@@ -6,7 +6,6 @@ import {
   Star,
   ArrowRight,
   Plus,
-  Search,
   Bell,
 } from 'lucide-react';
 
@@ -137,7 +136,7 @@ export default function Home() {
               Everything You Need to Plan Perfect Events
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-              From initial booking to final confirmation, we've got every step
+              From initial booking to final confirmation, we have got every step
               covered
             </p>
           </div>
