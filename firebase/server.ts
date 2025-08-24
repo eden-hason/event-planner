@@ -11,8 +11,10 @@ const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.PRIVATE_KEY
-    ? Buffer.from(process.env.PRIVATE_KEY, 'base64').toString('utf8')
+  private_key: process.env.FIREBASE_PRIVATE_KEY
+    ? Buffer.from(process.env.FIREBASE_PRIVATE_KEY, 'base64')
+        .toString('utf8')
+        .replace(/\\n/g, '\n')
     : undefined,
   client_email: process.env.FIREBASE_CLIENT_EMAIL,
   client_id: process.env.FIREBASE_CLIENT_ID,
@@ -22,6 +24,8 @@ const serviceAccount = {
   client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
   universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
 } as ServiceAccount;
+
+console.log(serviceAccount);
 
 // Initialize Firebase Admin SDK
 let app;
