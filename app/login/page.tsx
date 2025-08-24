@@ -3,6 +3,9 @@ import { LoginForm } from '@/components/login-form';
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
+// Force dynamic rendering since this page uses cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function Login() {
   const currentUser = await getCurrentUser();
 
