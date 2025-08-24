@@ -23,6 +23,7 @@ const serviceAccount = {
 
 // Initialize Firebase Admin SDK
 let app;
+
 if (getApps().length === 0) {
   try {
     app = initializeApp({
@@ -45,19 +46,6 @@ const firestore = getFirestore(app);
 
 // Initialize Auth
 const auth = getAuth(app);
-
-// Connect to emulators if in development mode
-if (process.env.NEXT_PUBLIC_APP_ENV === 'emulator') {
-  const authEmulatorHost = process.env.NEXT_PUBLIC_EMULATOR_AUTH_PATH;
-  const firestoreEmulatorHost = process.env.NEXT_PUBLIC_EMULATOR_FIRESTORE_PATH;
-
-  console.log('🔥 Firebase Admin SDK Emulator Configuration:');
-  console.log(`  - Firestore: ${firestoreEmulatorHost}`);
-  console.log(`  - Auth: ${authEmulatorHost}`);
-  console.log(
-    '  - Note: Admin SDK connects to emulators via environment variables',
-  );
-}
 
 // Export after emulator configuration
 export { firestore, auth };
