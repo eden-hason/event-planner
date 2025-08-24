@@ -22,10 +22,6 @@ export function LoginForm({
   const [state, formAction, isPending] = useActionState<AuthResult, FormData>(
     async (prevState: AuthResult, formData: FormData) => {
       const phone = formData.get('phone') as string;
-      console.log('phone', phone);
-
-      // const result = await loginWithEmailPassword(email, password);
-      // return result;
 
       return { success: false, message: '' };
     },
