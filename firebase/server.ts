@@ -25,8 +25,6 @@ const serviceAccount = {
   universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
 } as ServiceAccount;
 
-console.log(serviceAccount);
-
 // Initialize Firebase Admin SDK
 let app;
 

@@ -21,9 +21,6 @@ export function GoogleLoginButton() {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
 
-      console.log('result', result);
-      console.log('idToken', idToken);
-
       // Create session cookie on server
       const authResult = await createSessionCookie(idToken);
 
