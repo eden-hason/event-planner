@@ -1,14 +1,17 @@
-import { initializeApp } from 'firebase-admin';
-import { ServiceAccount, cert, getApps } from 'firebase-admin/app';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
-import { Auth, getAuth } from 'firebase-admin/auth';
+// Import configuration first to set environment variables
+import './config';
 
-// Use environment variables for service account credentials
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import { ServiceAccount } from 'firebase-admin/app';
+
+// Service account configuration from environment variables
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE,
   project_id: process.env.FIREBASE_PROJECT_ID,
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  private_key: process.env.FIREBASE_PRIVATE_KEY,
   client_email: process.env.FIREBASE_CLIENT_EMAIL,
   client_id: process.env.FIREBASE_CLIENT_ID,
   auth_uri: process.env.FIREBASE_AUTH_URI,
@@ -18,28 +21,31 @@ const serviceAccount = {
   universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
 } as ServiceAccount;
 
-let firestore: Firestore | undefined = undefined;
-let auth: Auth | undefined = undefined;
+// Initialize Firebase Admin SDK
+let app;
 
-const currentApps = getApps();
+if (getApps().length === 0) {
+  try {
+    app = initializeApp({
+      credential: cert(serviceAccount),
+    });
+  } catch (error) {
+    console.error(
+      'Firebase initialization error with service account object:',
+      error,
+    );
 
-if (currentApps.length <= 0) {
-  if (process.env.NEXT_PUBLIC_APP_ENV === 'emulator') {
-    process.env['FIREBASE_EMULATOR_HOST'] =
-      process.env.NEXT_PUBLIC_EMULATOR_FIRESTORE_PATH;
-    process.env['FIREBASE_AUTH_EMULATOR_HOST'] =
-      process.env.NEXT_PUBLIC_EMULATOR_AUTH_PATH;
+    throw error;
   }
-
-  const app = initializeApp({
-    credential: cert(serviceAccount),
-  });
-
-  firestore = getFirestore(app);
-  auth = getAuth(app);
 } else {
-  firestore = getFirestore(currentApps[0]);
-  auth = getAuth(currentApps[0]);
+  app = getApps()[0];
 }
 
+// Initialize Firestore
+const firestore = getFirestore(app);
+
+// Initialize Auth
+const auth = getAuth(app);
+
+// Export after emulator configuration
 export { firestore, auth };

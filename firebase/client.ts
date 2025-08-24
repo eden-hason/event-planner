@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   connectAuthEmulator,
 } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDzL4c18-jZh6IwNiyWCoSrgZ-MrfnNXpA',
@@ -18,14 +19,18 @@ const firebaseConfig = {
 const app =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Connect to emulators if in development mode
-if (process.env.NEXT_PUBLIC_APP_ENV === 'emulators') {
+if (process.env.NEXT_PUBLIC_APP_ENV === 'emulator') {
   const authEmulatorHost =
     process.env.NEXT_PUBLIC_EMULATOR_AUTH_PATH || 'localhost:9099';
+
   connectAuthEmulator(auth, `http://${authEmulatorHost}`, {
     disableWarnings: true,
   });
+
+  connectFirestoreEmulator(db, 'localhost', 8080);
 }
 
 // Configure Google Auth Provider
@@ -34,4 +39,4 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
-export { auth, googleProvider };
+export { auth, googleProvider, db };
