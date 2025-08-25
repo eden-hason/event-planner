@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 // Force dynamic rendering since this page uses cookies for authentication
 export const dynamic = 'force-dynamic';
 
-export default async function Login() {
+export default async function LoginPage() {
   const currentUser = await getCurrentUser();
 
   if (currentUser) {
