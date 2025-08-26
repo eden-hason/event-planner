@@ -2,19 +2,53 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Install dependencies:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```bash
+   npm install
+   ```
+
+2. Install Firebase CLI globally:
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+### Development with Emulator
+
+1. Start the Firebase emulators:
+
+   ```bash
+   npm run emulators
+   ```
+
+2. In a new terminal, seed the emulator with sample data:
+
+   ```bash
+   npm run seed
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Emulator Management
+
+- **Check emulator status**: `npm run emulator:status`
+- **Clear all data**: `npm run emulator:clear`
+- **Get data summary**: `npm run emulator:summary`
+- **Seed with sample data**: `npm run seed`
+
+### Emulator URLs
+
+- **Firestore**: http://localhost:8080
+- **Auth**: http://localhost:9099
+- **Emulator UI**: http://localhost:4000
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
