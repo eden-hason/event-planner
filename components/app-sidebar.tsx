@@ -3,15 +3,16 @@
 import * as React from 'react';
 import {
   IconCamera,
-  IconChartBar,
+  IconTemplate,
+  IconChecks,
   IconDashboard,
   IconFileAi,
   IconFileDescription,
   IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
   IconSettings,
   IconUsers,
+  IconGift,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
@@ -40,17 +41,22 @@ const data = {
     {
       title: 'Guests',
       url: '#',
-      icon: IconListDetails,
+      icon: IconUsers,
     },
     {
       title: 'Templates',
       url: '#',
-      icon: IconChartBar,
+      icon: IconTemplate,
+    },
+    {
+      title: 'Confirmations',
+      url: '#',
+      icon: IconChecks,
     },
     {
       title: 'Gifts',
       url: '#',
-      icon: IconUsers,
+      icon: IconGift,
     },
   ],
   navClouds: [

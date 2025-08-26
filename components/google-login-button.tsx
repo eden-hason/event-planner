@@ -25,7 +25,7 @@ export function GoogleLoginButton() {
       const authResult = await createSessionCookie(idToken);
 
       if (authResult.success) {
-        router.push('/'); // Redirect to home page
+        router.push('/dashboard'); // Redirect to dashboard
         router.refresh(); // Refresh to update server-side state
       } else {
         setError(authResult.message);

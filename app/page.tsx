@@ -8,6 +8,7 @@ import {
   Plus,
   Bell,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -47,9 +48,12 @@ export default function Home() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="hidden sm:flex items-center space-x-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Link
+                href="/login"
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 <span>Login</span>
-              </button>
+              </Link>
               <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                 Sign Up
               </button>
