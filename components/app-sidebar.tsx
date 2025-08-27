@@ -4,7 +4,6 @@ import * as React from 'react';
 import {
   IconCamera,
   IconTemplate,
-  IconChecks,
   IconDashboard,
   IconFileAi,
   IconFileDescription,
@@ -13,6 +12,7 @@ import {
   IconSettings,
   IconUsers,
   IconGift,
+  IconCash,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
@@ -35,27 +35,27 @@ const data = {
   navMain: [
     {
       title: 'Dashboard',
-      url: '#',
+      url: '/dashboard',
       icon: IconDashboard,
     },
     {
       title: 'Guests',
-      url: '#',
+      url: '/guests',
       icon: IconUsers,
     },
     {
       title: 'Templates',
-      url: '#',
+      url: '/templates',
       icon: IconTemplate,
     },
     {
-      title: 'Confirmations',
-      url: '#',
-      icon: IconChecks,
+      title: 'Expenses',
+      url: '/expenses',
+      icon: IconCash,
     },
     {
       title: 'Gifts',
-      url: '#',
+      url: '/gifts',
       icon: IconGift,
     },
   ],
