@@ -43,5 +43,11 @@ next-env.d.ts
 # firebase
 firebase/service-account.json
 
+# firebase emulator data
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+emulator-data/
+
 # cursor
 .cursorrules
