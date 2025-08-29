@@ -1,11 +1,31 @@
+import { GuestData } from '@/app/actions/guests';
 import { firestore } from '@/firebase/server';
 import { Timestamp } from 'firebase-admin/firestore';
+
+// Helper function to serialize Firestore timestamps to ISO strings
+const serializeTimestamps = (data: any) => {
+  return {
+    ...data,
+    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+  };
+};
+
+// Helper function to serialize event timestamps (includes date field)
+const serializeEventTimestamps = (data: any) => {
+  return {
+    ...data,
+    date: data.date?.toDate?.()?.toISOString() || data.date,
+    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+  };
+};
 
 // TypeScript interfaces
 export interface Guest {
   id?: string;
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   group: string;
   rsvpStatus: 'confirmed' | 'pending' | 'declined';
@@ -13,26 +33,27 @@ export interface Guest {
   plusOne?: boolean;
   plusOneName?: string;
   notes?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  amount: number;
+  createdAt?: string; // ISO string when returned from DAL
+  updatedAt?: string; // ISO string when returned from DAL
 }
 
 export interface Event {
   id?: string;
   title: string;
   description?: string;
-  date: Timestamp;
+  date: string; // ISO string when returned from DAL
   location?: string;
   maxGuests?: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: string; // ISO string when returned from DAL
+  updatedAt?: string; // ISO string when returned from DAL
 }
 
 // Guest operations - Read only
 export const getGuests = async (
   userId: string,
   eventId: string,
-): Promise<Guest[]> => {
+): Promise<GuestData[]> => {
   try {
     const guestsRef = firestore
       .collection('users')
@@ -44,7 +65,7 @@ export const getGuests = async (
 
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...serializeTimestamps(doc.data()),
     })) as Guest[];
   } catch (error) {
     console.error('Error fetching guests:', error);
@@ -56,7 +77,7 @@ export const getGuest = async (
   userId: string,
   eventId: string,
   guestId: string,
-): Promise<Guest | null> => {
+): Promise<GuestData | null> => {
   try {
     const guestRef = firestore
       .collection('users')
@@ -70,7 +91,7 @@ export const getGuest = async (
     if (guestDoc.exists) {
       return {
         id: guestDoc.id,
-        ...guestDoc.data(),
+        ...serializeTimestamps(guestDoc.data()),
       } as Guest;
     }
     return null;
@@ -98,7 +119,7 @@ export const getGuestsByStatus = async (
 
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...serializeTimestamps(doc.data()),
     })) as Guest[];
   } catch (error) {
     console.error('Error fetching guests by status:', error);
@@ -122,7 +143,7 @@ export const getGuestsByGroup = async (
 
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...serializeTimestamps(doc.data()),
     })) as Guest[];
   } catch (error) {
     console.error('Error fetching guests by group:', error);
@@ -141,7 +162,7 @@ export const getEvents = async (userId: string): Promise<Event[]> => {
 
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      ...serializeEventTimestamps(doc.data()),
     })) as Event[];
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -164,7 +185,7 @@ export const getEvent = async (
     if (eventDoc.exists) {
       return {
         id: eventDoc.id,
-        ...eventDoc.data(),
+        ...serializeEventTimestamps(eventDoc.data()),
       } as Event;
     }
     return null;
