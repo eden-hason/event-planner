@@ -5,6 +5,7 @@ import { startCase } from 'lodash';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import UserMenu from './user-menu';
 
 function formatPathToTitle(pathname: string): string {
   const segments = pathname.slice(1).split('/').filter(Boolean);
@@ -12,7 +13,15 @@ function formatPathToTitle(pathname: string): string {
   return startCase(lastSegment);
 }
 
-export function SiteHeader() {
+interface AppHeaderProps {
+  user: {
+    displayName: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+export function AppHeader({ user }: AppHeaderProps) {
   const pathname = usePathname();
   const title = formatPathToTitle(pathname);
   const isMobile = useIsMobile();
@@ -27,7 +36,10 @@ export function SiteHeader() {
             className="mx-2 data-[orientation=vertical]:h-4"
           />
         )}
-        <h1 className="text-2xl font-bold py-2">{title}</h1>
+        <div className="flex items-center justify-between w-full">
+          <h1 className="text-2xl font-bold py-2">{title}</h1>
+          <UserMenu user={user} />
+        </div>
       </div>
     </header>
   );
