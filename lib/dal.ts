@@ -1,11 +1,11 @@
+import { GuestData } from '@/app/actions/guests';
 import { firestore } from '@/firebase/server';
-import { Timestamp } from 'firebase-admin/firestore';
 
 // TypeScript interfaces
 export interface Guest {
   id?: string;
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   group: string;
   rsvpStatus: 'confirmed' | 'pending' | 'declined';
@@ -13,26 +13,27 @@ export interface Guest {
   plusOne?: boolean;
   plusOneName?: string;
   notes?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  amount: number;
+  createdAt?: string; // ISO string when returned from DAL
+  updatedAt?: string; // ISO string when returned from DAL
 }
 
 export interface Event {
   id?: string;
   title: string;
   description?: string;
-  date: Timestamp;
+  date: string; // ISO string when returned from DAL
   location?: string;
   maxGuests?: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: string; // ISO string when returned from DAL
+  updatedAt?: string; // ISO string when returned from DAL
 }
 
 // Guest operations - Read only
 export const getGuests = async (
   userId: string,
   eventId: string,
-): Promise<Guest[]> => {
+): Promise<GuestData[]> => {
   try {
     const guestsRef = firestore
       .collection('users')
@@ -42,10 +43,15 @@ export const getGuests = async (
       .collection('guests');
     const querySnapshot = await guestsRef.get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests:', error);
     throw new Error('Failed to fetch guests');
@@ -56,7 +62,7 @@ export const getGuest = async (
   userId: string,
   eventId: string,
   guestId: string,
-): Promise<Guest | null> => {
+): Promise<GuestData | null> => {
   try {
     const guestRef = firestore
       .collection('users')
@@ -68,9 +74,12 @@ export const getGuest = async (
     const guestDoc = await guestRef.get();
 
     if (guestDoc.exists) {
+      const data = guestDoc.data() || {};
       return {
         id: guestDoc.id,
-        ...guestDoc.data(),
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as Guest;
     }
     return null;
@@ -96,10 +105,15 @@ export const getGuestsByStatus = async (
       .where('rsvpStatus', '==', status)
       .get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests by status:', error);
     throw new Error('Failed to fetch guests by status');
@@ -120,10 +134,15 @@ export const getGuestsByGroup = async (
       .collection('guests');
     const querySnapshot = await guestsRef.where('group', '==', group).get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests by group:', error);
     throw new Error('Failed to fetch guests by group');
@@ -139,10 +158,16 @@ export const getEvents = async (userId: string): Promise<Event[]> => {
       .collection('events');
     const querySnapshot = await eventsRef.get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Event[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        date: data.date?.toDate?.()?.toISOString() || data.date,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Event;
+    });
   } catch (error) {
     console.error('Error fetching events:', error);
     throw new Error('Failed to fetch events');
@@ -162,9 +187,13 @@ export const getEvent = async (
     const eventDoc = await eventRef.get();
 
     if (eventDoc.exists) {
+      const data = eventDoc.data() || {};
       return {
         id: eventDoc.id,
-        ...eventDoc.data(),
+        ...data,
+        date: data.date?.toDate?.()?.toISOString() || data.date,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as Event;
     }
     return null;
