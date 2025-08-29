@@ -1,25 +1,5 @@
 import { GuestData } from '@/app/actions/guests';
 import { firestore } from '@/firebase/server';
-import { Timestamp } from 'firebase-admin/firestore';
-
-// Helper function to serialize Firestore timestamps to ISO strings
-const serializeTimestamps = (data: any) => {
-  return {
-    ...data,
-    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-    updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-  };
-};
-
-// Helper function to serialize event timestamps (includes date field)
-const serializeEventTimestamps = (data: any) => {
-  return {
-    ...data,
-    date: data.date?.toDate?.()?.toISOString() || data.date,
-    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-    updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-  };
-};
 
 // TypeScript interfaces
 export interface Guest {
@@ -63,10 +43,15 @@ export const getGuests = async (
       .collection('guests');
     const querySnapshot = await guestsRef.get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...serializeTimestamps(doc.data()),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests:', error);
     throw new Error('Failed to fetch guests');
@@ -89,9 +74,12 @@ export const getGuest = async (
     const guestDoc = await guestRef.get();
 
     if (guestDoc.exists) {
+      const data = guestDoc.data() || {};
       return {
         id: guestDoc.id,
-        ...serializeTimestamps(guestDoc.data()),
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as Guest;
     }
     return null;
@@ -117,10 +105,15 @@ export const getGuestsByStatus = async (
       .where('rsvpStatus', '==', status)
       .get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...serializeTimestamps(doc.data()),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests by status:', error);
     throw new Error('Failed to fetch guests by status');
@@ -141,10 +134,15 @@ export const getGuestsByGroup = async (
       .collection('guests');
     const querySnapshot = await guestsRef.where('group', '==', group).get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...serializeTimestamps(doc.data()),
-    })) as Guest[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Guest;
+    });
   } catch (error) {
     console.error('Error fetching guests by group:', error);
     throw new Error('Failed to fetch guests by group');
@@ -160,10 +158,16 @@ export const getEvents = async (userId: string): Promise<Event[]> => {
       .collection('events');
     const querySnapshot = await eventsRef.get();
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...serializeEventTimestamps(doc.data()),
-    })) as Event[];
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        date: data.date?.toDate?.()?.toISOString() || data.date,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Event;
+    });
   } catch (error) {
     console.error('Error fetching events:', error);
     throw new Error('Failed to fetch events');
@@ -183,9 +187,13 @@ export const getEvent = async (
     const eventDoc = await eventRef.get();
 
     if (eventDoc.exists) {
+      const data = eventDoc.data() || {};
       return {
         id: eventDoc.id,
-        ...serializeEventTimestamps(eventDoc.data()),
+        ...data,
+        date: data.date?.toDate?.()?.toISOString() || data.date,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as Event;
     }
     return null;
