@@ -3,8 +3,9 @@ import { cookies } from 'next/headers';
 
 export interface User {
   uid: string;
-  email: string | undefined;
-  displayName: string | undefined;
+  email: string;
+  displayName: string;
+  avatar: string;
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -24,8 +25,9 @@ export async function getCurrentUser(): Promise<User | null> {
 
     return {
       uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: userRecord.displayName,
+      email: userRecord.email || '',
+      displayName: userRecord.displayName || '',
+      avatar: userRecord.photoURL || '',
     };
   } catch (error) {
     console.error('Get current user error:', error);

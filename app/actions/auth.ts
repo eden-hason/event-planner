@@ -59,8 +59,9 @@ export async function createSessionCookie(
       message: 'Successfully signed in',
       user: {
         uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
+        email: userRecord.email || '',
+        displayName: userRecord.displayName || '',
+        avatar: userRecord.photoURL || '',
       },
     };
   } catch (error) {
