@@ -12,7 +12,7 @@ export default async function GuestsPage() {
   }
 
   const eventId = 'event1'; // TODO: Get this from URL params or context
-  const guests = await getGuests('user1', eventId);
+  const guests = await getGuests(currentUser.uid, eventId);
   return (
     <div className="container mx-auto space-y-6 p-4">
       <GuestsContainer guests={guests} eventId={eventId} />
