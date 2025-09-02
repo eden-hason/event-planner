@@ -20,7 +20,7 @@ export default async function Layout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <AppHeader user={{ ...currentUser, avatar: currentUser.displayName }} />
-        <main>{children}</main>
+        <main className="container mx-auto p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
