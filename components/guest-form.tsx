@@ -13,14 +13,18 @@ import {
   SelectValue,
 } from './ui/select';
 import { toast } from 'sonner';
-import { createGuest, GuestResult } from '@/app/actions/guests';
+import { createGuest, updateGuest, GuestResult } from '@/app/actions/guests';
+import { Guest } from '@/lib/dal';
 
-interface AddGuestFormProps {
+interface GuestFormProps {
   eventId: string;
+  guest?: Guest; // Optional - if provided, form is in edit mode
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
+export function GuestForm({ eventId, guest, onSuccess, onCancel }: GuestFormProps) {
+  const isEditMode = !!guest;
   const [state, formAction, isPending] = useActionState(
     async (prevState: GuestResult, formData: FormData) => {
       try {
@@ -34,16 +38,35 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
           | 'confirmed'
           | 'declined';
         const notes = formData.get('notes') as string;
+        const dietaryRestrictions = formData.get(
+          'dietaryRestrictions',
+        ) as string;
 
-        // Call server action
-        const result = await createGuest(eventId, {
-          name,
-          phone,
-          amount,
-          group,
-          rsvpStatus,
-          notes,
-        });
+        let result: GuestResult;
+
+        if (isEditMode) {
+          // Update existing guest
+          result = await updateGuest(eventId, guest!.id!, {
+            name,
+            phone,
+            amount,
+            group,
+            rsvpStatus,
+            notes,
+            dietaryRestrictions,
+          });
+        } else {
+          // Create new guest
+          result = await createGuest(eventId, {
+            name,
+            phone,
+            amount,
+            group,
+            rsvpStatus,
+            notes,
+            dietaryRestrictions,
+          });
+        }
 
         if (result.success) {
           toast.success(result.message);
@@ -70,6 +93,7 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
           name="name"
           type="text"
           placeholder="Enter guest name"
+          defaultValue={guest?.name || ''}
         />
       </div>
 
@@ -80,6 +104,7 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
           name="phone"
           type="tel"
           placeholder="Enter phone number"
+          defaultValue={guest?.phone || ''}
         />
       </div>
 
@@ -91,12 +116,13 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
           type="number"
           min="1"
           placeholder="Enter amount"
+          defaultValue={guest?.amount || 1}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="group">Group</Label>
-        <Select name="group" defaultValue="">
+        <Select name="group" defaultValue={guest?.group || ''}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a group" />
           </SelectTrigger>
@@ -112,7 +138,7 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="rsvpStatus">RSVP Status</Label>
-        <Select name="rsvpStatus" defaultValue="pending">
+        <Select name="rsvpStatus" defaultValue={guest?.rsvpStatus || 'pending'}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select RSVP status" />
           </SelectTrigger>
@@ -125,18 +151,38 @@ export function AddGuestForm({ eventId, onSuccess }: AddGuestFormProps) {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
+        <Input
+          id="dietaryRestrictions"
+          name="dietaryRestrictions"
+          type="text"
+          placeholder="Enter dietary restrictions (optional)"
+          defaultValue={guest?.dietaryRestrictions || ''}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
         <Textarea
           id="notes"
           name="notes"
           placeholder="Add any additional notes about this guest..."
           className="min-h-[100px]"
+          defaultValue={guest?.notes || ''}
         />
       </div>
 
       <div className="flex justify-end space-x-2">
+        {isEditMode && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Adding...' : 'Add Guest'}
+          {isPending 
+            ? (isEditMode ? 'Updating...' : 'Adding...') 
+            : (isEditMode ? 'Update Guest' : 'Add Guest')
+          }
         </Button>
       </div>
     </form>

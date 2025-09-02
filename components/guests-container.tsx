@@ -13,10 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from './ui/button';
-import { Separator } from './ui/separator';
-import { AddGuestForm } from './add-guest-form';
-import { ImportGuestsForm } from './import-guests-form';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { GuestForm } from '@/components/guest-form';
+import { ImportGuestsForm } from '@/components/import-guests-form';
 import { Upload } from 'lucide-react';
 
 interface GuestsContainerProps {
@@ -85,7 +85,7 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
                 </DialogDescription>
               </DialogHeader>
 
-              <AddGuestForm
+              <GuestForm
                 eventId={eventId}
                 onSuccess={() => setIsAddDialogOpen(false)}
               />
@@ -95,7 +95,7 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
       </div>
 
       {/* Guests table */}
-      <GuestsTable guests={guests} searchTerm={searchTerm} />
+      <GuestsTable guests={guests} searchTerm={searchTerm} eventId={eventId} />
     </div>
   );
 }
