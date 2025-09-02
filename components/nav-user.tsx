@@ -21,6 +21,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useLogout } from '@/hooks/use-logout';
+
 export function NavUser({
   user,
 }: {
@@ -31,6 +33,12 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const { logout, isLoading } = useLogout();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -68,9 +76,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleLogout}
+              disabled={isLoading}
+              className="cursor-pointer"
+            >
               <IconLogout />
-              Log out
+              {isLoading ? 'Logging out...' : 'Log out'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

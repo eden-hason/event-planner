@@ -16,6 +16,27 @@ export async function signOut(): Promise<void> {
   redirect('/login');
 }
 
+export async function logoutAction(): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  try {
+    // Clear the session cookie
+    (await cookies()).delete('session');
+
+    return {
+      success: true,
+      message: 'Successfully logged out',
+    };
+  } catch (error) {
+    console.error('Logout error:', error);
+    return {
+      success: false,
+      message: 'Failed to logout',
+    };
+  }
+}
+
 export async function createSessionCookie(
   idToken: string,
 ): Promise<AuthResult> {
