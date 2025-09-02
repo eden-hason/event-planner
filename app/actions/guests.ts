@@ -95,6 +95,67 @@ export async function createGuest(
   }
 }
 
+export async function updateGuest(
+  eventId: string,
+  guestId: string,
+  guestData: GuestData,
+): Promise<GuestResult> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return {
+        success: false,
+        message: 'You must be logged in to update guests',
+      };
+    }
+
+    // Validate data using Zod schema
+    const validationResult = GuestDataSchema.safeParse(guestData);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return {
+        success: false,
+        message: firstError.message,
+      };
+    }
+
+    const validatedData = validationResult.data;
+
+    // Update guest document with updated timestamp
+    const now = Timestamp.now();
+    const guestWithTimestamps = {
+      ...validatedData,
+      updatedAt: now,
+    };
+
+    // Update in Firestore
+    const guestRef = firestore
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('events')
+      .doc(eventId)
+      .collection('guests')
+      .doc(guestId);
+
+    await guestRef.update(guestWithTimestamps);
+
+    // Revalidate the guests page to show the updated guest
+    revalidatePath('/guests');
+
+    return {
+      success: true,
+      message: 'Guest updated successfully',
+      guestId: guestId,
+    };
+  } catch (error) {
+    console.error('Update guest error:', error);
+    return {
+      success: false,
+      message: 'Failed to update guest. Please try again.',
+    };
+  }
+}
+
 export async function importGuestsFromCSV(
   eventId: string,
   file: File,
@@ -107,7 +168,7 @@ export async function importGuestsFromCSV(
         message: 'You must be logged in to import guests',
       };
     }
-
+    console.log('File:', file);
     // Read the CSV file
     const text = await file.text();
     const lines = text.split('\n').filter((line) => line.trim());
@@ -120,7 +181,8 @@ export async function importGuestsFromCSV(
     }
 
     // Parse header row
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const headers = lines[0].split(',').map((h) => h.trim());
+    console.log('Headers:', headers);
     const requiredHeaders = ['name', 'phone', 'group'];
     const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
 
