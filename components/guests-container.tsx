@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from './guests-table';
+import { GuestsDashboard } from './guests-dashboard';
 import { Guest } from '@/lib/dal';
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 import { AddGuestForm } from './add-guest-form';
 import { ImportGuestsForm } from './import-guests-form';
 import { Upload } from 'lucide-react';
@@ -29,6 +31,12 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
 
   return (
     <div className="space-y-6">
+      <div className="space-y-4">
+        <GuestsDashboard guests={guests} />
+      </div>
+
+      <Separator />
+
       {/* Header with search and buttons */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2 flex-1 max-w-sm">

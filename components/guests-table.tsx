@@ -33,13 +33,22 @@ export function GuestsTable({ guests, searchTerm }: GuestsTableProps) {
 
   const getStatusBadge = (status: Guest['rsvpStatus']) => {
     const statusConfig = {
-      confirmed: { variant: 'default' as const, label: 'Confirmed' },
-      pending: { variant: 'secondary' as const, label: 'Pending' },
-      declined: { variant: 'destructive' as const, label: 'Declined' },
+      confirmed: {
+        className: 'bg-green-100 text-green-800 border-green-200',
+        label: 'Confirmed',
+      },
+      pending: {
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        label: 'Pending',
+      },
+      declined: {
+        className: 'bg-red-100 text-red-800 border-red-200',
+        label: 'Declined',
+      },
     };
 
     const config = statusConfig[status];
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   return (
