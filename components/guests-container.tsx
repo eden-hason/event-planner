@@ -14,7 +14,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { GuestForm } from '@/components/guest-form';
 import { ImportGuestsForm } from '@/components/import-guests-form';
 import { Upload } from 'lucide-react';
@@ -30,12 +29,8 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <GuestsDashboard guests={guests} />
-      </div>
-
-      <Separator />
+    <div className="space-y-4">
+      <GuestsDashboard guests={guests} />
 
       {/* Header with search and buttons */}
       <div className="flex items-center justify-between gap-2">

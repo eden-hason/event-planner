@@ -62,35 +62,35 @@ export function GuestsDashboard({ guests }: GuestsDashboardProps) {
   return (
     <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
       <MetricCard
-        title="Total"
+        title="Total Guests"
         value={totalGuests}
         icon={<Users className="h-4 w-4" />}
         iconBgColor="bg-blue-100 text-blue-600"
       />
 
       <MetricCard
-        title="Confirmed"
+        title="Confirmed Invitations"
         value={confirmedGuests}
         icon={<CheckCircle className="h-4 w-4" />}
         iconBgColor="bg-green-100 text-green-600"
       />
 
       <MetricCard
-        title="Pending"
+        title="Pending Invitations"
         value={pendingGuests}
         icon={<Clock className="h-4 w-4" />}
         iconBgColor="bg-yellow-100 text-yellow-600"
       />
 
       <MetricCard
-        title="Declined"
+        title="Declined Invitations"
         value={declinedGuests}
         icon={<XCircle className="h-4 w-4" />}
         iconBgColor="bg-red-100 text-red-600"
       />
 
       <MetricCard
-        title="View Invitation"
+        title="Invitations Views"
         value={145} // TODO: Get this from the database
         icon={<Eye className="h-4 w-4" />}
         iconBgColor="bg-orange-100 text-orange-600"

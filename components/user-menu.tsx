@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { IconUser } from '@tabler/icons-react';
 import { Button } from './ui/button';
+import { useLogout } from '@/hooks/use-logout';
 
 const user = {
   name: 'Toby Belhome',
@@ -32,6 +33,12 @@ interface UserMenuProps {
 
 export default function UserMenu({ user }: UserMenuProps) {
   const [open, setOpen] = React.useState(false);
+  const { logout, isLoading } = useLogout();
+
+  const handleLogout = async () => {
+    setOpen(false); // Close the dropdown
+    await logout();
+  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -81,9 +88,13 @@ export default function UserMenu({ user }: UserMenuProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600!">
-          <LogOutIcon className="text-red-600!" />
-          Log out
+        <DropdownMenuItem
+          className="text-red-600 cursor-pointer"
+          onClick={handleLogout}
+          disabled={isLoading}
+        >
+          <LogOutIcon className="text-red-600" />
+          {isLoading ? 'Logging out...' : 'Log out'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
