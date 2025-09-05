@@ -223,9 +223,9 @@ export async function importGuestsFromCSV(
             | 'confirmed'
             | 'pending'
             | 'declined',
-          dietaryRestrictions: rowData.dietaryrestrictions || undefined,
+          dietaryRestrictions: rowData.dietaryrestrictions,
           amount: parseInt(rowData.amount) || 1,
-          notes: rowData.notes || undefined,
+          notes: rowData.notes,
         };
 
         // Validate using Zod schema
