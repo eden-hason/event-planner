@@ -1,39 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/firebase/client';
-import { createSessionCookie } from '@/app/actions/auth';
+import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 
 export function GoogleLoginButton() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Login with Google
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
+      const supabase = createClient();
 
-      // Create session cookie on server
-      const authResult = await createSessionCookie(idToken);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
+      });
 
-      if (authResult.success) {
-        router.push('/dashboard'); // Redirect to dashboard
-        router.refresh(); // Refresh to update server-side state
-      } else {
-        setError(authResult.message);
+      if (error) {
+        throw error;
       }
+
+      // The user will be redirected to Google's OAuth page
+      // No need to handle the response here as the redirect will happen automatically
     } catch (error) {
       console.error('Google login error:', error);
       setError('Failed to login with Google. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

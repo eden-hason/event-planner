@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -21,19 +20,18 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useLogout } from '@/hooks/use-logout';
+import { logout } from '@/app/actions/auth';
 
 export function NavUser({
   user,
 }: {
   user: {
     name: string;
-    email: string;
-    avatar: string;
+    email?: string;
+    avatar?: string;
   };
 }) {
   const { isMobile } = useSidebar();
-  const { logout, isLoading } = useLogout();
 
   const handleLogout = async () => {
     await logout();
@@ -76,13 +74,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              disabled={isLoading}
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <IconLogout />
-              {isLoading ? 'Logging out...' : 'Log out'}
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

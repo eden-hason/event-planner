@@ -12,24 +12,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useActionState } from 'react';
-import { AuthResult } from '@/app/actions/auth';
 import { GoogleLoginButton } from '@/components/google-login-button';
+import { login, signup } from '@/app/login/actions';
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
-  const [state, formAction, isPending] = useActionState<AuthResult, FormData>(
-    async (prevState: AuthResult, formData: FormData) => {
-      const phone = formData.get('phone') as string;
-
-      return { success: false, message: '' };
-    },
-    {
-      success: false,
-      message: '',
-    },
-  );
+  const [state, formAction, isPending] = useActionState(login, {
+    success: false,
+    message: '',
+  });
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
@@ -54,9 +47,20 @@ export function LoginForm({
               <div className="grid gap-6">
                 <div className="grid gap-3">
                   <div className="flex items-center">
-                    <Label htmlFor="password">Phone Number</Label>
+                    <Label htmlFor="email">Email</Label>
                   </div>
-                  <Input id="phone" name="phone" type="tel" required />
+                  <Input id="email" name="email" type="email" required />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                  </div>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                  />
                 </div>
                 {state.message && (
                   <div
