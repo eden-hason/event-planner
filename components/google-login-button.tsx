@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
+import { signInWithGoogle } from '@/app/login/actions';
 
 export function GoogleLoginButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,21 +13,8 @@ export function GoogleLoginButton() {
     setError(null);
 
     try {
-      const supabase = createClient();
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // The user will be redirected to Google's OAuth page
-      // No need to handle the response here as the redirect will happen automatically
+      await signInWithGoogle();
+      // The server action will handle the redirect
     } catch (error) {
       console.error('Google login error:', error);
       setError('Failed to login with Google. Please try again.');

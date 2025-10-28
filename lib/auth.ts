@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 export interface User {
   id: string;
@@ -9,15 +9,28 @@ export interface User {
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const sessionCookie = (await cookies()).get('session')?.value;
+    const supabase = await createClient();
 
-    if (!sessionCookie) {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
       return null;
     }
 
-    // TODO: Implement Supabase session verification
-    // For now, return null to indicate no authentication
-    return null;
+    return {
+      id: user.id,
+      email: user.email || '',
+      displayName:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email ||
+        '',
+      avatar:
+        user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+    };
   } catch (error) {
     console.error('Get current user error:', error);
     return null;
