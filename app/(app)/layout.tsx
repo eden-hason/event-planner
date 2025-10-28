@@ -3,23 +3,31 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppHeader } from '@/components/app-header';
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
 export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const currentUser = await getCurrentUser();
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
 
-  if (!currentUser) {
+  if (!data.user) {
     redirect('/login');
   }
 
+  const user = {
+    name: data.user.user_metadata.name,
+    email: data.user.email,
+    avatar: data.user.user_metadata.avatar_url,
+  };
+
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
-        <AppHeader user={{ ...currentUser, avatar: currentUser.displayName }} />
+        <AppHeader user={user} />
         <main className="container mx-auto p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>

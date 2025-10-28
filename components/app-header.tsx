@@ -15,8 +15,8 @@ function formatPathToTitle(pathname: string): string {
 
 interface AppHeaderProps {
   user: {
-    displayName: string;
-    email: string;
+    name: string;
+    email?: string;
     avatar?: string;
   };
 }

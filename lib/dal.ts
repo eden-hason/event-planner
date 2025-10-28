@@ -1,5 +1,4 @@
 import { GuestData } from '@/app/actions/guests';
-import { firestore } from '@/firebase/server';
 
 // TypeScript interfaces
 export interface Guest {
@@ -35,23 +34,9 @@ export const getGuests = async (
   eventId: string,
 ): Promise<GuestData[]> => {
   try {
-    const guestsRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests');
-    const querySnapshot = await guestsRef.get();
-
-    return querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Guest;
-    });
+    // TODO: Implement Supabase query
+    console.log('getGuests called with userId:', userId, 'eventId:', eventId);
+    return [];
   } catch (error) {
     console.error('Error fetching guests:', error);
     throw new Error('Failed to fetch guests');
@@ -64,24 +49,15 @@ export const getGuest = async (
   guestId: string,
 ): Promise<GuestData | null> => {
   try {
-    const guestRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests')
-      .doc(guestId);
-    const guestDoc = await guestRef.get();
-
-    if (guestDoc.exists) {
-      const data = guestDoc.data() || {};
-      return {
-        id: guestDoc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Guest;
-    }
+    // TODO: Implement Supabase query
+    console.log(
+      'getGuest called with userId:',
+      userId,
+      'eventId:',
+      eventId,
+      'guestId:',
+      guestId,
+    );
     return null;
   } catch (error) {
     console.error('Error fetching guest:', error);
@@ -95,25 +71,16 @@ export const getGuestsByStatus = async (
   status: Guest['rsvpStatus'],
 ): Promise<Guest[]> => {
   try {
-    const guestsRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests');
-    const querySnapshot = await guestsRef
-      .where('rsvpStatus', '==', status)
-      .get();
-
-    return querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Guest;
-    });
+    // TODO: Implement Supabase query
+    console.log(
+      'getGuestsByStatus called with userId:',
+      userId,
+      'eventId:',
+      eventId,
+      'status:',
+      status,
+    );
+    return [];
   } catch (error) {
     console.error('Error fetching guests by status:', error);
     throw new Error('Failed to fetch guests by status');
@@ -126,23 +93,16 @@ export const getGuestsByGroup = async (
   group: string,
 ): Promise<Guest[]> => {
   try {
-    const guestsRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests');
-    const querySnapshot = await guestsRef.where('group', '==', group).get();
-
-    return querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Guest;
-    });
+    // TODO: Implement Supabase query
+    console.log(
+      'getGuestsByGroup called with userId:',
+      userId,
+      'eventId:',
+      eventId,
+      'group:',
+      group,
+    );
+    return [];
   } catch (error) {
     console.error('Error fetching guests by group:', error);
     throw new Error('Failed to fetch guests by group');
@@ -152,22 +112,9 @@ export const getGuestsByGroup = async (
 // Event operations - Read only
 export const getEvents = async (userId: string): Promise<Event[]> => {
   try {
-    const eventsRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events');
-    const querySnapshot = await eventsRef.get();
-
-    return querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        date: data.date?.toDate?.()?.toISOString() || data.date,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Event;
-    });
+    // TODO: Implement Supabase query
+    console.log('getEvents called with userId:', userId);
+    return [];
   } catch (error) {
     console.error('Error fetching events:', error);
     throw new Error('Failed to fetch events');
@@ -179,23 +126,8 @@ export const getEvent = async (
   eventId: string,
 ): Promise<Event | null> => {
   try {
-    const eventRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('events')
-      .doc(eventId);
-    const eventDoc = await eventRef.get();
-
-    if (eventDoc.exists) {
-      const data = eventDoc.data() || {};
-      return {
-        id: eventDoc.id,
-        ...data,
-        date: data.date?.toDate?.()?.toISOString() || data.date,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      } as Event;
-    }
+    // TODO: Implement Supabase query
+    console.log('getEvent called with userId:', userId, 'eventId:', eventId);
     return null;
   } catch (error) {
     console.error('Error fetching event:', error);

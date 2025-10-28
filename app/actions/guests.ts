@@ -1,8 +1,6 @@
 'use server';
 
 import { getCurrentUser } from '@/lib/auth';
-import { firestore } from '@/firebase/server';
-import { Timestamp } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -59,24 +57,13 @@ export async function createGuest(
 
     const validatedData = validationResult.data;
 
-    // Create guest document with timestamps
-    const now = Timestamp.now();
-    const guestWithTimestamps = {
-      ...validatedData,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    // Save to Firestore using the correct path: users/{userId}/events/{eventId}/guests/{guestId}
-    const guestRef = firestore
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests')
-      .doc();
-
-    await guestRef.set(guestWithTimestamps);
+    // TODO: Implement Supabase insert
+    console.log(
+      'createGuest called with eventId:',
+      eventId,
+      'guestData:',
+      validatedData,
+    );
 
     // Revalidate the guests page to show the new guest
     revalidatePath('/guests');
@@ -84,7 +71,7 @@ export async function createGuest(
     return {
       success: true,
       message: 'Guest created successfully',
-      guestId: guestRef.id,
+      guestId: 'temp-id', // TODO: Return actual ID from Supabase
     };
   } catch (error) {
     console.error('Create guest error:', error);
@@ -121,23 +108,15 @@ export async function updateGuest(
 
     const validatedData = validationResult.data;
 
-    // Update guest document with updated timestamp
-    const now = Timestamp.now();
-    const guestWithTimestamps = {
-      ...validatedData,
-      updatedAt: now,
-    };
-
-    // Update in Firestore
-    const guestRef = firestore
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests')
-      .doc(guestId);
-
-    await guestRef.update(guestWithTimestamps);
+    // TODO: Implement Supabase update
+    console.log(
+      'updateGuest called with eventId:',
+      eventId,
+      'guestId:',
+      guestId,
+      'guestData:',
+      validatedData,
+    );
 
     // Revalidate the guests page to show the updated guest
     revalidatePath('/guests');
@@ -195,7 +174,6 @@ export async function importGuestsFromCSV(
 
     const errors: string[] = [];
     const validGuests: GuestData[] = [];
-    const now = Timestamp.now();
 
     // Process each data row
     for (let i = 1; i < lines.length; i++) {
@@ -250,26 +228,13 @@ export async function importGuestsFromCSV(
       };
     }
 
-    // Batch write to Firestore
-    const batch = firestore.batch();
-    const guestsCollection = firestore
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('events')
-      .doc(eventId)
-      .collection('guests');
-
-    validGuests.forEach((guestData) => {
-      const guestRef = guestsCollection.doc();
-      const guestWithTimestamps = {
-        ...guestData,
-        createdAt: now,
-        updatedAt: now,
-      };
-      batch.set(guestRef, guestWithTimestamps);
-    });
-
-    await batch.commit();
+    // TODO: Implement Supabase batch insert
+    console.log(
+      'importGuestsFromCSV called with eventId:',
+      eventId,
+      'validGuests:',
+      validGuests.length,
+    );
 
     // Revalidate the guests page
     revalidatePath('/guests');

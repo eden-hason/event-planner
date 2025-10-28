@@ -3,16 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_PUBLIC_APP_ENV='emulator' next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "emulators": "firebase emulators:start",
-    "seed": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npx tsx scripts/seed.ts",
-    "seed:dev": "NEXT_PUBLIC_APP_ENV='emulator' FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npx tsx scripts/seed.ts",
-    "emulator:status": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npx tsx scripts/emulator-utils.ts status",
-    "emulator:clear": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npx tsx scripts/emulator-utils.ts clear",
-    "emulator:summary": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npx tsx scripts/emulator-utils.ts summary"
+    "lint": "eslint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -24,12 +18,12 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.76.1",
     "@tabler/icons-react": "^3.34.1",
     "@types/lodash": "^4.17.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "firebase": "^12.1.0",
-    "firebase-admin": "^13.4.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.540.0",
     "motion": "^12.23.12",

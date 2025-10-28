@@ -10,45 +10,30 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
    npm install
    ```
 
-2. Install Firebase CLI globally:
-   ```bash
-   npm install -g firebase-tools
-   ```
+2. Set up environment variables:
 
-### Development with Emulator
-
-1. Start the Firebase emulators:
+   Create a `.env.local` file in the root directory with your Supabase credentials:
 
    ```bash
-   npm run emulators
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+
+   # For local development with Google OAuth (optional)
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET=your_google_client_secret
    ```
 
-2. In a new terminal, seed the emulator with sample data:
+   You can find these values in your Supabase project dashboard under Settings > API.
 
-   ```bash
-   npm run seed
-   ```
+### Development
 
-3. Start the development server:
+1. Start the development server:
 
    ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-### Emulator Management
-
-- **Check emulator status**: `npm run emulator:status`
-- **Clear all data**: `npm run emulator:clear`
-- **Get data summary**: `npm run emulator:summary`
-- **Seed with sample data**: `npm run seed`
-
-### Emulator URLs
-
-- **Firestore**: http://localhost:8080
-- **Auth**: http://localhost:9099
-- **Emulator UI**: http://localhost:4000
+2. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

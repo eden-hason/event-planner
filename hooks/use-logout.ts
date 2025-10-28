@@ -1,45 +1,41 @@
 'use client';
 
-import { useState } from 'react';
-import { signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/firebase/client';
-import { logoutAction } from '@/app/actions/auth';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { useState } from 'react';
 
 export function useLogout() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const logout = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Sign out from Firebase Auth
-      await firebaseSignOut(auth);
+      const supabase = createClient();
 
-      // Clear server-side session
-      const result = await logoutAction();
+      const { error } = await supabase.auth.signOut();
 
-      if (result.success) {
-        // Redirect to login page
-        router.push('/login');
-        router.refresh(); // Refresh to update server-side state
-      } else {
-        console.error('Logout failed:', result.message);
-        // Even if server logout fails, we're signed out of Firebase
-        // so redirect anyway
-        router.push('/login');
-        router.refresh();
+      if (error) {
+        throw error;
       }
+
+      // Redirect to login page after successful logout
+      router.push('/login');
+      router.refresh(); // Refresh to clear any cached data
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if there's an error, try to redirect to login
-      router.push('/login');
-      router.refresh();
+      setError('Failed to logout. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { logout, isLoading };
+  return {
+    logout,
+    isLoading,
+    error,
+  };
 }
