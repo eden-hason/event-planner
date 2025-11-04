@@ -13,11 +13,11 @@ export async function logout() {
       console.error('Logout error:', error);
       return { success: false, message: 'Failed to logout. Please try again.' };
     }
-
-    // Redirect to login page after successful logout
-    redirect('/login');
   } catch (error) {
     console.error('Logout error:', error);
     return { success: false, message: 'Failed to logout. Please try again.' };
   }
+
+  // Only redirect on successful logout (outside try/catch)
+  redirect('/login');
 }
