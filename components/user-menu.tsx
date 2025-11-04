@@ -40,7 +40,7 @@ export default function UserMenu({ user }: UserMenuProps) {
           <Avatar className="size-8 rounded-xl">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback className="rounded-lg">
-              {/* <IconUser /> */}
+              <IconUser />
             </AvatarFallback>
           </Avatar>
           {/* <div className="truncate">{user.displayName}</div>
