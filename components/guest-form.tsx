@@ -1,76 +1,97 @@
 'use client';
 
-import { useActionState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
+import * as React from 'react';
+import { useActionState, startTransition } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { toast } from 'sonner';
-import { createGuest, updateGuest, GuestResult } from '@/app/actions/guests';
-import { Guest } from '@/lib/dal';
+import { upsertGuest } from '@/app/actions/guests';
+import {
+  type UpsertGuestState,
+  type GuestUpsert,
+  GuestUpsertSchema,
+} from '@/lib/schemas/guest.schema';
+import { GuestApp } from '@/lib/schemas/guest.schema';
 
 interface GuestFormProps {
   eventId: string;
-  guest?: Guest; // Optional - if provided, form is in edit mode
+  guest?: GuestApp; // Optional - if provided, form is in edit mode
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function GuestForm({ eventId, guest, onSuccess, onCancel }: GuestFormProps) {
+export function GuestForm({
+  eventId,
+  guest,
+  onSuccess,
+  onCancel,
+}: GuestFormProps) {
   const isEditMode = !!guest;
-  const [state, formAction, isPending] = useActionState(
-    async (prevState: GuestResult, formData: FormData) => {
+
+  // Set up react-hook-form with zodResolver
+  const form = useForm({
+    resolver: zodResolver(GuestUpsertSchema),
+    defaultValues: {
+      name: guest?.name || '',
+      phone: guest?.phone || '',
+      guestGroup: guest?.guestGroup || '',
+      rsvpStatus:
+        (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
+        'pending',
+      dietaryRestrictions: guest?.dietaryRestrictions || '',
+      amount: guest?.amount || 1,
+      notes: guest?.notes || '',
+    },
+  });
+
+  // Update form when guest prop changes
+  React.useEffect(() => {
+    if (guest) {
+      form.reset({
+        name: guest.name || '',
+        phone: guest.phone || '',
+        guestGroup: guest.guestGroup || '',
+        rsvpStatus:
+          (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
+          'pending',
+        dietaryRestrictions: guest.dietaryRestrictions || '',
+        amount: guest.amount || 1,
+        notes: guest.notes || '',
+      });
+    }
+  }, [guest, form]);
+
+  // Server action state management
+  const [, formAction, isPending] = useActionState(
+    async (prevState: UpsertGuestState | null, formData: FormData) => {
       try {
-        // Extract form data
-        const name = formData.get('name') as string;
-        const phone = formData.get('phone') as string;
-        const amount = Number(formData.get('amount'));
-        const group = formData.get('group') as string;
-        const rsvpStatus = formData.get('rsvpStatus') as
-          | 'pending'
-          | 'confirmed'
-          | 'declined';
-        const notes = formData.get('notes') as string;
-        const dietaryRestrictions = formData.get(
-          'dietaryRestrictions',
-        ) as string;
-
-        let result: GuestResult;
-
-        if (isEditMode) {
-          // Update existing guest
-          result = await updateGuest(eventId, guest!.id!, {
-            name,
-            phone,
-            amount,
-            group,
-            rsvpStatus,
-            notes,
-            dietaryRestrictions,
-          });
-        } else {
-          // Create new guest
-          result = await createGuest(eventId, {
-            name,
-            phone,
-            amount,
-            group,
-            rsvpStatus,
-            notes,
-            dietaryRestrictions,
-          });
-        }
+        const result = await upsertGuest(eventId, formData);
 
         if (result.success) {
           toast.success(result.message);
           onSuccess?.();
+          // Reset form after successful creation
+          if (!isEditMode) {
+            form.reset();
+          }
         } else {
           toast.error(result.message);
         }
@@ -81,110 +102,189 @@ export function GuestForm({ eventId, guest, onSuccess, onCancel }: GuestFormProp
         return { success: false, message: 'An unexpected error occurred' };
       }
     },
-    { success: false, message: '' },
+    null,
   );
 
+  // Handle form submission - convert form values to FormData
+  const onSubmit = (values: GuestUpsert) => {
+    const formData = new FormData();
+
+    // Include guest ID if in edit mode
+    if (isEditMode && guest?.id) {
+      formData.append('id', guest.id);
+    }
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, String(value));
+      }
+    });
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
+
   return (
-    <form action={formAction} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
           name="name"
-          type="text"
-          placeholder="Enter guest name"
-          defaultValue={guest?.name || ''}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="Enter guest name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
-        <Input
-          id="phone"
+        <FormField
+          control={form.control}
           name="phone"
-          type="tel"
-          placeholder="Enter phone number"
-          defaultValue={guest?.phone || ''}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="Enter phone number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
-        <Input
-          id="amount"
+        <FormField
+          control={form.control}
           name="amount"
-          type="number"
-          min="1"
-          placeholder="Enter amount"
-          defaultValue={guest?.amount || 1}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Enter amount"
+                  {...field}
+                  value={field.value || ''}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value === ''
+                        ? undefined
+                        : Number(e.target.value);
+                    field.onChange(value);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="group">Group</Label>
-        <Select name="group" defaultValue={guest?.group || ''}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a group" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="family">Family</SelectItem>
-            <SelectItem value="friends">Friends</SelectItem>
-            <SelectItem value="colleagues">Colleagues</SelectItem>
-            <SelectItem value="acquaintances">Acquaintances</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <FormField
+          control={form.control}
+          name="guestGroup"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Guest Group</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a group" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="family">Family</SelectItem>
+                  <SelectItem value="friends">Friends</SelectItem>
+                  <SelectItem value="colleagues">Colleagues</SelectItem>
+                  <SelectItem value="acquaintances">Acquaintances</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="space-y-2">
-        <Label htmlFor="rsvpStatus">RSVP Status</Label>
-        <Select name="rsvpStatus" defaultValue={guest?.rsvpStatus || 'pending'}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select RSVP status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="declined">Declined</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <FormField
+          control={form.control}
+          name="rsvpStatus"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>RSVP Status</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select RSVP status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="space-y-2">
-        <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
-        <Input
-          id="dietaryRestrictions"
+        <FormField
+          control={form.control}
           name="dietaryRestrictions"
-          type="text"
-          placeholder="Enter dietary restrictions (optional)"
-          defaultValue={guest?.dietaryRestrictions || ''}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dietary Restrictions</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Enter dietary restrictions (optional)"
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
+        <FormField
+          control={form.control}
           name="notes"
-          placeholder="Add any additional notes about this guest..."
-          className="min-h-[100px]"
-          defaultValue={guest?.notes || ''}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Add any additional notes about this guest..."
+                  className="min-h-[100px]"
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="flex justify-end space-x-2">
-        {isEditMode && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+        <div className="flex justify-end space-x-2">
+          {isEditMode && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isPending}>
+            {isPending
+              ? isEditMode
+                ? 'Updating...'
+                : 'Adding...'
+              : isEditMode
+              ? 'Update Guest'
+              : 'Add Guest'}
           </Button>
-        )}
-        <Button type="submit" disabled={isPending}>
-          {isPending 
-            ? (isEditMode ? 'Updating...' : 'Adding...') 
-            : (isEditMode ? 'Update Guest' : 'Add Guest')
-          }
-        </Button>
-      </div>
-    </form>
+        </div>
+      </form>
+    </Form>
   );
 }

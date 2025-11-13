@@ -10,7 +10,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Guest } from '@/lib/dal';
 import {
   Dialog,
   DialogContent,
@@ -19,15 +18,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { GuestForm } from './guest-form';
+import { GuestApp } from '@/lib/schemas/guest.schema';
 
 interface GuestsTableProps {
-  guests: Guest[];
+  guests: GuestApp[];
   searchTerm: string;
   eventId: string;
 }
 
 export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
-  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const filteredGuests = useMemo(() => {
@@ -38,12 +38,12 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
       (guest) =>
         guest.name.toLowerCase().includes(searchLower) ||
         guest.phone?.toLowerCase().includes(searchLower) ||
-        guest.group.toLowerCase().includes(searchLower) ||
+        guest.guestGroup.toLowerCase().includes(searchLower) ||
         guest.notes?.toLowerCase().includes(searchLower),
     );
   }, [guests, searchTerm]);
 
-  const getStatusBadge = (status: Guest['rsvpStatus']) => {
+  const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
     const statusConfig = {
       confirmed: {
         className: 'bg-green-100 text-green-800 border-green-200',
@@ -59,11 +59,11 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
       },
     };
 
-    const config = statusConfig[status];
+    const config = statusConfig[status] || statusConfig.pending;
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const handleRowClick = (guest: Guest) => {
+  const handleRowClick = (guest: GuestApp) => {
     setSelectedGuest(guest);
     setIsEditModalOpen(true);
   };
@@ -84,7 +84,7 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead className="py-4 px-4">Name</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Group</TableHead>
               <TableHead>RSVP Status</TableHead>
@@ -100,23 +100,29 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
                 className="cursor-pointer hover:bg-gray-50 transition-colors group"
                 onClick={() => handleRowClick(guest)}
               >
-                <TableCell className="font-medium py-6 px-4">
+                <TableCell className="font-medium py-4 px-4">
                   <div className="flex items-center">
                     <span>{guest.name}</span>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-4">
                   {guest.phone ? (
                     <span className="text-sm">{guest.phone}</span>
                   ) : (
                     <span className="text-sm text-gray-400">-</span>
                   )}
                 </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{guest.group}</Badge>
+                <TableCell className="py-4">
+                  {guest.guestGroup ? (
+                    <Badge variant="outline">{guest.guestGroup}</Badge>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
                 </TableCell>
-                <TableCell>{getStatusBadge(guest.rsvpStatus)}</TableCell>
-                <TableCell>
+                <TableCell className="py-4">
+                  {getStatusBadge(guest.rsvpStatus)}
+                </TableCell>
+                <TableCell className="py-4">
                   {guest.dietaryRestrictions ? (
                     <span className="text-sm text-gray-600">
                       {guest.dietaryRestrictions}
@@ -125,12 +131,12 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
                     <span className="text-sm text-gray-400">None</span>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-4">
                   <div className="text-sm">
                     <div className="text-gray-500">{guest.amount}</div>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-4">
                   {guest.notes ? (
                     <span className="text-sm text-gray-600 max-w-xs truncate block">
                       {guest.notes}
@@ -171,7 +177,7 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
                         minute: '2-digit',
                       },
                     );
-                  } catch (error) {
+                  } catch {
                     return 'Unknown date';
                   }
                 })()}
@@ -181,7 +187,7 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
           {selectedGuest && (
             <GuestForm
               eventId={eventId}
-              guest={selectedGuest}
+              guest={selectedGuest as GuestApp}
               onSuccess={handleEditSuccess}
               onCancel={handleEditCancel}
             />

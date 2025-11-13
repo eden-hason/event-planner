@@ -1,12 +1,12 @@
 'use client';
 
-import { Guest } from '@/lib/dal';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Users, Eye, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { NumberTicker } from './magicui/number-ticker';
+import { GuestApp } from '@/lib/schemas/guest.schema';
 
 interface GuestsDashboardProps {
-  guests: Guest[];
+  guests: GuestApp[];
 }
 
 interface MetricCardProps {
@@ -14,18 +14,25 @@ interface MetricCardProps {
   value: string | number;
   icon: React.ReactNode;
   iconBgColor: string;
+  withTicker?: boolean;
 }
 
-function MetricCard({ title, value, icon, iconBgColor }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  icon,
+  iconBgColor,
+  withTicker = true,
+}: MetricCardProps) {
   return (
-    <Card className="shadow-none">
-      <CardContent>
-        <div className="flex items-center justify-between">
+    <Card className="shadow-none py-4">
+      <CardContent className="px-4">
+        <div className="flex items-top justify-between">
           <div className="text-sm text-gray-500">{title}</div>
           <div className={`p-2 rounded-lg ${iconBgColor}`}>{icon}</div>
         </div>
         <div className="text-2xl font-bold text-gray-900">
-          <NumberTicker value={Number(value)} />
+          {withTicker ? <NumberTicker value={Number(value)} /> : value}
         </div>
       </CardContent>
     </Card>
@@ -42,15 +49,6 @@ export function GuestsDashboard({ guests }: GuestsDashboardProps) {
   const declinedGuests = guests.filter(
     (g) => g.rsvpStatus === 'declined',
   ).length;
-  const totalRevenue = guests.reduce((sum, guest) => sum + guest.amount, 0);
-
-  // Calculate unique groups
-  const uniqueGroups = new Set(guests.map((g) => g.group)).size;
-
-  // Calculate average amount per guest
-  const averageAmount =
-    totalGuests > 0 ? Math.round(totalRevenue / totalGuests) : 0;
-
   // Calculate percentage changes (mock data for now - in real app, you'd compare with previous period)
   const confirmedPercentage =
     totalGuests > 0 ? Math.round((confirmedGuests / totalGuests) * 100) : 0;
@@ -60,12 +58,13 @@ export function GuestsDashboard({ guests }: GuestsDashboardProps) {
     totalGuests > 0 ? Math.round((declinedGuests / totalGuests) * 100) : 0;
 
   return (
-    <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
       <MetricCard
         title="Total Guests"
         value={totalGuests}
         icon={<Users className="h-4 w-4" />}
         iconBgColor="bg-blue-100 text-blue-600"
+        withTicker={false}
       />
 
       <MetricCard
@@ -87,13 +86,6 @@ export function GuestsDashboard({ guests }: GuestsDashboardProps) {
         value={declinedGuests}
         icon={<XCircle className="h-4 w-4" />}
         iconBgColor="bg-red-100 text-red-600"
-      />
-
-      <MetricCard
-        title="Invitations Views"
-        value={145} // TODO: Get this from the database
-        icon={<Eye className="h-4 w-4" />}
-        iconBgColor="bg-orange-100 text-orange-600"
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { OnboardingSchema, OnboardingFormData } from '@/lib/schemas/onboarding';
 import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/utils/supabase/server';
+import { processOnboardingCSV } from './process-onboarding-csv';
 
 export type OnboardingStep = 'profile' | 'event' | 'pricing';
 
@@ -292,6 +293,17 @@ export async function updateOnboardingStep(
             success: false,
             message: 'Failed to create event. Please try again.',
           };
+        }
+      }
+
+      // Process CSV file if it exists (do this asynchronously to not block the flow)
+      if (validatedData.file) {
+        // Process CSV in background - don't wait for it to complete
+        try {
+          await processOnboardingCSV();
+        } catch (error) {
+          console.error('Error processing CSV file:', error);
+          // Don't fail the onboarding step if CSV processing fails
         }
       }
     } else if (step === 'pricing') {

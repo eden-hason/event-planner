@@ -32,6 +32,7 @@ import {
   FileMetadataSchema,
 } from '@/lib/schemas/onboarding';
 import { createClient } from '@/utils/supabase/client';
+import { validateCSVFile } from '@/lib/utils/validate-csv';
 
 const EventStepSchema = z.object({
   eventDate: z.date({
@@ -62,6 +63,10 @@ export function EventStep({
   // Track all files currently in the FileUpload component (uploading and uploaded)
   const [currentUploadFiles, setCurrentUploadFiles] = React.useState<File[]>(
     [],
+  );
+  // Track upload errors per file
+  const [uploadErrors, setUploadErrors] = React.useState<Map<File, string>>(
+    new Map(),
   );
   const supabase = createClient();
 
@@ -107,6 +112,23 @@ export function EventStep({
         // Upload each file
         for (const file of files) {
           try {
+            // Validate CSV file content before uploading
+            const isCSV =
+              file.type === 'text/csv' || file.name.endsWith('.csv');
+
+            if (isCSV) {
+              callbacks.onProgress(file, 5);
+
+              const validation = await validateCSVFile(file);
+
+              if (!validation.isValid) {
+                console.log('validation', validation);
+                throw new Error(
+                  validation.error || 'CSV file validation failed',
+                );
+              }
+            }
+
             // Generate unique filename using UUID
             const fileExtension = file.name.split('.').pop() || '';
             const uniqueFileName = `${crypto.randomUUID()}.${fileExtension}`;
@@ -146,26 +168,50 @@ export function EventStep({
               return next;
             });
 
+            // Clear any previous errors for this file on successful upload
+            setUploadErrors((prev) => {
+              const next = new Map(prev);
+              next.delete(file);
+              return next;
+            });
+
             // callbacks.onProgress(file, 100);
 
             callbacks.onSuccess(file);
-            console.log('file uploaded successfully', file);
           } catch (error) {
-            callbacks.onError(
-              file,
-              error instanceof Error
-                ? error
-                : new Error('Failed to upload file'),
-            );
+            const errorMessage =
+              error instanceof Error ? error.message : 'Failed to upload file';
+
+            const errorToPass =
+              error instanceof Error ? error : new Error(errorMessage);
+
+            // Store error in state
+            setUploadErrors((prev) => {
+              const next = new Map(prev);
+              next.set(file, errorMessage);
+              return next;
+            });
+
+            callbacks.onError(file, errorToPass);
           }
         }
       } catch (error) {
         // Handle overall error
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to upload file';
+
         for (const file of files) {
-          callbacks.onError(
-            file,
-            error instanceof Error ? error : new Error('Failed to upload file'),
-          );
+          const errorToPass =
+            error instanceof Error ? error : new Error(errorMessage);
+
+          // Store error in state
+          setUploadErrors((prev) => {
+            const next = new Map(prev);
+            next.set(file, errorMessage);
+            return next;
+          });
+
+          callbacks.onError(file, errorToPass);
         }
       }
     },
@@ -286,7 +332,7 @@ export function EventStep({
                           // Update the tracked files - this includes files that are still uploading
                           setCurrentUploadFiles(files);
 
-                          // When file is removed, clean up metadata
+                          // When file is removed, clean up metadata and errors
                           if (files.length === 0) {
                             field.onChange(undefined);
                             setUploadingFiles((prev) => {
@@ -296,8 +342,9 @@ export function EventStep({
                               }
                               return next;
                             });
+                            setUploadErrors(new Map());
                           } else {
-                            // Clean up metadata for files that are no longer in the list
+                            // Clean up metadata and errors for files that are no longer in the list
                             setUploadingFiles((prev) => {
                               const next = new Map(prev);
                               const currentFilePaths = new Set(
@@ -318,10 +365,32 @@ export function EventStep({
 
                               return next;
                             });
+
+                            // Clean up errors for files that are no longer in the list
+                            setUploadErrors((prev) => {
+                              const next = new Map(prev);
+                              for (const file of prev.keys()) {
+                                if (!files.includes(file)) {
+                                  next.delete(file);
+                                }
+                              }
+                              return next;
+                            });
                           }
                         }}
                         onUpload={handleFileUpload}
-                        accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        onFileValidate={(file) => {
+                          // Basic file type validation (synchronous)
+                          const isCSV =
+                            file.type === 'text/csv' ||
+                            file.name.endsWith('.csv');
+
+                          if (!isCSV) {
+                            return 'Only CSV files are allowed';
+                          }
+                          return null; // File type is valid, content validation happens in upload
+                        }}
+                        accept=".csv,text/csv"
                         maxFiles={1}
                         maxSize={10 * 1024 * 1024} // 10MB
                         disabled={isLoading}
@@ -334,7 +403,7 @@ export function EventStep({
                                 Click to upload or drag and drop
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                CSV or Excel file (max 10MB)
+                                CSV file (max 10MB)
                               </p>
                             </div>
                           </div>
@@ -350,7 +419,19 @@ export function EventStep({
                                 render={() => <FileSpreadsheet />}
                               />
                               <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                                <FileUploadItemMetadata />
+                                <FileUploadItemMetadata>
+                                  <span className="truncate font-medium text-sm">
+                                    {file.name}
+                                  </span>
+                                  <span className="truncate text-muted-foreground text-xs">
+                                    {(file.size / 1024).toFixed(2)} KB
+                                  </span>
+                                  {uploadErrors.get(file) && (
+                                    <span className="text-destructive text-xs">
+                                      {uploadErrors.get(file)}
+                                    </span>
+                                  )}
+                                </FileUploadItemMetadata>
                               </div>
                               <FileUploadItemDelete asChild>
                                 <Button
@@ -359,7 +440,7 @@ export function EventStep({
                                   size="icon"
                                   className="ml-auto h-8 w-8"
                                   onClick={() => {
-                                    // Clean up metadata when file is deleted
+                                    // Clean up metadata and errors when file is deleted
                                     const fileMetadata =
                                       uploadingFiles.get(file);
                                     if (
@@ -368,6 +449,11 @@ export function EventStep({
                                       field.onChange(undefined);
                                     }
                                     setUploadingFiles((prev) => {
+                                      const next = new Map(prev);
+                                      next.delete(file);
+                                      return next;
+                                    });
+                                    setUploadErrors((prev) => {
                                       const next = new Map(prev);
                                       next.delete(file);
                                       return next;
@@ -419,4 +505,3 @@ export function EventStep({
     </div>
   );
 }
-

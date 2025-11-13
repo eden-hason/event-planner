@@ -85,7 +85,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Event Planner</span>
+                <span className="text-base font-semibold">Kululu Events</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
