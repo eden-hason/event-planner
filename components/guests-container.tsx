@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from './guests-table';
 import { GuestsDashboard } from './guests-dashboard';
-import { Guest } from '@/lib/dal';
 import {
   Dialog,
   DialogContent,
@@ -15,23 +14,18 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { GuestForm } from '@/components/guest-form';
-import { ImportGuestsForm } from '@/components/import-guests-form';
-import { Upload } from 'lucide-react';
+import { GuestApp } from '@/lib/schemas/guest.schema';
 
 interface GuestsContainerProps {
-  guests: Guest[];
+  guests: GuestApp[];
   eventId: string;
 }
 
 export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-
   return (
     <div className="space-y-4">
-      <GuestsDashboard guests={guests} />
-
       {/* Header with search and buttons */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2 flex-1 max-w-sm">
@@ -39,34 +33,6 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Import CSV Button */}
-          <Dialog
-            open={isImportDialogOpen}
-            onOpenChange={setIsImportDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Upload className="w-4 h-4 mr-1" />
-                Import CSV
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Import Guests from CSV</DialogTitle>
-                <DialogDescription>
-                  Upload a CSV file to import multiple guests at once. The file
-                  should have columns: name, phone, group, rsvpStatus, amount,
-                  notes
-                </DialogDescription>
-              </DialogHeader>
-
-              <ImportGuestsForm
-                eventId={eventId}
-                onSuccess={() => setIsImportDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-
           {/* Add Guest Button */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>

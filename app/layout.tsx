@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Event Planner',
+  title: 'Kululu Events',
   description:
     'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
 };
@@ -32,10 +32,9 @@ export default function RootLayout({
         {children}
         <Toaster
           toastOptions={{
-            style: {
-              background: 'var(--primary)',
-              color: 'var(--primary-foreground)',
-              border: '1px solid var(--border)',
+            classNames: {
+              success: 'toast-success',
+              error: 'toast-error',
             },
           }}
         />
