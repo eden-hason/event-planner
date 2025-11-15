@@ -74,3 +74,46 @@ export async function upsertGuest(
     };
   }
 }
+
+export type DeleteGuestState = {
+  success: boolean;
+  message: string;
+};
+
+export async function deleteGuest(
+  guestId: string,
+): Promise<DeleteGuestState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return {
+        success: false,
+        message: 'You must be logged in to delete guests',
+      };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase.from('guests').delete().eq('id', guestId);
+
+    if (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Database error: Could not delete guest.',
+      };
+    }
+
+    revalidatePath('/guests');
+    return {
+      success: true,
+      message: 'Guest deleted successfully.',
+    };
+  } catch (error) {
+    console.error('Delete guest error:', error);
+    return {
+      success: false,
+      message: 'Failed to delete guest. Please try again.',
+    };
+  }
+}

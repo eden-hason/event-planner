@@ -9,15 +9,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Button } from '@/components/ui/button';
+import { IconUsers } from '@tabler/icons-react';
+import { Upload, PlusIcon } from 'lucide-react';
 import { GuestApp } from '@/lib/schemas/guest.schema';
 import { useGuestsTable } from '@/hooks/guests';
-import { guestColumns } from './columns';
 
 interface GuestsTableProps {
   guests: GuestApp[];
   searchTerm: string;
   groupFilter: string[];
   onSelectGuest: (id: string) => void;
+  onDeleteGuest: (guest: GuestApp) => void;
+  onAddGuest?: () => void;
+  onUploadFile?: () => void;
 }
 
 export function GuestsTable({
@@ -25,14 +38,55 @@ export function GuestsTable({
   searchTerm,
   groupFilter,
   onSelectGuest,
+  onDeleteGuest,
+  onAddGuest,
+  onUploadFile,
 }: GuestsTableProps) {
-  const table = useGuestsTable({ guests, searchTerm, groupFilter });
+  const table = useGuestsTable({
+    guests,
+    searchTerm,
+    groupFilter,
+    onDeleteGuest,
+  });
 
   const handleRowClick = (guest: GuestApp) => {
     onSelectGuest(guest.id);
   };
 
   const tableRows = table.getFilteredRowModel().rows;
+  const hasFilters = searchTerm || groupFilter.length > 0;
+  const isEmpty = guests.length === 0;
+
+  // Show empty state only when there are no guests and no filters applied
+  if (isEmpty && !hasFilters) {
+    return (
+      <div className="rounded-md border">
+        <Empty className="min-h-[400px]">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <IconUsers className="size-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>No Guests Yet</EmptyTitle>
+            <EmptyDescription>
+              Get started by uploading a guest list or adding guests manually.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex gap-2">
+              <Button onClick={onUploadFile}>
+                <Upload className="size-4" />
+                Upload File
+              </Button>
+              <Button variant="outline" onClick={onAddGuest}>
+                <PlusIcon className="size-4" />
+                Add Guest
+              </Button>
+            </div>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
@@ -59,7 +113,7 @@ export function GuestsTable({
           {tableRows.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={guestColumns.length}
+                colSpan={table.getAllColumns().length}
                 className="h-24 text-center"
               >
                 <div className="p-8 text-center text-gray-500">

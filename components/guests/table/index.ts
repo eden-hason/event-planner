@@ -1,3 +1,4 @@
 export { GuestsTable } from './guests-table';
-export { guestColumns } from './columns';
+export { guestColumns, createGuestColumns } from './columns';
+export { RowActions } from './row-actions';
 

@@ -9,18 +9,20 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { GuestApp } from '@/lib/schemas/guest.schema';
-import { guestColumns } from '@/components/guests/table';
+import { createGuestColumns } from '@/components/guests/table';
 
 interface UseGuestsTableProps {
   guests: GuestApp[];
   searchTerm: string;
   groupFilter: string[];
+  onDeleteGuest: (guest: GuestApp) => void;
 }
 
 export function useGuestsTable({
   guests,
   searchTerm,
   groupFilter,
+  onDeleteGuest,
 }: UseGuestsTableProps) {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -59,9 +61,13 @@ export function useGuestsTable({
     );
   };
 
+  const columns = createGuestColumns({
+    onDelete: onDeleteGuest,
+  });
+
   const table = useReactTable({
     data: guests,
-    columns: guestColumns,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn,
