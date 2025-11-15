@@ -33,7 +33,7 @@ import { GuestApp } from '@/lib/schemas/guest.schema';
 
 interface GuestFormProps {
   eventId: string;
-  guest?: GuestApp; // Optional - if provided, form is in edit mode
+  guest?: GuestApp | null; // Optional - if provided, form is in edit mode
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -268,12 +268,7 @@ export function GuestForm({
           )}
         />
 
-        <div className="flex justify-end space-x-2">
-          {isEditMode && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
+        <div className="flex gap-2">
           <Button type="submit" disabled={isPending}>
             {isPending
               ? isEditMode
@@ -283,6 +278,11 @@ export function GuestForm({
               ? 'Update Guest'
               : 'Add Guest'}
           </Button>
+          {isEditMode && (
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
         </div>
       </form>
     </Form>

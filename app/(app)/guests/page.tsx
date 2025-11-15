@@ -19,9 +19,9 @@ export default async function GuestsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mb-10">
+      {/* <div className="mb-10">
         <GuestsDashboard guests={guests} />
-      </div>
+      </div> */}
       <GuestsContainer guests={guests} eventId={event.id} />
     </div>
   );

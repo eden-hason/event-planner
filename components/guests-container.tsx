@@ -1,20 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from './guests-table';
-import { GuestsDashboard } from './guests-dashboard';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { GuestForm } from '@/components/guest-form';
 import { GuestApp } from '@/lib/schemas/guest.schema';
+import { PlusIcon, CalendarSync } from 'lucide-react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 
 interface GuestsContainerProps {
   guests: GuestApp[];
@@ -23,7 +23,27 @@ interface GuestsContainerProps {
 
 export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
+
+  const handleSelectGuest = (id: string) => {
+    const guest = guests.find((guest) => guest.id === id);
+    setSelectedGuest(guest || null);
+    setIsDrawerOpen(true);
+  };
+
+  const handleAddGuestClick = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = (open: boolean) => {
+    setIsDrawerOpen(open);
+    if (!open) {
+      // Clear selected guest when drawer closes
+      setSelectedGuest(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with search and buttons */}
@@ -31,32 +51,58 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
         <div className="flex items-center space-x-2 flex-1 max-w-sm">
           <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         </div>
-
-        <div className="flex items-center space-x-2">
-          {/* Add Guest Button */}
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>Add Guest</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Guest</DialogTitle>
-                <DialogDescription>
-                  Please fill out the form below to add a new guest.
-                </DialogDescription>
-              </DialogHeader>
-
-              <GuestForm
-                eventId={eventId}
-                onSuccess={() => setIsAddDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto"
+          onClick={handleAddGuestClick}
+        >
+          <PlusIcon className="size-4" />
+          Add Guest
+        </Button>
       </div>
 
       {/* Guests table */}
-      <GuestsTable guests={guests} searchTerm={searchTerm} eventId={eventId} />
+      <GuestsTable
+        guests={guests}
+        searchTerm={searchTerm}
+        eventId={eventId}
+        onSelectGuest={handleSelectGuest}
+      />
+
+      <Drawer
+        direction="right"
+        open={isDrawerOpen}
+        onOpenChange={handleDrawerClose}
+      >
+        <DrawerContent className="!max-w-[600px]">
+          <DrawerHeader>
+            <DrawerTitle>
+              {selectedGuest ? `Edit ${selectedGuest.name}` : 'Add New Guest'}
+            </DrawerTitle>
+            <DrawerDescription>
+              {selectedGuest ? (
+                <span className="flex items-center gap-2">
+                  <CalendarSync className="size-4" />
+                  Last edited{' '}
+                  {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              ) : (
+                'Please fill out the form below to add a new guest'
+              )}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-6">
+            <GuestForm
+              eventId={eventId}
+              guest={selectedGuest}
+              onSuccess={() => handleDrawerClose(false)}
+              onCancel={() => handleDrawerClose(false)}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
