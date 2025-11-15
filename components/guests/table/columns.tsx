@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { GuestApp } from '@/lib/schemas/guest.schema';
+import { RowActions } from './row-actions';
 
 const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
   const statusConfig = {
@@ -24,7 +25,13 @@ const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
   return <Badge className={config.className}>{config.label}</Badge>;
 };
 
-export const guestColumns: ColumnDef<GuestApp>[] = [
+interface GuestColumnsOptions {
+  onDelete: (guest: GuestApp) => void;
+}
+
+export const createGuestColumns = (
+  options: GuestColumnsOptions,
+): ColumnDef<GuestApp>[] => [
   {
     accessorKey: 'name',
     header: () => <div>Name</div>,
@@ -113,6 +120,14 @@ export const guestColumns: ColumnDef<GuestApp>[] = [
       ) : (
         <span className="text-sm text-gray-400">-</span>
       );
+    },
+  },
+  {
+    id: 'actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const guest = row.original;
+      return <RowActions guest={guest} onDelete={options.onDelete} />;
     },
   },
 ];

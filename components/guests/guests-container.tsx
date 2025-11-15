@@ -1,6 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import {
+  useState,
+  useActionState,
+  startTransition,
+  useRef,
+  useEffect,
+} from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { GuestSearch } from '@/components/guest-search';
 import { GuestsTable } from './table';
@@ -17,6 +23,8 @@ import {
   DrawerDescription,
 } from '@/components/ui/drawer';
 import { useGuestFilters } from '@/hooks/guests/use-guest-filters';
+import { deleteGuest, type DeleteGuestState } from '@/app/actions/guests';
+import { toast } from 'sonner';
 
 interface GuestsContainerProps {
   guests: GuestApp[];
@@ -37,10 +45,53 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     isAllSelected,
   } = useGuestFilters(guests);
 
+  const deletingGuestRef = useRef<string | null>(null);
+  const toastIdRef = useRef<string | number | null>(null);
+
+  const [deleteState, deleteAction, isDeleting] = useActionState(
+    async (prevState: DeleteGuestState | null, guestId: string) => {
+      const result = await deleteGuest(guestId);
+      return result;
+    },
+    null,
+  );
+
+  // Show loading toast when deletion starts
+  useEffect(() => {
+    if (isDeleting && deletingGuestRef.current && !toastIdRef.current) {
+      const guestName = deletingGuestRef.current;
+      toastIdRef.current = toast.loading(`Deleting ${guestName}...`);
+    }
+  }, [isDeleting]);
+
+  // Show success/error toast when deletion completes
+  useEffect(() => {
+    if (!isDeleting && deleteState && toastIdRef.current) {
+      if (deleteState.success) {
+        toast.success(deleteState.message || 'Guest deleted successfully.', {
+          id: toastIdRef.current,
+        });
+      } else {
+        toast.error(deleteState.message || 'Failed to delete guest.', {
+          id: toastIdRef.current,
+        });
+      }
+      toastIdRef.current = null;
+      deletingGuestRef.current = null;
+    }
+  }, [isDeleting, deleteState]);
+
   const handleSelectGuest = (id: string) => {
     const guest = guests.find((guest) => guest.id === id);
     setSelectedGuest(guest || null);
     setIsDrawerOpen(true);
+  };
+
+  const handleDeleteGuest = (guest: GuestApp) => {
+    deletingGuestRef.current = guest.name;
+    startTransition(() => {
+      deleteAction(guest.id);
+    });
   };
 
   const handleAddGuestClick = () => {
@@ -85,6 +136,12 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
         searchTerm={searchTerm}
         groupFilter={selectedGroups}
         onSelectGuest={handleSelectGuest}
+        onDeleteGuest={handleDeleteGuest}
+        onAddGuest={handleAddGuestClick}
+        onUploadFile={() => {
+          // TODO: Implement file upload
+          toast.info('File upload coming soon!');
+        }}
       />
 
       {/* Guest form drawer */}
