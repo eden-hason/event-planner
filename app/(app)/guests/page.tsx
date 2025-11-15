@@ -1,4 +1,4 @@
-import { GuestsContainer } from '@/components/guests-container';
+import { GuestsContainer } from '@/components/guests';
 import { GuestsDashboard } from '@/components/guests-dashboard';
 import { getCurrentUser } from '@/lib/auth';
 import { getGuestsForEvent, getUserEvent } from '@/lib/dal';
