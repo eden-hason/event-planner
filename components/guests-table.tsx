@@ -24,9 +24,15 @@ interface GuestsTableProps {
   guests: GuestApp[];
   searchTerm: string;
   eventId: string;
+  onSelectGuest: (id: string) => void;
 }
 
-export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
+export function GuestsTable({
+  guests,
+  searchTerm,
+  eventId,
+  onSelectGuest,
+}: GuestsTableProps) {
   const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -64,8 +70,8 @@ export function GuestsTable({ guests, searchTerm, eventId }: GuestsTableProps) {
   };
 
   const handleRowClick = (guest: GuestApp) => {
-    setSelectedGuest(guest);
-    setIsEditModalOpen(true);
+    // setSelectedGuest(guest);
+    onSelectGuest(guest.id);
   };
 
   const handleEditSuccess = () => {

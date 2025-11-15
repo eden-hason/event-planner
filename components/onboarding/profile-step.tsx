@@ -31,11 +31,7 @@ interface ProfileStepProps {
   isLoading?: boolean;
 }
 
-export function ProfileStep({
-  data,
-  onSubmit,
-  isLoading,
-}: ProfileStepProps) {
+export function ProfileStep({ data, onSubmit, isLoading }: ProfileStepProps) {
   const form = useForm<ProfileStepData>({
     resolver: zodResolver(ProfileStepSchema),
     defaultValues: {
@@ -115,11 +111,7 @@ export function ProfileStep({
           />
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <BouncingBallIcon className="mr-2" size={16} />
-            ) : (
-              'Continue'
-            )}
+            {isLoading ? <BouncingBallIcon size={16} /> : 'Continue'}
           </Button>
         </form>
       </Form>
