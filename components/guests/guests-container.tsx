@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  useState,
-  useActionState,
-  startTransition,
-  useRef,
-  useEffect,
-} from 'react';
+import { useState, useActionState, startTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { GuestSearch } from '@/components/guest-search';
 import { GuestsTable } from './table';
@@ -23,7 +17,12 @@ import {
   DrawerDescription,
 } from '@/components/ui/drawer';
 import { useGuestFilters } from '@/hooks/guests/use-guest-filters';
-import { deleteGuest, type DeleteGuestState } from '@/app/actions/guests';
+import {
+  deleteGuest,
+  type DeleteGuestState,
+  sendSMS,
+  type SendSMSState,
+} from '@/app/actions/guests';
 import { toast } from 'sonner';
 
 interface GuestsContainerProps {
@@ -45,41 +44,78 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     isAllSelected,
   } = useGuestFilters(guests);
 
-  const deletingGuestRef = useRef<string | null>(null);
-  const toastIdRef = useRef<string | number | null>(null);
-
-  const [deleteState, deleteAction, isDeleting] = useActionState(
-    async (prevState: DeleteGuestState | null, guestId: string) => {
-      const result = await deleteGuest(guestId);
+  // Delete guest action with toast
+  const deleteActionWithToast = async (
+    prevState: DeleteGuestState | null,
+    params: { guestId: string; guestName: string },
+  ): Promise<DeleteGuestState | null> => {
+    const promise = deleteGuest(params.guestId).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete guest.');
+      }
       return result;
-    },
+    });
+
+    toast.promise(promise, {
+      loading: `Deleting ${params.guestName}...`,
+      success: (data) => {
+        return data.message || 'Guest deleted successfully.';
+      },
+      error: (err) => {
+        return err instanceof Error
+          ? err.message
+          : 'Failed to delete guest. Please try again.';
+      },
+    });
+
+    try {
+      return await promise;
+    } catch {
+      return null;
+    }
+  };
+
+  const [, deleteAction] = useActionState(deleteActionWithToast, null);
+
+  // Send SMS action with toast
+  const sendSMSActionWithToast = async (
+    prevState: SendSMSState | null,
+    params: { phoneNumber: string; message: string },
+  ): Promise<SendSMSState | null> => {
+    const promise = sendSMS(params.phoneNumber, params.message).then(
+      (result) => {
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to send SMS.');
+        }
+        return result;
+      },
+    );
+
+    toast.promise(promise, {
+      loading: 'Sending SMS...',
+      success: (data) => {
+        return data.messageSid
+          ? `SMS sent successfully! Message ID: ${data.messageSid}`
+          : data.message || 'SMS sent successfully!';
+      },
+      error: (err) => {
+        return err instanceof Error
+          ? err.message
+          : 'Failed to send SMS. Please try again.';
+      },
+    });
+
+    try {
+      return await promise;
+    } catch {
+      return null;
+    }
+  };
+
+  const [, smsAction, isSendingSMS] = useActionState(
+    sendSMSActionWithToast,
     null,
   );
-
-  // Show loading toast when deletion starts
-  useEffect(() => {
-    if (isDeleting && deletingGuestRef.current && !toastIdRef.current) {
-      const guestName = deletingGuestRef.current;
-      toastIdRef.current = toast.loading(`Deleting ${guestName}...`);
-    }
-  }, [isDeleting]);
-
-  // Show success/error toast when deletion completes
-  useEffect(() => {
-    if (!isDeleting && deleteState && toastIdRef.current) {
-      if (deleteState.success) {
-        toast.success(deleteState.message || 'Guest deleted successfully.', {
-          id: toastIdRef.current,
-        });
-      } else {
-        toast.error(deleteState.message || 'Failed to delete guest.', {
-          id: toastIdRef.current,
-        });
-      }
-      toastIdRef.current = null;
-      deletingGuestRef.current = null;
-    }
-  }, [isDeleting, deleteState]);
 
   const handleSelectGuest = (id: string) => {
     const guest = guests.find((guest) => guest.id === id);
@@ -88,9 +124,29 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
   };
 
   const handleDeleteGuest = (guest: GuestApp) => {
-    deletingGuestRef.current = guest.name;
     startTransition(() => {
-      deleteAction(guest.id);
+      deleteAction({
+        guestId: guest.id,
+        guestName: guest.name,
+      });
+    });
+  };
+
+  const handleSendSMS = (guest: GuestApp) => {
+    if (!guest.phone || guest.phone.trim().length === 0) {
+      toast.error('Cannot send SMS', {
+        description: 'Guest does not have a phone number.',
+      });
+      return;
+    }
+
+    const message = `Kululu Events - Coming Soon! 🎉`;
+
+    startTransition(() => {
+      smsAction({
+        phoneNumber: guest.phone.trim(),
+        message,
+      });
     });
   };
 
@@ -108,7 +164,6 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header with search, filter and buttons */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2 flex-1 max-w-2xl">
           <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
@@ -137,6 +192,8 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
         groupFilter={selectedGroups}
         onSelectGuest={handleSelectGuest}
         onDeleteGuest={handleDeleteGuest}
+        onSendSMS={handleSendSMS}
+        isSendingSMS={isSendingSMS}
         onAddGuest={handleAddGuestClick}
         onUploadFile={() => {
           // TODO: Implement file upload

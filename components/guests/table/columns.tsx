@@ -27,6 +27,8 @@ const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
 
 interface GuestColumnsOptions {
   onDelete: (guest: GuestApp) => void;
+  onSendSMS: (guest: GuestApp) => void;
+  isSendingSMS: boolean;
 }
 
 export const createGuestColumns = (
@@ -59,7 +61,7 @@ export const createGuestColumns = (
     accessorKey: 'guestGroup',
     header: () => <div>Group</div>,
     cell: ({ row }) => {
-      const guestGroup = row.getValue('guestGroup') as string;
+      const guestGroup = row.getValue('guestGroup') as string | undefined;
       return guestGroup ? (
         <Badge variant="outline">{guestGroup}</Badge>
       ) : (
@@ -67,7 +69,11 @@ export const createGuestColumns = (
       );
     },
     filterFn: (row, id, value) => {
-      const group = row.getValue(id) as string;
+      const group = row.getValue(id) as string | undefined;
+      // If group is undefined, exclude from group filters unless no filters are selected
+      if (group === undefined || group === null || group === '') {
+        return Array.isArray(value) ? value.length === 0 : false;
+      }
       if (Array.isArray(value)) {
         return value.length === 0 || value.includes(group);
       }
@@ -127,7 +133,14 @@ export const createGuestColumns = (
     enableHiding: false,
     cell: ({ row }) => {
       const guest = row.original;
-      return <RowActions guest={guest} onDelete={options.onDelete} />;
+      return (
+        <RowActions
+          guest={guest}
+          onDelete={options.onDelete}
+          onSendSMS={options.onSendSMS}
+          isSendingSMS={options.isSendingSMS}
+        />
+      );
     },
   },
 ];

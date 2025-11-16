@@ -6,6 +6,18 @@ import { guestUpsertToDb } from '@/lib/utils/guest.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { UpsertGuestState } from '@/lib/schemas/guest.schema';
+import twilio from 'twilio';
+
+export type DeleteGuestState = {
+  success: boolean;
+  message: string;
+};
+
+export type SendSMSState = {
+  success: boolean;
+  message: string;
+  messageSid?: string;
+};
 
 export async function upsertGuest(
   eventId: string,
@@ -75,14 +87,7 @@ export async function upsertGuest(
   }
 }
 
-export type DeleteGuestState = {
-  success: boolean;
-  message: string;
-};
-
-export async function deleteGuest(
-  guestId: string,
-): Promise<DeleteGuestState> {
+export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -114,6 +119,84 @@ export async function deleteGuest(
     return {
       success: false,
       message: 'Failed to delete guest. Please try again.',
+    };
+  }
+}
+
+export async function sendSMS(
+  phoneNumber: string,
+  message: string,
+): Promise<SendSMSState> {
+  try {
+    // 1. Authenticate user
+    const user = await getCurrentUser();
+    if (!user) {
+      return {
+        success: false,
+        message: 'Unauthorized: You must be logged in to send a message.',
+      };
+    }
+
+    // 2. Validate environment variables
+    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+      console.error('Missing Twilio environment variables');
+      return {
+        success: false,
+        message: 'SMS service is not configured.',
+      };
+    }
+
+    // 3. Validate inputs
+    if (
+      !message ||
+      typeof message !== 'string' ||
+      message.trim().length === 0
+    ) {
+      return {
+        success: false,
+        message: 'Message is required and must be a non-empty string.',
+      };
+    }
+
+    if (
+      !phoneNumber ||
+      typeof phoneNumber !== 'string' ||
+      phoneNumber.trim().length === 0
+    ) {
+      return {
+        success: false,
+        message: 'Phone number is required and must be a non-empty string.',
+      };
+    }
+
+    // 4. Initialize Twilio client
+    const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
+
+    // 5. Send SMS
+    const twilioMessage = await twilioClient.messages.create({
+      body: message.trim(),
+      from: twilioPhoneNumber,
+      to: phoneNumber.trim(),
+    });
+
+    return {
+      success: true,
+      message: 'SMS sent successfully!',
+      messageSid: twilioMessage.sid,
+    };
+  } catch (error) {
+    console.error('Send SMS error:', error);
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? `Failed to send SMS: ${error.message}`
+          : 'Failed to send SMS. Please try again.',
     };
   }
 }

@@ -280,15 +280,4 @@ a:focus-visible {
   }
 }
 
-/* Toast styling */
-.toast-success {
-  background: var(--success) !important;
-  color: var(--success-foreground) !important;
-  border: 1px solid var(--success) !important;
-}
-
-.toast-error {
-  background: var(--destructive) !important;
-  color: white !important;
-  border: 1px solid var(--destructive) !important;
-}
+/* Toast styling - using default background colors */

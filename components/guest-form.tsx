@@ -115,6 +115,8 @@ export function GuestForm({
     }
 
     Object.entries(values).forEach(([key, value]) => {
+      // For optional fields like guestGroup, only include if value is truthy
+      // Empty strings should be treated as undefined for optional fields
       if (value !== undefined && value !== null && value !== '') {
         formData.append(key, String(value));
       }
@@ -188,7 +190,10 @@ export function GuestForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Guest Group</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value || undefined}
+                onValueChange={field.onChange}
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a group" />

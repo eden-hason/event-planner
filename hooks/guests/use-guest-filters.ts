@@ -7,12 +7,15 @@ export function useGuestFilters(guests: GuestApp[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
-  // Get unique groups from guests (filter out empty strings)
+  // Get unique groups from guests (filter out undefined, null, and empty strings)
   const uniqueGroups = useMemo(() => {
     const groups = new Set(
       guests
         .map((guest) => guest.guestGroup)
-        .filter((group) => group && group.trim() !== ''),
+        .filter(
+          (group): group is string =>
+            group !== undefined && group !== null && group.trim() !== '',
+        ),
     );
     return Array.from(groups).sort();
   }, [guests]);
@@ -43,4 +46,3 @@ export function useGuestFilters(guests: GuestApp[]) {
     isAllSelected,
   };
 }
-
