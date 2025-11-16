@@ -12,7 +12,7 @@ export const GuestAppSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name is too long'),
   phone: z.string().min(1, 'Phone is required'),
-  guestGroup: z.string().min(1, 'Guest group is required'),
+  guestGroup: z.string().optional(),
   rsvpStatus: z
     .enum(['pending', 'confirmed', 'declined'], {
       message: 'RSVP status must be pending, confirmed, or declined',
@@ -38,7 +38,7 @@ export const GuestDbSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   phone_number: z.string(),
-  guest_group: z.string(),
+  guest_group: z.string().optional(),
   rsvp_status: z.enum(['pending', 'confirmed', 'declined']),
   dietary_restrictions: z.string().optional().nullable(),
   amount: z.number(),
@@ -58,7 +58,7 @@ export function dbToAppTransformer(dbData: {
   id: string;
   name: string;
   phone_number: string;
-  guest_group: string;
+  guest_group?: string | null;
   rsvp_status: string;
   dietary_restrictions?: string | null;
   amount: number;
@@ -70,7 +70,7 @@ export function dbToAppTransformer(dbData: {
     id: dbData.id,
     name: dbData.name,
     phone: dbData.phone_number,
-    guestGroup: dbData.guest_group,
+    guestGroup: dbData.guest_group ?? undefined,
     rsvpStatus: (dbData.rsvp_status || 'pending') as
       | 'pending'
       | 'confirmed'

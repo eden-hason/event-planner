@@ -29,6 +29,8 @@ interface GuestsTableProps {
   groupFilter: string[];
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestApp) => void;
+  onSendSMS: (guest: GuestApp) => void;
+  isSendingSMS: boolean;
   onAddGuest?: () => void;
   onUploadFile?: () => void;
 }
@@ -39,6 +41,8 @@ export function GuestsTable({
   groupFilter,
   onSelectGuest,
   onDeleteGuest,
+  onSendSMS,
+  isSendingSMS,
   onAddGuest,
   onUploadFile,
 }: GuestsTableProps) {
@@ -47,6 +51,8 @@ export function GuestsTable({
     searchTerm,
     groupFilter,
     onDeleteGuest,
+    onSendSMS,
+    isSendingSMS,
   });
 
   const handleRowClick = (guest: GuestApp) => {

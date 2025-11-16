@@ -220,7 +220,8 @@ export async function processCSVFromStorage(
       const name = nameIndex >= 0 ? values[nameIndex] : '';
       const phone = phoneIndex >= 0 ? values[phoneIndex] : '';
       const amountStr = amountIndex >= 0 ? values[amountIndex] : '';
-      const guestGroup = guestGroupIndex >= 0 ? values[guestGroupIndex] : '';
+      const guestGroupRaw = guestGroupIndex >= 0 ? values[guestGroupIndex] : '';
+      const guestGroup = guestGroupRaw && guestGroupRaw.trim() !== '' ? guestGroupRaw.trim() : undefined;
       const statusStr = statusIndex >= 0 ? values[statusIndex] : '';
 
       // Validate name
