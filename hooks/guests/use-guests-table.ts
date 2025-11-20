@@ -16,8 +16,8 @@ interface UseGuestsTableProps {
   searchTerm: string;
   groupFilter: string[];
   onDeleteGuest: (guest: GuestApp) => void;
-  onSendSMS: (guest: GuestApp) => void;
-  isSendingSMS: boolean;
+  onSendWhatsApp: (guest: GuestApp) => void;
+  isSendingWhatsApp: boolean;
 }
 
 export function useGuestsTable({
@@ -25,8 +25,8 @@ export function useGuestsTable({
   searchTerm,
   groupFilter,
   onDeleteGuest,
-  onSendSMS,
-  isSendingSMS,
+  onSendWhatsApp,
+  isSendingWhatsApp,
 }: UseGuestsTableProps) {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -67,8 +67,8 @@ export function useGuestsTable({
 
   const columns = createGuestColumns({
     onDelete: onDeleteGuest,
-    onSendSMS,
-    isSendingSMS,
+    onSendWhatsApp,
+    isSendingWhatsApp,
   });
 
   const table = useReactTable({

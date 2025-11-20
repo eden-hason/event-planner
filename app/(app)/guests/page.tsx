@@ -1,4 +1,4 @@
-import { GuestsContainer } from '@/components/guests';
+import { GuestDirectory } from '@/components/guests';
 import { GuestsDashboard } from '@/components/guests-dashboard';
 import { getCurrentUser } from '@/lib/auth';
 import { getGuestsForEvent, getUserEvent } from '@/lib/dal';
@@ -19,10 +19,10 @@ export default async function GuestsPage() {
 
   return (
     <div className="space-y-6">
-      {/* <div className="mb-10">
+      <div className="mb-10">
         <GuestsDashboard guests={guests} />
-      </div> */}
-      <GuestsContainer guests={guests} eventId={event.id} />
+      </div>
+      <GuestDirectory guests={guests} eventId={event.id} />
     </div>
   );
 }

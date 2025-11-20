@@ -20,17 +20,17 @@ import { useGuestFilters } from '@/hooks/guests/use-guest-filters';
 import {
   deleteGuest,
   type DeleteGuestState,
-  sendSMS,
-  type SendSMSState,
+  sendWhatsAppMessage,
+  SendWhatsAppMessageState,
 } from '@/app/actions/guests';
 import { toast } from 'sonner';
 
-interface GuestsContainerProps {
+interface GuestDirectoryProps {
   guests: GuestApp[];
   eventId: string;
 }
 
-export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
+export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
 
@@ -77,31 +77,30 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
 
   const [, deleteAction] = useActionState(deleteActionWithToast, null);
 
-  // Send SMS action with toast
-  const sendSMSActionWithToast = async (
-    prevState: SendSMSState | null,
+  const sendWhatsAppActionWithToast = async (
+    prevState: SendWhatsAppMessageState | null,
     params: { phoneNumber: string; message: string },
-  ): Promise<SendSMSState | null> => {
-    const promise = sendSMS(params.phoneNumber, params.message).then(
+  ): Promise<SendWhatsAppMessageState | null> => {
+    const promise = sendWhatsAppMessage(params.phoneNumber, params.message).then(
       (result) => {
         if (!result.success) {
-          throw new Error(result.message || 'Failed to send SMS.');
+          throw new Error(result.message || 'Failed to send WhatsApp message.');
         }
         return result;
       },
     );
 
     toast.promise(promise, {
-      loading: 'Sending SMS...',
+      loading: 'Sending WhatsApp message...',
       success: (data) => {
         return data.messageSid
-          ? `SMS sent successfully! Message ID: ${data.messageSid}`
-          : data.message || 'SMS sent successfully!';
+          ? `WhatsApp message sent successfully! Message ID: ${data.messageSid}`
+          : data.message || 'WhatsApp message sent successfully!';
       },
       error: (err) => {
         return err instanceof Error
           ? err.message
-          : 'Failed to send SMS. Please try again.';
+          : 'Failed to send WhatsApp message. Please try again.';
       },
     });
 
@@ -112,8 +111,8 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     }
   };
 
-  const [, smsAction, isSendingSMS] = useActionState(
-    sendSMSActionWithToast,
+  const [, whatsAppAction, isSendingWhatsApp] = useActionState(
+    sendWhatsAppActionWithToast,
     null,
   );
 
@@ -132,9 +131,9 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     });
   };
 
-  const handleSendSMS = (guest: GuestApp) => {
+  const handleSendWhatsApp = (guest: GuestApp) => {
     if (!guest.phone || guest.phone.trim().length === 0) {
-      toast.error('Cannot send SMS', {
+      toast.error('Cannot send WhatsApp message', {
         description: 'Guest does not have a phone number.',
       });
       return;
@@ -143,7 +142,7 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     const message = `Kululu Events - Coming Soon! 🎉`;
 
     startTransition(() => {
-      smsAction({
+      whatsAppAction({
         phoneNumber: guest.phone.trim(),
         message,
       });
@@ -192,8 +191,8 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
         groupFilter={selectedGroups}
         onSelectGuest={handleSelectGuest}
         onDeleteGuest={handleDeleteGuest}
-        onSendSMS={handleSendSMS}
-        isSendingSMS={isSendingSMS}
+        onSendWhatsApp={handleSendWhatsApp}
+        isSendingWhatsApp={isSendingWhatsApp}
         onAddGuest={handleAddGuestClick}
         onUploadFile={() => {
           // TODO: Implement file upload
@@ -239,3 +238,4 @@ export function GuestsContainer({ guests, eventId }: GuestsContainerProps) {
     </div>
   );
 }
+
