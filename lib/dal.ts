@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { DbToAppTransformerSchema, GuestApp } from './schemas/guest.schema';
+import { ScheduleApp } from './schemas/schedule.schemas';
 
 // Check if user has completed initial setup
 export const getInitialSetupStatus = async (): Promise<boolean> => {
@@ -169,7 +170,6 @@ export const getGuestsForEvent = async (
   eventId: string,
 ): Promise<GuestApp[]> => {
   try {
-    console.log('getGuestsForEvent called with eventId:', eventId);
     const supabase = await createClient();
     const { data: guests, error } = await supabase
       .from('guests')
@@ -204,5 +204,21 @@ export const getGuestsForEvent = async (
   } catch (error) {
     console.error('Error fetching guests for event:', error);
     return [];
+  }
+};
+
+export const getSchedules = async (): Promise<ScheduleApp[]> => {
+  try {
+    return [{
+      id: '1',
+      name: 'Schedule 1',
+      description: 'Description 1',
+      dueTime: '2025-01-01T00:00:00Z',
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+    }];
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+    throw new Error('Failed to fetch schedules');
   }
 };

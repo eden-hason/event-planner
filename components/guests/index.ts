@@ -1,2 +1,2 @@
-export { GuestsContainer } from './guests-container';
+export { GuestDirectory } from './guest-directory';
 

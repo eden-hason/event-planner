@@ -13,7 +13,7 @@ export type DeleteGuestState = {
   message: string;
 };
 
-export type SendSMSState = {
+export type SendWhatsAppMessageState = {
   success: boolean;
   message: string;
   messageSid?: string;
@@ -123,12 +123,11 @@ export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
   }
 }
 
-export async function sendSMS(
+export async function sendWhatsAppMessage(
   phoneNumber: string,
   message: string,
-): Promise<SendSMSState> {
+): Promise<SendWhatsAppMessageState> {
   try {
-    // 1. Authenticate user
     const user = await getCurrentUser();
     if (!user) {
       return {
@@ -137,66 +136,43 @@ export async function sendSMS(
       };
     }
 
-    // 2. Validate environment variables
     const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
     const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+    const twilioPhoneNumber = process.env.TWILIO_SENDER_ID;
 
     if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
       console.error('Missing Twilio environment variables');
       return {
         success: false,
-        message: 'SMS service is not configured.',
+        message: 'WhatsApp service is not configured.',
       };
     }
 
-    // 3. Validate inputs
-    if (
-      !message ||
-      typeof message !== 'string' ||
-      message.trim().length === 0
-    ) {
-      return {
-        success: false,
-        message: 'Message is required and must be a non-empty string.',
-      };
-    }
-
-    if (
-      !phoneNumber ||
-      typeof phoneNumber !== 'string' ||
-      phoneNumber.trim().length === 0
-    ) {
-      return {
-        success: false,
-        message: 'Phone number is required and must be a non-empty string.',
-      };
-    }
-
-    // 4. Initialize Twilio client
     const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
-    // 5. Send SMS
     const twilioMessage = await twilioClient.messages.create({
       body: message.trim(),
-      from: twilioPhoneNumber,
-      to: phoneNumber.trim(),
+      from: 'whatsapp:+14155238886',
+      to: `whatsapp:${phoneNumber.trim()}`,
+      contentSid: 'HX0c6709657f56ebc45252f1836fc588cc',
+      contentVariables: JSON.stringify({
+        name: 'John Doe',
+      }),
     });
 
     return {
       success: true,
-      message: 'SMS sent successfully!',
+      message: 'WhatsApp message sent successfully!',
       messageSid: twilioMessage.sid,
     };
   } catch (error) {
-    console.error('Send SMS error:', error);
-
+    console.error('Send WhatsApp message error:', error);
     return {
       success: false,
       message:
         error instanceof Error
-          ? `Failed to send SMS: ${error.message}`
-          : 'Failed to send SMS. Please try again.',
+          ? `Failed to send WhatsApp message: ${error.message}`
+          : 'Failed to send WhatsApp message. Please try again.',
     };
   }
 }

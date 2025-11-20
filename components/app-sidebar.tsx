@@ -10,6 +10,7 @@ import {
   IconUsers,
   IconGift,
   IconCash,
+  IconCalendar,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
@@ -39,6 +40,11 @@ const data = {
       title: 'Templates',
       url: '/templates',
       icon: IconTemplate,
+    },
+    {
+      title: "Schedules",
+      url: '/schedules',
+      icon: IconCalendar,
     },
     {
       title: 'Expenses',
