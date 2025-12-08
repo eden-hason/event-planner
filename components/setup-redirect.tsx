@@ -13,8 +13,8 @@ export function SetupRedirect({ isSetupComplete }: SetupRedirectProps) {
 
   useEffect(() => {
     // Only redirect if setup is not complete and we're not already on the onboarding page
-    if (!isSetupComplete && pathname !== '/onboarding') {
-      router.push('/onboarding');
+    if (!isSetupComplete && pathname !== '/app/onboarding') {
+      router.push('/app/onboarding');
     }
   }, [isSetupComplete, pathname, router]);
 

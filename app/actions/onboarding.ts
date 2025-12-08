@@ -5,6 +5,7 @@ import { OnboardingSchema, OnboardingFormData } from '@/lib/schemas/onboarding';
 import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/utils/supabase/server';
 import { processOnboardingCSV } from './process-onboarding-csv';
+import { upsertEvent } from '@/features/events/actions';
 
 export type OnboardingStep = 'profile' | 'event' | 'pricing';
 
@@ -266,34 +267,43 @@ export async function updateOnboardingStep(
           : null,
       };
 
+      // Use upsertEvent action to create or update event
+      // Convert eventData to FormData format expected by upsertEvent
+      const formData = new FormData();
+
+      // If updating, include the event ID
       if (existingEvents && existingEvents.length > 0) {
-        // Update existing event
-        const { error: updateError } = await supabase
-          .from('events')
-          .update(eventData)
-          .eq('id', existingEvents[0].id)
-          .eq('user_id', user.id);
+        formData.append('id', existingEvents[0].id);
+      }
 
-        if (updateError) {
-          console.error('Error updating event:', updateError);
-          return {
-            success: false,
-            message: 'Failed to update event. Please try again.',
-          };
-        }
-      } else {
-        // Create new event
-        const { error: insertError } = await supabase
-          .from('events')
-          .insert(eventData);
+      // Transform snake_case to camelCase and add to FormData
+      formData.append('title', eventData.title);
+      formData.append('eventDate', eventData.event_date);
+      if (eventData.event_type) {
+        formData.append('eventType', eventData.event_type);
+      }
+      if (eventData.description) {
+        formData.append('description', eventData.description);
+      }
+      if (eventData.file_metadata) {
+        // file_metadata is already a JSON string, append as-is
+        formData.append('fileMetadata', eventData.file_metadata);
+      }
+      // Set status to draft for onboarding events
+      formData.append('status', 'draft');
 
-        if (insertError) {
-          console.error('Error creating event:', insertError);
-          return {
-            success: false,
-            message: 'Failed to create event. Please try again.',
-          };
-        }
+      formData.append('isDefault', 'true');
+
+      const upsertResult = await upsertEvent(formData);
+
+      if (!upsertResult.success) {
+        console.error('Error creating/updating event:', upsertResult.message);
+        return {
+          success: false,
+          message:
+            upsertResult.message ||
+            'Failed to create or update event. Please try again.',
+        };
       }
 
       // Process CSV file if it exists (do this asynchronously to not block the flow)
@@ -368,7 +378,7 @@ export async function updateOnboardingStep(
   } finally {
     // Redirect in finally block if pricing step was successfully completed
     if (shouldRedirect) {
-      redirect('/dashboard');
+      redirect('/app/dashboard');
     }
   }
 

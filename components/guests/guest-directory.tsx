@@ -5,10 +5,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { GuestSearch } from '@/components/guest-search';
 import { GuestsTable } from './table';
 import { GroupFilter } from './filters';
-import { Button } from '@/components/ui/button';
 import { GuestForm } from '@/components/guest-form';
 import { GuestApp } from '@/lib/schemas/guest.schema';
-import { PlusIcon, CalendarSync } from 'lucide-react';
+import { CalendarSync } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -81,14 +80,15 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
     prevState: SendWhatsAppMessageState | null,
     params: { phoneNumber: string; message: string },
   ): Promise<SendWhatsAppMessageState | null> => {
-    const promise = sendWhatsAppMessage(params.phoneNumber, params.message).then(
-      (result) => {
-        if (!result.success) {
-          throw new Error(result.message || 'Failed to send WhatsApp message.');
-        }
-        return result;
-      },
-    );
+    const promise = sendWhatsAppMessage(
+      params.phoneNumber,
+      params.message,
+    ).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to send WhatsApp message.');
+      }
+      return result;
+    });
 
     toast.promise(promise, {
       loading: 'Sending WhatsApp message...',
@@ -164,7 +164,7 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center space-x-2 flex-1 max-w-2xl">
+        <div className="flex w-full items-center justify-between space-x-2">
           <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
           <GroupFilter
             groups={uniqueGroups}
@@ -174,14 +174,6 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
             isAllSelected={isAllSelected}
           />
         </div>
-        <Button
-          variant="outline"
-          className="w-full sm:w-auto"
-          onClick={handleAddGuestClick}
-        >
-          <PlusIcon className="size-4" />
-          Add Guest
-        </Button>
       </div>
 
       {/* Guests table */}
@@ -238,4 +230,3 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
     </div>
   );
 }
-

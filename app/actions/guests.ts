@@ -71,7 +71,7 @@ export async function upsertGuest(
       };
     }
 
-    revalidatePath('/guests');
+    revalidatePath('/app/guests');
     return {
       success: true,
       message: validatedData.id
@@ -109,7 +109,7 @@ export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
       };
     }
 
-    revalidatePath('/guests');
+    revalidatePath('/app/guests');
     return {
       success: true,
       message: 'Guest deleted successfully.',
