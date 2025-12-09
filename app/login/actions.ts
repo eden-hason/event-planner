@@ -28,7 +28,7 @@ export async function login(
   }
 
   revalidatePath('/', 'layout');
-  redirect('/');
+  redirect('/app');
 }
 
 export async function signup(
@@ -71,7 +71,7 @@ const getURL = () => {
 export async function signInWithGoogle() {
   const supabase = await createClient();
 
-  const redirectTo = `${getURL()}auth/callback?next=/app/dashboard`;
+  const redirectTo = `${getURL()}auth/callback?next=/app`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

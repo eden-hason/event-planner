@@ -132,20 +132,6 @@ export const getEvents = async (userId: string): Promise<Event[]> => {
   }
 };
 
-export const getEvent = async (
-  userId: string,
-  eventId: string,
-): Promise<Event | null> => {
-  try {
-    // TODO: Implement Supabase query
-    console.log('getEvent called with userId:', userId, 'eventId:', eventId);
-    return null;
-  } catch (error) {
-    console.error('Error fetching event:', error);
-    throw new Error('Failed to fetch event');
-  }
-};
-
 export const getUserEvent = async (userId: string): Promise<Event | null> => {
   try {
     const supabase = await createClient();

@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/utils/supabase/server';
 import { processOnboardingCSV } from './process-onboarding-csv';
 import { upsertEvent } from '@/features/events/actions';
+import { getLastUserEvent } from '@/features/events/queries';
 
 export type OnboardingStep = 'profile' | 'event' | 'pricing';
 
@@ -378,7 +379,14 @@ export async function updateOnboardingStep(
   } finally {
     // Redirect in finally block if pricing step was successfully completed
     if (shouldRedirect) {
-      redirect('/app/dashboard');
+      // Fetch the user's event to get the event ID for the redirect
+      const event = await getLastUserEvent();
+      if (event?.id) {
+        redirect(`/app/${event.id}/dashboard`);
+      } else {
+        // Fallback to /app which will handle the redirect logic
+        redirect('/app');
+      }
     }
   }
 
