@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import {
   IconTemplate,
   IconDashboard,
@@ -24,8 +25,34 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-const data = {
-  navMain: [
+
+// Helper function to extract eventId from pathname
+function getEventIdFromPathname(pathname: string): string | null {
+  const match = pathname.match(/^\/app\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+// Helper function to build navigation URLs with eventId
+function buildNavUrl(basePath: string, eventId: string | null): string {
+  if (!eventId) {
+    return basePath;
+  }
+  // Replace /app/ with /app/{eventId}/
+  return basePath.replace(/^\/app\//, `/app/${eventId}/`);
+}
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user: {
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
+}
+
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const pathname = usePathname();
+  const eventId = getEventIdFromPathname(pathname);
+  const navMainBase = [
     {
       title: 'Dashboard',
       url: '/app/dashboard',
@@ -42,7 +69,7 @@ const data = {
       icon: IconTemplate,
     },
     {
-      title: "Schedules",
+      title: 'Schedules',
       url: '/app/schedules',
       icon: IconCalendar,
     },
@@ -56,8 +83,14 @@ const data = {
       url: '/app/gifts',
       icon: IconGift,
     },
-  ],
-  navSecondary: [
+  ];
+
+  const navMain = navMainBase.map((item) => ({
+    ...item,
+    url: buildNavUrl(item.url, eventId),
+  }));
+
+  const navSecondary = [
     {
       title: 'Settings',
       url: '#',
@@ -68,18 +101,8 @@ const data = {
       url: '#',
       icon: IconHelp,
     },
-  ],
-};
+  ];
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: {
-    name: string;
-    email?: string;
-    avatar?: string;
-  };
-}
-
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -98,8 +121,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMain} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
