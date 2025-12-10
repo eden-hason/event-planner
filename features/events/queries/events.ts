@@ -57,3 +57,15 @@ export async function getLastUserEvent(): Promise<EventApp | null> {
   }
 }
 
+export async function getAllUserEvents(): Promise<EventApp[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching all user events:', error);
+    return [];
+  }
+  return data;
+}

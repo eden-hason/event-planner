@@ -6,16 +6,16 @@ import {
   IconTemplate,
   IconDashboard,
   IconHelp,
-  IconInnerShadowTop,
   IconSettings,
   IconUsers,
   IconGift,
-  IconCash,
   IconCalendar,
+  IconCoins,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser } from '@/components/nav-user';
+import { NavEvents } from '@/components/nav-events';
+import { PartyPopper } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { type EventApp } from '@/features/events/schemas';
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -42,14 +43,10 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: {
-    name: string;
-    email?: string;
-    avatar?: string;
-  };
+  events: EventApp[];
 }
 
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+export function AppSidebar({ events, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
   const navMainBase = [
@@ -76,7 +73,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     {
       title: 'Expenses',
       url: '/app/expenses',
-      icon: IconCash,
+      icon: IconCoins,
     },
     {
       title: 'Gifts',
@@ -113,7 +110,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <PartyPopper className="!size-5" />
                 <span className="text-base font-semibold">Kululu Events</span>
               </a>
             </SidebarMenuButton>
@@ -125,7 +122,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavEvents events={events} />
       </SidebarFooter>
     </Sidebar>
   );
