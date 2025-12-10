@@ -1,0 +1,1 @@
+export { getEventGuests } from './guests';

@@ -8,8 +8,8 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { GuestApp } from '@/lib/schemas/guest.schema';
-import { createGuestColumns } from '@/components/guests/table';
+import { GuestApp } from '@/features/guests/schemas';
+import { createGuestColumns } from '@/features/guests/components/table';
 
 interface UseGuestsTableProps {
   guests: GuestApp[];

@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { IconUsers } from '@tabler/icons-react';
 import { Upload, PlusIcon } from 'lucide-react';
-import { GuestApp } from '@/lib/schemas/guest.schema';
+import { GuestApp } from '@/features/guests/schemas';
 import { useGuestsTable } from '@/hooks/guests';
 
 interface GuestsTableProps {
@@ -70,7 +70,7 @@ export function GuestsTable({
         <Empty className="min-h-[400px]">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <IconUsers className="size-6 text-muted-foreground" />
+              <IconUsers className="text-muted-foreground size-6" />
             </EmptyMedia>
             <EmptyTitle>No Guests Yet</EmptyTitle>
             <EmptyDescription>
@@ -133,7 +133,7 @@ export function GuestsTable({
             tableRows.map((row) => (
               <TableRow
                 key={row.id}
-                className="cursor-pointer hover:bg-gray-50 transition-colors group"
+                className="group cursor-pointer transition-colors hover:bg-gray-50"
                 onClick={() => handleRowClick(row.original)}
               >
                 {row.getVisibleCells().map((cell) => {
@@ -143,7 +143,7 @@ export function GuestsTable({
                     <TableCell
                       key={cell.id}
                       className={
-                        isNameColumn ? 'font-medium py-4 px-4' : 'py-4'
+                        isNameColumn ? 'px-4 py-4 font-medium' : 'py-4'
                       }
                     >
                       {flexRender(

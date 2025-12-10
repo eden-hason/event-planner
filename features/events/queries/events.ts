@@ -15,7 +15,7 @@ export async function getEventById(eventId: string): Promise<EventApp | null> {
     console.error('Error fetching event by id:', error);
     return null;
   }
-  
+
   if (!event) {
     return null;
   }
@@ -67,5 +67,6 @@ export async function getAllUserEvents(): Promise<EventApp[]> {
     console.error('Error fetching all user events:', error);
     return [];
   }
-  return data;
+
+  return data.map((event) => DbToAppTransformerSchema.parse(event));
 }

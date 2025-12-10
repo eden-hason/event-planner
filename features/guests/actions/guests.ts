@@ -1,12 +1,20 @@
 'use server';
 
 import { getCurrentUser } from '@/lib/auth';
-import { GuestUpsertSchema } from '@/lib/schemas/guest.schema';
-import { guestUpsertToDb } from '@/lib/utils/guest.transform';
+import {
+  GuestUpsertSchema,
+  AppToDbTransformerSchema,
+} from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { UpsertGuestState } from '@/lib/schemas/guest.schema';
 import twilio from 'twilio';
+import { z } from 'zod';
+
+export type UpsertGuestState = {
+  success: boolean;
+  errors?: z.ZodError<z.input<typeof GuestUpsertSchema>>;
+  message?: string | null;
+};
 
 export type DeleteGuestState = {
   success: boolean;
@@ -50,7 +58,7 @@ export async function upsertGuest(
     }
 
     const validatedData = validationResult.data;
-    const dbData = guestUpsertToDb(validatedData);
+    const dbData = AppToDbTransformerSchema.parse(validatedData);
     const supabase = await createClient();
 
     const { error } = await supabase.from('guests').upsert(

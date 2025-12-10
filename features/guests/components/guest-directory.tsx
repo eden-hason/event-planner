@@ -1,38 +1,25 @@
 'use client';
 
-import { useState, useActionState, startTransition } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { GuestSearch } from '@/components/guest-search';
-import { GuestsTable } from './table';
-import { GroupFilter } from './filters';
-import { GuestForm } from '@/components/guest-form';
-import { GuestApp } from '@/lib/schemas/guest.schema';
-import { CalendarSync } from 'lucide-react';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-} from '@/components/ui/drawer';
+import { useActionState, startTransition } from 'react';
+import { GuestSearch } from './guest-search';
+import { GuestsTable } from '@/features/guests/components/table';
+import { GroupFilter } from '@/features/guests/components/filters';
+import { GuestApp } from '@/features/guests/schemas';
 import { useGuestFilters } from '@/hooks/guests/use-guest-filters';
 import {
   deleteGuest,
   type DeleteGuestState,
   sendWhatsAppMessage,
   SendWhatsAppMessageState,
-} from '@/app/actions/guests';
+} from '@/features/guests/actions';
 import { toast } from 'sonner';
 
 interface GuestDirectoryProps {
   guests: GuestApp[];
-  eventId: string;
+  onSelectGuest: (guest: GuestApp | null) => void;
 }
 
-export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
-
+export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
   const {
     searchTerm,
     setSearchTerm,
@@ -118,8 +105,7 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
 
   const handleSelectGuest = (id: string) => {
     const guest = guests.find((guest) => guest.id === id);
-    setSelectedGuest(guest || null);
-    setIsDrawerOpen(true);
+    onSelectGuest(guest || null);
   };
 
   const handleDeleteGuest = (guest: GuestApp) => {
@@ -143,22 +129,14 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
 
     startTransition(() => {
       whatsAppAction({
-        phoneNumber: guest.phone.trim(),
+        phoneNumber: guest.phone?.trim() || '',
         message,
       });
     });
   };
 
   const handleAddGuestClick = () => {
-    setSelectedGuest(null);
-    setIsDrawerOpen(true);
-  };
-
-  const handleDrawerClose = (open: boolean) => {
-    setIsDrawerOpen(open);
-    if (!open) {
-      setSelectedGuest(null);
-    }
+    onSelectGuest(null);
   };
 
   return (
@@ -191,42 +169,6 @@ export function GuestDirectory({ guests, eventId }: GuestDirectoryProps) {
           toast.info('File upload coming soon!');
         }}
       />
-
-      {/* Guest form drawer */}
-      <Drawer
-        direction="right"
-        open={isDrawerOpen}
-        onOpenChange={handleDrawerClose}
-      >
-        <DrawerContent className="!max-w-[600px]">
-          <DrawerHeader>
-            <DrawerTitle>
-              {selectedGuest ? `Edit ${selectedGuest.name}` : 'Add New Guest'}
-            </DrawerTitle>
-            <DrawerDescription>
-              {selectedGuest ? (
-                <span className="flex items-center gap-2">
-                  <CalendarSync className="size-4" />
-                  Last edited{' '}
-                  {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
-                    addSuffix: true,
-                  })}
-                </span>
-              ) : (
-                'Please fill out the form below to add a new guest'
-              )}
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-6">
-            <GuestForm
-              eventId={eventId}
-              guest={selectedGuest}
-              onSuccess={() => handleDrawerClose(false)}
-              onCancel={() => handleDrawerClose(false)}
-            />
-          </div>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { GuestApp } from '@/lib/schemas/guest.schema';
+import { GuestApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 
 const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
@@ -120,7 +120,7 @@ export const createGuestColumns = (
     cell: ({ row }) => {
       const notes = row.getValue('notes') as string | undefined;
       return notes ? (
-        <span className="text-sm text-gray-600 max-w-xs truncate block">
+        <span className="block max-w-xs truncate text-sm text-gray-600">
           {notes}
         </span>
       ) : (

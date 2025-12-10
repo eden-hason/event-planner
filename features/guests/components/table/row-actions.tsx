@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { GuestApp } from '@/lib/schemas/guest.schema';
+import { GuestApp } from '@/features/guests/schemas';
 
 interface RowActionsProps {
   guest: GuestApp;
@@ -43,7 +43,10 @@ export function RowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem onClick={handleSendWhatsApp} disabled={isSendingWhatsApp}>
+        <DropdownMenuItem
+          onClick={handleSendWhatsApp}
+          disabled={isSendingWhatsApp}
+        >
           <Send className="mr-2 h-4 w-4" />
           {isSendingWhatsApp ? 'Sending...' : 'Send WhatsApp'}
         </DropdownMenuItem>

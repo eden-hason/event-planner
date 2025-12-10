@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { GuestApp } from '@/lib/schemas/guest.schema';
+import { GuestApp } from '@/features/guests/schemas';
 
 export function useGuestFilters(guests: GuestApp[]) {
   const [searchTerm, setSearchTerm] = useState('');
