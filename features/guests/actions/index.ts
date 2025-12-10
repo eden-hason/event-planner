@@ -6,4 +6,3 @@ export {
   type DeleteGuestState,
   type SendWhatsAppMessageState,
 } from './guests';
-

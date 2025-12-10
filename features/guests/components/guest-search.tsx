@@ -25,4 +25,3 @@ export function GuestSearch({ searchTerm, onSearchChange }: GuestSearchProps) {
     </div>
   );
 }
-

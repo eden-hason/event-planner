@@ -30,8 +30,8 @@ export function GroupFilter({
           {selectedGroups.length === 0
             ? 'Filter by group'
             : selectedGroups.length === 1
-            ? selectedGroups[0]
-            : `${selectedGroups.length} groups selected`}
+              ? selectedGroups[0]
+              : `${selectedGroups.length} groups selected`}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -44,7 +44,7 @@ export function GroupFilter({
                 <div
                   key={group}
                   onClick={() => onGroupToggle(group)}
-                  className="p-2 rounded-sm cursor-pointer text-sm transition-colors hover:bg-accent flex items-center gap-2"
+                  className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm transition-colors"
                 >
                   {isSelected ? (
                     <Check className="h-4 w-4 shrink-0" />
@@ -58,7 +58,7 @@ export function GroupFilter({
           </div>
           <div
             onClick={onSelectAll}
-            className="p-2 rounded-sm cursor-pointer text-sm font-medium transition-colors mt-1 hover:bg-accent flex items-center gap-2"
+            className="hover:bg-accent mt-1 flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm font-medium transition-colors"
           >
             {isAllSelected ? (
               <Check className="h-4 w-4 shrink-0" />
@@ -72,4 +72,3 @@ export function GroupFilter({
     </Popover>
   );
 }
-

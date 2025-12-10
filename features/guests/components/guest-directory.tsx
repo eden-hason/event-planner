@@ -172,4 +172,3 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
     </div>
   );
 }
-

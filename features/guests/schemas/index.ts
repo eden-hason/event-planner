@@ -109,3 +109,43 @@ export const GuestUpsertSchema = z.object({
 });
 
 export type GuestUpsert = z.infer<typeof GuestUpsertSchema>;
+
+// --- 5. Zod-based "App to DB" Transformer Schema ---
+// Uses Zod's transform to convert camelCase app data to snake_case DB data.
+// This provides validation and type safety through Zod, consistent with DbToAppTransformerSchema.
+
+export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
+  (appData) => {
+    const dbData: Record<string, unknown> = {};
+
+    // Only include fields that are defined (not undefined)
+    if (appData.id !== undefined) {
+      dbData.id = appData.id;
+    }
+    if (appData.name !== undefined) {
+      dbData.name = appData.name;
+    }
+    if (appData.phone !== undefined) {
+      dbData.phone_number = appData.phone ?? null;
+    }
+    if (appData.guestGroup !== undefined) {
+      dbData.guest_group = appData.guestGroup ?? null;
+    }
+    if (appData.rsvpStatus !== undefined) {
+      dbData.rsvp_status = appData.rsvpStatus;
+    }
+    if (appData.dietaryRestrictions !== undefined) {
+      dbData.dietary_restrictions = appData.dietaryRestrictions ?? null;
+    }
+    if (appData.amount !== undefined) {
+      dbData.amount = appData.amount;
+    }
+    if (appData.notes !== undefined) {
+      dbData.notes = appData.notes ?? null;
+    }
+
+    return dbData;
+  },
+);
+
+export type GuestDbUpsert = z.infer<typeof AppToDbTransformerSchema>;
