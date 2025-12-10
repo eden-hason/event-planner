@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/server';
 import { SetupRedirect } from '@/components/setup-redirect';
 import { Suspense } from 'react';
 import Loading from './loading';
+import { getAllUserEvents } from '@/features/events/queries';
 
 export default async function Layout({
   children,
@@ -27,12 +28,15 @@ export default async function Layout({
     avatar: data.user.user_metadata.avatar_url,
   };
 
+  // Fetch user events
+  const events = await getAllUserEvents();
+
   // Check if user has completed initial setup
   const isSetupComplete = await getInitialSetupStatus();
 
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" events={events} />
       <SidebarInset>
         <AppHeader user={user} />
         <main className="container mx-auto p-4">
