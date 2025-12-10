@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/utils/supabase/server';
-import { type GuestUpsert } from '@/lib/schemas/guest.schema';
+import { type GuestUpsert } from '@/features/guests/schemas';
 
 export interface ProcessCSVResult {
   success: boolean;
@@ -221,7 +221,10 @@ export async function processCSVFromStorage(
       const phone = phoneIndex >= 0 ? values[phoneIndex] : '';
       const amountStr = amountIndex >= 0 ? values[amountIndex] : '';
       const guestGroupRaw = guestGroupIndex >= 0 ? values[guestGroupIndex] : '';
-      const guestGroup = guestGroupRaw && guestGroupRaw.trim() !== '' ? guestGroupRaw.trim() : undefined;
+      const guestGroup =
+        guestGroupRaw && guestGroupRaw.trim() !== ''
+          ? guestGroupRaw.trim()
+          : undefined;
       const statusStr = statusIndex >= 0 ? values[statusIndex] : '';
 
       // Validate name

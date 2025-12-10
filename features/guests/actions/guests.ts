@@ -1,12 +1,18 @@
 'use server';
 
 import { getCurrentUser } from '@/lib/auth';
-import { GuestUpsertSchema } from '@/lib/schemas/guest.schema';
+import { GuestUpsertSchema } from '@/features/guests/schemas';
 import { guestUpsertToDb } from '@/lib/utils/guest.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import { UpsertGuestState } from '@/lib/schemas/guest.schema';
 import twilio from 'twilio';
+import { z } from 'zod';
+
+export type UpsertGuestState = {
+  success: boolean;
+  errors?: z.ZodError<z.input<typeof GuestUpsertSchema>>;
+  message?: string | null;
+};
 
 export type DeleteGuestState = {
   success: boolean;
@@ -176,3 +182,4 @@ export async function sendWhatsAppMessage(
     };
   }
 }
+

@@ -19,18 +19,20 @@ import {
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
 import { IconCarambola } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
 
 interface NavEventsProps {
   events: EventApp[];
 }
 
 export function NavEvents({ events }: NavEventsProps) {
+  console.log('events', events);
   const pathname = usePathname();
   const { isMobile } = useSidebar();
 
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
-  
+
   // Find the current event
   const currentEvent = events.find((event) => event.id === currentEventId);
 
@@ -55,7 +57,7 @@ export function NavEvents({ events }: NavEventsProps) {
                   {currentEvent ? currentEvent.title : 'No event selected'}
                 </span>
                 <span className="truncate text-xs">
-                  {currentEvent?.eventType || 'Select an event'}
+                  {currentEvent?.eventType}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -71,44 +73,40 @@ export function NavEvents({ events }: NavEventsProps) {
               Events
             </DropdownMenuLabel>
             <div className="flex flex-col gap-1">
+              {events.length === 0 ? (
+                <DropdownMenuItem disabled>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="text-muted-foreground">No events yet</span>
+                  </div>
+                </DropdownMenuItem>
+              ) : (
+                events.map((event) => {
+                  const eventUrl = `/app/${event.id}/dashboard`;
+                  const isActive = currentEventId === event.id;
 
-            {events.length === 0 ? (
-              <DropdownMenuItem disabled>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="text-muted-foreground">No events yet</span>
-                </div>
-              </DropdownMenuItem>
-            ) : (
-              events.map((event) => {
-                const eventUrl = `/app/${event.id}/dashboard`;
-                const isActive = currentEventId === event.id;
-                
-                return (
-                  <DropdownMenuItem
-                  key={event.id}
-                  asChild
-                  className={`gap-2 p-1 ${isActive ? 'bg-accent' : ''}`}
-                  >
-                    <Link href={eventUrl}>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-medium">
-                          {event.title}
-                        </span>
-                        <span className="text-muted-foreground truncate text-xs">
-                          {event.eventType || 'No type'}
-                        </span>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                );
-              })
-            )}
+                  return (
+                    <DropdownMenuItem
+                      asChild
+                      key={event.id}
+                      className={cn('gap-2 p-2', isActive && 'bg-accent')}
+                    >
+                      <Link href={eventUrl}>
+                        <div className="grid flex-1 text-left text-sm leading-tight">
+                          <span className="truncate font-medium">
+                            {event.title}
+                          </span>
+                          <span className="text-muted-foreground truncate text-xs">
+                            {event.eventType}
+                          </span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })
+              )}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleNewEvent}
-              className="gap-2 p-2"
-            >
+            <DropdownMenuItem onClick={handleNewEvent} className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
@@ -120,4 +118,3 @@ export function NavEvents({ events }: NavEventsProps) {
     </SidebarMenu>
   );
 }
-

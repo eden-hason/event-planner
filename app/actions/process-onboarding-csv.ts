@@ -7,7 +7,7 @@ import {
   ProcessCSVResult,
 } from '@/lib/utils/process-csv';
 import { FileMetadata } from '@/lib/schemas/onboarding';
-import { GuestUpsertSchema } from '@/lib/schemas/guest.schema';
+import { GuestUpsertSchema } from '@/features/guests/schemas';
 
 export interface ProcessOnboardingCSVResult {
   success: boolean;

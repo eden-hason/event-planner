@@ -23,13 +23,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { upsertGuest } from '@/app/actions/guests';
+import { upsertGuest, type UpsertGuestState } from '@/features/guests/actions';
 import {
-  type UpsertGuestState,
   type GuestUpsert,
   GuestUpsertSchema,
-} from '@/lib/schemas/guest.schema';
-import { GuestApp } from '@/lib/schemas/guest.schema';
+  GuestApp,
+} from '@/features/guests/schemas';
 
 interface GuestFormProps {
   eventId: string;
@@ -150,7 +149,12 @@ export function GuestForm({
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="Enter phone number" {...field} />
+                <Input
+                  type="tel"
+                  placeholder="Enter phone number"
+                  {...field}
+                  value={field.value || ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -184,56 +188,58 @@ export function GuestForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="guestGroup"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Guest Group</FormLabel>
-              <Select
-                value={field.value || undefined}
-                onValueChange={field.onChange}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a group" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="family">Family</SelectItem>
-                  <SelectItem value="friends">Friends</SelectItem>
-                  <SelectItem value="colleagues">Colleagues</SelectItem>
-                  <SelectItem value="acquaintances">Acquaintances</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="guestGroup"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Guest Group</FormLabel>
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a group" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="family">Family</SelectItem>
+                    <SelectItem value="friends">Friends</SelectItem>
+                    <SelectItem value="colleagues">Colleagues</SelectItem>
+                    <SelectItem value="acquaintances">Acquaintances</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="rsvpStatus"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>RSVP Status</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select RSVP status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="declined">Declined</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="rsvpStatus"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>RSVP Status</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select RSVP status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="declined">Declined</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -280,8 +286,8 @@ export function GuestForm({
                 ? 'Updating...'
                 : 'Adding...'
               : isEditMode
-              ? 'Update Guest'
-              : 'Add Guest'}
+                ? 'Update Guest'
+                : 'Add Guest'}
           </Button>
           {isEditMode && (
             <Button type="button" variant="secondary" onClick={onCancel}>
@@ -293,3 +299,4 @@ export function GuestForm({
     </Form>
   );
 }
+

@@ -1,6 +1,4 @@
-import {
-type GuestUpsert
-} from '@/lib/schemas/guest.schema';
+import { type GuestUpsert } from '@/features/guests/schemas';
 
 // This is the type for data you'll send to Supabase for upsert
 type GuestDbUpsert = {
