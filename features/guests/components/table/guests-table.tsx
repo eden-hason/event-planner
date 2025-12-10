@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { IconUsers } from '@tabler/icons-react';
 import { Upload, PlusIcon } from 'lucide-react';
 import { GuestApp } from '@/features/guests/schemas';
-import { useGuestsTable } from '@/hooks/guests';
+import { useGuestsTable } from '@/features/guests/hooks';
 
 interface GuestsTableProps {
   guests: GuestApp[];

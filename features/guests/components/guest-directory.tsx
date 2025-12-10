@@ -5,7 +5,7 @@ import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter } from '@/features/guests/components/filters';
 import { GuestApp } from '@/features/guests/schemas';
-import { useGuestFilters } from '@/hooks/guests/use-guest-filters';
+import { useGuestFilters } from '@/features/guests/hooks';
 import {
   deleteGuest,
   type DeleteGuestState,
