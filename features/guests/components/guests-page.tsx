@@ -43,7 +43,7 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
   };
 
   return (
-    <Card className="border-none p-0 shadow-none">
+    <Card className="border-none bg-transparent p-0 shadow-none min-h-[calc(100vh-101px)]">
       <GuestsPageHeader onAddGuest={handleAddGuest} />
       <CardContent className="space-y-6">
         <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />

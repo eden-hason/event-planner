@@ -11,6 +11,7 @@ import {
   IconGift,
   IconCalendar,
   IconCoins,
+  IconAlertSquareRounded,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
@@ -54,6 +55,11 @@ export function AppSidebar({ events, ...props }: AppSidebarProps) {
       title: 'Dashboard',
       url: '/app/dashboard',
       icon: IconDashboard,
+    },
+    {
+      title: 'Event Details',
+      url: '/app/details',
+      icon: IconAlertSquareRounded,
     },
     {
       title: 'Guests',
@@ -101,7 +107,7 @@ export function AppSidebar({ events, ...props }: AppSidebarProps) {
   ];
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar className="bg-[#F4F4F6]" collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

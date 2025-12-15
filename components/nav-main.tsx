@@ -22,9 +22,9 @@ function isActiveRoute(pathname: string, routeUrl: string): boolean {
   // routeUrl might be /app/dashboard or /app/{eventId}/dashboard
   const routeMatch = routeUrl.match(/^\/app\/(?:[^/]+\/)?(.+)$/);
   if (!routeMatch) return false;
-  
+
   const routePath = routeMatch[1];
-  
+
   // Check if pathname matches the pattern /app/{eventId}/{routePath}
   const pathnameMatch = pathname.match(/^\/app\/(?:[^/]+\/)?(.+)$/);
   if (pathnameMatch) {

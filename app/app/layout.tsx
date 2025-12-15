@@ -35,15 +35,17 @@ export default async function Layout({
   const isSetupComplete = await getInitialSetupStatus();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="!bg-[#F4F4F6]">
       <AppSidebar variant="inset" events={events} />
       <SidebarInset>
         <AppHeader user={user} />
-        <main className="container mx-auto p-4">
-          <Suspense fallback={<Loading />}>
-            <SetupRedirect isSetupComplete={isSetupComplete} />
-            {children}
-          </Suspense>
+        <main className="bg-muted/50 p-4">
+          <div className="container mx-auto">
+            <Suspense fallback={<Loading />}>
+              <SetupRedirect isSetupComplete={isSetupComplete} />
+              {children}
+            </Suspense>
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

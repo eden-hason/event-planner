@@ -26,7 +26,6 @@ interface NavEventsProps {
 }
 
 export function NavEvents({ events }: NavEventsProps) {
-  console.log('events', events);
   const pathname = usePathname();
   const { isMobile } = useSidebar();
 
