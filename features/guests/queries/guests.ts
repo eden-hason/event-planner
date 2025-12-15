@@ -24,7 +24,6 @@ export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
         const transformedGuest = DbToAppTransformerSchema.parse(guest);
         transformedGuests.push(transformedGuest);
       } catch (err) {
-        console.log('guest:', guest);
         console.error(
           'Failed to parse guest data with Zod transformer:',
           err,
