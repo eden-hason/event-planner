@@ -5,8 +5,6 @@ import { getInitialSetupStatus } from '@/lib/dal';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { SetupRedirect } from '@/components/setup-redirect';
-import { Suspense } from 'react';
-import Loading from './loading';
 import { getAllUserEvents } from '@/features/events/queries';
 
 export default async function Layout({
@@ -39,12 +37,10 @@ export default async function Layout({
       <AppSidebar variant="inset" events={events} />
       <SidebarInset>
         <AppHeader user={user} />
-        <main className="bg-muted/50 p-4">
+        <main className="bg-muted/50 px-4 py-4 md:px-12">
           <div className="container mx-auto">
-            <Suspense fallback={<Loading />}>
-              <SetupRedirect isSetupComplete={isSetupComplete} />
-              {children}
-            </Suspense>
+            <SetupRedirect isSetupComplete={isSetupComplete} />
+            {children}
           </div>
         </main>
       </SidebarInset>

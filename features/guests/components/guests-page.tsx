@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { GuestDirectory } from './guest-directory';
-import { GuestsPageHeader } from './guests-page-header';
 import { GuestForm } from './guest-form';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Drawer,
   DrawerContent,
@@ -13,8 +11,10 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer';
-import { CalendarSync } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CalendarSync, PlusIcon } from 'lucide-react';
 import { GuestApp } from '../schemas';
+import { useFeatureHeader } from '@/components/feature-layout';
 
 interface GuestsPageProps {
   guests: GuestApp[];
@@ -42,12 +42,25 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
     }
   };
 
+  // Configure the feature header with title and action button
+  const headerAction = useMemo(
+    () => (
+      <Button onClick={handleAddGuest}>
+        <PlusIcon className="size-4" />
+        Add Guest
+      </Button>
+    ),
+    [],
+  );
+
+  useFeatureHeader({
+    title: 'Guests',
+    action: headerAction,
+  });
+
   return (
-    <Card className="border-none bg-transparent p-0 shadow-none min-h-[calc(100vh-101px)]">
-      <GuestsPageHeader onAddGuest={handleAddGuest} />
-      <CardContent className="space-y-6">
-        <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />
-      </CardContent>
+    <>
+      <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />
 
       {/* Guest form drawer */}
       <Drawer
@@ -84,6 +97,6 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
           </div>
         </DrawerContent>
       </Drawer>
-    </Card>
+    </>
   );
 }
