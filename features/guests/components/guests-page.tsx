@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
@@ -42,7 +42,6 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
     }
   };
 
-  // Configure the feature header with title and action button
   const headerAction = useMemo(
     () => (
       <Button onClick={handleAddGuest}>
@@ -50,11 +49,12 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
         Add Guest
       </Button>
     ),
-    [],
+    [handleAddGuest],
   );
 
   useFeatureHeader({
     title: 'Guests',
+    description: 'Manage your event guests',
     action: headerAction,
   });
 
