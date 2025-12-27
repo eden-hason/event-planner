@@ -17,7 +17,7 @@ export function SchedulesHeader({ onAddSchedule }: SchedulesHeaderProps) {
         Add Schedule
       </Button>
     ),
-    [onAddSchedule]
+    [onAddSchedule],
   );
 
   useFeatureHeader({
@@ -28,4 +28,3 @@ export function SchedulesHeader({ onAddSchedule }: SchedulesHeaderProps) {
 
   return null;
 }
-
