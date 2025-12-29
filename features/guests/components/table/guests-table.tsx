@@ -20,16 +20,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { IconUsers } from '@tabler/icons-react';
 import { Upload, PlusIcon } from 'lucide-react';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { useGuestsTable } from '@/features/guests/hooks';
 
 interface GuestsTableProps {
-  guests: GuestApp[];
+  guests: GuestWithGroupApp[];
   searchTerm: string;
-  groupFilter: string[];
+  groupFilter: string[]; // Array of group IDs
   onSelectGuest: (id: string) => void;
-  onDeleteGuest: (guest: GuestApp) => void;
-  onSendWhatsApp: (guest: GuestApp) => void;
+  onDeleteGuest: (guest: GuestWithGroupApp) => void;
+  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
   isSendingWhatsApp: boolean;
   onAddGuest?: () => void;
   onUploadFile?: () => void;
@@ -55,7 +55,7 @@ export function GuestsTable({
     isSendingWhatsApp,
   });
 
-  const handleRowClick = (guest: GuestApp) => {
+  const handleRowClick = (guest: GuestWithGroupApp) => {
     onSelectGuest(guest.id);
   };
 

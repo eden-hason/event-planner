@@ -13,11 +13,8 @@ export const GuestAppSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long'),
   phone: z.string().max(20, 'Phone number is too long').nullable().optional(),
-  guestGroup: z
-    .string()
-    .max(100, 'Guest group is too long')
-    .nullable()
-    .optional(),
+  // Foreign key to groups table
+  groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
     .enum(['pending', 'confirmed', 'declined'], {
       message: 'RSVP status must be pending, confirmed, or declined',
@@ -34,6 +31,25 @@ export const GuestAppSchema = z.object({
 // This is the type you will use in your components and functions.
 export type GuestApp = z.infer<typeof GuestAppSchema>;
 
+// Minimal group info schema for embedding in GuestWithGroup
+// (defined here to avoid circular dependency with GroupAppSchema)
+export const GroupInfoSchema = z.object({
+  id: z.uuid(),
+  name: z.string().max(100),
+  icon: z.string().nullable(),
+  side: z.enum(['bride', 'groom']).nullable(),
+});
+
+export type GroupInfo = z.infer<typeof GroupInfoSchema>;
+
+// Extended Guest schema with group info - used when fetching guests with their group populated
+// The group relationship is resolved at query time via the group_id FK
+export const GuestWithGroupAppSchema = GuestAppSchema.extend({
+  group: GroupInfoSchema.nullable().optional(),
+});
+
+export type GuestWithGroupApp = z.infer<typeof GuestWithGroupAppSchema>;
+
 // --- 2. The Database-Level Schema ---
 // This schema matches the raw data structure in your Supabase (SQL) table.
 // It uses snake_case.
@@ -44,7 +60,8 @@ export const GuestDbSchema = z.object({
   event_id: z.uuid().nullable(),
   name: z.string().max(255),
   phone_number: z.string().max(20).nullable(),
-  guest_group: z.string().max(100).nullable(),
+  // Foreign key to groups table
+  group_id: z.uuid().nullable(),
   rsvp_status: z.enum(['pending', 'confirmed', 'declined']).default('pending'),
   dietary_restrictions: z.string().nullable(),
   amount: z.number().int().default(1),
@@ -69,7 +86,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     eventId: dbData.event_id,
     name: dbData.name,
     phone: dbData.phone_number ?? undefined,
-    guestGroup: dbData.guest_group ?? undefined,
+    groupId: dbData.group_id ?? undefined,
     rsvpStatus,
     dietaryRestrictions: dbData.dietary_restrictions ?? undefined,
     amount: dbData.amount,
@@ -93,11 +110,8 @@ export const GuestUpsertSchema = z.object({
     .max(255, 'Name is too long')
     .optional(),
   phone: z.string().max(20, 'Phone number is too long').nullable().optional(),
-  guestGroup: z
-    .string()
-    .max(100, 'Guest group is too long')
-    .nullable()
-    .optional(),
+  // Foreign key to groups table
+  groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
     .enum(['pending', 'confirmed', 'declined'], {
       message: 'RSVP status must be pending, confirmed, or declined',
@@ -128,8 +142,8 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     if (appData.phone !== undefined) {
       dbData.phone_number = appData.phone ?? null;
     }
-    if (appData.guestGroup !== undefined) {
-      dbData.guest_group = appData.guestGroup ?? null;
+    if (appData.groupId !== undefined) {
+      dbData.group_id = appData.groupId ?? null;
     }
     if (appData.rsvpStatus !== undefined) {
       dbData.rsvp_status = appData.rsvpStatus;
@@ -149,3 +163,142 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
 );
 
 export type GuestDbUpsert = z.infer<typeof AppToDbTransformerSchema>;
+
+// --- 6. Group Schemas ---
+
+// Group App Schema - the canonical app-level schema for a Group
+export const GroupAppSchema = z.object({
+  id: z.uuid(),
+  eventId: z.uuid().nullable(),
+  name: z.string().max(100),
+  description: z.string().nullable(),
+  icon: z.string().nullable(),
+  side: z.enum(['bride', 'groom']).nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type GroupApp = z.infer<typeof GroupAppSchema>;
+
+// Extended Group schema with guests - used when fetching groups with their associated guests
+// The guests relationship is resolved at query time via the group_id FK on the guests table
+export const GroupWithGuestsAppSchema = GroupAppSchema.extend({
+  guests: z.array(GuestAppSchema).default([]),
+  guestCount: z.number().int().default(0),
+});
+
+export type GroupWithGuestsApp = z.infer<typeof GroupWithGuestsAppSchema>;
+
+// Group DB Schema - matches the raw data structure in Supabase
+export const GroupDbSchema = z.object({
+  id: z.uuid(),
+  event_id: z.uuid().nullable(),
+  name: z.string().max(100),
+  description: z.string().nullable(),
+  icon: z.string().nullable(),
+  side: z.enum(['bride', 'groom']).nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type GroupDb = z.infer<typeof GroupDbSchema>;
+
+// Zod-based "DB to App" Transformer Schema for Groups
+export const GroupDbToAppTransformerSchema = GroupDbSchema.transform(
+  (dbData) => ({
+    id: dbData.id,
+    eventId: dbData.event_id,
+    name: dbData.name,
+    description: dbData.description,
+    icon: dbData.icon,
+    side: dbData.side,
+    createdAt: dbData.created_at,
+    updatedAt: dbData.updated_at,
+  }),
+);
+
+// Available icon names for groups (using exact Tabler icon component names)
+// Lucide icons are prefixed with 'Lucide'
+export const GROUP_ICONS = [
+  'IconUsers',
+  'IconSchool',
+  'IconBriefcase',
+  'IconHome',
+  'LucideBeer',
+  'IconTank',
+  'IconHeart',
+  'IconStar',
+  'IconPlane',
+  'IconCrown',
+  'IconCar',
+  'IconCake',
+] as const;
+
+export type GroupIcon = (typeof GROUP_ICONS)[number];
+
+// Available sides for groups
+export const GROUP_SIDES = ['bride', 'groom'] as const;
+export type GroupSide = (typeof GROUP_SIDES)[number];
+
+export const GROUP_SIDE_LABELS: Record<GroupSide, string> = {
+  bride: "Bride's side",
+  groom: "Groom's side",
+};
+
+export const GroupUpsertSchema = z.object({
+  id: z.uuid().optional(),
+  eventId: z.uuid().nullable().optional(),
+  name: z
+    .string()
+    .min(1, 'Group name is required')
+    .max(100, 'Group name is too long')
+    .optional(),
+  description: z
+    .string()
+    .max(500, 'Description is too long')
+    .nullable()
+    .optional(),
+  icon: z
+    .enum(GROUP_ICONS, {
+      message: 'Please select a valid icon',
+    })
+    .optional(),
+  side: z
+    .enum(GROUP_SIDES, {
+      message: 'Please select a valid side',
+    })
+    .nullable()
+    .optional(),
+});
+
+export type GroupUpsert = z.infer<typeof GroupUpsertSchema>;
+
+// Zod-based "App to DB" Transformer Schema for Groups
+export const GroupAppToDbTransformerSchema = GroupUpsertSchema.transform(
+  (appData) => {
+    const dbData: Record<string, unknown> = {};
+
+    if (appData.id !== undefined) {
+      dbData.id = appData.id;
+    }
+    if (appData.eventId !== undefined) {
+      dbData.event_id = appData.eventId ?? null;
+    }
+    if (appData.name !== undefined) {
+      dbData.name = appData.name;
+    }
+    if (appData.description !== undefined) {
+      dbData.description = appData.description ?? null;
+    }
+    if (appData.icon !== undefined) {
+      dbData.icon = appData.icon ?? null;
+    }
+    if (appData.side !== undefined) {
+      dbData.side = appData.side ?? null;
+    }
+
+    return dbData;
+  },
+);
+
+export type GroupDbUpsert = z.infer<typeof GroupAppToDbTransformerSchema>;

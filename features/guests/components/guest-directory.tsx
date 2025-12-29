@@ -4,7 +4,7 @@ import { useActionState, startTransition } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter } from '@/features/guests/components/filters';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { useGuestFilters } from '@/features/guests/hooks';
 import {
   deleteGuest,
@@ -15,15 +15,15 @@ import {
 import { toast } from 'sonner';
 
 interface GuestDirectoryProps {
-  guests: GuestApp[];
-  onSelectGuest: (guest: GuestApp | null) => void;
+  guests: GuestWithGroupApp[];
+  onSelectGuest: (guest: GuestWithGroupApp | null) => void;
 }
 
 export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
   const {
     searchTerm,
     setSearchTerm,
-    selectedGroups,
+    selectedGroupIds,
     uniqueGroups,
     handleGroupToggle,
     handleSelectAllGroups,
@@ -108,7 +108,7 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
     onSelectGuest(guest || null);
   };
 
-  const handleDeleteGuest = (guest: GuestApp) => {
+  const handleDeleteGuest = (guest: GuestWithGroupApp) => {
     startTransition(() => {
       deleteAction({
         guestId: guest.id,
@@ -117,7 +117,7 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
     });
   };
 
-  const handleSendWhatsApp = (guest: GuestApp) => {
+  const handleSendWhatsApp = (guest: GuestWithGroupApp) => {
     if (!guest.phone || guest.phone.trim().length === 0) {
       toast.error('Cannot send WhatsApp message', {
         description: 'Guest does not have a phone number.',
@@ -146,7 +146,7 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
           <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
           <GroupFilter
             groups={uniqueGroups}
-            selectedGroups={selectedGroups}
+            selectedGroupIds={selectedGroupIds}
             onGroupToggle={handleGroupToggle}
             onSelectAll={handleSelectAllGroups}
             isAllSelected={isAllSelected}
@@ -158,7 +158,7 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
       <GuestsTable
         guests={guests}
         searchTerm={searchTerm}
-        groupFilter={selectedGroups}
+        groupFilter={selectedGroupIds}
         onSelectGuest={handleSelectGuest}
         onDeleteGuest={handleDeleteGuest}
         onSendWhatsApp={handleSendWhatsApp}

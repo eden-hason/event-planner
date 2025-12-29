@@ -2,10 +2,10 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 
-const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
+const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
   const statusConfig = {
     confirmed: {
       className: 'bg-green-100 text-green-800 border-green-200',
@@ -26,14 +26,14 @@ const getStatusBadge = (status: GuestApp['rsvpStatus']) => {
 };
 
 interface GuestColumnsOptions {
-  onDelete: (guest: GuestApp) => void;
-  onSendWhatsApp: (guest: GuestApp) => void;
+  onDelete: (guest: GuestWithGroupApp) => void;
+  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
   isSendingWhatsApp: boolean;
 }
 
 export const createGuestColumns = (
   options: GuestColumnsOptions,
-): ColumnDef<GuestApp>[] => [
+): ColumnDef<GuestWithGroupApp>[] => [
   {
     accessorKey: 'name',
     header: () => <div>Name</div>,
@@ -58,33 +58,35 @@ export const createGuestColumns = (
     },
   },
   {
-    accessorKey: 'guestGroup',
+    accessorKey: 'group',
     header: () => <div>Group</div>,
     cell: ({ row }) => {
-      const guestGroup = row.getValue('guestGroup') as string | undefined;
-      return guestGroup ? (
-        <Badge variant="outline">{guestGroup}</Badge>
+      const group = row.original.group;
+      return group ? (
+        <Badge variant="outline">{group.name}</Badge>
       ) : (
         <span className="text-sm text-gray-400">-</span>
       );
     },
-    filterFn: (row, id, value) => {
-      const group = row.getValue(id) as string | undefined;
+    filterFn: (row, _id, value) => {
+      const group = row.original.group;
       // If group is undefined, exclude from group filters unless no filters are selected
-      if (group === undefined || group === null || group === '') {
+      if (!group) {
         return Array.isArray(value) ? value.length === 0 : false;
       }
       if (Array.isArray(value)) {
-        return value.length === 0 || value.includes(group);
+        return value.length === 0 || value.includes(group.id);
       }
-      return group === value;
+      return group.id === value;
     },
   },
   {
     accessorKey: 'rsvpStatus',
     header: () => <div>RSVP Status</div>,
     cell: ({ row }) => {
-      const status = row.getValue('rsvpStatus') as GuestApp['rsvpStatus'];
+      const status = row.getValue(
+        'rsvpStatus',
+      ) as GuestWithGroupApp['rsvpStatus'];
       return getStatusBadge(status);
     },
   },

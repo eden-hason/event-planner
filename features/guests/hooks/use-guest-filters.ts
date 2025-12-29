@@ -1,45 +1,48 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 
-export function useGuestFilters(guests: GuestApp[]) {
+export function useGuestFilters(guests: GuestWithGroupApp[]) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
 
-  // Get unique groups from guests (filter out undefined, null, and empty strings)
+  // Get unique groups from guests (filter out undefined/null groups)
   const uniqueGroups = useMemo(() => {
-    const groups = new Set(
-      guests
-        .map((guest) => guest.guestGroup)
-        .filter(
-          (group): group is string =>
-            group !== undefined && group !== null && group.trim() !== '',
-        ),
+    const groupMap = new Map<string, GroupInfo>();
+    guests.forEach((guest) => {
+      if (guest.group && !groupMap.has(guest.group.id)) {
+        groupMap.set(guest.group.id, guest.group);
+      }
+    });
+    return Array.from(groupMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
     );
-    return Array.from(groups).sort();
   }, [guests]);
 
-  const handleGroupToggle = (group: string) => {
-    setSelectedGroups((prev) =>
-      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
+  const handleGroupToggle = (groupId: string) => {
+    setSelectedGroupIds((prev) =>
+      prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId],
     );
   };
 
   const handleSelectAllGroups = () => {
-    if (selectedGroups.length === uniqueGroups.length) {
-      setSelectedGroups([]);
+    if (selectedGroupIds.length === uniqueGroups.length) {
+      setSelectedGroupIds([]);
     } else {
-      setSelectedGroups([...uniqueGroups]);
+      setSelectedGroupIds(uniqueGroups.map((g) => g.id));
     }
   };
 
-  const isAllSelected = selectedGroups.length === uniqueGroups.length;
+  const isAllSelected =
+    uniqueGroups.length > 0 && selectedGroupIds.length === uniqueGroups.length;
 
   return {
     searchTerm,
     setSearchTerm,
-    selectedGroups,
+    selectedGroupIds,
     uniqueGroups,
     handleGroupToggle,
     handleSelectAllGroups,

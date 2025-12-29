@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useActionState, startTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import {
@@ -13,24 +14,76 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { CalendarSync, PlusIcon } from 'lucide-react';
-import { GuestApp } from '../schemas';
+import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { GroupsDirectory, CreateGroupDialog } from '@/features/guests/components/groups';
+import { upsertGroup, UpsertGroupState } from '../actions/groups';
 
 interface GuestsPageProps {
-  guests: GuestApp[];
+  guests: GuestWithGroupApp[];
   eventId: string;
+  groups: GroupWithGuestsApp[];
 }
 
-export function GuestsPage({ guests, eventId }: GuestsPageProps) {
+export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedGuest, setSelectedGuest] = useState<GuestApp | null>(null);
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
+    null,
+  );
+
+  // Create group action with toast
+  const createGroupActionWithToast = async (
+    prevState: UpsertGroupState | null,
+    params: { formData: FormData },
+  ): Promise<UpsertGroupState | null> => {
+    const groupName = params.formData.get('name') as string;
+
+    const promise = upsertGroup(eventId, params.formData).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create group.');
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: `Creating ${groupName}...`,
+      success: (data) => {
+        return data.message || 'Group created successfully.';
+      },
+      error: (err) => {
+        return err instanceof Error
+          ? err.message
+          : 'Failed to create group. Please try again.';
+      },
+    });
+
+    try {
+      return await promise;
+    } catch {
+      return null;
+    }
+  };
+
+  const [, createGroupAction] = useActionState(createGroupActionWithToast, null);
+
+  const handleCreateGroup = (formData: FormData) => {
+    startTransition(() => {
+      createGroupAction({ formData });
+    });
+  };
+
+  const handleOpenGroupDialog = () => {
+    setIsGroupDialogOpen(true);
+  };
 
   const handleAddGuest = () => {
     setSelectedGuest(null);
     setIsDrawerOpen(true);
   };
 
-  const handleSelectGuest = (guest: GuestApp | null) => {
+  const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
     setSelectedGuest(guest);
     setIsDrawerOpen(true);
   };
@@ -42,7 +95,7 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
     }
   };
 
-  const headerAction = useMemo(
+  const guestsHeaderAction = useMemo(
     () => (
       <Button onClick={handleAddGuest}>
         <PlusIcon className="size-4" />
@@ -52,15 +105,68 @@ export function GuestsPage({ guests, eventId }: GuestsPageProps) {
     [handleAddGuest],
   );
 
-  useFeatureHeader({
+  const groupHeaderAction = useMemo(
+    () => (
+      <Button onClick={handleOpenGroupDialog}>
+        <PlusIcon className="size-4" />
+        Add Group
+      </Button>
+    ),
+    [],
+  );
+
+  const { setHeader } = useFeatureHeader({
     title: 'Guests',
     description: 'Manage your event guests',
-    action: headerAction,
+    action: guestsHeaderAction,
   });
+
+  const handleTabsChange = useCallback(
+    (value: string) => {
+      setHeader({
+        title: 'Guests',
+        description: 'Manage your event guests',
+        action: value === 'guests' ? guestsHeaderAction : groupHeaderAction,
+      });
+    },
+    [setHeader, guestsHeaderAction, groupHeaderAction],
+  );
 
   return (
     <>
-      <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />
+      <Tabs defaultValue="guests" onValueChange={handleTabsChange}>
+        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+          <TabsTrigger
+            value="guests"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            All Guests
+          </TabsTrigger>
+          <TabsTrigger
+            value="groups"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Groups
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="guests">
+          <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />
+        </TabsContent>
+        <TabsContent value="groups">
+          <GroupsDirectory 
+            eventId={eventId} 
+            groups={groups} 
+            onAddGroup={handleOpenGroupDialog}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Create group dialog */}
+      <CreateGroupDialog
+        open={isGroupDialogOpen}
+        onOpenChange={setIsGroupDialogOpen}
+        onCreateGroup={handleCreateGroup}
+      />
 
       {/* Guest form drawer */}
       <Drawer
