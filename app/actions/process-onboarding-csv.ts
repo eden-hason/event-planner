@@ -131,7 +131,6 @@ export async function processOnboardingCSV(): Promise<ProcessOnboardingCSVResult
           event_id: eventId,
           name: validatedGuest.name,
           phone_number: validatedGuest.phone,
-          guest_group: validatedGuest.guestGroup,
           // rsvp_status: validatedGuest.rsvpStatus,
           amount: validatedGuest.amount,
           dietary_restrictions: validatedGuest.dietaryRestrictions || null,
