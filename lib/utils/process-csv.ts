@@ -289,7 +289,6 @@ export async function processCSVFromStorage(
       const guestData: GuestUpsert = {
         name,
         phone,
-        guestGroup,
         rsvpStatus,
         amount: Math.floor(amount),
         notes: undefined,

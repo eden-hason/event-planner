@@ -51,7 +51,6 @@ export function GuestForm({
     defaultValues: {
       name: guest?.name || '',
       phone: guest?.phone || '',
-      guestGroup: guest?.guestGroup || '',
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
@@ -67,7 +66,6 @@ export function GuestForm({
       form.reset({
         name: guest.name || '',
         phone: guest.phone || '',
-        guestGroup: guest.guestGroup || '',
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
@@ -189,34 +187,6 @@ export function GuestForm({
         />
 
         <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="guestGroup"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Guest Group</FormLabel>
-                <Select
-                  value={field.value || undefined}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a group" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="friends">Friends</SelectItem>
-                    <SelectItem value="colleagues">Colleagues</SelectItem>
-                    <SelectItem value="acquaintances">Acquaintances</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <FormField
             control={form.control}
             name="rsvpStatus"
