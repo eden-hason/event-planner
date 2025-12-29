@@ -28,11 +28,13 @@ import {
   type GuestUpsert,
   GuestUpsertSchema,
   GuestApp,
+  GroupApp,
 } from '@/features/guests/schemas';
 
 interface GuestFormProps {
   eventId: string;
   guest?: GuestApp | null; // Optional - if provided, form is in edit mode
+  groups?: GroupApp[]; // Available groups for the event
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -40,6 +42,7 @@ interface GuestFormProps {
 export function GuestForm({
   eventId,
   guest,
+  groups = [],
   onSuccess,
   onCancel,
 }: GuestFormProps) {
@@ -51,6 +54,7 @@ export function GuestForm({
     defaultValues: {
       name: guest?.name || '',
       phone: guest?.phone || '',
+      groupId: guest?.groupId || undefined,
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
@@ -66,6 +70,7 @@ export function GuestForm({
       form.reset({
         name: guest.name || '',
         phone: guest.phone || '',
+        groupId: guest.groupId || undefined,
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
@@ -203,6 +208,37 @@ export function GuestForm({
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="declined">Declined</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="groupId"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Group</FormLabel>
+                <Select
+                  value={field.value || 'none'}
+                  onValueChange={(value) =>
+                    field.onChange(value === 'none' ? undefined : value)
+                  }
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select group" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">No group</SelectItem>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

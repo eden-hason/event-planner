@@ -197,6 +197,7 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
             <GuestForm
               eventId={eventId}
               guest={selectedGuest}
+              groups={groups}
               onSuccess={() => handleDrawerClose(false)}
               onCancel={() => handleDrawerClose(false)}
             />

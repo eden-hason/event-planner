@@ -13,6 +13,7 @@ import {
   SendWhatsAppMessageState,
 } from '@/features/guests/actions';
 import { toast } from 'sonner';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
@@ -140,35 +141,33 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex w-full items-center justify-between space-x-2">
-          <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-          <GroupFilter
-            groups={uniqueGroups}
-            selectedGroupIds={selectedGroupIds}
-            onGroupToggle={handleGroupToggle}
-            onSelectAll={handleSelectAllGroups}
-            isAllSelected={isAllSelected}
-          />
-        </div>
-      </div>
-
-      {/* Guests table */}
-      <GuestsTable
-        guests={guests}
-        searchTerm={searchTerm}
-        groupFilter={selectedGroupIds}
-        onSelectGuest={handleSelectGuest}
-        onDeleteGuest={handleDeleteGuest}
-        onSendWhatsApp={handleSendWhatsApp}
-        isSendingWhatsApp={isSendingWhatsApp}
-        onAddGuest={handleAddGuestClick}
-        onUploadFile={() => {
-          // TODO: Implement file upload
-          toast.info('File upload coming soon!');
-        }}
-      />
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        <GroupFilter
+          groups={uniqueGroups}
+          selectedGroupIds={selectedGroupIds}
+          onGroupToggle={handleGroupToggle}
+          onSelectAll={handleSelectAllGroups}
+          isAllSelected={isAllSelected}
+        />
+      </CardHeader>
+      <CardContent>
+        <GuestsTable
+          guests={guests}
+          searchTerm={searchTerm}
+          groupFilter={selectedGroupIds}
+          onSelectGuest={handleSelectGuest}
+          onDeleteGuest={handleDeleteGuest}
+          onSendWhatsApp={handleSendWhatsApp}
+          isSendingWhatsApp={isSendingWhatsApp}
+          onAddGuest={handleAddGuestClick}
+          onUploadFile={() => {
+            // TODO: Implement file upload
+            toast.info('File upload coming soon!');
+          }}
+        />
+      </CardContent>
+    </Card>
   );
 }
