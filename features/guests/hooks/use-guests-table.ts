@@ -8,15 +8,15 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
 
 interface UseGuestsTableProps {
-  guests: GuestApp[];
+  guests: GuestWithGroupApp[];
   searchTerm: string;
-  groupFilter: string[];
-  onDeleteGuest: (guest: GuestApp) => void;
-  onSendWhatsApp: (guest: GuestApp) => void;
+  groupFilter: string[]; // Array of group IDs
+  onDeleteGuest: (guest: GuestWithGroupApp) => void;
+  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
   isSendingWhatsApp: boolean;
 }
 
@@ -39,19 +39,19 @@ export function useGuestsTable({
   // Update column filters when groupFilter changes
   useEffect(() => {
     if (groupFilter.length === 0) {
-      setColumnFilters((prev) => prev.filter((f) => f.id !== 'guestGroup'));
+      setColumnFilters((prev) => prev.filter((f) => f.id !== 'group'));
     } else {
       setColumnFilters((prev) => {
-        const filtered = prev.filter((f) => f.id !== 'guestGroup');
-        return [...filtered, { id: 'guestGroup', value: groupFilter }];
+        const filtered = prev.filter((f) => f.id !== 'group');
+        return [...filtered, { id: 'group', value: groupFilter }];
       });
     }
   }, [groupFilter]);
 
   // Custom global filter function for searching across multiple columns
   const globalFilterFn = (
-    row: Row<GuestApp>,
-    columnId: string,
+    row: Row<GuestWithGroupApp>,
+    _columnId: string,
     filterValue: string,
   ): boolean => {
     const searchLower = filterValue.toLowerCase();
@@ -60,7 +60,7 @@ export function useGuestsTable({
     return (
       guest.name.toLowerCase().includes(searchLower) ||
       (guest.phone?.toLowerCase().includes(searchLower) ?? false) ||
-      guest.guestGroup?.toLowerCase().includes(searchLower) ||
+      (guest.group?.name.toLowerCase().includes(searchLower) ?? false) ||
       (guest.notes?.toLowerCase().includes(searchLower) ?? false)
     );
   };

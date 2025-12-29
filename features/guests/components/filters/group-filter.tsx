@@ -7,31 +7,37 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ChevronDown, Check } from 'lucide-react';
+import { GroupInfo } from '@/features/guests/schemas';
 
 interface GroupFilterProps {
-  groups: string[];
-  selectedGroups: string[];
-  onGroupToggle: (group: string) => void;
+  groups: GroupInfo[];
+  selectedGroupIds: string[];
+  onGroupToggle: (groupId: string) => void;
   onSelectAll: () => void;
   isAllSelected: boolean;
 }
 
 export function GroupFilter({
   groups,
-  selectedGroups,
+  selectedGroupIds,
   onGroupToggle,
   onSelectAll,
   isAllSelected,
 }: GroupFilterProps) {
+  // Find selected group names for display
+  const selectedGroupNames = groups
+    .filter((g) => selectedGroupIds.includes(g.id))
+    .map((g) => g.name);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-[180px] justify-between">
-          {selectedGroups.length === 0
+          {selectedGroupIds.length === 0
             ? 'Filter by group'
-            : selectedGroups.length === 1
-              ? selectedGroups[0]
-              : `${selectedGroups.length} groups selected`}
+            : selectedGroupIds.length === 1
+              ? selectedGroupNames[0]
+              : `${selectedGroupIds.length} groups selected`}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -39,11 +45,11 @@ export function GroupFilter({
         <div className="p-2">
           <div className="max-h-[300px] overflow-y-auto">
             {groups.map((group) => {
-              const isSelected = selectedGroups.includes(group);
+              const isSelected = selectedGroupIds.includes(group.id);
               return (
                 <div
-                  key={group}
-                  onClick={() => onGroupToggle(group)}
+                  key={group.id}
+                  onClick={() => onGroupToggle(group.id)}
                   className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm transition-colors"
                 >
                   {isSelected ? (
@@ -51,7 +57,7 @@ export function GroupFilter({
                   ) : (
                     <div className="h-4 w-4 shrink-0" />
                   )}
-                  <span>{group}</span>
+                  <span>{group.name}</span>
                 </div>
               );
             })}

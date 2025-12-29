@@ -8,12 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { GuestApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp } from '@/features/guests/schemas';
 
 interface RowActionsProps {
-  guest: GuestApp;
-  onDelete: (guest: GuestApp) => void;
-  onSendWhatsApp: (guest: GuestApp) => void;
+  guest: GuestWithGroupApp;
+  onDelete: (guest: GuestWithGroupApp) => void;
+  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
   isSendingWhatsApp: boolean;
 }
 

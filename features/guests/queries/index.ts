@@ -1,1 +1,2 @@
-export { getEventGuests } from './guests';
+export { getEventGuests, getEventGuestsWithGroups } from './guests';
+export { getEventGroups, getEventGroupsWithGuests } from './groups';
