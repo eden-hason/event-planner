@@ -6,10 +6,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { GroupWithGuestsApp } from '../../schemas';
 import { GroupCard } from './group-card';
-import {
-  deleteGroup,
-  DeleteGroupState,
-} from '../../actions/groups';
+import { deleteGroup, DeleteGroupState } from '../../actions/groups';
 
 interface GroupsDirectoryProps {
   eventId: string;
@@ -17,7 +14,11 @@ interface GroupsDirectoryProps {
   onAddGroup: () => void;
 }
 
-export function GroupsDirectory({ eventId, groups, onAddGroup }: GroupsDirectoryProps) {
+export function GroupsDirectory({
+  eventId,
+  groups,
+  onAddGroup,
+}: GroupsDirectoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Delete group action with toast
@@ -81,16 +82,16 @@ export function GroupsDirectory({ eventId, groups, onAddGroup }: GroupsDirectory
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {filteredGroups.map((group) => (
-          <GroupCard 
-            key={group.id} 
-            group={group} 
-            eventId={eventId} 
-            onDeleteGroup={() => handleDeleteGroup(group.id, group.name)} 
+          <GroupCard
+            key={group.id}
+            group={group}
+            eventId={eventId}
+            onDeleteGroup={() => handleDeleteGroup(group.id, group.name)}
           />
         ))}
         <button
           onClick={onAddGroup}
-          className="hover:border-primary hover:text-foreground flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
+          className="hover:border-primary hover:text-foreground flex min-h-[275px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
         >
           <div className="rounded-full bg-white p-4">
             <Plus className="text-primary h-6 w-6" />

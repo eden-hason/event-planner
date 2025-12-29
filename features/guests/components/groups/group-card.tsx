@@ -83,7 +83,7 @@ export function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+              <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
                 <span className="sr-only">Open menu</span>
                 <EllipsisVertical className="h-4 w-4" />
               </Button>
