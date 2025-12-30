@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useMemo, useState, useActionState, startTransition } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useActionState,
+  startTransition,
+} from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { GuestDirectory } from './guest-directory';
@@ -17,7 +23,10 @@ import { CalendarSync, PlusIcon } from 'lucide-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { GroupsDirectory, CreateGroupDialog } from '@/features/guests/components/groups';
+import {
+  GroupsDirectory,
+  CreateGroupDialog,
+} from '@/features/guests/components/groups';
 import { upsertGroup, UpsertGroupState } from '../actions/groups';
 
 interface GuestsPageProps {
@@ -66,7 +75,10 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
     }
   };
 
-  const [, createGroupAction] = useActionState(createGroupActionWithToast, null);
+  const [, createGroupAction] = useActionState(
+    createGroupActionWithToast,
+    null,
+  );
 
   const handleCreateGroup = (formData: FormData) => {
     startTransition(() => {
@@ -150,12 +162,16 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="guests">
-          <GuestDirectory guests={guests} onSelectGuest={handleSelectGuest} />
+          <GuestDirectory
+            guests={guests}
+            groups={groups}
+            onSelectGuest={handleSelectGuest}
+          />
         </TabsContent>
         <TabsContent value="groups">
-          <GroupsDirectory 
-            eventId={eventId} 
-            groups={groups} 
+          <GroupsDirectory
+            eventId={eventId}
+            groups={groups}
             onAddGroup={handleOpenGroupDialog}
           />
         </TabsContent>

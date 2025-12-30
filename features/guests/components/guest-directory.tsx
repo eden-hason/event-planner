@@ -4,7 +4,7 @@ import { useActionState, startTransition } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter } from '@/features/guests/components/filters';
-import { GuestWithGroupApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters } from '@/features/guests/hooks';
 import {
   deleteGuest,
@@ -17,19 +17,23 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
+  groups: GroupInfo[];
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
 }
 
-export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
+export function GuestDirectory({
+  guests,
+  groups,
+  onSelectGuest,
+}: GuestDirectoryProps) {
   const {
     searchTerm,
     setSearchTerm,
     selectedGroupIds,
-    uniqueGroups,
     handleGroupToggle,
     handleSelectAllGroups,
     isAllSelected,
-  } = useGuestFilters(guests);
+  } = useGuestFilters(groups);
 
   // Delete guest action with toast
   const deleteActionWithToast = async (
@@ -145,7 +149,7 @@ export function GuestDirectory({ guests, onSelectGuest }: GuestDirectoryProps) {
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         <GroupFilter
-          groups={uniqueGroups}
+          groups={groups}
           selectedGroupIds={selectedGroupIds}
           onGroupToggle={handleGroupToggle}
           onSelectAll={handleSelectAllGroups}
