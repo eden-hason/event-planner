@@ -1,24 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
+import { useState } from 'react';
+import { GroupInfo } from '@/features/guests/schemas';
 
-export function useGuestFilters(guests: GuestWithGroupApp[]) {
+export function useGuestFilters(groups: GroupInfo[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
-
-  // Get unique groups from guests (filter out undefined/null groups)
-  const uniqueGroups = useMemo(() => {
-    const groupMap = new Map<string, GroupInfo>();
-    guests.forEach((guest) => {
-      if (guest.group && !groupMap.has(guest.group.id)) {
-        groupMap.set(guest.group.id, guest.group);
-      }
-    });
-    return Array.from(groupMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
-  }, [guests]);
 
   const handleGroupToggle = (groupId: string) => {
     setSelectedGroupIds((prev) =>
@@ -29,21 +16,20 @@ export function useGuestFilters(guests: GuestWithGroupApp[]) {
   };
 
   const handleSelectAllGroups = () => {
-    if (selectedGroupIds.length === uniqueGroups.length) {
+    if (selectedGroupIds.length === groups.length) {
       setSelectedGroupIds([]);
     } else {
-      setSelectedGroupIds(uniqueGroups.map((g) => g.id));
+      setSelectedGroupIds(groups.map((g) => g.id));
     }
   };
 
   const isAllSelected =
-    uniqueGroups.length > 0 && selectedGroupIds.length === uniqueGroups.length;
+    groups.length > 0 && selectedGroupIds.length === groups.length;
 
   return {
     searchTerm,
     setSearchTerm,
     selectedGroupIds,
-    uniqueGroups,
     handleGroupToggle,
     handleSelectAllGroups,
     isAllSelected,

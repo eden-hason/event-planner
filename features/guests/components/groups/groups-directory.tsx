@@ -91,7 +91,7 @@ export function GroupsDirectory({
         ))}
         <button
           onClick={onAddGroup}
-          className="hover:border-primary hover:text-foreground flex min-h-[275px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
+          className="hover:border-primary hover:text-foreground border-muted-foreground/50 flex min-h-[275px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
         >
           <div className="rounded-full bg-white p-4">
             <Plus className="text-primary h-6 w-6" />
