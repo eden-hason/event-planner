@@ -47,6 +47,10 @@ export async function upsertGuest(
     if (parsedData.amount && typeof parsedData.amount === 'string') {
       parsedData.amount = Number(parsedData.amount);
     }
+    // Handle explicit null for groupId (remove from group)
+    if (parsedData.groupId === 'null') {
+      parsedData.groupId = null;
+    }
 
     const validationResult = GuestUpsertSchema.safeParse(parsedData);
     if (!validationResult.success) {

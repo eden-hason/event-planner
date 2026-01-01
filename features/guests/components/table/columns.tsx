@@ -4,6 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
+import { GroupIcon } from '../groups';
 
 const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
   const statusConfig = {
@@ -63,7 +64,10 @@ export const createGuestColumns = (
     cell: ({ row }) => {
       const group = row.original.group;
       return group ? (
-        <Badge variant="outline">{group.name}</Badge>
+        <Badge variant="outline" className="gap-1.5">
+          <GroupIcon iconName={group.icon} size="sm" />
+          {group.name}
+        </Badge>
       ) : (
         <span className="text-sm text-gray-400">-</span>
       );

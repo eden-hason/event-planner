@@ -30,6 +30,7 @@ import {
   GuestApp,
   GroupApp,
 } from '@/features/guests/schemas';
+import { GroupIcon } from './groups';
 
 interface GuestFormProps {
   eventId: string;
@@ -54,7 +55,7 @@ export function GuestForm({
     defaultValues: {
       name: guest?.name || '',
       phone: guest?.phone || '',
-      groupId: guest?.groupId || undefined,
+      groupId: guest?.groupId ?? null,
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
@@ -70,7 +71,7 @@ export function GuestForm({
       form.reset({
         name: guest.name || '',
         phone: guest.phone || '',
-        groupId: guest.groupId || undefined,
+        groupId: guest.groupId ?? null,
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
@@ -117,7 +118,12 @@ export function GuestForm({
     }
 
     Object.entries(values).forEach(([key, value]) => {
-      // For optional fields like guestGroup, only include if value is truthy
+      // For groupId, explicitly send 'null' string to signal removal from group
+      if (key === 'groupId') {
+        formData.append(key, value ? String(value) : 'null');
+        return;
+      }
+      // For other optional fields, only include if value is truthy
       // Empty strings should be treated as undefined for optional fields
       if (value !== undefined && value !== null && value !== '') {
         formData.append(key, String(value));
@@ -218,32 +224,47 @@ export function GuestForm({
           <FormField
             control={form.control}
             name="groupId"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Group</FormLabel>
-                <Select
-                  value={field.value || 'none'}
-                  onValueChange={(value) =>
-                    field.onChange(value === 'none' ? undefined : value)
-                  }
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select group" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">No group</SelectItem>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectedGroup = groups.find((g) => g.id === field.value);
+              return (
+                <FormItem className="flex-1">
+                  <FormLabel>Group</FormLabel>
+                  <Select
+                    value={field.value || 'none'}
+                    onValueChange={(value) =>
+                      field.onChange(value === 'none' ? null : value)
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select group">
+                          {selectedGroup ? (
+                            <span className="flex items-center gap-2">
+                              <GroupIcon iconName={selectedGroup.icon} size="sm" />
+                              {selectedGroup.name}
+                            </span>
+                          ) : (
+                            'No group'
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">No group</SelectItem>
+                      {groups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          <span className="flex items-center gap-2">
+                            <GroupIcon iconName={group.icon} size="sm" />
+                            {group.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 
