@@ -20,6 +20,11 @@ export type DeleteGroupState = {
   message: string;
 };
 
+export type UpdateGroupMembersState = {
+  success: boolean;
+  message: string;
+};
+
 export async function upsertGroup(
   eventId: string,
   formData: FormData,
@@ -117,6 +122,107 @@ export async function deleteGroup(
     return {
       success: false,
       message: 'Failed to delete group. Please try again.',
+    };
+  }
+}
+
+/**
+ * Updates the members of a group by setting/unsetting the group_id on guests.
+ * Uses PostgreSQL batch updates for efficiency:
+ * 1. Sets group_id = groupId for all guests that should be in the group
+ * 2. Sets group_id = null for guests being removed from the group
+ *
+ * @param eventId - The event ID for path revalidation
+ * @param groupId - The group ID to update
+ * @param memberGuestIds - Array of guest IDs that should be members of this group
+ * @param previousMemberIds - Array of guest IDs that were previously members (for removal)
+ */
+export async function updateGroupMembers(
+  eventId: string,
+  groupId: string,
+  memberGuestIds: string[],
+  previousMemberIds: string[],
+): Promise<UpdateGroupMembersState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return {
+        success: false,
+        message: 'You must be logged in to update group members',
+      };
+    }
+
+    const supabase = await createClient();
+
+    // Calculate guests to add and remove
+    const guestsToAdd = memberGuestIds.filter(
+      (id) => !previousMemberIds.includes(id),
+    );
+    const guestsToRemove = previousMemberIds.filter(
+      (id) => !memberGuestIds.includes(id),
+    );
+
+    // Perform batch updates using PostgreSQL's efficient IN clause
+    // Both operations are independent and can fail separately,
+    // but we execute them sequentially for simplicity
+
+    // Add guests to group (set group_id)
+    if (guestsToAdd.length > 0) {
+      const { error: addError } = await supabase
+        .from('guests')
+        .update({ group_id: groupId })
+        .in('id', guestsToAdd)
+        .eq('event_id', eventId);
+
+      if (addError) {
+        console.error('Error adding guests to group:', addError);
+        return {
+          success: false,
+          message: 'Database error: Could not add guests to group',
+        };
+      }
+    }
+
+    // Remove guests from group (set group_id to null)
+    if (guestsToRemove.length > 0) {
+      const { error: removeError } = await supabase
+        .from('guests')
+        .update({ group_id: null })
+        .in('id', guestsToRemove)
+        .eq('event_id', eventId);
+
+      if (removeError) {
+        console.error('Error removing guests from group:', removeError);
+        return {
+          success: false,
+          message: 'Database error: Could not remove guests from group',
+        };
+      }
+    }
+
+    revalidatePath(`/app/${eventId}/guests`);
+
+    const addedCount = guestsToAdd.length;
+    const removedCount = guestsToRemove.length;
+
+    let message = 'Group members updated successfully.';
+    if (addedCount > 0 && removedCount > 0) {
+      message = `Added ${addedCount} and removed ${removedCount} guests`;
+    } else if (addedCount > 0) {
+      message = `Added ${addedCount} guest${addedCount > 1 ? 's' : ''} to group`;
+    } else if (removedCount > 0) {
+      message = `Removed ${removedCount} guest${removedCount > 1 ? 's' : ''} from group`;
+    }
+
+    return {
+      success: true,
+      message,
+    };
+  } catch (error) {
+    console.error('Update group members error:', error);
+    return {
+      success: false,
+      message: 'Failed to update group members. Please try again.',
     };
   }
 }

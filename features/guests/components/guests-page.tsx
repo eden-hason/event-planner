@@ -172,6 +172,7 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
           <GroupsDirectory
             eventId={eventId}
             groups={groups}
+            guests={guests}
             onAddGroup={handleOpenGroupDialog}
           />
         </TabsContent>

@@ -4,22 +4,32 @@ import { Plus, Search } from 'lucide-react';
 import { useState, useActionState, startTransition } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { GroupWithGuestsApp } from '../../schemas';
+import { GroupWithGuestsApp, GuestApp } from '../../schemas';
 import { GroupCard } from './group-card';
+import { AssignGuestsDrawer } from './assign-guests-drawer';
 import { deleteGroup, DeleteGroupState } from '../../actions/groups';
 
 interface GroupsDirectoryProps {
   eventId: string;
   groups: GroupWithGuestsApp[];
+  guests: GuestApp[];
   onAddGroup: () => void;
 }
 
 export function GroupsDirectory({
   eventId,
   groups,
+  guests,
   onAddGroup,
 }: GroupsDirectoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [assignDrawerOpen, setAssignDrawerOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<GroupWithGuestsApp | null>(
+    null,
+  );
+
+  // Compute available guests (only ungrouped guests)
+  const availableGuests = guests.filter((guest) => !guest.groupId);
 
   // Delete group action with toast
   const deleteActionWithToast = async (
@@ -68,6 +78,11 @@ export function GroupsDirectory({
     });
   };
 
+  const handleAssignGuests = (group: GroupWithGuestsApp) => {
+    setSelectedGroup(group);
+    setAssignDrawerOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -87,6 +102,7 @@ export function GroupsDirectory({
             group={group}
             eventId={eventId}
             onDeleteGroup={() => handleDeleteGroup(group.id, group.name)}
+            onAssignGuestsClick={() => handleAssignGuests(group)}
           />
         ))}
         <button
@@ -102,6 +118,14 @@ export function GroupsDirectory({
           </span>
         </button>
       </div>
+
+      <AssignGuestsDrawer
+        open={assignDrawerOpen}
+        onOpenChange={setAssignDrawerOpen}
+        group={selectedGroup}
+        availableGuests={availableGuests}
+        eventId={eventId}
+      />
     </div>
   );
 }
