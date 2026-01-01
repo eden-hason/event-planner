@@ -36,9 +36,14 @@ interface GroupCardProps {
   group: GroupWithGuestsApp;
   eventId: string;
   onDeleteGroup: () => void;
+  onAssignGuestsClick: () => void;
 }
 
-export function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
+export function GroupCard({
+  group,
+  onDeleteGroup,
+  onAssignGuestsClick,
+}: GroupCardProps) {
   return (
     <Card className="relative gap-2">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -122,7 +127,11 @@ export function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
       </CardContent>
 
       <CardFooter className="mt-4">
-        <Button variant="secondary" className="w-full">
+        <Button
+          variant="secondary"
+          className="bg-primary/10 text-primary hover:bg-primary/20 w-full"
+          onClick={onAssignGuestsClick}
+        >
           <IconUserPlus className="size-4" />
           Assign guests
         </Button>
