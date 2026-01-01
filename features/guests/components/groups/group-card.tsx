@@ -1,7 +1,6 @@
 'use client';
 
-import { EllipsisVertical, Trash2, Beer, type LucideIcon } from 'lucide-react';
-import * as TablerIcons from '@tabler/icons-react';
+import { EllipsisVertical, Trash2 } from 'lucide-react';
 import {
   Card,
   CardAction,
@@ -22,11 +21,7 @@ import { GroupWithGuestsApp } from '../../schemas';
 import { CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { IconUserFilled, IconUserPlus } from '@tabler/icons-react';
-
-// Map of Lucide icons used in the group icon selector
-const LucideIcons: Record<string, LucideIcon> = {
-  LucideBeer: Beer,
-};
+import { GroupIcon } from './group-icon';
 
 function getInitials(name: string): string {
   return name
@@ -41,23 +36,6 @@ interface GroupCardProps {
   group: GroupWithGuestsApp;
   eventId: string;
   onDeleteGroup: () => void;
-}
-
-function GroupIcon({ iconName }: { iconName: string | null }) {
-  if (!iconName) return null;
-
-  const isLucideIcon = iconName.startsWith('Lucide');
-
-  if (isLucideIcon) {
-    const LucideIcon = LucideIcons[iconName];
-    return LucideIcon ? <LucideIcon className="h-5 w-5" /> : null;
-  }
-
-  const TablerIcon = TablerIcons[
-    iconName as keyof typeof TablerIcons
-  ] as React.ComponentType<{ className?: string }>;
-
-  return TablerIcon ? <TablerIcon className="h-5 w-5" /> : null;
 }
 
 export function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
