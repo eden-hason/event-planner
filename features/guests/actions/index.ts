@@ -9,9 +9,9 @@ export {
 
 export {
   upsertGroup,
-  deleteGroup,
+  deleteGroups,
   updateGroupMembers,
   type UpsertGroupState,
-  type DeleteGroupState,
+  type DeleteGroupsState,
   type UpdateGroupMembersState,
 } from './groups';

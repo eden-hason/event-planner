@@ -15,9 +15,10 @@ export type UpsertGroupState = {
   message?: string | null;
 };
 
-export type DeleteGroupState = {
+export type DeleteGroupsState = {
   success: boolean;
   message: string;
+  deletedCount?: number;
 };
 
 export type UpdateGroupMembersState = {
@@ -87,10 +88,17 @@ export async function upsertGroup(
   }
 }
 
-export async function deleteGroup(
+/**
+ * Deletes one or more groups in a single database operation.
+ * Uses PostgreSQL's IN clause for efficient batch deletion.
+ *
+ * @param eventId - The event ID for path revalidation and security
+ * @param groupIds - Single group ID or array of group IDs to delete
+ */
+export async function deleteGroups(
   eventId: string,
-  groupId: string,
-): Promise<DeleteGroupState> {
+  groupIds: string | string[],
+): Promise<DeleteGroupsState> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -100,28 +108,47 @@ export async function deleteGroup(
       };
     }
 
-    const supabase = await createClient();
+    const ids = Array.isArray(groupIds) ? groupIds : [groupIds];
 
-    const { error } = await supabase.from('groups').delete().eq('id', groupId);
-
-    if (error) {
-      console.error(error);
+    if (ids.length === 0) {
       return {
         success: false,
-        message: 'Database error: Could not delete group.',
+        message: 'No groups selected for deletion',
+      };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('groups')
+      .delete()
+      .in('id', ids)
+      .eq('event_id', eventId);
+
+    if (error) {
+      console.error('Error deleting groups:', error);
+      return {
+        success: false,
+        message: 'Database error: Could not delete group(s)',
       };
     }
 
     revalidatePath(`/app/${eventId}/guests`);
+
+    const count = ids.length;
     return {
       success: true,
-      message: 'Group deleted successfully.',
+      message:
+        count === 1
+          ? 'Group deleted successfully'
+          : `${count} groups deleted successfully`,
+      deletedCount: count,
     };
   } catch (error) {
-    console.error('Delete group error:', error);
+    console.error('Delete groups error:', error);
     return {
       success: false,
-      message: 'Failed to delete group. Please try again.',
+      message: 'Failed to delete group(s). Please try again',
     };
   }
 }
