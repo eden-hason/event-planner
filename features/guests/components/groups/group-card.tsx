@@ -1,6 +1,6 @@
 'use client';
 
-import { EllipsisVertical, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Trash2, SquareMousePointer } from 'lucide-react';
 import {
   Card,
   CardAction,
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,15 +38,25 @@ interface GroupCardProps {
   eventId: string;
   onDeleteGroup: () => void;
   onAssignGuestsClick: () => void;
+  isSelected?: boolean;
+  onSelectGroup?: () => void;
+  selectionMode?: boolean;
 }
 
 export function GroupCard({
   group,
   onDeleteGroup,
   onAssignGuestsClick,
+  isSelected = false,
+  onSelectGroup,
+  selectionMode = false,
 }: GroupCardProps) {
   return (
-    <Card className="relative gap-2">
+    <Card
+      className={`relative gap-2 transition-all ${
+        isSelected ? 'ring-primary bg-primary/5 ring-2' : ''
+      }`}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="flex items-center gap-3 text-base font-medium">
           <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
@@ -64,20 +75,32 @@ export function GroupCard({
               {group.side}
             </Badge>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
-                <span className="sr-only">Open menu</span>
-                <EllipsisVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onClick={onDeleteGroup}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete group
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {selectionMode ? (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={() => onSelectGroup?.()}
+              className="h-5 w-5"
+            />
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
+                  <span className="sr-only">Open menu</span>
+                  <EllipsisVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onSelectGroup}>
+                  <SquareMousePointer className="mr-2 h-4 w-4" />
+                  Select
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={onDeleteGroup}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete group
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
