@@ -84,6 +84,7 @@ export function ValidateStep({
                 <TableHead className="w-[60px]">Row</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
+                <TableHead className="w-[80px]">Amount</TableHead>
                 <TableHead>Errors</TableHead>
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
@@ -109,6 +110,9 @@ export function ValidateStep({
                   </TableCell>
                   <TableCell className="max-w-[120px] truncate p-3">
                     {row.data.phone || '—'}
+                  </TableCell>
+                  <TableCell className="p-3">
+                    {row.data.amount}
                   </TableCell>
                   <TableCell className="max-w-[150px] p-3">
                     {row.errors.length > 0 && (

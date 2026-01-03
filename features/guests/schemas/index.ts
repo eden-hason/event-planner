@@ -337,6 +337,11 @@ export const ImportGuestSchema = z.object({
       );
     }
   }),
+  amount: z.coerce
+    .number()
+    .int('Amount must be a whole number')
+    .min(1, 'Amount must be at least 1')
+    .default(1),
 });
 
 export type ImportGuestData = z.infer<typeof ImportGuestSchema>;
