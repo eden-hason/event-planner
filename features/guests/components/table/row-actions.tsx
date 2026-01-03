@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal, Trash2, Send } from 'lucide-react';
+import { MoreVertical, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -39,7 +39,7 @@ export function RowActions({
           }}
         >
           <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>

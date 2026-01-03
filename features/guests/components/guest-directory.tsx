@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useActionState, startTransition } from 'react';
+import { useState, useActionState, startTransition, useRef } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
-import { useGuestFilters } from '@/features/guests/hooks';
+import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
 import {
   deleteGuest,
   type DeleteGuestState,
@@ -34,6 +34,8 @@ export function GuestDirectory({
   onSelectGuest,
 }: GuestDirectoryProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const pageSize = useDynamicPageSize({ containerRef: tableContainerRef });
   const {
     searchTerm,
     setSearchTerm,
@@ -174,7 +176,7 @@ export function GuestDirectory({
           />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent ref={tableContainerRef}>
         <GuestsTable
           guests={guests}
           searchTerm={searchTerm}
@@ -184,6 +186,7 @@ export function GuestDirectory({
           onSendWhatsApp={handleSendWhatsApp}
           isSendingWhatsApp={isSendingWhatsApp}
           onAddGuest={handleAddGuestClick}
+          pageSize={pageSize}
         />
       </CardContent>
 
