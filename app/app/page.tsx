@@ -8,7 +8,5 @@ export default async function AppPage() {
     redirect(`/app/${event.id}/dashboard`);
   }
 
-  // If no events exist, redirect to onboarding
-  redirect('/app/onboarding');
+  return <div>No event found</div>;
 }
-
