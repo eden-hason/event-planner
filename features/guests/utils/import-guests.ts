@@ -90,7 +90,9 @@ export function validateCsvRow(
   return {
     rowIndex,
     originalRow: row,
-    data: result.success ? result.data : data,
+    data: result.success
+      ? result.data
+      : { ...data, amount: Number(data.amount) || 1 },
     isValid: errors.length === 0,
     errors,
   };
