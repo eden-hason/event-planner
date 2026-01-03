@@ -22,6 +22,7 @@ interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
   groups: GroupInfo[];
   eventId: string;
+  existingPhones: Set<string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
 }
 
@@ -29,6 +30,7 @@ export function GuestDirectory({
   guests,
   groups,
   eventId,
+  existingPhones,
   onSelectGuest,
 }: GuestDirectoryProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -189,6 +191,7 @@ export function GuestDirectory({
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         eventId={eventId}
+        existingPhones={existingPhones}
       />
     </Card>
   );

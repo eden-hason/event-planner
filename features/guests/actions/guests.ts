@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/auth';
 import {
   GuestUpsertSchema,
   AppToDbTransformerSchema,
+  ImportGuestSchema,
+  type ImportGuestData,
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
@@ -185,6 +187,135 @@ export async function sendWhatsAppMessage(
         error instanceof Error
           ? `Failed to send WhatsApp message: ${error.message}`
           : 'Failed to send WhatsApp message. Please try again.',
+    };
+  }
+}
+
+// --- Get Existing Guest Phones ---
+
+export async function getExistingGuestPhones(
+  eventId: string,
+): Promise<Set<string>> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return new Set();
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('guests')
+      .select('phone_number')
+      .eq('event_id', eventId)
+      .not('phone_number', 'is', null);
+
+    if (error) {
+      console.error('Error fetching guest phones:', error);
+      return new Set();
+    }
+
+    // Normalize phone numbers for comparison
+    const phones = new Set<string>();
+    for (const row of data || []) {
+      if (row.phone_number) {
+        const normalized = row.phone_number.replace(/[\s\-().]/g, '');
+        phones.add(normalized);
+      }
+    }
+
+    return phones;
+  } catch (error) {
+    console.error('Error fetching guest phones:', error);
+    return new Set();
+  }
+}
+
+// --- Bulk Import Guests ---
+
+export type ImportGuestsState = {
+  success: boolean;
+  message: string;
+  importedCount?: number;
+  failedCount?: number;
+};
+
+export async function importGuests(
+  eventId: string,
+  guests: ImportGuestData[],
+): Promise<ImportGuestsState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return {
+        success: false,
+        message: 'You must be logged in to import guests',
+      };
+    }
+
+    if (!guests || guests.length === 0) {
+      return {
+        success: false,
+        message: 'No guests to import',
+      };
+    }
+
+    // Validate all guests
+    const validGuests: {
+      name: string;
+      phone_number: string;
+      event_id: string;
+    }[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < guests.length; i++) {
+      const result = ImportGuestSchema.safeParse(guests[i]);
+      if (result.success) {
+        validGuests.push({
+          name: result.data.name,
+          phone_number: result.data.phone,
+          event_id: eventId,
+        });
+      } else {
+        errors.push(`Row ${i + 1}: ${result.error.issues[0]?.message}`);
+      }
+    }
+
+    if (validGuests.length === 0) {
+      return {
+        success: false,
+        message: 'No valid guests to import',
+        failedCount: errors.length,
+      };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase.from('guests').insert(validGuests);
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return {
+        success: false,
+        message: `Database error: ${error.message}`,
+      };
+    }
+
+    revalidatePath(`/app/${eventId}/guests`);
+
+    return {
+      success: true,
+      message: `Successfully imported ${validGuests.length} guest${validGuests.length === 1 ? '' : 's'}`,
+      importedCount: validGuests.length,
+      failedCount: errors.length,
+    };
+  } catch (error) {
+    console.error('Import guests error:', error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? `Failed to import guests: ${error.message}`
+          : 'Failed to import guests. Please try again.',
     };
   }
 }

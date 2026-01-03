@@ -302,3 +302,41 @@ export const GroupAppToDbTransformerSchema = GroupUpsertSchema.transform(
 );
 
 export type GroupDbUpsert = z.infer<typeof GroupAppToDbTransformerSchema>;
+
+// --- 7. Import Guest Schema ---
+// Schema for validating guest data during CSV import
+// Uses same validation rules as GuestAppSchema but only includes importable fields
+
+export const ImportGuestSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(255, 'Name is too long'),
+  phone: z.string().superRefine((val, ctx) => {
+    // Check if empty first - show friendly required message
+    if (!val || val.trim().length === 0) {
+      ctx.addIssue('Phone number is required');
+      return;
+    }
+
+    // Only validate format if there's a value
+    if (val.length < 7) {
+      ctx.addIssue('Phone number must be at least 7 characters');
+      return;
+    }
+
+    if (val.length > 20) {
+      ctx.addIssue('Phone number is too long');
+      return;
+    }
+
+    if (!/^[+]?[\d\s\-().]+$/.test(val)) {
+      ctx.addIssue(
+        'Invalid phone format (use digits, spaces, +, -, or parentheses)',
+      );
+    }
+  }),
+});
+
+export type ImportGuestData = z.infer<typeof ImportGuestSchema>;

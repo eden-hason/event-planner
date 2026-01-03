@@ -33,9 +33,15 @@ interface GuestsPageProps {
   guests: GuestWithGroupApp[];
   eventId: string;
   groups: GroupWithGuestsApp[];
+  existingPhones: Set<string>;
 }
 
-export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
+export function GuestsPage({
+  guests,
+  eventId,
+  groups,
+  existingPhones,
+}: GuestsPageProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
@@ -166,6 +172,7 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
             guests={guests}
             groups={groups}
             eventId={eventId}
+            existingPhones={existingPhones}
             onSelectGuest={handleSelectGuest}
           />
         </TabsContent>
