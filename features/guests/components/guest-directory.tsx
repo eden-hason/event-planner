@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState, startTransition } from 'react';
+import { useState, useActionState, startTransition } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter } from '@/features/guests/components/filters';
+import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters } from '@/features/guests/hooks';
 import {
@@ -13,19 +14,26 @@ import {
   SendWhatsAppMessageState,
 } from '@/features/guests/actions';
 import { toast } from 'sonner';
+import { Upload } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
   groups: GroupInfo[];
+  eventId: string;
+  existingPhones: Set<string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
 }
 
 export function GuestDirectory({
   guests,
   groups,
+  eventId,
+  existingPhones,
   onSelectGuest,
 }: GuestDirectoryProps) {
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const {
     searchTerm,
     setSearchTerm,
@@ -148,13 +156,23 @@ export function GuestDirectory({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-        <GroupFilter
-          groups={groups}
-          selectedGroupIds={selectedGroupIds}
-          onGroupToggle={handleGroupToggle}
-          onSelectAll={handleSelectAllGroups}
-          isAllSelected={isAllSelected}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setImportDialogOpen(true)}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </Button>
+          <GroupFilter
+            groups={groups}
+            selectedGroupIds={selectedGroupIds}
+            onGroupToggle={handleGroupToggle}
+            onSelectAll={handleSelectAllGroups}
+            isAllSelected={isAllSelected}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <GuestsTable
@@ -166,12 +184,15 @@ export function GuestDirectory({
           onSendWhatsApp={handleSendWhatsApp}
           isSendingWhatsApp={isSendingWhatsApp}
           onAddGuest={handleAddGuestClick}
-          onUploadFile={() => {
-            // TODO: Implement file upload
-            toast.info('File upload coming soon!');
-          }}
         />
       </CardContent>
+
+      <ImportGuestsDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        eventId={eventId}
+        existingPhones={existingPhones}
+      />
     </Card>
   );
 }

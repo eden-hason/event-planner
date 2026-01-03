@@ -32,7 +32,7 @@ export default async function Layout({
       <AppSidebar variant="inset" events={events} />
       <SidebarInset>
         <AppHeader user={user} />
-        <main className="bg-muted/50 px-4 py-4 md:px-12">
+        <main className="bg-muted/50 py-4">
           <div className="container mx-auto">{children}</div>
         </main>
       </SidebarInset>
