@@ -110,7 +110,8 @@ export function ImportGuestsDialog({
   // Check if all required Kululu fields are mapped
   const isAllFieldsMapped = (): boolean => {
     const mappedValues = new Set(Object.values(columnMapping).filter(Boolean));
-    return KULULU_FIELDS.every((field) => mappedValues.has(field.value));
+    const requiredFields = KULULU_FIELDS.filter((field) => field.required);
+    return requiredFields.every((field) => mappedValues.has(field.value));
   };
 
   // Get current step index

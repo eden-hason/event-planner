@@ -5,6 +5,7 @@ import { type ColumnMapping } from '../components/groups/import-guests-dialog/ma
 export interface ValidatedRowData {
   name: string;
   phone: string;
+  amount: number;
 }
 
 export interface ValidatedRow {
@@ -19,6 +20,7 @@ export interface ValidatedRow {
 type RawImportGuestData = {
   name: string;
   phone: string;
+  amount: string | number;
 };
 
 /**
@@ -41,6 +43,7 @@ export function transformCsvRow(
   return {
     name: data.name || '',
     phone: data.phone || '',
+    amount: data.amount || 1,
   };
 }
 

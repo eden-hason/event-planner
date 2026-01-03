@@ -13,8 +13,9 @@ import {
 
 // Available Kululu fields for mapping
 export const KULULU_FIELDS = [
-  { value: 'name', label: 'Name' },
-  { value: 'phone', label: 'Phone' },
+  { value: 'name', label: 'Name', required: true },
+  { value: 'phone', label: 'Phone', required: true },
+  { value: 'amount', label: 'Amount', required: false },
 ] as const;
 
 export type KululuFieldValue = (typeof KULULU_FIELDS)[number]['value'];
@@ -68,8 +69,12 @@ export function MapStep({
   const mappedFieldsCount = new Set(
     Object.values(columnMapping).filter(Boolean),
   ).size;
-  const totalFieldsRequired = KULULU_FIELDS.length;
-  const isAllMapped = mappedFieldsCount === totalFieldsRequired;
+  const requiredFields = KULULU_FIELDS.filter((f) => f.required);
+  const mappedRequiredCount = requiredFields.filter((f) =>
+    Object.values(columnMapping).includes(f.value),
+  ).length;
+  const totalFieldsRequired = requiredFields.length;
+  const isAllMapped = mappedRequiredCount === totalFieldsRequired;
 
   return (
     <div className="space-y-4">
@@ -141,11 +146,16 @@ export function MapStep({
           }`}
         >
           <span className="font-medium">
-            {mappedFieldsCount}/{totalFieldsRequired}
+            {mappedRequiredCount}/{totalFieldsRequired}
           </span>{' '}
           {isAllMapped
             ? 'All required fields mapped ✓'
             : 'required fields mapped'}
+          {mappedFieldsCount > mappedRequiredCount && (
+            <span className="text-muted-foreground ml-2">
+              (+{mappedFieldsCount - mappedRequiredCount} optional)
+            </span>
+          )}
         </div>
       </div>
     </div>

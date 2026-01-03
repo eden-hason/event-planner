@@ -224,6 +224,7 @@ export async function importGuests(
     const validGuests: {
       name: string;
       phone_number: string;
+      amount: number;
       event_id: string;
     }[] = [];
     const errors: string[] = [];
@@ -234,6 +235,7 @@ export async function importGuests(
         validGuests.push({
           name: result.data.name,
           phone_number: result.data.phone,
+          amount: result.data.amount,
           event_id: eventId,
         });
       } else {
