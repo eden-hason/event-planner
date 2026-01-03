@@ -165,6 +165,7 @@ export function GuestsPage({ guests, eventId, groups }: GuestsPageProps) {
           <GuestDirectory
             guests={guests}
             groups={groups}
+            eventId={eventId}
             onSelectGuest={handleSelectGuest}
           />
         </TabsContent>
