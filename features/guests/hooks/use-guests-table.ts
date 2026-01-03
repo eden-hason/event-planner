@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import {
   ColumnFiltersState,
+  PaginationState,
   Row,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
+
+const DEFAULT_PAGE_SIZE = 10;
 
 interface UseGuestsTableProps {
   guests: GuestWithGroupApp[];
@@ -18,6 +22,7 @@ interface UseGuestsTableProps {
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   onSendWhatsApp: (guest: GuestWithGroupApp) => void;
   isSendingWhatsApp: boolean;
+  pageSize?: number;
 }
 
 export function useGuestsTable({
@@ -27,13 +32,31 @@ export function useGuestsTable({
   onDeleteGuest,
   onSendWhatsApp,
   isSendingWhatsApp,
+  pageSize = DEFAULT_PAGE_SIZE,
 }: UseGuestsTableProps) {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize,
+  });
+
+  // Update page size when it changes (e.g., from window resize)
+  useEffect(() => {
+    setPagination((prev) => {
+      if (prev.pageSize === pageSize) return prev;
+      // Calculate new page index to keep roughly the same position
+      const firstVisibleRow = prev.pageIndex * prev.pageSize;
+      const newPageIndex = Math.floor(firstVisibleRow / pageSize);
+      return { pageIndex: newPageIndex, pageSize };
+    });
+  }, [pageSize]);
 
   // Update global filter when searchTerm changes
   useEffect(() => {
     setGlobalFilter(searchTerm);
+    // Reset to first page when search changes
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [searchTerm]);
 
   // Update column filters when groupFilter changes
@@ -46,6 +69,8 @@ export function useGuestsTable({
         return [...filtered, { id: 'group', value: groupFilter }];
       });
     }
+    // Reset to first page when filters change
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [groupFilter]);
 
   // Custom global filter function for searching across multiple columns
@@ -76,11 +101,14 @@ export function useGuestsTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     state: {
       globalFilter,
       columnFilters,
+      pagination,
     },
     onGlobalFilterChange: setGlobalFilter,
   });
