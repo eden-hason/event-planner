@@ -191,45 +191,6 @@ export async function sendWhatsAppMessage(
   }
 }
 
-// --- Get Existing Guest Phones ---
-
-export async function getExistingGuestPhones(
-  eventId: string,
-): Promise<Set<string>> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return new Set();
-    }
-
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('guests')
-      .select('phone_number')
-      .eq('event_id', eventId)
-      .not('phone_number', 'is', null);
-
-    if (error) {
-      console.error('Error fetching guest phones:', error);
-      return new Set();
-    }
-
-    // Normalize phone numbers for comparison
-    const phones = new Set<string>();
-    for (const row of data || []) {
-      if (row.phone_number) {
-        const normalized = row.phone_number.replace(/[\s\-().]/g, '');
-        phones.add(normalized);
-      }
-    }
-
-    return phones;
-  } catch (error) {
-    console.error('Error fetching guest phones:', error);
-    return new Set();
-  }
-}
-
 // --- Bulk Import Guests ---
 
 export type ImportGuestsState = {

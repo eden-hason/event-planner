@@ -3,7 +3,6 @@ export {
   deleteGuest,
   sendWhatsAppMessage,
   importGuests,
-  getExistingGuestPhones,
   type UpsertGuestState,
   type DeleteGuestState,
   type SendWhatsAppMessageState,
