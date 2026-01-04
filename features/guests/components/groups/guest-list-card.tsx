@@ -70,7 +70,7 @@ export function GuestListCard({
   };
 
   return (
-    <Card className="flex min-w-sm flex-1 flex-col">
+    <Card className="flex min-w-sm flex-1 flex-col min-h-0 h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="flex w-full items-center justify-between">
           {title}
@@ -79,7 +79,7 @@ export function GuestListCard({
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-4 px-0">
+      <CardContent className="flex flex-1 flex-col gap-4 px-0 min-h-0 overflow-hidden">
         <div className="relative px-6">
           <Search className="text-muted-foreground absolute top-1/2 left-9 h-4 w-4 -translate-y-1/2" />
           <Input
@@ -93,7 +93,7 @@ export function GuestListCard({
         <Separator />
 
         {/* Guest list */}
-        <div className="flex flex-1 flex-col overflow-y-auto px-6">
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 min-h-0">
           {filteredGuests.map((guest) => (
             <Item
               key={guest.id}

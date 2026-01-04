@@ -121,7 +121,7 @@ export function AssignGuestsDrawer({
           </DrawerHeader>
 
           {/* Main content area */}
-          <div className="flex flex-1 flex-row gap-4 overflow-y-auto p-4">
+          <div className="flex flex-1 flex-row gap-4 overflow-hidden p-4 min-h-0">
             <GuestListCard
               title="Available Guests"
               guests={localAvailable}
