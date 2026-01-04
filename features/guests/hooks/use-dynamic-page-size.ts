@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback, RefObject } from 'react';
 
-const TABLE_ROW_HEIGHT = 49; // Height of each table row in pixels (py-4 = 16px * 2 + content)
+const TABLE_ROW_HEIGHT = 49; // Height of each table row in pixels (py-2 padding + content)
 const TABLE_HEADER_HEIGHT = 48; // Height of table header
 const PAGINATION_HEIGHT = 40; // Height of pagination controls
-const BUFFER = 40; // Extra buffer space
+const BUFFER = 48; // Extra buffer space for margins, borders, and layout shifts
 
 interface UseDynamicPageSizeOptions {
   containerRef: RefObject<HTMLDivElement | null>;
@@ -14,13 +14,20 @@ interface UseDynamicPageSizeOptions {
   rowHeight?: number;
 }
 
+interface DynamicPageSizeResult {
+  pageSize: number;
+  isCalculated: boolean;
+}
+
 export function useDynamicPageSize({
   containerRef,
   minPageSize = 5,
   maxPageSize = 50,
   rowHeight = TABLE_ROW_HEIGHT,
-}: UseDynamicPageSizeOptions) {
-  const [pageSize, setPageSize] = useState(minPageSize);
+}: UseDynamicPageSizeOptions): DynamicPageSizeResult {
+  // Start with null to indicate "not yet calculated"
+  const [pageSize, setPageSize] = useState<number | null>(null);
+  const [isCalculated, setIsCalculated] = useState(false);
 
   const calculatePageSize = useCallback(() => {
     if (!containerRef.current) return;
@@ -30,8 +37,6 @@ export function useDynamicPageSize({
 
     // Calculate available height from container top to viewport bottom
     const viewportHeight = window.innerHeight;
-    console.log('viewportHeight', viewportHeight);
-    console.log('rect', rect);
     const availableHeight =
       viewportHeight -
       rect.top -
@@ -39,7 +44,7 @@ export function useDynamicPageSize({
       PAGINATION_HEIGHT -
       BUFFER;
 
-    // Calculate how many rows fit
+    // Calculate how many rows fit - use consistent rounding
     const calculatedPageSize = Math.floor(availableHeight / rowHeight);
 
     // Clamp to min/max bounds
@@ -48,23 +53,54 @@ export function useDynamicPageSize({
       Math.min(maxPageSize, calculatedPageSize),
     );
 
-    setPageSize(clampedPageSize);
+    setPageSize((prev) => {
+      // Only update if the value has changed to prevent unnecessary re-renders
+      if (prev === clampedPageSize) return prev;
+      return clampedPageSize;
+    });
+    setIsCalculated(true);
   }, [containerRef, minPageSize, maxPageSize, rowHeight]);
 
   useEffect(() => {
-    // Initial calculation
-    calculatePageSize();
+    const rafIds: number[] = [];
+    let timeoutId: NodeJS.Timeout;
 
-    // Recalculate on resize
+    const deferredCalculation = () => {
+      // Use a small timeout to ensure all layout shifts have completed
+      // This is more reliable than double RAF for handling:
+      // - Font loading
+      // - Image loading
+      // - CSS transitions
+      // - React hydration
+      timeoutId = setTimeout(() => {
+        // Then use RAF to sync with the paint cycle
+        const rafId = requestAnimationFrame(() => {
+          calculatePageSize();
+        });
+        rafIds.push(rafId);
+      }, 50);
+    };
+
+    deferredCalculation();
+
+    // Debounced resize handler to prevent excessive recalculations
+    let resizeTimeout: NodeJS.Timeout;
     const handleResize = () => {
-      calculatePageSize();
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        calculatePageSize();
+      }, 100);
     };
 
     window.addEventListener('resize', handleResize);
 
     // Use ResizeObserver for container size changes
     const resizeObserver = new ResizeObserver(() => {
-      calculatePageSize();
+      // Debounce ResizeObserver calls too
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        calculatePageSize();
+      }, 100);
     });
 
     if (containerRef.current) {
@@ -72,10 +108,17 @@ export function useDynamicPageSize({
     }
 
     return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(resizeTimeout);
+      rafIds.forEach(cancelAnimationFrame);
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
     };
   }, [calculatePageSize, containerRef]);
 
-  return pageSize;
+  // Return minPageSize as fallback until calculation is done
+  return {
+    pageSize: pageSize ?? minPageSize,
+    isCalculated,
+  };
 }

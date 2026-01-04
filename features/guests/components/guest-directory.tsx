@@ -35,7 +35,9 @@ export function GuestDirectory({
 }: GuestDirectoryProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const pageSize = useDynamicPageSize({ containerRef: tableContainerRef });
+  const { pageSize, isCalculated } = useDynamicPageSize({
+    containerRef: tableContainerRef,
+  });
   const {
     searchTerm,
     setSearchTerm,
@@ -177,17 +179,19 @@ export function GuestDirectory({
         </div>
       </CardHeader>
       <CardContent ref={tableContainerRef}>
-        <GuestsTable
-          guests={guests}
-          searchTerm={searchTerm}
-          groupFilter={selectedGroupIds}
-          onSelectGuest={handleSelectGuest}
-          onDeleteGuest={handleDeleteGuest}
-          onSendWhatsApp={handleSendWhatsApp}
-          isSendingWhatsApp={isSendingWhatsApp}
-          onAddGuest={handleAddGuestClick}
-          pageSize={pageSize}
-        />
+        {isCalculated ? (
+          <GuestsTable
+            guests={guests}
+            searchTerm={searchTerm}
+            groupFilter={selectedGroupIds}
+            onSelectGuest={handleSelectGuest}
+            onDeleteGuest={handleDeleteGuest}
+            onSendWhatsApp={handleSendWhatsApp}
+            isSendingWhatsApp={isSendingWhatsApp}
+            onAddGuest={handleAddGuestClick}
+            pageSize={pageSize}
+          />
+        ) : null}
       </CardContent>
 
       <ImportGuestsDialog
