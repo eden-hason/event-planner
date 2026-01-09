@@ -132,7 +132,7 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
   (appData) => {
     const dbData: Record<string, unknown> = {};
 
-    // Only include fields that are defined (not undefined)
+    // Only include fields that are defined
     if (appData.id !== undefined) {
       dbData.id = appData.id;
     }

@@ -1,5 +1,77 @@
 import { z } from 'zod';
 
+// --- Location Schema ---
+export const LocationCoordsSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+});
+
+export type LocationCoords = z.infer<typeof LocationCoordsSchema>;
+
+export const LocationSchema = z.object({
+  name: z.string(),
+  coords: LocationCoordsSchema.optional(),
+});
+
+export type Location = z.infer<typeof LocationSchema>;
+
+// --- Event Settings Sub-Schemas ---
+// Paybox configuration for payment integration
+export const PayboxConfigSchema = z.object({
+  enabled: z.boolean(),
+  link: z.string(),
+});
+
+export type PayboxConfig = z.infer<typeof PayboxConfigSchema>;
+
+// Bit configuration for phone-based digital gifting
+export const BitConfigSchema = z.object({
+  enabled: z.boolean(),
+  phoneNumber: z.string(),
+});
+
+export type BitConfig = z.infer<typeof BitConfigSchema>;
+
+// Event settings object that contains various configuration options
+export const EventSettingsSchema = z.object({
+  paybox_config: PayboxConfigSchema.optional(),
+  bit_config: BitConfigSchema.optional(),
+});
+
+export type EventSettings = z.infer<typeof EventSettingsSchema>;
+
+// App-level event settings (camelCase)
+export const EventSettingsAppSchema = z.object({
+  payboxConfig: PayboxConfigSchema.optional(),
+  bitConfig: BitConfigSchema.optional(),
+});
+
+export type EventSettingsApp = z.infer<typeof EventSettingsAppSchema>;
+
+// --- Host Details Sub-Schemas ---
+// Wedding host details structure
+export const WeddingHostDetailsSchema = z.object({
+  bride: z
+    .object({
+      name: z.string().optional(),
+      parents: z.string().optional(),
+    })
+    .optional(),
+  groom: z
+    .object({
+      name: z.string().optional(),
+      parents: z.string().optional(),
+    })
+    .optional(),
+});
+
+export type WeddingHostDetails = z.infer<typeof WeddingHostDetailsSchema>;
+
+// Generic host details schema (flexible for any event type)
+export const HostDetailsSchema = z.record(z.string(), z.unknown());
+
+export type HostDetails = z.infer<typeof HostDetailsSchema>;
+
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what an "Event" object
 // looks like inside your Next.js application (frontend and backend).
@@ -15,10 +87,11 @@ export const EventAppSchema = z.object({
   description: z.string().optional(),
   eventDate: z.string(),
   eventType: z.string().optional(),
-  location: z.string().optional(),
-  maxGuests: z.number().int().positive().optional(),
-  budget: z.number().nonnegative().optional(),
-  fileMetadata: z.record(z.string(), z.unknown()).optional(),
+  receptionTime: z.string().optional(),
+  ceremonyTime: z.string().optional(),
+  location: LocationSchema.optional(),
+  eventSettings: EventSettingsAppSchema.optional(),
+  hostDetails: HostDetailsSchema.optional(),
   status: z
     .enum(['draft', 'published', 'archived'], {
       message: 'Status must be draft, published, or archived',
@@ -48,10 +121,11 @@ export const EventDbSchema = z.object({
   description: z.string().optional().nullable(),
   event_date: z.string(),
   event_type: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  max_guests: z.number().int().positive().optional().nullable(),
-  budget: z.number().nonnegative().optional().nullable(),
-  file_metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+  reception_time: z.string().optional().nullable(),
+  ceremony_time: z.string().optional().nullable(),
+  location: LocationSchema.optional().nullable(),
+  event_settings: EventSettingsSchema.optional().nullable(),
+  host_details: HostDetailsSchema.optional().nullable(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
   created_at: z.string(),
@@ -72,10 +146,11 @@ export function dbToAppTransformer(dbData: {
   description?: string | null;
   event_date: string;
   event_type?: string | null;
-  location?: string | null;
-  max_guests?: number | null;
-  budget?: number | null;
-  file_metadata?: Record<string, unknown> | null;
+  reception_time?: string | null;
+  ceremony_time?: string | null;
+  location?: Location | null;
+  event_settings?: EventSettings | null;
+  host_details?: HostDetails | null;
   status?: string | null;
   is_default?: boolean | null;
   created_at: string;
@@ -84,6 +159,14 @@ export function dbToAppTransformer(dbData: {
   const status: 'draft' | 'published' | 'archived' =
     (dbData.status as 'draft' | 'published' | 'archived') || 'draft';
 
+  // Transform event_settings from snake_case to camelCase
+  const eventSettings: EventSettingsApp | undefined = dbData.event_settings
+    ? {
+        payboxConfig: dbData.event_settings.paybox_config,
+        bitConfig: dbData.event_settings.bit_config,
+      }
+    : undefined;
+
   return {
     id: dbData.id,
     userId: dbData.user_id,
@@ -91,10 +174,11 @@ export function dbToAppTransformer(dbData: {
     description: dbData.description ?? undefined,
     eventDate: dbData.event_date,
     eventType: dbData.event_type ?? undefined,
+    receptionTime: dbData.reception_time ?? undefined,
+    ceremonyTime: dbData.ceremony_time ?? undefined,
     location: dbData.location ?? undefined,
-    maxGuests: dbData.max_guests ?? undefined,
-    budget: dbData.budget ?? undefined,
-    fileMetadata: dbData.file_metadata ?? undefined,
+    eventSettings,
+    hostDetails: dbData.host_details ?? undefined,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -110,6 +194,14 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
   const status: 'draft' | 'published' | 'archived' = (dbData.status ||
     'draft') as 'draft' | 'published' | 'archived';
 
+  // Transform event_settings from snake_case to camelCase
+  const eventSettings: EventSettingsApp | undefined = dbData.event_settings
+    ? {
+        payboxConfig: dbData.event_settings.paybox_config,
+        bitConfig: dbData.event_settings.bit_config,
+      }
+    : undefined;
+
   return {
     id: dbData.id,
     userId: dbData.user_id,
@@ -117,10 +209,11 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     description: dbData.description ?? undefined,
     eventDate: dbData.event_date,
     eventType: dbData.event_type ?? undefined,
+    receptionTime: dbData.reception_time ?? undefined,
+    ceremonyTime: dbData.ceremony_time ?? undefined,
     location: dbData.location ?? undefined,
-    maxGuests: dbData.max_guests ?? undefined,
-    budget: dbData.budget ?? undefined,
-    fileMetadata: dbData.file_metadata ?? undefined,
+    eventSettings,
+    hostDetails: dbData.host_details ?? undefined,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -128,37 +221,40 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
   };
 });
 
-export type UpsertEventState = {
-  success: boolean;
-  errors?: z.ZodError<z.input<typeof EventUpsertSchema>>;
-  message?: string | null;
-};
+// --- 4. Event Details Update Schema ---
+// Schema for updating event details from the event details page form.
+// Requires id since this is always an update operation.
+// Uses nested structure to match DB schema (hostDetails, eventSettings).
 
-// --- 4. "Upsert" Input Schema ---
-// This schema is for VALIDATING upsert operations (create or update).
-// It includes an optional id field (if provided, it's an update; if not, it's a create).
-// All other fields are optional to support partial updates, but when provided, they must meet validation rules.
-
-export const EventUpsertSchema = z.object({
-  id: z.uuid().optional(),
-  title: z
-    .string()
-    .min(2, 'Title must be at least 2 characters')
-    .max(200, 'Title is too long')
-    .optional(),
-  description: z.string().optional(),
+export const EventDetailsUpdateSchema = z.object({
+  id: z.uuid(),
   eventDate: z.string().optional(),
   eventType: z.string().optional(),
-  location: z.string().optional(),
-  maxGuests: z.number().int().positive().optional(),
-  budget: z.number().nonnegative().optional(),
-  fileMetadata: z.record(z.string(), z.unknown()).optional(),
-  status: z
-    .enum(['draft', 'published', 'archived'], {
-      message: 'Status must be draft, published, or archived',
+  receptionTime: z.string().optional(),
+  ceremonyTime: z.string().optional(),
+  location: LocationSchema.optional(),
+  hostDetails: WeddingHostDetailsSchema.optional(),
+  eventSettings: z
+    .object({
+      payboxConfig: z
+        .object({
+          enabled: z.boolean().optional(),
+          link: z.string().optional(),
+        })
+        .optional(),
+      bitConfig: z
+        .object({
+          enabled: z.boolean().optional(),
+          phoneNumber: z.string().optional(),
+        })
+        .optional(),
     })
     .optional(),
-  isDefault: z.boolean().optional(),
 });
 
-export type EventUpsert = z.infer<typeof EventUpsertSchema>;
+export type EventDetailsUpdate = z.infer<typeof EventDetailsUpdateSchema>;
+
+export type UpdateEventDetailsState = {
+  success: boolean;
+  message?: string | null;
+};

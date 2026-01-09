@@ -1,8 +1,11 @@
 'use server';
 
 import { getCurrentUser } from '@/lib/auth';
-import { EventUpsertSchema, UpsertEventState } from '../schemas';
-import { eventUpsertToDb } from '../utils/event.transform';
+import {
+  EventDetailsUpdateSchema,
+  UpdateEventDetailsState,
+} from '../schemas';
+import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 
@@ -16,15 +19,15 @@ export type SetDefaultEventState = {
   message: string;
 };
 
-export async function upsertEvent(
+export async function updateEventDetails(
   formData: FormData,
-): Promise<UpsertEventState> {
+): Promise<UpdateEventDetailsState> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
       return {
         success: false,
-        message: 'You must be logged in to create or update events',
+        message: 'You must be logged in to update events',
       };
     }
 
@@ -33,34 +36,35 @@ export async function upsertEvent(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsedData: Record<string, any> = { ...rawData };
 
-    // Convert numeric fields
-    if (parsedData.maxGuests && typeof parsedData.maxGuests === 'string') {
-      parsedData.maxGuests = Number(parsedData.maxGuests);
-    }
-    if (parsedData.budget && typeof parsedData.budget === 'string') {
-      parsedData.budget = Number(parsedData.budget);
-    }
-
-    // Convert boolean fields
-    if (parsedData.isDefault !== undefined) {
-      parsedData.isDefault =
-        parsedData.isDefault === 'true' || parsedData.isDåefault === true;
-    }
-
-    // Parse fileMetadata if it's a string
-    if (
-      parsedData.fileMetadata &&
-      typeof parsedData.fileMetadata === 'string'
-    ) {
+    // Parse JSON fields (hostDetails, eventSettings)
+    if (parsedData.hostDetails && typeof parsedData.hostDetails === 'string') {
       try {
-        parsedData.fileMetadata = JSON.parse(parsedData.fileMetadata);
+        parsedData.hostDetails = JSON.parse(parsedData.hostDetails);
       } catch {
-        // If parsing fails, keep as is or set to undefined
-        parsedData.fileMetadata = undefined;
+        parsedData.hostDetails = undefined;
       }
     }
 
-    const validationResult = EventUpsertSchema.safeParse(parsedData);
+    if (
+      parsedData.eventSettings &&
+      typeof parsedData.eventSettings === 'string'
+    ) {
+      try {
+        parsedData.eventSettings = JSON.parse(parsedData.eventSettings);
+      } catch {
+        parsedData.eventSettings = undefined;
+      }
+    }
+
+    if (parsedData.location && typeof parsedData.location === 'string') {
+      try {
+        parsedData.location = JSON.parse(parsedData.location);
+      } catch {
+        parsedData.location = undefined;
+      }
+    }
+
+    const validationResult = EventDetailsUpdateSchema.safeParse(parsedData);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
       return {
@@ -70,40 +74,55 @@ export async function upsertEvent(
     }
 
     const validatedData = validationResult.data;
-    const dbData = eventUpsertToDb(validatedData);
     const supabase = await createClient();
 
-    // Always include user_id for new events
-    const eventData = {
-      ...dbData,
-      user_id: currentUser.id,
-    };
+    // Verify the event belongs to the current user
+    const { data: event, error: fetchError } = await supabase
+      .from('events')
+      .select('user_id')
+      .eq('id', validatedData.id)
+      .single();
 
-    const { error } = await supabase.from('events').upsert(eventData, {
-      onConflict: 'id',
-    });
+    if (fetchError || !event) {
+      return {
+        success: false,
+        message: 'Event not found.',
+      };
+    }
+
+    if (event.user_id !== currentUser.id) {
+      return {
+        success: false,
+        message: 'You do not have permission to update this event.',
+      };
+    }
+
+    const dbData = eventDetailsUpdateToDb(validatedData);
+
+    const { error } = await supabase
+      .from('events')
+      .update(dbData)
+      .eq('id', validatedData.id);
 
     if (error) {
       console.error(error);
       return {
         success: false,
-        message: 'Database error: Could not create or update event.',
+        message: 'Database error: Could not update event.',
       };
     }
 
-    revalidatePath('/app/dashboard');
-    revalidatePath('/events');
+    revalidatePath('/app');
+    revalidatePath(`/app/${validatedData.id}`);
     return {
       success: true,
-      message: validatedData.id
-        ? 'Event updated successfully.'
-        : 'Event created successfully.',
+      message: 'Event updated successfully.',
     };
   } catch (error) {
-    console.error('Upsert event error:', error);
+    console.error('Update event details error:', error);
     return {
       success: false,
-      message: 'Failed to create or update event. Please try again.',
+      message: 'Failed to update event. Please try again.',
     };
   }
 }
