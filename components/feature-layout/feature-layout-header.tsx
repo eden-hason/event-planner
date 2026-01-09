@@ -32,7 +32,7 @@ export function FeatureLayoutHeader() {
 
     observer.observe(header);
     return () => observer.disconnect();
-  }, []);
+  }, [title]);
 
   // Don't render header if no title is set
   if (!title) {
