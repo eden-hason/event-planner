@@ -1,1 +1,7 @@
-export { EventDetailsHeader } from './event-details-header';
+export {
+  EventDetailsWrapper,
+  EventDetailsHeader,
+  LogisticsCard,
+  CoupleCard,
+  DigitalGiftCard,
+} from './event-details';

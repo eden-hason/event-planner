@@ -2,7 +2,7 @@
 // This file provides a clean API for importing event-related server actions
 
 export {
-  upsertEvent,
+  updateEventDetails,
   deleteEvent,
   setDefaultEvent,
   type DeleteEventState,
