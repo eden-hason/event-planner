@@ -6,3 +6,4 @@ export { EventDetailsHeader } from './event-details-header';
 export { LogisticsCard } from './logistics-card';
 export { CoupleCard } from './couple-card';
 export { DigitalGiftCard } from './digital-gift-card';
+export { EventInvitationCard } from './event-invitation-card';

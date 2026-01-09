@@ -8,6 +8,14 @@ export const LocationCoordsSchema = z.object({
 
 export type LocationCoords = z.infer<typeof LocationCoordsSchema>;
 
+// --- Invitations Schema ---
+export const InvitationsSchema = z.object({
+  frontImageUrl: z.string().optional(),
+  backImageUrl: z.string().optional(),
+});
+
+export type Invitations = z.infer<typeof InvitationsSchema>;
+
 export const LocationSchema = z.object({
   name: z.string(),
   coords: LocationCoordsSchema.optional(),
@@ -92,6 +100,7 @@ export const EventAppSchema = z.object({
   location: LocationSchema.optional(),
   eventSettings: EventSettingsAppSchema.optional(),
   hostDetails: HostDetailsSchema.optional(),
+  invitations: InvitationsSchema.optional(),
   status: z
     .enum(['draft', 'published', 'archived'], {
       message: 'Status must be draft, published, or archived',
@@ -114,6 +123,14 @@ export type EventStatus = EventApp['status'];
 // It uses snake_case.
 // Note: Supabase sends timestamp_tz as ISO 8601 strings.
 
+// DB-level invitations schema (snake_case)
+export const InvitationsDbSchema = z.object({
+  front_image_url: z.string().optional(),
+  back_image_url: z.string().optional(),
+});
+
+export type InvitationsDb = z.infer<typeof InvitationsDbSchema>;
+
 export const EventDbSchema = z.object({
   id: z.uuid(),
   user_id: z.uuid(),
@@ -126,6 +143,7 @@ export const EventDbSchema = z.object({
   location: LocationSchema.optional().nullable(),
   event_settings: EventSettingsSchema.optional().nullable(),
   host_details: HostDetailsSchema.optional().nullable(),
+  invitations: InvitationsDbSchema.optional().nullable(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
   created_at: z.string(),
@@ -151,6 +169,7 @@ export function dbToAppTransformer(dbData: {
   location?: Location | null;
   event_settings?: EventSettings | null;
   host_details?: HostDetails | null;
+  invitations?: InvitationsDb | null;
   status?: string | null;
   is_default?: boolean | null;
   created_at: string;
@@ -167,6 +186,14 @@ export function dbToAppTransformer(dbData: {
       }
     : undefined;
 
+  // Transform invitations from snake_case to camelCase
+  const invitations: Invitations | undefined = dbData.invitations
+    ? {
+        frontImageUrl: dbData.invitations.front_image_url,
+        backImageUrl: dbData.invitations.back_image_url,
+      }
+    : undefined;
+
   return {
     id: dbData.id,
     userId: dbData.user_id,
@@ -179,6 +206,7 @@ export function dbToAppTransformer(dbData: {
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
+    invitations,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -202,6 +230,14 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
       }
     : undefined;
 
+  // Transform invitations from snake_case to camelCase
+  const invitations: Invitations | undefined = dbData.invitations
+    ? {
+        frontImageUrl: dbData.invitations.front_image_url,
+        backImageUrl: dbData.invitations.back_image_url,
+      }
+    : undefined;
+
   return {
     id: dbData.id,
     userId: dbData.user_id,
@@ -214,6 +250,7 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
+    invitations,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -250,6 +287,7 @@ export const EventDetailsUpdateSchema = z.object({
         .optional(),
     })
     .optional(),
+  invitations: InvitationsSchema.optional(),
 });
 
 export type EventDetailsUpdate = z.infer<typeof EventDetailsUpdateSchema>;
