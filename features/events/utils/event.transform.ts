@@ -3,6 +3,7 @@ import {
   type EventDetailsUpdate,
   type HostDetails,
   type Location,
+  type InvitationsDb,
 } from '../schemas';
 
 // Type for event details update to DB
@@ -15,6 +16,7 @@ type EventDetailsDbUpdate = {
   location?: Location | null;
   host_details?: HostDetails | null;
   event_settings?: EventSettings | null;
+  invitations?: InvitationsDb | null;
 };
 
 // Transforms event details update data from camelCase to snake_case for DB
@@ -66,6 +68,14 @@ export function eventDetailsUpdateToDb(
         phoneNumber: data.eventSettings.bitConfig.phoneNumber || '',
       };
     }
+  }
+
+  // invitations maps to invitations with snake_case conversion
+  if (data.invitations !== undefined) {
+    dbData.invitations = {
+      front_image_url: data.invitations.frontImageUrl,
+      back_image_url: data.invitations.backImageUrl,
+    };
   }
 
   return dbData;

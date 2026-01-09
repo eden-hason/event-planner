@@ -84,7 +84,7 @@ export function LogisticsCard() {
   const hasCoords = location?.coords?.lat && location?.coords?.lng;
 
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <CalendarDays className="h-5 w-5" />

@@ -9,6 +9,7 @@ import { EventDetailsHeader } from './event-details-header';
 import { LogisticsCard } from './logistics-card';
 import { CoupleCard } from './couple-card';
 import { DigitalGiftCard } from './digital-gift-card';
+import { EventInvitationCard } from './event-invitation-card';
 import {
   EventApp,
   EventDetailsUpdateSchema,
@@ -55,6 +56,10 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           enabled: event.eventSettings?.bitConfig?.enabled || false,
           phoneNumber: event.eventSettings?.bitConfig?.phoneNumber || '',
         },
+      },
+      invitations: {
+        frontImageUrl: event.invitations?.frontImageUrl || undefined,
+        backImageUrl: event.invitations?.backImageUrl || undefined,
       },
     },
   });
@@ -119,14 +124,25 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           onDiscard={handleDiscard}
         />
 
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-12 lg:col-span-7">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Row 1 */}
+          <div className="lg:col-span-7">
             <LogisticsCard />
           </div>
-
-          <div className="col-span-12 space-y-4 lg:col-span-5">
+          <div className="h-full lg:col-span-5">
             <CoupleCard />
+          </div>
+
+          {/* Row 2 */}
+          <div className="lg:col-span-5">
             <DigitalGiftCard />
+          </div>
+          <div className="lg:col-span-7">
+            <EventInvitationCard
+              eventId={event.id}
+              frontImageUrl={event.invitations?.frontImageUrl}
+              backImageUrl={event.invitations?.backImageUrl}
+            />
           </div>
         </div>
       </form>

@@ -4,10 +4,13 @@ import { getCurrentUser } from '@/lib/auth';
 import {
   EventDetailsUpdateSchema,
   UpdateEventDetailsState,
+  Invitations,
+  InvitationsDb,
 } from '../schemas';
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
+import { deleteInvitationImage } from '@/lib/storage.server';
 
 export type DeleteEventState = {
   success: boolean;
@@ -18,6 +21,35 @@ export type SetDefaultEventState = {
   success: boolean;
   message: string;
 };
+
+// Helper function to process invitations
+// Images are now uploaded directly from the client to Supabase Storage,
+// so this function only handles URL passthrough and removal logic
+function processInvitations(invitations: Invitations): Invitations {
+  const result: Invitations = {};
+
+  if (invitations.frontImageUrl !== undefined) {
+    if (invitations.frontImageUrl === '') {
+      // Empty string means the image was removed
+      result.frontImageUrl = undefined;
+    } else {
+      // URL is already uploaded from client, pass through
+      result.frontImageUrl = invitations.frontImageUrl;
+    }
+  }
+
+  if (invitations.backImageUrl !== undefined) {
+    if (invitations.backImageUrl === '') {
+      // Empty string means the image was removed
+      result.backImageUrl = undefined;
+    } else {
+      // URL is already uploaded from client, pass through
+      result.backImageUrl = invitations.backImageUrl;
+    }
+  }
+
+  return result;
+}
 
 export async function updateEventDetails(
   formData: FormData,
@@ -64,6 +96,14 @@ export async function updateEventDetails(
       }
     }
 
+    if (parsedData.invitations && typeof parsedData.invitations === 'string') {
+      try {
+        parsedData.invitations = JSON.parse(parsedData.invitations);
+      } catch {
+        parsedData.invitations = undefined;
+      }
+    }
+
     const validationResult = EventDetailsUpdateSchema.safeParse(parsedData);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
@@ -76,10 +116,10 @@ export async function updateEventDetails(
     const validatedData = validationResult.data;
     const supabase = await createClient();
 
-    // Verify the event belongs to the current user
+    // Fetch existing event data (including invitation URLs for cleanup)
     const { data: event, error: fetchError } = await supabase
       .from('events')
-      .select('user_id')
+      .select('user_id, invitations')
       .eq('id', validatedData.id)
       .single();
 
@@ -97,7 +137,21 @@ export async function updateEventDetails(
       };
     }
 
-    const dbData = eventDetailsUpdateToDb(validatedData);
+    // Store old URLs for potential cleanup after successful update
+    const existingInvitations = event.invitations as InvitationsDb | null;
+    const oldFrontImageUrl = existingInvitations?.front_image_url ?? null;
+    const oldBackImageUrl = existingInvitations?.back_image_url ?? null;
+
+    // Process invitations - images are already uploaded from client
+    const dataToTransform = { ...validatedData };
+    if (validatedData.invitations) {
+      const processedInvitations = processInvitations(
+        validatedData.invitations,
+      );
+      dataToTransform.invitations = processedInvitations;
+    }
+
+    const dbData = eventDetailsUpdateToDb(dataToTransform);
 
     const { error } = await supabase
       .from('events')
@@ -110,6 +164,30 @@ export async function updateEventDetails(
         success: false,
         message: 'Database error: Could not update event.',
       };
+    }
+
+    // Clean up removed images from storage after successful database update
+    const imagesToDelete: string[] = [];
+
+    // Check if front image was removed (old URL exists, new value is being cleared)
+    if (oldFrontImageUrl && validatedData.invitations?.frontImageUrl === '') {
+      imagesToDelete.push(oldFrontImageUrl);
+    }
+
+    // Check if back image was removed (old URL exists, new value is being cleared)
+    if (oldBackImageUrl && validatedData.invitations?.backImageUrl === '') {
+      imagesToDelete.push(oldBackImageUrl);
+    }
+
+    // Delete removed images in parallel
+    if (imagesToDelete.length > 0) {
+      await Promise.all(
+        imagesToDelete.map((url) =>
+          deleteInvitationImage(url).catch((err) =>
+            console.error('Failed to delete image from storage:', url, err),
+          ),
+        ),
+      );
     }
 
     revalidatePath('/app');
