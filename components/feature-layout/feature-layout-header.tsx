@@ -43,7 +43,7 @@ export function FeatureLayoutHeader() {
     <CardHeader
       ref={headerRef}
       className={cn(
-        'sticky -top-px z-[60] pb-4 transition-all duration-200',
+        'sticky -top-px z-40 pb-4 transition-all duration-200',
         isStuck && 'bg-[#F4F4F6] pt-4 shadow-sm',
       )}
     >
