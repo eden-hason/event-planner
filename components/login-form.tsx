@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useActionState } from 'react';
 import { GoogleLoginButton } from '@/components/google-login-button';
-import { login, signup } from '@/app/login/actions';
+import { login, signup } from '@/features/auth';
 
 export function LoginForm({
   className,

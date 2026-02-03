@@ -1,6 +1,6 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/features/auth/queries';
 import {
   EventDetailsUpdateSchema,
   UpdateEventDetailsState,
@@ -9,7 +9,7 @@ import {
 } from '../schemas';
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
 
 export type DeleteEventState = {

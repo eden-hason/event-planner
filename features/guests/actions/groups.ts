@@ -1,12 +1,12 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/features/auth/queries';
 import {
   GroupUpsertSchema,
   GroupAppToDbTransformerSchema,
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 export type UpsertGroupState = {

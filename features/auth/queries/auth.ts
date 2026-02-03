@@ -1,11 +1,5 @@
-import { createClient } from '@/utils/supabase/server';
-
-export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-  avatar: string;
-}
+import { createClient } from '@/lib/supabase/server';
+import type { User } from '../schemas';
 
 export async function getCurrentUser(): Promise<User | null> {
   try {

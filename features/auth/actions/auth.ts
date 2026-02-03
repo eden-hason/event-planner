@@ -2,8 +2,26 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
-import { createClient } from '@/utils/supabase/server';
+export async function logout() {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('Logout error:', error);
+      return { success: false, message: 'Failed to logout. Please try again.' };
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    return { success: false, message: 'Failed to logout. Please try again.' };
+  }
+
+  // Only redirect on successful logout (outside try/catch)
+  redirect('/login');
+}
 
 export async function login(
   prevState: { success: boolean; message: string },

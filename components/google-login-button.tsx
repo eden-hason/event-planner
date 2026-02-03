@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { signInWithGoogle } from '@/app/login/actions';
+import { signInWithGoogle } from '@/features/auth';
 
 export function GoogleLoginButton() {
   const [isLoading, setIsLoading] = useState(false);

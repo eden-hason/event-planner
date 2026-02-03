@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { IconUser } from '@tabler/icons-react';
 import { Button } from './ui/button';
-import { logout } from '@/app/actions/auth';
+import { logout } from '@/features/auth';
 
 interface UserMenuProps {
   user: {
