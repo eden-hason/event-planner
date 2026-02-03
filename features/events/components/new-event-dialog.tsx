@@ -42,16 +42,22 @@ import { createEvent } from '../actions';
 
 interface NewEventDialogProps {
   children?: React.ReactNode;
+  /** Controlled mode: use when dialog is rendered outside its trigger (e.g. in a dropdown) */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const initialState: CreateEventState = {
-  success: false,
-  message: null,
-  eventId: null,
-};
-
-export function NewEventDialog({ children }: NewEventDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export function NewEventDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: NewEventDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled
+    ? (value: boolean) => controlledOnOpenChange?.(value)
+    : setInternalOpen;
   const router = useRouter();
 
   const form = useForm({
@@ -63,26 +69,46 @@ export function NewEventDialog({ children }: NewEventDialogProps) {
     },
   });
 
-  const [state, formAction, isPending] = useActionState(
-    async (_prevState: CreateEventState, formData: FormData) => {
-      return createEvent(formData);
-    },
-    initialState,
+  const createEventActionWithToast = async (
+    _prevState: CreateEventState | null,
+    formData: FormData,
+  ): Promise<CreateEventState | null> => {
+    const eventTitle = (formData.get('title') as string) || 'event';
+    const promise = createEvent(formData).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to create event.');
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: `Creating ${eventTitle}...`,
+      success: (data) => {
+        setOpen(false);
+        form.reset();
+        router.push(`/app/${data.eventId}/dashboard`);
+        return data.message || 'Event created successfully';
+      },
+      error: (err) =>
+        err instanceof Error
+          ? err.message
+          : 'Failed to create event. Please try again.',
+    });
+
+    try {
+      return await promise;
+    } catch {
+      return null;
+    }
+  };
+
+  const [, formAction, isPending] = useActionState(
+    createEventActionWithToast,
+    null as CreateEventState | null,
   );
 
-  // Handle successful creation
-  React.useEffect(() => {
-    if (state.success && state.eventId) {
-      toast.success('Event created successfully');
-      setOpen(false);
-      form.reset();
-      router.push(`/app/${state.eventId}/dashboard`);
-    } else if (!state.success && state.message) {
-      toast.error(state.message);
-    }
-  }, [state, router, form]);
-
   const onSubmit = (values: EventCreate) => {
+    setOpen(false); // Close modal immediately on submit
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('eventDate', values.eventDate);
@@ -93,18 +119,24 @@ export function NewEventDialog({ children }: NewEventDialogProps) {
     });
   };
 
+  const triggerButton = (
+    <button
+      type="button"
+      className="flex w-full items-center gap-2 p-2"
+      onClick={() => setOpen(true)}
+    >
+      <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+        <Plus className="size-4" />
+      </div>
+      <div className="text-muted-foreground font-medium">New Event</div>
+    </button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children ?? (
-          <button className="flex w-full items-center gap-2 p-2">
-            <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-              <Plus className="size-4" />
-            </div>
-            <div className="text-muted-foreground font-medium">New Event</div>
-          </button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>{children ?? triggerButton}</DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Event</DialogTitle>
