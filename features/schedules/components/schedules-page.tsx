@@ -9,7 +9,7 @@ interface SchedulesPageProps {
 }
 
 export function SchedulesPage({ eventId, schedules }: SchedulesPageProps) {
-  console.log('schedules:', schedules);
+
   return (
     <>
       <SchedulesHeader />
