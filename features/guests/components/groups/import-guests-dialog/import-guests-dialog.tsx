@@ -23,7 +23,7 @@ import { UploadStep } from './upload-step';
 import { MapStep, KULULU_FIELDS, type ColumnMapping } from './map-step';
 import { ValidateStep } from './validate-step';
 import { SummaryStep } from './summary-step';
-import { parseCSVFile, type ParsedCSV } from '@/lib/utils/parse-csv';
+import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { validateCsvRows } from '@/features/guests/utils';
 import { type ImportGuestData } from '@/features/guests/schemas';
 

@@ -1,7 +1,7 @@
 import { GalleryVerticalEnd } from 'lucide-react';
 import { LoginForm } from '@/components/login-form';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { IconInnerShadowTop } from '@tabler/icons-react';
 
 // Force dynamic rendering since this page uses cookies for authentication

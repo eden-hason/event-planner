@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { DbToAppTransformerSchema, type EventApp } from '../schemas';
 
 export async function getEventById(eventId: string): Promise<EventApp | null> {

@@ -1,5 +1,5 @@
 import { Card, CardTitle, CardHeader, CardContent } from '@/components/ui/card';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/features/auth/queries';
 import { DashboardHeader } from '@/features/dashboard/components';
 
 export default async function DashboardPage() {

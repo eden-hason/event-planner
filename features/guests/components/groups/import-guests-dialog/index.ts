@@ -8,4 +8,4 @@ export {
 } from './map-step';
 export { ValidateStep } from './validate-step';
 export { SummaryStep } from './summary-step';
-export { parseCSVFile, type ParsedCSV } from '@/lib/utils/parse-csv';
+export { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';

@@ -1,7 +1,7 @@
 'use client';
 
 import { TableBody, TableCell, TableHead } from '@/components/ui/table';
-import { getSampleData, type ParsedCSV } from '@/lib/utils/parse-csv';
+import { getSampleData, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { Table, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Select,

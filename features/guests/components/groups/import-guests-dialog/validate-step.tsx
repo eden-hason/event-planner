@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { type ParsedCSV } from '@/lib/utils/parse-csv';
+import { type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { type ColumnMapping } from './map-step';
 import { validateCsvRows } from '@/features/guests/utils';
 

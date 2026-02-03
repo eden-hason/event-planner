@@ -1,6 +1,6 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/features/auth/queries';
 import {
   GuestUpsertSchema,
   AppToDbTransformerSchema,
@@ -8,7 +8,7 @@ import {
   type ImportGuestData,
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import twilio from 'twilio';
 import { z } from 'zod';
 
