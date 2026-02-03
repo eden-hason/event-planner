@@ -13,9 +13,26 @@ export function GoogleLoginButton() {
     setError(null);
 
     try {
-      await signInWithGoogle();
-      // The server action will handle the redirect
-    } catch (error) {
+      const result = await signInWithGoogle();
+
+      // If the server action returns an error object (no redirect happened),
+      // show the message and stop loading.
+      if (result && !result.success) {
+        const { success, message } = result;
+
+        if (!success) {
+          setError(message || 'Failed to login with Google. Please try again.');
+          setIsLoading(false);
+        }
+      }
+      // On successful login, the server action will trigger a redirect
+      // before this point, so we don't need to handle that here.
+    } catch (error: unknown) {
+      // Ignore Next.js redirect "errors" which are expected during successful auth
+      if (error instanceof Error && error.message?.includes('NEXT_REDIRECT')) {
+        return;
+      }
+
       console.error('Google login error:', error);
       setError('Failed to login with Google. Please try again.');
       setIsLoading(false);
