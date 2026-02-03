@@ -2,6 +2,7 @@
 // This file provides a clean API for importing event-related server actions
 
 export {
+  createEvent,
   updateEventDetails,
   deleteEvent,
   setDefaultEvent,

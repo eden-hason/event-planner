@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
+import { NewEventDialog } from '@/features/events/components/new-event-dialog';
 import { IconCarambola } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
@@ -34,10 +35,6 @@ export function NavEvents({ events }: NavEventsProps) {
 
   // Find the current event
   const currentEvent = events.find((event) => event.id === currentEventId);
-
-  const handleNewEvent = () => {
-    // Placeholder - does nothing for now
-  };
 
   return (
     <SidebarMenu>
@@ -105,11 +102,8 @@ export function NavEvents({ events }: NavEventsProps) {
               )}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleNewEvent} className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">New Event</div>
+            <DropdownMenuItem asChild className="p-0">
+              <NewEventDialog />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

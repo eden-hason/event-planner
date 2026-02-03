@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/features/auth/queries';
 import {
   EventDetailsUpdateSchema,
   UpdateEventDetailsState,
+  EventCreateSchema,
+  CreateEventState,
   Invitations,
   InvitationsDb,
 } from '../schemas';
@@ -11,6 +13,7 @@ import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
+import { createDefaultSchedules } from '@/features/schedules/actions/schedules';
 
 export type DeleteEventState = {
   success: boolean;
@@ -21,6 +24,94 @@ export type SetDefaultEventState = {
   success: boolean;
   message: string;
 };
+
+/**
+ * Creates a new event and its default schedules.
+ *
+ * @param formData - Form data containing title, eventDate, and eventType
+ * @returns Result state with success status and new event ID
+ */
+export async function createEvent(formData: FormData): Promise<CreateEventState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return {
+        success: false,
+        message: 'You must be logged in to create events',
+      };
+    }
+
+    const rawData = Object.fromEntries(formData);
+    const validationResult = EventCreateSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return {
+        success: false,
+        message: firstError.message,
+      };
+    }
+
+    const { title, eventDate, eventType } = validationResult.data;
+    const supabase = await createClient();
+
+    // Insert the new event
+    const { data: newEvent, error } = await supabase
+      .from('events')
+      .insert({
+        user_id: currentUser.id,
+        title,
+        event_date: eventDate,
+        event_type: eventType,
+        status: 'draft',
+        is_default: true,
+      })
+      .select('id')
+      .single();
+
+    if (error || !newEvent) {
+      console.error('Error creating event:', error);
+      return {
+        success: false,
+        message: 'Failed to create event',
+      };
+    }
+
+    // Unset is_default on other events for this user
+    await supabase
+      .from('events')
+      .update({ is_default: false })
+      .eq('user_id', currentUser.id)
+      .neq('id', newEvent.id);
+
+    // Create default schedules for the event
+    const schedulesResult = await createDefaultSchedules(
+      newEvent.id,
+      eventDate,
+      eventType,
+    );
+
+    if (!schedulesResult.success) {
+      console.warn('Failed to create default schedules:', schedulesResult.message);
+      // Don't fail the event creation if schedules fail
+    }
+
+    revalidatePath('/app');
+    revalidatePath('/app/dashboard');
+
+    return {
+      success: true,
+      message: 'Event created successfully',
+      eventId: newEvent.id,
+    };
+  } catch (error) {
+    console.error('Create event error:', error);
+    return {
+      success: false,
+      message: 'Failed to create event. Please try again.',
+    };
+  }
+}
 
 // Helper function to process invitations
 // Images are now uploaded directly from the client to Supabase Storage,
