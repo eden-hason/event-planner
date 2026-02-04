@@ -1,6 +1,7 @@
 'use client';
 
 import { Info, Lock, MessageSquareText, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,11 +15,30 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+import { sendWhatsAppTestMessage } from '../actions';
+
 interface MessageContentCardProps {
   messageBody: string;
 }
 
 export function MessageContentCard({ messageBody }: MessageContentCardProps) {
+  const handleSendTest = () => {
+    const timestamp = new Date().toLocaleString();
+    const testMessage = `Test from Event Planner - ${timestamp}`;
+
+    const promise = sendWhatsAppTestMessage(testMessage).then((result) => {
+      if (!result.success) throw new Error(result.message);
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: 'Sending test message...',
+      success: (data) => data.message,
+      error: (err) =>
+        err instanceof Error ? err.message : 'Failed to send.',
+    });
+  };
+
   return (
     <Card className="col-span-2 row-span-2">
       <CardHeader>
@@ -44,7 +64,7 @@ export function MessageContentCard({ messageBody }: MessageContentCardProps) {
         <Separator />
       </CardContent>
       <CardFooter>
-        <Button variant="outline" disabled>
+        <Button variant="outline" onClick={handleSendTest}>
           <Send className="h-4 w-4" />
           Send Test to Me
         </Button>
