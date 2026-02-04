@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
+import { NewEventDialog } from '@/features/events/components/new-event-dialog';
 import { IconCarambola } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +28,8 @@ interface NavEventsProps {
 }
 
 export function NavEvents({ events }: NavEventsProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const pathname = usePathname();
   const { isMobile } = useSidebar();
 
@@ -35,14 +39,15 @@ export function NavEvents({ events }: NavEventsProps) {
   // Find the current event
   const currentEvent = events.find((event) => event.id === currentEventId);
 
-  const handleNewEvent = () => {
-    // Placeholder - does nothing for now
+  const handleNewEventClick = () => {
+    setDropdownOpen(false);
+    setDialogOpen(true);
   };
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -105,14 +110,23 @@ export function NavEvents({ events }: NavEventsProps) {
               )}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleNewEvent} className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">New Event</div>
+            <DropdownMenuItem asChild className="p-0">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 p-2"
+                onClick={handleNewEventClick}
+              >
+                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                  <Plus className="size-4" />
+                </div>
+                <div className="text-muted-foreground font-medium">
+                  New Event
+                </div>
+              </button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <NewEventDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       </SidebarMenuItem>
     </SidebarMenu>
   );

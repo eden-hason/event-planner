@@ -296,3 +296,24 @@ export type UpdateEventDetailsState = {
   success: boolean;
   message?: string | null;
 };
+
+// --- 5. Event Create Schema ---
+// Schema for creating a new event from the create event dialog.
+// Uses minimal required fields, with sensible defaults for the rest.
+
+export const EventCreateSchema = z.object({
+  title: z
+    .string()
+    .min(2, 'Title must be at least 2 characters')
+    .max(200, 'Title is too long'),
+  eventDate: z.string().min(1, 'Event date is required'),
+  eventType: z.enum(['wedding', 'birthday', 'corporate', 'other']),
+});
+
+export type EventCreate = z.infer<typeof EventCreateSchema>;
+
+export type CreateEventState = {
+  success: boolean;
+  message?: string | null;
+  eventId?: string | null;
+};
