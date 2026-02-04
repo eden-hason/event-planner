@@ -32,7 +32,6 @@ export async function SchedulesPage({
   const templatesMap = new Map(
     templateResults.map((r) => [r.scheduleId, r.template]),
   );
-  console.log(templatesMap);
 
   // Helper to find schedule by message type
   const getScheduleForTab = (
