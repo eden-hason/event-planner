@@ -5,7 +5,12 @@ import { z } from 'zod';
 // =====================================================
 
 // Event types for message templates
-export const EVENT_TYPES = ['wedding', 'birthday', 'corporate', 'other'] as const;
+export const EVENT_TYPES = [
+  'wedding',
+  'birthday',
+  'corporate',
+  'other',
+] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 // Message types (must match DB enum message_type)
@@ -18,12 +23,35 @@ export const MESSAGE_TYPES = [
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
+// Human-readable labels for message types
+export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
+  initial_invitation: 'Initial Invite',
+  first_confirmation: 'First Confirmation',
+  second_confirmation: 'Second Confirmation',
+  event_reminder: 'Event Reminder',
+  thank_you: 'Thank You Note',
+};
+
 // CTA (Call to Action) types
-export const CTA_TYPES = ['none', 'rsvp', 'directions', 'gift_registry', 'custom'] as const;
+export const CTA_TYPES = [
+  'none',
+  'confirm_rsvp',
+  'directions',
+  'gift_registry',
+  'custom',
+  'view_photos',
+  'view_directions',
+  'view_invitation',
+] as const;
 export type CtaType = (typeof CTA_TYPES)[number];
 
 // Schedule status
-export const SCHEDULE_STATUSES = ['draft', 'scheduled', 'sent', 'cancelled'] as const;
+export const SCHEDULE_STATUSES = [
+  'draft',
+  'scheduled',
+  'sent',
+  'cancelled',
+] as const;
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
 
 // Delivery methods
@@ -70,6 +98,7 @@ export const MessageTemplateAppSchema = z.object({
   defaultDaysOffset: z.number().int(),
   defaultTime: z.string(),
   isSystem: z.boolean().default(false),
+  isDefault: z.boolean().default(false),
   createdBy: z.uuid().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -91,6 +120,7 @@ export const MessageTemplateDbSchema = z.object({
   default_days_offset: z.number().int(),
   default_time: z.string(),
   is_system: z.boolean().default(false),
+  is_default: z.boolean().default(false),
   created_by: z.uuid().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -99,23 +129,26 @@ export const MessageTemplateDbSchema = z.object({
 export type MessageTemplateDb = z.infer<typeof MessageTemplateDbSchema>;
 
 // --- DB to App Transformer ---
-export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform((db) => ({
-  id: db.id,
-  eventType: db.event_type,
-  messageType: db.message_type,
-  name: db.name,
-  subject: db.subject ?? undefined,
-  bodyTemplate: db.body_template,
-  whatsappTemplate: db.whatsapp_template ?? undefined,
-  ctaText: db.cta_text ?? undefined,
-  ctaType: db.cta_type,
-  defaultDaysOffset: db.default_days_offset,
-  defaultTime: db.default_time,
-  isSystem: db.is_system,
-  createdBy: db.created_by ?? undefined,
-  createdAt: db.created_at,
-  updatedAt: db.updated_at,
-}));
+export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
+  (db) => ({
+    id: db.id,
+    eventType: db.event_type,
+    messageType: db.message_type,
+    name: db.name,
+    subject: db.subject ?? undefined,
+    bodyTemplate: db.body_template,
+    whatsappTemplate: db.whatsapp_template ?? undefined,
+    ctaText: db.cta_text ?? undefined,
+    ctaType: db.cta_type,
+    defaultDaysOffset: db.default_days_offset,
+    defaultTime: db.default_time,
+    isSystem: db.is_system,
+    isDefault: db.is_default,
+    createdBy: db.created_by ?? undefined,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
+  }),
+);
 
 // --- Upsert Schema ---
 export const MessageTemplateUpsertSchema = z.object({
@@ -135,23 +168,25 @@ export const MessageTemplateUpsertSchema = z.object({
 export type MessageTemplateUpsert = z.infer<typeof MessageTemplateUpsertSchema>;
 
 // --- App to DB Transformer ---
-export const MessageTemplateAppToDbSchema = MessageTemplateUpsertSchema.transform((app) => {
-  const dbData: Record<string, unknown> = {};
+export const MessageTemplateAppToDbSchema =
+  MessageTemplateUpsertSchema.transform((app) => {
+    const dbData: Record<string, unknown> = {};
 
-  if (app.id !== undefined) dbData.id = app.id;
-  dbData.event_type = app.eventType;
-  dbData.message_type = app.messageType;
-  dbData.name = app.name;
-  if (app.subject !== undefined) dbData.subject = app.subject ?? null;
-  dbData.body_template = app.bodyTemplate;
-  if (app.whatsappTemplate !== undefined) dbData.whatsapp_template = app.whatsappTemplate ?? null;
-  if (app.ctaText !== undefined) dbData.cta_text = app.ctaText ?? null;
-  if (app.ctaType !== undefined) dbData.cta_type = app.ctaType;
-  dbData.default_days_offset = app.defaultDaysOffset;
-  dbData.default_time = app.defaultTime;
+    if (app.id !== undefined) dbData.id = app.id;
+    dbData.event_type = app.eventType;
+    dbData.message_type = app.messageType;
+    dbData.name = app.name;
+    if (app.subject !== undefined) dbData.subject = app.subject ?? null;
+    dbData.body_template = app.bodyTemplate;
+    if (app.whatsappTemplate !== undefined)
+      dbData.whatsapp_template = app.whatsappTemplate ?? null;
+    if (app.ctaText !== undefined) dbData.cta_text = app.ctaText ?? null;
+    if (app.ctaType !== undefined) dbData.cta_type = app.ctaType;
+    dbData.default_days_offset = app.defaultDaysOffset;
+    dbData.default_time = app.defaultTime;
 
-  return dbData;
-});
+    return dbData;
+  });
 
 // =====================================================
 // SCHEDULES
@@ -224,20 +259,20 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   sentAt: db.sent_at ?? undefined,
   targetFilter: db.target_filter
     ? TargetFilterSchema.parse({
-      guestStatus: db.target_filter.guest_status,
-      tags: db.target_filter.tags,
-      groupIds: db.target_filter.group_ids,
-    })
+        guestStatus: db.target_filter.guest_status,
+        tags: db.target_filter.tags,
+        groupIds: db.target_filter.group_ids,
+      })
     : undefined,
   templateId: db.template_id ?? undefined,
   customContent: db.custom_content
     ? CustomContentSchema.parse({
-      subject: db.custom_content.subject,
-      body: db.custom_content.body,
-      whatsappBody: db.custom_content.whatsapp_body,
-      ctaText: db.custom_content.cta_text,
-      ctaUrl: db.custom_content.cta_url,
-    })
+        subject: db.custom_content.subject,
+        body: db.custom_content.body,
+        whatsappBody: db.custom_content.whatsapp_body,
+        ctaText: db.custom_content.cta_text,
+        ctaUrl: db.custom_content.cta_url,
+      })
     : undefined,
   deliveryMethod: db.delivery_method,
   createdAt: db.created_at,
@@ -279,15 +314,16 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   if (app.customContent !== undefined) {
     dbData.custom_content = app.customContent
       ? {
-        subject: app.customContent.subject,
-        body: app.customContent.body,
-        whatsapp_body: app.customContent.whatsappBody,
-        cta_text: app.customContent.ctaText,
-        cta_url: app.customContent.ctaUrl,
-      }
+          subject: app.customContent.subject,
+          body: app.customContent.body,
+          whatsapp_body: app.customContent.whatsappBody,
+          cta_text: app.customContent.ctaText,
+          cta_url: app.customContent.ctaUrl,
+        }
       : null;
   }
-  if (app.deliveryMethod !== undefined) dbData.delivery_method = app.deliveryMethod;
+  if (app.deliveryMethod !== undefined)
+    dbData.delivery_method = app.deliveryMethod;
 
   return dbData;
 });
@@ -348,29 +384,31 @@ export const MessageDeliveryDbSchema = z.object({
 export type MessageDeliveryDb = z.infer<typeof MessageDeliveryDbSchema>;
 
 // --- DB to App Transformer ---
-export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform((db) => ({
-  id: db.id,
-  scheduleId: db.schedule_id,
-  guestId: db.guest_id,
-  deliveryMethod: db.delivery_method,
-  status: db.status,
-  sentAt: db.sent_at ?? undefined,
-  deliveredAt: db.delivered_at ?? undefined,
-  readAt: db.read_at ?? undefined,
-  clickedAt: db.clicked_at ?? undefined,
-  respondedAt: db.responded_at ?? undefined,
-  responseData: db.response_data
-    ? ResponseDataSchema.parse({
-      guestCount: db.response_data.guest_count,
-      dietaryRestrictions: db.response_data.dietary_restrictions,
-      notes: db.response_data.notes,
-    })
-    : undefined,
-  whatsappMessageId: db.whatsapp_message_id ?? undefined,
-  errorMessage: db.error_message ?? undefined,
-  createdAt: db.created_at,
-  updatedAt: db.updated_at,
-}));
+export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
+  (db) => ({
+    id: db.id,
+    scheduleId: db.schedule_id,
+    guestId: db.guest_id,
+    deliveryMethod: db.delivery_method,
+    status: db.status,
+    sentAt: db.sent_at ?? undefined,
+    deliveredAt: db.delivered_at ?? undefined,
+    readAt: db.read_at ?? undefined,
+    clickedAt: db.clicked_at ?? undefined,
+    respondedAt: db.responded_at ?? undefined,
+    responseData: db.response_data
+      ? ResponseDataSchema.parse({
+          guestCount: db.response_data.guest_count,
+          dietaryRestrictions: db.response_data.dietary_restrictions,
+          notes: db.response_data.notes,
+        })
+      : undefined,
+    whatsappMessageId: db.whatsapp_message_id ?? undefined,
+    errorMessage: db.error_message ?? undefined,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
+  }),
+);
 
 // --- Upsert Schema ---
 export const MessageDeliveryUpsertSchema = z.object({
@@ -384,17 +422,18 @@ export const MessageDeliveryUpsertSchema = z.object({
 export type MessageDeliveryUpsert = z.infer<typeof MessageDeliveryUpsertSchema>;
 
 // --- App to DB Transformer ---
-export const MessageDeliveryAppToDbSchema = MessageDeliveryUpsertSchema.transform((app) => {
-  const dbData: Record<string, unknown> = {};
+export const MessageDeliveryAppToDbSchema =
+  MessageDeliveryUpsertSchema.transform((app) => {
+    const dbData: Record<string, unknown> = {};
 
-  if (app.id !== undefined) dbData.id = app.id;
-  dbData.schedule_id = app.scheduleId;
-  dbData.guest_id = app.guestId;
-  dbData.delivery_method = app.deliveryMethod;
-  if (app.status !== undefined) dbData.status = app.status;
+    if (app.id !== undefined) dbData.id = app.id;
+    dbData.schedule_id = app.scheduleId;
+    dbData.guest_id = app.guestId;
+    dbData.delivery_method = app.deliveryMethod;
+    if (app.status !== undefined) dbData.status = app.status;
 
-  return dbData;
-});
+    return dbData;
+  });
 
 // =====================================================
 // GUEST INTERACTIONS
@@ -435,21 +474,23 @@ export const GuestInteractionDbSchema = z.object({
 export type GuestInteractionDb = z.infer<typeof GuestInteractionDbSchema>;
 
 // --- DB to App Transformer ---
-export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform((db) => ({
-  id: db.id,
-  guestId: db.guest_id,
-  scheduleId: db.schedule_id,
-  interactionType: db.interaction_type,
-  metadata: db.metadata
-    ? InteractionMetadataSchema.parse({
-      guestCount: db.metadata.guest_count,
-      dietaryRestrictions: db.metadata.dietary_restrictions,
-      linkClicked: db.metadata.link_clicked,
-      userAgent: db.metadata.user_agent,
-    })
-    : undefined,
-  createdAt: db.created_at,
-}));
+export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
+  (db) => ({
+    id: db.id,
+    guestId: db.guest_id,
+    scheduleId: db.schedule_id,
+    interactionType: db.interaction_type,
+    metadata: db.metadata
+      ? InteractionMetadataSchema.parse({
+          guestCount: db.metadata.guest_count,
+          dietaryRestrictions: db.metadata.dietary_restrictions,
+          linkClicked: db.metadata.link_clicked,
+          userAgent: db.metadata.user_agent,
+        })
+      : undefined,
+    createdAt: db.created_at,
+  }),
+);
 
 // --- Create Schema (interactions are typically insert-only) ---
 export const GuestInteractionCreateSchema = z.object({
@@ -459,19 +500,22 @@ export const GuestInteractionCreateSchema = z.object({
   metadata: InteractionMetadataSchema.optional(),
 });
 
-export type GuestInteractionCreate = z.infer<typeof GuestInteractionCreateSchema>;
+export type GuestInteractionCreate = z.infer<
+  typeof GuestInteractionCreateSchema
+>;
 
 // --- App to DB Transformer ---
-export const GuestInteractionAppToDbSchema = GuestInteractionCreateSchema.transform((app) => ({
-  guest_id: app.guestId,
-  schedule_id: app.scheduleId,
-  interaction_type: app.interactionType,
-  metadata: app.metadata
-    ? {
-      guest_count: app.metadata.guestCount,
-      dietary_restrictions: app.metadata.dietaryRestrictions,
-      link_clicked: app.metadata.linkClicked,
-      user_agent: app.metadata.userAgent,
-    }
-    : null,
-}));
+export const GuestInteractionAppToDbSchema =
+  GuestInteractionCreateSchema.transform((app) => ({
+    guest_id: app.guestId,
+    schedule_id: app.scheduleId,
+    interaction_type: app.interactionType,
+    metadata: app.metadata
+      ? {
+          guest_count: app.metadata.guestCount,
+          dietary_restrictions: app.metadata.dietaryRestrictions,
+          link_clicked: app.metadata.linkClicked,
+          user_agent: app.metadata.userAgent,
+        }
+      : null,
+  }));
