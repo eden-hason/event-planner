@@ -58,6 +58,45 @@ Each feature contains:
 3. Zod schemas transform database models to app models
 4. Forms use React Hook Form with Zod validation via `useActionState`
 
+### Server Action Toast Pattern
+
+Wrap server actions with `toast.promise` from Sonner to provide loading/success/error feedback:
+
+```typescript
+import { toast } from 'sonner';
+
+const actionWithToast = async (
+  prevState: ActionState | null,
+  params: { formData: FormData },
+): Promise<ActionState | null> => {
+  const promise = serverAction(params.formData).then((result) => {
+    if (!result.success) {
+      throw new Error(result.message || 'Operation failed.');
+    }
+    return result;
+  });
+
+  toast.promise(promise, {
+    loading: 'Creating item...',
+    success: (data) => {
+      // Side effects (close modal, reset form, navigate)
+      return data.message || 'Success!';
+    },
+    error: (err) =>
+      err instanceof Error ? err.message : 'Something went wrong.',
+  });
+
+  try {
+    return await promise;
+  } catch {
+    return null;
+  }
+};
+
+// Use with useActionState
+const [, formAction, isPending] = useActionState(actionWithToast, null);
+```
+
 ### Supabase Client Usage
 
 ```typescript
@@ -69,6 +108,10 @@ const supabase = await createClient();
 import { createClient } from '@/lib/supabase/client';
 const supabase = createClient();
 ```
+
+### Row Level Security (RLS)
+
+Supabase RLS policies handle data ownership at the database level. **Do not add manual ownership checks in code** (e.g., verifying `user_id` matches the current user before CRUD operations). RLS automatically ensures users can only access their own data.
 
 ### Styling
 
