@@ -2,7 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
+import { getDefaultTemplatesByMessageTypes } from '../queries/message-templates';
 import { getExistingMessageTypes } from '../queries/schedules';
+import type { EventType, MessageType } from '../schemas';
 import { calculateScheduledDate } from '../utils';
 
 export type CreateDefaultSchedulesState = {
@@ -56,10 +58,33 @@ export async function createDefaultSchedules(
       };
     }
 
+    // Get message types that need templates
+    const messageTypesToCreate = schedulesToCreate.map(
+      (s) => s.messageType as MessageType,
+    );
+
+    // Fetch default templates for all message types
+    const templateMap = await getDefaultTemplatesByMessageTypes(
+      messageTypesToCreate,
+      eventType as EventType,
+    );
+
+    // Validate all message types have default templates
+    for (const messageType of messageTypesToCreate) {
+      if (!templateMap.has(messageType)) {
+        console.error(`No default template found for message_type: ${messageType}`);
+        return {
+          success: false,
+          message: `No default template found for message type: ${messageType}`,
+        };
+      }
+    }
+
     // Prepare records for insertion
     const records = schedulesToCreate.map((schedule) => ({
       event_id: eventId,
       message_type: schedule.messageType,
+      template_id: templateMap.get(schedule.messageType as MessageType),
       scheduled_date: calculateScheduledDate(
         eventDate,
         schedule.daysOffset,
