@@ -208,9 +208,10 @@ export async function updateEventDetails(
     const supabase = await createClient();
 
     // Fetch existing event data (including invitation URLs for cleanup)
+    // RLS handles ownership verification
     const { data: event, error: fetchError } = await supabase
       .from('events')
-      .select('user_id, invitations')
+      .select('invitations')
       .eq('id', validatedData.id)
       .single();
 
@@ -218,13 +219,6 @@ export async function updateEventDetails(
       return {
         success: false,
         message: 'Event not found.',
-      };
-    }
-
-    if (event.user_id !== currentUser.id) {
-      return {
-        success: false,
-        message: 'You do not have permission to update this event.',
       };
     }
 
@@ -308,27 +302,6 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
 
     const supabase = await createClient();
 
-    // Verify the event belongs to the current user
-    const { data: event, error: fetchError } = await supabase
-      .from('events')
-      .select('user_id')
-      .eq('id', eventId)
-      .single();
-
-    if (fetchError || !event) {
-      return {
-        success: false,
-        message: 'Event not found.',
-      };
-    }
-
-    if (event.user_id !== currentUser.id) {
-      return {
-        success: false,
-        message: 'You do not have permission to delete this event.',
-      };
-    }
-
     const { error } = await supabase.from('events').delete().eq('id', eventId);
 
     if (error) {
@@ -368,32 +341,10 @@ export async function setDefaultEvent(
 
     const supabase = await createClient();
 
-    // Verify the event belongs to the current user
-    const { data: event, error: fetchError } = await supabase
-      .from('events')
-      .select('user_id')
-      .eq('id', eventId)
-      .single();
-
-    if (fetchError || !event) {
-      return {
-        success: false,
-        message: 'Event not found.',
-      };
-    }
-
-    if (event.user_id !== currentUser.id) {
-      return {
-        success: false,
-        message: 'You do not have permission to modify this event.',
-      };
-    }
-
-    // First, unset all other default events for this user
+    // First, unset all other default events for this user (RLS filters to current user)
     await supabase
       .from('events')
       .update({ is_default: false })
-      .eq('user_id', currentUser.id)
       .neq('id', eventId);
 
     // Then set this event as default

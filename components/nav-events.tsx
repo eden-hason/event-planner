@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronsUpDown, Plus } from 'lucide-react';
+import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +19,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { type EventApp } from '@/features/events/schemas';
 import { NewEventDialog } from '@/features/events/components/new-event-dialog';
+import { deleteEvent } from '@/features/events/actions';
 import { IconCarambola } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +43,10 @@ interface NavEventsProps {
 export function NavEvents({ events }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const { isMobile } = useSidebar();
 
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
@@ -42,6 +58,52 @@ export function NavEvents({ events }: NavEventsProps) {
   const handleNewEventClick = () => {
     setDropdownOpen(false);
     setDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    const eventTitle = eventToDelete.title;
+    const eventId = eventToDelete.id;
+
+    const promise = deleteEvent(eventId).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete event.');
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: `Deleting ${eventTitle}...`,
+      success: (data) => {
+        setDeleteDialogOpen(false);
+        setEventToDelete(null);
+
+        // Navigation logic
+        const remainingEvents = events.filter(e => e.id !== eventId);
+        if (remainingEvents.length === 0) {
+          // No events left - navigate to empty state
+          router.push('/app');
+        } else if (currentEventId === eventId) {
+          // Deleted current event - navigate to first remaining
+          router.push(`/app/${remainingEvents[0].id}/dashboard`);
+        }
+        // else: viewing different event, stay put
+
+        return data.message || 'Event deleted successfully';
+      },
+      error: (err) =>
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete event. Please try again.',
+    });
+
+    try {
+      await promise;
+    } catch {
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    }
   };
 
   return (
@@ -90,20 +152,37 @@ export function NavEvents({ events }: NavEventsProps) {
 
                   return (
                     <DropdownMenuItem
-                      asChild
                       key={event.id}
-                      className={cn('gap-2 p-2', isActive && 'bg-accent')}
+                      className={cn('gap-2 p-2 group', isActive && 'bg-accent')}
                     >
-                      <Link href={eventUrl}>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                          <span className="truncate font-medium">
-                            {event.title}
-                          </span>
-                          <span className="text-muted-foreground truncate text-xs">
-                            {event.eventType}
-                          </span>
-                        </div>
-                      </Link>
+                      {/* Clickable area for navigation */}
+                      <div
+                        className="flex-1 cursor-pointer grid text-left text-sm leading-tight"
+                        onClick={() => router.push(eventUrl)}
+                      >
+                        <span className="truncate font-medium">
+                          {event.title}
+                        </span>
+                        <span className="text-muted-foreground truncate text-xs">
+                          {event.eventType}
+                        </span>
+                      </div>
+
+                      {/* Delete button - visible on hover */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEventToDelete(event);
+                          setDeleteDialogOpen(true);
+                          setDropdownOpen(false);
+                        }}
+                        aria-label="Delete event"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                     </DropdownMenuItem>
                   );
                 })
@@ -127,6 +206,22 @@ export function NavEvents({ events }: NavEventsProps) {
           </DropdownMenuContent>
         </DropdownMenu>
         <NewEventDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete &quot;{eventToDelete?.title}&quot;? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={handleConfirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarMenuItem>
     </SidebarMenu>
   );
