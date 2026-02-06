@@ -32,10 +32,7 @@ export function MessageContentCard({ template, deliveryMethod }: MessageContentC
   const messageBody = template?.bodyText ?? 'No message content configured yet.';
 
   const handleSendTest = () => {
-    const timestamp = new Date().toLocaleString();
-    const testMessage = `Test from Event Planner - ${timestamp}`;
-
-    const promise = sendWhatsAppTestMessage(testMessage).then((result) => {
+    const promise = sendWhatsAppTestMessage().then((result) => {
       if (!result.success) throw new Error(result.message);
       return result;
     });
