@@ -5,10 +5,20 @@ export { SchedulesHeader } from './components';
 export {
   createDefaultSchedules,
   type CreateDefaultSchedulesState,
+  executeSchedule,
+  type ExecuteScheduleResult,
+  type ExecuteScheduleSummary,
+  sendWhatsAppTemplateMessage,
+  type SendWhatsAppTemplateResult,
 } from './actions';
 
 // Queries
-export { getSchedulesByEventId } from './queries';
+export {
+  getSchedulesByEventId,
+  getScheduleById,
+  getMessageDeliveriesByScheduleId,
+  getDeliveryStats,
+} from './queries';
 
 // Constants
 export {
@@ -18,14 +28,23 @@ export {
 } from './constants';
 
 // Utils
-export { calculateScheduledDate } from './utils';
+export {
+  calculateScheduledDate,
+  filterGuestsByTarget,
+  validatePhoneNumber,
+  formatPhoneE164,
+  buildTemplateParameters,
+  type TemplateParameter,
+} from './utils';
 
 // Schemas/Types
 export {
   type ScheduleApp,
   type ScheduleDb,
   type MessageType,
+  type MessageDeliveryApp,
   MESSAGE_TYPES,
   SCHEDULE_STATUSES,
   DELIVERY_METHODS,
+  DELIVERY_STATUSES,
 } from './schemas';

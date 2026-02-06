@@ -9,4 +9,11 @@ export {
 export {
   sendWhatsAppTestMessage,
   type SendWhatsAppTestState,
+  sendWhatsAppTemplateMessage,
+  type SendWhatsAppTemplateResult,
 } from './whatsapp';
+export {
+  executeSchedule,
+  type ExecuteScheduleResult,
+  type ExecuteScheduleSummary,
+} from './execute-schedule';

@@ -31,5 +31,69 @@ export async function getSchedulesByEventId(
   return data.map((record) => ScheduleDbToAppSchema.parse(record));
 }
 
+/**
+ * Fetches a single schedule by ID with its related event data.
+ * RLS policies automatically verify ownership.
+ *
+ * @param scheduleId - The schedule ID to fetch
+ * @returns Schedule with event data, or null if not found
+ */
+export async function getScheduleById(
+  scheduleId: string,
+): Promise<
+  | (ScheduleApp & {
+    event: {
+      id: string;
+      userId: string;
+      title: string;
+      eventDate: string;
+    };
+  })
+  | null
+> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('schedules')
+    .select(
+      `
+      *,
+      events (
+        id,
+        user_id,
+        title,
+        event_date
+      )
+    `,
+    )
+    .eq('id', scheduleId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching schedule:', error);
+    return null;
+  }
+
+  if (!data || !data.events) {
+    return null;
+  }
+
+  // Transform schedule to app format
+  const schedule = ScheduleDbToAppSchema.parse(data);
+
+  // Transform event data to app format
+  const event = {
+    id: data.events.id,
+    userId: data.events.user_id,
+    title: data.events.title,
+    eventDate: data.events.event_date,
+  };
+
+  return {
+    ...schedule,
+    event,
+  };
+}
+
 // Removed getExistingMessageTypes - no longer needed since message_type field doesn't exist in schedules table
 // Use template_id instead for deduplication in createDefaultSchedules action
