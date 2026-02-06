@@ -8,7 +8,7 @@ export {
 } from './actions';
 
 // Queries
-export { getSchedulesByEventId, getExistingMessageTypes } from './queries';
+export { getSchedulesByEventId } from './queries';
 
 // Constants
 export {

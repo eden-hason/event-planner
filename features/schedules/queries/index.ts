@@ -1,6 +1,6 @@
-export {
-  getSchedulesByEventId,
-  getExistingMessageTypes,
-} from './schedules';
+export { getSchedulesByEventId } from './schedules';
 
-export { getMessageTemplateById } from './message-templates';
+export {
+  getWhatsAppTemplateById,
+  getWhatsAppTemplatesByIds,
+} from './whatsapp-templates';

@@ -145,7 +145,7 @@ const TABLE_ORDER = [
   'guests',
   'groups',
   'schedules',
-  'message_templates',
+  'whatsapp_templates',
   'message_deliveries',
   'guest_interactions',
 ];

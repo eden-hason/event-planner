@@ -16,7 +16,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 import { sendWhatsAppTestMessage } from '../actions';
-import type { DeliveryMethod } from '../schemas';
+import type { DeliveryMethod, WhatsAppTemplateApp } from '../schemas';
 
 const DELIVERY_METHOD_LABELS: Record<DeliveryMethod, string> = {
   whatsapp: 'WhatsApp',
@@ -24,11 +24,13 @@ const DELIVERY_METHOD_LABELS: Record<DeliveryMethod, string> = {
 };
 
 interface MessageContentCardProps {
-  messageBody: string;
+  template: WhatsAppTemplateApp | null;
   deliveryMethod?: DeliveryMethod;
 }
 
-export function MessageContentCard({ messageBody, deliveryMethod }: MessageContentCardProps) {
+export function MessageContentCard({ template, deliveryMethod }: MessageContentCardProps) {
+  const messageBody = template?.bodyText ?? 'No message content configured yet.';
+
   const handleSendTest = () => {
     const timestamp = new Date().toLocaleString();
     const testMessage = `Test from Event Planner - ${timestamp}`;
