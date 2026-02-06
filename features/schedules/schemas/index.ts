@@ -216,13 +216,11 @@ export type CustomContent = z.infer<typeof CustomContentSchema>;
 export const ScheduleAppSchema = z.object({
   id: z.uuid(),
   eventId: z.uuid(),
-  messageType: z.enum(MESSAGE_TYPES),
   scheduledDate: z.string(),
   status: z.enum(SCHEDULE_STATUSES).default('draft'),
   sentAt: z.string().nullable().optional(),
   targetFilter: TargetFilterSchema.optional(),
   templateId: z.uuid().nullable().optional(),
-  customContent: CustomContentSchema.nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -231,17 +229,15 @@ export const ScheduleAppSchema = z.object({
 export type ScheduleApp = z.infer<typeof ScheduleAppSchema>;
 
 // --- DB-Level Schema (snake_case) ---
-// Note: target_filter and custom_content are JSONB in Supabase
+// Note: target_filter is JSONB in Supabase
 export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
-  message_type: z.enum(MESSAGE_TYPES),
   scheduled_date: z.string(),
   status: z.enum(SCHEDULE_STATUSES).default('draft'),
   sent_at: z.string().nullable(),
   target_filter: z.record(z.string(), z.unknown()).nullable(),
   template_id: z.uuid().nullable(),
-  custom_content: z.record(z.string(), z.unknown()).nullable(),
   delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
   created_at: z.string(),
   updated_at: z.string(),
@@ -253,7 +249,6 @@ export type ScheduleDb = z.infer<typeof ScheduleDbSchema>;
 export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   id: db.id,
   eventId: db.event_id,
-  messageType: db.message_type,
   scheduledDate: db.scheduled_date,
   status: db.status,
   sentAt: db.sent_at ?? undefined,
@@ -265,15 +260,6 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
     })
     : undefined,
   templateId: db.template_id ?? undefined,
-  customContent: db.custom_content
-    ? CustomContentSchema.parse({
-      subject: db.custom_content.subject,
-      body: db.custom_content.body,
-      whatsappBody: db.custom_content.whatsapp_body,
-      ctaText: db.custom_content.cta_text,
-      ctaUrl: db.custom_content.cta_url,
-    })
-    : undefined,
   deliveryMethod: db.delivery_method,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
@@ -283,12 +269,10 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
 export const ScheduleUpsertSchema = z.object({
   id: z.uuid().optional(),
   eventId: z.uuid(),
-  messageType: z.enum(MESSAGE_TYPES),
   scheduledDate: z.string(),
   status: z.enum(SCHEDULE_STATUSES).optional(),
   targetFilter: TargetFilterSchema.optional(),
   templateId: z.uuid().nullable().optional(),
-  customContent: CustomContentSchema.nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
 });
 
@@ -300,7 +284,6 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
 
   if (app.id !== undefined) dbData.id = app.id;
   dbData.event_id = app.eventId;
-  dbData.message_type = app.messageType;
   dbData.scheduled_date = app.scheduledDate;
   if (app.status !== undefined) dbData.status = app.status;
   if (app.targetFilter !== undefined) {
@@ -311,17 +294,6 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
     };
   }
   if (app.templateId !== undefined) dbData.template_id = app.templateId ?? null;
-  if (app.customContent !== undefined) {
-    dbData.custom_content = app.customContent
-      ? {
-        subject: app.customContent.subject,
-        body: app.customContent.body,
-        whatsapp_body: app.customContent.whatsappBody,
-        cta_text: app.customContent.ctaText,
-        cta_url: app.customContent.ctaUrl,
-      }
-      : null;
-  }
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;
 
@@ -519,3 +491,8 @@ export const GuestInteractionAppToDbSchema =
       }
       : null,
   }));
+
+// =====================================================
+// WHATSAPP TEMPLATES
+// =====================================================
+export * from './whatsapp-templates';

@@ -23,9 +23,9 @@
    - [guests](#guests)
    - [groups](#groups)
    - [schedules](#schedules)
-   - [message_templates](#message_templates)
    - [message_deliveries](#message_deliveries)
    - [guest_interactions](#guest_interactions)
+   - [whatsapp_templates](#whatsapp_templates)
 5. [Foreign Key Relationships](#foreign-key-relationships)
 6. [JSONB Column Structures](#jsonb-column-structures)
 7. [Row Level Security (RLS) Policies](#row-level-security-rls-policies)
@@ -45,9 +45,9 @@ The database uses **PostgreSQL** (hosted on Supabase) and consists of **8 tables
 | `guests` | Guest list per event | Guest management |
 | `groups` | Guest groupings (e.g., bride's side, work friends) | Guest organization |
 | `schedules` | Stores scheduled messages for events with timing and targeting configuration | Messaging automation |
-| `message_templates` | Stores message templates for different event types and message stages | Message content |
 | `message_deliveries` | Tracks individual message delivery status per guest | Delivery analytics |
 | `guest_interactions` | Records all guest interactions with messages for detailed analytics | Engagement tracking |
+| `whatsapp_templates` |  |  |
 
 Authentication is handled by **Supabase Auth** (`auth.users`), which is separate from the `public` schema.
 
@@ -89,16 +89,6 @@ guest_interactions
 
 The database defines the following custom PostgreSQL enum types:
 
-### `public.cta_type`
-
-| Value |
-|---|
-| `view_invitation` |
-| `confirm_rsvp` |
-| `view_directions` |
-| `view_photos` |
-| `none` |
-
 ### `public.delivery_method`
 
 | Value |
@@ -116,15 +106,6 @@ The database defines the following custom PostgreSQL enum types:
 | `read` |
 | `failed` |
 
-### `public.event_type`
-
-| Value |
-|---|
-| `wedding` |
-| `birthday` |
-| `corporate` |
-| `other` |
-
 ### `public.interaction_type`
 
 | Value |
@@ -135,16 +116,6 @@ The database defines the following custom PostgreSQL enum types:
 | `rsvp_decline` |
 | `update_guests` |
 | `share` |
-
-### `public.message_type`
-
-| Value |
-|---|
-| `initial_invitation` |
-| `first_confirmation` |
-| `second_confirmation` |
-| `event_reminder` |
-| `thank_you` |
 
 ### `public.PRICING_PLAN`
 
@@ -265,39 +236,12 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 |---|---|---|---|---|---|
 | `id` | `uuid` | **NO** | `gen_random_uuid()` | **PK** |  |
 | `event_id` | `uuid` | **NO** | - | **FK** -> `events.id` |  |
-| `template_id` | `uuid` | YES | - | **FK** -> `message_templates.id` |  |
-| `custom_content` | `jsonb` | YES | - |  | See [JSONB structures](#custom_content) |
 | `delivery_method` | `delivery_method` | **NO** | `'whatsapp'` |  | Enum: `whatsapp`, `sms` |
-| `message_type` | `message_type` | **NO** | - |  | Enum: `initial_invitation`, `first_confirmation`, `second_confirmation`, `event_reminder`, `thank_you` |
 | `scheduled_date` | `timestamptz` | **NO** | - |  | When to send |
 | `sent_at` | `timestamptz` | YES | - |  | Actual send time |
 | `status` | `schedule_status` | YES | `'draft'` |  | Enum: `draft`, `scheduled`, `sent`, `cancelled` |
 | `target_filter` | `jsonb` | YES | - |  | See [JSONB structures](#target_filter) |
-| `created_at` | `timestamptz` | YES | `now()` |  |  |
-| `updated_at` | `timestamptz` | YES | `now()` |  |  |
-
----
-
-### `message_templates`
-
-> Stores message templates for different event types and message stages.
-
-| Column | Type | Nullable | Default | Constraints | Notes |
-|---|---|---|---|---|---|
-| `id` | `uuid` | **NO** | `gen_random_uuid()` | **PK** |  |
-| `body_template` | `text` | **NO** | - |  | Main message body |
-| `created_by` | `uuid` | YES | - |  | User who created (null for system) |
-| `cta_text` | `varchar(100)` | YES | - |  | Call-to-action button text |
-| `cta_type` | `cta_type` | YES | `'none'` |  | Enum: `view_invitation`, `confirm_rsvp`, `view_directions`, `view_photos`, `none` |
-| `default_days_offset` | `integer` | **NO** | - |  | Days before/after event to send |
-| `default_time` | `time` | **NO** | `'10:00:00'` |  | Default send time |
-| `event_type` | `event_type` | **NO** | - |  | Enum: `wedding`, `birthday`, `corporate`, `other` |
-| `is_default` | `boolean` | **NO** | `false` |  | Default template for its type |
-| `is_system` | `boolean` | YES | `false` |  | System-provided template |
-| `message_type` | `message_type` | **NO** | - |  | Enum: `initial_invitation`, `first_confirmation`, `second_confirmation`, `event_reminder`, `thank_you` |
-| `name` | `varchar(255)` | **NO** | - |  | Template display name |
-| `subject` | `varchar(500)` | YES | - |  | Email subject line |
-| `whatsapp_template` | `text` | YES | - |  | WhatsApp-specific body |
+| `template_id` | `uuid` | YES | - |  |  |
 | `created_at` | `timestamptz` | YES | `now()` |  |  |
 | `updated_at` | `timestamptz` | YES | `now()` |  |  |
 
@@ -313,6 +257,7 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `guest_id` | `uuid` | **NO** | - | **FK** -> `guests.id` |  |
 | `schedule_id` | `uuid` | **NO** | - | **FK** -> `schedules.id` |  |
 | `clicked_at` | `timestamptz` | YES | - |  |  |
+| `confirmation_token` | `varchar(64)` | YES | - |  |  |
 | `delivered_at` | `timestamptz` | YES | - |  |  |
 | `error_message` | `text` | YES | - |  | Error details on failure |
 | `read_at` | `timestamptz` | YES | - |  |  |
@@ -345,6 +290,27 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 
 ---
 
+### `whatsapp_templates`
+
+| Column | Type | Nullable | Default | Constraints | Notes |
+|---|---|---|---|---|---|
+| `id` | `uuid` | **NO** | `gen_random_uuid()` | **PK** |  |
+| `body_text` | `text` | **NO** | - |  |  |
+| `buttons` | `jsonb` | YES | - |  |  |
+| `description` | `text` | YES | - |  |  |
+| `display_name` | `text` | **NO** | - |  |  |
+| `footer_text` | `text` | YES | - |  |  |
+| `header_parameters` | `jsonb` | YES | - |  |  |
+| `header_text` | `text` | YES | - |  |  |
+| `header_type` | `text` | YES | - |  |  |
+| `language_code` | `text` | **NO** | - |  |  |
+| `parameters` | `jsonb` | YES | - |  |  |
+| `template_name` | `text` | **NO** | - |  |  |
+| `created_at` | `timestamptz` | YES | `now()` |  |  |
+| `updated_at` | `timestamptz` | YES | `now()` |  |  |
+
+---
+
 ## Foreign Key Relationships
 
 | Source Table | Source Column | Target Table | Target Column | On Delete |
@@ -355,7 +321,6 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `guests` | `group_id` | `groups` | `id` | - |
 | `groups` | `event_id` | `events` | `id` | - |
 | `schedules` | `event_id` | `events` | `id` | - |
-| `schedules` | `template_id` | `message_templates` | `id` | - |
 | `message_deliveries` | `guest_id` | `guests` | `id` | - |
 | `message_deliveries` | `schedule_id` | `schedules` | `id` | - |
 | `guest_interactions` | `guest_id` | `guests` | `id` | - |
@@ -436,20 +401,6 @@ _Table: `schedules`_
   "guestStatus": ["pending", "confirmed"],  // array of RSVP_STATUS values, optional
   "tags": ["family", "vip"],                // array of strings, optional
   "groupIds": ["uuid-1", "uuid-2"]          // array of group UUIDs, optional
-}
-```
-
-### `custom_content`
-
-_Table: `schedules`_
-
-```jsonc
-{
-  "subject": "Custom subject line",    // string, optional
-  "body": "Custom message body",       // string, optional
-  "whatsappBody": "WhatsApp version",  // string, optional
-  "ctaText": "Click here",             // string, optional
-  "ctaUrl": "https://..."              // URL string, optional
 }
 ```
 
@@ -635,31 +586,17 @@ The application uses **camelCase** in TypeScript and **snake_case** in the datab
 | `createdAt` | `created_at` | `groups` |
 | `updatedAt` | `updated_at` | `groups` |
 | `eventId` | `event_id` | `schedules` |
-| `templateId` | `template_id` | `schedules` |
-| `customContent` | `custom_content` | `schedules` |
 | `deliveryMethod` | `delivery_method` | `schedules` |
-| `messageType` | `message_type` | `schedules` |
 | `scheduledDate` | `scheduled_date` | `schedules` |
 | `sentAt` | `sent_at` | `schedules` |
 | `targetFilter` | `target_filter` | `schedules` |
+| `templateId` | `template_id` | `schedules` |
 | `createdAt` | `created_at` | `schedules` |
 | `updatedAt` | `updated_at` | `schedules` |
-| `bodyTemplate` | `body_template` | `message_templates` |
-| `createdBy` | `created_by` | `message_templates` |
-| `ctaText` | `cta_text` | `message_templates` |
-| `ctaType` | `cta_type` | `message_templates` |
-| `defaultDaysOffset` | `default_days_offset` | `message_templates` |
-| `defaultTime` | `default_time` | `message_templates` |
-| `eventType` | `event_type` | `message_templates` |
-| `isDefault` | `is_default` | `message_templates` |
-| `isSystem` | `is_system` | `message_templates` |
-| `messageType` | `message_type` | `message_templates` |
-| `whatsappTemplate` | `whatsapp_template` | `message_templates` |
-| `createdAt` | `created_at` | `message_templates` |
-| `updatedAt` | `updated_at` | `message_templates` |
 | `guestId` | `guest_id` | `message_deliveries` |
 | `scheduleId` | `schedule_id` | `message_deliveries` |
 | `clickedAt` | `clicked_at` | `message_deliveries` |
+| `confirmationToken` | `confirmation_token` | `message_deliveries` |
 | `deliveredAt` | `delivered_at` | `message_deliveries` |
 | `errorMessage` | `error_message` | `message_deliveries` |
 | `readAt` | `read_at` | `message_deliveries` |
@@ -673,3 +610,13 @@ The application uses **camelCase** in TypeScript and **snake_case** in the datab
 | `scheduleId` | `schedule_id` | `guest_interactions` |
 | `interactionType` | `interaction_type` | `guest_interactions` |
 | `createdAt` | `created_at` | `guest_interactions` |
+| `bodyText` | `body_text` | `whatsapp_templates` |
+| `displayName` | `display_name` | `whatsapp_templates` |
+| `footerText` | `footer_text` | `whatsapp_templates` |
+| `headerParameters` | `header_parameters` | `whatsapp_templates` |
+| `headerText` | `header_text` | `whatsapp_templates` |
+| `headerType` | `header_type` | `whatsapp_templates` |
+| `languageCode` | `language_code` | `whatsapp_templates` |
+| `templateName` | `template_name` | `whatsapp_templates` |
+| `createdAt` | `created_at` | `whatsapp_templates` |
+| `updatedAt` | `updated_at` | `whatsapp_templates` |

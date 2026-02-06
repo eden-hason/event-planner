@@ -17,10 +17,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 import { updateScheduledDate, updateScheduleStatus } from '../actions';
-import type { ScheduleApp, ScheduleStatus } from '../schemas';
+import type { ScheduleApp, ScheduleStatus, WhatsAppTemplateApp } from '../schemas';
 
 interface ScheduleDetailsCardProps {
   schedule: ScheduleApp | undefined;
+  template: WhatsAppTemplateApp | null;
   eventDate: string;
 }
 
@@ -72,6 +73,7 @@ function toDateInputValue(isoString: string): string {
 
 export function ScheduleDetailsCard({
   schedule,
+  template,
   eventDate,
 }: ScheduleDetailsCardProps) {
   const [isPending, startTransition] = useTransition();

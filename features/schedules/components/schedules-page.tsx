@@ -1,12 +1,14 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { getMessageTemplateById } from '../queries';
+import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
+import { getMessageTypeForTemplate } from '../constants';
 import {
   MESSAGE_TYPE_LABELS,
   MESSAGE_TYPES,
   MessageType,
   ScheduleApp,
+  WhatsAppTemplateApp,
 } from '../schemas';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { MessageContentCard } from './message-content-card';
@@ -23,18 +25,18 @@ const tabTriggerClassName =
 
 function ScheduleTabContent({
   schedule,
-  messageBody,
+  template,
   eventDate,
 }: {
   schedule: ScheduleApp | undefined;
-  messageBody: string;
+  template: WhatsAppTemplateApp | null;
   eventDate: string;
 }) {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <ScheduleDetailsCard schedule={schedule} eventDate={eventDate} />
+      <ScheduleDetailsCard schedule={schedule} template={template} eventDate={eventDate} />
       <MessageContentCard
-        messageBody={messageBody}
+        template={template}
         deliveryMethod={schedule?.deliveryMethod}
       />
       <Card className="col-span-1">
@@ -56,42 +58,43 @@ export async function SchedulesPage({
   eventDate,
   schedules,
 }: SchedulesPageProps) {
-  // Fetch all templates for schedules that have a templateId
-  const templatePromises = schedules
-    .filter((s) => s.templateId)
-    .map(async (s) => {
-      const template = await getMessageTemplateById(s.templateId!);
-      return { scheduleId: s.id, template };
-    });
+  // Fetch all templates for schedules in one batch
+  const templateIds = schedules
+    .map((s) => s.templateId)
+    .filter((id): id is string => id !== null && id !== undefined);
 
-  const templateResults = await Promise.all(templatePromises);
-  const templatesMap = new Map(
-    templateResults.map((r) => [r.scheduleId, r.template]),
+  const uniqueTemplateIds = Array.from(new Set(templateIds));
+  const templateMap = await getWhatsAppTemplatesByIds(uniqueTemplateIds);
+
+  // Create a map of schedule ID to template
+  const scheduleTemplates = new Map(
+    schedules
+      .filter((s) => s.templateId && templateMap.has(s.templateId))
+      .map((s) => [s.id, templateMap.get(s.templateId!)!]),
   );
 
-  // Helper to find schedule by message type
-  const getScheduleForTab = (
-    messageType: MessageType,
-  ): ScheduleApp | undefined => {
-    return schedules.find((s) => s.messageType === messageType);
-  };
+  // Group schedules by message type for the tab UI
+  const schedulesByMessageType = schedules.reduce((acc, schedule) => {
+    if (!schedule.templateId) return acc;
 
-  // Helper to get message body for a tab
-  const getMessageBodyForTab = (messageType: MessageType): string => {
-    const schedule = getScheduleForTab(messageType);
-    if (!schedule) return 'No message content configured yet.';
+    const messageType = getMessageTypeForTemplate(schedule.templateId) ?? 'initial_invitation';
 
-    // Use custom content if available, otherwise use template
-    if (schedule.customContent?.body) {
-      return schedule.customContent.body;
+    if (!acc[messageType]) {
+      acc[messageType] = [];
     }
 
-    const template = templatesMap.get(schedule.id);
-    if (template?.bodyTemplate) {
-      return template.bodyTemplate;
-    }
+    acc[messageType].push({
+      schedule,
+      template: scheduleTemplates.get(schedule.id) ?? null,
+    });
 
-    return 'No message content configured yet.';
+    return acc;
+  }, {} as Record<string, Array<{ schedule: ScheduleApp; template: WhatsAppTemplateApp | null }>>);
+
+  // Helper to get the first schedule and template for a tab
+  const getScheduleForTab = (messageType: MessageType) => {
+    const items = schedulesByMessageType[messageType];
+    return items?.[0] ?? { schedule: undefined, template: null };
   };
 
   return (
@@ -106,12 +109,12 @@ export async function SchedulesPage({
           ))}
         </TabsList>
         {MESSAGE_TYPES.map((type) => {
-          const schedule = getScheduleForTab(type);
+          const { schedule, template } = getScheduleForTab(type);
           return (
             <TabsContent key={type} value={type}>
               <ScheduleTabContent
                 schedule={schedule}
-                messageBody={getMessageBodyForTab(type)}
+                template={template}
                 eventDate={eventDate}
               />
             </TabsContent>

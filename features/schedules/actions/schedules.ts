@@ -4,9 +4,8 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
-import { getDefaultTemplatesByMessageTypes } from '../queries/message-templates';
-import { getExistingMessageTypes } from '../queries/schedules';
-import type { EventType, MessageType, ScheduleStatus } from '../schemas';
+import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
+import type { ScheduleStatus } from '../schemas';
 import { calculateScheduledDate } from '../utils';
 
 export type UpdateScheduleStatusState = {
@@ -116,8 +115,7 @@ export type CreateDefaultSchedulesState = {
 
 /**
  * Creates default schedules for a new event based on its type.
- * This function is idempotent - it skips creating schedules for message types
- * that already exist for the event.
+ * This function is idempotent - it skips creating schedules that already exist.
  *
  * @param eventId - The event ID to create schedules for
  * @param eventDate - The event date in ISO format (YYYY-MM-DD)
@@ -127,65 +125,74 @@ export type CreateDefaultSchedulesState = {
 export async function createDefaultSchedules(
   eventId: string,
   eventDate: string,
-  eventType: string,
+  eventType: string = 'wedding',
 ): Promise<CreateDefaultSchedulesState> {
   try {
     const supabase = await createClient();
 
-    // Get default schedules for this event type
-    const defaultSchedules = DEFAULT_SCHEDULES_BY_EVENT_TYPE[eventType];
-    if (!defaultSchedules || defaultSchedules.length === 0) {
+    // 1. Get default schedule configurations for this event type
+    const defaultSchedules = DEFAULT_SCHEDULES_BY_EVENT_TYPE[eventType] || [];
+
+    if (defaultSchedules.length === 0) {
       return {
         success: true,
-        message: 'No default schedules defined for this event type',
+        message: 'No default schedules configured for this event type.',
         schedulesCreated: 0,
       };
     }
 
-    // Get existing message types to avoid duplicates (idempotency)
-    const existingTypes = await getExistingMessageTypes(eventId);
-    const existingTypesSet = new Set(existingTypes);
+    // 2. Get existing schedules for this event (to avoid duplicates)
+    const { data: existingSchedules, error: fetchError } = await supabase
+      .from('schedules')
+      .select('template_id')
+      .eq('event_id', eventId);
 
-    // Filter out schedules that already exist
+    if (fetchError) {
+      console.error('Error fetching existing schedules:', fetchError);
+      return {
+        success: false,
+        message: 'Failed to check existing schedules.',
+      };
+    }
+
+    // 3. Create a set of existing template IDs
+    const existingTemplateIds = new Set(
+      existingSchedules?.map((s) => s.template_id).filter(Boolean) ?? [],
+    );
+
+    // 4. Filter to only create schedules that don't already exist
     const schedulesToCreate = defaultSchedules.filter(
-      (schedule) => !existingTypesSet.has(schedule.messageType),
+      (schedule) => !existingTemplateIds.has(schedule.templateId),
     );
 
     if (schedulesToCreate.length === 0) {
       return {
         success: true,
-        message: 'All default schedules already exist',
+        message: 'Default schedules already exist.',
         schedulesCreated: 0,
       };
     }
 
-    // Get message types that need templates
-    const messageTypesToCreate = schedulesToCreate.map(
-      (s) => s.messageType as MessageType,
+    // 5. Validate that all templates exist in the database
+    const templateIds = schedulesToCreate.map((s) => s.templateId);
+    const templateMap = await getWhatsAppTemplatesByIds(templateIds);
+
+    const missingTemplates = templateIds.filter(
+      (id) => !templateMap.has(id),
     );
 
-    // Fetch default templates for all message types
-    const templateMap = await getDefaultTemplatesByMessageTypes(
-      messageTypesToCreate,
-      eventType as EventType,
-    );
-
-    // Validate all message types have default templates
-    for (const messageType of messageTypesToCreate) {
-      if (!templateMap.has(messageType)) {
-        console.error(`No default template found for message_type: ${messageType}`);
-        return {
-          success: false,
-          message: `No default template found for message type: ${messageType}`,
-        };
-      }
+    if (missingTemplates.length > 0) {
+      console.error('Missing WhatsApp templates:', missingTemplates);
+      return {
+        success: false,
+        message: `Missing templates with IDs: ${missingTemplates.join(', ')}`,
+      };
     }
 
-    // Prepare records for insertion
+    // 6. Create schedule records
     const records = schedulesToCreate.map((schedule) => ({
       event_id: eventId,
-      message_type: schedule.messageType,
-      template_id: templateMap.get(schedule.messageType as MessageType),
+      template_id: schedule.templateId,
       scheduled_date: calculateScheduledDate(
         eventDate,
         schedule.daysOffset,
@@ -195,27 +202,28 @@ export async function createDefaultSchedules(
       delivery_method: 'whatsapp' as const,
     }));
 
-    // Insert schedules
-    const { error } = await supabase.from('schedules').insert(records);
+    const { error: insertError } = await supabase
+      .from('schedules')
+      .insert(records);
 
-    if (error) {
-      console.error('Error creating default schedules:', error);
+    if (insertError) {
+      console.error('Error creating schedules:', insertError);
       return {
         success: false,
-        message: 'Failed to create default schedules',
+        message: 'Failed to create default schedules.',
       };
     }
 
     return {
       success: true,
-      message: `Created ${schedulesToCreate.length} default schedules`,
+      message: `Created ${schedulesToCreate.length} default schedule(s).`,
       schedulesCreated: schedulesToCreate.length,
     };
   } catch (error) {
-    console.error('Error in createDefaultSchedules:', error);
+    console.error('Unexpected error in createDefaultSchedules:', error);
     return {
       success: false,
-      message: 'An unexpected error occurred',
+      message: 'An unexpected error occurred.',
     };
   }
 }

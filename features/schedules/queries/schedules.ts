@@ -31,27 +31,5 @@ export async function getSchedulesByEventId(
   return data.map((record) => ScheduleDbToAppSchema.parse(record));
 }
 
-/**
- * Fetches existing message types for an event.
- * Used for idempotency checks when creating default schedules.
- *
- * @param eventId - The event ID to check
- * @returns Array of existing message types
- */
-export async function getExistingMessageTypes(
-  eventId: string,
-): Promise<string[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from('schedules')
-    .select('message_type')
-    .eq('event_id', eventId);
-
-  if (error) {
-    console.error('Error fetching existing message types:', error);
-    return [];
-  }
-
-  return data?.map((row) => row.message_type) ?? [];
-}
+// Removed getExistingMessageTypes - no longer needed since message_type field doesn't exist in schedules table
+// Use template_id instead for deduplication in createDefaultSchedules action
