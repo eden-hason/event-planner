@@ -1,6 +1,6 @@
 'use client';
 
-import { Info, Lock, MessageSquareText, Send } from 'lucide-react';
+import { Info, Lock, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +16,19 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 import { sendWhatsAppTestMessage } from '../actions';
+import type { DeliveryMethod } from '../schemas';
+
+const DELIVERY_METHOD_LABELS: Record<DeliveryMethod, string> = {
+  whatsapp: 'WhatsApp',
+  sms: 'SMS',
+};
 
 interface MessageContentCardProps {
   messageBody: string;
+  deliveryMethod?: DeliveryMethod;
 }
 
-export function MessageContentCard({ messageBody }: MessageContentCardProps) {
+export function MessageContentCard({ messageBody, deliveryMethod }: MessageContentCardProps) {
   const handleSendTest = () => {
     const timestamp = new Date().toLocaleString();
     const testMessage = `Test from Event Planner - ${timestamp}`;
@@ -42,12 +49,9 @@ export function MessageContentCard({ messageBody }: MessageContentCardProps) {
   return (
     <Card className="col-span-2 row-span-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquareText className="h-4 w-4" />
-          Message Content
-        </CardTitle>
+        <CardTitle>Message Content</CardTitle>
         <CardAction>
-          <Badge variant="outline">SMS</Badge>
+          <Badge variant="outline">{deliveryMethod ? DELIVERY_METHOD_LABELS[deliveryMethod] : 'N/A'}</Badge>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

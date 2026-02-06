@@ -55,7 +55,7 @@ export const SCHEDULE_STATUSES = [
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
 
 // Delivery methods
-export const DELIVERY_METHODS = ['email', 'whatsapp', 'both'] as const;
+export const DELIVERY_METHODS = ['whatsapp', 'sms'] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 
 // Delivery status for individual messages
@@ -223,7 +223,7 @@ export const ScheduleAppSchema = z.object({
   targetFilter: TargetFilterSchema.optional(),
   templateId: z.uuid().nullable().optional(),
   customContent: CustomContentSchema.nullable().optional(),
-  deliveryMethod: z.enum(DELIVERY_METHODS).default('both'),
+  deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -242,7 +242,7 @@ export const ScheduleDbSchema = z.object({
   target_filter: z.record(z.string(), z.unknown()).nullable(),
   template_id: z.uuid().nullable(),
   custom_content: z.record(z.string(), z.unknown()).nullable(),
-  delivery_method: z.enum(DELIVERY_METHODS).default('both'),
+  delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -259,20 +259,20 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   sentAt: db.sent_at ?? undefined,
   targetFilter: db.target_filter
     ? TargetFilterSchema.parse({
-        guestStatus: db.target_filter.guest_status,
-        tags: db.target_filter.tags,
-        groupIds: db.target_filter.group_ids,
-      })
+      guestStatus: db.target_filter.guest_status,
+      tags: db.target_filter.tags,
+      groupIds: db.target_filter.group_ids,
+    })
     : undefined,
   templateId: db.template_id ?? undefined,
   customContent: db.custom_content
     ? CustomContentSchema.parse({
-        subject: db.custom_content.subject,
-        body: db.custom_content.body,
-        whatsappBody: db.custom_content.whatsapp_body,
-        ctaText: db.custom_content.cta_text,
-        ctaUrl: db.custom_content.cta_url,
-      })
+      subject: db.custom_content.subject,
+      body: db.custom_content.body,
+      whatsappBody: db.custom_content.whatsapp_body,
+      ctaText: db.custom_content.cta_text,
+      ctaUrl: db.custom_content.cta_url,
+    })
     : undefined,
   deliveryMethod: db.delivery_method,
   createdAt: db.created_at,
@@ -314,12 +314,12 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   if (app.customContent !== undefined) {
     dbData.custom_content = app.customContent
       ? {
-          subject: app.customContent.subject,
-          body: app.customContent.body,
-          whatsapp_body: app.customContent.whatsappBody,
-          cta_text: app.customContent.ctaText,
-          cta_url: app.customContent.ctaUrl,
-        }
+        subject: app.customContent.subject,
+        body: app.customContent.body,
+        whatsapp_body: app.customContent.whatsappBody,
+        cta_text: app.customContent.ctaText,
+        cta_url: app.customContent.ctaUrl,
+      }
       : null;
   }
   if (app.deliveryMethod !== undefined)
@@ -398,10 +398,10 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     respondedAt: db.responded_at ?? undefined,
     responseData: db.response_data
       ? ResponseDataSchema.parse({
-          guestCount: db.response_data.guest_count,
-          dietaryRestrictions: db.response_data.dietary_restrictions,
-          notes: db.response_data.notes,
-        })
+        guestCount: db.response_data.guest_count,
+        dietaryRestrictions: db.response_data.dietary_restrictions,
+        notes: db.response_data.notes,
+      })
       : undefined,
     whatsappMessageId: db.whatsapp_message_id ?? undefined,
     errorMessage: db.error_message ?? undefined,
@@ -482,11 +482,11 @@ export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
     interactionType: db.interaction_type,
     metadata: db.metadata
       ? InteractionMetadataSchema.parse({
-          guestCount: db.metadata.guest_count,
-          dietaryRestrictions: db.metadata.dietary_restrictions,
-          linkClicked: db.metadata.link_clicked,
-          userAgent: db.metadata.user_agent,
-        })
+        guestCount: db.metadata.guest_count,
+        dietaryRestrictions: db.metadata.dietary_restrictions,
+        linkClicked: db.metadata.link_clicked,
+        userAgent: db.metadata.user_agent,
+      })
       : undefined,
     createdAt: db.created_at,
   }),
@@ -512,10 +512,10 @@ export const GuestInteractionAppToDbSchema =
     interaction_type: app.interactionType,
     metadata: app.metadata
       ? {
-          guest_count: app.metadata.guestCount,
-          dietary_restrictions: app.metadata.dietaryRestrictions,
-          link_clicked: app.metadata.linkClicked,
-          user_agent: app.metadata.userAgent,
-        }
+        guest_count: app.metadata.guestCount,
+        dietary_restrictions: app.metadata.dietaryRestrictions,
+        link_clicked: app.metadata.linkClicked,
+        user_agent: app.metadata.userAgent,
+      }
       : null,
   }));

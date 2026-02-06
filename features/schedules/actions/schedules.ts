@@ -1,11 +1,112 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
 import { getDefaultTemplatesByMessageTypes } from '../queries/message-templates';
 import { getExistingMessageTypes } from '../queries/schedules';
-import type { EventType, MessageType } from '../schemas';
+import type { EventType, MessageType, ScheduleStatus } from '../schemas';
 import { calculateScheduledDate } from '../utils';
+
+export type UpdateScheduleStatusState = {
+  success: boolean;
+  message?: string | null;
+};
+
+/**
+ * Updates the status of a schedule (e.g. toggling between draft and scheduled).
+ * RLS ensures the user can only update their own schedules.
+ *
+ * @param scheduleId - The schedule ID to update
+ * @param status - The new schedule status
+ * @returns Result state with success status
+ */
+export async function updateScheduleStatus(
+  scheduleId: string,
+  status: ScheduleStatus,
+): Promise<UpdateScheduleStatusState> {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('schedules')
+      .update({ status })
+      .eq('id', scheduleId);
+
+    if (error) {
+      console.error('Error updating schedule status:', error);
+      return {
+        success: false,
+        message: 'Failed to update schedule status.',
+      };
+    }
+
+    revalidatePath('/app');
+
+    return {
+      success: true,
+      message:
+        status === 'scheduled'
+          ? 'Schedule enabled.'
+          : 'Schedule disabled.',
+    };
+  } catch (error) {
+    console.error('Error in updateScheduleStatus:', error);
+    return {
+      success: false,
+      message: 'An unexpected error occurred.',
+    };
+  }
+}
+
+export type UpdateScheduledDateState = {
+  success: boolean;
+  message?: string | null;
+};
+
+/**
+ * Updates the scheduled_date of a schedule.
+ * RLS ensures the user can only update their own schedules.
+ *
+ * @param scheduleId - The schedule ID to update
+ * @param scheduledDate - The new scheduled date as an ISO 8601 string
+ * @returns Result state with success status
+ */
+export async function updateScheduledDate(
+  scheduleId: string,
+  scheduledDate: string,
+): Promise<UpdateScheduledDateState> {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('schedules')
+      .update({ scheduled_date: scheduledDate })
+      .eq('id', scheduleId);
+
+    if (error) {
+      console.error('Error updating scheduled date:', error);
+      return {
+        success: false,
+        message: 'Failed to update scheduled date.',
+      };
+    }
+
+    revalidatePath('/app');
+
+    return {
+      success: true,
+      message: 'Scheduled date updated.',
+    };
+  } catch (error) {
+    console.error('Error in updateScheduledDate:', error);
+    return {
+      success: false,
+      message: 'An unexpected error occurred.',
+    };
+  }
+}
 
 export type CreateDefaultSchedulesState = {
   success: boolean;
@@ -91,7 +192,7 @@ export async function createDefaultSchedules(
         schedule.defaultTime,
       ),
       status: 'draft' as const,
-      delivery_method: 'both' as const,
+      delivery_method: 'whatsapp' as const,
     }));
 
     // Insert schedules

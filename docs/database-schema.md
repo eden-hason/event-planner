@@ -104,8 +104,7 @@ The database defines the following custom PostgreSQL enum types:
 | Value |
 |---|
 | `whatsapp` |
-| `landing_page` |
-| `both` |
+| `sms` |
 
 ### `public.delivery_status`
 
@@ -268,7 +267,7 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `event_id` | `uuid` | **NO** | - | **FK** -> `events.id` |  |
 | `template_id` | `uuid` | YES | - | **FK** -> `message_templates.id` |  |
 | `custom_content` | `jsonb` | YES | - |  | See [JSONB structures](#custom_content) |
-| `delivery_method` | `delivery_method` | YES | `'both'` |  | Enum: `whatsapp`, `landing_page`, `both` |
+| `delivery_method` | `delivery_method` | **NO** | `'whatsapp'` |  | Enum: `whatsapp`, `sms` |
 | `message_type` | `message_type` | **NO** | - |  | Enum: `initial_invitation`, `first_confirmation`, `second_confirmation`, `event_reminder`, `thank_you` |
 | `scheduled_date` | `timestamptz` | **NO** | - |  | When to send |
 | `sent_at` | `timestamptz` | YES | - |  | Actual send time |
@@ -315,7 +314,6 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `schedule_id` | `uuid` | **NO** | - | **FK** -> `schedules.id` |  |
 | `clicked_at` | `timestamptz` | YES | - |  |  |
 | `delivered_at` | `timestamptz` | YES | - |  |  |
-| `delivery_method` | `delivery_method` | **NO** | - |  | Enum: `whatsapp`, `landing_page`, `both` |
 | `error_message` | `text` | YES | - |  | Error details on failure |
 | `read_at` | `timestamptz` | YES | - |  |  |
 | `responded_at` | `timestamptz` | YES | - |  |  |
@@ -663,7 +661,6 @@ The application uses **camelCase** in TypeScript and **snake_case** in the datab
 | `scheduleId` | `schedule_id` | `message_deliveries` |
 | `clickedAt` | `clicked_at` | `message_deliveries` |
 | `deliveredAt` | `delivered_at` | `message_deliveries` |
-| `deliveryMethod` | `delivery_method` | `message_deliveries` |
 | `errorMessage` | `error_message` | `message_deliveries` |
 | `readAt` | `read_at` | `message_deliveries` |
 | `respondedAt` | `responded_at` | `message_deliveries` |
