@@ -36,8 +36,6 @@ interface GuestsTableProps {
   groupFilter: string[]; // Array of group IDs
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
-  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
-  isSendingWhatsApp: boolean;
   onAddGuest?: () => void;
   onUploadFile?: () => void;
   pageSize?: number;
@@ -49,8 +47,6 @@ export function GuestsTable({
   groupFilter,
   onSelectGuest,
   onDeleteGuest,
-  onSendWhatsApp,
-  isSendingWhatsApp,
   onAddGuest,
   onUploadFile,
   pageSize,
@@ -60,8 +56,6 @@ export function GuestsTable({
     searchTerm,
     groupFilter,
     onDeleteGuest,
-    onSendWhatsApp,
-    isSendingWhatsApp,
     pageSize,
   });
 
