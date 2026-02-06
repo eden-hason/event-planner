@@ -4,6 +4,7 @@ import { useMemo, useOptimistic, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { Calendar } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -60,14 +61,16 @@ function computeDaysBefore(eventDate: string, scheduledDate: string): number {
 }
 
 /**
- * Formats an ISO date string to YYYY-MM-DD for a date input.
+ * Formats an ISO date string for display (e.g. "Friday, February 6, 2025").
  */
-function toDateInputValue(isoString: string): string {
+function formatScheduledDateDisplay(isoString: string): string {
   const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 export function ScheduleDetailsCard({
@@ -89,11 +92,6 @@ export function ScheduleDetailsCard({
     return computeDaysBefore(eventDate, scheduledDate);
   }, [eventDate, scheduledDate]);
 
-  const dateInputValue = useMemo(() => {
-    if (!scheduledDate) return '';
-    return toDateInputValue(scheduledDate);
-  }, [scheduledDate]);
-
   const isDirty = scheduledDate !== initialDateValue;
 
   const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,22 +101,6 @@ export function ScheduleDetailsCard({
     const event = new Date(eventDate);
     const newDate = new Date(event);
     newDate.setDate(event.getDate() - days);
-
-    // Preserve the time from the current scheduledDate
-    if (scheduledDate) {
-      const existing = new Date(scheduledDate);
-      newDate.setHours(existing.getHours(), existing.getMinutes(), existing.getSeconds());
-    }
-
-    setScheduledDate(newDate.toISOString());
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateValue = e.target.value; // YYYY-MM-DD
-    if (!dateValue) return;
-
-    const [year, month, day] = dateValue.split('-').map(Number);
-    const newDate = new Date(year, month - 1, day);
 
     // Preserve the time from the current scheduledDate
     if (scheduledDate) {
@@ -216,7 +198,7 @@ export function ScheduleDetailsCard({
         {schedule && eventDate && (
           <FormItem>
             <Label>Scheduled Date</Label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -229,13 +211,17 @@ export function ScheduleDetailsCard({
                   days before
                 </span>
               </div>
-              <Input
-                type="date"
-                value={dateInputValue}
-                onChange={handleDateChange}
-                className="w-auto"
-                disabled={isSaving}
-              />
+              {scheduledDate && (
+                <div className="rounded-lg bg-primary/10 px-4 py-3">
+                  <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+                    Scheduled for
+                  </p>
+                  <p className="mt-1 flex items-center gap-2 text-lg font-semibold text-foreground">
+                    <Calendar className="size-5 shrink-0 text-primary" />
+                    {formatScheduledDateDisplay(scheduledDate)}
+                  </p>
+                </div>
+              )}
             </div>
           </FormItem>
         )}
