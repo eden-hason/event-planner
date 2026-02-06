@@ -20,8 +20,6 @@ interface UseGuestsTableProps {
   searchTerm: string;
   groupFilter: string[]; // Array of group IDs
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
-  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
-  isSendingWhatsApp: boolean;
   pageSize?: number;
 }
 
@@ -30,8 +28,6 @@ export function useGuestsTable({
   searchTerm,
   groupFilter,
   onDeleteGuest,
-  onSendWhatsApp,
-  isSendingWhatsApp,
   pageSize = DEFAULT_PAGE_SIZE,
 }: UseGuestsTableProps) {
   const [globalFilter, setGlobalFilter] = useState('');
@@ -92,8 +88,6 @@ export function useGuestsTable({
 
   const columns = createGuestColumns({
     onDelete: onDeleteGuest,
-    onSendWhatsApp,
-    isSendingWhatsApp,
   });
 
   const table = useReactTable({

@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal, Trash2, Send } from 'lucide-react';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,20 +13,9 @@ import { GuestWithGroupApp } from '@/features/guests/schemas';
 interface RowActionsProps {
   guest: GuestWithGroupApp;
   onDelete: (guest: GuestWithGroupApp) => void;
-  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
-  isSendingWhatsApp: boolean;
 }
 
-export function RowActions({
-  guest,
-  onDelete,
-  onSendWhatsApp,
-  isSendingWhatsApp,
-}: RowActionsProps) {
-  const handleSendWhatsApp = () => {
-    onSendWhatsApp(guest);
-  };
-
+export function RowActions({ guest, onDelete }: RowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,13 +32,6 @@ export function RowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem
-          onClick={handleSendWhatsApp}
-          disabled={isSendingWhatsApp}
-        >
-          <Send className="mr-2 h-4 w-4" />
-          {isSendingWhatsApp ? 'Sending...' : 'Send WhatsApp'}
-        </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onClick={() => onDelete(guest)}>
           <Trash2 className="mr-2 h-4 w-4" />
           Delete guest

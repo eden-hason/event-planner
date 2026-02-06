@@ -9,7 +9,6 @@ import {
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import twilio from 'twilio';
 import { z } from 'zod';
 
 export type UpsertGuestState = {
@@ -21,12 +20,6 @@ export type UpsertGuestState = {
 export type DeleteGuestState = {
   success: boolean;
   message: string;
-};
-
-export type SendWhatsAppMessageState = {
-  success: boolean;
-  message: string;
-  messageSid?: string;
 };
 
 export async function upsertGuest(
@@ -133,60 +126,6 @@ export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
     return {
       success: false,
       message: 'Failed to delete guest. Please try again.',
-    };
-  }
-}
-
-export async function sendWhatsAppMessage(
-  phoneNumber: string,
-  message: string,
-): Promise<SendWhatsAppMessageState> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return {
-        success: false,
-        message: 'Unauthorized: You must be logged in to send a message.',
-      };
-    }
-
-    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioPhoneNumber = process.env.TWILIO_SENDER_ID;
-
-    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-      console.error('Missing Twilio environment variables');
-      return {
-        success: false,
-        message: 'WhatsApp service is not configured.',
-      };
-    }
-
-    const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
-
-    const twilioMessage = await twilioClient.messages.create({
-      body: message.trim(),
-      from: 'whatsapp:+14155238886',
-      to: `whatsapp:${phoneNumber.trim()}`,
-      contentSid: 'HX0c6709657f56ebc45252f1836fc588cc',
-      contentVariables: JSON.stringify({
-        name: 'John Doe',
-      }),
-    });
-
-    return {
-      success: true,
-      message: 'WhatsApp message sent successfully!',
-      messageSid: twilioMessage.sid,
-    };
-  } catch (error) {
-    console.error('Send WhatsApp message error:', error);
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? `Failed to send WhatsApp message: ${error.message}`
-          : 'Failed to send WhatsApp message. Please try again.',
     };
   }
 }

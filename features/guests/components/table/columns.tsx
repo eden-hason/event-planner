@@ -28,8 +28,6 @@ const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
 
 interface GuestColumnsOptions {
   onDelete: (guest: GuestWithGroupApp) => void;
-  onSendWhatsApp: (guest: GuestWithGroupApp) => void;
-  isSendingWhatsApp: boolean;
 }
 
 export const createGuestColumns = (
@@ -140,12 +138,7 @@ export const createGuestColumns = (
     cell: ({ row }) => {
       const guest = row.original;
       return (
-        <RowActions
-          guest={guest}
-          onDelete={options.onDelete}
-          onSendWhatsApp={options.onSendWhatsApp}
-          isSendingWhatsApp={options.isSendingWhatsApp}
-        />
+        <RowActions guest={guest} onDelete={options.onDelete} />
       );
     },
   },

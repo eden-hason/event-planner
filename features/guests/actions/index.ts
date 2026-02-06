@@ -1,11 +1,9 @@
 export {
   upsertGuest,
   deleteGuest,
-  sendWhatsAppMessage,
   importGuests,
   type UpsertGuestState,
   type DeleteGuestState,
-  type SendWhatsAppMessageState,
   type ImportGuestsState,
 } from './guests';
 

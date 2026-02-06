@@ -7,12 +7,7 @@ import { GroupFilter } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
-import {
-  deleteGuest,
-  type DeleteGuestState,
-  sendWhatsAppMessage,
-  SendWhatsAppMessageState,
-} from '@/features/guests/actions';
+import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
 import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -80,46 +75,6 @@ export function GuestDirectory({
 
   const [, deleteAction] = useActionState(deleteActionWithToast, null);
 
-  const sendWhatsAppActionWithToast = async (
-    prevState: SendWhatsAppMessageState | null,
-    params: { phoneNumber: string; message: string },
-  ): Promise<SendWhatsAppMessageState | null> => {
-    const promise = sendWhatsAppMessage(
-      params.phoneNumber,
-      params.message,
-    ).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to send WhatsApp message.');
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: 'Sending WhatsApp message...',
-      success: (data) => {
-        return data.messageSid
-          ? `WhatsApp message sent successfully! Message ID: ${data.messageSid}`
-          : data.message || 'WhatsApp message sent successfully!';
-      },
-      error: (err) => {
-        return err instanceof Error
-          ? err.message
-          : 'Failed to send WhatsApp message. Please try again.';
-      },
-    });
-
-    try {
-      return await promise;
-    } catch {
-      return null;
-    }
-  };
-
-  const [, whatsAppAction, isSendingWhatsApp] = useActionState(
-    sendWhatsAppActionWithToast,
-    null,
-  );
-
   const handleSelectGuest = (id: string) => {
     const guest = guests.find((guest) => guest.id === id);
     onSelectGuest(guest || null);
@@ -130,24 +85,6 @@ export function GuestDirectory({
       deleteAction({
         guestId: guest.id,
         guestName: guest.name,
-      });
-    });
-  };
-
-  const handleSendWhatsApp = (guest: GuestWithGroupApp) => {
-    if (!guest.phone || guest.phone.trim().length === 0) {
-      toast.error('Cannot send WhatsApp message', {
-        description: 'Guest does not have a phone number.',
-      });
-      return;
-    }
-
-    const message = `Kululu Events - Coming Soon! 🎉`;
-
-    startTransition(() => {
-      whatsAppAction({
-        phoneNumber: guest.phone?.trim() || '',
-        message,
       });
     });
   };
@@ -186,8 +123,6 @@ export function GuestDirectory({
             groupFilter={selectedGroupIds}
             onSelectGuest={handleSelectGuest}
             onDeleteGuest={handleDeleteGuest}
-            onSendWhatsApp={handleSendWhatsApp}
-            isSendingWhatsApp={isSendingWhatsApp}
             onAddGuest={handleAddGuestClick}
             pageSize={pageSize}
           />
