@@ -47,6 +47,9 @@ export async function getScheduleById(
       userId: string;
       title: string;
       eventDate: string;
+      location?: { name: string; coords?: { lat: number; lng: number } } | null;
+      hostDetails?: Record<string, unknown> | null;
+      invitations?: { frontImageUrl?: string; backImageUrl?: string } | null;
     };
   })
   | null
@@ -62,7 +65,10 @@ export async function getScheduleById(
         id,
         user_id,
         title,
-        event_date
+        event_date,
+        location,
+        host_details,
+        invitations
       )
     `,
     )
@@ -87,6 +93,14 @@ export async function getScheduleById(
     userId: data.events.user_id,
     title: data.events.title,
     eventDate: data.events.event_date,
+    location: data.events.location ?? undefined,
+    hostDetails: data.events.host_details ?? undefined,
+    invitations: data.events.invitations
+      ? {
+          frontImageUrl: data.events.invitations.front_image_url,
+          backImageUrl: data.events.invitations.back_image_url,
+        }
+      : undefined,
   };
 
   return {

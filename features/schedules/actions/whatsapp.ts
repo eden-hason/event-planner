@@ -1,6 +1,6 @@
 'use server';
 
-import type { TemplateParameter } from '../utils';
+import type { MediaParameter } from '../utils';
 
 export type SendWhatsAppTestState = {
   success: boolean;
@@ -90,8 +90,8 @@ export async function sendWhatsAppTemplateMessage(params: {
   to: string;
   templateName: string;
   languageCode: string;
-  parameters?: TemplateParameter[];
-  headerParameters?: TemplateParameter[];
+  parameters?: MediaParameter[];
+  headerParameters?: MediaParameter[];
 }): Promise<SendWhatsAppTemplateResult> {
   try {
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
