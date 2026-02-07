@@ -5,13 +5,17 @@ import { createClient } from '@/lib/supabase/server';
 import { getScheduleById } from '../queries/schedules';
 import { getWhatsAppTemplateById } from '../queries/whatsapp-templates';
 import { getEventGuests } from '@/features/guests/queries/guests';
+import { getGroupById } from '@/features/guests/queries/groups';
 import { sendWhatsAppTemplateMessage } from './whatsapp';
 import {
   filterGuestsByTarget,
   validatePhoneNumber,
   formatPhoneE164,
-  buildTemplateParameters,
+  buildDynamicTemplateParameters,
+  type ParameterResolutionContext,
 } from '../utils';
+import { buildDynamicHeaderParameters } from '../utils/parameter-resolvers';
+import type { GroupApp } from '@/features/guests/schemas';
 
 /**
  * Execution result summary.
@@ -140,18 +144,61 @@ export async function executeSchedule(
 
     const skippedCount = targetedGuests.length - guestsWithPhones.length;
 
-    // 9. Send messages concurrently
+    // 9. Validate template has parameters configuration
+    if (!template.parameters) {
+      return {
+        success: false,
+        message: 'Template missing parameter configuration',
+      };
+    }
+
+    // 10. Batch fetch all needed groups for performance
+    const uniqueGroupIds = [
+      ...new Set(
+        guestsWithPhones
+          .map((guest) => guest.groupId)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+
+    const groupsMap = new Map<string, GroupApp>();
+    await Promise.all(
+      uniqueGroupIds.map(async (groupId) => {
+        const group = await getGroupById(groupId);
+        if (group) {
+          groupsMap.set(groupId, group);
+        }
+      }),
+    );
+
+    // 11. Send messages concurrently with dynamic parameter resolution
     const sendResults = await Promise.allSettled(
       guestsWithPhones.map(async (guest) => {
         const phoneE164 = formatPhoneE164(guest.phone!);
 
-        // Build template parameters
-        const parameters = buildTemplateParameters(
+        // Build parameter resolution context
+        const context: ParameterResolutionContext = {
+          guest,
+          event: schedule.event,
+          group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+          schedule,
+        };
+
+        // Build template parameters dynamically
+        // Safe to use non-null assertion because we validated above
+        const parameters = buildDynamicTemplateParameters(
           template.bodyText,
-          schedule.event.title,
-          schedule.event.eventDate,
-          guest.name,
+          template.parameters!.placeholders,
+          context,
         );
+
+        // Build header parameters dynamically if configured
+        const headerParameters = template.parameters?.headerPlaceholders?.length
+          ? buildDynamicHeaderParameters(
+              template.parameters.headerPlaceholders,
+              context,
+            )
+          : undefined;
 
         // Send WhatsApp message
         const result = await sendWhatsAppTemplateMessage({
@@ -159,7 +206,7 @@ export async function executeSchedule(
           templateName: template.templateName,
           languageCode: template.languageCode,
           parameters,
-          headerParameters: template.headerParameters || undefined,
+          headerParameters,
         });
 
         return {
@@ -169,7 +216,7 @@ export async function executeSchedule(
       }),
     );
 
-    // 10. Process results and create delivery records
+    // 12. Process results and create delivery records
     const deliveryRecords = [];
     let sentCount = 0;
     let failedCount = 0;
@@ -201,7 +248,7 @@ export async function executeSchedule(
       }
     }
 
-    // 11. Bulk insert delivery records
+    // 13. Bulk insert delivery records
     const { data: insertedDeliveries, error: insertError } = await supabase
       .from('message_deliveries')
       .insert(deliveryRecords)
@@ -213,7 +260,7 @@ export async function executeSchedule(
 
     const deliveryIds = insertedDeliveries?.map((d) => d.id) || [];
 
-    // 12. Update schedule status
+    // 14. Update schedule status
     const newStatus = sentCount > 0 ? 'sent' : 'failed';
     const { error: updateError } = await supabase
       .from('schedules')
@@ -227,10 +274,10 @@ export async function executeSchedule(
       console.error('Error updating schedule status:', updateError);
     }
 
-    // 13. Revalidate cache
+    // 15. Revalidate cache
     revalidatePath('/app');
 
-    // 14. Return execution summary
+    // 16. Return execution summary
     return {
       success: true,
       message:

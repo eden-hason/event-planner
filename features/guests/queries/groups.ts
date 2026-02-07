@@ -110,3 +110,39 @@ export const getEventGroupsWithGuests = async (
     return [];
   }
 };
+
+/**
+ * Fetches a single group by ID
+ */
+export const getGroupById = async (
+  groupId: string,
+): Promise<GroupApp | null> => {
+  try {
+    const supabase = await createClient();
+    const { data: group, error } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('id', groupId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching group:', error);
+      return null;
+    }
+
+    if (!group) {
+      return null;
+    }
+
+    // Transform group from DB model to app model
+    try {
+      return GroupDbToAppTransformerSchema.parse(group);
+    } catch (err) {
+      console.error('Failed to parse group data with Zod transformer:', err, group);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching group:', error);
+    return null;
+  }
+};

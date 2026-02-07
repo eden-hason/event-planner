@@ -1,6 +1,13 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import type { TargetFilter } from '../schemas';
 
+// Re-export parameter resolution utilities
+export {
+  buildDynamicTemplateParameters,
+  buildDynamicHeaderParameters,
+  type ParameterResolutionContext,
+} from './parameter-resolvers';
+
 /**
  * Calculates the scheduled date/time based on the event date and offset.
  *
@@ -120,11 +127,15 @@ export function formatPhoneE164(phone: string): string {
 
 /**
  * Template parameter type for WhatsApp messages.
+ * Supports text and media types (image, video, document).
  */
-export interface TemplateParameter {
-  type: 'text';
-  text: string;
-}
+export type MediaParameter =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: { link: string } }
+  | { type: 'video'; video: { link: string } }
+  | { type: 'document'; document: { link: string; filename?: string } };
+
+export type TemplateParameter = MediaParameter;
 
 /**
  * Builds template parameters by replacing placeholders with actual values.

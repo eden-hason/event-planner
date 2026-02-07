@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TemplateParametersConfigSchema } from './template-parameters';
 
 // Database schema (snake_case)
 export const WhatsAppTemplateDbSchema = z.object({
@@ -12,7 +13,7 @@ export const WhatsAppTemplateDbSchema = z.object({
   header_parameters: z.any().nullable(),
   footer_text: z.string().nullable(),
   buttons: z.any().nullable(),
-  parameters: z.any().nullable(),
+  parameters: TemplateParametersConfigSchema.nullable(),
   description: z.string().nullable(),
   created_at: z.string().nullable(),
   updated_at: z.string().nullable(),
@@ -30,7 +31,7 @@ export const WhatsAppTemplateAppSchema = z.object({
   headerParameters: z.any().nullable(),
   footerText: z.string().nullable(),
   buttons: z.any().nullable(),
-  parameters: z.any().nullable(),
+  parameters: TemplateParametersConfigSchema.nullable(),
   description: z.string().nullable(),
   createdAt: z.string().nullable(),
   updatedAt: z.string().nullable(),
