@@ -5,8 +5,17 @@ import type { TargetFilter } from '../schemas';
 export {
   buildDynamicTemplateParameters,
   buildDynamicHeaderParameters,
+  extractPlaceholders,
   type ParameterResolutionContext,
 } from './parameter-resolvers';
+
+// Re-export template validation utilities
+export {
+  validateTemplateConfig,
+  formatValidationIssues,
+  type ValidationResult,
+  type ValidationIssue,
+} from './template-validation';
 
 /**
  * Calculates the scheduled date/time based on the event date and offset.

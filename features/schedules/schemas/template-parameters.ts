@@ -6,13 +6,9 @@ import { z } from 'zod';
 export const TransformerTypeSchema = z.enum([
   'none', // No transformation
   'formatDate', // Format date with locale and style
-  'uppercase', // Convert to uppercase
-  'lowercase', // Convert to lowercase
-  'capitalize', // Capitalize first letter
   'rsvpLabel', // Convert RSVP status to readable label
   'currency', // Format as currency
   'phoneNumber', // Format phone number
-  'optional', // Only show value if it exists
 ]);
 
 export type TransformerType = z.infer<typeof TransformerTypeSchema>;
@@ -50,13 +46,16 @@ export type TransformerOptions = z.infer<typeof TransformerOptionsSchema>;
 
 /**
  * Configuration for a single placeholder in a template
+ *
+ * The placeholder name in the template (e.g., "guest.name" from "{{guest.name}}")
+ * is used as the key in the placeholders record. If source is omitted, the placeholder
+ * name itself is used as the source path.
  */
 export const PlaceholderConfigSchema = z.object({
-  name: z.string().describe('Placeholder name (without braces, e.g., "guest_name")'),
-  source: z.string().describe('Dot-notation path to value (e.g., "guest.name", "event.eventDate")'),
+  source: z.string().optional().describe('Dot-notation path to value (e.g., "guest.name", "event.eventDate"). Defaults to placeholder name if omitted.'),
   transformer: TransformerTypeSchema.default('none'),
   transformerOptions: TransformerOptionsSchema.optional(),
-  fallback: z.string().default('').describe('Fallback value if source is null/undefined'),
+  fallback: z.string().optional().describe('Fallback value if source is null/undefined. Defaults to empty string.'),
 });
 
 export type PlaceholderConfig = z.infer<typeof PlaceholderConfigSchema>;
@@ -82,13 +81,17 @@ export type HeaderPlaceholderConfig = z.infer<typeof HeaderPlaceholderConfigSche
 
 /**
  * Complete parameter configuration for a template
+ *
+ * Uses named placeholders where the key is the placeholder name from the template
+ * (e.g., "guest.name" for "{{guest.name}}"). This eliminates positional matching errors
+ * and makes templates self-documenting.
  */
 export const TemplateParametersConfigSchema = z.object({
   headerPlaceholders: z.array(HeaderPlaceholderConfigSchema)
     .max(1)
     .default([])
     .describe('Header media parameters (WhatsApp supports max 1)'),
-  placeholders: z.array(PlaceholderConfigSchema).describe('Body text placeholder configurations'),
+  placeholders: z.record(z.string(), PlaceholderConfigSchema).describe('Body text placeholder configurations mapped by placeholder name'),
 });
 
 export type TemplateParametersConfig = z.infer<typeof TemplateParametersConfigSchema>;
