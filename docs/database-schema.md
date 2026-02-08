@@ -251,6 +251,8 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 
 > Tracks individual message delivery status per guest.
 
+<!-- TODO: Add delivery_method column when SMS support is implemented to track which delivery method was used per message -->
+
 | Column | Type | Nullable | Default | Constraints | Notes |
 |---|---|---|---|---|---|
 | `id` | `uuid` | **NO** | `gen_random_uuid()` | **PK** |  |
@@ -269,7 +271,7 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `created_at` | `timestamptz` | YES | `now()` |  |  |
 | `updated_at` | `timestamptz` | YES | `now()` |  |  |
 
-**Note:** Not currently queried by the application code (schema defined for future use).
+**Note:** Not currently queried by the application code (schema defined for future use). The delivery method for messages can be determined by joining with the `schedules` table.
 
 ---
 

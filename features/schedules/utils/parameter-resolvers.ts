@@ -79,16 +79,6 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     return new Intl.DateTimeFormat(locale, formatOptions).format(date);
   },
 
-  uppercase: (value: unknown) => String(value ?? '').toUpperCase(),
-
-  lowercase: (value: unknown) => String(value ?? '').toLowerCase(),
-
-  capitalize: (value: unknown) => {
-    const str = String(value ?? '');
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  },
-
   rsvpLabel: (value: unknown) => {
     const statusMap: Record<string, string> = {
       pending: 'Pending',
@@ -130,29 +120,32 @@ const transformers: Record<TransformerType, TransformerFunction> = {
 
     return phone;
   },
-
-  optional: (value: unknown) => {
-    // Only return value if it exists and is not empty
-    if (value === null || value === undefined || value === '') {
-      return '';
-    }
-    return String(value);
-  },
 };
 
 /**
  * Resolve a single placeholder value using its configuration
+ *
+ * @param placeholderName - The placeholder name from the template (e.g., "guest.name")
+ * @param config - The placeholder configuration
+ * @param context - The resolution context with guest, event, group, schedule data
  */
 export function resolvePlaceholder(
+  placeholderName: string,
   config: PlaceholderConfig,
   context: ParameterResolutionContext,
 ): string {
+  // Determine source path: use config.source if provided, otherwise use placeholder name
+  const sourcePath = config.source ?? placeholderName;
+
   // Extract value from context using source path
-  const rawValue = getValueByPath(context as unknown as Record<string, unknown>, config.source);
+  const rawValue = getValueByPath(context as unknown as Record<string, unknown>, sourcePath);
+
+  // Determine fallback value (default to empty string if not specified)
+  const fallbackValue = config.fallback ?? '';
 
   // Apply fallback if value is null/undefined
   if (rawValue === null || rawValue === undefined) {
-    return config.fallback;
+    return fallbackValue;
   }
 
   // Apply transformer
@@ -161,40 +154,53 @@ export function resolvePlaceholder(
 
   // Use fallback if transformed value is empty
   if (transformedValue === '') {
-    return config.fallback;
+    return fallbackValue;
   }
 
   return transformedValue;
 }
 
 /**
+ * Extract placeholder names from a template body
+ *
+ * @example extractPlaceholders("Hi {{guest.name}}, event on {{event.eventDate}}")
+ * // Returns: ["guest.name", "event.eventDate"]
+ */
+export function extractPlaceholders(templateBody: string): string[] {
+  const placeholderRegex = /\{\{([^}]+)\}\}/g;
+  const matches = Array.from(templateBody.matchAll(placeholderRegex));
+  return matches.map(match => match[1].trim());
+}
+
+/**
  * Build WhatsApp template parameters array from template body and configurations
  *
- * WhatsApp templates use numbered placeholders ({{1}}, {{2}}, {{3}}) which map
- * to parameters by position. This function counts placeholders in the template
- * and maps configs positionally: configs[0] → {{1}}, configs[1] → {{2}}, etc.
+ * This function uses named placeholders (e.g., {{guest.name}}, {{event.eventDate}})
+ * instead of numbered placeholders. It extracts placeholder names from the template
+ * in order, looks up each config by name, and builds the parameter array for the
+ * WhatsApp API (which still requires numbered parameters).
+ *
+ * @param templateBody - The template body text with named placeholders
+ * @param configs - Record mapping placeholder names to their configurations
+ * @param context - The resolution context with guest, event, group, schedule data
+ * @returns Array of text parameters for WhatsApp API
  */
 export function buildDynamicTemplateParameters(
   templateBody: string,
-  configs: PlaceholderConfig[],
+  configs: Record<string, PlaceholderConfig>,
   context: ParameterResolutionContext,
 ): Array<{ type: 'text'; text: string }> {
-  // Count how many placeholders are in the template
-  const placeholderRegex = /\{\{([^}]+)\}\}/g;
-  const matches = Array.from(templateBody.matchAll(placeholderRegex));
-  const placeholderCount = matches.length;
+  // Extract placeholder names in order from template
+  const placeholderNames = extractPlaceholders(templateBody);
 
-  // Validate we have enough configs
-  if (configs.length < placeholderCount) {
-    console.warn(
-      `Template has ${placeholderCount} placeholders but only ${configs.length} configurations provided`
-    );
-  }
+  // Build parameters by looking up each placeholder name in configs
+  const parameters = placeholderNames.map((placeholderName) => {
+    // Get config for this placeholder (or use defaults if not found)
+    const config = configs[placeholderName] ?? {
+      transformer: 'none' as const,
+    };
 
-  // Use configs in order (positional matching)
-  // WhatsApp templates use {{1}}, {{2}}, {{3}} which map to configs[0], configs[1], configs[2]
-  const parameters = configs.slice(0, placeholderCount).map((config) => {
-    const resolvedValue = resolvePlaceholder(config, context);
+    const resolvedValue = resolvePlaceholder(placeholderName, config, context);
     return { type: 'text' as const, text: resolvedValue };
   });
 

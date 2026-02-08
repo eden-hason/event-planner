@@ -318,7 +318,7 @@ export const MessageDeliveryAppSchema = z.object({
   id: z.uuid(),
   scheduleId: z.uuid(),
   guestId: z.uuid(),
-  deliveryMethod: z.enum(DELIVERY_METHODS),
+  // deliveryMethod: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
   status: z.enum(DELIVERY_STATUSES).default('pending'),
   sentAt: z.string().nullable().optional(),
   deliveredAt: z.string().nullable().optional(),
@@ -335,11 +335,14 @@ export const MessageDeliveryAppSchema = z.object({
 export type MessageDeliveryApp = z.infer<typeof MessageDeliveryAppSchema>;
 
 // --- DB-Level Schema (snake_case) ---
+// TODO: Add delivery_method field when SMS support is implemented
+// This will allow tracking which delivery method was used per message when
+// schedules support multiple delivery methods (e.g., WhatsApp for some guests, SMS for others)
 export const MessageDeliveryDbSchema = z.object({
   id: z.uuid(),
   schedule_id: z.uuid(),
   guest_id: z.uuid(),
-  delivery_method: z.enum(DELIVERY_METHODS),
+  // delivery_method: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
   status: z.enum(DELIVERY_STATUSES).default('pending'),
   sent_at: z.string().nullable(),
   delivered_at: z.string().nullable(),
@@ -361,7 +364,7 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     id: db.id,
     scheduleId: db.schedule_id,
     guestId: db.guest_id,
-    deliveryMethod: db.delivery_method,
+    // deliveryMethod: db.delivery_method, // TODO: Uncomment when SMS is implemented
     status: db.status,
     sentAt: db.sent_at ?? undefined,
     deliveredAt: db.delivered_at ?? undefined,
@@ -387,7 +390,7 @@ export const MessageDeliveryUpsertSchema = z.object({
   id: z.uuid().optional(),
   scheduleId: z.uuid(),
   guestId: z.uuid(),
-  deliveryMethod: z.enum(DELIVERY_METHODS),
+  // deliveryMethod: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
   status: z.enum(DELIVERY_STATUSES).optional(),
 });
 
@@ -401,7 +404,7 @@ export const MessageDeliveryAppToDbSchema =
     if (app.id !== undefined) dbData.id = app.id;
     dbData.schedule_id = app.scheduleId;
     dbData.guest_id = app.guestId;
-    dbData.delivery_method = app.deliveryMethod;
+    // dbData.delivery_method = app.deliveryMethod; // TODO: Uncomment when SMS is implemented
     if (app.status !== undefined) dbData.status = app.status;
 
     return dbData;

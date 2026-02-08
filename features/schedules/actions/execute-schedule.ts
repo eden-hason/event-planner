@@ -217,6 +217,8 @@ export async function executeSchedule(
     );
 
     // 12. Process results and create delivery records
+    // TODO: When SMS support is added, include delivery_method field in delivery records
+    // to track which method was used per message (some guests may need SMS fallback)
     const deliveryRecords = [];
     let sentCount = 0;
     let failedCount = 0;
@@ -228,7 +230,7 @@ export async function executeSchedule(
         deliveryRecords.push({
           schedule_id: scheduleId,
           guest_id: guest.id,
-          delivery_method: schedule.deliveryMethod,
+          // delivery_method: schedule.deliveryMethod, // TODO: Uncomment when SMS is implemented
           status: result.success ? ('sent' as const) : ('failed' as const),
           sent_at: result.success ? new Date().toISOString() : null,
           whatsapp_message_id: result.messageId || null,
