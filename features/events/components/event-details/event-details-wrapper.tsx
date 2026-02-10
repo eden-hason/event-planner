@@ -6,9 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
 import { EventDetailsHeader } from './event-details-header';
-import { LogisticsCard } from './logistics-card';
+import { DateTimeCard } from './date-time-card';
+import { LocationCard } from './location-card';
 import { CoupleCard } from './couple-card';
 import { DigitalGiftCard } from './digital-gift-card';
+import { GuestExperienceCard } from './guest-experience-card';
 import { EventInvitationCard } from './event-invitation-card';
 import {
   EventApp,
@@ -36,6 +38,7 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
       eventType: event.eventType || '',
       receptionTime: event.receptionTime || '',
       ceremonyTime: event.ceremonyTime || '',
+      venueName: event.venueName || '',
       location: event.location || undefined,
       hostDetails: {
         bride: {
@@ -60,6 +63,9 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
       invitations: {
         frontImageUrl: event.invitations?.frontImageUrl || undefined,
         backImageUrl: event.invitations?.backImageUrl || undefined,
+      },
+      guestExperience: {
+        dietaryOptions: event.guestExperience?.dietaryOptions ?? false,
       },
     },
   });
@@ -124,25 +130,22 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           onDiscard={handleDiscard}
         />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          {/* Row 1 */}
-          <div className="lg:col-span-7">
-            <LogisticsCard />
-          </div>
-          <div className="h-full lg:col-span-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          {/* Left column: Date & Time → Couple → Location */}
+          <div className="flex flex-col gap-6 lg:col-span-7">
+            <DateTimeCard />
             <CoupleCard />
+            <LocationCard />
           </div>
-
-          {/* Row 2 */}
-          <div className="lg:col-span-5">
-            <DigitalGiftCard />
-          </div>
-          <div className="lg:col-span-7">
+          {/* Right column: Event Invitation → Guest Experience → Digital Gift */}
+          <div className="flex flex-col gap-6 lg:col-span-5">
             <EventInvitationCard
               eventId={event.id}
               frontImageUrl={event.invitations?.frontImageUrl}
               backImageUrl={event.invitations?.backImageUrl}
             />
+            <GuestExperienceCard />
+            <DigitalGiftCard />
           </div>
         </div>
       </form>

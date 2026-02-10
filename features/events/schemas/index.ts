@@ -80,6 +80,20 @@ export const HostDetailsSchema = z.record(z.string(), z.unknown());
 
 export type HostDetails = z.infer<typeof HostDetailsSchema>;
 
+// --- Guest Experience Sub-Schemas ---
+export const GuestExperienceSchema = z.object({
+  dietaryOptions: z.boolean().optional(),
+});
+
+export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
+
+// DB-level guest experience (snake_case)
+export const GuestExperienceDbSchema = z.object({
+  dietary_options: z.boolean().optional(),
+});
+
+export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
+
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what an "Event" object
 // looks like inside your Next.js application (frontend and backend).
@@ -97,10 +111,12 @@ export const EventAppSchema = z.object({
   eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
+  venueName: z.string().optional(),
   location: LocationSchema.optional(),
   eventSettings: EventSettingsAppSchema.optional(),
   hostDetails: HostDetailsSchema.optional(),
   invitations: InvitationsSchema.optional(),
+  guestExperience: GuestExperienceSchema.optional(),
   status: z
     .enum(['draft', 'published', 'archived'], {
       message: 'Status must be draft, published, or archived',
@@ -140,10 +156,12 @@ export const EventDbSchema = z.object({
   event_type: z.string().optional().nullable(),
   reception_time: z.string().optional().nullable(),
   ceremony_time: z.string().optional().nullable(),
+  venue_name: z.string().optional().nullable(),
   location: LocationSchema.optional().nullable(),
   event_settings: EventSettingsSchema.optional().nullable(),
   host_details: HostDetailsSchema.optional().nullable(),
   invitations: InvitationsDbSchema.optional().nullable(),
+  guests_experience: GuestExperienceDbSchema.optional().nullable(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
   created_at: z.string(),
@@ -166,10 +184,12 @@ export function dbToAppTransformer(dbData: {
   event_type?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
+  venue_name?: string | null;
   location?: Location | null;
   event_settings?: EventSettings | null;
   host_details?: HostDetails | null;
   invitations?: InvitationsDb | null;
+  guests_experience?: GuestExperienceDb | null;
   status?: string | null;
   is_default?: boolean | null;
   created_at: string;
@@ -181,17 +201,23 @@ export function dbToAppTransformer(dbData: {
   // Transform event_settings from snake_case to camelCase
   const eventSettings: EventSettingsApp | undefined = dbData.event_settings
     ? {
-        payboxConfig: dbData.event_settings.paybox_config,
-        bitConfig: dbData.event_settings.bit_config,
-      }
+      payboxConfig: dbData.event_settings.paybox_config,
+      bitConfig: dbData.event_settings.bit_config,
+    }
     : undefined;
 
   // Transform invitations from snake_case to camelCase
   const invitations: Invitations | undefined = dbData.invitations
     ? {
-        frontImageUrl: dbData.invitations.front_image_url,
-        backImageUrl: dbData.invitations.back_image_url,
-      }
+      frontImageUrl: dbData.invitations.front_image_url,
+      backImageUrl: dbData.invitations.back_image_url,
+    }
+    : undefined;
+
+  const guestExperience: GuestExperience | undefined = dbData.guests_experience
+    ? {
+      dietaryOptions: dbData.guests_experience.dietary_options,
+    }
     : undefined;
 
   return {
@@ -203,10 +229,12 @@ export function dbToAppTransformer(dbData: {
     eventType: dbData.event_type ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
+    venueName: dbData.venue_name ?? undefined,
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
     invitations,
+    guestExperience,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -225,17 +253,24 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
   // Transform event_settings from snake_case to camelCase
   const eventSettings: EventSettingsApp | undefined = dbData.event_settings
     ? {
-        payboxConfig: dbData.event_settings.paybox_config,
-        bitConfig: dbData.event_settings.bit_config,
-      }
+      payboxConfig: dbData.event_settings.paybox_config,
+      bitConfig: dbData.event_settings.bit_config,
+    }
     : undefined;
 
   // Transform invitations from snake_case to camelCase
   const invitations: Invitations | undefined = dbData.invitations
     ? {
-        frontImageUrl: dbData.invitations.front_image_url,
-        backImageUrl: dbData.invitations.back_image_url,
-      }
+      frontImageUrl: dbData.invitations.front_image_url,
+      backImageUrl: dbData.invitations.back_image_url,
+    }
+    : undefined;
+
+  // Transform guests_experience from snake_case to camelCase
+  const guestExperience: GuestExperience | undefined = dbData.guests_experience
+    ? {
+      dietaryOptions: dbData.guests_experience.dietary_options,
+    }
     : undefined;
 
   return {
@@ -247,10 +282,12 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     eventType: dbData.event_type ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
+    venueName: dbData.venue_name ?? undefined,
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
     invitations,
+    guestExperience,
     status,
     isDefault: dbData.is_default ?? undefined,
     createdAt: dbData.created_at,
@@ -269,6 +306,7 @@ export const EventDetailsUpdateSchema = z.object({
   eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
+  venueName: z.string().optional(),
   location: LocationSchema.optional(),
   hostDetails: WeddingHostDetailsSchema.optional(),
   eventSettings: z
@@ -288,6 +326,7 @@ export const EventDetailsUpdateSchema = z.object({
     })
     .optional(),
   invitations: InvitationsSchema.optional(),
+  guestExperience: GuestExperienceSchema.optional(),
 });
 
 export type EventDetailsUpdate = z.infer<typeof EventDetailsUpdateSchema>;

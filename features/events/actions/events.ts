@@ -195,6 +195,17 @@ export async function updateEventDetails(
       }
     }
 
+    if (
+      parsedData.guestExperience &&
+      typeof parsedData.guestExperience === 'string'
+    ) {
+      try {
+        parsedData.guestExperience = JSON.parse(parsedData.guestExperience);
+      } catch {
+        parsedData.guestExperience = undefined;
+      }
+    }
+
     const validationResult = EventDetailsUpdateSchema.safeParse(parsedData);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];

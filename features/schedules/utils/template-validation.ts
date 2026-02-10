@@ -36,6 +36,7 @@ const VALID_CONTEXT_PATHS = [
   'event.userId',
   'event.title',
   'event.eventDate',
+  'event.venueName',
   'event.location',
   'event.description',
   'group.id',

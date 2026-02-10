@@ -181,6 +181,7 @@ The `id` column maps directly to `auth.users.id` (set on user creation, not auto
 | `event_type` | `text` | YES | - |  | Free-text (not enum) |
 | `host_details` | `jsonb` | YES | - |  | See [JSONB structures](#host_details) |
 | `invitations` | `jsonb` | YES | - |  | See [JSONB structures](#invitations) |
+| `guests_experience` | `jsonb` | YES | - |  | See [JSONB structures](#guests_experience) |
 | `is_default` | `boolean` | YES | - |  | User's default event |
 | `location` | `jsonb` | YES | - |  | See [JSONB structures](#location) |
 | `reception_time` | `text` | YES | - |  | Time string |
@@ -391,6 +392,16 @@ _Table: `events`_
 {
   "front_image_url": "https://...",  // string, optional
   "back_image_url": "https://..."    // string, optional
+}
+```
+
+### `guests_experience`
+
+_Table: `events`_
+
+```jsonc
+{
+  "dietary_options": true   // boolean, optional – ask guests for meal requests
 }
 ```
 
