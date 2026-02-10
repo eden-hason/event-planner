@@ -1,7 +1,8 @@
 export {
   EventDetailsWrapper,
   EventDetailsHeader,
-  LogisticsCard,
+  DateTimeCard,
+  LocationCard,
   CoupleCard,
   DigitalGiftCard,
 } from './event-details';

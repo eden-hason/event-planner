@@ -6,6 +6,11 @@ import {
   type InvitationsDb,
 } from '../schemas';
 
+// DB shape for guests_experience (snake_case)
+type GuestsExperienceDb = {
+  dietary_options?: boolean;
+};
+
 // Type for event details update to DB
 type EventDetailsDbUpdate = {
   id: string;
@@ -13,10 +18,12 @@ type EventDetailsDbUpdate = {
   event_type?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
+  venue_name?: string | null;
   location?: Location | null;
   host_details?: HostDetails | null;
   event_settings?: EventSettings | null;
   invitations?: InvitationsDb | null;
+  guests_experience?: GuestsExperienceDb | null;
 };
 
 // Transforms event details update data from camelCase to snake_case for DB
@@ -38,6 +45,9 @@ export function eventDetailsUpdateToDb(
   }
   if (data.ceremonyTime !== undefined) {
     dbData.ceremony_time = data.ceremonyTime || null;
+  }
+  if (data.venueName !== undefined) {
+    dbData.venue_name = data.venueName || null;
   }
   if (data.location !== undefined) {
     dbData.location = data.location || null;
@@ -75,6 +85,13 @@ export function eventDetailsUpdateToDb(
     dbData.invitations = {
       front_image_url: data.invitations.frontImageUrl,
       back_image_url: data.invitations.backImageUrl,
+    };
+  }
+
+  // guestExperience maps to guests_experience with snake_case conversion
+  if (data.guestExperience !== undefined) {
+    dbData.guests_experience = {
+      dietary_options: data.guestExperience.dietaryOptions,
     };
   }
 

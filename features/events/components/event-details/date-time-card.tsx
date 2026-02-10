@@ -1,11 +1,17 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { Users } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarDays } from 'lucide-react';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   FormControl,
   FormField,
@@ -15,67 +21,38 @@ import {
 } from '@/components/ui/form';
 import { EventDetailsUpdate } from '../../schemas';
 
-export function CoupleCard() {
+export function DateTimeCard() {
   const form = useFormContext<EventDetailsUpdate>();
+  const eventType = form.watch('eventType');
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Users className="h-5 w-5" />
-          The Couple
+          <CalendarDays className="h-5 w-5" />
+          Date & Time
         </CardTitle>
+        <CardAction>
+          <Badge variant="secondary">
+            {eventType?.trim() || '—'}
+          </Badge>
+        </CardAction>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <h4 className="text-muted-foreground text-sm font-medium">
-            Couple Names
-          </h4>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-8">
           <FormField
             control={form.control}
-            name="hostDetails.bride.name"
+            name="eventDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Bride Name</FormLabel>
+                <FormLabel>Date</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter bride's name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="hostDetails.groom.name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Groom Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter groom's name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <h4 className="text-muted-foreground text-sm font-medium">
-            Parents&apos; Names
-          </h4>
-          <FormField
-            control={form.control}
-            name="hostDetails.bride.parents"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bride&apos;s Side</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Enter bride's parents names"
-                    rows={3}
-                    {...field}
+                  <DatePicker
+                    placeholder="Select date"
+                    date={field.value ? new Date(field.value) : undefined}
+                    onDateChange={(date) =>
+                      field.onChange(date?.toISOString() || '')
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -84,16 +61,38 @@ export function CoupleCard() {
           />
           <FormField
             control={form.control}
-            name="hostDetails.groom.parents"
+            name="eventType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Groom&apos;s Side</FormLabel>
+                <FormLabel>Event Type</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="Enter groom's parents names"
-                    rows={3}
-                    {...field}
-                  />
+                  <Input placeholder="Enter event type" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="receptionTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reception Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="ceremonyTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ceremony Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

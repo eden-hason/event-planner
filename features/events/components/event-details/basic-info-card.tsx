@@ -2,7 +2,14 @@
 
 import { useFormContext } from 'react-hook-form';
 import { CalendarDays, MapPin } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { LocationInput } from '@/components/ui/location-input';
@@ -65,9 +72,10 @@ function PrimaryMarkerIcon() {
   );
 }
 
-export function LogisticsCard() {
+export function BasicInfoCard() {
   const form = useFormContext<EventDetailsUpdate>();
   const location = form.watch('location');
+  const eventType = form.watch('eventType');
 
   const handleLocationChange = (
     value: string,
@@ -88,8 +96,13 @@ export function LogisticsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <CalendarDays className="h-5 w-5" />
-          Event Logistics
+          Basic Info
         </CardTitle>
+        <CardAction>
+          <Badge variant="secondary">
+            {eventType?.trim() || '—'}
+          </Badge>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-8">
