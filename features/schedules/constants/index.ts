@@ -25,6 +25,12 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
     daysOffset: -90,
     defaultTime: '10:00',
   },
+  {
+    templateId: '99adcc20-9e1b-4b6d-afe9-bd6b387a4cd9',
+    messageType: 'confirmation_casual_v1_he',
+    daysOffset: -14,
+    defaultTime: '10:00',
+  },
   // Add more schedules as needed:
   // { templateId: 'uuid-2', messageType: 'first_confirmation', daysOffset: -45, defaultTime: '10:00' },
   // { templateId: 'uuid-3', messageType: 'event_reminder', daysOffset: -7, defaultTime: '10:00' },

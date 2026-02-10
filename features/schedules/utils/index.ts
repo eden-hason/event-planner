@@ -5,8 +5,10 @@ import type { TargetFilter } from '../schemas';
 export {
   buildDynamicTemplateParameters,
   buildDynamicHeaderParameters,
+  buildDynamicButtonParameters,
   extractPlaceholders,
   type ParameterResolutionContext,
+  type ButtonComponent,
 } from './parameter-resolvers';
 
 // Re-export template validation utilities

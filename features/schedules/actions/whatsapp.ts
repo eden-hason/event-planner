@@ -1,6 +1,7 @@
 'use server';
 
 import type { MediaParameter } from '../utils';
+import type { ButtonComponent } from '../utils/parameter-resolvers';
 
 export type SendWhatsAppTestState = {
   success: boolean;
@@ -92,6 +93,7 @@ export async function sendWhatsAppTemplateMessage(params: {
   languageCode: string;
   parameters?: MediaParameter[];
   headerParameters?: MediaParameter[];
+  buttonParameters?: ButtonComponent[];
 }): Promise<SendWhatsAppTemplateResult> {
   try {
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -121,6 +123,11 @@ export async function sendWhatsAppTemplateMessage(params: {
         type: 'body',
         parameters: params.parameters,
       });
+    }
+
+    // Add button parameters if provided (each button is a separate component)
+    if (params.buttonParameters?.length) {
+      components.push(...params.buttonParameters);
     }
 
     // Build request body

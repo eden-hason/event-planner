@@ -9,3 +9,5 @@ export {
   type DeleteEventState,
   type SetDefaultEventState,
 } from './events';
+
+export { duplicateEvent, type DuplicateEventState } from './duplicate-event';

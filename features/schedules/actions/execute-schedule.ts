@@ -12,6 +12,7 @@ import {
   validatePhoneNumber,
   formatPhoneE164,
   buildDynamicTemplateParameters,
+  buildDynamicButtonParameters,
   type ParameterResolutionContext,
 } from '../utils';
 import { buildDynamicHeaderParameters } from '../utils/parameter-resolvers';
@@ -200,6 +201,14 @@ export async function executeSchedule(
             )
           : undefined;
 
+        // Build button parameters dynamically if configured
+        const buttonParameters = template.parameters?.buttonPlaceholders?.length
+          ? buildDynamicButtonParameters(
+              template.parameters.buttonPlaceholders,
+              context,
+            )
+          : undefined;
+
         // Send WhatsApp message
         const result = await sendWhatsAppTemplateMessage({
           to: phoneE164,
@@ -207,6 +216,7 @@ export async function executeSchedule(
           languageCode: template.languageCode,
           parameters,
           headerParameters,
+          buttonParameters,
         });
 
         return {

@@ -20,6 +20,7 @@ export const MESSAGE_TYPES = [
   'second_confirmation',
   'event_reminder',
   'thank_you',
+  'confirmation_casual_v1_he',
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
@@ -30,6 +31,7 @@ export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   second_confirmation: 'Second Confirmation',
   event_reminder: 'Event Reminder',
   thank_you: 'Thank You Note',
+  confirmation_casual_v1_he: 'Confirmation',
 };
 
 // CTA (Call to Action) types

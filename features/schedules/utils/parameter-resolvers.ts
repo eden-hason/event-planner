@@ -4,6 +4,7 @@ import type { ScheduleApp } from '@/features/schedules/schemas';
 import type {
   PlaceholderConfig,
   HeaderPlaceholderConfig,
+  ButtonPlaceholderConfig,
   TransformerType,
   DateFormatOptions,
   CurrencyOptions,
@@ -287,4 +288,40 @@ export function buildDynamicHeaderParameters(
   // WhatsApp only supports 1 header parameter
   const config = configs[0];
   return buildHeaderParameter(config, context);
+}
+
+/**
+ * A single button component entry for the Meta WhatsApp API.
+ * Each dynamic button is a separate component in the `components` array.
+ */
+export interface ButtonComponent {
+  type: 'button';
+  sub_type: string;
+  index: number;
+  parameters: Array<{ type: 'text'; text: string }>;
+}
+
+/**
+ * Build WhatsApp button parameter components from template configuration
+ *
+ * Each button config produces one component entry with resolved placeholder values.
+ * Per Meta API spec, every dynamic button is a separate component.
+ *
+ * @param configs - Array of button placeholder configurations
+ * @param context - The resolution context with guest, event, group, schedule data
+ * @returns Array of button components for the Meta WhatsApp API
+ */
+export function buildDynamicButtonParameters(
+  configs: ButtonPlaceholderConfig[],
+  context: ParameterResolutionContext,
+): ButtonComponent[] {
+  return configs.map((config) => ({
+    type: 'button' as const,
+    sub_type: config.subType,
+    index: config.index,
+    parameters: config.placeholders.map((placeholder, idx) => {
+      const resolved = resolvePlaceholder(String(idx), placeholder, context);
+      return { type: 'text' as const, text: resolved };
+    }),
+  }));
 }
