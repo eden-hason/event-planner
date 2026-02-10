@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { TemplateParametersConfigSchema, type PlaceholderConfig } from './template-parameters';
-import { extractPlaceholders } from '../utils/parameter-resolvers';
+import { TemplateParametersConfigSchema } from './template-parameters';
 
 // Database schema (snake_case)
 // Note: parameters is z.any() to accept both old (array) and new (record) formats
@@ -39,70 +38,23 @@ export const WhatsAppTemplateAppSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
-/**
- * Migrate old array-based placeholder config to new record-based format
- *
- * Old format: { placeholders: [{ name, source, transformer, fallback }] }
- * New format: { placeholders: { "placeholder.name": { source, transformer, fallback } } }
- */
-function migrateParametersToRecordFormat(
-  parameters: any,
-  bodyText: string,
-): z.infer<typeof TemplateParametersConfigSchema> | null {
-  if (!parameters) return null;
-
-  // Check if placeholders is an array (old format)
-  if (Array.isArray(parameters.placeholders)) {
-    // Extract placeholder names from template body
-    const placeholderNames = extractPlaceholders(bodyText);
-
-    // Convert array to record by mapping positions to placeholder names
-    const placeholdersRecord: Record<string, PlaceholderConfig> = {};
-
-    parameters.placeholders.forEach((config: any, index: number) => {
-      const placeholderName = placeholderNames[index];
-      if (placeholderName) {
-        // Remove the 'name' field and keep other properties
-        const { name, ...configWithoutName } = config;
-        placeholdersRecord[placeholderName] = configWithoutName;
-      }
-    });
-
-    return {
-      headerPlaceholders: parameters.headerPlaceholders ?? [],
-      placeholders: placeholdersRecord,
-    };
-  }
-
-  // Already in new format or invalid
-  return parameters;
-}
-
 // Transformation schemas
-export const WhatsAppTemplateDbToAppSchema = WhatsAppTemplateDbSchema.transform((data) => {
-  // Migrate parameters from old format to new format
-  const migratedParameters = migrateParametersToRecordFormat(
-    data.parameters,
-    data.body_text,
-  );
-
-  return {
-    id: data.id,
-    templateName: data.template_name,
-    displayName: data.display_name,
-    bodyText: data.body_text,
-    languageCode: data.language_code,
-    headerType: data.header_type,
-    headerText: data.header_text,
-    headerParameters: data.header_parameters,
-    footerText: data.footer_text,
-    buttons: data.buttons,
-    parameters: migratedParameters,
-    description: data.description,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-  };
-});
+export const WhatsAppTemplateDbToAppSchema = WhatsAppTemplateDbSchema.transform((data) => ({
+  id: data.id,
+  templateName: data.template_name,
+  displayName: data.display_name,
+  bodyText: data.body_text,
+  languageCode: data.language_code,
+  headerType: data.header_type,
+  headerText: data.header_text,
+  headerParameters: data.header_parameters,
+  footerText: data.footer_text,
+  buttons: data.buttons,
+  parameters: data.parameters,
+  description: data.description,
+  createdAt: data.created_at,
+  updatedAt: data.updated_at,
+}));
 
 export type WhatsAppTemplateDb = z.infer<typeof WhatsAppTemplateDbSchema>;
 export type WhatsAppTemplateApp = z.infer<typeof WhatsAppTemplateAppSchema>;

@@ -80,6 +80,17 @@ export const HeaderPlaceholderConfigSchema = z.object({
 export type HeaderPlaceholderConfig = z.infer<typeof HeaderPlaceholderConfigSchema>;
 
 /**
+ * Button parameter configuration for dynamic URL or quick-reply buttons
+ */
+export const ButtonPlaceholderConfigSchema = z.object({
+  index: z.number().int().min(0).describe('Zero-based button position in the template'),
+  subType: z.enum(['url', 'quick_reply']).describe('Meta API button sub_type'),
+  placeholders: z.array(PlaceholderConfigSchema).min(1).describe('Placeholder configs for this button'),
+});
+
+export type ButtonPlaceholderConfig = z.infer<typeof ButtonPlaceholderConfigSchema>;
+
+/**
  * Complete parameter configuration for a template
  *
  * Uses named placeholders where the key is the placeholder name from the template
@@ -92,6 +103,7 @@ export const TemplateParametersConfigSchema = z.object({
     .default([])
     .describe('Header media parameters (WhatsApp supports max 1)'),
   placeholders: z.record(z.string(), PlaceholderConfigSchema).describe('Body text placeholder configurations mapped by placeholder name'),
+  buttonPlaceholders: z.array(ButtonPlaceholderConfigSchema).default([]).describe('Button parameter configurations for dynamic URL or quick-reply buttons'),
 });
 
 export type TemplateParametersConfig = z.infer<typeof TemplateParametersConfigSchema>;

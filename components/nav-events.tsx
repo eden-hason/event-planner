@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
+import { ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { type EventApp } from '@/features/events/schemas';
 import { NewEventDialog } from '@/features/events/components/new-event-dialog';
-import { deleteEvent } from '@/features/events/actions';
+import { deleteEvent, duplicateEvent } from '@/features/events/actions';
 import { IconCarambola } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +58,31 @@ export function NavEvents({ events }: NavEventsProps) {
   const handleNewEventClick = () => {
     setDropdownOpen(false);
     setDialogOpen(true);
+  };
+
+  const handleDuplicate = async (event: EventApp) => {
+    setDropdownOpen(false);
+
+    const promise = duplicateEvent(event.id).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to duplicate event.');
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: `Duplicating ${event.title}...`,
+      success: (data) => {
+        if (data.eventId) {
+          router.push(`/app/${data.eventId}/dashboard`);
+        }
+        return data.message || 'Event duplicated successfully';
+      },
+      error: (err) =>
+        err instanceof Error
+          ? err.message
+          : 'Failed to duplicate event. Please try again.',
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -168,21 +193,35 @@ export function NavEvents({ events }: NavEventsProps) {
                         </span>
                       </div>
 
-                      {/* Delete button - visible on hover */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEventToDelete(event);
-                          setDeleteDialogOpen(true);
-                          setDropdownOpen(false);
-                        }}
-                        aria-label="Delete event"
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      {/* Action buttons - visible on hover */}
+                      <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(event);
+                          }}
+                          aria-label="Duplicate event"
+                        >
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEventToDelete(event);
+                            setDeleteDialogOpen(true);
+                            setDropdownOpen(false);
+                          }}
+                          aria-label="Delete event"
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </DropdownMenuItem>
                   );
                 })
