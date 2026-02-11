@@ -14,10 +14,11 @@ export async function submitConfirmation(
     token: formData.get('token'),
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount'),
-    dietaryRestrictions: formData.get('dietaryRestrictions'),
+    dietaryRestrictions: formData.get('dietaryRestrictions') ?? undefined,
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
+  console.log('parsed', parsed);
   if (!parsed.success) {
     return { success: false, message: 'נתונים לא תקינים' };
   }
