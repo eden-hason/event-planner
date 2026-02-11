@@ -1,5 +1,6 @@
 'use server';
 
+import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getScheduleById } from '../queries/schedules';
@@ -177,18 +178,21 @@ export async function executeSchedule(
       guestsWithPhones.map(async (guest) => {
         const phoneE164 = formatPhoneE164(guest.phone!);
 
+        // Generate a unique confirmation token for this guest's delivery
+        const confirmationToken = randomBytes(32).toString('hex');
+
         // Build parameter resolution context
         const context: ParameterResolutionContext = {
           guest,
           event: schedule.event,
           group: guest.groupId ? groupsMap.get(guest.groupId) : null,
           schedule,
+          confirmationToken,
         };
 
         // Build template parameters dynamically
         // Safe to use non-null assertion because we validated above
         const parameters = buildDynamicTemplateParameters(
-          template.bodyText,
           template.parameters!.placeholders,
           context,
         );
@@ -196,17 +200,17 @@ export async function executeSchedule(
         // Build header parameters dynamically if configured
         const headerParameters = template.parameters?.headerPlaceholders?.length
           ? buildDynamicHeaderParameters(
-              template.parameters.headerPlaceholders,
-              context,
-            )
+            template.parameters.headerPlaceholders,
+            context,
+          )
           : undefined;
 
         // Build button parameters dynamically if configured
         const buttonParameters = template.parameters?.buttonPlaceholders?.length
           ? buildDynamicButtonParameters(
-              template.parameters.buttonPlaceholders,
-              context,
-            )
+            template.parameters.buttonPlaceholders,
+            context,
+          )
           : undefined;
 
         // Send WhatsApp message
@@ -222,6 +226,7 @@ export async function executeSchedule(
         return {
           guest,
           result,
+          confirmationToken,
         };
       }),
     );
@@ -235,7 +240,7 @@ export async function executeSchedule(
 
     for (const promiseResult of sendResults) {
       if (promiseResult.status === 'fulfilled') {
-        const { guest, result } = promiseResult.value;
+        const { guest, result, confirmationToken } = promiseResult.value;
 
         deliveryRecords.push({
           schedule_id: scheduleId,
@@ -245,6 +250,7 @@ export async function executeSchedule(
           sent_at: result.success ? new Date().toISOString() : null,
           whatsapp_message_id: result.messageId || null,
           error_message: result.success ? null : result.message,
+          confirmation_token: confirmationToken,
         });
 
         if (result.success) {

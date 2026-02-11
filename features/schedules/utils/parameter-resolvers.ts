@@ -26,6 +26,7 @@ export interface ParameterResolutionContext {
   };
   group?: GroupApp | null;
   schedule?: ScheduleApp;
+  confirmationToken?: string;
 }
 
 /**
@@ -162,50 +163,38 @@ export function resolvePlaceholder(
 }
 
 /**
- * Extract placeholder names from a template body
+ * Extract numeric placeholder indices from a template body
  *
- * @example extractPlaceholders("Hi {{guest.name}}, event on {{event.eventDate}}")
- * // Returns: ["guest.name", "event.eventDate"]
+ * Only matches numeric placeholders (e.g., {{1}}, {{2}}).
+ *
+ * @example extractPlaceholders("Hi {{1}}, event on {{2}}")
+ * // Returns: ["1", "2"]
  */
 export function extractPlaceholders(templateBody: string): string[] {
-  const placeholderRegex = /\{\{([^}]+)\}\}/g;
+  const placeholderRegex = /\{\{(\d+)\}\}/g;
   const matches = Array.from(templateBody.matchAll(placeholderRegex));
-  return matches.map(match => match[1].trim());
+  return matches.map(match => match[1]);
 }
 
 /**
- * Build WhatsApp template parameters array from template body and configurations
+ * Build WhatsApp template parameters array from configurations
  *
- * This function uses named placeholders (e.g., {{guest.name}}, {{event.eventDate}})
- * instead of numbered placeholders. It extracts placeholder names from the template
- * in order, looks up each config by name, and builds the parameter array for the
- * WhatsApp API (which still requires numbered parameters).
+ * WhatsApp templates use numeric placeholders ({{1}}, {{2}}, etc.).
+ * Each config entry maps positionally to a numeric placeholder — the first
+ * entry resolves {{1}}, the second {{2}}, and so on.
  *
- * @param templateBody - The template body text with named placeholders
- * @param configs - Record mapping placeholder names to their configurations
+ * @param configs - Record mapping placeholder names to their configurations (insertion order defines position)
  * @param context - The resolution context with guest, event, group, schedule data
  * @returns Array of text parameters for WhatsApp API
  */
 export function buildDynamicTemplateParameters(
-  templateBody: string,
   configs: Record<string, PlaceholderConfig>,
   context: ParameterResolutionContext,
 ): Array<{ type: 'text'; text: string }> {
-  // Extract placeholder names in order from template
-  const placeholderNames = extractPlaceholders(templateBody);
-
-  // Build parameters by looking up each placeholder name in configs
-  const parameters = placeholderNames.map((placeholderName) => {
-    // Get config for this placeholder (or use defaults if not found)
-    const config = configs[placeholderName] ?? {
-      transformer: 'none' as const,
-    };
-
+  return Object.entries(configs).map(([placeholderName, config]) => {
     const resolvedValue = resolvePlaceholder(placeholderName, config, context);
     return { type: 'text' as const, text: resolvedValue };
   });
-
-  return parameters;
 }
 
 /**
