@@ -1,14 +1,5 @@
 import { type MessageType } from '../schemas';
 
-// Keep MESSAGE_TYPES for UI categorization
-export const MESSAGE_TYPES = [
-  'initial_invitation',
-  'first_confirmation',
-  'second_confirmation',
-  'event_reminder',
-  'thank_you',
-] as const;
-
 export type DefaultScheduleConfig = {
   templateId: string;           // UUID reference to whatsapp_templates
   messageType: MessageType;      // UI category (not stored in DB)
@@ -45,11 +36,12 @@ export const DEFAULT_SCHEDULES_BY_EVENT_TYPE: Record<
   // Other event types can be added here as needed
 };
 
-// Mapping from template ID to message type for UI categorization
-export const TEMPLATE_TO_MESSAGE_TYPE: Record<string, MessageType> = {
-  'a68d0f3c-cd30-4fe7-a515-60011e0e027c': 'initial_invitation',
-  // Add mappings for other templates as they're added
-};
+// Auto-derived mapping from template ID to message type for UI categorization
+export const TEMPLATE_TO_MESSAGE_TYPE: Record<string, MessageType> = Object.fromEntries(
+  Object.values(DEFAULT_SCHEDULES_BY_EVENT_TYPE)
+    .flat()
+    .map((config) => [config.templateId, config.messageType]),
+);
 
 // Helper function to get message type from template ID
 export function getMessageTypeForTemplate(templateId: string): MessageType | null {
