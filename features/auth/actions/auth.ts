@@ -36,6 +36,8 @@ export async function login(
     password: formData.get('password') as string,
   };
 
+  const next = (formData.get('next') as string) || '/app';
+
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
@@ -46,7 +48,7 @@ export async function login(
   }
 
   revalidatePath('/', 'layout');
-  redirect('/app');
+  redirect(next);
 }
 
 export async function signup(
@@ -86,10 +88,10 @@ const getURL = () => {
   return url;
 };
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
 
-  const redirectTo = `${getURL()}auth/callback?next=/app`;
+  const redirectTo = `${getURL()}auth/callback?next=${encodeURIComponent(next || '/app')}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

@@ -38,9 +38,10 @@ import { cn } from '@/lib/utils';
 
 interface NavEventsProps {
   events: EventApp[];
+  currentUserId?: string;
 }
 
-export function NavEvents({ events }: NavEventsProps) {
+export function NavEvents({ events, currentUserId }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -175,6 +176,8 @@ export function NavEvents({ events }: NavEventsProps) {
                   const eventUrl = `/app/${event.id}/dashboard`;
                   const isActive = currentEventId === event.id;
 
+                  const isShared = currentUserId ? event.userId !== currentUserId : false;
+
                   return (
                     <DropdownMenuItem
                       key={event.id}
@@ -190,11 +193,16 @@ export function NavEvents({ events }: NavEventsProps) {
                         </span>
                         <span className="text-muted-foreground truncate text-xs">
                           {event.eventType}
+                          {isShared && (
+                            <span className="text-primary ml-1.5 font-medium">
+                              · Shared
+                            </span>
+                          )}
                         </span>
                       </div>
 
-                      {/* Action buttons - visible on hover */}
-                      <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Action buttons - visible on hover, hidden for shared events */}
+                      <div className={cn("flex opacity-0 group-hover:opacity-100 transition-opacity", isShared && "hidden")}>
                         <Button
                           variant="ghost"
                           size="icon"

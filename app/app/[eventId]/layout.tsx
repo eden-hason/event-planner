@@ -1,10 +1,12 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getEventById } from '@/features/events/queries';
+import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   FeatureLayoutProvider,
   FeatureLayoutHeader,
+  CollaborationProvider,
 } from '@/components/feature-layout';
 
 export default async function EventLayout({
@@ -21,12 +23,18 @@ export default async function EventLayout({
     redirect('/app/onboarding');
   }
 
+  const collaboratorRole = await getCollaboratorRole(eventId);
+  const role = collaboratorRole?.role ?? 'owner';
+  const isCreator = collaboratorRole?.isCreator ?? true;
+
   return (
-    <FeatureLayoutProvider>
-      <Card className="min-h-[calc(100vh-101px)] border-none bg-transparent p-0 shadow-none">
-        <FeatureLayoutHeader />
-        <CardContent className="space-y-6">{children}</CardContent>
-      </Card>
-    </FeatureLayoutProvider>
+    <CollaborationProvider role={role} isCreator={isCreator}>
+      <FeatureLayoutProvider>
+        <Card className="min-h-[calc(100vh-101px)] border-none bg-transparent p-0 shadow-none">
+          <FeatureLayoutHeader />
+          <CardContent className="space-y-6">{children}</CardContent>
+        </Card>
+      </FeatureLayoutProvider>
+    </CollaborationProvider>
   );
 }

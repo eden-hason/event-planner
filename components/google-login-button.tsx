@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { signInWithGoogle } from '@/features/auth';
 
-export function GoogleLoginButton() {
+export function GoogleLoginButton({ next }: { next?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +13,7 @@ export function GoogleLoginButton() {
     setError(null);
 
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(next);
 
       // If the server action returns an error object (no redirect happened),
       // show the message and stop loading.
