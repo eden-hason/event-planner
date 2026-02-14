@@ -7,13 +7,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { IconPlus, IconCopy, IconCheck } from '@tabler/icons-react';
+import { IconCopy, IconCheck } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { createInvitation } from '../actions';
 import { ScopePicker } from './scope-picker';
@@ -24,6 +23,8 @@ interface InviteCollaboratorDialogProps {
   eventId: string;
   groups: GroupApp[];
   guests: GuestApp[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 type Step = 'form' | 'scope' | 'success';
@@ -32,8 +33,9 @@ export function InviteCollaboratorDialog({
   eventId,
   groups,
   guests,
+  open,
+  onOpenChange,
 }: InviteCollaboratorDialogProps) {
-  const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<Step>('form');
   const [isPending, setIsPending] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
@@ -105,17 +107,11 @@ export function InviteCollaboratorDialog({
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        setOpen(v);
+        onOpenChange(v);
         if (!v) resetForm();
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <IconPlus className="mr-1.5 h-4 w-4" />
-          Invite Collaborator
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {step === 'form' && 'Invite Collaborator'}
@@ -220,26 +216,27 @@ export function InviteCollaboratorDialog({
 
         {step === 'success' && (
           <div className="space-y-4">
-            <div className="bg-muted flex items-center gap-2 rounded-md p-3">
-              <code className="flex-1 truncate text-xs">{invitationLink}</code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyLink}
-              >
-                {copied ? (
-                  <IconCheck className="mr-1.5 h-4 w-4" />
-                ) : (
-                  <IconCopy className="mr-1.5 h-4 w-4" />
-                )}
-                {copied ? 'Copied' : 'Copy'}
-              </Button>
+            <div className="bg-muted overflow-hidden rounded-md p-3">
+              <code className="block break-all text-xs">{invitationLink}</code>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleCopyLink}
+            >
+              {copied ? (
+                <IconCheck className="mr-1.5 h-4 w-4" />
+              ) : (
+                <IconCopy className="mr-1.5 h-4 w-4" />
+              )}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
             <Button
               variant="outline"
               className="w-full"
               onClick={() => {
-                setOpen(false);
+                onOpenChange(false);
                 resetForm();
               }}
             >
