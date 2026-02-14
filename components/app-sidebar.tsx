@@ -96,7 +96,7 @@ export function AppSidebar({ events, ...props }: AppSidebarProps) {
   const navSecondary = [
     {
       title: 'Settings',
-      url: '#',
+      url: buildNavUrl('/app/settings', eventId),
       icon: IconSettings,
     },
     {
