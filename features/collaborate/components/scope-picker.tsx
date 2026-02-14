@@ -56,7 +56,7 @@ export function ScopePicker({
       {groups.length > 0 && (
         <div className="space-y-2">
           <Label className="text-sm font-medium">Groups</Label>
-          <div className="space-y-2">
+          <div className="max-h-48 space-y-2 overflow-y-auto">
             {groups.map((group) => (
               <div key={group.id} className="flex items-center gap-2">
                 <Checkbox
