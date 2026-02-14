@@ -27,6 +27,10 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
+import { useCollaboration } from '@/components/feature-layout';
+
+// Sidebar nav items that seating managers can see
+const SEATING_MANAGER_ALLOWED = ['Dashboard', 'Guests', 'Settings'];
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -45,11 +49,13 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   events: EventApp[];
+  currentUserId?: string;
 }
 
-export function AppSidebar({ events, ...props }: AppSidebarProps) {
+export function AppSidebar({ events, currentUserId, ...props }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
+  const { isOwner } = useCollaboration();
   const navMainBase = [
     {
       title: 'Dashboard',
@@ -88,7 +94,11 @@ export function AppSidebar({ events, ...props }: AppSidebarProps) {
     },
   ];
 
-  const navMain = navMainBase.map((item) => ({
+  const filteredNavMain = isOwner
+    ? navMainBase
+    : navMainBase.filter((item) => SEATING_MANAGER_ALLOWED.includes(item.title));
+
+  const navMain = filteredNavMain.map((item) => ({
     ...item,
     url: buildNavUrl(item.url, eventId),
   }));
@@ -128,7 +138,7 @@ export function AppSidebar({ events, ...props }: AppSidebarProps) {
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavEvents events={events} />
+        <NavEvents events={events} currentUserId={currentUserId} />
       </SidebarFooter>
     </Sidebar>
   );

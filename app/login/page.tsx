@@ -7,12 +7,17 @@ import { IconInnerShadowTop } from '@tabler/icons-react';
 // Force dynamic rendering since this page uses cookies for authentication
 export const dynamic = 'force-dynamic';
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
 
   if (data.user) {
-    redirect('/app');
+    redirect(next || '/app');
   }
 
   return (
@@ -22,7 +27,7 @@ export default async function LoginPage() {
           <IconInnerShadowTop className="!size-5" />
           Kululu Events
         </a>
-        <LoginForm />
+        <LoginForm next={next} />
       </div>
     </div>
   );

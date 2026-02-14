@@ -29,7 +29,7 @@ export default async function Layout({
 
   return (
     <SidebarProvider className="!bg-[#F4F4F6]">
-      <AppSidebar variant="inset" events={events} />
+      <AppSidebar variant="inset" events={events} currentUserId={data.user.id} />
       <SidebarInset>
         <AppHeader user={user} />
         <div className="bg-muted/50 flex-1 py-4">
