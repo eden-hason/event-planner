@@ -156,4 +156,5 @@ export type ActionState = {
   success: boolean;
   message?: string | null;
   invitationLink?: string | null;
+  emailSent?: boolean;
 };

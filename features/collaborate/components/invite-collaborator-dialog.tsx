@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { IconCopy, IconCheck } from '@tabler/icons-react';
+import { IconCopy, IconCheck, IconMail } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { createInvitation } from '../actions';
 import { ScopePicker } from './scope-picker';
@@ -46,6 +46,7 @@ export function InviteCollaboratorDialog({
   const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
   const [selectedGuests, setSelectedGuests] = React.useState<string[]>([]);
   const [invitationLink, setInvitationLink] = React.useState('');
+  const [emailSent, setEmailSent] = React.useState(false);
 
   const resetForm = () => {
     setStep('form');
@@ -54,6 +55,7 @@ export function InviteCollaboratorDialog({
     setSelectedGroups([]);
     setSelectedGuests([]);
     setInvitationLink('');
+    setEmailSent(false);
     setCopied(false);
   };
 
@@ -87,6 +89,7 @@ export function InviteCollaboratorDialog({
       }
 
       setInvitationLink(result.invitationLink || '');
+      setEmailSent(result.emailSent ?? false);
       setStep('success');
       toast.success('Invitation created!');
     } catch {
@@ -124,7 +127,9 @@ export function InviteCollaboratorDialog({
             {step === 'scope' &&
               'Select which groups and guests this seating manager can access.'}
             {step === 'success' &&
-              'Share this link with the person you invited.'}
+              (emailSent
+                ? 'An invitation email has been sent. You can also share the link manually.'
+                : 'Share this link with the person you invited.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -216,6 +221,12 @@ export function InviteCollaboratorDialog({
 
         {step === 'success' && (
           <div className="space-y-4">
+            {emailSent && (
+              <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+                <IconMail className="h-4 w-4 shrink-0" />
+                <span>Invitation email sent to {email}</span>
+              </div>
+            )}
             <div className="bg-muted overflow-hidden rounded-md p-3">
               <code className="block break-all text-xs">{invitationLink}</code>
             </div>
