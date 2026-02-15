@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { MessageContentCard } from './message-content-card';
+import { SchedulePerformanceCard } from './schedule-performance-card';
 
 interface ScheduleTabContentProps {
   schedule: ScheduleApp;
@@ -27,11 +28,7 @@ export function ScheduleTabContent({
           <CardTitle>Schedule Logic</CardTitle>
         </CardHeader>
       </Card>
-      <Card className="col-span-3">
-        <CardHeader>
-          <CardTitle>Schedule Performance</CardTitle>
-        </CardHeader>
-      </Card>
+      <SchedulePerformanceCard scheduleId={schedule.id} />
     </div>
   );
 }

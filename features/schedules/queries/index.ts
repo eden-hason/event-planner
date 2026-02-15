@@ -9,3 +9,5 @@ export {
   getMessageDeliveriesByScheduleId,
   getDeliveryStats,
 } from './message-deliveries';
+
+export { getRsvpStats } from './guest-interactions';
