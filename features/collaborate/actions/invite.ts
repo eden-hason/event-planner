@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/features/auth/queries';
 import { revalidatePath } from 'next/cache';
 import { InviteFormSchema, type ActionState } from '../schemas';
 import { generateInviteToken, buildInvitationLink } from '../utils';
+import { sendInvitationEmail } from '@/lib/email/send-invitation-email';
 
 export async function createInvitation(
   eventId: string,
@@ -145,12 +146,36 @@ export async function createInvitation(
 
     const invitationLink = buildInvitationLink(token);
 
+    // Fetch event title and inviter name for the email
+    let emailSent = false;
+    const [{ data: event }, { data: profile }] = await Promise.all([
+      supabase.from('events').select('title').eq('id', eventId).single(),
+      supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', currentUser.id)
+        .single(),
+    ]);
+
+    const inviterName = profile?.full_name || 'A collaborator';
+    const eventTitle = event?.title || 'an event';
+
+    const emailResult = await sendInvitationEmail({
+      to: email,
+      inviterName,
+      eventTitle,
+      role,
+      invitationLink,
+    });
+    emailSent = emailResult.success;
+
     revalidatePath(`/app/${eventId}/settings`);
 
     return {
       success: true,
       message: 'Invitation created successfully.',
       invitationLink,
+      emailSent,
     };
   } catch (error) {
     console.error('Create invitation error:', error);
