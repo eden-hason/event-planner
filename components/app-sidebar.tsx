@@ -117,7 +117,7 @@ export function AppSidebar({ events, currentUserId, ...props }: AppSidebarProps)
   ];
 
   return (
-    <Sidebar className="bg-[#F4F4F6]" collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
