@@ -12,12 +12,13 @@ import { toast } from 'sonner';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { CalendarSync, PlusIcon } from 'lucide-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
@@ -47,6 +48,7 @@ export function GuestsPage({
   const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
     null,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Create group action with toast
   const createGroupActionWithToast = async (
@@ -193,18 +195,17 @@ export function GuestsPage({
         onCreateGroup={handleCreateGroup}
       />
 
-      {/* Guest form drawer */}
-      <Drawer
-        direction="right"
-        open={isDrawerOpen}
-        onOpenChange={handleDrawerClose}
-      >
-        <DrawerContent className="!max-w-[600px]">
-          <DrawerHeader>
-            <DrawerTitle>
+      {/* Guest form sheet */}
+      <Sheet open={isDrawerOpen} onOpenChange={handleDrawerClose}>
+        <SheetContent
+          className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[520px]"
+          onOpenAutoFocus={(e) => { if (selectedGuest) e.preventDefault(); }}
+        >
+          <SheetHeader className="border-b px-6 py-5">
+            <SheetTitle>
               {selectedGuest ? `Edit ${selectedGuest.name}` : 'Add New Guest'}
-            </DrawerTitle>
-            <DrawerDescription>
+            </SheetTitle>
+            <SheetDescription>
               {selectedGuest ? (
                 <span className="flex items-center gap-2">
                   <CalendarSync className="size-4" />
@@ -214,21 +215,34 @@ export function GuestsPage({
                   })}
                 </span>
               ) : (
-                'Please fill out the form below to add a new guest'
+                'Fill out the form below to add a new guest.'
               )}
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-6">
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-6">
             <GuestForm
+              formId="guest-form"
               eventId={eventId}
               guest={selectedGuest}
               groups={groups}
               onSuccess={() => handleDrawerClose(false)}
               onCancel={() => handleDrawerClose(false)}
+              hideActions
+              onPendingChange={setIsSubmitting}
             />
           </div>
-        </DrawerContent>
-      </Drawer>
+
+          <SheetFooter className="flex-row justify-between border-t px-6 py-4 sm:flex-row">
+            <Button variant="ghost" onClick={() => handleDrawerClose(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="guest-form" disabled={isSubmitting}>
+              {selectedGuest ? 'Update Guest' : 'Add Guest'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

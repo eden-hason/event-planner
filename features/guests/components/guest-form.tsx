@@ -38,6 +38,9 @@ interface GuestFormProps {
   groups?: GroupApp[]; // Available groups for the event
   onSuccess?: () => void;
   onCancel?: () => void;
+  formId?: string;
+  hideActions?: boolean;
+  onPendingChange?: (pending: boolean) => void;
 }
 
 export function GuestForm({
@@ -46,6 +49,9 @@ export function GuestForm({
   groups = [],
   onSuccess,
   onCancel,
+  formId = 'guest-form',
+  hideActions = false,
+  onPendingChange,
 }: GuestFormProps) {
   const isEditMode = !!guest;
 
@@ -108,6 +114,11 @@ export function GuestForm({
     null,
   );
 
+  // Bubble isPending to parent
+  React.useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
+
   // Handle form submission - convert form values to FormData
   const onSubmit = (values: GuestUpsert) => {
     const formData = new FormData();
@@ -136,7 +147,7 @@ export function GuestForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -306,22 +317,24 @@ export function GuestForm({
           )}
         />
 
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isPending}>
-            {isPending
-              ? isEditMode
-                ? 'Updating...'
-                : 'Adding...'
-              : isEditMode
-                ? 'Update Guest'
-                : 'Add Guest'}
-          </Button>
-          {isEditMode && (
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
+        {!hideActions && (
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? isEditMode
+                  ? 'Updating...'
+                  : 'Adding...'
+                : isEditMode
+                  ? 'Update Guest'
+                  : 'Add Guest'}
             </Button>
-          )}
-        </div>
+            {isEditMode && (
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        )}
       </form>
     </Form>
   );
