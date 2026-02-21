@@ -7,8 +7,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` - Start Next.js dev server on localhost:3000
 - `npm run build` - Build production bundle
 - `npm run lint` - Run ESLint (flat config, v9)
-- `npm run generate:db-docs` - Regenerate `docs/database-schema.md` from live Supabase OpenAPI spec
-
 No test framework is currently configured.
 
 ## Tech Stack
@@ -45,7 +43,10 @@ Each feature contains:
 - `/components/ui/` - shadcn/ui components
 - `/lib/supabase/` - Supabase client configuration (client.ts for browser, server.ts for server)
 - `/hooks/` - Custom React hooks
-- `/docs/database-schema.md` - Full database schema reference (tables, columns, enums, FKs, JSONB structures)
+
+### Database Schema
+
+The Supabase MCP is connected and provides live schema context. Use `mcp__supabase__list_tables`, `mcp__supabase__execute_sql`, and related tools to inspect tables, columns, enums, and relationships directly rather than relying on any static schema file.
 
 ### Path Aliases
 
