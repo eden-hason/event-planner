@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "generate:db-docs": "tsx scripts/generate-db-docs.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
