@@ -2,6 +2,7 @@ import { SettingsPage } from '@/features/settings/components';
 import { getEventCollaborators } from '@/features/collaborate/queries';
 import { getEventInvitations } from '@/features/collaborate/queries';
 import { getEventGroups, getEventGuests } from '@/features/guests/queries';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function SettingsPageRoute({
   params,
@@ -9,6 +10,11 @@ export default async function SettingsPageRoute({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const [collaborators, invitations, groups, guests] = await Promise.all([
     getEventCollaborators(eventId),
@@ -20,6 +26,7 @@ export default async function SettingsPageRoute({
   return (
     <SettingsPage
       eventId={eventId}
+      currentUserId={user?.id}
       collaborators={collaborators}
       invitations={invitations}
       groups={groups}

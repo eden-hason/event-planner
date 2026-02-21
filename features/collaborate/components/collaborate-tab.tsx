@@ -6,13 +6,12 @@ import {
   IconUsersGroup,
   IconClipboardCheck,
   IconRefresh,
-  IconPlus,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { CollaboratorsList } from './collaborators-list';
 import { PendingInvitations } from './pending-invitations';
 import { InviteCollaboratorDialog } from './invite-collaborator-dialog';
-import { EditScopeDrawer } from './edit-scope-drawer';
+import { CollaboratorConfigDialog } from './collaborator-config-dialog';
 import { getCollaboratorScope } from '../queries';
 import type { CollaboratorApp, InvitationApp } from '../schemas';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
@@ -40,6 +39,7 @@ const FEATURES = [
 
 interface CollaborateTabProps {
   eventId: string;
+  currentUserId?: string;
   collaborators: CollaboratorApp[];
   invitations: InvitationApp[];
   groups: GroupApp[];
@@ -48,25 +48,31 @@ interface CollaborateTabProps {
 
 export function CollaborateTab({
   eventId,
+  currentUserId,
   collaborators,
   invitations,
   groups,
   guests,
 }: CollaborateTabProps) {
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
-  const [scopeDrawerOpen, setScopeDrawerOpen] = React.useState(false);
+  const [configDialogOpen, setConfigDialogOpen] = React.useState(false);
   const [editingCollaborator, setEditingCollaborator] =
     React.useState<CollaboratorApp | null>(null);
   const [scopeGroupIds, setScopeGroupIds] = React.useState<string[]>([]);
   const [scopeGuestIds, setScopeGuestIds] = React.useState<string[]>([]);
 
-  const handleEditScope = async (collaborator: CollaboratorApp) => {
+  const handleConfigure = async (collaborator: CollaboratorApp) => {
     setEditingCollaborator(collaborator);
-    // Fetch current scope
-    const scope = await getCollaboratorScope(collaborator.id);
-    setScopeGroupIds(scope.groupIds);
-    setScopeGuestIds(scope.guestIds);
-    setScopeDrawerOpen(true);
+    // Fetch current scope for seating managers
+    if (collaborator.role === 'seating_manager') {
+      const scope = await getCollaboratorScope(collaborator.id);
+      setScopeGroupIds(scope.groupIds);
+      setScopeGuestIds(scope.guestIds);
+    } else {
+      setScopeGroupIds([]);
+      setScopeGuestIds([]);
+    }
+    setConfigDialogOpen(true);
   };
 
   // Only creator row means no other collaborators
@@ -141,20 +147,17 @@ export function CollaborateTab({
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-muted-foreground text-sm font-medium">
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-muted-foreground mb-3 text-xs font-semibold tracking-widest uppercase">
               Active Members
             </h3>
-            <Button size="sm" onClick={() => setInviteDialogOpen(true)}>
-              <IconPlus className="mr-1.5 h-4 w-4" />
-              Invite
-            </Button>
+            <CollaboratorsList
+              collaborators={collaborators}
+              currentUserId={currentUserId}
+              onConfigure={handleConfigure}
+            />
           </div>
-          <CollaboratorsList
-            collaborators={collaborators}
-            onEditScope={handleEditScope}
-          />
           <PendingInvitations invitations={invitations} />
         </div>
       )}
@@ -167,10 +170,10 @@ export function CollaborateTab({
         onOpenChange={setInviteDialogOpen}
       />
 
-      <EditScopeDrawer
+      <CollaboratorConfigDialog
         collaborator={editingCollaborator}
-        open={scopeDrawerOpen}
-        onOpenChange={setScopeDrawerOpen}
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
         groups={groups}
         guests={guests}
         initialGroupIds={scopeGroupIds}

@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,21 +19,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { IconDots, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconDotsVertical, IconUserMinus, IconUserCog } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { removeCollaborator } from '../actions';
 import { RoleBadge } from './role-badge';
-import { ScopeSummary } from './scope-summary';
+import { formatScopeSummary } from '../utils';
 import type { CollaboratorApp } from '../schemas';
 
 interface CollaboratorsListProps {
   collaborators: CollaboratorApp[];
-  onEditScope?: (collaborator: CollaboratorApp) => void;
+  currentUserId?: string;
+  onConfigure?: (collaborator: CollaboratorApp) => void;
 }
 
 export function CollaboratorsList({
   collaborators,
-  onEditScope,
+  currentUserId,
+  onConfigure,
 }: CollaboratorsListProps) {
   const handleRemove = async (collaborator: CollaboratorApp) => {
     const promise = removeCollaborator(collaborator.id).then((result) => {
@@ -54,47 +55,69 @@ export function CollaboratorsList({
 
   return (
     <div className="space-y-3">
-      {collaborators.map((collaborator) => (
-        <Card key={collaborator.id}>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
+      {collaborators.map((collaborator) => {
+        const isCurrentUser = currentUserId === collaborator.userId;
+        const initials = collaborator.fullName
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+
+        return (
+          <div
+            key={collaborator.id}
+            className="flex items-center justify-between rounded-xl border bg-white px-5 py-4"
+          >
+            <div className="flex items-center gap-4">
+              <Avatar className="h-10 w-10">
                 {collaborator.avatarUrl && (
                   <AvatarImage
                     src={collaborator.avatarUrl}
                     alt={collaborator.fullName}
                   />
                 )}
-                <AvatarFallback>
-                  {collaborator.fullName
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)}
+                <AvatarFallback className="bg-blue-100 text-xs font-medium text-blue-700">
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    {collaborator.fullName}
+                  <span className="text-base font-semibold">
+                    {collaborator.email}
                   </span>
+                  {isCurrentUser && (
+                    <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-500">
+                      You
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 flex items-center gap-1.5">
                   <RoleBadge
                     role={collaborator.role}
                     isCreator={collaborator.isCreator}
                   />
+                  {collaborator.role === 'seating_manager' &&
+                    (collaborator.scopeGuestCount > 0 ||
+                      collaborator.scopeGroupCount > 0) && (
+                      <span className="text-muted-foreground text-xs">
+                        &middot;{' '}
+                        {formatScopeSummary(
+                          collaborator.scopeGroupCount,
+                          collaborator.scopeGuestCount,
+                        )}
+                      </span>
+                    )}
+                  {collaborator.role === 'owner' && !collaborator.isCreator && (
+                    <span className="text-muted-foreground text-xs">
+                      &middot; Invited by you &middot;{' '}
+                      {new Date(collaborator.createdAt).toLocaleDateString(
+                        'en-US',
+                        { month: 'short', day: 'numeric' },
+                      )}
+                    </span>
+                  )}
                 </div>
-                <p className="text-muted-foreground text-xs">
-                  {collaborator.email}
-                </p>
-                {collaborator.role === 'seating_manager' && (
-                  <div className="mt-1">
-                    <ScopeSummary
-                      groupCount={collaborator.scopeGroupCount}
-                      guestCount={collaborator.scopeGuestCount}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 
@@ -102,16 +125,16 @@ export function CollaboratorsList({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <IconDots className="h-4 w-4" />
+                    <IconDotsVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {collaborator.role === 'seating_manager' && onEditScope && (
+                <DropdownMenuContent align="end" className="w-44">
+                  {onConfigure && (
                     <DropdownMenuItem
-                      onClick={() => onEditScope(collaborator)}
+                      onClick={() => onConfigure(collaborator)}
                     >
-                      <IconEye className="mr-2 h-4 w-4" />
-                      Edit Scope
+                      <IconUserCog className="mr-2 h-4 w-4" />
+                      Change Role
                     </DropdownMenuItem>
                   )}
                   <AlertDialog>
@@ -120,7 +143,7 @@ export function CollaboratorsList({
                         onSelect={(e) => e.preventDefault()}
                         className="text-destructive"
                       >
-                        <IconTrash className="mr-2 h-4 w-4" />
+                        <IconUserMinus className="mr-2 h-4 w-4" />
                         Remove
                       </DropdownMenuItem>
                     </AlertDialogTrigger>
@@ -148,9 +171,9 @@ export function CollaboratorsList({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
