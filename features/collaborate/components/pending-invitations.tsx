@@ -1,8 +1,7 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { IconCopy, IconX } from '@tabler/icons-react';
+import { IconMail, IconClock } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { revokeInvitation } from '../actions';
 import { RoleBadge } from './role-badge';
@@ -39,45 +38,65 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
   };
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-muted-foreground text-sm font-medium">
-        Pending Invitations
-      </h3>
-      {invitations.map((invitation) => (
-        <Card key={invitation.id}>
-          <CardContent className="flex items-center justify-between p-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+          Pending Invitations
+        </h3>
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-medium text-gray-500">
+          {invitations.length}
+        </span>
+      </div>
+      <div className="space-y-3">
+        {invitations.map((invitation) => (
+          <div
+            key={invitation.id}
+            className="flex items-center justify-between rounded-xl border border-dashed border-gray-300 bg-white px-5 py-4"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+                <IconMail className="h-5 w-5 text-gray-400" />
+              </div>
+              <div>
+                <span className="text-base font-semibold text-gray-500">
                   {invitation.invitedEmail}
                 </span>
-                <RoleBadge role={invitation.role} />
+                <div className="mt-1 flex items-center gap-1.5">
+                  <RoleBadge role={invitation.role} />
+                  <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                    &middot;{' '}
+                    <IconClock className="h-3 w-3" />
+                    Expires{' '}
+                    {new Date(invitation.expiresAt).toLocaleDateString(
+                      'en-US',
+                      { month: 'short', day: 'numeric' },
+                    )}
+                  </span>
+                </div>
               </div>
-              <p className="text-muted-foreground text-xs">
-                {getExpiryText(invitation.expiresAt)}
-              </p>
             </div>
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                variant="link"
+                size="sm"
+                className="text-primary font-medium"
                 onClick={() => handleCopyLink(invitation.token)}
               >
-                <IconCopy className="h-4 w-4" />
+                Resend
               </Button>
+              <span className="text-gray-300">|</span>
               <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive h-8 w-8"
+                variant="link"
+                size="sm"
+                className="font-medium text-gray-500 hover:text-gray-700"
                 onClick={() => handleRevoke(invitation)}
               >
-                <IconX className="h-4 w-4" />
+                Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

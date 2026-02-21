@@ -20,12 +20,10 @@ import {
   IconArmchair,
   IconSend,
   IconInfoCircle,
-  IconSearch,
-  IconUsers,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { createInvitation } from '../actions';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ScopePicker } from './scope-picker';
 import { cn } from '@/lib/utils';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
 import type { CollaboratorRole } from '../schemas';
@@ -66,7 +64,9 @@ function ScopeStep({
   groups,
   guests,
   selectedGroups,
+  selectedGuests,
   onGroupsChange,
+  onGuestsChange,
   isPending,
   onSubmit,
   onCancel,
@@ -75,56 +75,13 @@ function ScopeStep({
   groups: GroupApp[];
   guests: GuestApp[];
   selectedGroups: string[];
+  selectedGuests: string[];
   onGroupsChange: (ids: string[]) => void;
+  onGuestsChange: (ids: string[]) => void;
   isPending: boolean;
   onSubmit: () => void;
   onCancel: () => void;
 }) {
-  const [search, setSearch] = React.useState('');
-
-  const guestCountByGroup = React.useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const guest of guests) {
-      if (guest.groupId) {
-        map[guest.groupId] = (map[guest.groupId] || 0) + 1;
-      }
-    }
-    return map;
-  }, [guests]);
-
-  const guestsByGroup = React.useMemo(() => {
-    const map: Record<string, GuestApp[]> = {};
-    for (const guest of guests) {
-      if (guest.groupId) {
-        (map[guest.groupId] ??= []).push(guest);
-      }
-    }
-    return map;
-  }, [guests]);
-
-  const filteredGroups = React.useMemo(() => {
-    if (!search) return groups;
-    const q = search.toLowerCase();
-    return groups.filter((g) => {
-      if (g.name.toLowerCase().includes(q)) return true;
-      const groupGuests = guestsByGroup[g.id] || [];
-      return groupGuests.some((guest) => guest.name.toLowerCase().includes(q));
-    });
-  }, [groups, guestsByGroup, search]);
-
-  const totalSelectedGuests = selectedGroups.reduce(
-    (sum, id) => sum + (guestCountByGroup[id] || 0),
-    0,
-  );
-
-  const toggleGroup = (groupId: string) => {
-    if (selectedGroups.includes(groupId)) {
-      onGroupsChange(selectedGroups.filter((id) => id !== groupId));
-    } else {
-      onGroupsChange([...selectedGroups, groupId]);
-    }
-  };
-
   const seatingRole = roles.find((r) => r.value === 'seating_manager')!;
 
   return (
@@ -174,60 +131,16 @@ function ScopeStep({
           </div>
         </div>
 
-        <div className="rounded-lg border">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <p className="text-sm font-semibold">Select What They Can Manage</p>
-            {totalSelectedGuests > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
-                <IconUsers className="size-3.5" />
-                {totalSelectedGuests} guest{totalSelectedGuests !== 1 ? 's' : ''}{' '}
-                selected
-              </span>
-            )}
-          </div>
-
-          <div className="p-4">
-            <div className="relative mb-3">
-              <IconSearch className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-              <Input
-                placeholder="Search groups or guests..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <div className="max-h-52 space-y-1 overflow-y-auto">
-              {filteredGroups.map((group) => {
-                const count = guestCountByGroup[group.id] || 0;
-                const checked = selectedGroups.includes(group.id);
-                return (
-                  <label
-                    key={group.id}
-                    className={cn(
-                      'flex cursor-pointer items-center justify-between rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50',
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => toggleGroup(group.id)}
-                      />
-                      <span className="text-sm">{group.name}</span>
-                    </div>
-                    <span className="text-muted-foreground text-xs">
-                      {count} guest{count !== 1 ? 's' : ''}
-                    </span>
-                  </label>
-                );
-              })}
-              {filteredGroups.length === 0 && (
-                <p className="text-muted-foreground py-4 text-center text-xs">
-                  No groups or guests found.
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="rounded-lg border bg-muted/40 p-4">
+          <p className="mb-3 text-sm font-semibold">Select What They Can Manage</p>
+          <ScopePicker
+            groups={groups}
+            guests={guests}
+            selectedGroups={selectedGroups}
+            selectedGuests={selectedGuests}
+            onGroupsChange={onGroupsChange}
+            onGuestsChange={onGuestsChange}
+          />
         </div>
       </div>
 
@@ -239,7 +152,7 @@ function ScopeStep({
         </Button>
         <Button
           onClick={onSubmit}
-          disabled={isPending || selectedGroups.length === 0}
+          disabled={isPending || (selectedGroups.length === 0 && selectedGuests.length === 0)}
         >
           <IconSend className="size-4" />
           {isPending ? 'Sending...' : 'Send Invitation'}
@@ -471,7 +384,9 @@ export function InviteCollaboratorDialog({
             groups={groups}
             guests={guests}
             selectedGroups={selectedGroups}
+            selectedGuests={selectedGuests}
             onGroupsChange={setSelectedGroups}
+            onGuestsChange={setSelectedGuests}
             isPending={isPending}
             onSubmit={handleSubmit}
             onCancel={() => {

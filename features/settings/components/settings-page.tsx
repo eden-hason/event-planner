@@ -22,6 +22,7 @@ const TAB_HEADERS: Record<
 
 interface SettingsPageProps {
   eventId: string;
+  currentUserId?: string;
   collaborators: CollaboratorApp[];
   invitations: InvitationApp[];
   groups: GroupApp[];
@@ -30,6 +31,7 @@ interface SettingsPageProps {
 
 export function SettingsPage({
   eventId,
+  currentUserId,
   collaborators,
   invitations,
   groups,
@@ -73,6 +75,7 @@ export function SettingsPage({
         <TabsContent value="team">
           <CollaborateTab
             eventId={eventId}
+            currentUserId={currentUserId}
             collaborators={collaborators}
             invitations={invitations}
             groups={groups}

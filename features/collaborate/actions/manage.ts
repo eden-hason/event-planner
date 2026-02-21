@@ -218,6 +218,148 @@ export async function updateCollaboratorScope(
   }
 }
 
+export async function updateCollaboratorRole(
+  collaboratorId: string,
+  newRole: 'owner' | 'seating_manager',
+  formData?: FormData,
+): Promise<ActionState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, message: 'You must be logged in.' };
+    }
+
+    const supabase = await createClient();
+
+    // Fetch the collaborator
+    const { data: target, error: fetchError } = await supabase
+      .from('event_collaborators')
+      .select('id, event_id, user_id, role, is_creator, profiles!event_collaborators_user_id_profiles_fk(email)')
+      .eq('id', collaboratorId)
+      .single();
+
+    if (fetchError || !target) {
+      return { success: false, message: 'Collaborator not found.' };
+    }
+
+    if (target.is_creator) {
+      return { success: false, message: 'Cannot change the creator\'s role.' };
+    }
+
+    // Verify caller is an owner
+    const { data: callerCollab } = await supabase
+      .from('event_collaborators')
+      .select('role')
+      .eq('event_id', target.event_id)
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (!callerCollab || callerCollab.role !== 'owner') {
+      return { success: false, message: 'Only owners can change roles.' };
+    }
+
+    // If changing from owner, ensure not the last owner
+    if (target.role === 'owner' && newRole !== 'owner') {
+      const { count } = await supabase
+        .from('event_collaborators')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', target.event_id)
+        .eq('role', 'owner');
+
+      if ((count ?? 0) <= 1) {
+        return { success: false, message: 'Cannot change the last owner\'s role.' };
+      }
+    }
+
+    // If promoting to owner, max 2 owners
+    if (newRole === 'owner' && target.role !== 'owner') {
+      const { count } = await supabase
+        .from('event_collaborators')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', target.event_id)
+        .eq('role', 'owner');
+
+      if ((count ?? 0) >= 2) {
+        return { success: false, message: 'Maximum 2 owners per event.' };
+      }
+    }
+
+    // Update role
+    const { error: updateError } = await supabase
+      .from('event_collaborators')
+      .update({ role: newRole })
+      .eq('id', collaboratorId);
+
+    if (updateError) {
+      console.error('Error updating role:', updateError);
+      return { success: false, message: 'Failed to update role.' };
+    }
+
+    // If changing to seating_manager, update scope
+    if (newRole === 'seating_manager' && formData) {
+      const scopeGroups: string[] = JSON.parse(
+        (formData.get('scopeGroups') as string) || '[]',
+      );
+      const scopeGuests: string[] = JSON.parse(
+        (formData.get('scopeGuests') as string) || '[]',
+      );
+
+      // Delete existing scope
+      await supabase
+        .from('collaborator_guest_scope')
+        .delete()
+        .eq('collaborator_id', collaboratorId);
+
+      // Insert new scope
+      const scopeEntries: Array<{
+        collaborator_id: string;
+        guest_id?: string;
+        group_id?: string;
+      }> = [];
+
+      for (const groupId of scopeGroups) {
+        scopeEntries.push({ collaborator_id: collaboratorId, group_id: groupId });
+      }
+      for (const guestId of scopeGuests) {
+        scopeEntries.push({ collaborator_id: collaboratorId, guest_id: guestId });
+      }
+
+      if (scopeEntries.length > 0) {
+        await supabase.from('collaborator_guest_scope').insert(scopeEntries);
+      }
+    }
+
+    // If changing from seating_manager to owner, clear scope
+    if (newRole === 'owner' && target.role === 'seating_manager') {
+      await supabase
+        .from('collaborator_guest_scope')
+        .delete()
+        .eq('collaborator_id', collaboratorId);
+    }
+
+    // Audit log
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const targetEmail = (target.profiles as any)?.email ?? '';
+    await supabase.from('collaboration_audit_log').insert({
+      event_id: target.event_id,
+      actor_id: currentUser.id,
+      target_email: targetEmail,
+      action: 'role_changed',
+      metadata: { previousRole: target.role, newRole },
+    });
+
+    revalidatePath(`/app/${target.event_id}/settings`);
+
+    return {
+      success: true,
+      message: 'Role updated successfully.',
+    };
+  } catch (error) {
+    console.error('Update role error:', error);
+    return { success: false, message: 'Failed to update role.' };
+  }
+}
+
 export async function revokeInvitation(
   invitationId: string,
 ): Promise<ActionState> {

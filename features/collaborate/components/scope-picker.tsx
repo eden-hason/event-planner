@@ -24,13 +24,19 @@ export function ScopePicker({
   onGroupsChange,
   onGuestsChange,
 }: ScopePickerProps) {
-  const [guestSearch, setGuestSearch] = React.useState('');
+  const [search, setSearch] = React.useState('');
+
+  const q = search.toLowerCase();
+
+  const filteredGroups = React.useMemo(() => {
+    if (!q) return groups;
+    return groups.filter((g) => g.name.toLowerCase().includes(q));
+  }, [groups, q]);
 
   const filteredGuests = React.useMemo(() => {
-    if (!guestSearch) return guests;
-    const q = guestSearch.toLowerCase();
+    if (!q) return guests;
     return guests.filter((g) => g.name.toLowerCase().includes(q));
-  }, [guests, guestSearch]);
+  }, [guests, q]);
 
   const toggleGroup = (groupId: string) => {
     if (selectedGroups.includes(groupId)) {
@@ -48,17 +54,29 @@ export function ScopePicker({
     }
   };
 
-  const totalSelected =
-    selectedGroups.length + selectedGuests.length;
+  const totalSelected = selectedGroups.length + selectedGuests.length;
+  const noResults = filteredGroups.length === 0 && filteredGuests.length === 0;
 
   return (
-    <div className="space-y-4">
-      {groups.length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Groups</Label>
-          <div className="max-h-48 space-y-2 overflow-y-auto">
-            {groups.map((group) => (
-              <div key={group.id} className="flex items-center gap-2">
+    <div className="space-y-3">
+      <div className="relative">
+        <IconSearch className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+        <Input
+          placeholder="Search groups or guests..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+
+      <div className="max-h-56 space-y-3 overflow-y-auto">
+        {filteredGroups.length > 0 && (
+          <div className="space-y-1">
+            <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              Groups
+            </Label>
+            {filteredGroups.map((group) => (
+              <div key={group.id} className="flex items-center gap-2 py-1">
                 <Checkbox
                   id={`group-${group.id}`}
                   checked={selectedGroups.includes(group.id)}
@@ -73,24 +91,15 @@ export function ScopePicker({
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {guests.length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Individual Guests</Label>
-          <div className="relative">
-            <IconSearch className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <Input
-              placeholder="Search guests..."
-              value={guestSearch}
-              onChange={(e) => setGuestSearch(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-          <div className="max-h-48 space-y-2 overflow-y-auto">
+        {filteredGuests.length > 0 && (
+          <div className="space-y-1">
+            <Label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              Individual Guests
+            </Label>
             {filteredGuests.map((guest) => (
-              <div key={guest.id} className="flex items-center gap-2">
+              <div key={guest.id} className="flex items-center gap-2 py-1">
                 <Checkbox
                   id={`guest-${guest.id}`}
                   checked={selectedGuests.includes(guest.id)}
@@ -104,14 +113,15 @@ export function ScopePicker({
                 </Label>
               </div>
             ))}
-            {filteredGuests.length === 0 && (
-              <p className="text-muted-foreground py-2 text-center text-xs">
-                No guests found.
-              </p>
-            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {noResults && (
+          <p className="text-muted-foreground py-4 text-center text-xs">
+            No groups or guests found.
+          </p>
+        )}
+      </div>
 
       <p className="text-muted-foreground text-xs">
         Selected: {selectedGroups.length} group
