@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-} from '@/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { GroupWithGuestsApp, GuestApp } from '../../schemas';
 import { GuestListCard } from './guest-list-card';
@@ -108,78 +108,79 @@ export function AssignGuestsDrawer({
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="!w-auto !max-w-none">
-        <div className="bg-muted/50 flex h-full flex-col">
-          <DrawerHeader className="bg-background border-b">
-            <DrawerTitle className="text-xl">
-              {`Manage '${group?.name}' Members`}
-            </DrawerTitle>
-            <DrawerDescription>
-              Assign guests to this group for easier management
-            </DrawerDescription>
-          </DrawerHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[920px]">
+        <SheetHeader className="border-b px-6 py-5">
+          <SheetDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Manage Members
+          </SheetDescription>
+          <SheetTitle className="text-xl">
+            {`'${group?.name}' Group`}
+          </SheetTitle>
+          <p className="text-xs text-muted-foreground">
+            Assign guests to this group for easier management
+          </p>
+        </SheetHeader>
 
-          {/* Main content area */}
-          <div className="flex flex-1 flex-row gap-4 overflow-hidden p-4 min-h-0">
-            <GuestListCard
-              title="Available Guests"
-              guests={localAvailable}
-              countLabel="Guests"
-              onSelectionChange={setSelectedAvailable}
-            />
+        {/* Main content area */}
+        <div className="flex flex-1 flex-row gap-4 overflow-hidden p-4 min-h-0 bg-muted/30">
+          <GuestListCard
+            title="Available Guests"
+            guests={localAvailable}
+            countLabel="Guests"
+            onSelectionChange={setSelectedAvailable}
+          />
 
-            {/* Arrow buttons */}
-            <div className="flex flex-col items-center justify-center gap-3">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleMoveToGroup}
-                disabled={selectedAvailable.length === 0}
-                className={`h-10 w-10 ${
-                  selectedAvailable.length > 0
-                    ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                    : ''
-                }`}
-              >
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleMoveToAvailable}
-                disabled={selectedInGroup.length === 0}
-                className={`h-10 w-10 ${
-                  selectedInGroup.length > 0
-                    ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                    : ''
-                }`}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <GuestListCard
-              title="Guests in Group"
-              guests={localInGroup}
-              countLabel="Members"
-              onSelectionChange={setSelectedInGroup}
-            />
+          {/* Arrow buttons */}
+          <div className="flex flex-col items-center justify-center gap-3">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleMoveToGroup}
+              disabled={selectedAvailable.length === 0}
+              className={`h-10 w-10 ${
+                selectedAvailable.length > 0
+                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
+                  : ''
+              }`}
+            >
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleMoveToAvailable}
+              disabled={selectedInGroup.length === 0}
+              className={`h-10 w-10 ${
+                selectedInGroup.length > 0
+                  ? 'bg-primary/15 text-primary hover:bg-primary/25'
+                  : ''
+              }`}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </div>
 
-          <DrawerFooter className="bg-background flex-row items-center justify-between border-t">
-            <span className="text-muted-foreground text-sm">
-              {totalSelected > 0 && `${totalSelected} guests selected to move`}
-            </span>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>Save Changes</Button>
-            </div>
-          </DrawerFooter>
+          <GuestListCard
+            title="Guests in Group"
+            guests={localInGroup}
+            countLabel="Members"
+            onSelectionChange={setSelectedInGroup}
+          />
         </div>
-      </DrawerContent>
-    </Drawer>
+
+        <SheetFooter className="flex-row items-center justify-between border-t px-6 py-4 sm:flex-row">
+          <span className="text-muted-foreground text-sm">
+            {totalSelected > 0 && `${totalSelected} guests selected to move`}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Save Changes</Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
