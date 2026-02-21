@@ -125,9 +125,6 @@ export function GuestsPage({
 
   const handleDrawerClose = (open: boolean) => {
     setIsDrawerOpen(open);
-    if (!open) {
-      setSelectedGuest(null);
-    }
   };
 
   const handleDeleteGuest = () => {
