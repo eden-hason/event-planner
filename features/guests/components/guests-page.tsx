@@ -38,6 +38,7 @@ interface GuestsPageProps {
   eventId: string;
   groups: GroupWithGuestsApp[];
   existingPhones: Set<string>;
+  showDietary?: boolean;
 }
 
 const RSVP_BADGE_STYLES: Record<string, string> = {
@@ -57,6 +58,7 @@ export function GuestsPage({
   eventId,
   groups,
   existingPhones,
+  showDietary = false,
 }: GuestsPageProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
@@ -213,6 +215,7 @@ export function GuestsPage({
             eventId={eventId}
             existingPhones={existingPhones}
             onSelectGuest={handleSelectGuest}
+            showDietary={showDietary}
           />
         </TabsContent>
         <TabsContent value="groups">
@@ -300,6 +303,7 @@ export function GuestsPage({
               onCancel={() => handleDrawerClose(false)}
               hideActions
               onPendingChange={setIsSubmitting}
+              showDietary={showDietary}
             />
           </div>
 

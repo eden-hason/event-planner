@@ -19,6 +19,7 @@ interface GuestDirectoryProps {
   eventId: string;
   existingPhones: Set<string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
+  showDietary?: boolean;
 }
 
 export function GuestDirectory({
@@ -27,6 +28,7 @@ export function GuestDirectory({
   eventId,
   existingPhones,
   onSelectGuest,
+  showDietary = false,
 }: GuestDirectoryProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +127,7 @@ export function GuestDirectory({
             onDeleteGuest={handleDeleteGuest}
             onAddGuest={handleAddGuestClick}
             pageSize={pageSize}
+            showDietary={showDietary}
           />
         ) : null}
       </CardContent>

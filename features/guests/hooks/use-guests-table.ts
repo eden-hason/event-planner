@@ -21,6 +21,7 @@ interface UseGuestsTableProps {
   groupFilter: string[]; // Array of group IDs
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
+  showDietary?: boolean;
 }
 
 export function useGuestsTable({
@@ -29,6 +30,7 @@ export function useGuestsTable({
   groupFilter,
   onDeleteGuest,
   pageSize = DEFAULT_PAGE_SIZE,
+  showDietary = false,
 }: UseGuestsTableProps) {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -88,6 +90,7 @@ export function useGuestsTable({
 
   const columns = createGuestColumns({
     onDelete: onDeleteGuest,
+    showDietary,
   });
 
   const table = useReactTable({
