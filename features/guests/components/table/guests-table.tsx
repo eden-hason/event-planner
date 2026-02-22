@@ -34,6 +34,7 @@ interface GuestsTableProps {
   guests: GuestWithGroupApp[];
   searchTerm: string;
   groupFilter: string[]; // Array of group IDs
+  statusFilter: string[];
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   onAddGuest?: () => void;
@@ -46,6 +47,7 @@ export function GuestsTable({
   guests,
   searchTerm,
   groupFilter,
+  statusFilter,
   onSelectGuest,
   onDeleteGuest,
   onAddGuest,
@@ -57,6 +59,7 @@ export function GuestsTable({
     guests,
     searchTerm,
     groupFilter,
+    statusFilter,
     onDeleteGuest,
     pageSize,
     showDietary,
@@ -69,7 +72,7 @@ export function GuestsTable({
   // Use paginated rows for display, filtered rows for count
   const paginatedRows = table.getRowModel().rows;
   const totalFilteredRows = table.getFilteredRowModel().rows.length;
-  const hasFilters = searchTerm || groupFilter.length > 0;
+  const hasFilters = searchTerm || groupFilter.length > 0 || statusFilter.length > 0;
   const isEmpty = guests.length === 0;
 
   // Pagination info

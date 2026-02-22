@@ -6,6 +6,13 @@ import { GroupInfo } from '@/features/guests/schemas';
 export function useGuestFilters(groups: GroupInfo[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
+  const handleStatusToggle = (status: string) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    );
+  };
 
   const handleGroupToggle = (groupId: string) => {
     setSelectedGroupIds((prev) =>
@@ -33,5 +40,7 @@ export function useGuestFilters(groups: GroupInfo[]) {
     handleGroupToggle,
     handleSelectAllGroups,
     isAllSelected,
+    selectedStatuses,
+    handleStatusToggle,
   };
 }

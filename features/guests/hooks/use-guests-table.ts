@@ -19,6 +19,7 @@ interface UseGuestsTableProps {
   guests: GuestWithGroupApp[];
   searchTerm: string;
   groupFilter: string[]; // Array of group IDs
+  statusFilter: string[];
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
   showDietary?: boolean;
@@ -28,6 +29,7 @@ export function useGuestsTable({
   guests,
   searchTerm,
   groupFilter,
+  statusFilter,
   onDeleteGuest,
   pageSize = DEFAULT_PAGE_SIZE,
   showDietary = false,
@@ -70,6 +72,19 @@ export function useGuestsTable({
     // Reset to first page when filters change
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [groupFilter]);
+
+  // Update column filters when statusFilter changes
+  useEffect(() => {
+    if (statusFilter.length === 0) {
+      setColumnFilters((prev) => prev.filter((f) => f.id !== 'rsvpStatus'));
+    } else {
+      setColumnFilters((prev) => {
+        const filtered = prev.filter((f) => f.id !== 'rsvpStatus');
+        return [...filtered, { id: 'rsvpStatus', value: statusFilter }];
+      });
+    }
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [statusFilter]);
 
   // Custom global filter function for searching across multiple columns
   const globalFilterFn = (
