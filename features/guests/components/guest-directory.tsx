@@ -3,7 +3,7 @@
 import { useState, useActionState, startTransition, useRef } from 'react';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
-import { GroupFilter } from '@/features/guests/components/filters';
+import { GroupFilter, RsvpStatusFilter } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
@@ -42,6 +42,8 @@ export function GuestDirectory({
     handleGroupToggle,
     handleSelectAllGroups,
     isAllSelected,
+    selectedStatuses,
+    handleStatusToggle,
   } = useGuestFilters(groups);
 
   // Delete guest action with toast
@@ -98,8 +100,8 @@ export function GuestDirectory({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         <div className="flex items-center gap-2">
+          <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
           <Button
             variant="outline"
             onClick={() => setImportDialogOpen(true)}
@@ -108,6 +110,12 @@ export function GuestDirectory({
             <Upload className="h-4 w-4" />
             Import CSV
           </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <RsvpStatusFilter
+            selectedStatuses={selectedStatuses}
+            onStatusToggle={handleStatusToggle}
+          />
           <GroupFilter
             groups={groups}
             selectedGroupIds={selectedGroupIds}
@@ -123,6 +131,7 @@ export function GuestDirectory({
             guests={guests}
             searchTerm={searchTerm}
             groupFilter={selectedGroupIds}
+            statusFilter={selectedStatuses}
             onSelectGuest={handleSelectGuest}
             onDeleteGuest={handleDeleteGuest}
             onAddGuest={handleAddGuestClick}

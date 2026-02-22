@@ -94,6 +94,9 @@ export const createGuestColumns = (
         ) as GuestWithGroupApp['rsvpStatus'];
         return getStatusBadge(status);
       },
+      filterFn: (row, _id, value: string[]) => {
+        return value.length === 0 || value.includes(row.original.rsvpStatus);
+      },
     },
   ];
 
