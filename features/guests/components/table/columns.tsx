@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
+import { DIETARY_LABEL_MAP } from '@/features/guests/utils';
 
 const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
   const statusConfig = {
@@ -28,118 +29,131 @@ const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
 
 interface GuestColumnsOptions {
   onDelete: (guest: GuestWithGroupApp) => void;
+  showDietary?: boolean;
 }
 
 export const createGuestColumns = (
   options: GuestColumnsOptions,
-): ColumnDef<GuestWithGroupApp>[] => [
-  {
-    accessorKey: 'name',
-    header: () => <div>Name</div>,
-    cell: ({ row }) => {
-      return (
-        <div className="flex items-center">
-          <span>{row.getValue('name')}</span>
-        </div>
-      );
+): ColumnDef<GuestWithGroupApp>[] => {
+  const cols: ColumnDef<GuestWithGroupApp>[] = [
+    {
+      accessorKey: 'name',
+      header: () => <div>Name</div>,
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center">
+            <span>{row.getValue('name')}</span>
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'phone',
-    header: () => <div>Phone</div>,
-    cell: ({ row }) => {
-      const phone = row.getValue('phone') as string;
-      return phone ? (
-        <span className="text-sm">{phone}</span>
-      ) : (
-        <span className="text-sm text-gray-400">-</span>
-      );
+    {
+      accessorKey: 'phone',
+      header: () => <div>Phone</div>,
+      cell: ({ row }) => {
+        const phone = row.getValue('phone') as string;
+        return phone ? (
+          <span className="text-sm">{phone}</span>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'group',
-    header: () => <div>Group</div>,
-    cell: ({ row }) => {
-      const group = row.original.group;
-      return group ? (
-        <Badge variant="outline" className="gap-1.5">
-          <GroupIcon iconName={group.icon} size="sm" />
-          {group.name}
-        </Badge>
-      ) : (
-        <span className="text-sm text-gray-400">-</span>
-      );
+    {
+      accessorKey: 'group',
+      header: () => <div>Group</div>,
+      cell: ({ row }) => {
+        const group = row.original.group;
+        return group ? (
+          <Badge variant="outline" className="gap-1.5">
+            <GroupIcon iconName={group.icon} size="sm" />
+            {group.name}
+          </Badge>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      },
+      filterFn: (row, _id, value) => {
+        const group = row.original.group;
+        // If group is undefined, exclude from group filters unless no filters are selected
+        if (!group) {
+          return Array.isArray(value) ? value.length === 0 : false;
+        }
+        if (Array.isArray(value)) {
+          return value.length === 0 || value.includes(group.id);
+        }
+        return group.id === value;
+      },
     },
-    filterFn: (row, _id, value) => {
-      const group = row.original.group;
-      // If group is undefined, exclude from group filters unless no filters are selected
-      if (!group) {
-        return Array.isArray(value) ? value.length === 0 : false;
-      }
-      if (Array.isArray(value)) {
-        return value.length === 0 || value.includes(group.id);
-      }
-      return group.id === value;
+    {
+      accessorKey: 'rsvpStatus',
+      header: () => <div>RSVP Status</div>,
+      cell: ({ row }) => {
+        const status = row.getValue(
+          'rsvpStatus',
+        ) as GuestWithGroupApp['rsvpStatus'];
+        return getStatusBadge(status);
+      },
     },
-  },
-  {
-    accessorKey: 'rsvpStatus',
-    header: () => <div>RSVP Status</div>,
-    cell: ({ row }) => {
-      const status = row.getValue(
-        'rsvpStatus',
-      ) as GuestWithGroupApp['rsvpStatus'];
-      return getStatusBadge(status);
+  ];
+
+  if (options.showDietary) {
+    cols.push({
+      accessorKey: 'dietaryRestrictions',
+      header: () => <div>Dietary Restrictions</div>,
+      cell: ({ row }) => {
+        const dietaryRestrictions = row.getValue('dietaryRestrictions') as
+          | string
+          | undefined;
+        return dietaryRestrictions ? (
+          <span className="text-sm text-gray-600">
+            {DIETARY_LABEL_MAP[dietaryRestrictions] ?? dietaryRestrictions}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">None</span>
+        );
+      },
+    });
+  }
+
+  cols.push(
+    {
+      accessorKey: 'amount',
+      header: () => <div>Amount</div>,
+      cell: ({ row }) => {
+        const amount = row.getValue('amount') as number;
+        return (
+          <div className="text-sm">
+            <div className="text-gray-500">{amount}</div>
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'dietaryRestrictions',
-    header: () => <div>Dietary Restrictions</div>,
-    cell: ({ row }) => {
-      const dietaryRestrictions = row.getValue('dietaryRestrictions') as
-        | string
-        | undefined;
-      return dietaryRestrictions ? (
-        <span className="text-sm text-gray-600">{dietaryRestrictions}</span>
-      ) : (
-        <span className="text-sm text-gray-400">None</span>
-      );
+    {
+      accessorKey: 'notes',
+      header: () => <div>Notes</div>,
+      cell: ({ row }) => {
+        const notes = row.getValue('notes') as string | undefined;
+        return notes ? (
+          <span className="block max-w-xs truncate text-sm text-gray-600">
+            {notes}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'amount',
-    header: () => <div>Amount</div>,
-    cell: ({ row }) => {
-      const amount = row.getValue('amount') as number;
-      return (
-        <div className="text-sm">
-          <div className="text-gray-500">{amount}</div>
-        </div>
-      );
+    {
+      id: 'actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const guest = row.original;
+        return (
+          <RowActions guest={guest} onDelete={options.onDelete} />
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'notes',
-    header: () => <div>Notes</div>,
-    cell: ({ row }) => {
-      const notes = row.getValue('notes') as string | undefined;
-      return notes ? (
-        <span className="block max-w-xs truncate text-sm text-gray-600">
-          {notes}
-        </span>
-      ) : (
-        <span className="text-sm text-gray-400">-</span>
-      );
-    },
-  },
-  {
-    id: 'actions',
-    enableHiding: false,
-    cell: ({ row }) => {
-      const guest = row.original;
-      return (
-        <RowActions guest={guest} onDelete={options.onDelete} />
-      );
-    },
-  },
-];
+  );
+
+  return cols;
+};

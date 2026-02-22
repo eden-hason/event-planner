@@ -39,6 +39,7 @@ interface GuestsTableProps {
   onAddGuest?: () => void;
   onUploadFile?: () => void;
   pageSize?: number;
+  showDietary?: boolean;
 }
 
 export function GuestsTable({
@@ -50,6 +51,7 @@ export function GuestsTable({
   onAddGuest,
   onUploadFile,
   pageSize,
+  showDietary = false,
 }: GuestsTableProps) {
   const table = useGuestsTable({
     guests,
@@ -57,6 +59,7 @@ export function GuestsTable({
     groupFilter,
     onDeleteGuest,
     pageSize,
+    showDietary,
   });
 
   const handleRowClick = (guest: GuestWithGroupApp) => {

@@ -41,15 +41,7 @@ import {
   Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const DIETARY_PRESETS = [
-  'Vegan',
-  'Vegetarian',
-  'Gluten Free',
-  'Nut Allergy',
-  'Kosher',
-  'Halal',
-];
+import { DIETARY_PRESETS } from '@/features/guests/utils';
 
 interface GuestFormProps {
   eventId: string;
@@ -60,6 +52,7 @@ interface GuestFormProps {
   formId?: string;
   hideActions?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  showDietary?: boolean;
 }
 
 export function GuestForm({
@@ -71,10 +64,9 @@ export function GuestForm({
   formId = 'guest-form',
   hideActions = false,
   onPendingChange,
+  showDietary = false,
 }: GuestFormProps) {
   const isEditMode = !!guest;
-  const [customChipInput, setCustomChipInput] = React.useState('');
-  const [showCustomInput, setShowCustomInput] = React.useState(false);
 
   const form = useForm({
     resolver: zodResolver(GuestUpsertSchema),
@@ -156,6 +148,13 @@ export function GuestForm({
         formData.append(key, value ? String(value) : 'null');
         return;
       }
+      // dietaryRestrictions and notes can be intentionally cleared (empty string → null in DB)
+      if (key === 'dietaryRestrictions' || key === 'notes') {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value)); // '' is valid; schema/transformer handles it
+        }
+        return;
+      }
       if (value !== undefined && value !== null && value !== '') {
         formData.append(key, String(value));
       }
@@ -176,24 +175,8 @@ export function GuestForm({
   const amountValue = form.watch('amount') || 1;
 
   const toggleChip = (chip: string) => {
-    const next = selectedChips.includes(chip)
-      ? selectedChips.filter((c: string) => c !== chip)
-      : [...selectedChips, chip];
-    form.setValue('dietaryRestrictions', next.join(', '), {
-      shouldDirty: true,
-    });
-  };
-
-  const addCustomChip = () => {
-    const trimmed = customChipInput.trim();
-    if (trimmed && !selectedChips.includes(trimmed)) {
-      const next = [...selectedChips, trimmed];
-      form.setValue('dietaryRestrictions', next.join(', '), {
-        shouldDirty: true,
-      });
-    }
-    setCustomChipInput('');
-    setShowCustomInput(false);
+    const next = selectedChips.includes(chip) ? '' : chip;
+    form.setValue('dietaryRestrictions', next, { shouldDirty: true });
   };
 
   return (
@@ -375,96 +358,46 @@ export function GuestForm({
         </div>
 
         {/* Card 3: Dietary Restrictions */}
-        <div className="rounded-lg border bg-card p-5 space-y-4">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <Utensils className="size-4 text-muted-foreground" />
-            Dietary Restrictions
-          </h3>
-          <FormField
-            control={form.control}
-            name="dietaryRestrictions"
-            render={() => (
-              <FormItem>
-                <FormControl>
-                  <div className="flex flex-wrap gap-2">
-                    {DIETARY_PRESETS.map((chip) => {
-                      const isActive = selectedChips.includes(chip);
-                      return (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => toggleChip(chip)}
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                            isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80',
-                          )}
-                        >
-                          {isActive && <Check className="size-3" />}
-                          {chip}
-                        </button>
-                      );
-                    })}
-                    {/* Custom chips (non-preset selected values) */}
-                    {selectedChips
-                      .filter((c: string) => !DIETARY_PRESETS.includes(c))
-                      .map((chip: string) => (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => toggleChip(chip)}
-                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-primary text-primary-foreground transition-colors"
-                        >
-                          <Check className="size-3" />
-                          {chip}
-                        </button>
-                      ))}
-                    {/* Custom chip input toggle */}
-                    {showCustomInput ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={customChipInput}
-                          onChange={(e) => setCustomChipInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addCustomChip();
-                            } else if (e.key === 'Escape') {
-                              setShowCustomInput(false);
-                              setCustomChipInput('');
-                            }
-                          }}
-                          placeholder="Custom..."
-                          className="h-7 w-24 rounded-full border border-dashed px-3 text-xs focus:outline-none focus:ring-1 focus:ring-ring bg-background"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={addCustomChip}
-                          className="inline-flex items-center justify-center size-7 rounded-full bg-muted text-muted-foreground hover:bg-muted/80"
-                        >
-                          <Plus className="size-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setShowCustomInput(true)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-                      >
-                        <Plus className="size-3" />
-                        Custom
-                      </button>
-                    )}
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {showDietary && (
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <Utensils className="size-4 text-muted-foreground" />
+              Dietary Restrictions
+            </h3>
+            <FormField
+              control={form.control}
+              name="dietaryRestrictions"
+              render={() => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex flex-wrap gap-2">
+                      {DIETARY_PRESETS.map((preset) => {
+                        const isActive = selectedChips.includes(preset.value);
+                        return (
+                          <button
+                            key={preset.value}
+                            type="button"
+                            onClick={() => toggleChip(preset.value)}
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                              isActive
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                            )}
+                          >
+                            {isActive && <Check className="size-3" />}
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         {/* Card 4: Notes */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
