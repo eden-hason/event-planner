@@ -25,6 +25,11 @@ export const GuestAppSchema = z.object({
   notes: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  // RSVP attribution tracking
+  rsvpChangedBy: z.uuid().nullable().optional(),
+  rsvpChangedByName: z.string().nullable().optional(),
+  rsvpChangedAt: z.string().nullable().optional(),
+  rsvpChangeSource: z.enum(['manual', 'guest']).nullable().optional(),
 });
 
 // We infer the TypeScript type directly from the schema.
@@ -68,6 +73,11 @@ export const GuestDbSchema = z.object({
   notes: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  // RSVP attribution tracking
+  rsvp_changed_by: z.uuid().nullable().optional(),
+  rsvp_changed_by_name: z.string().max(255).nullable().optional(),
+  rsvp_changed_at: z.string().nullable().optional(),
+  rsvp_change_source: z.enum(['manual', 'guest']).nullable().optional(),
 });
 
 // We also infer the DB type for reference, though it's less used.
@@ -93,6 +103,10 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     notes: dbData.notes ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
+    rsvpChangedBy: dbData.rsvp_changed_by ?? null,
+    rsvpChangedByName: dbData.rsvp_changed_by_name ?? null,
+    rsvpChangedAt: dbData.rsvp_changed_at ?? null,
+    rsvpChangeSource: dbData.rsvp_change_source ?? null,
   };
 });
 

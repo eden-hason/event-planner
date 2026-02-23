@@ -58,7 +58,26 @@ export async function upsertGuest(
 
     const validatedData = validationResult.data;
     const dbData = AppToDbTransformerSchema.parse(validatedData);
+
     const supabase = await createClient();
+
+    // Only update attribution when the RSVP status is actually changing.
+    // For new guests (no id) there's no prior status, so skip.
+    // For updates, fetch the current value and compare.
+    if (dbData.rsvp_status !== undefined && validatedData.id) {
+      const { data: existing } = await supabase
+        .from('guests')
+        .select('rsvp_status')
+        .eq('id', validatedData.id)
+        .maybeSingle();
+
+      if (existing && dbData.rsvp_status !== existing.rsvp_status) {
+        dbData.rsvp_changed_by = currentUser.id;
+        dbData.rsvp_changed_by_name = currentUser.displayName;
+        dbData.rsvp_changed_at = new Date().toISOString();
+        dbData.rsvp_change_source = 'manual';
+      }
+    }
 
     const { error } = await supabase.from('guests').upsert(
       {

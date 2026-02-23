@@ -7,7 +7,7 @@ import {
   useActionState,
   startTransition,
 } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
@@ -40,6 +40,7 @@ interface GuestsPageProps {
   groups: GroupWithGuestsApp[];
   existingPhones: Set<string>;
   showDietary?: boolean;
+  currentUserId?: string | null;
 }
 
 const RSVP_BADGE_STYLES: Record<string, string> = {
@@ -60,6 +61,7 @@ export function GuestsPage({
   groups,
   existingPhones,
   showDietary = false,
+  currentUserId = null,
 }: GuestsPageProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
@@ -267,31 +269,46 @@ export function GuestsPage({
             )}
           </SheetHeader>
 
-          {/* Status badges row — edit mode only */}
+          {/* Status badges — edit mode only */}
           {selectedGuest && (
-            <div className="border-b px-6 py-3 flex gap-2 flex-wrap">
+            <div className="border-b px-6 py-3 space-y-2">
+              {/* RSVP badge — full row, single line with attribution */}
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
               >
                 <span
-                  className={`size-1.5 rounded-full ${RSVP_DOT_STYLES[rsvpStatus]}`}
+                  className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
                 />
                 {rsvpStatus.charAt(0).toUpperCase() + rsvpStatus.slice(1)}
+                {selectedGuest.rsvpChangedAt && (
+                  <>
+                    <span className="w-px h-3 bg-current opacity-25 shrink-0" />
+                    <span className="font-normal opacity-60">
+                      {selectedGuest.rsvpChangeSource === 'guest'
+                        ? `via guest · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
+                        : `via ${selectedGuest.rsvpChangedBy === currentUserId ? 'you' : (selectedGuest.rsvpChangedByName ?? 'organizer')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
+                      }
+                    </span>
+                  </>
+                )}
               </span>
-              {guestGroup && (
-                <Badge
-                  variant="outline"
-                  className="bg-blue-50 text-blue-700 border-blue-200 gap-1.5"
-                >
-                  <GroupIcon iconName={guestGroup.icon} size="sm" />
-                  {guestGroup.name}
+              {/* Group + people badges */}
+              <div className="flex gap-2 flex-wrap">
+                {guestGroup && (
+                  <Badge
+                    variant="outline"
+                    className="bg-blue-50 text-blue-700 border-blue-200 gap-1.5"
+                  >
+                    <GroupIcon iconName={guestGroup.icon} size="sm" />
+                    {guestGroup.name}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+                  <Users className="size-3" />
+                  {selectedGuest.amount}{' '}
+                  {selectedGuest.amount === 1 ? 'person' : 'people'}
                 </Badge>
-              )}
-              <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-                <Users className="size-3" />
-                {selectedGuest.amount}{' '}
-                {selectedGuest.amount === 1 ? 'person' : 'people'}
-              </Badge>
+              </div>
             </div>
           )}
 
