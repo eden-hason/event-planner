@@ -18,7 +18,6 @@ export async function submitConfirmation(
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
-  console.log('parsed', parsed);
   if (!parsed.success) {
     return { success: false, message: 'נתונים לא תקינים' };
   }
@@ -64,6 +63,10 @@ export async function submitConfirmation(
   // Update guest record
   const guestUpdate: Record<string, unknown> = {
     rsvp_status: rsvpStatus,
+    rsvp_changed_by: null,
+    rsvp_changed_by_name: null,
+    rsvp_changed_at: new Date().toISOString(),
+    rsvp_change_source: 'guest',
   };
   if (rsvpStatus === 'confirmed' && guestCount) {
     guestUpdate.amount = guestCount;

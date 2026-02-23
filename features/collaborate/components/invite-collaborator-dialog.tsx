@@ -326,17 +326,19 @@ export function InviteCollaboratorDialog({
                           </div>
                         </div>
                         <div className="space-y-1.5">
-                          <span className="text-sm font-semibold">
-                            {r.label}
-                          </span>
-                          <span
-                            className={cn(
-                              'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight',
-                              r.badgeClass,
-                            )}
-                          >
-                            {r.badge}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-sm font-semibold">
+                              {r.label}
+                            </span>
+                            <span
+                              className={cn(
+                                'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight',
+                                r.badgeClass,
+                              )}
+                            >
+                              {r.badge}
+                            </span>
+                          </div>
                           <p className="text-muted-foreground text-xs leading-relaxed">
                             {r.description}
                           </p>
