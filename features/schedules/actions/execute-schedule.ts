@@ -8,6 +8,8 @@ import { getWhatsAppTemplateById } from '../queries/whatsapp-templates';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { getGroupById } from '@/features/guests/queries/groups';
 import { sendWhatsAppTemplateMessage } from './whatsapp';
+import { sendSmsMessage, buildSmsFallbackBody } from './sms';
+import type { DeliveryMethod } from '../schemas';
 import {
   filterGuestsByTarget,
   validatePhoneNumber,
@@ -214,7 +216,7 @@ export async function executeSchedule(
           : undefined;
 
         // Send WhatsApp message
-        const result = await sendWhatsAppTemplateMessage({
+        const whatsappResult = await sendWhatsAppTemplateMessage({
           to: phoneE164,
           templateName: template.templateName,
           languageCode: template.languageCode,
@@ -223,32 +225,43 @@ export async function executeSchedule(
           buttonParameters,
         });
 
+        let result = whatsappResult;
+        let channel: DeliveryMethod = 'whatsapp';
+
+        if (!whatsappResult.success) {
+          const smsBody = buildSmsFallbackBody(context, confirmationToken);
+          const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
+          if (smsResult.success) {
+            result = smsResult;
+            channel = 'sms';
+          }
+        }
+
         return {
           guest,
           result,
           confirmationToken,
+          channel,
         };
       }),
     );
 
     // 12. Process results and create delivery records
-    // TODO: When SMS support is added, include delivery_method field in delivery records
-    // to track which method was used per message (some guests may need SMS fallback)
     const deliveryRecords = [];
     let sentCount = 0;
     let failedCount = 0;
 
     for (const promiseResult of sendResults) {
       if (promiseResult.status === 'fulfilled') {
-        const { guest, result, confirmationToken } = promiseResult.value;
+        const { guest, result, confirmationToken, channel } = promiseResult.value;
 
         deliveryRecords.push({
           schedule_id: scheduleId,
           guest_id: guest.id,
-          // delivery_method: schedule.deliveryMethod, // TODO: Uncomment when SMS is implemented
+          delivery_method: channel,
           status: result.success ? ('sent' as const) : ('failed' as const),
           sent_at: result.success ? new Date().toISOString() : null,
-          whatsapp_message_id: result.messageId || null,
+          external_message_id: result.messageId || null,
           error_message: result.success ? null : result.message,
           confirmation_token: confirmationToken,
         });
