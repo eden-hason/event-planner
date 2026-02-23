@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
+import { GuestStats } from './guest-stats';
 import {
   Sheet,
   SheetContent,
@@ -43,7 +44,7 @@ interface GuestsPageProps {
 
 const RSVP_BADGE_STYLES: Record<string, string> = {
   confirmed: 'bg-green-100 text-green-700 border-green-200',
-  pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  pending: 'bg-yellow-100 text-yellow-700 border-yellow-200' ,
   declined: 'bg-red-100 text-red-700 border-red-200',
 };
 
@@ -193,7 +194,8 @@ export function GuestsPage({
 
   return (
     <>
-      <Tabs defaultValue="guests" onValueChange={handleTabsChange}>
+      <GuestStats guests={guests} />
+      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6">
         <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="guests"
