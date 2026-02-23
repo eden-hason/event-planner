@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { BadgeCheckIcon, LogOutIcon } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,10 +39,19 @@ export default function UserMenu({ user }: UserMenuProps) {
       <DropdownMenuTrigger asChild className="cursor-pointer">
         <Button variant="link" className="p-0">
           <Avatar className="size-8 rounded-xl">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="rounded-lg">
-              <IconUser />
-            </AvatarFallback>
+            {user.avatar ? (
+              <Image
+                src={user.avatar}
+                alt={user.name}
+                width={32}
+                height={32}
+                className="aspect-square size-full object-cover"
+              />
+            ) : (
+              <AvatarFallback className="rounded-lg">
+                <IconUser />
+              </AvatarFallback>
+            )}
           </Avatar>
           {/* <div className="truncate">{user.displayName}</div>
           <ChevronDown /> */}
@@ -55,10 +65,6 @@ export default function UserMenu({ user }: UserMenuProps) {
       >
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-            <Avatar className="size-8 rounded-lg">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-lg"></AvatarFallback>
-            </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{user.name}</span>
               <span className="text-muted-foreground truncate text-xs">
@@ -76,7 +82,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-red-600 cursor-pointer"
+          className="cursor-pointer text-red-600"
           onClick={handleLogout}
         >
           <LogOutIcon className="text-red-600" />
