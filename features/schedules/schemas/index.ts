@@ -320,7 +320,7 @@ export const MessageDeliveryAppSchema = z.object({
   id: z.uuid(),
   scheduleId: z.uuid(),
   guestId: z.uuid(),
-  // deliveryMethod: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
+  deliveryMethod: z.enum(DELIVERY_METHODS),
   status: z.enum(DELIVERY_STATUSES).default('pending'),
   sentAt: z.string().nullable().optional(),
   deliveredAt: z.string().nullable().optional(),
@@ -328,7 +328,7 @@ export const MessageDeliveryAppSchema = z.object({
   clickedAt: z.string().nullable().optional(),
   respondedAt: z.string().nullable().optional(),
   responseData: ResponseDataSchema.nullable().optional(),
-  whatsappMessageId: z.string().max(255).nullable().optional(),
+  externalMessageId: z.string().max(255).nullable().optional(),
   errorMessage: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -337,14 +337,11 @@ export const MessageDeliveryAppSchema = z.object({
 export type MessageDeliveryApp = z.infer<typeof MessageDeliveryAppSchema>;
 
 // --- DB-Level Schema (snake_case) ---
-// TODO: Add delivery_method field when SMS support is implemented
-// This will allow tracking which delivery method was used per message when
-// schedules support multiple delivery methods (e.g., WhatsApp for some guests, SMS for others)
 export const MessageDeliveryDbSchema = z.object({
   id: z.uuid(),
   schedule_id: z.uuid(),
   guest_id: z.uuid(),
-  // delivery_method: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
+  delivery_method: z.enum(DELIVERY_METHODS),
   status: z.enum(DELIVERY_STATUSES).default('pending'),
   sent_at: z.string().nullable(),
   delivered_at: z.string().nullable(),
@@ -352,7 +349,7 @@ export const MessageDeliveryDbSchema = z.object({
   clicked_at: z.string().nullable(),
   responded_at: z.string().nullable(),
   response_data: z.record(z.string(), z.unknown()).nullable(),
-  whatsapp_message_id: z.string().max(255).nullable(),
+  external_message_id: z.string().max(255).nullable(),
   error_message: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -366,7 +363,7 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     id: db.id,
     scheduleId: db.schedule_id,
     guestId: db.guest_id,
-    // deliveryMethod: db.delivery_method, // TODO: Uncomment when SMS is implemented
+    deliveryMethod: db.delivery_method,
     status: db.status,
     sentAt: db.sent_at ?? undefined,
     deliveredAt: db.delivered_at ?? undefined,
@@ -380,7 +377,7 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
         notes: db.response_data.notes,
       })
       : undefined,
-    whatsappMessageId: db.whatsapp_message_id ?? undefined,
+    externalMessageId: db.external_message_id ?? undefined,
     errorMessage: db.error_message ?? undefined,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
@@ -392,7 +389,7 @@ export const MessageDeliveryUpsertSchema = z.object({
   id: z.uuid().optional(),
   scheduleId: z.uuid(),
   guestId: z.uuid(),
-  // deliveryMethod: z.enum(DELIVERY_METHODS), // TODO: Uncomment when SMS is implemented
+  deliveryMethod: z.enum(DELIVERY_METHODS),
   status: z.enum(DELIVERY_STATUSES).optional(),
 });
 
@@ -406,7 +403,7 @@ export const MessageDeliveryAppToDbSchema =
     if (app.id !== undefined) dbData.id = app.id;
     dbData.schedule_id = app.scheduleId;
     dbData.guest_id = app.guestId;
-    // dbData.delivery_method = app.deliveryMethod; // TODO: Uncomment when SMS is implemented
+    dbData.delivery_method = app.deliveryMethod;
     if (app.status !== undefined) dbData.status = app.status;
 
     return dbData;

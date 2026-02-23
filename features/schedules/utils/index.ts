@@ -91,7 +91,7 @@ export function validatePhoneNumber(phone: string | undefined | null): boolean {
   }
 
   // Strip formatting characters
-  const cleaned = phone.replace(/[\s\-().]/g, '');
+  const cleaned = phone.replace(/[^\d+]/g, '');
 
   // Must have at least 7 digits and contain only digits/+
   if (cleaned.length < 7) {
@@ -115,7 +115,7 @@ export function validatePhoneNumber(phone: string | undefined | null): boolean {
  */
 export function formatPhoneE164(phone: string): string {
   // Strip all formatting characters
-  const cleaned = phone.replace(/[\s\-().]/g, '');
+  const cleaned = phone.replace(/[^\d+]/g, '');
 
   // Already has + prefix (international format)
   if (cleaned.startsWith('+')) {

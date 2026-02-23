@@ -7,6 +7,8 @@ import {
   GroupDbToAppTransformerSchema,
 } from '@/features/guests/schemas';
 import { sendWhatsAppTemplateMessage } from '@/features/schedules/actions/whatsapp';
+import { sendSmsMessage, buildSmsFallbackBody } from '@/features/schedules/actions/sms';
+import type { DeliveryMethod } from '@/features/schedules/schemas';
 import {
   filterGuestsByTarget,
   validatePhoneNumber,
@@ -266,7 +268,7 @@ async function processSingleSchedule(
           )
         : undefined;
 
-      const result = await sendWhatsAppTemplateMessage({
+      const whatsappResult = await sendWhatsAppTemplateMessage({
         to: phoneE164,
         templateName: template.templateName,
         languageCode: template.languageCode,
@@ -275,7 +277,19 @@ async function processSingleSchedule(
         buttonParameters,
       });
 
-      return { guest, result, confirmationToken };
+      let result = whatsappResult;
+      let channel: DeliveryMethod = 'whatsapp';
+
+      if (!whatsappResult.success) {
+        const smsBody = buildSmsFallbackBody(context, confirmationToken);
+        const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
+        if (smsResult.success) {
+          result = smsResult;
+          channel = 'sms';
+        }
+      }
+
+      return { guest, result, confirmationToken, channel };
     }),
   );
 
@@ -286,14 +300,15 @@ async function processSingleSchedule(
 
   for (const promiseResult of sendResults) {
     if (promiseResult.status === 'fulfilled') {
-      const { guest, result, confirmationToken } = promiseResult.value;
+      const { guest, result, confirmationToken, channel } = promiseResult.value;
 
       deliveryRecords.push({
         schedule_id: schedule.id,
         guest_id: guest.id,
+        delivery_method: channel,
         status: result.success ? ('sent' as const) : ('failed' as const),
         sent_at: result.success ? new Date().toISOString() : null,
-        whatsapp_message_id: result.messageId || null,
+        external_message_id: result.messageId || null,
         error_message: result.success ? null : result.message,
         confirmation_token: confirmationToken,
       });
