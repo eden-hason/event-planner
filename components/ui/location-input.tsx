@@ -37,6 +37,7 @@ export function LocationInput({
   const [isLoading, setIsLoading] = React.useState(false);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
+
   const autocompleteService =
     React.useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = React.useRef<google.maps.places.PlacesService | null>(
@@ -150,7 +151,8 @@ export function LocationInput({
   };
 
   const handleSelectPrediction = async (prediction: PlacePrediction) => {
-    setInputValue(prediction.description);
+    const displayName = prediction.structured_formatting.main_text;
+    setInputValue(displayName);
     setIsOpen(false);
     setPredictions([]);
 
@@ -184,16 +186,16 @@ export function LocationInput({
             lat: placeDetails.geometry.location.lat(),
             lng: placeDetails.geometry.location.lng(),
           };
-          onChange?.(prediction.description, prediction.place_id, coords);
+          onChange?.(displayName, prediction.place_id, coords);
         } else {
-          onChange?.(prediction.description, prediction.place_id);
+          onChange?.(displayName, prediction.place_id);
         }
       } catch (error) {
         console.error('Error getting place details:', error);
-        onChange?.(prediction.description, prediction.place_id);
+        onChange?.(displayName, prediction.place_id);
       }
     } else {
-      onChange?.(prediction.description, prediction.place_id);
+      onChange?.(displayName, prediction.place_id);
     }
   };
 

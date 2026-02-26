@@ -20,7 +20,7 @@ export default async function EventLayout({
   const event = await getEventById(eventId);
 
   if (!event) {
-    redirect('/app/onboarding');
+    redirect('/app/new-event');
   }
 
   const collaboratorRole = await getCollaboratorRole(eventId);

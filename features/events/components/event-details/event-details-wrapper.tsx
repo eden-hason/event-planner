@@ -38,7 +38,6 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
       eventType: event.eventType || '',
       receptionTime: event.receptionTime || '',
       ceremonyTime: event.ceremonyTime || '',
-      venueName: event.venueName || '',
       location: event.location || undefined,
       hostDetails: {
         bride: {

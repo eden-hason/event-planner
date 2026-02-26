@@ -26,7 +26,7 @@ export async function getConfirmationDataByToken(
         id,
         events!inner (
           id, title, event_date, ceremony_time, reception_time,
-          location, venue_name, host_details, guests_experience, event_type
+          location, host_details, guests_experience, event_type
         )
       )
     `,
@@ -64,7 +64,6 @@ export async function getConfirmationDataByToken(
       ceremony_time: string | null;
       reception_time: string | null;
       location: { name: string; coords?: { lat: number; lng: number } } | null;
-      venue_name: string | null;
       host_details: Record<string, unknown> | null;
       guests_experience: { dietary_options?: boolean } | null;
       event_type: string | null;
@@ -91,7 +90,6 @@ export async function getConfirmationDataByToken(
       ceremonyTime: event.ceremony_time ?? undefined,
       receptionTime: event.reception_time ?? undefined,
       location: event.location ?? undefined,
-      venueName: event.venue_name ?? undefined,
       hostDetails: event.host_details ?? undefined,
       guestExperience: event.guests_experience
         ? { dietaryOptions: event.guests_experience.dietary_options }

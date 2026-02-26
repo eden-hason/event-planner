@@ -18,7 +18,6 @@ type EventDetailsDbUpdate = {
   event_type?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
-  venue_name?: string | null;
   location?: Location | null;
   host_details?: HostDetails | null;
   event_settings?: EventSettings | null;
@@ -45,9 +44,6 @@ export function eventDetailsUpdateToDb(
   }
   if (data.ceremonyTime !== undefined) {
     dbData.ceremony_time = data.ceremonyTime || null;
-  }
-  if (data.venueName !== undefined) {
-    dbData.venue_name = data.venueName || null;
   }
   if (data.location !== undefined) {
     dbData.location = data.location || null;
