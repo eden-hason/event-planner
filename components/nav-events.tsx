@@ -31,7 +31,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { type EventApp } from '@/features/events/schemas';
-import { NewEventDialog } from '@/features/events/components/new-event-dialog';
 import { deleteEvent, duplicateEvent } from '@/features/events/actions';
 import { IconCarambola } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
@@ -43,7 +42,6 @@ interface NavEventsProps {
 
 export function NavEvents({ events, currentUserId }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
   const pathname = usePathname();
@@ -58,7 +56,7 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
 
   const handleNewEventClick = () => {
     setDropdownOpen(false);
-    setDialogOpen(true);
+    router.push('/app/new-event');
   };
 
   const handleDuplicate = async (event: EventApp) => {
@@ -252,7 +250,6 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <NewEventDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

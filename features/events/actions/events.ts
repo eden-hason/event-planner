@@ -8,6 +8,8 @@ import {
   CreateEventState,
   Invitations,
   InvitationsDb,
+  EventOnboardingSchema,
+  CreateOnboardingEventState,
 } from '../schemas';
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
@@ -110,6 +112,97 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
       success: false,
       message: 'Failed to create event. Please try again.',
     };
+  }
+}
+
+/**
+ * Creates a new wedding event from the onboarding wizard.
+ */
+export async function createOnboardingEvent(
+  formData: FormData,
+): Promise<CreateOnboardingEventState> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, message: 'You must be logged in to create events' };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawData: Record<string, any> = Object.fromEntries(formData);
+
+    if (rawData.location && typeof rawData.location === 'string') {
+      try {
+        rawData.location = JSON.parse(rawData.location);
+      } catch {
+        rawData.location = undefined;
+      }
+    }
+
+    const validationResult = EventOnboardingSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return { success: false, message: firstError.message };
+    }
+
+    const { brideName, groomName, eventDate, venueName, location, guestsEstimate } =
+      validationResult.data;
+
+    // Auto-generate title
+    let title = 'My Wedding';
+    if (brideName && groomName) {
+      title = `${brideName} & ${groomName}'s Wedding`;
+    } else if (brideName) {
+      title = `${brideName}'s Wedding`;
+    } else if (groomName) {
+      title = `${groomName}'s Wedding`;
+    }
+
+    const supabase = await createClient();
+
+    const { data: newEvent, error } = await supabase
+      .from('events')
+      .insert({
+        user_id: currentUser.id,
+        title,
+        event_date: eventDate,
+        event_type: 'wedding',
+        status: 'draft',
+        is_default: true,
+        host_details: {
+          bride: brideName ? { name: brideName } : undefined,
+          groom: groomName ? { name: groomName } : undefined,
+        },
+        venue_name: venueName ?? null,
+        location: location ?? null,
+        guests_estimate: guestsEstimate ?? null,
+      })
+      .select('id')
+      .single();
+
+    if (error || !newEvent) {
+      console.error('Error creating onboarding event:', error);
+      return { success: false, message: 'Failed to create event' };
+    }
+
+    // Unset is_default on other events for this user
+    await supabase
+      .from('events')
+      .update({ is_default: false })
+      .eq('user_id', currentUser.id)
+      .neq('id', newEvent.id);
+
+    const schedulesResult = await createDefaultSchedules(newEvent.id, eventDate, 'wedding');
+    if (!schedulesResult.success) {
+      console.warn('Failed to create default schedules:', schedulesResult.message);
+    }
+
+    revalidatePath('/app');
+    revalidatePath('/app/dashboard');
+
+    return { success: true, message: 'Event created successfully', eventId: newEvent.id };
+  } catch (error) {
+    console.error('Create onboarding event error:', error);
+    return { success: false, message: 'Failed to create event. Please try again.' };
   }
 }
 

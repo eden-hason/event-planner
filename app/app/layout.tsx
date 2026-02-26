@@ -29,11 +29,15 @@ export default async function Layout({
 
   return (
     <SidebarProvider className="!bg-[#F4F4F6]">
-      <AppSidebar variant="floating" events={events} currentUserId={data.user.id} />
+      <AppSidebar
+        variant="floating"
+        events={events}
+        currentUserId={data.user.id}
+      />
       <SidebarInset className="!bg-[#F4F4F6]">
         <AppHeader user={user} />
         <div className="flex-1 py-4">
-          <div className="container mx-auto">{children}</div>
+          <div className="container mx-auto h-full">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>
