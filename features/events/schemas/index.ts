@@ -94,6 +94,10 @@ export const GuestExperienceDbSchema = z.object({
 
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
 
+// --- Guests Estimate Schema ---
+export const GuestsEstimateSchema = z.enum(['up_to_100', '100_200', '200_350', '350_plus']);
+export type GuestsEstimate = z.infer<typeof GuestsEstimateSchema>;
+
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what an "Event" object
 // looks like inside your Next.js application (frontend and backend).
@@ -123,6 +127,7 @@ export const EventAppSchema = z.object({
     })
     .default('draft'),
   isDefault: z.boolean().optional(),
+  guestsEstimate: GuestsEstimateSchema.optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -164,6 +169,7 @@ export const EventDbSchema = z.object({
   guests_experience: GuestExperienceDbSchema.optional().nullable(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
+  guests_estimate: GuestsEstimateSchema.optional().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -192,6 +198,7 @@ export function dbToAppTransformer(dbData: {
   guests_experience?: GuestExperienceDb | null;
   status?: string | null;
   is_default?: boolean | null;
+  guests_estimate?: GuestsEstimate | null;
   created_at: string;
   updated_at: string;
 }): EventApp {
@@ -237,6 +244,7 @@ export function dbToAppTransformer(dbData: {
     guestExperience,
     status,
     isDefault: dbData.is_default ?? undefined,
+    guestsEstimate: dbData.guests_estimate ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
   };
@@ -290,6 +298,7 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     guestExperience,
     status,
     isDefault: dbData.is_default ?? undefined,
+    guestsEstimate: dbData.guests_estimate ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
   };
@@ -352,6 +361,24 @@ export const EventCreateSchema = z.object({
 export type EventCreate = z.infer<typeof EventCreateSchema>;
 
 export type CreateEventState = {
+  success: boolean;
+  message?: string | null;
+  eventId?: string | null;
+};
+
+// --- 6. Event Onboarding Schema ---
+export const EventOnboardingSchema = z.object({
+  brideName: z.string().optional(),
+  groomName: z.string().optional(),
+  eventDate: z.string().min(1, 'Event date is required'),
+  venueName: z.string().optional(),
+  location: LocationSchema.optional(),
+  guestsEstimate: GuestsEstimateSchema.optional(),
+});
+
+export type EventOnboarding = z.infer<typeof EventOnboardingSchema>;
+
+export type CreateOnboardingEventState = {
   success: boolean;
   message?: string | null;
   eventId?: string | null;
