@@ -57,7 +57,7 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
           </div>
         )}
 
-        {(event.venueName || event.location?.name) && (
+        {event.location?.name && (
           <div className="flex items-center gap-3">
             <MapPin className="text-muted-foreground size-5 shrink-0" />
             {mapsLink ? (
@@ -67,10 +67,10 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
                 rel="noopener noreferrer"
                 className="text-primary underline underline-offset-4"
               >
-                {event.venueName || event.location?.name}
+                {event.location.name}
               </a>
             ) : (
-              <span>{event.venueName || event.location?.name}</span>
+              <span>{event.location.name}</span>
             )}
           </div>
         )}

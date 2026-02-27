@@ -56,7 +56,6 @@ export async function processScheduledMessages(
         user_id,
         title,
         event_date,
-        venue_name,
         location,
         host_details,
         invitations
@@ -126,7 +125,6 @@ async function processSingleSchedule(
     userId: rawEvent.user_id as string,
     title: rawEvent.title as string,
     eventDate: rawEvent.event_date as string,
-    venueName: (rawEvent.venue_name as string | null) ?? undefined,
     location: (rawEvent.location as { name: string; coords?: { lat: number; lng: number } } | null) ?? undefined,
     hostDetails: (rawEvent.host_details as Record<string, unknown> | null) ?? undefined,
     invitations: rawEvent.invitations

@@ -144,7 +144,7 @@ export async function createOnboardingEvent(
       return { success: false, message: firstError.message };
     }
 
-    const { brideName, groomName, eventDate, venueName, location, guestsEstimate } =
+    const { brideName, groomName, eventDate, location, guestsEstimate } =
       validationResult.data;
 
     // Auto-generate title
@@ -172,7 +172,6 @@ export async function createOnboardingEvent(
           bride: brideName ? { name: brideName } : undefined,
           groom: groomName ? { name: groomName } : undefined,
         },
-        venue_name: venueName ?? null,
         location: location ?? null,
         guests_estimate: guestsEstimate ?? null,
       })

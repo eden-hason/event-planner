@@ -20,7 +20,6 @@ interface WizardData {
   brideName: string;
   groomName: string;
   eventDate: string;
-  venueName: string;
   location: { name: string; coords?: LocationCoords } | null;
   guestsEstimate: GuestsEstimate | null;
 }
@@ -39,7 +38,6 @@ export function OnboardingWizard() {
     brideName: '',
     groomName: '',
     eventDate: '',
-    venueName: '',
     location: null,
     guestsEstimate: null,
   });
@@ -55,7 +53,6 @@ export function OnboardingWizard() {
     if (data.brideName) formData.set('brideName', data.brideName);
     if (data.groomName) formData.set('groomName', data.groomName);
     formData.set('eventDate', data.eventDate);
-    if (data.venueName) formData.set('venueName', data.venueName);
     if (data.location) formData.set('location', JSON.stringify(data.location));
     if (guestsEstimate) formData.set('guestsEstimate', guestsEstimate);
 
@@ -89,7 +86,6 @@ export function OnboardingWizard() {
     return (
       <div className="flex h-full items-center justify-center px-4">
         <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
-
           {/* Success graphic */}
           <div className="relative flex size-52 items-center justify-center">
             {/* Outermost ring */}
@@ -104,15 +100,27 @@ export function OnboardingWizard() {
             </div>
 
             {/* Floating decorative elements */}
-            <span className="text-primary absolute -top-3 right-4 text-sm [animation:float_3s_ease-in-out_infinite] [animation-delay:0s]">★</span>
-            <span className="text-primary absolute top-1/4 -right-7 text-sm [animation:float_3s_ease-in-out_infinite] [animation-delay:0.5s]">♥</span>
-            <span className="text-primary absolute -right-2 bottom-4 text-xs [animation:float_3s_ease-in-out_infinite] [animation-delay:1s]">•</span>
-            <span className="text-primary absolute -bottom-2 left-2 text-xs [animation:float_3s_ease-in-out_infinite] [animation-delay:1.5s]">•</span>
-            <span className="text-primary absolute top-1/2 -left-7 text-sm [animation:float_3s_ease-in-out_infinite] [animation-delay:2s]">♥</span>
-            <span className="text-primary absolute -top-2 left-4 text-sm [animation:float_3s_ease-in-out_infinite] [animation-delay:2.5s]">★</span>
+            <span className="text-primary absolute -top-3 right-4 [animation:float_3s_ease-in-out_infinite] text-sm [animation-delay:0s]">
+              ★
+            </span>
+            <span className="text-primary absolute top-1/4 -right-7 [animation:float_3s_ease-in-out_infinite] text-sm [animation-delay:0.5s]">
+              ♥
+            </span>
+            <span className="text-primary absolute -right-2 bottom-4 [animation:float_3s_ease-in-out_infinite] text-xs [animation-delay:1s]">
+              •
+            </span>
+            <span className="text-primary absolute -bottom-2 left-2 [animation:float_3s_ease-in-out_infinite] text-xs [animation-delay:1.5s]">
+              •
+            </span>
+            <span className="text-primary absolute top-1/2 -left-7 [animation:float_3s_ease-in-out_infinite] text-sm [animation-delay:2s]">
+              ♥
+            </span>
+            <span className="text-primary absolute -top-2 left-4 [animation:float_3s_ease-in-out_infinite] text-sm [animation-delay:2.5s]">
+              ★
+            </span>
           </div>
 
-          <div className="flex w-full flex-col items-center gap-8 -translate-y-[50px]">
+          <div className="flex w-full -translate-y-[50px] flex-col items-center gap-8">
             <div className="flex flex-col gap-2">
               <h1 className="text-3xl font-bold">Your event is ready!</h1>
               <p className="text-muted-foreground max-w-xs text-base">
@@ -167,9 +175,9 @@ export function OnboardingWizard() {
               Step {step} of 3
             </span>
           </div>
-          <div className="bg-muted h-1.5 overflow-hidden">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
             <div
-              className="bg-primary h-full transition-all duration-300"
+              className="bg-primary h-full rounded-full transition-all duration-700"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -275,11 +283,10 @@ export function OnboardingWizard() {
                   Venue
                 </label>
                 <LocationInput
-                  value={data.venueName}
+                  value={data.location?.name || ''}
                   onChange={(value, _placeId, coords) => {
                     setData((d) => ({
                       ...d,
-                      venueName: value,
                       location: value ? { name: value, coords } : null,
                     }));
                   }}
@@ -320,7 +327,7 @@ export function OnboardingWizard() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
               {GUEST_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -332,7 +339,7 @@ export function OnboardingWizard() {
                     }))
                   }
                   className={cn(
-                    'border-2 px-4 py-3 text-sm font-medium transition-colors',
+                    'rounded-md border-2 px-4 py-3 text-sm font-medium transition-colors',
                     data.guestsEstimate === opt.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-card text-foreground hover:border-primary/40',

@@ -42,7 +42,6 @@ export type ConfirmationPageData = {
     | 'hostDetails'
     | 'guestExperience'
     | 'eventType'
-    | 'venueName'
   >;
   scheduleId: string;
 };

@@ -3,7 +3,6 @@
 import { useFormContext } from 'react-hook-form';
 import { MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { LocationInput } from '@/components/ui/location-input';
 import { Map, MapTileLayer, MapMarker } from '@/components/ui/map';
 import {
@@ -91,22 +90,6 @@ export function LocationCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <FormField
-          control={form.control}
-          name="venueName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Venue Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Grand Ballroom at Hilton"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="location"

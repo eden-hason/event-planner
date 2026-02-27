@@ -115,7 +115,6 @@ export const EventAppSchema = z.object({
   eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
-  venueName: z.string().optional(),
   location: LocationSchema.optional(),
   eventSettings: EventSettingsAppSchema.optional(),
   hostDetails: HostDetailsSchema.optional(),
@@ -161,7 +160,6 @@ export const EventDbSchema = z.object({
   event_type: z.string().optional().nullable(),
   reception_time: z.string().optional().nullable(),
   ceremony_time: z.string().optional().nullable(),
-  venue_name: z.string().optional().nullable(),
   location: LocationSchema.optional().nullable(),
   event_settings: EventSettingsSchema.optional().nullable(),
   host_details: HostDetailsSchema.optional().nullable(),
@@ -190,7 +188,6 @@ export function dbToAppTransformer(dbData: {
   event_type?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
-  venue_name?: string | null;
   location?: Location | null;
   event_settings?: EventSettings | null;
   host_details?: HostDetails | null;
@@ -236,7 +233,6 @@ export function dbToAppTransformer(dbData: {
     eventType: dbData.event_type ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
-    venueName: dbData.venue_name ?? undefined,
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
@@ -290,7 +286,6 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     eventType: dbData.event_type ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
-    venueName: dbData.venue_name ?? undefined,
     location: dbData.location ?? undefined,
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
@@ -315,7 +310,6 @@ export const EventDetailsUpdateSchema = z.object({
   eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
-  venueName: z.string().optional(),
   location: LocationSchema.optional(),
   hostDetails: WeddingHostDetailsSchema.optional(),
   eventSettings: z
@@ -371,7 +365,6 @@ export const EventOnboardingSchema = z.object({
   brideName: z.string().optional(),
   groomName: z.string().optional(),
   eventDate: z.string().min(1, 'Event date is required'),
-  venueName: z.string().optional(),
   location: LocationSchema.optional(),
   guestsEstimate: GuestsEstimateSchema.optional(),
 });
