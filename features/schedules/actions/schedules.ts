@@ -28,6 +28,16 @@ export async function updateScheduleStatus(
   try {
     const supabase = await createClient();
 
+    const { data: schedule } = await supabase
+      .from('schedules')
+      .select('allow_disable')
+      .eq('id', scheduleId)
+      .single();
+
+    if (!schedule?.allow_disable && status === 'draft') {
+      return { success: false, message: 'This schedule cannot be disabled.' };
+    }
+
     const { error } = await supabase
       .from('schedules')
       .update({ status })
