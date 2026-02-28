@@ -120,7 +120,7 @@ export async function duplicateEvent(
       }
     }
 
-    // Copy schedules with remapped group IDs in target_filter, reset status
+    // Copy schedules and reset status to draft
     const { data: originalSchedules } = await supabase
       .from('schedules')
       .select('*')
@@ -132,24 +132,9 @@ export async function duplicateEvent(
         const { id, created_at, updated_at, sent_at, ...scheduleFields } =
           schedule;
 
-        // Remap group_ids inside target_filter
-        let targetFilter = schedule.target_filter as Record<
-          string,
-          unknown
-        > | null;
-        if (targetFilter?.group_ids && Array.isArray(targetFilter.group_ids)) {
-          targetFilter = {
-            ...targetFilter,
-            group_ids: (targetFilter.group_ids as string[])
-              .map((gid) => groupIdMap.get(gid))
-              .filter(Boolean),
-          };
-        }
-
         return {
           ...scheduleFields,
           event_id: newEvent.id,
-          target_filter: targetFilter,
           status: 'draft' as const,
           sent_at: null,
         };

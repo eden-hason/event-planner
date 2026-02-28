@@ -1,6 +1,7 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import type { GroupApp } from '@/features/guests/schemas';
-import type { ScheduleApp } from '@/features/schedules/schemas';
+import type { EventApp } from '@/features/events/schemas';
+import type { ScheduleApp, WhatsAppTemplateApp } from '@/features/schedules/schemas';
 import type {
   PlaceholderConfig,
   HeaderPlaceholderConfig,
@@ -9,7 +10,11 @@ import type {
   DateFormatOptions,
   CurrencyOptions,
 } from '@/features/schedules/schemas/template-parameters';
-import type { MediaParameter } from '@/features/schedules/utils';
+export type MediaParameter =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: { link: string } }
+  | { type: 'video'; video: { link: string } }
+  | { type: 'document'; document: { link: string; filename?: string } };
 
 /**
  * Context available for resolving template parameters
@@ -313,4 +318,53 @@ export function buildDynamicButtonParameters(
       return { type: 'text' as const, text: resolved };
     }),
   }));
+}
+
+/**
+ * Resolve a template body for preview purposes.
+ *
+ * Guest/group placeholders are shown as labelled tokens (e.g. `[Name]`) because
+ * no specific guest is selected at preview time. Event placeholders are resolved
+ * against the provided event.
+ */
+export function resolveTemplateBodyForPreview(
+  template: WhatsAppTemplateApp,
+  event: EventApp | null,
+): { resolvedBody: string; hasMissingFields: boolean } {
+  const placeholders = template.parameters?.placeholders;
+
+  if (!placeholders || Object.keys(placeholders).length === 0) {
+    return { resolvedBody: template.bodyText, hasMissingFields: false };
+  }
+
+  let hasMissingFields = false;
+  const resolvedValues: string[] = [];
+  const mockContext = { event: event ?? {}, guest: {} } as unknown as ParameterResolutionContext;
+
+  for (const [name, config] of Object.entries(placeholders)) {
+    const source = config.source ?? name;
+
+    if (source.startsWith('guest.') || source.startsWith('group.')) {
+      const fieldName = source.split('.').pop() ?? source;
+      const label = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+      resolvedValues.push(`[${label}]`);
+    } else {
+      const rawValue = event ? getValueByPath({ event }, source) : undefined;
+
+      if ((rawValue === null || rawValue === undefined) && !config.fallback) {
+        hasMissingFields = true;
+        resolvedValues.push('…');
+      } else {
+        const resolved = resolvePlaceholder(name, config, mockContext);
+        resolvedValues.push(resolved || '…');
+      }
+    }
+  }
+
+  let resolvedBody = template.bodyText;
+  resolvedValues.forEach((value, index) => {
+    resolvedBody = resolvedBody.replaceAll(`{{${index + 1}}}`, value);
+  });
+
+  return { resolvedBody, hasMissingFields };
 }

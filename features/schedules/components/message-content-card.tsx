@@ -1,14 +1,13 @@
 'use client';
 
-import { ImageIcon, Send } from 'lucide-react';
+import { ImageIcon, Send, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardAction,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -16,9 +15,13 @@ import {
 
 import { type EventApp } from '@/features/events/schemas';
 import { sendWhatsAppTestMessage } from '../actions';
-import type { DeliveryMethod, WhatsAppTemplateApp } from '../schemas';
+import type { WhatsAppTemplateApp } from '../schemas';
+import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 
-function resolveSourcePath(source: string, event: EventApp | null): string | null {
+function resolveSourcePath(
+  source: string,
+  event: EventApp | null,
+): string | null {
   if (!event) return null;
   const context: Record<string, unknown> = { event };
   const parts = source.split('.');
@@ -30,11 +33,6 @@ function resolveSourcePath(source: string, event: EventApp | null): string | nul
   return typeof current === 'string' ? current : null;
 }
 
-const DELIVERY_METHOD_LABELS: Record<DeliveryMethod, string> = {
-  whatsapp: 'WhatsApp',
-  sms: 'SMS',
-};
-
 const chatBgStyle: React.CSSProperties = {
   backgroundColor: '#E5DDD5',
   backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='1' fill='%23C9BBAD' fill-opacity='0.4'/%3E%3C/svg%3E")`,
@@ -42,11 +40,17 @@ const chatBgStyle: React.CSSProperties = {
 
 interface MessageContentCardProps {
   template: WhatsAppTemplateApp | null;
-  deliveryMethod?: DeliveryMethod;
   event: EventApp | null;
 }
 
-export function MessageContentCard({ template, deliveryMethod, event }: MessageContentCardProps) {
+export function MessageContentCard({
+  template,
+  event,
+}: MessageContentCardProps) {
+  const { resolvedBody, hasMissingFields } = template
+    ? resolveTemplateBodyForPreview(template, event)
+    : { resolvedBody: '', hasMissingFields: false };
+
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];
   const imageUrl = headerPlaceholder?.source
     ? resolveSourcePath(headerPlaceholder.source, event)
@@ -61,8 +65,7 @@ export function MessageContentCard({ template, deliveryMethod, event }: MessageC
     toast.promise(promise, {
       loading: 'Sending test message...',
       success: (data) => data.message,
-      error: (err) =>
-        err instanceof Error ? err.message : 'Failed to send.',
+      error: (err) => (err instanceof Error ? err.message : 'Failed to send.'),
     });
   };
 
@@ -70,15 +73,18 @@ export function MessageContentCard({ template, deliveryMethod, event }: MessageC
     <Card>
       <CardHeader>
         <CardTitle>Message Preview</CardTitle>
-        <CardAction>
-          <Badge variant="outline">{deliveryMethod ? DELIVERY_METHOD_LABELS[deliveryMethod] : 'N/A'}</Badge>
-        </CardAction>
+        <CardDescription>
+          The message guests will receive for this schedule.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {/* WhatsApp phone mockup */}
         <div className="overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
           {/* Chat area */}
-          <div className="flex min-h-[180px] flex-col gap-1 px-3 py-4" style={chatBgStyle}>
+          <div
+            className="flex min-h-[180px] flex-col gap-1 px-3 py-4"
+            style={chatBgStyle}
+          >
             {template === null ? (
               <div className="flex min-h-[140px] flex-1 items-center justify-center">
                 <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
@@ -88,37 +94,49 @@ export function MessageContentCard({ template, deliveryMethod, event }: MessageC
             ) : (
               <>
                 {/* Message bubble */}
-                <div className="relative self-end max-w-[85%]">
+                <div className="relative max-w-[85%] self-end">
                   {/* Bubble tail */}
                   <div
-                    className="absolute -right-[7px] top-0 h-0 w-0"
+                    className="absolute top-0 -right-[7px] h-0 w-0"
                     style={{
                       borderLeft: '8px solid #DCF8C6',
                       borderBottom: '8px solid transparent',
                     }}
                   />
-                  <div className="overflow-hidden rounded-l-xl rounded-br-xl shadow-sm" style={{ backgroundColor: '#DCF8C6' }}>
+                  <div
+                    className="overflow-hidden rounded-l-xl rounded-br-xl shadow-sm"
+                    style={{ backgroundColor: '#DCF8C6' }}
+                  >
                     {/* Image header */}
-                    {template.headerType?.toUpperCase() === 'IMAGE' && (
-                      imageUrl ? (
+                    {template.headerType?.toUpperCase() === 'IMAGE' &&
+                      (imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={imageUrl} alt="Header" className="w-full object-contain" style={{ maxHeight: 120 }} />
+                        <img
+                          src={imageUrl}
+                          alt="Header"
+                          className="w-full object-contain"
+                          style={{ maxHeight: 120 }}
+                        />
                       ) : (
                         <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
                           <ImageIcon className="h-7 w-7 text-zinc-400" />
-                          <span className="text-[10px] text-zinc-400">Image</span>
+                          <span className="text-[10px] text-zinc-400">
+                            Image
+                          </span>
                         </div>
-                      )
-                    )}
+                      ))}
                     {/* Text content */}
                     <div className="px-3 py-2">
                       {template.headerText && (
-                        <p className="mb-1 text-sm font-semibold leading-tight text-zinc-800">
+                        <p className="mb-1 text-sm leading-tight font-semibold text-zinc-800">
                           {template.headerText}
                         </p>
                       )}
-                      <p className="text-sm leading-relaxed text-zinc-800 whitespace-pre-wrap" dir="rtl">
-                        {template.bodyText}
+                      <p
+                        className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
+                        dir="rtl"
+                      >
+                        {resolvedBody}
                       </p>
                     </div>
                   </div>
@@ -126,15 +144,23 @@ export function MessageContentCard({ template, deliveryMethod, event }: MessageC
 
                 {/* Footer text */}
                 {template.footerText && (
-                  <p className="self-end max-w-[85%] pr-1 text-[11px] italic text-zinc-500">
+                  <p className="max-w-[85%] self-end pr-1 text-[11px] text-zinc-500 italic">
                     {template.footerText}
                   </p>
                 )}
               </>
             )}
           </div>
-
         </div>
+        {hasMissingFields && (
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span>
+              Some event data is missing. Update your event details to see the
+              full preview.
+            </span>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button variant="outline" onClick={handleSendTest}>
