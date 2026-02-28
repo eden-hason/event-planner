@@ -6,6 +6,7 @@ export {
   buildDynamicHeaderParameters,
   buildDynamicButtonParameters,
   extractPlaceholders,
+  type MediaParameter,
   type ParameterResolutionContext,
   type ButtonComponent,
 } from './parameter-resolvers';

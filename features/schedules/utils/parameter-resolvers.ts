@@ -10,7 +10,11 @@ import type {
   DateFormatOptions,
   CurrencyOptions,
 } from '@/features/schedules/schemas/template-parameters';
-import type { MediaParameter } from '@/features/schedules/utils';
+export type MediaParameter =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: { link: string } }
+  | { type: 'video'; video: { link: string } }
+  | { type: 'document'; document: { link: string; filename?: string } };
 
 /**
  * Context available for resolving template parameters
