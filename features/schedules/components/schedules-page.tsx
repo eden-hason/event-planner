@@ -1,21 +1,22 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
+import { type EventApp } from '@/features/events/schemas';
 import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
 import { getMessageTypeForTemplate } from '../constants';
 import {
-  MESSAGE_TYPE_LABELS,
   MESSAGE_TYPES,
   type MessageType,
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
+import { SchedulePerformanceCard } from './schedule-performance-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesHeader } from './schedules-header';
+import { SchedulesLayout } from './schedules-layout';
 
 interface SchedulesPageProps {
   eventId: string;
   eventDate: string;
   schedules: ScheduleApp[];
+  event: EventApp | null;
 }
 
 type ScheduleWithTemplate = {
@@ -23,13 +24,11 @@ type ScheduleWithTemplate = {
   template: WhatsAppTemplateApp | null;
 };
 
-const tabTriggerClassName =
-  'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none';
-
 export async function SchedulesPage({
   eventId,
   eventDate,
   schedules,
+  event,
 }: SchedulesPageProps) {
   // Fetch all templates for schedules in one batch
   const templateIds = schedules
@@ -66,7 +65,7 @@ export async function SchedulesPage({
     };
   }
 
-  // Only show tabs for message types that have actual schedules, in canonical order
+  // Only show types that have actual schedules, in canonical order
   const visibleTypes = MESSAGE_TYPES.filter((type) => schedulesByMessageType[type]);
 
   if (visibleTypes.length === 0) {
@@ -80,32 +79,31 @@ export async function SchedulesPage({
     );
   }
 
-  const defaultTab = visibleTypes[0];
+  // Pre-render content for all types on the server
+  const contentByType = Object.fromEntries(
+    visibleTypes.map((type) => {
+      const { schedule, template } = schedulesByMessageType[type]!;
+      return [
+        type,
+        {
+          details: (
+            <ScheduleTabContent
+              schedule={schedule}
+              template={template}
+              eventDate={eventDate}
+              event={event}
+            />
+          ),
+          delivery: <SchedulePerformanceCard scheduleId={schedule.id} />,
+        },
+      ] as const;
+    }),
+  ) as Record<MessageType, { details: React.ReactNode; delivery: React.ReactNode }>;
 
   return (
     <>
       <SchedulesHeader />
-      <Tabs defaultValue={defaultTab}>
-        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-          {visibleTypes.map((type) => (
-            <TabsTrigger key={type} value={type} className={tabTriggerClassName}>
-              {MESSAGE_TYPE_LABELS[type]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {visibleTypes.map((type) => {
-          const { schedule, template } = schedulesByMessageType[type]!;
-          return (
-            <TabsContent key={type} value={type}>
-              <ScheduleTabContent
-                schedule={schedule}
-                template={template}
-                eventDate={eventDate}
-              />
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+      <SchedulesLayout visibleTypes={visibleTypes} contentByType={contentByType} />
     </>
   );
 }

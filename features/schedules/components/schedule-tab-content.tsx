@@ -1,34 +1,33 @@
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
-import { ScheduleDetailsCard } from './schedule-details-card';
 import { MessageContentCard } from './message-content-card';
-import { SchedulePerformanceCard } from './schedule-performance-card';
+import { ScheduleDetailsCard } from './schedule-details-card';
+import { ScheduleStatusCard } from './schedule-status-card';
 
 interface ScheduleTabContentProps {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
   eventDate: string;
+  event: EventApp | null;
 }
 
 export function ScheduleTabContent({
   schedule,
   template,
   eventDate,
+  event,
 }: ScheduleTabContentProps) {
   return (
-    <div className="grid grid-cols-3 gap-4">
-      <ScheduleDetailsCard schedule={schedule} template={template} eventDate={eventDate} />
+    <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-col gap-4">
+        <ScheduleStatusCard schedule={schedule} />
+        <ScheduleDetailsCard schedule={schedule} eventDate={eventDate} />
+      </div>
       <MessageContentCard
         template={template}
         deliveryMethod={schedule.deliveryMethod}
+        event={event}
       />
-      <Card className="col-span-1">
-        <CardHeader>
-          <CardTitle>Schedule Logic</CardTitle>
-        </CardHeader>
-      </Card>
-      <SchedulePerformanceCard scheduleId={schedule.id} />
     </div>
   );
 }

@@ -224,6 +224,7 @@ export const ScheduleAppSchema = z.object({
   targetFilter: TargetFilterSchema.optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
+  allowDisable: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -241,6 +242,7 @@ export const ScheduleDbSchema = z.object({
   target_filter: z.record(z.string(), z.unknown()).nullable(),
   template_id: z.uuid().nullable(),
   delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
+  allow_disable: z.boolean().default(false),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -263,6 +265,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
     : undefined,
   templateId: db.template_id ?? undefined,
   deliveryMethod: db.delivery_method,
+  allowDisable: db.allow_disable,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));
@@ -276,6 +279,7 @@ export const ScheduleUpsertSchema = z.object({
   targetFilter: TargetFilterSchema.optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
+  allowDisable: z.boolean().optional(),
 });
 
 export type ScheduleUpsert = z.infer<typeof ScheduleUpsertSchema>;
@@ -298,6 +302,7 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   if (app.templateId !== undefined) dbData.template_id = app.templateId ?? null;
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;
+  if (app.allowDisable !== undefined) dbData.allow_disable = app.allowDisable;
 
   return dbData;
 });

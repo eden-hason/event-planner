@@ -18,6 +18,7 @@ export default async function SchedulesPage({
       schedules={schedules}
       eventId={eventId}
       eventDate={event?.eventDate ?? ''}
+      event={event ?? null}
     />
   );
 }
