@@ -124,7 +124,7 @@ export async function executeSchedule(
     // 7. Apply target filter
     const targetedGuests = filterGuestsByTarget(
       allGuests,
-      schedule.targetFilter,
+      schedule.targetStatus,
     );
 
     if (targetedGuests.length === 0) {

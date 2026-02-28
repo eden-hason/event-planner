@@ -3,6 +3,7 @@ import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import { MessageContentCard } from './message-content-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { ScheduleStatusCard } from './schedule-status-card';
+import { TargetAudienceCard } from './target-audience-card';
 
 interface ScheduleTabContentProps {
   schedule: ScheduleApp;
@@ -22,10 +23,10 @@ export function ScheduleTabContent({
       <div className="flex flex-col gap-4">
         <ScheduleStatusCard schedule={schedule} />
         <ScheduleDetailsCard schedule={schedule} eventDate={eventDate} />
+        <TargetAudienceCard targetStatus={schedule.targetStatus} />
       </div>
       <MessageContentCard
         template={template}
-        deliveryMethod={schedule.deliveryMethod}
         event={event}
       />
     </div>

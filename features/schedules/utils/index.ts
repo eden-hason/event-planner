@@ -1,5 +1,4 @@
 import type { GuestApp } from '@/features/guests/schemas';
-import type { TargetFilter } from '../schemas';
 
 // Re-export parameter resolution utilities
 export {
@@ -46,36 +45,15 @@ export function calculateScheduledDate(
  * Filters guests based on targeting criteria.
  *
  * @param guests - Array of guests to filter
- * @param targetFilter - Optional targeting criteria (RSVP status, group IDs)
+ * @param targetStatus - Optional RSVP status to filter by (null means all guests)
  * @returns Filtered array of guests
  */
 export function filterGuestsByTarget(
   guests: GuestApp[],
-  targetFilter?: TargetFilter,
+  targetStatus?: 'pending' | 'confirmed' | null,
 ): GuestApp[] {
-  if (!targetFilter) {
-    return guests;
-  }
-
-  let filtered = guests;
-
-  // Filter by RSVP status
-  if (targetFilter.guestStatus && targetFilter.guestStatus.length > 0) {
-    filtered = filtered.filter((guest) =>
-      targetFilter.guestStatus!.includes(guest.rsvpStatus),
-    );
-  }
-
-  // Filter by group IDs
-  if (targetFilter.groupIds && targetFilter.groupIds.length > 0) {
-    filtered = filtered.filter(
-      (guest) => guest.groupId && targetFilter.groupIds!.includes(guest.groupId),
-    );
-  }
-
-  // Tags filtering not implemented yet (future enhancement)
-
-  return filtered;
+  if (!targetStatus) return guests;
+  return guests.filter((guest) => guest.rsvpStatus === targetStatus);
 }
 
 /**
@@ -136,70 +114,3 @@ export function formatPhoneE164(phone: string): string {
   return '+972' + cleaned;
 }
 
-/**
- * Template parameter type for WhatsApp messages.
- * Supports text and media types (image, video, document).
- */
-export type MediaParameter =
-  | { type: 'text'; text: string }
-  | { type: 'image'; image: { link: string } }
-  | { type: 'video'; video: { link: string } }
-  | { type: 'document'; document: { link: string; filename?: string } };
-
-export type TemplateParameter = MediaParameter;
-
-/**
- * Builds template parameters by replacing placeholders with actual values.
- * Supports common placeholders: {{guest_name}}, {{event_title}}, {{event_date}}
- *
- * @param bodyText - Template body text with placeholders
- * @param eventTitle - Event title
- * @param eventDate - Event date (ISO string)
- * @param guestName - Guest name
- * @returns Array of template parameters for WhatsApp API
- */
-export function buildTemplateParameters(
-  bodyText: string,
-  eventTitle: string,
-  eventDate: string,
-  guestName: string,
-): TemplateParameter[] {
-  const parameters: TemplateParameter[] = [];
-
-  // Extract placeholders using regex
-  const placeholderRegex = /\{\{(\w+)\}\}/g;
-  let match;
-
-  while ((match = placeholderRegex.exec(bodyText)) !== null) {
-    const placeholder = match[1];
-    let value = '';
-
-    switch (placeholder) {
-      case 'guest_name':
-        value = guestName;
-        break;
-      case 'event_title':
-        value = eventTitle;
-        break;
-      case 'event_date':
-        // Format date to readable format
-        value = new Date(eventDate).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-        break;
-      default:
-        // Unknown placeholder - use empty string
-        value = '';
-    }
-
-    parameters.push({
-      type: 'text',
-      text: value,
-    });
-  }
-
-  return parameters;
-}

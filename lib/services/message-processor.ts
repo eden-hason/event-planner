@@ -187,7 +187,7 @@ async function processSingleSchedule(
   );
 
   // 6. Apply target filter and validate phone numbers
-  const targetedGuests = filterGuestsByTarget(allGuests, schedule.targetFilter);
+  const targetedGuests = filterGuestsByTarget(allGuests, schedule.targetStatus);
 
   if (targetedGuests.length === 0) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);

@@ -34,8 +34,6 @@ export {
   filterGuestsByTarget,
   validatePhoneNumber,
   formatPhoneE164,
-  buildTemplateParameters,
-  type TemplateParameter,
 } from './utils';
 
 // Schemas/Types

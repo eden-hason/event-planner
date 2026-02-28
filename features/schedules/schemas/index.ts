@@ -194,15 +194,6 @@ export const MessageTemplateAppToDbSchema =
 // SCHEDULES
 // =====================================================
 
-// Target filter schema for schedule targeting
-export const TargetFilterSchema = z.object({
-  guestStatus: z.array(z.enum(['pending', 'confirmed', 'declined'])).optional(),
-  tags: z.array(z.string()).optional(),
-  groupIds: z.array(z.uuid()).optional(),
-});
-
-export type TargetFilter = z.infer<typeof TargetFilterSchema>;
-
 // Custom content override schema
 export const CustomContentSchema = z.object({
   subject: z.string().optional(),
@@ -221,7 +212,7 @@ export const ScheduleAppSchema = z.object({
   scheduledDate: z.string(),
   status: z.enum(SCHEDULE_STATUSES).default('draft'),
   sentAt: z.string().nullable().optional(),
-  targetFilter: TargetFilterSchema.optional(),
+  targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
   allowDisable: z.boolean().default(false),
@@ -232,14 +223,13 @@ export const ScheduleAppSchema = z.object({
 export type ScheduleApp = z.infer<typeof ScheduleAppSchema>;
 
 // --- DB-Level Schema (snake_case) ---
-// Note: target_filter is JSONB in Supabase
 export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
   scheduled_date: z.string(),
   status: z.enum(SCHEDULE_STATUSES).default('draft'),
   sent_at: z.string().nullable(),
-  target_filter: z.record(z.string(), z.unknown()).nullable(),
+  target_status: z.enum(['pending', 'confirmed']).nullable(),
   template_id: z.uuid().nullable(),
   delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
   allow_disable: z.boolean().default(false),
@@ -256,13 +246,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   scheduledDate: db.scheduled_date,
   status: db.status,
   sentAt: db.sent_at ?? undefined,
-  targetFilter: db.target_filter
-    ? TargetFilterSchema.parse({
-      guestStatus: db.target_filter.guest_status,
-      tags: db.target_filter.tags,
-      groupIds: db.target_filter.group_ids,
-    })
-    : undefined,
+  targetStatus: db.target_status ?? null,
   templateId: db.template_id ?? undefined,
   deliveryMethod: db.delivery_method,
   allowDisable: db.allow_disable,
@@ -276,7 +260,7 @@ export const ScheduleUpsertSchema = z.object({
   eventId: z.uuid(),
   scheduledDate: z.string(),
   status: z.enum(SCHEDULE_STATUSES).optional(),
-  targetFilter: TargetFilterSchema.optional(),
+  targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
   allowDisable: z.boolean().optional(),
@@ -292,13 +276,7 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   dbData.event_id = app.eventId;
   dbData.scheduled_date = app.scheduledDate;
   if (app.status !== undefined) dbData.status = app.status;
-  if (app.targetFilter !== undefined) {
-    dbData.target_filter = {
-      guest_status: app.targetFilter.guestStatus,
-      tags: app.targetFilter.tags,
-      group_ids: app.targetFilter.groupIds,
-    };
-  }
+  if (app.targetStatus !== undefined) dbData.target_status = app.targetStatus;
   if (app.templateId !== undefined) dbData.template_id = app.templateId ?? null;
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;

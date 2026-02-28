@@ -210,6 +210,7 @@ export async function createDefaultSchedules(
       ),
       status: 'draft' as const,
       delivery_method: 'whatsapp' as const,
+      target_status: schedule.targetStatus ?? null,
     }));
 
     const { error: insertError } = await supabase
