@@ -22,7 +22,9 @@ export function CoupleCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Users className="h-5 w-5" />
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <Users className="h-4 w-4 text-primary" />
+          </div>
           The Couple
         </CardTitle>
       </CardHeader>
