@@ -47,7 +47,7 @@ export interface ExecuteScheduleResult {
  *
  * Workflow:
  * 1. Authenticate user and fetch schedule
- * 2. Validate schedule status is 'scheduled'
+ * 2. Validate schedule has not already been executed
  * 3. Fetch WhatsApp template
  * 4. Fetch and filter guests
  * 5. Send messages concurrently
@@ -85,8 +85,8 @@ export async function executeSchedule(
       };
     }
 
-    // 3. Validate schedule status
-    if (schedule.status !== 'scheduled') {
+    // 3. Validate schedule has not already been executed
+    if (schedule.status === 'sent' || schedule.status === 'cancelled') {
       return {
         success: false,
         message: `Cannot execute schedule with status: ${schedule.status}`,
@@ -291,15 +291,13 @@ export async function executeSchedule(
 
     const deliveryIds = insertedDeliveries?.map((d) => d.id) || [];
 
-    // 14. Update schedule status
-    const newStatus = sentCount > 0 ? 'sent' : 'failed';
-    const { error: updateError } = await supabase
-      .from('schedules')
-      .update({
-        status: newStatus,
-        sent_at: new Date().toISOString(),
-      })
-      .eq('id', scheduleId);
+    // 14. Update schedule status (only mark sent when at least one message was delivered)
+    const { error: updateError } = sentCount > 0
+      ? await supabase
+          .from('schedules')
+          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .eq('id', scheduleId)
+      : { error: null };
 
     if (updateError) {
       console.error('Error updating schedule status:', updateError);
@@ -309,12 +307,24 @@ export async function executeSchedule(
     revalidatePath('/app');
 
     // 16. Return execution summary
+    if (sentCount === 0) {
+      return {
+        success: false,
+        message: 'All messages failed to send',
+        summary: {
+          scheduleId,
+          totalGuests: guestsWithPhones.length,
+          sentCount,
+          failedCount,
+          skippedCount,
+          deliveryIds,
+        },
+      };
+    }
+
     return {
       success: true,
-      message:
-        sentCount > 0
-          ? `Successfully sent ${sentCount} message${sentCount !== 1 ? 's' : ''}`
-          : 'All messages failed to send',
+      message: `Successfully sent ${sentCount} message${sentCount !== 1 ? 's' : ''}`,
       summary: {
         scheduleId,
         totalGuests: guestsWithPhones.length,

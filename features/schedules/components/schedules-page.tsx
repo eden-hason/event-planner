@@ -1,9 +1,9 @@
 import { type EventApp } from '@/features/events/schemas';
 import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
-import { getMessageTypeForTemplate } from '../constants';
 import {
-  MESSAGE_TYPES,
-  type MessageType,
+  ACTION_TYPE_LABELS,
+  ACTION_TYPES,
+  type ActionType,
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
@@ -24,6 +24,12 @@ type ScheduleWithTemplate = {
   template: WhatsAppTemplateApp | null;
 };
 
+export type ScheduleTabItem = {
+  label: string;
+  details: React.ReactNode;
+  delivery: React.ReactNode;
+};
+
 export async function SchedulesPage({
   eventId,
   eventDate,
@@ -38,35 +44,21 @@ export async function SchedulesPage({
   const uniqueTemplateIds = Array.from(new Set(templateIds));
   const templateMap = await getWhatsAppTemplatesByIds(uniqueTemplateIds);
 
-  // Group schedules by message type (each message type has at most one schedule)
-  const schedulesByMessageType: Partial<Record<MessageType, ScheduleWithTemplate>> = {};
+  // Group schedules by actionType (multiple allowed for 'confirmation')
+  const schedulesByActionType: Partial<Record<ActionType, ScheduleWithTemplate[]>> = {};
 
   for (const schedule of schedules) {
-    if (!schedule.templateId) continue;
-
-    const messageType = getMessageTypeForTemplate(schedule.templateId);
-    if (!messageType) {
-      console.warn(
-        `Schedule ${schedule.id} has unmapped template ${schedule.templateId} — skipping`,
-      );
-      continue;
+    if (!schedulesByActionType[schedule.actionType]) {
+      schedulesByActionType[schedule.actionType] = [];
     }
-
-    if (schedulesByMessageType[messageType]) {
-      console.warn(
-        `Duplicate schedule for message type "${messageType}" — keeping first, skipping ${schedule.id}`,
-      );
-      continue;
-    }
-
-    schedulesByMessageType[messageType] = {
+    schedulesByActionType[schedule.actionType]!.push({
       schedule,
-      template: templateMap.get(schedule.templateId) ?? null,
-    };
+      template: schedule.templateId ? (templateMap.get(schedule.templateId) ?? null) : null,
+    });
   }
 
   // Only show types that have actual schedules, in canonical order
-  const visibleTypes = MESSAGE_TYPES.filter((type) => schedulesByMessageType[type]);
+  const visibleTypes = ACTION_TYPES.filter((type) => schedulesByActionType[type]);
 
   if (visibleTypes.length === 0) {
     return (
@@ -80,30 +72,34 @@ export async function SchedulesPage({
   }
 
   // Pre-render content for all types on the server
-  const contentByType = Object.fromEntries(
-    visibleTypes.map((type) => {
-      const { schedule, template } = schedulesByMessageType[type]!;
-      return [
-        type,
-        {
-          details: (
-            <ScheduleTabContent
-              schedule={schedule}
-              template={template}
-              eventDate={eventDate}
-              event={event}
-            />
-          ),
-          delivery: <SchedulePerformanceCard scheduleId={schedule.id} />,
-        },
-      ] as const;
-    }),
-  ) as Record<MessageType, { details: React.ReactNode; delivery: React.ReactNode }>;
+  const contentByType: Partial<Record<ActionType, ScheduleTabItem[]>> = {};
+
+  for (const type of visibleTypes) {
+    const items = schedulesByActionType[type]!;
+    const baseLabel = ACTION_TYPE_LABELS[type];
+    const multiple = items.length > 1;
+
+    contentByType[type] = items.map(({ schedule, template }, index) => ({
+      label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
+      details: (
+        <ScheduleTabContent
+          schedule={schedule}
+          template={template}
+          eventDate={eventDate}
+          event={event}
+        />
+      ),
+      delivery: <SchedulePerformanceCard scheduleId={schedule.id} />,
+    }));
+  }
 
   return (
     <>
       <SchedulesHeader />
-      <SchedulesLayout visibleTypes={visibleTypes} contentByType={contentByType} />
+      <SchedulesLayout
+        visibleTypes={visibleTypes}
+        contentByType={contentByType as Record<ActionType, ScheduleTabItem[]>}
+      />
     </>
   );
 }

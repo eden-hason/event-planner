@@ -40,9 +40,7 @@ export {
 export {
   type ScheduleApp,
   type ScheduleDb,
-  type MessageType,
   type MessageDeliveryApp,
-  MESSAGE_TYPES,
   SCHEDULE_STATUSES,
   DELIVERY_METHODS,
   DELIVERY_STATUSES,

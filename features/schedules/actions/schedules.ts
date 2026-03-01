@@ -5,69 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
 import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
-import type { ScheduleStatus } from '../schemas';
 import { calculateScheduledDate } from '../utils';
-
-export type UpdateScheduleStatusState = {
-  success: boolean;
-  message?: string | null;
-};
-
-/**
- * Updates the status of a schedule (e.g. toggling between draft and scheduled).
- * RLS ensures the user can only update their own schedules.
- *
- * @param scheduleId - The schedule ID to update
- * @param status - The new schedule status
- * @returns Result state with success status
- */
-export async function updateScheduleStatus(
-  scheduleId: string,
-  status: ScheduleStatus,
-): Promise<UpdateScheduleStatusState> {
-  try {
-    const supabase = await createClient();
-
-    const { data: schedule } = await supabase
-      .from('schedules')
-      .select('allow_disable')
-      .eq('id', scheduleId)
-      .single();
-
-    if (!schedule?.allow_disable && status === 'draft') {
-      return { success: false, message: 'This schedule cannot be disabled.' };
-    }
-
-    const { error } = await supabase
-      .from('schedules')
-      .update({ status })
-      .eq('id', scheduleId);
-
-    if (error) {
-      console.error('Error updating schedule status:', error);
-      return {
-        success: false,
-        message: 'Failed to update schedule status.',
-      };
-    }
-
-    revalidatePath('/app');
-
-    return {
-      success: true,
-      message:
-        status === 'scheduled'
-          ? 'Schedule enabled.'
-          : 'Schedule disabled.',
-    };
-  } catch (error) {
-    console.error('Error in updateScheduleStatus:', error);
-    return {
-      success: false,
-      message: 'An unexpected error occurred.',
-    };
-  }
-}
 
 export type UpdateScheduledDateState = {
   success: boolean;
@@ -208,9 +146,9 @@ export async function createDefaultSchedules(
         schedule.daysOffset,
         schedule.defaultTime,
       ),
-      status: 'draft' as const,
       delivery_method: 'whatsapp' as const,
       target_status: schedule.targetStatus ?? null,
+      action_type: schedule.actionType,
     }));
 
     const { error: insertError } = await supabase
