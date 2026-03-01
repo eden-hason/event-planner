@@ -95,7 +95,9 @@ export function BasicInfoCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <CalendarDays className="h-5 w-5" />
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <CalendarDays className="h-4 w-4 text-primary" />
+          </div>
           Basic Info
         </CardTitle>
         <CardAction>
