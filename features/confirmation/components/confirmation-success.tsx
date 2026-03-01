@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 
 interface ConfirmationSuccessProps {
   status: 'confirmed' | 'declined';
@@ -23,9 +23,9 @@ export function ConfirmationSuccess({
     <Card>
       <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
         {isConfirmed ? (
-          <CheckCircle2 className="text-primary size-16" />
+          <IconCircleCheck size={64} className="text-primary" />
         ) : (
-          <XCircle className="text-muted-foreground size-16" />
+          <IconCircleX size={64} className="text-muted-foreground" />
         )}
 
         <h2 className="text-2xl font-semibold">תודה!</h2>

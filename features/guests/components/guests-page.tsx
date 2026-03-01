@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, PlusIcon, Trash2, Users } from 'lucide-react';
+import { IconClock, IconPlus, IconTrash, IconUsers } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -157,7 +157,7 @@ export function GuestsPage({
   const guestsHeaderAction = useMemo(
     () => (
       <Button onClick={handleAddGuest}>
-        <PlusIcon className="size-4" />
+        <IconPlus size={16} />
         Add Guest
       </Button>
     ),
@@ -167,7 +167,7 @@ export function GuestsPage({
   const groupHeaderAction = useMemo(
     () => (
       <Button onClick={handleOpenGroupDialog}>
-        <PlusIcon className="size-4" />
+        <IconPlus size={16} />
         Add Group
       </Button>
     ),
@@ -256,7 +256,7 @@ export function GuestsPage({
             </SheetTitle>
             {selectedGuest ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock className="size-3" />
+                <IconClock size={12} />
                 Last edited{' '}
                 {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
                   addSuffix: true,
@@ -304,7 +304,7 @@ export function GuestsPage({
                   </Badge>
                 )}
                 <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-                  <Users className="size-3" />
+                  <IconUsers size={12} />
                   {selectedGuest.amount}{' '}
                   {selectedGuest.amount === 1 ? 'person' : 'people'}
                 </Badge>
@@ -334,7 +334,7 @@ export function GuestsPage({
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={handleDeleteGuest}
                 >
-                  <Trash2 className="size-4" />
+                  <IconTrash size={16} />
                   Delete Guest
                 </Button>
               )}

@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react';
+import { IconUsers } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -46,7 +46,7 @@ export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceC
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <div className="rounded-md bg-primary/10 p-1.5">
-              <Users className="h-4 w-4 text-primary" />
+              <IconUsers size={16} className="text-primary" />
             </div>
             Target Audience
           </CardTitle>

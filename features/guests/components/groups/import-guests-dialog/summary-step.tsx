@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition, useRef } from 'react';
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { IconCircleCheck, IconCircleX, IconLoader2 } from '@tabler/icons-react';
 import {
   importGuests,
   type ImportGuestsState,
@@ -42,7 +42,7 @@ export function SummaryStep({
   if (isPending || !result) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
-        <Loader2 className="text-primary h-12 w-12 animate-spin" />
+        <IconLoader2 size={48} className="text-primary animate-spin" />
         <div className="text-center">
           <p className="font-medium">Importing guests...</p>
           <p className="text-muted-foreground text-sm">
@@ -59,7 +59,7 @@ export function SummaryStep({
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-          <CheckCircle2 className="h-10 w-10 text-green-600" />
+          <IconCircleCheck size={40} className="text-green-600" />
         </div>
         <div className="text-center">
           <p className="text-lg font-medium text-green-700 dark:text-green-400">
@@ -79,7 +79,7 @@ export function SummaryStep({
   return (
     <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-        <XCircle className="h-10 w-10 text-red-600" />
+        <IconCircleX size={40} className="text-red-600" />
       </div>
       <div className="text-center">
         <p className="text-lg font-medium text-red-700 dark:text-red-400">

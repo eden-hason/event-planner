@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { CircleCheck, CircleX, Trash2 } from 'lucide-react';
+import { IconCircleCheck, IconCircleX, IconTrash } from '@tabler/icons-react';
 import {
   Table,
   TableBody,
@@ -97,9 +97,9 @@ export function ValidateStep({
                 >
                   <TableCell className="p-3">
                     {row.isValid ? (
-                      <CircleCheck className="h-5 w-5 text-green-600" />
+                      <IconCircleCheck size={20} className="text-green-600" />
                     ) : (
-                      <CircleX className="h-5 w-5 text-red-600" />
+                      <IconCircleX size={20} className="text-red-600" />
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground p-3">
@@ -140,7 +140,7 @@ export function ValidateStep({
                         className="text-muted-foreground h-8 w-8 hover:text-red-600"
                         onClick={() => handleRemoveRow(row.rowIndex)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <IconTrash size={16} />
                       </Button>
                     )}
                   </TableCell>

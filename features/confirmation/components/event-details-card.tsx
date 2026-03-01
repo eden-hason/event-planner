@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CalendarDays, Clock, MapPin, Heart } from 'lucide-react';
+import { IconCalendarEvent, IconClock, IconHeart, IconMapPin } from '@tabler/icons-react';
 import type { ConfirmationPageData } from '../schemas';
 
 interface EventDetailsCardProps {
@@ -41,13 +41,13 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3">
-          <CalendarDays className="text-muted-foreground size-5 shrink-0" />
+          <IconCalendarEvent size={20} className="text-muted-foreground shrink-0" />
           <span>{formattedDate}</span>
         </div>
 
         {(event.ceremonyTime || event.receptionTime) && (
           <div className="flex items-center gap-3">
-            <Clock className="text-muted-foreground size-5 shrink-0" />
+            <IconClock size={20} className="text-muted-foreground shrink-0" />
             <div className="flex flex-col">
               {event.ceremonyTime && <span>טקס: {event.ceremonyTime}</span>}
               {event.receptionTime && (
@@ -59,7 +59,7 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
 
         {event.location?.name && (
           <div className="flex items-center gap-3">
-            <MapPin className="text-muted-foreground size-5 shrink-0" />
+            <IconMapPin size={20} className="text-muted-foreground shrink-0" />
             {mapsLink ? (
               <a
                 href={mapsLink}
@@ -77,7 +77,7 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
 
         {hasHosts && (
           <div className="flex items-center gap-3">
-            <Heart className="text-muted-foreground size-5 shrink-0" />
+            <IconHeart size={20} className="text-muted-foreground shrink-0" />
             <span>
               {[brideName, groomName].filter(Boolean).join(' ו')}
             </span>

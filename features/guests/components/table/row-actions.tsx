@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { IconDots, IconTrash } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,12 +28,12 @@ export function RowActions({ guest, onDelete }: RowActionsProps) {
           }}
         >
           <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
+          <IconDots size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
         <DropdownMenuItem variant="destructive" onClick={() => onDelete(guest)}>
-          <Trash2 className="mr-2 h-4 w-4" />
+          <IconTrash size={16} className="mr-2" />
           Delete guest
         </DropdownMenuItem>
       </DropdownMenuContent>

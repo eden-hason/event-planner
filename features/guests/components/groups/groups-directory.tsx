@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search } from 'lucide-react';
+import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { useState, useActionState, startTransition } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -183,7 +183,7 @@ export function GroupsDirectory({
       ) : (
         <div className="flex items-center justify-between gap-2">
           <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+            <IconSearch size={16} className="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400" />
             <Input
               placeholder="Search groups..."
               value={searchTerm}
@@ -218,7 +218,7 @@ export function GroupsDirectory({
           className="hover:border-primary hover:text-foreground border-muted-foreground/50 flex min-h-[275px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
         >
           <div className="rounded-full bg-white p-4">
-            <Plus className="text-primary h-6 w-6" />
+            <IconPlus size={24} className="text-primary" />
           </div>
           <span className="text-lg font-bold">Create new group</span>
           <span className="text-muted-foreground text-sm">

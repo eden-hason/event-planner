@@ -1,9 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { Mail, Upload, X, ImageIcon, Loader2 } from 'lucide-react';
+import {
+  IconLoader2,
+  IconMail,
+  IconPhoto,
+  IconUpload,
+  IconX,
+} from '@tabler/icons-react';
 import { useFormContext } from 'react-hook-form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   FileUpload,
   FileUploadDropzone,
@@ -27,7 +39,9 @@ export function EventInvitationCard({
 }: EventInvitationCardProps) {
   const form = useFormContext<EventDetailsUpdate>();
   const [files, setFiles] = React.useState<File[]>([]);
-  const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(existingUrl);
+  const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(
+    existingUrl,
+  );
   const [isRemoved, setIsRemoved] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
@@ -78,7 +92,9 @@ export function EventInvitationCard({
         }
 
         if (result.url) {
-          form.setValue('invitations.imageUrl', result.url, { shouldDirty: true });
+          form.setValue('invitations.imageUrl', result.url, {
+            shouldDirty: true,
+          });
         }
       } catch {
         setUploadError('Failed to upload image');
@@ -105,13 +121,14 @@ export function EventInvitationCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <Mail className="h-4 w-4 text-primary" />
+          <div className="bg-primary/10 rounded-md p-1.5">
+            <IconMail size={16} className="text-primary" />
           </div>
           Event Invitation
         </CardTitle>
         <CardDescription>
-          This image will be sent to guests as the first message they receive when invited to your event.
+          This image will be sent to guests as the first message they receive
+          when invited to your event.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
@@ -129,7 +146,7 @@ export function EventInvitationCard({
               {isUploading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/50">
                   <div className="flex flex-col items-center gap-2 text-white">
-                    <Loader2 className="size-8 animate-spin" />
+                    <IconLoader2 size={32} className="animate-spin" />
                     <span className="text-sm">Uploading...</span>
                   </div>
                 </div>
@@ -149,7 +166,7 @@ export function EventInvitationCard({
                       onClick={handleRemove}
                       disabled={isUploading}
                     >
-                      <X className="size-4" />
+                      <IconX size={16} />
                       <span className="sr-only">Remove image</span>
                     </Button>
                   </FileUploadItemDelete>
@@ -170,7 +187,7 @@ export function EventInvitationCard({
                     onClick={handleRemove}
                     disabled={isUploading}
                   >
-                    <X className="size-4" />
+                    <IconX size={16} />
                     <span className="sr-only">Remove image</span>
                   </Button>
                 </>
@@ -189,7 +206,7 @@ export function EventInvitationCard({
             >
               <div className="flex flex-col items-center justify-center gap-3 text-center">
                 <div className="rounded-full bg-slate-200/80 p-3">
-                  <ImageIcon className="size-6 text-slate-400" />
+                  <IconPhoto size={24} className="text-slate-400" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-slate-600">
@@ -203,14 +220,16 @@ export function EventInvitationCard({
                   size="sm"
                   className="mt-1 gap-1.5"
                 >
-                  <Upload className="size-3.5" />
+                  <IconUpload size={14} />
                   Upload
                 </Button>
               </div>
             </FileUploadDropzone>
           )}
         </FileUpload>
-        {uploadError && <p className="text-destructive mt-2 text-sm">{uploadError}</p>}
+        {uploadError && (
+          <p className="text-destructive mt-2 text-sm">{uploadError}</p>
+        )}
       </CardContent>
     </Card>
   );

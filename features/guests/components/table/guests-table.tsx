@@ -18,15 +18,15 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
-import { IconUsers } from '@tabler/icons-react';
 import {
-  Upload,
-  PlusIcon,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from 'lucide-react';
+  IconChevronLeft,
+  IconChevronRight,
+  IconChevronsLeft,
+  IconChevronsRight,
+  IconPlus,
+  IconUpload,
+  IconUsers,
+} from '@tabler/icons-react';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { useGuestsTable } from '@/features/guests/hooks';
 
@@ -98,11 +98,11 @@ export function GuestsTable({
           <EmptyContent>
             <div className="flex gap-2">
               <Button onClick={onUploadFile}>
-                <Upload className="size-4" />
+                <IconUpload size={16} />
                 Upload File
               </Button>
               <Button variant="outline" onClick={onAddGuest}>
-                <PlusIcon className="size-4" />
+                <IconPlus size={16} />
                 Add Guest
               </Button>
             </div>
@@ -193,7 +193,7 @@ export function GuestsTable({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronsLeft className="size-4" />
+              <IconChevronsLeft size={16} />
               <span className="sr-only">First page</span>
             </Button>
             <Button
@@ -203,7 +203,7 @@ export function GuestsTable({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronLeft className="size-4" />
+              <IconChevronLeft size={16} />
               <span className="sr-only">Previous page</span>
             </Button>
             <div className="flex items-center gap-1 px-2">
@@ -218,7 +218,7 @@ export function GuestsTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronRight className="size-4" />
+              <IconChevronRight size={16} />
               <span className="sr-only">Next page</span>
             </Button>
             <Button
@@ -228,7 +228,7 @@ export function GuestsTable({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              <ChevronsRight className="size-4" />
+              <IconChevronsRight size={16} />
               <span className="sr-only">Last page</span>
             </Button>
           </div>

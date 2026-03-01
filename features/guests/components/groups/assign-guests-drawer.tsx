@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import {
   Sheet,
@@ -144,7 +144,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <ArrowRight className="h-5 w-5" />
+              <IconArrowRight size={20} />
             </Button>
             <Button
               variant="secondary"
@@ -157,7 +157,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <ArrowLeft className="h-5 w-5" />
+              <IconArrowLeft size={20} />
             </Button>
           </div>
 

@@ -38,11 +38,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import * as TablerIcons from '@tabler/icons-react';
-import { Beer, type LucideIcon } from 'lucide-react';
 
-// Map of Lucide icons used in the group icon selector
-const LucideIcons: Record<string, LucideIcon> = {
-  LucideBeer: Beer,
+// Legacy icon map for group icons stored as 'LucideBeer' in the database
+const LegacyIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  LucideBeer: TablerIcons.IconBeer,
 };
 
 interface CreateGroupDialogProps {
@@ -182,9 +181,9 @@ export function CreateGroupDialog({
                         // Get the appropriate icon component
                         const renderIcon = () => {
                           if (isLucideIcon) {
-                            const LucideIcon = LucideIcons[iconName];
-                            return LucideIcon ? (
-                              <LucideIcon className="h-6 w-6" />
+                            const LegacyIcon = LegacyIcons[iconName];
+                            return LegacyIcon ? (
+                              <LegacyIcon className="h-6 w-6" />
                             ) : null;
                           }
                           const TablerIcon = TablerIcons[

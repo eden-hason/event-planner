@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { IconChartBar, IconFileDescription } from '@tabler/icons-react';
+
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -77,9 +79,11 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
         <Tabs defaultValue="details">
           <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
             <TabsTrigger value="details" className={tabTriggerClassName}>
+              <IconFileDescription size={16} />
               Schedule Details
             </TabsTrigger>
             <TabsTrigger value="delivery" className={tabTriggerClassName}>
+              <IconChartBar size={16} />
               Delivery Details
             </TabsTrigger>
           </TabsList>

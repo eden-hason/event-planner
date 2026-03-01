@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { Users } from 'lucide-react';
+import { IconUsers } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -23,7 +23,7 @@ export function CoupleCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <Users className="h-4 w-4 text-primary" />
+            <IconUsers size={16} className="text-primary" />
           </div>
           The Couple
         </CardTitle>

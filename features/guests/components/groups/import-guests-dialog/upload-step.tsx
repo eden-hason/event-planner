@@ -1,6 +1,6 @@
 'use client';
 
-import { Upload } from 'lucide-react';
+import { IconUpload } from '@tabler/icons-react';
 import { FileUpload, FileUploadDropzone } from '@/components/ui/file-upload';
 
 interface UploadStepProps {
@@ -20,7 +20,7 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
       <FileUploadDropzone className="min-h-[200px] cursor-pointer">
         <div className="flex flex-col items-center gap-3">
           <div className="bg-primary/10 text-primary rounded-full p-4">
-            <Upload className="h-8 w-8" />
+            <IconUpload size={32} />
           </div>
           <div className="text-center">
             <p className="font-medium">Upload your guests list</p>

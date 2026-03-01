@@ -1,4 +1,4 @@
-import { Activity } from 'lucide-react';
+import { IconActivity } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -44,7 +44,7 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <div className="rounded-md bg-primary/10 p-1.5">
-              <Activity className="h-4 w-4 text-primary" />
+              <IconActivity size={16} className="text-primary" />
             </div>
             Status
           </CardTitle>

@@ -1,12 +1,11 @@
 'use client';
 
-import { Beer, type LucideIcon } from 'lucide-react';
 import * as TablerIcons from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
-// Map of Lucide icons used in the group icon selector
-const LucideIcons: Record<string, LucideIcon> = {
-  LucideBeer: Beer,
+// Legacy icon map for group icons stored as 'LucideBeer' in the database
+const LegacyIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  LucideBeer: TablerIcons.IconBeer,
 };
 
 type GroupIconSize = 'sm' | 'md' | 'lg';
@@ -30,8 +29,8 @@ export function GroupIcon({ iconName, size = 'md', className }: GroupIconProps) 
   const iconClassName = cn(sizeClasses[size], className);
 
   if (isLucideIcon) {
-    const LucideIcon = LucideIcons[iconName];
-    return LucideIcon ? <LucideIcon className={iconClassName} /> : null;
+    const LegacyIcon = LegacyIcons[iconName];
+    return LegacyIcon ? <LegacyIcon className={iconClassName} /> : null;
   }
 
   const TablerIcon = TablerIcons[

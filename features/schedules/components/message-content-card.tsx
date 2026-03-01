@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageIcon, MessageSquare, TriangleAlert } from 'lucide-react';
+import { IconAlertTriangle, IconMessage, IconPhoto } from '@tabler/icons-react';
 
 import {
   Card,
@@ -57,7 +57,7 @@ export function MessageContentCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <MessageSquare className="h-4 w-4 text-primary" />
+            <IconMessage size={16} className="text-primary" />
           </div>
           Message Preview
         </CardTitle>
@@ -107,7 +107,7 @@ export function MessageContentCard({
                         />
                       ) : (
                         <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
-                          <ImageIcon className="h-7 w-7 text-zinc-400" />
+                          <IconPhoto size={28} className="text-zinc-400" />
                           <span className="text-[10px] text-zinc-400">
                             Image
                           </span>
@@ -142,7 +142,7 @@ export function MessageContentCard({
         </div>
         {hasMissingFields && (
           <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <IconAlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-500" />
             <span>
               Some event data is missing. Update your event details to see the
               full preview.

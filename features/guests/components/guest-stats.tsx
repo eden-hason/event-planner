@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Users, UserCheck, Clock, UserX } from 'lucide-react';
+import { IconClock, IconUserCheck, IconUsers, IconUserX } from '@tabler/icons-react';
 import { GuestWithGroupApp } from '../schemas';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +27,7 @@ export function GuestStats({ guests }: GuestStatsProps) {
         people: totalPeople,
         records: totalRecords,
         pct: 100,
-        icon: Users,
+        icon: IconUsers,
         iconColor: 'text-blue-500',
         barColor: 'bg-blue-500',
       },
@@ -36,7 +36,7 @@ export function GuestStats({ guests }: GuestStatsProps) {
         people: confirmed.reduce((s, g) => s + g.amount, 0),
         records: confirmed.length,
         pct: pct(confirmed.length),
-        icon: UserCheck,
+        icon: IconUserCheck,
         iconColor: 'text-green-500',
         barColor: 'bg-green-500',
       },
@@ -45,7 +45,7 @@ export function GuestStats({ guests }: GuestStatsProps) {
         people: pending.reduce((s, g) => s + g.amount, 0),
         records: pending.length,
         pct: pct(pending.length),
-        icon: Clock,
+        icon: IconClock,
         iconColor: 'text-amber-400',
         barColor: 'bg-amber-400',
       },
@@ -54,7 +54,7 @@ export function GuestStats({ guests }: GuestStatsProps) {
         people: declined.reduce((s, g) => s + g.amount, 0),
         records: declined.length,
         pct: pct(declined.length),
-        icon: UserX,
+        icon: IconUserX,
         iconColor: 'text-red-500',
         barColor: 'bg-red-500',
       },
@@ -73,7 +73,7 @@ export function GuestStats({ guests }: GuestStatsProps) {
           {/* Header: title + icon */}
           <div className="flex items-center justify-between">
             <span className="text-base font-bold">{label}</span>
-            <Icon className={cn('size-5', iconColor)} strokeWidth={2} />
+            <Icon size={20} className={iconColor} />
           </div>
 
           {/* Large number */}
