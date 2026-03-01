@@ -49,7 +49,7 @@ export async function getScheduleById(
       eventDate: string;
       location?: { name: string; coords?: { lat: number; lng: number } } | null;
       hostDetails?: Record<string, unknown> | null;
-      invitations?: { frontImageUrl?: string; backImageUrl?: string } | null;
+      invitations?: { imageUrl?: string } | null;
     };
   })
   | null
@@ -97,8 +97,7 @@ export async function getScheduleById(
     hostDetails: data.events.host_details ?? undefined,
     invitations: data.events.invitations
       ? {
-        frontImageUrl: data.events.invitations.front_image_url,
-        backImageUrl: data.events.invitations.back_image_url,
+        imageUrl: data.events.invitations.image_url,
       }
       : undefined,
   };

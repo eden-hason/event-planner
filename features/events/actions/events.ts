@@ -211,24 +211,9 @@ export async function createOnboardingEvent(
 function processInvitations(invitations: Invitations): Invitations {
   const result: Invitations = {};
 
-  if (invitations.frontImageUrl !== undefined) {
-    if (invitations.frontImageUrl === '') {
-      // Empty string means the image was removed
-      result.frontImageUrl = undefined;
-    } else {
-      // URL is already uploaded from client, pass through
-      result.frontImageUrl = invitations.frontImageUrl;
-    }
-  }
-
-  if (invitations.backImageUrl !== undefined) {
-    if (invitations.backImageUrl === '') {
-      // Empty string means the image was removed
-      result.backImageUrl = undefined;
-    } else {
-      // URL is already uploaded from client, pass through
-      result.backImageUrl = invitations.backImageUrl;
-    }
+  if (invitations.imageUrl !== undefined) {
+    // Empty string means the image was removed
+    result.imageUrl = invitations.imageUrl === '' ? undefined : invitations.imageUrl;
   }
 
   return result;
@@ -325,10 +310,9 @@ export async function updateEventDetails(
       };
     }
 
-    // Store old URLs for potential cleanup after successful update
+    // Store old URL for potential cleanup after successful update
     const existingInvitations = event.invitations as InvitationsDb | null;
-    const oldFrontImageUrl = existingInvitations?.front_image_url ?? null;
-    const oldBackImageUrl = existingInvitations?.back_image_url ?? null;
+    const oldImageUrl = existingInvitations?.image_url ?? null;
 
     // Process invitations - images are already uploaded from client
     const dataToTransform = { ...validatedData };
@@ -354,27 +338,10 @@ export async function updateEventDetails(
       };
     }
 
-    // Clean up removed images from storage after successful database update
-    const imagesToDelete: string[] = [];
-
-    // Check if front image was removed (old URL exists, new value is being cleared)
-    if (oldFrontImageUrl && validatedData.invitations?.frontImageUrl === '') {
-      imagesToDelete.push(oldFrontImageUrl);
-    }
-
-    // Check if back image was removed (old URL exists, new value is being cleared)
-    if (oldBackImageUrl && validatedData.invitations?.backImageUrl === '') {
-      imagesToDelete.push(oldBackImageUrl);
-    }
-
-    // Delete removed images in parallel
-    if (imagesToDelete.length > 0) {
-      await Promise.all(
-        imagesToDelete.map((url) =>
-          deleteInvitationImage(url).catch((err) =>
-            console.error('Failed to delete image from storage:', url, err),
-          ),
-        ),
+    // Clean up removed image from storage after successful database update
+    if (oldImageUrl && validatedData.invitations?.imageUrl === '') {
+      deleteInvitationImage(oldImageUrl).catch((err) =>
+        console.error('Failed to delete image from storage:', oldImageUrl, err),
       );
     }
 

@@ -79,8 +79,7 @@ export function eventDetailsUpdateToDb(
   // invitations maps to invitations with snake_case conversion
   if (data.invitations !== undefined) {
     dbData.invitations = {
-      front_image_url: data.invitations.frontImageUrl,
-      back_image_url: data.invitations.backImageUrl,
+      image_url: data.invitations.imageUrl,
     };
   }
 

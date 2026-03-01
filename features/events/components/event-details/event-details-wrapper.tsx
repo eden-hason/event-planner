@@ -60,8 +60,7 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
         },
       },
       invitations: {
-        frontImageUrl: event.invitations?.frontImageUrl || undefined,
-        backImageUrl: event.invitations?.backImageUrl || undefined,
+        imageUrl: event.invitations?.imageUrl || undefined,
       },
       guestExperience: {
         dietaryOptions: event.guestExperience?.dietaryOptions ?? false,
@@ -140,8 +139,7 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           <div className="flex flex-col gap-6 lg:col-span-5">
             <EventInvitationCard
               eventId={event.id}
-              frontImageUrl={event.invitations?.frontImageUrl}
-              backImageUrl={event.invitations?.backImageUrl}
+              imageUrl={event.invitations?.imageUrl}
             />
             <GuestExperienceCard />
             <DigitalGiftCard />

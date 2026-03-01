@@ -72,7 +72,7 @@ export type HeaderParameterType = z.infer<typeof HeaderParameterTypeSchema>;
  */
 export const HeaderPlaceholderConfigSchema = z.object({
   type: HeaderParameterTypeSchema.describe('Media type for the header'),
-  source: z.string().describe('Dot-notation path to media URL (e.g., "event.invitations.frontImageUrl")'),
+  source: z.string().describe('Dot-notation path to media URL (e.g., "event.invitations.imageUrl")'),
   fallback: z.string().nullable().default(null).describe('Fallback URL if source is null/undefined (null = skip header)'),
   filename: z.string().optional().describe('Filename for document type'),
 });

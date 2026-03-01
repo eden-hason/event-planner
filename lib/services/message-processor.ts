@@ -129,8 +129,7 @@ async function processSingleSchedule(
     hostDetails: (rawEvent.host_details as Record<string, unknown> | null) ?? undefined,
     invitations: rawEvent.invitations
       ? {
-          frontImageUrl: (rawEvent.invitations as Record<string, string>).front_image_url,
-          backImageUrl: (rawEvent.invitations as Record<string, string>).back_image_url,
+          imageUrl: (rawEvent.invitations as Record<string, string>).image_url,
         }
       : undefined,
   };
