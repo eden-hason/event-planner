@@ -73,7 +73,7 @@ export function SideFilter({
             className="hover:bg-accent mt-1 flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm font-medium transition-colors"
           >
             {isAllSelected ? (
-              <Check className="h-4 w-4 shrink-0" />
+              <IconCheck size={16} className="shrink-0" />
             ) : (
               <div className="h-4 w-4 shrink-0" />
             )}
