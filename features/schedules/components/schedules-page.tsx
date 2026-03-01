@@ -1,9 +1,11 @@
 import { type EventApp } from '@/features/events/schemas';
+import { getEventGuests } from '@/features/guests/queries/guests';
 import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
 import {
   ACTION_TYPE_LABELS,
   ACTION_TYPES,
   type ActionType,
+  type GuestStats,
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
@@ -42,7 +44,17 @@ export async function SchedulesPage({
     .filter((id): id is string => id !== null && id !== undefined);
 
   const uniqueTemplateIds = Array.from(new Set(templateIds));
-  const templateMap = await getWhatsAppTemplatesByIds(uniqueTemplateIds);
+  const [templateMap, guests] = await Promise.all([
+    getWhatsAppTemplatesByIds(uniqueTemplateIds),
+    getEventGuests(eventId),
+  ]);
+
+  const guestStats: GuestStats = {
+    total: guests.length,
+    confirmed: guests.filter((g) => g.rsvpStatus === 'confirmed').length,
+    pending: guests.filter((g) => g.rsvpStatus === 'pending').length,
+    declined: guests.filter((g) => g.rsvpStatus === 'declined').length,
+  };
 
   // Group schedules by actionType (multiple allowed for 'confirmation')
   const schedulesByActionType: Partial<Record<ActionType, ScheduleWithTemplate[]>> = {};
@@ -87,6 +99,7 @@ export async function SchedulesPage({
           template={template}
           eventDate={eventDate}
           event={event}
+          guestStats={guestStats}
         />
       ),
       delivery: <SchedulePerformanceCard scheduleId={schedule.id} />,

@@ -1,20 +1,16 @@
 'use client';
 
-import { ImageIcon, Send, TriangleAlert } from 'lucide-react';
-import { toast } from 'sonner';
+import { ImageIcon, MessageSquare, TriangleAlert } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 
 import { type EventApp } from '@/features/events/schemas';
-import { sendWhatsAppTestMessage } from '../actions';
 import type { WhatsAppTemplateApp } from '../schemas';
 import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 
@@ -56,23 +52,15 @@ export function MessageContentCard({
     ? resolveSourcePath(headerPlaceholder.source, event)
     : null;
 
-  const handleSendTest = () => {
-    const promise = sendWhatsAppTestMessage().then((result) => {
-      if (!result.success) throw new Error(result.message);
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: 'Sending test message...',
-      success: (data) => data.message,
-      error: (err) => (err instanceof Error ? err.message : 'Failed to send.'),
-    });
-  };
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Message Preview</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <MessageSquare className="h-4 w-4 text-primary" />
+          </div>
+          Message Preview
+        </CardTitle>
         <CardDescription>
           The message guests will receive for this schedule.
         </CardDescription>
@@ -162,12 +150,6 @@ export function MessageContentCard({
           </div>
         )}
       </CardContent>
-      <CardFooter>
-        <Button variant="outline" onClick={handleSendTest}>
-          <Send className="h-4 w-4" />
-          Send Test to Me
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

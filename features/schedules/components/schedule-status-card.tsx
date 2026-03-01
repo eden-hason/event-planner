@@ -1,3 +1,6 @@
+import { Activity } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -17,19 +20,19 @@ const STATUS_CONFIG: Record<ScheduleStatus, StatusConfig> = {
   sent: {
     description: 'Messages have been sent to eligible guests.',
     label: 'Sent',
-    className: 'bg-blue-100 text-blue-700',
+    className: 'bg-blue-100 text-blue-800 border-blue-200',
   },
   cancelled: {
     description: 'This schedule has been cancelled.',
     label: 'Cancelled',
-    className: 'bg-red-100 text-red-700',
+    className: 'bg-red-100 text-red-800 border-red-200',
   },
 };
 
 const PENDING_CONFIG: StatusConfig = {
   description: 'Messages will be sent on the scheduled date.',
   label: 'Pending',
-  className: 'bg-amber-100 text-amber-700',
+  className: 'bg-amber-100 text-amber-800 border-amber-200',
 };
 
 export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
@@ -38,17 +41,19 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Status</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Schedule Status</span>
-          <span
-            className={`rounded-sm px-2 py-0.5 text-xs font-medium ${config.className}`}
-          >
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <div className="rounded-md bg-primary/10 p-1.5">
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
+            Status
+          </CardTitle>
+          <Badge variant="secondary" className={config.className}>
             {config.label}
-          </span>
+          </Badge>
         </div>
+      </CardHeader>
+      <CardContent>
         <p className="text-muted-foreground text-sm">{config.description}</p>
       </CardContent>
     </Card>
