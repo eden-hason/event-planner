@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { CalendarDays } from 'lucide-react';
+import { IconCalendarEvent } from '@tabler/icons-react';
 import {
   Card,
   CardContent,
@@ -44,7 +44,7 @@ export function DateTimeCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <CalendarDays className="h-4 w-4 text-primary" />
+            <IconCalendarEvent size={16} className="text-primary" />
           </div>
           Date & Time
         </CardTitle>

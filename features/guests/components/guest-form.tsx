@@ -32,14 +32,14 @@ import {
 } from '@/features/guests/schemas';
 import { GroupIcon } from './groups';
 import {
-  Contact,
-  LayoutList,
-  Utensils,
-  StickyNote,
-  Minus,
-  Plus,
-  Check,
-} from 'lucide-react';
+  IconAddressBook,
+  IconCheck,
+  IconLayoutList,
+  IconMinus,
+  IconNote,
+  IconPlus,
+  IconToolsKitchen,
+} from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { DIETARY_PRESETS } from '@/features/guests/utils';
 
@@ -189,7 +189,7 @@ export function GuestForm({
         {/* Card 1: Contact Information */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <Contact className="size-4 text-muted-foreground" />
+            <IconAddressBook size={16} className="text-muted-foreground" />
             Contact Information
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -246,7 +246,7 @@ export function GuestForm({
                         )
                       }
                     >
-                      <Minus className="size-4" />
+                      <IconMinus size={16} />
                     </Button>
                     <div className="flex-1 text-center">
                       <span className="text-lg font-semibold">
@@ -267,7 +267,7 @@ export function GuestForm({
                         })
                       }
                     >
-                      <Plus className="size-4" />
+                      <IconPlus size={16} />
                     </Button>
                   </div>
                 </FormControl>
@@ -280,7 +280,7 @@ export function GuestForm({
         {/* Card 2: Event Details */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <LayoutList className="size-4 text-muted-foreground" />
+            <IconLayoutList size={16} className="text-muted-foreground" />
             Event Details
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -361,7 +361,7 @@ export function GuestForm({
         {showDietary && (
           <div className="rounded-lg border bg-card p-5 space-y-4">
             <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-              <Utensils className="size-4 text-muted-foreground" />
+              <IconToolsKitchen size={16} className="text-muted-foreground" />
               Dietary Restrictions
             </h3>
             <FormField
@@ -385,7 +385,7 @@ export function GuestForm({
                                 : 'bg-muted text-muted-foreground hover:bg-muted/80',
                             )}
                           >
-                            {isActive && <Check className="size-3" />}
+                            {isActive && <IconCheck size={12} />}
                             {preset.label}
                           </button>
                         );
@@ -402,7 +402,7 @@ export function GuestForm({
         {/* Card 4: Notes */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-            <StickyNote className="size-4 text-muted-foreground" />
+            <IconNote size={16} className="text-muted-foreground" />
             Notes
           </h3>
           <FormField

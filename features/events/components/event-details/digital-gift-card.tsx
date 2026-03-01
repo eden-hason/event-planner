@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { Gift } from 'lucide-react';
+import { IconGift } from '@tabler/icons-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ export function DigitalGiftCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <Gift className="h-4 w-4 text-primary" />
+            <IconGift size={16} className="text-primary" />
           </div>
           Digital Gift
         </CardTitle>

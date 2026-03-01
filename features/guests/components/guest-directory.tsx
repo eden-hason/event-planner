@@ -9,7 +9,7 @@ import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
 import { toast } from 'sonner';
-import { Upload } from 'lucide-react';
+import { IconUpload } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -107,7 +107,7 @@ export function GuestDirectory({
             onClick={() => setImportDialogOpen(true)}
             className="gap-2"
           >
-            <Upload className="h-4 w-4" />
+            <IconUpload size={16} />
             Import CSV
           </Button>
         </div>

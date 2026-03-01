@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, X, Loader2 } from 'lucide-react';
+import { IconCheck, IconLoader2, IconX } from '@tabler/icons-react';
 import { submitConfirmation } from '../actions';
 import { ConfirmationSuccess } from './confirmation-success';
 import type { ConfirmationPageData } from '../schemas';
@@ -89,7 +89,7 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
               className="h-16 text-lg"
               onClick={() => setRsvpStatus('confirmed')}
             >
-              <Check className="size-5" />
+              <IconCheck size={20} />
               מגיע/ה
             </Button>
             <Button
@@ -99,7 +99,7 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
               className="h-16 text-lg"
               onClick={() => setRsvpStatus('declined')}
             >
-              <X className="size-5" />
+              <IconX size={20} />
               לא מגיע/ה
             </Button>
           </div>
@@ -165,7 +165,7 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
           >
             {isPending ? (
               <>
-                <Loader2 className="size-5 animate-spin" />
+                <IconLoader2 size={20} className="animate-spin" />
                 שולח...
               </>
             ) : (

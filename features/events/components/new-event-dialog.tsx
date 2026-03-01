@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -126,7 +126,7 @@ export function NewEventDialog({
       onClick={() => setOpen(true)}
     >
       <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-        <Plus className="size-4" />
+        <IconPlus size={16} />
       </div>
       <div className="text-muted-foreground font-medium">New Event</div>
     </button>

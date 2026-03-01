@@ -1,7 +1,7 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { IconSearch } from '@tabler/icons-react';
 
 interface GuestSearchProps {
   searchTerm: string;
@@ -15,7 +15,7 @@ export function GuestSearch({ searchTerm, onSearchChange }: GuestSearchProps) {
 
   return (
     <div className="relative">
-      <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+      <IconSearch size={16} className="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400" />
       <Input
         placeholder="Search guests..."
         value={searchTerm}

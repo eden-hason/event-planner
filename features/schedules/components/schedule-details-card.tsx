@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, CalendarDays } from 'lucide-react';
+import { IconCalendarClock, IconCalendarEvent } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -114,7 +114,7 @@ export function ScheduleDetailsCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <CalendarClock className="h-4 w-4 text-primary" />
+            <IconCalendarClock size={16} className="text-primary" />
           </div>
           Schedule Timing
         </CardTitle>
@@ -150,7 +150,7 @@ export function ScheduleDetailsCard({
               Scheduled date
             </Label>
             <div className="flex items-center gap-2 mt-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
-              <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+              <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
               <span>{resolvedDateDisplay}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">Derived from the event date</p>

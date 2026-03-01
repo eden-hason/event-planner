@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeft, ArrowRight, PartyPopper } from 'lucide-react';
+import { IconArrowLeft, IconArrowRight, IconConfetti } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -96,7 +96,7 @@ export function OnboardingWizard() {
             <div className="border-primary/50 absolute inset-0 m-auto size-28 rounded-full border" />
             {/* Center circle with icon */}
             <div className="bg-card border-primary relative z-10 flex size-16 items-center justify-center rounded-full border shadow-sm">
-              <PartyPopper className="text-primary h-7 w-7" />
+              <IconConfetti size={28} className="text-primary" />
             </div>
 
             {/* Floating decorative elements */}
@@ -134,7 +134,7 @@ export function OnboardingWizard() {
                 onClick={() => router.push(`/app/${createdEventId}/dashboard`)}
                 className="w-full gap-2"
               >
-                Go to Dashboard <ArrowRight className="h-4 w-4" />
+                Go to Dashboard <IconArrowRight size={16} />
               </Button>
               <Button
                 variant="outline"
@@ -163,7 +163,7 @@ export function OnboardingWizard() {
                 }
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
               >
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
+                <IconArrowLeft size={14} /> Back
               </button>
             )}
             <span

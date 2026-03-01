@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ChevronDown, Check } from 'lucide-react';
+import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { GroupInfo } from '@/features/guests/schemas';
 
 interface GroupFilterProps {
@@ -38,7 +38,7 @@ export function GroupFilter({
             : selectedGroupIds.length === 1
               ? selectedGroupNames[0]
               : `${selectedGroupIds.length} groups selected`}
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <IconChevronDown size={16} className="ml-2 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
@@ -53,7 +53,7 @@ export function GroupFilter({
                   className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm transition-colors"
                 >
                   {isSelected ? (
-                    <Check className="h-4 w-4 shrink-0" />
+                    <IconCheck size={16} className="shrink-0" />
                   ) : (
                     <div className="h-4 w-4 shrink-0" />
                   )}
@@ -67,7 +67,7 @@ export function GroupFilter({
             className="hover:bg-accent mt-1 flex cursor-pointer items-center gap-2 rounded-sm p-2 text-sm font-medium transition-colors"
           >
             {isAllSelected ? (
-              <Check className="h-4 w-4 shrink-0" />
+              <IconCheck size={16} className="shrink-0" />
             ) : (
               <div className="h-4 w-4 shrink-0" />
             )}

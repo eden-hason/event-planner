@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { UtensilsCrossed } from 'lucide-react';
+import { IconToolsKitchen2 } from '@tabler/icons-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,7 +20,7 @@ export function GuestExperienceCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">
-            <UtensilsCrossed className="h-4 w-4 text-primary" />
+            <IconToolsKitchen2 size={16} className="text-primary" />
           </div>
           Guest Experience
         </CardTitle>

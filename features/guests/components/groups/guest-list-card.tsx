@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { IconSearch } from '@tabler/icons-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -81,7 +81,7 @@ export function GuestListCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4 px-0 min-h-0 overflow-hidden">
         <div className="relative px-6">
-          <Search className="text-muted-foreground absolute top-1/2 left-9 h-4 w-4 -translate-y-1/2" />
+          <IconSearch size={16} className="text-muted-foreground absolute top-1/2 left-9 -translate-y-1/2" />
           <Input
             placeholder="Search guests..."
             value={searchTerm}

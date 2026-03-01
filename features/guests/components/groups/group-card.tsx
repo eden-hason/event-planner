@@ -1,6 +1,5 @@
 'use client';
 
-import { EllipsisVertical, Trash2, SquareMousePointer } from 'lucide-react';
 import {
   Card,
   CardAction,
@@ -21,7 +20,7 @@ import {
 import { GroupWithGuestsApp } from '../../schemas';
 import { CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { IconUserFilled, IconUserPlus } from '@tabler/icons-react';
+import { IconDotsVertical, IconPointer, IconTrash, IconUserFilled, IconUserPlus } from '@tabler/icons-react';
 import { GroupIcon } from './group-icon';
 
 function getInitials(name: string): string {
@@ -86,16 +85,16 @@ export function GroupCard({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
                   <span className="sr-only">Open menu</span>
-                  <EllipsisVertical className="h-4 w-4" />
+                  <IconDotsVertical size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={onSelectGroup}>
-                  <SquareMousePointer className="mr-2 h-4 w-4" />
+                  <IconPointer size={16} className="mr-2" />
                   Select
                 </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onClick={onDeleteGroup}>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <IconTrash size={16} className="mr-2" />
                   Delete group
                 </DropdownMenuItem>
               </DropdownMenuContent>
