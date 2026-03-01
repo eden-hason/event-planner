@@ -10,8 +10,7 @@ export type LocationCoords = z.infer<typeof LocationCoordsSchema>;
 
 // --- Invitations Schema ---
 export const InvitationsSchema = z.object({
-  frontImageUrl: z.string().optional(),
-  backImageUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 export type Invitations = z.infer<typeof InvitationsSchema>;
@@ -145,8 +144,7 @@ export type EventStatus = EventApp['status'];
 
 // DB-level invitations schema (snake_case)
 export const InvitationsDbSchema = z.object({
-  front_image_url: z.string().optional(),
-  back_image_url: z.string().optional(),
+  image_url: z.string().optional(),
 });
 
 export type InvitationsDb = z.infer<typeof InvitationsDbSchema>;
@@ -213,8 +211,7 @@ export function dbToAppTransformer(dbData: {
   // Transform invitations from snake_case to camelCase
   const invitations: Invitations | undefined = dbData.invitations
     ? {
-      frontImageUrl: dbData.invitations.front_image_url,
-      backImageUrl: dbData.invitations.back_image_url,
+      imageUrl: dbData.invitations.image_url,
     }
     : undefined;
 
@@ -265,8 +262,7 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
   // Transform invitations from snake_case to camelCase
   const invitations: Invitations | undefined = dbData.invitations
     ? {
-      frontImageUrl: dbData.invitations.front_image_url,
-      backImageUrl: dbData.invitations.back_image_url,
+      imageUrl: dbData.invitations.image_url,
     }
     : undefined;
 

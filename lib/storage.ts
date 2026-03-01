@@ -55,18 +55,15 @@ export async function uploadToStorage(
  *
  * @param file - The image file to upload
  * @param eventId - The event ID to organize uploads
- * @param type - 'front' or 'back' for the invitation side
  * @returns The public URL of the uploaded image or an error
  */
 export async function uploadInvitationImage(
   file: File,
   eventId: string,
-  type: 'front' | 'back',
 ): Promise<UploadResult> {
-  // Generate unique filename
   const extension = file.name.split('.').pop() || 'png';
   const timestamp = Date.now();
-  const path = `${eventId}/${type}-${timestamp}.${extension}`;
+  const path = `${eventId}/invitation-${timestamp}.${extension}`;
 
   return uploadToStorage(file, 'invitations', path);
 }
