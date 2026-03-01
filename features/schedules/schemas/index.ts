@@ -13,25 +13,19 @@ export const EVENT_TYPES = [
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
-// Message types (must match DB enum message_type)
-export const MESSAGE_TYPES = [
+// Action types for schedules (stored in DB)
+export const ACTION_TYPES = [
   'initial_invitation',
-  'first_confirmation',
-  'second_confirmation',
+  'confirmation',
   'event_reminder',
-  'thank_you',
-  'confirmation_casual_v1_he',
+  'post_event',
 ] as const;
-export type MessageType = (typeof MESSAGE_TYPES)[number];
-
-// Human-readable labels for message types
-export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
-  initial_invitation: 'Initial Invite',
-  first_confirmation: 'First Confirmation',
-  second_confirmation: 'Second Confirmation',
+export type ActionType = (typeof ACTION_TYPES)[number];
+export const ACTION_TYPE_LABELS: Record<ActionType, string> = {
+  initial_invitation: 'Initial Invitation',
+  confirmation: 'Confirmation',
   event_reminder: 'Event Reminder',
-  thank_you: 'Thank You Note',
-  confirmation_casual_v1_he: 'Confirmation',
+  post_event: 'Post Event',
 };
 
 // CTA (Call to Action) types
@@ -47,13 +41,8 @@ export const CTA_TYPES = [
 ] as const;
 export type CtaType = (typeof CTA_TYPES)[number];
 
-// Schedule status
-export const SCHEDULE_STATUSES = [
-  'draft',
-  'scheduled',
-  'sent',
-  'cancelled',
-] as const;
+// Schedule completion status (set after execution)
+export const SCHEDULE_STATUSES = ['sent', 'cancelled'] as const;
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
 
 // Delivery methods
@@ -83,114 +72,6 @@ export const INTERACTION_TYPES = [
 export type InteractionType = (typeof INTERACTION_TYPES)[number];
 
 // =====================================================
-// MESSAGE TEMPLATES
-// =====================================================
-
-// --- App-Level Schema (camelCase) ---
-export const MessageTemplateAppSchema = z.object({
-  id: z.uuid(),
-  eventType: z.enum(EVENT_TYPES),
-  messageType: z.enum(MESSAGE_TYPES),
-  name: z.string().max(255),
-  subject: z.string().max(500).nullable().optional(),
-  bodyTemplate: z.string(),
-  whatsappTemplate: z.string().nullable().optional(),
-  ctaText: z.string().max(100).nullable().optional(),
-  ctaType: z.enum(CTA_TYPES).default('none'),
-  defaultDaysOffset: z.number().int(),
-  defaultTime: z.string(),
-  isSystem: z.boolean().default(false),
-  isDefault: z.boolean().default(false),
-  createdBy: z.uuid().nullable().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export type MessageTemplateApp = z.infer<typeof MessageTemplateAppSchema>;
-
-// --- DB-Level Schema (snake_case) ---
-export const MessageTemplateDbSchema = z.object({
-  id: z.uuid(),
-  event_type: z.enum(EVENT_TYPES),
-  message_type: z.enum(MESSAGE_TYPES),
-  name: z.string().max(255),
-  subject: z.string().max(500).nullable(),
-  body_template: z.string(),
-  whatsapp_template: z.string().nullable(),
-  cta_text: z.string().max(100).nullable(),
-  cta_type: z.enum(CTA_TYPES).default('none'),
-  default_days_offset: z.number().int(),
-  default_time: z.string(),
-  is_system: z.boolean().default(false),
-  is_default: z.boolean().default(false),
-  created_by: z.uuid().nullable(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-export type MessageTemplateDb = z.infer<typeof MessageTemplateDbSchema>;
-
-// --- DB to App Transformer ---
-export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
-  (db) => ({
-    id: db.id,
-    eventType: db.event_type,
-    messageType: db.message_type,
-    name: db.name,
-    subject: db.subject ?? undefined,
-    bodyTemplate: db.body_template,
-    whatsappTemplate: db.whatsapp_template ?? undefined,
-    ctaText: db.cta_text ?? undefined,
-    ctaType: db.cta_type,
-    defaultDaysOffset: db.default_days_offset,
-    defaultTime: db.default_time,
-    isSystem: db.is_system,
-    isDefault: db.is_default,
-    createdBy: db.created_by ?? undefined,
-    createdAt: db.created_at,
-    updatedAt: db.updated_at,
-  }),
-);
-
-// --- Upsert Schema ---
-export const MessageTemplateUpsertSchema = z.object({
-  id: z.uuid().optional(),
-  eventType: z.enum(EVENT_TYPES),
-  messageType: z.enum(MESSAGE_TYPES),
-  name: z.string().min(1, 'Name is required').max(255),
-  subject: z.string().max(500).nullable().optional(),
-  bodyTemplate: z.string().min(1, 'Body template is required'),
-  whatsappTemplate: z.string().nullable().optional(),
-  ctaText: z.string().max(100).nullable().optional(),
-  ctaType: z.enum(CTA_TYPES).optional(),
-  defaultDaysOffset: z.number().int(),
-  defaultTime: z.string(),
-});
-
-export type MessageTemplateUpsert = z.infer<typeof MessageTemplateUpsertSchema>;
-
-// --- App to DB Transformer ---
-export const MessageTemplateAppToDbSchema =
-  MessageTemplateUpsertSchema.transform((app) => {
-    const dbData: Record<string, unknown> = {};
-
-    if (app.id !== undefined) dbData.id = app.id;
-    dbData.event_type = app.eventType;
-    dbData.message_type = app.messageType;
-    dbData.name = app.name;
-    if (app.subject !== undefined) dbData.subject = app.subject ?? null;
-    dbData.body_template = app.bodyTemplate;
-    if (app.whatsappTemplate !== undefined)
-      dbData.whatsapp_template = app.whatsappTemplate ?? null;
-    if (app.ctaText !== undefined) dbData.cta_text = app.ctaText ?? null;
-    if (app.ctaType !== undefined) dbData.cta_type = app.ctaType;
-    dbData.default_days_offset = app.defaultDaysOffset;
-    dbData.default_time = app.defaultTime;
-
-    return dbData;
-  });
-
-// =====================================================
 // SCHEDULES
 // =====================================================
 
@@ -210,12 +91,12 @@ export const ScheduleAppSchema = z.object({
   id: z.uuid(),
   eventId: z.uuid(),
   scheduledDate: z.string(),
-  status: z.enum(SCHEDULE_STATUSES).default('draft'),
+  status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   sentAt: z.string().nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
-  allowDisable: z.boolean().default(false),
+  actionType: z.enum(ACTION_TYPES),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -227,12 +108,12 @@ export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
   scheduled_date: z.string(),
-  status: z.enum(SCHEDULE_STATUSES).default('draft'),
+  status: z.enum(SCHEDULE_STATUSES).nullable(),
   sent_at: z.string().nullable(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   template_id: z.uuid().nullable(),
   delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
-  allow_disable: z.boolean().default(false),
+  action_type: z.enum(ACTION_TYPES),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -249,7 +130,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   targetStatus: db.target_status ?? null,
   templateId: db.template_id ?? undefined,
   deliveryMethod: db.delivery_method,
-  allowDisable: db.allow_disable,
+  actionType: db.action_type,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));
@@ -259,11 +140,11 @@ export const ScheduleUpsertSchema = z.object({
   id: z.uuid().optional(),
   eventId: z.uuid(),
   scheduledDate: z.string(),
-  status: z.enum(SCHEDULE_STATUSES).optional(),
+  status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
   templateId: z.uuid().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
-  allowDisable: z.boolean().optional(),
+  actionType: z.enum(ACTION_TYPES),
 });
 
 export type ScheduleUpsert = z.infer<typeof ScheduleUpsertSchema>;
@@ -280,7 +161,7 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   if (app.templateId !== undefined) dbData.template_id = app.templateId ?? null;
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;
-  if (app.allowDisable !== undefined) dbData.allow_disable = app.allowDisable;
+  dbData.action_type = app.actionType;
 
   return dbData;
 });

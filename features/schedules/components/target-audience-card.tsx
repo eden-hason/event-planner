@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -40,11 +39,10 @@ export function TargetAudienceCard({ targetStatus }: TargetAudienceCardProps) {
           <Users className="h-5 w-5 text-primary" />
           Target Audience
         </CardTitle>
-        <CardDescription>Who will receive this message</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary" className={config.className}>
+        <div className="flex flex-col gap-2">
+          <Badge variant="secondary" className={`w-fit ${config.className}`}>
             {config.label}
           </Badge>
           <p className="text-sm text-muted-foreground">{config.description}</p>
