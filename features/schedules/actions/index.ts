@@ -5,8 +5,6 @@ export {
   type UpdateScheduledDateState,
 } from './schedules';
 export {
-  sendWhatsAppTestMessage,
-  type SendWhatsAppTestState,
   sendWhatsAppTemplateMessage,
   type SendWhatsAppTemplateResult,
 } from './whatsapp';

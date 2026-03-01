@@ -7,8 +7,8 @@ import { CalendarClock, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardAction,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -46,8 +46,8 @@ export function ScheduleDetailsCard({
 }: ScheduleDetailsCardProps) {
   const [isSaving, startSaveTransition] = useTransition();
 
-  const initialDateValue = schedule?.scheduledDate ?? '';
-  const [scheduledDate, setScheduledDate] = useState(initialDateValue);
+  const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
+  const [scheduledDate, setScheduledDate] = useState(schedule?.scheduledDate ?? '');
 
   const daysBeforeEvent = useMemo(() => {
     if (!eventDate || !scheduledDate) return 0;
@@ -63,7 +63,7 @@ export function ScheduleDetailsCard({
     });
   }, [scheduledDate]);
 
-  const isDirty = scheduledDate !== initialDateValue;
+  const isDirty = scheduledDate !== savedDate;
 
   const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseInt(e.target.value, 10);
@@ -100,8 +100,9 @@ export function ScheduleDetailsCard({
 
       try {
         await promise;
+        setSavedDate(scheduledDate);
       } catch {
-        // Revalidation will reset on error
+        // error toast handled above
       }
     });
   };
@@ -112,9 +113,16 @@ export function ScheduleDetailsCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CalendarClock className="h-5 w-5 text-primary" />
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <CalendarClock className="h-4 w-4 text-primary" />
+          </div>
           Schedule Timing
         </CardTitle>
+        <CardAction className={isDirty ? undefined : 'invisible'}>
+          <Button onClick={handleSave} disabled={isSaving || !isDirty} size="sm">
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-6">
@@ -150,13 +158,6 @@ export function ScheduleDetailsCard({
         </div>
       </CardContent>
 
-      {isDirty && (
-        <CardFooter className="border-t">
-          <Button onClick={handleSave} disabled={isSaving} size="sm">
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }
