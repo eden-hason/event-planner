@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ScheduleDbToAppSchema } from '@/features/schedules/schemas';
-import { WhatsAppTemplateDbToAppSchema } from '@/features/schedules/schemas/whatsapp-templates';
+import { getTemplateByKey } from '@/features/schedules/config/whatsapp-templates';
 import {
   DbToAppTransformerSchema,
   GroupDbToAppTransformerSchema,
@@ -151,24 +151,20 @@ async function processSingleSchedule(
   }
 
   // 3. Validate template is assigned
-  if (!schedule.templateId) {
+  if (!schedule.templateKey) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
     throw new Error('No template assigned to schedule');
   }
 
-  // 4. Fetch WhatsApp template
-  const { data: rawTemplate, error: templateError } = await supabase
-    .from('whatsapp_templates')
-    .select('*')
-    .eq('id', schedule.templateId)
-    .single();
+  // 4. Resolve template from local config
+  const templateConfig = getTemplateByKey(schedule.templateKey);
 
-  if (templateError || !rawTemplate) {
+  if (!templateConfig) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
     throw new Error('Template not found');
   }
 
-  const template = WhatsAppTemplateDbToAppSchema.parse(rawTemplate);
+  const template = templateConfig.whatsapp;
 
   // 5. Fetch all event guests
   const { data: rawGuests, error: guestsError } = await supabase
