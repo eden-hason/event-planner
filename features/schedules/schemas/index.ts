@@ -36,7 +36,7 @@ export const ACTION_TYPE_LABELS: Record<ActionType, string> = {
   initial_invitation: 'Initial Invitation',
   confirmation: 'Confirmation',
   event_reminder: 'Event Reminder',
-  post_event: 'Post Event',
+  post_event: 'Thank You',
 };
 
 // CTA (Call to Action) types
@@ -169,7 +169,8 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   dbData.scheduled_date = app.scheduledDate;
   if (app.status !== undefined) dbData.status = app.status;
   if (app.targetStatus !== undefined) dbData.target_status = app.targetStatus;
-  if (app.templateKey !== undefined) dbData.template_key = app.templateKey ?? null;
+  if (app.templateKey !== undefined)
+    dbData.template_key = app.templateKey ?? null;
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;
   dbData.action_type = app.actionType;
@@ -247,10 +248,10 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     respondedAt: db.responded_at ?? undefined,
     responseData: db.response_data
       ? ResponseDataSchema.parse({
-        guestCount: db.response_data.guest_count,
-        dietaryRestrictions: db.response_data.dietary_restrictions,
-        notes: db.response_data.notes,
-      })
+          guestCount: db.response_data.guest_count,
+          dietaryRestrictions: db.response_data.dietary_restrictions,
+          notes: db.response_data.notes,
+        })
       : undefined,
     externalMessageId: db.external_message_id ?? undefined,
     errorMessage: db.error_message ?? undefined,
@@ -331,11 +332,11 @@ export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
     interactionType: db.interaction_type,
     metadata: db.metadata
       ? InteractionMetadataSchema.parse({
-        guestCount: db.metadata.guest_count,
-        dietaryRestrictions: db.metadata.dietary_restrictions,
-        linkClicked: db.metadata.link_clicked,
-        userAgent: db.metadata.user_agent,
-      })
+          guestCount: db.metadata.guest_count,
+          dietaryRestrictions: db.metadata.dietary_restrictions,
+          linkClicked: db.metadata.link_clicked,
+          userAgent: db.metadata.user_agent,
+        })
       : undefined,
     createdAt: db.created_at,
   }),
@@ -361,11 +362,11 @@ export const GuestInteractionAppToDbSchema =
     interaction_type: app.interactionType,
     metadata: app.metadata
       ? {
-        guest_count: app.metadata.guestCount,
-        dietary_restrictions: app.metadata.dietaryRestrictions,
-        link_clicked: app.metadata.linkClicked,
-        user_agent: app.metadata.userAgent,
-      }
+          guest_count: app.metadata.guestCount,
+          dietary_restrictions: app.metadata.dietaryRestrictions,
+          link_clicked: app.metadata.linkClicked,
+          user_agent: app.metadata.userAgent,
+        }
       : null,
   }));
 

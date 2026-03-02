@@ -309,7 +309,6 @@ async function validateAndExecute(scheduleId: string) {
   }
 
   console.log(`About to send to ${validGuests.length} guests`);
-  console.log(`Template: ${template.displayName}`);
   console.log(`Event: ${schedule.event.title}`);
 
   // 4. Execute

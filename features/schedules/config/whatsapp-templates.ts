@@ -7,7 +7,6 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     whatsapp: {
       templateKey: 'initial_invitation',
       templateName: 'initial_invitation',
-      displayName: 'Initial Invitation',
       bodyText:
         "Hey! 🎉\n{{1}} & {{2}} are getting married and you're invited!\n📅 {{3}}\n📍 {{4}}\nLooking forward to seeing you there! ❤️",
       languageCode: 'en',
@@ -52,7 +51,6 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     whatsapp: {
       templateKey: 'confirmation_casual_v1_he',
       templateName: 'confirmation_casual_v1_he',
-      displayName: 'Confirmation',
       bodyText:
         'היי, \nהוזמנת לחתונתם של {{1}} ו{{2}}\nשתתקיים בתאריך {{3}} ב{{4}}\nמחכים לדעת אם נזכה לראות אותך באירוע.\nלאישור הגעה ופרטים נוספים, לחצו על הכפתור למטה',
       languageCode: 'he',
@@ -92,6 +90,72 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
         ],
       },
       description: 'Wedding invitation with RSVP button',
+    },
+    sms: undefined,
+  },
+  thank_you_v1_he: {
+    whatsapp: {
+      templateKey: 'thank_you_v1_he',
+      templateName: 'thank_you_v1_he',
+      bodyText:
+        'רצינו להגיד תודה ענקית שהגעת לחתונתנו 🙏🏼\nשמחנו מאוד שחלקת איתנו את הרגע!\n{{1}} ו{{2}} ❤️',
+      languageCode: 'he',
+      headerType: null,
+      headerText: null,
+      footerText: null,
+      parameters: {
+        headerPlaceholders: [],
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+        },
+        buttonPlaceholders: [],
+      },
+      description: 'Post-event thank you message sent to guests who attended the wedding',
+    },
+    sms: undefined,
+  },
+
+  event_reminder_v1_he: {
+    whatsapp: {
+      templateKey: 'event_reminder_v1_he',
+      templateName: 'event_reminder_v1_he',
+      bodyText:
+        'היום זה קורה! 🎊\nהחתונה של {{1}} ו{{2}}\n🕒 שעה: {{3}} \n📍 מיקום:{{4}}\nלנוחיותכם - קישור לניווט לארוע',
+      languageCode: 'he',
+      headerType: null,
+      headerText: null,
+      footerText: null,
+      parameters: {
+        headerPlaceholders: [],
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+          'event.eventDate': {
+            source: 'event.eventDate',
+            transformer: 'formatDate',
+            transformerOptions: { format: 'long', locale: 'he-IL' },
+          },
+          'event.venueName': {
+            source: 'event.location.name',
+            transformer: 'none',
+          },
+        },
+        buttonPlaceholders: [],
+      },
+      description: 'Day-of wedding reminder sent to confirmed guests with event time and venue',
     },
     sms: undefined,
   },
