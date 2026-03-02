@@ -21,6 +21,20 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
   {
     templateKey: 'confirmation_casual_v1_he',
     actionType: 'confirmation',
+    daysOffset: -60,
+    defaultTime: '10:00',
+    targetStatus: 'pending',
+  },
+  {
+    templateKey: 'confirmation_casual_v1_he',
+    actionType: 'confirmation',
+    daysOffset: -30,
+    defaultTime: '10:00',
+    targetStatus: 'pending',
+  },
+  {
+    templateKey: 'confirmation_casual_v1_he',
+    actionType: 'confirmation',
     daysOffset: -14,
     defaultTime: '10:00',
     targetStatus: 'pending',
