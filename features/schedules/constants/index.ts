@@ -39,9 +39,20 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
     defaultTime: '10:00',
     targetStatus: 'pending',
   },
-  // Add more schedules as needed:
-  // { templateKey: 'event_reminder_v1', actionType: 'event_reminder', daysOffset: -7, defaultTime: '10:00' },
-  // { templateKey: 'post_event_v1', actionType: 'post_event', daysOffset: 1, defaultTime: '10:00' },
+  {
+    templateKey: 'event_reminder_v1_he',
+    actionType: 'event_reminder',
+    daysOffset: 0,
+    defaultTime: '10:00',
+    targetStatus: 'confirmed',
+  },
+  {
+    templateKey: 'thank_you_v1_he',
+    actionType: 'post_event',
+    daysOffset: 1,
+    defaultTime: '10:00',
+    targetStatus: 'confirmed',
+  },
 ];
 
 // Map of event types to their default schedules

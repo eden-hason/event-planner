@@ -5,7 +5,6 @@ import { TemplateParametersConfigSchema } from './template-parameters';
 export const WhatsAppTemplateAppSchema = z.object({
   templateKey: z.string(),
   templateName: z.string(),
-  displayName: z.string(),
   bodyText: z.string(),
   languageCode: z.string(),
   headerType: z.string().nullable(),
