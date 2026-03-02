@@ -92,7 +92,7 @@ export async function createDefaultSchedules(
     // 2. Get existing schedules for this event (to avoid duplicates)
     const { data: existingSchedules, error: fetchError } = await supabase
       .from('schedules')
-      .select('template_key')
+      .select('template_key, scheduled_date')
       .eq('event_id', eventId);
 
     if (fetchError) {
@@ -103,15 +103,16 @@ export async function createDefaultSchedules(
       };
     }
 
-    // 3. Create a set of existing template keys
-    const existingTemplateKeys = new Set(
-      existingSchedules?.map((s) => s.template_key).filter(Boolean) ?? [],
+    // 3. Create a set of existing composite keys (template_key|scheduled_date)
+    const existingKeys = new Set(
+      existingSchedules?.map((s) => `${s.template_key}|${s.scheduled_date}`) ?? [],
     );
 
     // 4. Filter to only create schedules that don't already exist
-    const schedulesToCreate = defaultSchedules.filter(
-      (schedule) => !existingTemplateKeys.has(schedule.templateKey),
-    );
+    const schedulesToCreate = defaultSchedules.filter((schedule) => {
+      const scheduledDate = calculateScheduledDate(eventDate, schedule.daysOffset, schedule.defaultTime);
+      return !existingKeys.has(`${schedule.templateKey}|${scheduledDate}`);
+    });
 
     if (schedulesToCreate.length === 0) {
       return {

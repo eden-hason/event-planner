@@ -28,54 +28,63 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
     setSelectedSubIndex(0);
   };
 
-  const items = contentByType[selectedType] ?? [];
-  const hasMultiple = items.length > 1;
-  const activeItem = items[selectedSubIndex] ?? items[0];
+  const activeItem = (contentByType[selectedType] ?? [])[selectedSubIndex] ?? (contentByType[selectedType] ?? [])[0];
 
   return (
     <div className="flex gap-6">
       {/* Left vertical menu */}
       <nav className="flex w-52 shrink-0 flex-col gap-1">
-        {visibleTypes.map((type) => (
-          <Button
-            key={type}
-            variant="ghost"
-            className={cn(
-              'justify-start',
-              selectedType === type
-                ? 'bg-background hover:bg-background'
-                : 'hover:bg-background/60',
-            )}
-            onClick={() => handleTypeChange(type)}
-          >
-            {ACTION_TYPE_LABELS[type]}
-          </Button>
-        ))}
+        {visibleTypes.map((type) => {
+          const typeItems = contentByType[type] ?? [];
+          const hasMultiple = typeItems.length > 1;
+          const isActive = selectedType === type;
+
+          return (
+            <div key={type} className="flex flex-col">
+              <Button
+                variant="ghost"
+                className={cn(
+                  'justify-start',
+                  isActive && !hasMultiple
+                    ? 'bg-background hover:bg-background'
+                    : isActive && hasMultiple
+                      ? 'font-semibold hover:bg-background/60'
+                      : 'hover:bg-background/60',
+                )}
+                onClick={() => handleTypeChange(type)}
+              >
+                {ACTION_TYPE_LABELS[type]}
+              </Button>
+              {hasMultiple && (
+                <div className="mt-0.5 ml-3 flex flex-col gap-0.5">
+                  {typeItems.map((item, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        'justify-start',
+                        isActive && selectedSubIndex === index
+                          ? 'bg-background hover:bg-background font-medium'
+                          : 'hover:bg-background/60',
+                      )}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setSelectedSubIndex(index);
+                      }}
+                    >
+                      {item.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Right content with inner tabs */}
       <div className="min-w-0 flex-1">
-        {/* Sub-tab row for multi-schedule action types */}
-        {hasMultiple && (
-          <div className="border-border mb-4 flex gap-2 border-b pb-2">
-            {items.map((item, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  selectedSubIndex === index
-                    ? 'bg-background hover:bg-background font-medium'
-                    : 'hover:bg-background/60',
-                )}
-                onClick={() => setSelectedSubIndex(index)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        )}
-
         <Tabs defaultValue="details">
           <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
             <TabsTrigger value="details" className={tabTriggerClassName}>
