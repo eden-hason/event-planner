@@ -19,29 +19,24 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
           {
             type: 'image',
             source: 'event.invitations.imageUrl',
-            fallback: null,
           },
         ],
         placeholders: {
           bride_name: {
             source: 'event.hostDetails.bride.name',
-            fallback: 'the bride',
             transformer: 'none',
           },
           groom_name: {
             source: 'event.hostDetails.groom.name',
-            fallback: 'the groom',
             transformer: 'none',
           },
           event_date: {
             source: 'event.eventDate',
-            fallback: 'soon',
             transformer: 'formatDate',
             transformerOptions: { format: 'long', locale: 'en-US' },
           },
           event_location: {
             source: 'event.location.name',
-            fallback: 'the venue',
             transformer: 'none',
           },
         },
@@ -89,6 +84,7 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
           {
             index: 0,
             subType: 'url',
+            text: 'אישור הגעה',
             placeholders: [
               { source: 'confirmationToken', transformer: 'none' },
             ],

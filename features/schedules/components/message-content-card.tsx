@@ -1,7 +1,21 @@
 'use client';
 
-import { IconAlertTriangle, IconMessage, IconPhoto } from '@tabler/icons-react';
+import {
+  IconArrowBack,
+  IconExternalLink,
+  IconInfoCircle,
+  IconMessage,
+  IconPhoto,
+} from '@tabler/icons-react';
 
+import Link from 'next/link';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -30,8 +44,9 @@ function resolveSourcePath(
 }
 
 const chatBgStyle: React.CSSProperties = {
-  backgroundColor: '#E5DDD5',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='1' fill='%23C9BBAD' fill-opacity='0.4'/%3E%3C/svg%3E")`,
+  backgroundImage: `linear-gradient(rgba(229, 221, 213, 0.55), rgba(229, 221, 213, 0.55)), url('/whatsapp-background.png')`,
+  backgroundSize: '300px',
+  backgroundRepeat: 'repeat',
 };
 
 interface MessageContentCardProps {
@@ -52,11 +67,13 @@ export function MessageContentCard({
     ? resolveSourcePath(headerPlaceholder.source, event)
     : null;
 
+  const buttons = template?.parameters?.buttonPlaceholders ?? [];
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <div className="rounded-md bg-primary/10 p-1.5">
+          <div className="bg-primary/10 rounded-md p-1.5">
             <IconMessage size={16} className="text-primary" />
           </div>
           Message Preview
@@ -102,7 +119,7 @@ export function MessageContentCard({
                         <img
                           src={imageUrl}
                           alt="Header"
-                          className="w-full object-contain"
+                          className="w-full rounded-t-xl object-cover p-1.5 pb-0"
                           style={{ maxHeight: 120 }}
                         />
                       ) : (
@@ -127,6 +144,25 @@ export function MessageContentCard({
                         {resolvedBody}
                       </p>
                     </div>
+                    {/* Buttons */}
+                    {buttons.length > 0 && (
+                      <div>
+                        {buttons.map((btn, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-center gap-1.5 border-t border-zinc-300/70 py-2 text-sm font-medium"
+                            style={{ color: '#53B8C5' }}
+                          >
+                            {btn.subType === 'url' ? (
+                              <IconExternalLink size={14} />
+                            ) : (
+                              <IconArrowBack size={14} />
+                            )}
+                            <span>{btn.text ?? `Button ${btn.index + 1}`}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -140,14 +176,23 @@ export function MessageContentCard({
             )}
           </div>
         </div>
-        {hasMissingFields && (
-          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <IconAlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-500" />
-            <span>
-              Some event data is missing. Update your event details to see the
-              full preview.
-            </span>
-          </div>
+        {hasMissingFields && event && (
+          <Alert className="mt-3">
+            <IconInfoCircle />
+            <AlertTitle>Missing event details</AlertTitle>
+            <AlertDescription>
+              <p>
+                Some required fields aren&apos;t filled in yet. Complete them to
+                see the full message preview.
+              </p>
+              <Button size="xs" variant="link" className="mt-1 px-0" asChild>
+                <Link href={`/app/${event.id}/details`}>
+                  Event Details
+                  <IconExternalLink />
+                </Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>

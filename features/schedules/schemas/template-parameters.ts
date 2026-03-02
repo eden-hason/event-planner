@@ -55,7 +55,6 @@ export const PlaceholderConfigSchema = z.object({
   source: z.string().optional().describe('Dot-notation path to value (e.g., "guest.name", "event.eventDate"). Defaults to placeholder name if omitted.'),
   transformer: TransformerTypeSchema.default('none'),
   transformerOptions: TransformerOptionsSchema.optional(),
-  fallback: z.string().optional().describe('Fallback value if source is null/undefined. Defaults to empty string.'),
 });
 
 export type PlaceholderConfig = z.infer<typeof PlaceholderConfigSchema>;
@@ -73,7 +72,6 @@ export type HeaderParameterType = z.infer<typeof HeaderParameterTypeSchema>;
 export const HeaderPlaceholderConfigSchema = z.object({
   type: HeaderParameterTypeSchema.describe('Media type for the header'),
   source: z.string().describe('Dot-notation path to media URL (e.g., "event.invitations.imageUrl")'),
-  fallback: z.string().nullable().default(null).describe('Fallback URL if source is null/undefined (null = skip header)'),
   filename: z.string().optional().describe('Filename for document type'),
 });
 
@@ -85,6 +83,7 @@ export type HeaderPlaceholderConfig = z.infer<typeof HeaderPlaceholderConfigSche
 export const ButtonPlaceholderConfigSchema = z.object({
   index: z.number().int().min(0).describe('Zero-based button position in the template'),
   subType: z.enum(['url', 'quick_reply']).describe('Meta API button sub_type'),
+  text: z.string().optional().describe('Display label shown in the message preview'),
   placeholders: z.array(PlaceholderConfigSchema).min(1).describe('Placeholder configs for this button'),
 });
 
