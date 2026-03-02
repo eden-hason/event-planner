@@ -1,6 +1,6 @@
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
-import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
+import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import {
   ACTION_TYPE_LABELS,
   ACTION_TYPES,
@@ -38,16 +38,14 @@ export async function SchedulesPage({
   schedules,
   event,
 }: SchedulesPageProps) {
-  // Fetch all templates for schedules in one batch
-  const templateIds = schedules
-    .map((s) => s.templateId)
-    .filter((id): id is string => id !== null && id !== undefined);
+  // Resolve all templates for schedules from local config
+  const templateKeys = schedules
+    .map((s) => s.templateKey)
+    .filter((key): key is string => key !== null && key !== undefined);
 
-  const uniqueTemplateIds = Array.from(new Set(templateIds));
-  const [templateMap, guests] = await Promise.all([
-    getWhatsAppTemplatesByIds(uniqueTemplateIds),
-    getEventGuests(eventId),
-  ]);
+  const uniqueTemplateKeys = Array.from(new Set(templateKeys));
+  const templateMap = getTemplatesByKeys(uniqueTemplateKeys);
+  const guests = await getEventGuests(eventId);
 
   const guestStats: GuestStats = {
     total: guests.length,
@@ -65,7 +63,7 @@ export async function SchedulesPage({
     }
     schedulesByActionType[schedule.actionType]!.push({
       schedule,
-      template: schedule.templateId ? (templateMap.get(schedule.templateId) ?? null) : null,
+      template: schedule.templateKey ? (templateMap.get(schedule.templateKey)?.whatsapp ?? null) : null,
     });
   }
 

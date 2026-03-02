@@ -105,7 +105,7 @@ export const ScheduleAppSchema = z.object({
   status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   sentAt: z.string().nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
-  templateId: z.uuid().nullable().optional(),
+  templateKey: z.string().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
   actionType: z.enum(ACTION_TYPES),
   createdAt: z.string(),
@@ -122,7 +122,7 @@ export const ScheduleDbSchema = z.object({
   status: z.enum(SCHEDULE_STATUSES).nullable(),
   sent_at: z.string().nullable(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
-  template_id: z.uuid().nullable(),
+  template_key: z.string().nullable(),
   delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
   action_type: z.enum(ACTION_TYPES),
   created_at: z.string(),
@@ -139,7 +139,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   status: db.status,
   sentAt: db.sent_at ?? undefined,
   targetStatus: db.target_status ?? null,
-  templateId: db.template_id ?? undefined,
+  templateKey: db.template_key ?? undefined,
   deliveryMethod: db.delivery_method,
   actionType: db.action_type,
   createdAt: db.created_at,
@@ -153,7 +153,7 @@ export const ScheduleUpsertSchema = z.object({
   scheduledDate: z.string(),
   status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
-  templateId: z.uuid().nullable().optional(),
+  templateKey: z.string().nullable().optional(),
   deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
   actionType: z.enum(ACTION_TYPES),
 });
@@ -169,7 +169,7 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   dbData.scheduled_date = app.scheduledDate;
   if (app.status !== undefined) dbData.status = app.status;
   if (app.targetStatus !== undefined) dbData.target_status = app.targetStatus;
-  if (app.templateId !== undefined) dbData.template_id = app.templateId ?? null;
+  if (app.templateKey !== undefined) dbData.template_key = app.templateKey ?? null;
   if (app.deliveryMethod !== undefined)
     dbData.delivery_method = app.deliveryMethod;
   dbData.action_type = app.actionType;

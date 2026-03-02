@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
-import { getWhatsAppTemplatesByIds } from '../queries/whatsapp-templates';
+import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import { calculateScheduledDate } from '../utils';
 
 export type UpdateScheduledDateState = {
@@ -92,7 +92,7 @@ export async function createDefaultSchedules(
     // 2. Get existing schedules for this event (to avoid duplicates)
     const { data: existingSchedules, error: fetchError } = await supabase
       .from('schedules')
-      .select('template_id')
+      .select('template_key')
       .eq('event_id', eventId);
 
     if (fetchError) {
@@ -103,14 +103,14 @@ export async function createDefaultSchedules(
       };
     }
 
-    // 3. Create a set of existing template IDs
-    const existingTemplateIds = new Set(
-      existingSchedules?.map((s) => s.template_id).filter(Boolean) ?? [],
+    // 3. Create a set of existing template keys
+    const existingTemplateKeys = new Set(
+      existingSchedules?.map((s) => s.template_key).filter(Boolean) ?? [],
     );
 
     // 4. Filter to only create schedules that don't already exist
     const schedulesToCreate = defaultSchedules.filter(
-      (schedule) => !existingTemplateIds.has(schedule.templateId),
+      (schedule) => !existingTemplateKeys.has(schedule.templateKey),
     );
 
     if (schedulesToCreate.length === 0) {
@@ -121,26 +121,26 @@ export async function createDefaultSchedules(
       };
     }
 
-    // 5. Validate that all templates exist in the database
-    const templateIds = schedulesToCreate.map((s) => s.templateId);
-    const templateMap = await getWhatsAppTemplatesByIds(templateIds);
+    // 5. Validate that all templates exist in local config
+    const templateKeys = schedulesToCreate.map((s) => s.templateKey);
+    const templateMap = getTemplatesByKeys(templateKeys);
 
-    const missingTemplates = templateIds.filter(
-      (id) => !templateMap.has(id),
+    const missingTemplates = templateKeys.filter(
+      (key) => !templateMap.has(key),
     );
 
     if (missingTemplates.length > 0) {
       console.error('Missing WhatsApp templates:', missingTemplates);
       return {
         success: false,
-        message: `Missing templates with IDs: ${missingTemplates.join(', ')}`,
+        message: `Missing templates with keys: ${missingTemplates.join(', ')}`,
       };
     }
 
     // 6. Create schedule records
     const records = schedulesToCreate.map((schedule) => ({
       event_id: eventId,
-      template_id: schedule.templateId,
+      template_key: schedule.templateKey,
       scheduled_date: calculateScheduledDate(
         eventDate,
         schedule.daysOffset,

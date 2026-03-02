@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getScheduleById } from '../queries/schedules';
-import { getWhatsAppTemplateById } from '../queries/whatsapp-templates';
+import { getTemplateByKey } from '../config/whatsapp-templates';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { getGroupById } from '@/features/guests/queries/groups';
 import { sendWhatsAppTemplateMessage } from './whatsapp';
@@ -94,22 +94,24 @@ export async function executeSchedule(
     }
 
     // 4. Validate template is assigned
-    if (!schedule.templateId) {
+    if (!schedule.templateKey) {
       return {
         success: false,
         message: 'No template assigned to schedule',
       };
     }
 
-    // 5. Fetch WhatsApp template
-    const template = await getWhatsAppTemplateById(schedule.templateId);
+    // 5. Resolve template from local config
+    const templateConfig = getTemplateByKey(schedule.templateKey);
 
-    if (!template) {
+    if (!templateConfig) {
       return {
         success: false,
         message: 'Template not found',
       };
     }
+
+    const template = templateConfig.whatsapp;
 
     // 6. Fetch all event guests
     const allGuests = await getEventGuests(schedule.eventId);
