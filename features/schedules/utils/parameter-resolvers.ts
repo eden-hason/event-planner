@@ -1,7 +1,10 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import type { GroupApp } from '@/features/guests/schemas';
 import type { EventApp } from '@/features/events/schemas';
-import type { ScheduleApp, WhatsAppTemplateApp } from '@/features/schedules/schemas';
+import type {
+  ScheduleApp,
+  WhatsAppTemplateApp,
+} from '@/features/schedules/schemas';
 import type {
   PlaceholderConfig,
   HeaderPlaceholderConfig,
@@ -104,7 +107,8 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     const currency = currencyOptions?.currency ?? 'USD';
     const locale = currencyOptions?.locale ?? 'en-US';
 
-    const numValue = typeof value === 'number' ? value : parseFloat(String(value));
+    const numValue =
+      typeof value === 'number' ? value : parseFloat(String(value));
     if (isNaN(numValue)) return String(value);
 
     return new Intl.NumberFormat(locale, {
@@ -145,23 +149,26 @@ export function resolvePlaceholder(
   const sourcePath = config.source ?? placeholderName;
 
   // Extract value from context using source path
-  const rawValue = getValueByPath(context as unknown as Record<string, unknown>, sourcePath);
-
-  // Determine fallback value (default to empty string if not specified)
-  const fallbackValue = config.fallback ?? '';
+  const rawValue = getValueByPath(
+    context as unknown as Record<string, unknown>,
+    sourcePath,
+  );
 
   // Apply fallback if value is null/undefined
   if (rawValue === null || rawValue === undefined) {
-    return fallbackValue;
+    return '';
   }
 
   // Apply transformer
   const transformer = transformers[config.transformer] ?? transformers.none;
-  const transformedValue = transformer(rawValue, config.transformerOptions as Record<string, unknown>);
+  const transformedValue = transformer(
+    rawValue,
+    config.transformerOptions as Record<string, unknown>,
+  );
 
   // Use fallback if transformed value is empty
   if (transformedValue === '') {
-    return fallbackValue;
+    return '';
   }
 
   return transformedValue;
@@ -178,7 +185,7 @@ export function resolvePlaceholder(
 export function extractPlaceholders(templateBody: string): string[] {
   const placeholderRegex = /\{\{(\d+)\}\}/g;
   const matches = Array.from(templateBody.matchAll(placeholderRegex));
-  return matches.map(match => match[1]);
+  return matches.map((match) => match[1]);
 }
 
 /**
@@ -217,21 +224,21 @@ export function buildHeaderParameter(
   // Extract media URL from context using source path
   const rawValue = getValueByPath(
     context as unknown as Record<string, unknown>,
-    config.source
+    config.source,
   );
 
-  // Determine final URL (source or fallback)
+  // Determine final URL from source
   let mediaUrl: string | null = null;
 
   if (rawValue && typeof rawValue === 'string' && rawValue.trim()) {
     mediaUrl = rawValue.trim();
-  } else if (config.fallback) {
-    mediaUrl = config.fallback;
   }
 
   // If no URL available and fallback is null, skip header
   if (!mediaUrl) {
-    console.warn(`Header media URL not available for source: ${config.source}, skipping header`);
+    console.warn(
+      `Header media URL not available for source: ${config.source}, skipping header`,
+    );
     return [];
   }
 
@@ -252,13 +259,15 @@ export function buildHeaderParameter(
       return [{ type: 'video', video: { link: mediaUrl } }];
 
     case 'document':
-      return [{
-        type: 'document',
-        document: {
-          link: mediaUrl,
-          ...(config.filename && { filename: config.filename }),
+      return [
+        {
+          type: 'document',
+          document: {
+            link: mediaUrl,
+            ...(config.filename && { filename: config.filename }),
+          },
         },
-      }];
+      ];
 
     default:
       console.error(`Unsupported header parameter type: ${config.type}`);
@@ -339,7 +348,10 @@ export function resolveTemplateBodyForPreview(
 
   let hasMissingFields = false;
   const resolvedValues: string[] = [];
-  const mockContext = { event: event ?? {}, guest: {} } as unknown as ParameterResolutionContext;
+  const mockContext = {
+    event: event ?? {},
+    guest: {},
+  } as unknown as ParameterResolutionContext;
 
   for (const [name, config] of Object.entries(placeholders)) {
     const source = config.source ?? name;
@@ -351,7 +363,7 @@ export function resolveTemplateBodyForPreview(
     } else {
       const rawValue = event ? getValueByPath({ event }, source) : undefined;
 
-      if ((rawValue === null || rawValue === undefined) && !config.fallback) {
+      if (!rawValue) {
         hasMissingFields = true;
         resolvedValues.push('…');
       } else {
