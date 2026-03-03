@@ -86,6 +86,18 @@ export function validatePhoneNumber(phone: string | undefined | null): boolean {
 }
 
 /**
+ * Returns a human-readable label for a schedule's target audience.
+ *
+ * @param targetStatus - Optional RSVP status filter
+ * @returns Display label string
+ */
+export function getAudienceLabel(targetStatus?: 'pending' | 'confirmed' | null): string {
+  if (targetStatus === 'confirmed') return 'Confirmed Guests';
+  if (targetStatus === 'pending') return 'Pending Guests';
+  return 'All Guests';
+}
+
+/**
  * Formats a phone number to E.164 international format.
  * Handles Israeli numbers with special logic for 0 prefix.
  *

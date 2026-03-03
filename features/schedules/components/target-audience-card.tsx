@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { type GuestStats } from '../schemas';
+import { getAudienceLabel } from '../utils';
 
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
@@ -15,21 +16,15 @@ interface TargetAudienceCardProps {
 }
 
 export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceCardProps) {
-  const config =
-    targetStatus === 'confirmed'
-      ? {
-          label: 'Confirmed Guests',
-          className: 'bg-green-100 text-green-800 border-green-200',
-        }
-      : targetStatus === 'pending'
-        ? {
-            label: 'Pending Guests',
-            className: 'bg-amber-100 text-amber-800 border-amber-200',
-          }
-        : {
-            label: 'All Guests',
-            className: '',
-          };
+  const config = {
+    label: getAudienceLabel(targetStatus),
+    className:
+      targetStatus === 'confirmed'
+        ? 'bg-green-100 text-green-800 border-green-200'
+        : targetStatus === 'pending'
+          ? 'bg-amber-100 text-amber-800 border-amber-200'
+          : '',
+  };
 
   const targetCount =
     targetStatus === 'confirmed'

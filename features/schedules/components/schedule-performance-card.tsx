@@ -7,9 +7,14 @@ import {
 
 import { getDeliveryStats } from '../queries/message-deliveries';
 import { getRsvpStats } from '../queries/guest-interactions';
+import { type ScheduleApp } from '../schemas';
+import { DeliveryEmptyState } from './delivery-empty-state';
 
 interface SchedulePerformanceCardProps {
   scheduleId: string;
+  scheduledDate: string;
+  guestCount: number;
+  targetStatus: ScheduleApp['targetStatus'];
 }
 
 function formatPercentage(count: number, total: number): string {
@@ -45,11 +50,25 @@ function StatItem({
 
 export async function SchedulePerformanceCard({
   scheduleId,
+  scheduledDate,
+  guestCount,
+  targetStatus,
 }: SchedulePerformanceCardProps) {
   const [deliveryStats, rsvpStats] = await Promise.all([
     getDeliveryStats(scheduleId),
     getRsvpStats(scheduleId),
   ]);
+
+  if (deliveryStats.total === 0) {
+    return (
+      <DeliveryEmptyState
+        scheduleId={scheduleId}
+        scheduledDate={scheduledDate}
+        guestCount={guestCount}
+        targetStatus={targetStatus}
+      />
+    );
+  }
 
   const deliveredCount =
     deliveryStats.sent + deliveryStats.delivered + deliveryStats.read;
