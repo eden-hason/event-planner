@@ -1,10 +1,10 @@
 import { type ActionType } from '../schemas';
 
 export type DefaultScheduleConfig = {
-  templateKey: string;           // Key referencing local config in WHATSAPP_TEMPLATES
-  actionType: ActionType;        // Stored directly in DB
-  daysOffset: number;            // Negative = before event, positive = after
-  defaultTime: string;           // HH:MM format
+  templateKey: string; // Key referencing local config in WHATSAPP_TEMPLATES
+  actionType: ActionType; // Stored directly in DB
+  daysOffset: number; // Negative = before event, positive = after
+  defaultTime: string; // HH:MM format
   targetStatus?: 'pending' | 'confirmed';
 };
 
@@ -14,20 +14,6 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
   {
     templateKey: 'initial_invitation',
     actionType: 'initial_invitation',
-    daysOffset: -90,
-    defaultTime: '10:00',
-    targetStatus: 'pending',
-  },
-  {
-    templateKey: 'confirmation_casual_v1_he',
-    actionType: 'confirmation',
-    daysOffset: -60,
-    defaultTime: '10:00',
-    targetStatus: 'pending',
-  },
-  {
-    templateKey: 'confirmation_casual_v1_he',
-    actionType: 'confirmation',
     daysOffset: -30,
     defaultTime: '10:00',
     targetStatus: 'pending',
@@ -35,7 +21,21 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
   {
     templateKey: 'confirmation_casual_v1_he',
     actionType: 'confirmation',
+    daysOffset: -21,
+    defaultTime: '10:00',
+    targetStatus: 'pending',
+  },
+  {
+    templateKey: 'confirmation_casual_v1_he',
+    actionType: 'confirmation',
     daysOffset: -14,
+    defaultTime: '10:00',
+    targetStatus: 'pending',
+  },
+  {
+    templateKey: 'confirmation_casual_v1_he',
+    actionType: 'confirmation',
+    daysOffset: -10,
     defaultTime: '10:00',
     targetStatus: 'pending',
   },

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-
-import { IconChartBar, IconFileDescription } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
+import { IconChartBar, IconCircleCheck, IconCircleCheckFilled, IconFileDescription } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { ACTION_TYPE_LABELS, type ActionType } from '../schemas';
 import { type ScheduleTabItem } from './schedules-page';
+import { SendConfirmDialog } from './send-confirm-dialog';
 
 interface SchedulesLayoutProps {
   visibleTypes: ActionType[];
@@ -22,6 +23,7 @@ const tabTriggerClassName =
 export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayoutProps) {
   const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
+  const { setHeader, clearHeader } = useFeatureLayoutContext();
 
   const handleTypeChange = (type: ActionType) => {
     setSelectedType(type);
@@ -29,6 +31,25 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
   };
 
   const activeItem = (contentByType[selectedType] ?? [])[selectedSubIndex] ?? (contentByType[selectedType] ?? [])[0];
+  const isPending = !activeItem?.scheduleStatus;
+
+  useEffect(() => {
+    setHeader({
+      title: 'Schedules',
+      description: 'Manage your event schedule and timeline',
+      action: (isPending && activeItem?.scheduleId)
+        ? (
+          <SendConfirmDialog
+            scheduleId={activeItem.scheduleId}
+            guestCount={activeItem.guestCount}
+            targetStatus={activeItem.targetStatus}
+            triggerSize="sm"
+          />
+        )
+        : undefined,
+    });
+    return () => clearHeader();
+  }, [activeItem?.scheduleId, activeItem?.scheduleStatus, activeItem?.guestCount, activeItem?.targetStatus, setHeader, clearHeader]);
 
   return (
     <div className="flex gap-6">
@@ -39,46 +60,50 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
           const hasMultiple = typeItems.length > 1;
           const isActive = selectedType === type;
 
-          return (
-            <div key={type} className="flex flex-col">
+          if (hasMultiple) {
+            return typeItems.map((item, index) => (
               <Button
+                key={`${type}-${index}`}
                 variant="ghost"
                 className={cn(
                   'justify-start',
-                  isActive && !hasMultiple
+                  isActive && selectedSubIndex === index
                     ? 'bg-background hover:bg-background'
-                    : isActive && hasMultiple
-                      ? 'font-semibold hover:bg-background/60'
-                      : 'hover:bg-background/60',
+                    : 'hover:bg-background/60',
                 )}
-                onClick={() => handleTypeChange(type)}
+                onClick={() => {
+                  setSelectedType(type);
+                  setSelectedSubIndex(index);
+                }}
               >
-                {ACTION_TYPE_LABELS[type]}
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.scheduleStatus === 'sent' ? (
+                  <IconCircleCheckFilled size={15} className="text-green-500" />
+                ) : (
+                  <IconCircleCheck size={15} className="text-muted-foreground/40" />
+                )}
               </Button>
-              {hasMultiple && (
-                <div className="mt-0.5 ml-3 flex flex-col gap-0.5">
-                  {typeItems.map((item, index) => (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'justify-start',
-                        isActive && selectedSubIndex === index
-                          ? 'bg-background hover:bg-background font-medium'
-                          : 'hover:bg-background/60',
-                      )}
-                      onClick={() => {
-                        setSelectedType(type);
-                        setSelectedSubIndex(index);
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                  ))}
-                </div>
+            ));
+          }
+
+          const singleItem = typeItems[0];
+          return (
+            <Button
+              key={type}
+              variant="ghost"
+              className={cn(
+                'justify-start',
+                isActive ? 'bg-background hover:bg-background' : 'hover:bg-background/60',
               )}
-            </div>
+              onClick={() => handleTypeChange(type)}
+            >
+              <span className="flex-1 text-left">{ACTION_TYPE_LABELS[type]}</span>
+              {singleItem?.scheduleStatus === 'sent' ? (
+                <IconCircleCheckFilled size={15} className="text-green-500" />
+              ) : (
+                <IconCircleCheck size={15} className="text-muted-foreground/40" />
+              )}
+            </Button>
           );
         })}
       </nav>
@@ -87,7 +112,7 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
       <div className="min-w-0 flex-1">
         <Tabs defaultValue="details">
           <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-            <TabsTrigger value="details" className={tabTriggerClassName}>
+            <TabsTrigger id="schedule-details-tab-trigger" value="details" className={tabTriggerClassName}>
               <IconFileDescription size={16} />
               Schedule Details
             </TabsTrigger>

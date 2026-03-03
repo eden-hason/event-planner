@@ -3,6 +3,7 @@ import { IconActivity } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
@@ -41,17 +42,17 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <div className="rounded-md bg-primary/10 p-1.5">
-              <IconActivity size={16} className="text-primary" />
-            </div>
-            Status
-          </CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <IconActivity size={16} className="text-primary" />
+          </div>
+          Status
+        </CardTitle>
+        <CardAction>
           <Badge variant="secondary" className={config.className}>
             {config.label}
           </Badge>
-        </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground text-sm">{config.description}</p>

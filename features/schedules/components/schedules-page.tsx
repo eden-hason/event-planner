@@ -9,6 +9,7 @@ import {
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
+import { filterGuestsByTarget } from '../utils';
 import { SchedulePerformanceCard } from './schedule-performance-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesHeader } from './schedules-header';
@@ -28,6 +29,10 @@ type ScheduleWithTemplate = {
 
 export type ScheduleTabItem = {
   label: string;
+  scheduleId: string;
+  scheduleStatus: ScheduleApp['status'];
+  guestCount: number;
+  targetStatus: ScheduleApp['targetStatus'];
   details: React.ReactNode;
   delivery: React.ReactNode;
 };
@@ -89,28 +94,39 @@ export async function SchedulesPage({
     const baseLabel = ACTION_TYPE_LABELS[type];
     const multiple = items.length > 1;
 
-    contentByType[type] = items.map(({ schedule, template }, index) => ({
-      label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
-      details: (
-        <ScheduleTabContent
-          schedule={schedule}
-          template={template}
-          eventDate={eventDate}
-          event={event}
-          guestStats={guestStats}
-        />
-      ),
-      delivery: <SchedulePerformanceCard scheduleId={schedule.id} />,
-    }));
+    contentByType[type] = items.map(({ schedule, template }, index) => {
+      const guestCount = filterGuestsByTarget(guests, schedule.targetStatus).length;
+      return {
+        label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
+        scheduleId: schedule.id,
+        scheduleStatus: schedule.status,
+        guestCount,
+        targetStatus: schedule.targetStatus,
+        details: (
+          <ScheduleTabContent
+            schedule={schedule}
+            template={template}
+            eventDate={eventDate}
+            event={event}
+            guestStats={guestStats}
+          />
+        ),
+        delivery: (
+          <SchedulePerformanceCard
+            scheduleId={schedule.id}
+            scheduledDate={schedule.scheduledDate}
+            guestCount={guestCount}
+            targetStatus={schedule.targetStatus}
+          />
+        ),
+      };
+    });
   }
 
   return (
-    <>
-      <SchedulesHeader />
-      <SchedulesLayout
-        visibleTypes={visibleTypes}
-        contentByType={contentByType as Record<ActionType, ScheduleTabItem[]>}
-      />
-    </>
+    <SchedulesLayout
+      visibleTypes={visibleTypes}
+      contentByType={contentByType as Record<ActionType, ScheduleTabItem[]>}
+    />
   );
 }
