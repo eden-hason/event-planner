@@ -69,6 +69,23 @@ export function GuestsPage({
     null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
+  const handleStatCardClick = (status: string | null) => {
+    if (status === null) {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses((prev) =>
+        prev.length === 1 && prev[0] === status ? [] : [status],
+      );
+    }
+  };
+
+  const handleStatusToggle = (status: string) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    );
+  };
 
   // Create group action with toast
   const createGroupActionWithToast = async (
@@ -196,7 +213,11 @@ export function GuestsPage({
 
   return (
     <>
-      <GuestStats guests={guests} />
+      <GuestStats
+        guests={guests}
+        selectedStatuses={selectedStatuses}
+        onStatClick={handleStatCardClick}
+      />
       <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6">
         <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
@@ -220,6 +241,8 @@ export function GuestsPage({
             existingPhones={existingPhones}
             onSelectGuest={handleSelectGuest}
             showDietary={showDietary}
+            selectedStatuses={selectedStatuses}
+            onStatusToggle={handleStatusToggle}
           />
         </TabsContent>
         <TabsContent value="groups">

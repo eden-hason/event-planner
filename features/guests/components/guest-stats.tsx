@@ -3,14 +3,16 @@
 import { useMemo } from 'react';
 import { IconClock, IconUserCheck, IconUsers, IconUserX } from '@tabler/icons-react';
 import { GuestWithGroupApp } from '../schemas';
-import { cn } from '@/lib/utils';
+import { StatsCards, StatItem } from '@/components/ui/stats-cards';
 
 interface GuestStatsProps {
   guests: GuestWithGroupApp[];
+  selectedStatuses?: string[];
+  onStatClick?: (status: string | null) => void;
 }
 
-export function GuestStats({ guests }: GuestStatsProps) {
-  const stats = useMemo(() => {
+export function GuestStats({ guests, selectedStatuses = [], onStatClick }: GuestStatsProps) {
+  const stats = useMemo<StatItem[]>(() => {
     const totalRecords = guests.length;
     const totalPeople = guests.reduce((s, g) => s + g.amount, 0);
 
@@ -24,39 +26,47 @@ export function GuestStats({ guests }: GuestStatsProps) {
     return [
       {
         label: 'Total Guests',
-        people: totalPeople,
-        records: totalRecords,
+        status: null,
+        value: totalRecords,
+        secondaryText: `${totalPeople.toLocaleString()} people`,
         pct: 100,
         icon: IconUsers,
         iconColor: 'text-blue-500',
         barColor: 'bg-blue-500',
+        activeRing: 'ring-2 ring-blue-400',
       },
       {
         label: 'Confirmed',
-        people: confirmed.reduce((s, g) => s + g.amount, 0),
-        records: confirmed.length,
+        status: 'confirmed',
+        value: confirmed.length,
+        secondaryText: `${confirmed.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(confirmed.length),
         icon: IconUserCheck,
         iconColor: 'text-green-500',
         barColor: 'bg-green-500',
+        activeRing: 'ring-2 ring-green-400',
       },
       {
         label: 'Pending',
-        people: pending.reduce((s, g) => s + g.amount, 0),
-        records: pending.length,
+        status: 'pending',
+        value: pending.length,
+        secondaryText: `${pending.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(pending.length),
         icon: IconClock,
         iconColor: 'text-amber-400',
         barColor: 'bg-amber-400',
+        activeRing: 'ring-2 ring-amber-400',
       },
       {
         label: 'Declined',
-        people: declined.reduce((s, g) => s + g.amount, 0),
-        records: declined.length,
+        status: 'declined',
+        value: declined.length,
+        secondaryText: `${declined.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(declined.length),
         icon: IconUserX,
         iconColor: 'text-red-500',
         barColor: 'bg-red-500',
+        activeRing: 'ring-2 ring-red-400',
       },
     ];
   }, [guests]);
@@ -64,38 +74,10 @@ export function GuestStats({ guests }: GuestStatsProps) {
   if (guests.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {stats.map(({ label, people, records, pct, icon: Icon, iconColor, barColor }) => (
-        <div
-          key={label}
-          className="bg-card flex flex-col gap-5 rounded-xl border p-5 shadow-sm"
-        >
-          {/* Header: title + icon */}
-          <div className="flex items-center justify-between">
-            <span className="text-base font-bold">{label}</span>
-            <Icon size={20} className={iconColor} />
-          </div>
-
-          {/* Large number */}
-          <p className="text-5xl font-bold leading-none tracking-tight">
-            {records.toLocaleString()}
-          </p>
-
-          {/* Progress bar + stats row */}
-          <div className="space-y-2">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-              <div
-                className={cn('h-full rounded-full transition-all duration-700', barColor)}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <div className="text-muted-foreground flex items-center justify-between text-xs">
-              <span>{people.toLocaleString()} people</span>
-              <span>{pct}%</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <StatsCards
+      stats={stats}
+      selectedStatuses={selectedStatuses}
+      onStatClick={onStatClick}
+    />
   );
 }
