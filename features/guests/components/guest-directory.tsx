@@ -20,6 +20,8 @@ interface GuestDirectoryProps {
   existingPhones: Set<string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
   showDietary?: boolean;
+  selectedStatuses?: string[];
+  onStatusToggle?: (status: string) => void;
 }
 
 export function GuestDirectory({
@@ -29,6 +31,8 @@ export function GuestDirectory({
   existingPhones,
   onSelectGuest,
   showDietary = false,
+  selectedStatuses: externalStatuses,
+  onStatusToggle: externalStatusToggle,
 }: GuestDirectoryProps) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -42,9 +46,12 @@ export function GuestDirectory({
     handleGroupToggle,
     handleSelectAllGroups,
     isAllSelected,
-    selectedStatuses,
-    handleStatusToggle,
+    selectedStatuses: internalStatuses,
+    handleStatusToggle: internalStatusToggle,
   } = useGuestFilters(groups);
+
+  const selectedStatuses = externalStatuses ?? internalStatuses;
+  const handleStatusToggle = externalStatusToggle ?? internalStatusToggle;
 
   // Delete guest action with toast
   const deleteActionWithToast = async (
