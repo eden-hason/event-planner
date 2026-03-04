@@ -59,7 +59,7 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
   if (error) {
     console.error('Error fetching delivery stats:', error);
     return {
-      total: 0,
+      successful: 0,
       sent: 0,
       delivered: 0,
       read: 0,
@@ -69,7 +69,7 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
 
   if (!data) {
     return {
-      total: 0,
+      successful: 0,
       sent: 0,
       delivered: 0,
       read: 0,
