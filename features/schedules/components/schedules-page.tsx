@@ -117,6 +117,7 @@ export async function SchedulesPage({
             scheduledDate={schedule.scheduledDate}
             guestCount={guestCount}
             targetStatus={schedule.targetStatus}
+            actionType={schedule.actionType}
           />
         ),
       };
