@@ -43,7 +43,7 @@ export async function getMessageDeliveriesByScheduleId(
  * @returns Delivery statistics
  */
 export async function getDeliveryStats(scheduleId: string): Promise<{
-  total: number;
+  successful: number; // sent + delivered + read (excludes failed)
   sent: number;
   delivered: number;
   read: number;
@@ -79,7 +79,7 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
 
   // Count statuses
   const stats = {
-    total: data.length,
+    successful: 0,
     sent: 0,
     delivered: 0,
     read: 0,
@@ -87,9 +87,9 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
   };
 
   for (const record of data) {
-    if (record.status === 'sent') stats.sent++;
-    else if (record.status === 'delivered') stats.delivered++;
-    else if (record.status === 'read') stats.read++;
+    if (record.status === 'sent') { stats.sent++; stats.successful++; }
+    else if (record.status === 'delivered') { stats.delivered++; stats.successful++; }
+    else if (record.status === 'read') { stats.read++; stats.successful++; }
     else if (record.status === 'failed') stats.failed++;
   }
 

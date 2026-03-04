@@ -1,12 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-
-import { getDeliveryStats } from '../queries/message-deliveries';
+import { IconCircleCheck, IconCircleX, IconEye, IconSend } from '@tabler/icons-react';
+import { StatsCards, type StatItem } from '@/components/ui/stats-cards';
 import { getRsvpStats } from '../queries/guest-interactions';
+import { getDeliveryStats } from '../queries/message-deliveries';
 import { type ScheduleApp } from '../schemas';
 import { DeliveryEmptyState } from './delivery-empty-state';
 
@@ -15,37 +10,7 @@ interface SchedulePerformanceCardProps {
   scheduledDate: string;
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
-}
-
-function formatPercentage(count: number, total: number): string {
-  if (total === 0) return '';
-  return `${Math.round((count / total) * 100)}%`;
-}
-
-function StatItem({
-  label,
-  count,
-  total,
-}: {
-  label: string;
-  count: number;
-  total: number;
-}) {
-  const percentage = formatPercentage(count, total);
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-2xl font-semibold">
-        {total === 0 ? '—' : count}
-      </span>
-      {total > 0 && (
-        <span className="text-muted-foreground text-xs">
-          {count}/{total} {percentage && `(${percentage})`}
-        </span>
-      )}
-    </div>
-  );
+  actionType: ScheduleApp['actionType'];
 }
 
 export async function SchedulePerformanceCard({
@@ -53,13 +18,14 @@ export async function SchedulePerformanceCard({
   scheduledDate,
   guestCount,
   targetStatus,
+  actionType,
 }: SchedulePerformanceCardProps) {
   const [deliveryStats, rsvpStats] = await Promise.all([
     getDeliveryStats(scheduleId),
-    getRsvpStats(scheduleId),
+    actionType === 'confirmation' ? getRsvpStats(scheduleId) : null,
   ]);
 
-  if (deliveryStats.total === 0) {
+  if (deliveryStats.successful === 0) {
     return (
       <DeliveryEmptyState
         scheduleId={scheduleId}
@@ -70,33 +36,55 @@ export async function SchedulePerformanceCard({
     );
   }
 
-  const deliveredCount =
-    deliveryStats.sent + deliveryStats.delivered + deliveryStats.read;
+  if (actionType === 'confirmation' && rsvpStats) {
+    const successful = deliveryStats.successful;
+    const totalAttempts = successful + deliveryStats.failed;
 
-  return (
-    <Card className="col-span-3">
-      <CardHeader>
-        <CardTitle>Schedule Performance</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <StatItem
-            label="Delivered"
-            count={deliveredCount}
-            total={deliveryStats.total}
-          />
-          <StatItem
-            label="Confirmed"
-            count={rsvpStats.confirmed}
-            total={deliveredCount}
-          />
-          <StatItem
-            label="Declined"
-            count={rsvpStats.declined}
-            total={deliveredCount}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
+    const stats: StatItem[] = [
+      {
+        label: 'Total Deliveries',
+        status: null,
+        value: totalAttempts,
+        pct: 0,
+        barColor: '',
+        icon: <IconSend size={16} className="text-muted-foreground" />,
+        activeRing: '',
+        breakdown: [
+          { label: 'Success', value: successful, color: 'bg-teal-500' },
+          { label: 'Failed', value: deliveryStats.failed, color: 'bg-orange-500' },
+        ],
+      },
+      {
+        label: 'Opened',
+        status: null,
+        value: deliveryStats.read,
+        pct: successful > 0 ? Math.round((deliveryStats.read / successful) * 100) : 0,
+        icon: <IconEye size={16} className="text-blue-500" />,
+        barColor: 'bg-blue-500',
+        activeRing: '',
+      },
+      {
+        label: 'Confirmed',
+        status: null,
+        value: rsvpStats.confirmed,
+        pct: successful > 0 ? Math.round((rsvpStats.confirmed / successful) * 100) : 0,
+        icon: <IconCircleCheck size={16} className="text-green-500" />,
+        barColor: 'bg-green-500',
+        activeRing: '',
+      },
+      {
+        label: 'Declined',
+        status: null,
+        value: rsvpStats.declined,
+        pct: successful > 0 ? Math.round((rsvpStats.declined / successful) * 100) : 0,
+        icon: <IconCircleX size={16} className="text-red-500" />,
+        barColor: 'bg-red-500',
+        activeRing: '',
+      },
+    ];
+
+    return <StatsCards stats={stats} columns={4} />;
+  }
+
+  return null;
 }
