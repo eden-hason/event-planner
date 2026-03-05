@@ -71,15 +71,6 @@ export const DELIVERY_STATUSES = [
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
-// Interaction types for analytics
-export const INTERACTION_TYPES = [
-  'view',
-  'click',
-  'rsvp_confirm',
-  'rsvp_decline',
-] as const;
-export type InteractionType = (typeof INTERACTION_TYPES)[number];
-
 // =====================================================
 // SCHEDULES
 // =====================================================
@@ -180,15 +171,6 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
 // MESSAGE DELIVERIES
 // =====================================================
 
-// Response data schema for RSVP confirmations
-export const ResponseDataSchema = z.object({
-  guestCount: z.number().int().optional(),
-  dietaryRestrictions: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-export type ResponseData = z.infer<typeof ResponseDataSchema>;
-
 // --- App-Level Schema (camelCase) ---
 export const MessageDeliveryAppSchema = z.object({
   id: z.uuid(),
@@ -200,8 +182,6 @@ export const MessageDeliveryAppSchema = z.object({
   deliveredAt: z.string().nullable().optional(),
   readAt: z.string().nullable().optional(),
   clickedAt: z.string().nullable().optional(),
-  respondedAt: z.string().nullable().optional(),
-  responseData: ResponseDataSchema.nullable().optional(),
   externalMessageId: z.string().max(255).nullable().optional(),
   errorMessage: z.string().nullable().optional(),
   createdAt: z.string(),
@@ -221,8 +201,6 @@ export const MessageDeliveryDbSchema = z.object({
   delivered_at: z.string().nullable(),
   read_at: z.string().nullable(),
   clicked_at: z.string().nullable(),
-  responded_at: z.string().nullable(),
-  response_data: z.record(z.string(), z.unknown()).nullable(),
   external_message_id: z.string().max(255).nullable(),
   error_message: z.string().nullable(),
   created_at: z.string(),
@@ -243,14 +221,6 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     deliveredAt: db.delivered_at ?? undefined,
     readAt: db.read_at ?? undefined,
     clickedAt: db.clicked_at ?? undefined,
-    respondedAt: db.responded_at ?? undefined,
-    responseData: db.response_data
-      ? ResponseDataSchema.parse({
-          guestCount: db.response_data.guest_count,
-          dietaryRestrictions: db.response_data.dietary_restrictions,
-          notes: db.response_data.notes,
-        })
-      : undefined,
     externalMessageId: db.external_message_id ?? undefined,
     errorMessage: db.error_message ?? undefined,
     createdAt: db.created_at,
@@ -282,91 +252,6 @@ export const MessageDeliveryAppToDbSchema =
 
     return dbData;
   });
-
-// =====================================================
-// GUEST INTERACTIONS
-// =====================================================
-
-// Interaction metadata schema
-export const InteractionMetadataSchema = z.object({
-  guestCount: z.number().int().optional(),
-  dietaryRestrictions: z.string().optional(),
-  linkClicked: z.string().optional(),
-  userAgent: z.string().optional(),
-});
-
-export type InteractionMetadata = z.infer<typeof InteractionMetadataSchema>;
-
-// --- App-Level Schema (camelCase) ---
-export const GuestInteractionAppSchema = z.object({
-  id: z.uuid(),
-  guestId: z.uuid(),
-  scheduleId: z.uuid(),
-  interactionType: z.enum(INTERACTION_TYPES),
-  metadata: InteractionMetadataSchema.optional(),
-  createdAt: z.string(),
-});
-
-export type GuestInteractionApp = z.infer<typeof GuestInteractionAppSchema>;
-
-// --- DB-Level Schema (snake_case) ---
-export const GuestInteractionDbSchema = z.object({
-  id: z.uuid(),
-  guest_id: z.uuid(),
-  schedule_id: z.uuid(),
-  interaction_type: z.enum(INTERACTION_TYPES),
-  metadata: z.record(z.string(), z.unknown()).nullable(),
-  created_at: z.string(),
-});
-
-export type GuestInteractionDb = z.infer<typeof GuestInteractionDbSchema>;
-
-// --- DB to App Transformer ---
-export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
-  (db) => ({
-    id: db.id,
-    guestId: db.guest_id,
-    scheduleId: db.schedule_id,
-    interactionType: db.interaction_type,
-    metadata: db.metadata
-      ? InteractionMetadataSchema.parse({
-          guestCount: db.metadata.guest_count,
-          dietaryRestrictions: db.metadata.dietary_restrictions,
-          linkClicked: db.metadata.link_clicked,
-          userAgent: db.metadata.user_agent,
-        })
-      : undefined,
-    createdAt: db.created_at,
-  }),
-);
-
-// --- Create Schema (interactions are typically insert-only) ---
-export const GuestInteractionCreateSchema = z.object({
-  guestId: z.uuid(),
-  scheduleId: z.uuid(),
-  interactionType: z.enum(INTERACTION_TYPES),
-  metadata: InteractionMetadataSchema.optional(),
-});
-
-export type GuestInteractionCreate = z.infer<
-  typeof GuestInteractionCreateSchema
->;
-
-// --- App to DB Transformer ---
-export const GuestInteractionAppToDbSchema =
-  GuestInteractionCreateSchema.transform((app) => ({
-    guest_id: app.guestId,
-    schedule_id: app.scheduleId,
-    interaction_type: app.interactionType,
-    metadata: app.metadata
-      ? {
-          guest_count: app.metadata.guestCount,
-          dietary_restrictions: app.metadata.dietaryRestrictions,
-          link_clicked: app.metadata.linkClicked,
-          user_agent: app.metadata.userAgent,
-        }
-      : null,
-  }));
 
 // =====================================================
 // WHATSAPP TEMPLATES

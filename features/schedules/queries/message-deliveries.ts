@@ -121,7 +121,7 @@ export async function getDeliveryActivity(
   const [deliveryResult, interactionResult] = await Promise.all([
     supabase
       .from('message_deliveries')
-      .select('id, sent_at, delivered_at, read_at, responded_at, guest_id, guests(name, phone_number)')
+      .select('id, sent_at, delivered_at, read_at, guest_id, guests(name, phone_number)')
       .eq('schedule_id', scheduleId),
     supabase
       .from('guest_interactions')
@@ -161,8 +161,6 @@ export async function getDeliveryActivity(
     if (rsvp) {
       activityStatus = rsvp.type === 'rsvp_confirm' ? 'confirmed' : 'declined';
       respondedAt = rsvp.createdAt;
-    } else if (d.responded_at) {
-      respondedAt = d.responded_at;
     }
 
     const guest = Array.isArray(d.guests) ? d.guests[0] : d.guests;

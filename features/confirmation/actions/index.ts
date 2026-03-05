@@ -37,29 +37,6 @@ export async function submitConfirmation(
     return { success: false, message: 'הקישור אינו תקין' };
   }
 
-  // Build response_data
-  const responseData: Record<string, unknown> = {};
-  if (rsvpStatus === 'confirmed' && guestCount) {
-    responseData.guest_count = guestCount;
-  }
-  if (rsvpStatus === 'confirmed' && dietaryRestrictions) {
-    responseData.dietary_restrictions = dietaryRestrictions;
-  }
-
-  // Update message_deliveries
-  const { error: deliveryError } = await supabase
-    .from('message_deliveries')
-    .update({
-      responded_at: new Date().toISOString(),
-      response_data: responseData,
-    })
-    .eq('id', delivery.id);
-
-  if (deliveryError) {
-    console.error('Error updating delivery:', deliveryError);
-    return { success: false, message: 'שגיאה בשמירת התגובה' };
-  }
-
   // Update guest record
   const guestUpdate: Record<string, unknown> = {
     rsvp_status: rsvpStatus,
@@ -93,12 +70,19 @@ export async function submitConfirmation(
   if (guestCount) metadata.guestCount = guestCount;
   if (dietaryRestrictions) metadata.dietaryRestrictions = dietaryRestrictions;
 
-  await supabase.from('guest_interactions').insert({
-    guest_id: delivery.guest_id,
-    schedule_id: delivery.schedule_id,
-    interaction_type: interactionType,
-    metadata: Object.keys(metadata).length > 0 ? metadata : null,
-  });
+  const { error: interactionError } = await supabase
+    .from('guest_interactions')
+    .insert({
+      guest_id: delivery.guest_id,
+      schedule_id: delivery.schedule_id,
+      interaction_type: interactionType,
+      metadata: Object.keys(metadata).length > 0 ? metadata : null,
+    });
+
+  if (interactionError) {
+    console.error('Error inserting guest interaction:', interactionError);
+    return { success: false, message: 'שגיאה בשמירת התגובה' };
+  }
 
   return {
     success: true,

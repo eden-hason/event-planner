@@ -52,7 +52,7 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
   );
 
   const [dietaryRestrictions, setDietaryRestrictions] = useState(
-    data.responseData?.dietary_restrictions ?? guest.dietaryRestrictions ?? '',
+    data.responseData?.dietaryRestrictions ?? guest.dietaryRestrictions ?? '',
   );
 
   const showDietaryField =
@@ -114,7 +114,7 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
                 type="number"
                 min={1}
                 defaultValue={
-                  data.responseData?.guest_count ?? guest.amount
+                  data.responseData?.guestCount ?? guest.amount
                 }
                 className="text-center text-lg"
               />
