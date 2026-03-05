@@ -3,11 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 import {
   MessageDeliveryDbToAppSchema,
+  type MessageDeliveryApp,
+} from '../schemas';
+import {
   type ActivityStatus,
   type DeliveryActivityPage,
   type DeliveryActivityRow,
-  type MessageDeliveryApp,
-} from '../schemas';
+} from '../types';
 
 /**
  * Fetches all message delivery records for a schedule.

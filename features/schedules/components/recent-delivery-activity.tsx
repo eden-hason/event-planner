@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import { fetchDeliveryActivityPage } from '../queries/message-deliveries';
-import { type ActivityStatus } from '../schemas';
+import { type ActivityStatus, type DeliveryActivityPage } from '../types';
 
 const ACTIVITY_ROW_HEIGHT = 55; // h-8 avatar + two-line text (38px) with p-2 cell padding (8+8) + 1px border
 
@@ -85,7 +85,10 @@ export function RecentDeliveryActivity({
   });
 
   const [page, setPage] = useState(1);
-  const [data, setData] = useState({ rows: [], total: 0 });
+  const [data, setData] = useState<DeliveryActivityPage>({
+    rows: [],
+    total: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
@@ -191,7 +194,9 @@ export function RecentDeliveryActivity({
           </Table>
         )}
       </CardContent>
-      <CardFooter className={`flex items-center justify-between pt-4 ${!isReady ? 'invisible' : ''}`}>
+      <CardFooter
+        className={`flex items-center justify-between pt-4 ${!isReady ? 'invisible' : ''}`}
+      >
         <p className="text-muted-foreground text-sm">
           Showing {showing} of {data.total} recipients
         </p>

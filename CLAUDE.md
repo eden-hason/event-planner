@@ -31,7 +31,8 @@ Code is organized by domain under `/features/`:
 Each feature contains:
 - `queries/` - Server-side Supabase queries
 - `actions/` - Server Actions for mutations
-- `schemas/` - Zod validation schemas
+- `schemas/` - Zod schemas for DB↔app transformations and form validation only
+- `types.ts` - TypeScript-only types: view models, query result shapes, derived types (no Zod)
 - `components/` - Feature-specific UI
 - `utils/` - Data transformation and helpers
 
