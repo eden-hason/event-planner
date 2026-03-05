@@ -18,10 +18,10 @@ interface StatsCardsProps {
   stats: StatItem[];
   selectedStatuses?: string[];
   onStatClick?: (status: string | null) => void;
-  columns?: 2 | 3 | 4;
+  columns?: 1 | 2 | 3 | 4;
 }
 
-const colsClass = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' } as const;
+const colsClass = { 1: 'grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' } as const;
 
 export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns = 4 }: StatsCardsProps) {
   return (

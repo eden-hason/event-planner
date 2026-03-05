@@ -73,12 +73,10 @@ export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
 // Interaction types for analytics
 export const INTERACTION_TYPES = [
-  'opened',
-  'clicked',
-  'rsvp_confirmed',
-  'rsvp_declined',
-  'rsvp_updated',
-  'unsubscribed',
+  'view',
+  'click',
+  'rsvp_confirm',
+  'rsvp_decline',
 ] as const;
 export type InteractionType = (typeof INTERACTION_TYPES)[number];
 
