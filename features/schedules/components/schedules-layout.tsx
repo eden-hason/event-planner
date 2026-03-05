@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IconChartBar, IconCircleCheck, IconCircleCheckFilled, IconFileDescription } from '@tabler/icons-react';
+import {
+  IconChartBar,
+  IconCircleCheck,
+  IconCircleCheckFilled,
+  IconFileDescription,
+} from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,9 +25,13 @@ interface SchedulesLayoutProps {
 const tabTriggerClassName =
   'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none';
 
-export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayoutProps) {
+export function SchedulesLayout({
+  visibleTypes,
+  contentByType,
+}: SchedulesLayoutProps) {
   const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('details');
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
   const handleTypeChange = (type: ActionType) => {
@@ -30,26 +39,41 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
     setSelectedSubIndex(0);
   };
 
-  const activeItem = (contentByType[selectedType] ?? [])[selectedSubIndex] ?? (contentByType[selectedType] ?? [])[0];
+  const activeItem =
+    (contentByType[selectedType] ?? [])[selectedSubIndex] ??
+    (contentByType[selectedType] ?? [])[0];
   const isPending = !activeItem?.scheduleStatus;
+  const hasDeliveryTab = !!activeItem?.delivery;
+
+  useEffect(() => {
+    if (!hasDeliveryTab && activeTab === 'delivery') {
+      setActiveTab('details');
+    }
+  }, [hasDeliveryTab, activeTab]);
 
   useEffect(() => {
     setHeader({
       title: 'Schedules',
       description: 'Manage your event schedule and timeline',
-      action: (isPending && activeItem?.scheduleId)
-        ? (
+      action:
+        isPending && activeItem?.scheduleId ? (
           <SendConfirmDialog
             scheduleId={activeItem.scheduleId}
             guestCount={activeItem.guestCount}
             targetStatus={activeItem.targetStatus}
             triggerSize="sm"
           />
-        )
-        : undefined,
+        ) : undefined,
     });
     return () => clearHeader();
-  }, [activeItem?.scheduleId, activeItem?.scheduleStatus, activeItem?.guestCount, activeItem?.targetStatus, setHeader, clearHeader]);
+  }, [
+    activeItem?.scheduleId,
+    activeItem?.scheduleStatus,
+    activeItem?.guestCount,
+    activeItem?.targetStatus,
+    setHeader,
+    clearHeader,
+  ]);
 
   return (
     <div className="flex gap-6">
@@ -80,7 +104,10 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
                 {item.scheduleStatus === 'sent' ? (
                   <IconCircleCheckFilled size={15} className="text-green-500" />
                 ) : (
-                  <IconCircleCheck size={15} className="text-muted-foreground/40" />
+                  <IconCircleCheck
+                    size={15}
+                    className="text-muted-foreground/40"
+                  />
                 )}
               </Button>
             ));
@@ -93,15 +120,22 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
               variant="ghost"
               className={cn(
                 'justify-start',
-                isActive ? 'bg-background hover:bg-background' : 'hover:bg-background/60',
+                isActive
+                  ? 'bg-background hover:bg-background'
+                  : 'hover:bg-background/60',
               )}
               onClick={() => handleTypeChange(type)}
             >
-              <span className="flex-1 text-left">{ACTION_TYPE_LABELS[type]}</span>
+              <span className="flex-1 text-left">
+                {ACTION_TYPE_LABELS[type]}
+              </span>
               {singleItem?.scheduleStatus === 'sent' ? (
                 <IconCircleCheckFilled size={15} className="text-green-500" />
               ) : (
-                <IconCircleCheck size={15} className="text-muted-foreground/40" />
+                <IconCircleCheck
+                  size={15}
+                  className="text-muted-foreground/40"
+                />
               )}
             </Button>
           );
@@ -110,23 +144,27 @@ export function SchedulesLayout({ visibleTypes, contentByType }: SchedulesLayout
 
       {/* Right content with inner tabs */}
       <div className="min-w-0 flex-1">
-        <Tabs defaultValue="details">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-            <TabsTrigger id="schedule-details-tab-trigger" value="details" className={tabTriggerClassName}>
+            <TabsTrigger
+              id="schedule-details-tab-trigger"
+              value="details"
+              className={tabTriggerClassName}
+            >
               <IconFileDescription size={16} />
               Schedule Details
             </TabsTrigger>
-            <TabsTrigger value="delivery" className={tabTriggerClassName}>
-              <IconChartBar size={16} />
-              Delivery Details
-            </TabsTrigger>
+            {hasDeliveryTab && (
+              <TabsTrigger value="delivery" className={tabTriggerClassName}>
+                <IconChartBar size={16} />
+                Delivery Details
+              </TabsTrigger>
+            )}
           </TabsList>
-          <TabsContent value="details">
-            {activeItem?.details}
-          </TabsContent>
-          <TabsContent value="delivery">
-            {activeItem?.delivery}
-          </TabsContent>
+          <TabsContent value="details">{activeItem?.details}</TabsContent>
+          {hasDeliveryTab && (
+            <TabsContent value="delivery">{activeItem?.delivery}</TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

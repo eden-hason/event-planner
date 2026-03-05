@@ -84,7 +84,7 @@ export function GuestsTable({
   // Show empty state only when there are no guests and no filters applied
   if (isEmpty && !hasFilters) {
     return (
-      <div className="rounded-md border">
+      <div>
         <Empty className="min-h-[400px]">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -114,7 +114,7 @@ export function GuestsTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-md border">
+      <div>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
