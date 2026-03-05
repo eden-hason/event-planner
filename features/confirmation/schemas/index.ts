@@ -23,9 +23,8 @@ export type ConfirmationPageData = {
   deliveryId: string;
   respondedAt: string | null;
   responseData: {
-    guest_count?: number;
-    dietary_restrictions?: string;
-    notes?: string;
+    guestCount?: number;
+    dietaryRestrictions?: string;
   } | null;
   guest: Pick<
     GuestApp,

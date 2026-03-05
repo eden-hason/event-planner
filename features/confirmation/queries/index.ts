@@ -15,8 +15,6 @@ export async function getConfirmationDataByToken(
     .select(
       `
       id,
-      responded_at,
-      response_data,
       clicked_at,
       schedule_id,
       guests!inner (
@@ -72,10 +70,31 @@ export async function getConfirmationDataByToken(
 
   const event = schedule.events;
 
+  // Fetch latest RSVP interaction from guest_interactions
+  const { data: interaction } = await supabase
+    .from('guest_interactions')
+    .select('interaction_type, created_at, metadata')
+    .eq('guest_id', guest.id)
+    .eq('schedule_id', data.schedule_id)
+    .in('interaction_type', ['rsvp_confirm', 'rsvp_decline'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const interactionMetadata = interaction?.metadata as {
+    guestCount?: number;
+    dietaryRestrictions?: string;
+  } | null;
+
   return {
     deliveryId: data.id,
-    respondedAt: data.responded_at,
-    responseData: data.response_data as ConfirmationPageData['responseData'],
+    respondedAt: interaction?.created_at ?? null,
+    responseData: interactionMetadata
+      ? {
+          guestCount: interactionMetadata.guestCount,
+          dietaryRestrictions: interactionMetadata.dietaryRestrictions,
+        }
+      : null,
     guest: {
       id: guest.id,
       name: guest.name,
