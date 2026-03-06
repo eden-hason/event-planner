@@ -34,7 +34,7 @@ export type ScheduleTabItem = {
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
   details: React.ReactNode;
-  delivery: React.ReactNode | null;
+  delivery: React.ReactNode;
 };
 
 export async function SchedulesPage({
@@ -111,15 +111,16 @@ export async function SchedulesPage({
             guestStats={guestStats}
           />
         ),
-        delivery: schedule.actionType === 'confirmation' ? (
+        delivery: (
           <SchedulePerformanceCard
             scheduleId={schedule.id}
             scheduledDate={schedule.scheduledDate}
             guestCount={guestCount}
             targetStatus={schedule.targetStatus}
+            actionType={schedule.actionType}
             eventId={eventId}
           />
-        ) : null,
+        ),
       };
     });
   }

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import {
+  GuestInteractionDbToAppSchema,
   MessageDeliveryDbToAppSchema,
   type MessageDeliveryApp,
 } from '../schemas';
@@ -58,7 +59,7 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
 
   const { data, error } = await supabase
     .from('message_deliveries')
-    .select('status')
+    .select('status, read_at')
     .eq('schedule_id', scheduleId);
 
   if (error) {
@@ -94,8 +95,9 @@ export async function getDeliveryStats(scheduleId: string): Promise<{
   for (const record of data) {
     if (record.status === 'sent') { stats.sent++; stats.successful++; }
     else if (record.status === 'delivered') { stats.delivered++; stats.successful++; }
-    else if (record.status === 'read') { stats.read++; stats.successful++; }
+    else if (record.status === 'read') { stats.successful++; }
     else if (record.status === 'failed') stats.failed++;
+    if (record.read_at !== null) stats.read++;
   }
 
   return stats;
@@ -125,7 +127,7 @@ export async function getDeliveryActivity(
       .eq('schedule_id', scheduleId),
     supabase
       .from('guest_interactions')
-      .select('guest_id, interaction_type, created_at')
+      .select('guest_id, interaction_type, created_at, metadata')
       .eq('schedule_id', scheduleId)
       .in('interaction_type', ['rsvp_confirm', 'rsvp_decline'])
       .order('created_at', { ascending: false }),
@@ -137,12 +139,17 @@ export async function getDeliveryActivity(
   }
 
   // Build RSVP map — latest per guest (data is ordered desc so first wins)
-  const rsvpMap = new Map<string, { type: string; createdAt: string }>();
+  const rsvpMap = new Map<
+    string,
+    { type: string; createdAt: string; metadata: { guestCount?: number; dietaryRestrictions?: string } | null }
+  >();
   for (const record of interactionResult.data ?? []) {
     if (!rsvpMap.has(record.guest_id)) {
+      const parsed = GuestInteractionDbToAppSchema.parse(record);
       rsvpMap.set(record.guest_id, {
-        type: record.interaction_type,
-        createdAt: record.created_at,
+        type: parsed.interactionType,
+        createdAt: parsed.createdAt,
+        metadata: parsed.metadata,
       });
     }
   }
@@ -174,6 +181,7 @@ export async function getDeliveryActivity(
       deliveredAt: d.delivered_at,
       readAt: d.read_at,
       respondedAt,
+      interactionMetadata: rsvp?.metadata ?? null,
     });
   }
 
