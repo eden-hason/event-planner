@@ -254,6 +254,47 @@ export const MessageDeliveryAppToDbSchema =
   });
 
 // =====================================================
+// GUEST INTERACTIONS
+// =====================================================
+
+// Metadata: DB shape (snake_case JSON keys)
+const GuestInteractionMetadataDbSchema = z.object({
+  guest_count: z.number().optional(),
+  dietary_restrictions: z.string().optional(),
+}).nullable();
+
+// Metadata: App shape (camelCase)
+export const GuestInteractionMetadataAppSchema = z.object({
+  guestCount: z.number().optional(),
+  dietaryRestrictions: z.string().optional(),
+}).nullable();
+
+export type GuestInteractionMetadataApp = z.infer<typeof GuestInteractionMetadataAppSchema>;
+
+// DB-level schema for the fields we select
+const GuestInteractionDbSchema = z.object({
+  guest_id: z.string(),
+  interaction_type: z.string(),
+  created_at: z.string(),
+  metadata: z.unknown().transform((val) =>
+    GuestInteractionMetadataDbSchema.parse(val ?? null)
+  ),
+});
+
+// Transformer: DB → App
+export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform((db) => ({
+  guestId: db.guest_id,
+  interactionType: db.interaction_type,
+  createdAt: db.created_at,
+  metadata: db.metadata
+    ? {
+        guestCount: db.metadata.guest_count,
+        dietaryRestrictions: db.metadata.dietary_restrictions,
+      }
+    : null,
+}));
+
+// =====================================================
 // WHATSAPP TEMPLATES
 // =====================================================
 export * from './whatsapp-templates';

@@ -12,6 +12,10 @@ export type DeliveryActivityRow = {
   deliveredAt: string | null;
   readAt: string | null;
   respondedAt: string | null;
+  interactionMetadata: {
+    guestCount?: number;
+    dietaryRestrictions?: string;
+  } | null;
 };
 
 export type DeliveryActivityPage = {

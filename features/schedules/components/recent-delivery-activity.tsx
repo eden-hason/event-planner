@@ -1,6 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
+import { Users, Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,35 @@ function formatTime(ts: string | null): string {
   }
 }
 
+function RsvpDetails({
+  status,
+  metadata,
+}: {
+  status: ActivityStatus;
+  metadata: { guestCount?: number; dietaryRestrictions?: string } | null;
+}) {
+  if (status === 'read') return <span className="text-muted-foreground">—</span>;
+  if (!metadata || (!metadata.guestCount && !metadata.dietaryRestrictions))
+    return <span className="text-muted-foreground text-xs">No details</span>;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {metadata.guestCount != null && (
+        <span className="inline-flex w-fit items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+          <Users className="h-3 w-3" />
+          Party of {metadata.guestCount}
+        </span>
+      )}
+      {metadata.dietaryRestrictions && (
+        <span className="inline-flex w-fit items-center gap-1 text-xs text-muted-foreground italic">
+          <Utensils className="h-3 w-3 shrink-0" />
+          {metadata.dietaryRestrictions}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function Initials({ name }: { name: string }) {
   const initials = name
     .split(' ')
@@ -72,11 +102,13 @@ function Initials({ name }: { name: string }) {
 interface RecentDeliveryActivityProps {
   scheduleId: string;
   eventId: string;
+  showRsvpDetails?: boolean;
 }
 
 export function RecentDeliveryActivity({
   scheduleId,
   eventId,
+  showRsvpDetails = true,
 }: RecentDeliveryActivityProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { pageSize, isCalculated } = useDynamicPageSize({
@@ -149,7 +181,8 @@ export function RecentDeliveryActivity({
                 <TableHead>Status</TableHead>
                 <TableHead>Sent</TableHead>
                 <TableHead>Read</TableHead>
-                <TableHead>Responded</TableHead>
+                {showRsvpDetails && <TableHead>Responded</TableHead>}
+                {showRsvpDetails && <TableHead>RSVP Details</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,9 +217,19 @@ export function RecentDeliveryActivity({
                     <TableCell className="text-muted-foreground text-sm">
                       {formatTime(row.readAt)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {formatTime(row.respondedAt)}
-                    </TableCell>
+                    {showRsvpDetails && (
+                      <TableCell className="text-muted-foreground text-sm">
+                        {formatTime(row.respondedAt)}
+                      </TableCell>
+                    )}
+                    {showRsvpDetails && (
+                      <TableCell>
+                        <RsvpDetails
+                          status={row.activityStatus}
+                          metadata={row.interactionMetadata}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}

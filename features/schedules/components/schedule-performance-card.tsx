@@ -1,4 +1,9 @@
-import { IconCircleCheck, IconCircleX, IconEye, IconSend } from '@tabler/icons-react';
+import {
+  IconCircleCheck,
+  IconCircleX,
+  IconSend,
+  IconEyeCheck,
+} from '@tabler/icons-react';
 import { StatsCards, type StatItem } from '@/components/ui/stats-cards';
 import { getRsvpStats } from '../queries/guest-interactions';
 import { getDeliveryStats } from '../queries/message-deliveries';
@@ -11,6 +16,7 @@ interface SchedulePerformanceCardProps {
   scheduledDate: string;
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
+  actionType: ScheduleApp['actionType'];
   eventId: string;
 }
 
@@ -19,14 +25,25 @@ export async function SchedulePerformanceCard({
   scheduledDate,
   guestCount,
   targetStatus,
+  actionType,
   eventId,
 }: SchedulePerformanceCardProps) {
+  const isConfirmation = actionType === 'confirmation';
+
   const [deliveryStats, rsvpStats] = await Promise.all([
     getDeliveryStats(scheduleId),
-    getRsvpStats(scheduleId),
+    isConfirmation
+      ? getRsvpStats(scheduleId)
+      : Promise.resolve({ confirmed: 0, declined: 0 }),
   ]);
 
-  if (deliveryStats.read === 0 && rsvpStats.confirmed === 0 && rsvpStats.declined === 0) {
+  const isEmpty = isConfirmation
+    ? deliveryStats.read === 0 &&
+      rsvpStats.confirmed === 0 &&
+      rsvpStats.declined === 0
+    : deliveryStats.successful === 0 && deliveryStats.read === 0;
+
+  if (isEmpty) {
     return (
       <DeliveryEmptyState
         scheduleId={scheduleId}
@@ -38,58 +55,101 @@ export async function SchedulePerformanceCard({
   }
 
   const successful = deliveryStats.successful;
-  const totalAttempts = successful + deliveryStats.failed;
+  const failed = deliveryStats.failed;
+  const totalAttempts = successful + failed;
 
-  const stats: StatItem[] = [
-    {
-      label: 'Total Deliveries',
-      status: null,
-      value: totalAttempts,
-      pct: 0,
-      barColor: '',
-      icon: <IconSend size={16} className="text-muted-foreground" />,
-      activeRing: '',
-      breakdown: [
-        { label: 'Success', value: successful, color: 'bg-teal-500' },
-        { label: 'Failed', value: deliveryStats.failed, color: 'bg-orange-500' },
-      ],
-    },
-    {
-      label: 'Opened',
-      status: null,
-      value: deliveryStats.read,
-      pct: successful > 0 ? Math.round((deliveryStats.read / successful) * 100) : 0,
-      icon: <IconEye size={16} className="text-blue-500" />,
-      barColor: 'bg-blue-500',
-      activeRing: '',
-    },
-    {
-      label: 'Confirmed',
-      status: null,
-      value: rsvpStats.confirmed,
-      pct: successful > 0 ? Math.round((rsvpStats.confirmed / successful) * 100) : 0,
-      icon: <IconCircleCheck size={16} className="text-green-500" />,
-      barColor: 'bg-green-500',
-      activeRing: '',
-    },
-    {
-      label: 'Declined',
-      status: null,
-      value: rsvpStats.declined,
-      pct: successful > 0 ? Math.round((rsvpStats.declined / successful) * 100) : 0,
-      icon: <IconCircleX size={16} className="text-red-500" />,
-      barColor: 'bg-red-500',
-      activeRing: '',
-    },
-  ];
+  const stats: StatItem[] = isConfirmation
+    ? [
+        {
+          label: 'Total Deliveries',
+          status: null,
+          value: totalAttempts,
+          pct: 0,
+          barColor: '',
+          icon: <IconSend size={20} className="text-teal-500" />,
+          activeRing: '',
+          breakdown: [
+            { label: 'Success', value: successful, color: 'bg-teal-500' },
+            {
+              label: 'Failed',
+              value: failed,
+              color: 'bg-orange-500',
+            },
+          ],
+        },
+        {
+          label: 'Read',
+          status: null,
+          value: deliveryStats.read,
+          pct:
+            successful > 0
+              ? Math.round((deliveryStats.read / successful) * 100)
+              : 0,
+          icon: <IconEyeCheck size={20} className="text-blue-500" />,
+          barColor: 'bg-blue-500',
+          activeRing: '',
+        },
+        {
+          label: 'Confirmed',
+          status: null,
+          value: rsvpStats.confirmed,
+          pct:
+            successful > 0
+              ? Math.round((rsvpStats.confirmed / successful) * 100)
+              : 0,
+          icon: <IconCircleCheck size={20} className="text-green-500" />,
+          barColor: 'bg-green-500',
+          activeRing: '',
+        },
+        {
+          label: 'Declined',
+          status: null,
+          value: rsvpStats.declined,
+          pct:
+            successful > 0
+              ? Math.round((rsvpStats.declined / successful) * 100)
+              : 0,
+          icon: <IconCircleX size={20} className="text-red-500" />,
+          barColor: 'bg-red-500',
+          activeRing: '',
+        },
+      ]
+    : [
+        {
+          label: 'Total Deliveries',
+          status: null,
+          value: totalAttempts,
+          pct: 0,
+          barColor: '',
+          icon: <IconSend size={20} className="text-teal-500" />,
+          activeRing: '',
+          breakdown: [
+            { label: 'Success', value: successful, color: 'bg-teal-500' },
+            {
+              label: 'Failed',
+              value: failed,
+              color: 'bg-orange-500',
+            },
+          ],
+        },
+        {
+          label: 'Read',
+          status: null,
+          value: deliveryStats.read,
+          pct:
+            successful > 0
+              ? Math.round((deliveryStats.read / successful) * 100)
+              : 0,
+          icon: <IconEyeCheck size={20} className="text-blue-500" />,
+          barColor: 'bg-blue-500',
+          activeRing: '',
+        },
+      ];
 
   return (
     <div className="space-y-6">
-      <StatsCards stats={stats} columns={4} />
-      <RecentDeliveryActivity
-        scheduleId={scheduleId}
-        eventId={eventId}
-      />
+      <StatsCards stats={stats} columns={isConfirmation ? 4 : 2} />
+      <RecentDeliveryActivity scheduleId={scheduleId} eventId={eventId} showRsvpDetails={isConfirmation} />
     </div>
   );
 }
