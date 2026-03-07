@@ -31,6 +31,8 @@ export type ScheduleTabItem = {
   label: string;
   scheduleId: string;
   scheduleStatus: ScheduleApp['status'];
+  sentAt?: string;
+  scheduledDate: string;
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
   details: React.ReactNode;
@@ -100,6 +102,8 @@ export async function SchedulesPage({
         label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
         scheduleId: schedule.id,
         scheduleStatus: schedule.status,
+        sentAt: schedule.sentAt ?? undefined,
+        scheduledDate: schedule.scheduledDate,
         guestCount,
         targetStatus: schedule.targetStatus,
         details: (
