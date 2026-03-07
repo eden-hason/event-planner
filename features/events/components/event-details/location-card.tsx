@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { IconMapPin } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationInput } from '@/components/ui/location-input';
+import { cardHover } from '@/lib/utils';
 import { GoogleMap } from '@/components/ui/google-map';
 import {
   FormControl,
@@ -31,7 +32,7 @@ export function LocationCard() {
   };
 
   return (
-    <Card>
+    <Card className={cardHover}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">

@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Users, Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -40,17 +40,25 @@ const STATUS_CONFIG: Record<
     className: 'border-orange-200 bg-orange-100 text-orange-700',
   },
   read: {
-    label: 'Opened',
+    label: 'Read',
     className: 'border-blue-200 bg-blue-100 text-blue-700',
   },
 };
 
-function formatTime(ts: string | null): string {
-  if (!ts) return '—';
+function TimeStamp({ ts }: { ts: string | null }) {
+  if (!ts) return <span>—</span>;
   try {
-    return format(new Date(ts), 'h:mm a');
+    const date = new Date(ts);
+    return (
+      <div className="flex flex-col">
+        <span>{formatDistanceToNow(date, { addSuffix: true })}</span>
+        <span className="text-muted-foreground text-xs">
+          {format(date, 'MMM d, h:mm a')}
+        </span>
+      </div>
+    );
   } catch {
-    return '—';
+    return <span>—</span>;
   }
 }
 
@@ -212,14 +220,14 @@ export function RecentDeliveryActivity({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {formatTime(row.sentAt)}
+                      <TimeStamp ts={row.sentAt} />
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {formatTime(row.readAt)}
+                      <TimeStamp ts={row.readAt} />
                     </TableCell>
                     {showRsvpDetails && (
                       <TableCell className="text-muted-foreground text-sm">
-                        {formatTime(row.respondedAt)}
+                        <TimeStamp ts={row.respondedAt} />
                       </TableCell>
                     )}
                     {showRsvpDetails && (

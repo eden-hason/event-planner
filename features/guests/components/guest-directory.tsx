@@ -105,7 +105,7 @@ export function GuestDirectory({
   };
 
   return (
-    <Card className="hover:translate-y-0 hover:[box-shadow:none]">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />

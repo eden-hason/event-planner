@@ -5,6 +5,7 @@ import { IconGift } from '@tabler/icons-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { cardHover } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import {
   FormControl,
@@ -21,7 +22,7 @@ export function DigitalGiftCard() {
   const bitEnabled = form.watch('eventSettings.bitConfig.enabled');
 
   return (
-    <Card>
+    <Card className={cardHover}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">

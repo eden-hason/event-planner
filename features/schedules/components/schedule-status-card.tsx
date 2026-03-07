@@ -1,6 +1,7 @@
 import { IconActivity } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
+import { cardHover } from '@/lib/utils';
 import {
   Card,
   CardAction,
@@ -40,7 +41,7 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
   const config = schedule.status ? STATUS_CONFIG[schedule.status] : PENDING_CONFIG;
 
   return (
-    <Card>
+    <Card className={cardHover}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">

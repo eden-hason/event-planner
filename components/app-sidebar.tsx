@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
+import { Badge } from '@/components/ui/badge';
 
 // Sidebar nav items that seating managers can see
 const SEATING_MANAGER_ALLOWED = ['Dashboard', 'Guests', 'Settings'];
@@ -52,7 +53,11 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentUserId?: string;
 }
 
-export function AppSidebar({ events, currentUserId, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  events,
+  currentUserId,
+  ...props
+}: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
   const { isOwner } = useCollaboration();
@@ -96,7 +101,9 @@ export function AppSidebar({ events, currentUserId, ...props }: AppSidebarProps)
 
   const filteredNavMain = isOwner
     ? navMainBase
-    : navMainBase.filter((item) => SEATING_MANAGER_ALLOWED.includes(item.title));
+    : navMainBase.filter((item) =>
+        SEATING_MANAGER_ALLOWED.includes(item.title),
+      );
 
   const navMain = filteredNavMain.map((item) => ({
     ...item,
@@ -127,7 +134,10 @@ export function AppSidebar({ events, currentUserId, ...props }: AppSidebarProps)
             >
               <a href="#">
                 <PartyPopper className="!size-5" />
-                <span className="text-base font-semibold">Kululu Events</span>
+                <span className="text-base font-semibold">Kululu</span>
+                <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
+                  Beta
+                </Badge>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

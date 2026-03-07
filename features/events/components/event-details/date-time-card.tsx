@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cardHover } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import {
   FormControl,
@@ -40,7 +41,7 @@ export function DateTimeCard() {
     : null;
 
   return (
-    <Card>
+    <Card className={cardHover}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-md bg-primary/10 p-1.5">

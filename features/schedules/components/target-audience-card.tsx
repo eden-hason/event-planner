@@ -1,6 +1,7 @@
 import { IconUsers } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
+import { cardHover } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -36,7 +37,7 @@ export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceC
   const isFiltered = targetStatus != null;
 
   return (
-    <Card>
+    <Card className={cardHover}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

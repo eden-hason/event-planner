@@ -30,7 +30,7 @@ export default async function EventLayout({
   return (
     <CollaborationProvider role={role} isCreator={isCreator}>
       <FeatureLayoutProvider>
-        <Card className="min-h-[calc(100vh-101px)] gap-4 border-none bg-transparent p-0 shadow-none hover:translate-y-0 hover:[box-shadow:none]">
+        <Card className="min-h-[calc(100vh-101px)] gap-4 border-none bg-transparent p-0 shadow-none">
           <FeatureLayoutHeader />
           <CardContent className="space-y-6">{children}</CardContent>
         </Card>
