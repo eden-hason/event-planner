@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardHover } from '@/lib/utils';
 import {
   ChartConfig,
   ChartContainer,
@@ -40,7 +41,7 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
   ];
 
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-semibold">RSVP Breakdown</CardTitle>
       </CardHeader>

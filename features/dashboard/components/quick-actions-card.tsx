@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardHover } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   IconUserPlus,
@@ -35,7 +36,7 @@ export function QuickActionsCard({ eventId }: { eventId: string }) {
   ];
 
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
       </CardHeader>

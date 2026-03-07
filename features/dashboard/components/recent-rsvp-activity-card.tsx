@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardHover } from '@/lib/utils';
 import type { RecentRsvpRow } from '../types';
 
 function getActionLabel(status: RecentRsvpRow['rsvpStatus']): string {
@@ -56,7 +57,7 @@ export function RecentRsvpActivityCard({
   eventId: string;
 }) {
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Recent RSVP Activity</CardTitle>
       </CardHeader>

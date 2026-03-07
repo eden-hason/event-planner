@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cardHover } from '@/lib/utils';
 import { IconCalendar, IconMapPin } from '@tabler/icons-react';
 import type { EventApp } from '@/features/events/schemas';
 
@@ -32,7 +33,7 @@ export function EventCountdownCard({ event }: { event: EventApp }) {
   const isToday = daysRemaining === 0;
 
   return (
-    <Card className="h-full overflow-hidden">
+    <Card className={`h-full overflow-hidden ${cardHover}`}>
       <CardContent className="flex h-full flex-col justify-between p-6">
         <div className="space-y-1">
           <div className="flex items-start justify-between gap-2">

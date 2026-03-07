@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardHover } from '@/lib/utils';
 import { GroupIcon } from '@/features/guests/components/groups/group-icon';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
 
@@ -28,7 +29,7 @@ export function GroupsCard({ groups }: { groups: GroupWithGuestsApp[] }) {
   ].filter((s) => s.items.length > 0);
 
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Groups</CardTitle>
       </CardHeader>

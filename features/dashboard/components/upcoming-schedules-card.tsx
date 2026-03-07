@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardHover } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { IconBrandWhatsapp, IconMessage, IconCalendarPlus } from '@tabler/icons-react';
 import { ACTION_TYPE_LABELS, type ScheduleApp } from '@/features/schedules/schemas';
@@ -24,7 +25,7 @@ export function UpcomingSchedulesCard({
     .slice(0, 3);
 
   return (
-    <Card className="flex flex-col">
+    <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Upcoming Schedules</CardTitle>
       </CardHeader>
