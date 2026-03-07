@@ -1,10 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { importLibrary } from '@googlemaps/js-api-loader';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Spinner } from '@/components/ui/spinner';
 import { initGoogleMapsOptions, LocationCoords } from './google-map';
 
 interface PlacePrediction {
@@ -32,18 +44,19 @@ export function LocationInput({
   className,
 }: LocationInputProps) {
   const [inputValue, setInputValue] = React.useState(value || '');
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [predictions, setPredictions] = React.useState<PlacePrediction[]>([]);
-  const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isInitialized, setIsInitialized] = React.useState(false);
+  const [hasSearched, setHasSearched] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
-
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const autocompleteService =
     React.useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = React.useRef<google.maps.places.PlacesService | null>(
     null,
   );
-  const containerRef = React.useRef<HTMLDivElement>(null);
   const placesServiceDivRef = React.useRef<HTMLDivElement | null>(null);
 
   // Initialize Google Maps
@@ -56,7 +69,6 @@ export function LocationInput({
 
         autocompleteService.current = new placesLib.AutocompleteService();
 
-        // Create a temporary div for PlacesService (it requires a map or div)
         if (!placesServiceDivRef.current) {
           placesServiceDivRef.current = document.createElement('div');
         }
@@ -80,28 +92,16 @@ export function LocationInput({
     }
   }, [value]);
 
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const fetchPredictions = React.useCallback(async (input: string) => {
     if (!input.trim() || !autocompleteService.current) {
       setPredictions([]);
+      setIsLoading(false);
+      setHasSearched(false);
       return;
     }
 
     setIsLoading(true);
+    setHasSearched(true);
     try {
       const response = await new Promise<PlacePrediction[]>((resolve) => {
         autocompleteService.current!.getPlacePredictions(
@@ -130,22 +130,38 @@ export function LocationInput({
     }
   }, []);
 
-  // Debounce search
+  // Debounce search based on searchQuery
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      if (inputValue && isInitialized) {
-        fetchPredictions(inputValue);
+      if (searchQuery && isInitialized) {
+        fetchPredictions(searchQuery);
       } else {
         setPredictions([]);
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [inputValue, fetchPredictions, isInitialized]);
+  }, [searchQuery, fetchPredictions, isInitialized]);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
+    setSearchQuery(newValue);
     setIsOpen(true);
     onChange?.(newValue);
   };
@@ -153,8 +169,10 @@ export function LocationInput({
   const handleSelectPrediction = async (prediction: PlacePrediction) => {
     const displayName = prediction.structured_formatting.main_text;
     setInputValue(displayName);
-    setIsOpen(false);
+    setSearchQuery('');
     setPredictions([]);
+    setHasSearched(false);
+    setIsOpen(false);
 
     // Get place details to get coordinates
     if (placesService.current) {
@@ -199,52 +217,81 @@ export function LocationInput({
     }
   };
 
+  const hasNoResults =
+    hasSearched && !isLoading && predictions.length === 0;
+  const showCommandList = isOpen && (hasNoResults || predictions.length > 0);
+
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
-      <div className="relative">
-        <MapPin className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={() => predictions.length > 0 && setIsOpen(true)}
-          placeholder={placeholder}
-          disabled={disabled || !isInitialized}
-          className="pl-10"
-        />
-        {!isInitialized && (
-          <Loader2 className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
+    <Command
+      className={cn('h-fit overflow-visible', className)}
+      shouldFilter={false}
+      loop
+    >
+      <div ref={containerRef} className="relative z-50">
+        <InputGroup
+          className={cn(
+            '!border-input !bg-popover !ring-0',
+            showCommandList && 'rounded-b-none',
+          )}
+        >
+          <InputGroupAddon>
+            <MapPin />
+          </InputGroupAddon>
+          <InputGroupInput
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => {
+              if (predictions.length > 0 || hasNoResults) {
+                setIsOpen(true);
+              }
+            }}
+            disabled={disabled || !isInitialized}
+          />
+          {(isLoading || !isInitialized) && (
+            <InputGroupAddon align="inline-end">
+              <Spinner />
+            </InputGroupAddon>
+          )}
+        </InputGroup>
+        {showCommandList && (
+          <CommandList
+            data-state={showCommandList ? 'open' : 'closed'}
+            className={cn(
+              'bg-popover border-input absolute top-full right-0 left-0 rounded-b-md border border-t-0 shadow-md',
+              'data-[state=open]:animate-in data-[state=closed]:animate-out',
+              'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+              'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+              'data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2',
+            )}
+          >
+            {hasNoResults && (
+              <CommandEmpty>No locations found.</CommandEmpty>
+            )}
+            {predictions.length > 0 && (
+              <CommandGroup>
+                {predictions.map((prediction) => (
+                  <CommandItem
+                    key={prediction.place_id}
+                    value={prediction.place_id}
+                    onSelect={() => handleSelectPrediction(prediction)}
+                  >
+                    <MapPin />
+                    <div className="flex flex-col items-start text-start">
+                      <span className="font-medium">
+                        {prediction.structured_formatting.main_text}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        {prediction.structured_formatting.secondary_text}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
         )}
       </div>
-
-      {isOpen && predictions.length > 0 && (
-        <div className="bg-popover absolute z-50 mt-1 w-full rounded-md border shadow-md">
-          <ul className="max-h-60 overflow-auto py-1">
-            {predictions.map((prediction) => (
-              <li
-                key={prediction.place_id}
-                onClick={() => handleSelectPrediction(prediction)}
-                className="hover:bg-accent flex cursor-pointer items-start gap-3 px-3 py-2"
-              >
-                <MapPin className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {prediction.structured_formatting.main_text}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {prediction.structured_formatting.secondary_text}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {isOpen && isLoading && (
-        <div className="bg-popover absolute z-50 mt-1 w-full rounded-md border p-3 shadow-md">
-          <span className="text-muted-foreground text-sm">Searching...</span>
-        </div>
-      )}
-    </div>
+    </Command>
   );
 }
