@@ -20,6 +20,34 @@ export {
 } from './template-validation';
 
 /**
+ * Formats a date string as a relative time (e.g., "2 days ago", "in 10 days").
+ */
+export function formatRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = date.getTime() - now.getTime();
+  const absDiffMs = Math.abs(diffMs);
+  const isPast = diffMs < 0;
+
+  const minutes = Math.floor(absDiffMs / (1000 * 60));
+  const hours = Math.floor(absDiffMs / (1000 * 60 * 60));
+  const days = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+
+  let label: string;
+  if (minutes < 1) label = 'just now';
+  else if (minutes < 60) label = `${minutes}m`;
+  else if (hours < 24) label = `${hours}h`;
+  else if (days < 7) label = `${days}d`;
+  else if (weeks < 5) label = `${weeks}w`;
+  else label = `${months}mo`;
+
+  if (label === 'just now') return label;
+  return isPast ? `${label} ago` : `in ${label}`;
+}
+
+/**
  * Calculates the scheduled date/time based on the event date and offset.
  *
  * @param eventDate - The event date in ISO format (YYYY-MM-DD)

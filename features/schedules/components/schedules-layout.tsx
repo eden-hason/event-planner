@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import {
+  IconBell,
   IconChartBar,
-  IconCircleCheck,
-  IconCircleCheckFilled,
   IconFileDescription,
+  IconHeart,
+  IconMail,
+  IconUserCheck,
 } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,14 @@ import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { ACTION_TYPE_LABELS, type ActionType } from '../schemas';
+
+const ACTION_TYPE_ICONS: Record<ActionType, React.ComponentType<{ size?: number | string; className?: string }>> = {
+  initial_invitation: IconMail,
+  confirmation: IconUserCheck,
+  event_reminder: IconBell,
+  post_event: IconHeart,
+};
+import { formatRelativeTime } from '../utils';
 import { type ScheduleTabItem } from './schedules-page';
 import { SendConfirmDialog } from './send-confirm-dialog';
 
@@ -23,7 +33,7 @@ interface SchedulesLayoutProps {
 }
 
 const tabTriggerClassName =
-  'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none';
+  'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none cursor-pointer rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none';
 
 export function SchedulesLayout({
   visibleTypes,
@@ -79,18 +89,19 @@ export function SchedulesLayout({
     <div className="flex gap-6">
       {/* Left vertical menu */}
       <nav className="flex w-52 shrink-0 flex-col gap-1">
-        {visibleTypes.map((type) => {
+        {visibleTypes.flatMap((type) => {
           const typeItems = contentByType[type] ?? [];
           const hasMultiple = typeItems.length > 1;
           const isActive = selectedType === type;
 
           if (hasMultiple) {
+            const Icon = ACTION_TYPE_ICONS[type];
             return typeItems.map((item, index) => (
               <Button
                 key={`${type}-${index}`}
                 variant="ghost"
                 className={cn(
-                  'justify-start',
+                  'h-auto justify-start py-2',
                   isActive && selectedSubIndex === index
                     ? 'bg-background hover:bg-background'
                     : 'hover:bg-background/60',
@@ -100,49 +111,43 @@ export function SchedulesLayout({
                   setSelectedSubIndex(index);
                 }}
               >
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.scheduleStatus === 'sent' ? (
-                  <IconCircleCheckFilled size={15} className="text-green-500" />
-                ) : (
-                  <IconCircleCheck
-                    size={15}
-                    className="text-muted-foreground/40"
-                  />
-                )}
+                <div className="flex flex-1 items-start gap-2">
+                  <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="flex flex-1 flex-col items-start gap-0.5">
+                    <span>{item.label}</span>
+                    <StatusRow item={item} />
+                  </div>
+                </div>
               </Button>
             ));
           }
 
-          const singleItem = typeItems[0];
-          return (
+          const Icon = ACTION_TYPE_ICONS[type];
+          return [
             <Button
               key={type}
               variant="ghost"
               className={cn(
-                'justify-start',
+                'h-auto justify-start py-2',
                 isActive
                   ? 'bg-background hover:bg-background'
                   : 'hover:bg-background/60',
               )}
               onClick={() => handleTypeChange(type)}
             >
-              <span className="flex-1 text-left">
-                {ACTION_TYPE_LABELS[type]}
-              </span>
-              {singleItem?.scheduleStatus === 'sent' ? (
-                <IconCircleCheckFilled size={15} className="text-green-500" />
-              ) : (
-                <IconCircleCheck
-                  size={15}
-                  className="text-muted-foreground/40"
-                />
-              )}
-            </Button>
-          );
+              <div className="flex flex-1 items-start gap-2">
+                <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
+                <div className="flex flex-1 flex-col items-start gap-0.5">
+                  <span>{ACTION_TYPE_LABELS[type]}</span>
+                  {typeItems[0] && <StatusRow item={typeItems[0]} />}
+                </div>
+              </div>
+            </Button>,
+          ];
         })}
       </nav>
 
-      {/* Right content with inner tabs */}
+      {/* Right content */}
       <div className="min-w-0 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
@@ -152,12 +157,12 @@ export function SchedulesLayout({
               className={tabTriggerClassName}
             >
               <IconFileDescription size={16} />
-              Schedule Details
+              Overview
             </TabsTrigger>
             {hasDeliveryTab && (
               <TabsTrigger value="delivery" className={tabTriggerClassName}>
                 <IconChartBar size={16} />
-                Delivery Details
+                Activity
               </TabsTrigger>
             )}
           </TabsList>
@@ -168,5 +173,28 @@ export function SchedulesLayout({
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function StatusRow({ item }: { item: ScheduleTabItem }) {
+  const isSent = item.scheduleStatus === 'sent';
+  const dateStr = isSent ? item.sentAt : item.scheduledDate;
+
+  return (
+    <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <span
+        className={cn(
+          'inline-block size-1.5 rounded-full',
+          isSent ? 'bg-green-500' : 'bg-amber-500',
+        )}
+      />
+      {isSent ? 'Sent' : 'Pending'}
+      {dateStr && (
+        <>
+          <span>·</span>
+          {formatRelativeTime(dateStr)}
+        </>
+      )}
+    </span>
   );
 }
