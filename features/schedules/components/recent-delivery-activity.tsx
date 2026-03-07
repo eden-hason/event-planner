@@ -1,7 +1,8 @@
 'use client';
 
+import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Users, Utensils } from 'lucide-react';
+import { Search, Users, Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -21,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import { fetchDeliveryActivityPage } from '../queries/message-deliveries';
 import { type ActivityStatus, type DeliveryActivityPage } from '../types';
@@ -29,21 +37,29 @@ const ACTIVITY_ROW_HEIGHT = 55; // h-8 avatar + two-line text (38px) with p-2 ce
 
 const STATUS_CONFIG: Record<
   ActivityStatus,
-  { label: string; className: string }
+  { label: string; className: string; dotColor: string; labelColor: string }
 > = {
   confirmed: {
     label: 'Confirmed',
     className: 'border-green-200 bg-green-100 text-green-700',
+    dotColor: 'bg-green-500',
+    labelColor: 'text-green-700',
   },
   declined: {
     label: 'Declined',
     className: 'border-orange-200 bg-orange-100 text-orange-700',
+    dotColor: 'bg-orange-500',
+    labelColor: 'text-orange-700',
   },
   read: {
     label: 'Read',
     className: 'border-blue-200 bg-blue-100 text-blue-700',
+    dotColor: 'bg-blue-500',
+    labelColor: 'text-blue-700',
   },
 };
+
+const ALL_STATUSES: ActivityStatus[] = ['confirmed', 'declined', 'read'];
 
 function TimeStamp({ ts }: { ts: string | null }) {
   if (!ts) return <span>—</span>;
@@ -107,6 +123,47 @@ function Initials({ name }: { name: string }) {
   );
 }
 
+function StatusFilterTrigger({
+  selected,
+}: {
+  selected: ActivityStatus[];
+}) {
+  if (selected.length === 0) {
+    return (
+      <span className="flex items-center gap-1.5">
+        All Statuses
+        <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
+      </span>
+    );
+  }
+
+  if (selected.length === 1) {
+    const config = STATUS_CONFIG[selected[0]];
+    return (
+      <span className="flex items-center gap-1.5">
+        <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
+        <span className={config.labelColor}>{config.label}</span>
+        <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="flex gap-0.5">
+        {selected.map((s) => (
+          <span
+            key={s}
+            className={cn('h-2 w-2 rounded-full', STATUS_CONFIG[s].dotColor)}
+          />
+        ))}
+      </span>
+      <span>{selected.length} statuses</span>
+      <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
+    </span>
+  );
+}
+
 interface RecentDeliveryActivityProps {
   scheduleId: string;
   eventId: string;
@@ -132,6 +189,16 @@ export function RecentDeliveryActivity({
   const [loading, setLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedStatuses, setSelectedStatuses] = useState<ActivityStatus[]>([]);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch page 1 with the dynamic page size once calculated
   useEffect(() => {
     if (!isCalculated) return;
@@ -139,7 +206,13 @@ export function RecentDeliveryActivity({
 
     async function fetchInitial() {
       setLoading(true);
-      const result = await fetchDeliveryActivityPage(scheduleId, 1, pageSize);
+      const result = await fetchDeliveryActivityPage(
+        scheduleId,
+        1,
+        pageSize,
+        debouncedSearch,
+        selectedStatuses,
+      );
       if (!cancelled) {
         setData(result);
         setPage(1);
@@ -152,7 +225,7 @@ export function RecentDeliveryActivity({
     return () => {
       cancelled = true;
     };
-  }, [isCalculated, pageSize, scheduleId]);
+  }, [isCalculated, pageSize, scheduleId, debouncedSearch, selectedStatuses]);
 
   const totalPages = Math.ceil(data.total / pageSize);
   const showing = data.rows.length;
@@ -163,22 +236,78 @@ export function RecentDeliveryActivity({
       scheduleId,
       newPage,
       pageSize,
+      debouncedSearch,
+      selectedStatuses,
     );
     setData(result);
     setPage(newPage);
     setLoading(false);
   }
 
+  function toggleStatus(status: ActivityStatus) {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    );
+  }
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base">Recent Delivery Activity</CardTitle>
-        <Link
-          href={`/app/${eventId}/guests`}
-          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          View All Recipients →
-        </Link>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Recent Delivery Activity</CardTitle>
+          <Link
+            href={`/app/${eventId}/guests`}
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            View All Recipients →
+          </Link>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="relative w-56">
+            <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+            <Input
+              placeholder="Search by name or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-8 pl-8 text-sm"
+            />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 shrink-0">
+                <StatusFilterTrigger selected={selectedStatuses} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-44 p-1">
+              {ALL_STATUSES.map((status) => {
+                const config = STATUS_CONFIG[status];
+                const isChecked = selectedStatuses.includes(status);
+                return (
+                  <button
+                    key={status}
+                    onClick={() => toggleStatus(status)}
+                    className="hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm"
+                  >
+                    <span
+                      className={cn(
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                        isChecked
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-input',
+                      )}
+                    >
+                      {isChecked && <IconCheck className="h-3 w-3" />}
+                    </span>
+                    <span className={cn('flex items-center gap-1.5', config.labelColor)}>
+                      <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
+                      {config.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+        </div>
       </CardHeader>
       <CardContent ref={containerRef}>
         {isReady && (

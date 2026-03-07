@@ -117,6 +117,8 @@ export async function getDeliveryActivity(
   scheduleId: string,
   page: number,
   pageSize = PAGE_SIZE,
+  search = '',
+  statusFilter: ActivityStatus[] = [],
 ): Promise<DeliveryActivityPage> {
   const supabase = await createClient();
 
@@ -192,10 +194,21 @@ export async function getDeliveryActivity(
     ),
   );
 
-  const total = allRows.length;
+  let filtered = allRows;
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    filtered = filtered.filter(
+      (r) => r.guestName.toLowerCase().includes(q) || r.guestPhone.includes(q),
+    );
+  }
+  if (statusFilter.length > 0) {
+    filtered = filtered.filter((r) => statusFilter.includes(r.activityStatus));
+  }
+
+  const total = filtered.length;
   const start = (page - 1) * pageSize;
 
-  return { rows: allRows.slice(start, start + pageSize), total };
+  return { rows: filtered.slice(start, start + pageSize), total };
 }
 
 /**
@@ -205,6 +218,8 @@ export async function fetchDeliveryActivityPage(
   scheduleId: string,
   page: number,
   pageSize: number,
+  search = '',
+  statusFilter: ActivityStatus[] = [],
 ): Promise<DeliveryActivityPage> {
-  return getDeliveryActivity(scheduleId, page, pageSize);
+  return getDeliveryActivity(scheduleId, page, pageSize, search, statusFilter);
 }
