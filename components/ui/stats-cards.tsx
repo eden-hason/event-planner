@@ -44,9 +44,9 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
               }
             }}
             className={cn(
-              'bg-card flex flex-col gap-3 rounded-xl border p-4 shadow-sm',
+              'flex flex-col gap-3 rounded-xl border p-4 shadow-sm transition-colors',
+              isActive ? activeRing : 'bg-card',
               isClickable && `cursor-pointer ${cardHover}`,
-              isActive && activeRing,
             )}
           >
             {/* Header: title + icon */}

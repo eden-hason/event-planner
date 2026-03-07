@@ -4,12 +4,12 @@ import {
   IconSend,
   IconEyeCheck,
 } from '@tabler/icons-react';
-import { StatsCards, type StatItem } from '@/components/ui/stats-cards';
+import { type StatItem } from '@/components/ui/stats-cards';
 import { getRsvpStats } from '../queries/guest-interactions';
 import { getDeliveryStats } from '../queries/message-deliveries';
 import { type ScheduleApp } from '../schemas';
 import { DeliveryEmptyState } from './delivery-empty-state';
-import { RecentDeliveryActivity } from './recent-delivery-activity';
+import { SchedulePerformanceView } from './schedule-performance-view';
 
 interface SchedulePerformanceCardProps {
   scheduleId: string;
@@ -79,7 +79,7 @@ export async function SchedulePerformanceCard({
         },
         {
           label: 'Read',
-          status: null,
+          status: 'read',
           value: deliveryStats.read,
           pct:
             successful > 0
@@ -87,11 +87,11 @@ export async function SchedulePerformanceCard({
               : 0,
           icon: <IconEyeCheck size={20} className="text-blue-500" />,
           barColor: 'bg-blue-500',
-          activeRing: '',
+          activeRing: 'bg-blue-50 border-blue-300',
         },
         {
           label: 'Confirmed',
-          status: null,
+          status: 'confirmed',
           value: rsvpStats.confirmed,
           pct:
             successful > 0
@@ -99,11 +99,11 @@ export async function SchedulePerformanceCard({
               : 0,
           icon: <IconCircleCheck size={20} className="text-green-500" />,
           barColor: 'bg-green-500',
-          activeRing: '',
+          activeRing: 'bg-green-50 border-green-300',
         },
         {
           label: 'Declined',
-          status: null,
+          status: 'declined',
           value: rsvpStats.declined,
           pct:
             successful > 0
@@ -111,7 +111,7 @@ export async function SchedulePerformanceCard({
               : 0,
           icon: <IconCircleX size={20} className="text-red-500" />,
           barColor: 'bg-red-500',
-          activeRing: '',
+          activeRing: 'bg-red-50 border-red-300',
         },
       ]
     : [
@@ -134,7 +134,7 @@ export async function SchedulePerformanceCard({
         },
         {
           label: 'Read',
-          status: null,
+          status: 'read',
           value: deliveryStats.read,
           pct:
             successful > 0
@@ -142,14 +142,17 @@ export async function SchedulePerformanceCard({
               : 0,
           icon: <IconEyeCheck size={20} className="text-blue-500" />,
           barColor: 'bg-blue-500',
-          activeRing: '',
+          activeRing: 'bg-blue-50 border-blue-300',
         },
       ];
 
   return (
-    <div className="space-y-6">
-      <StatsCards stats={stats} columns={isConfirmation ? 4 : 2} />
-      <RecentDeliveryActivity scheduleId={scheduleId} eventId={eventId} showRsvpDetails={isConfirmation} />
-    </div>
+    <SchedulePerformanceView
+      stats={stats}
+      columns={isConfirmation ? 4 : 2}
+      scheduleId={scheduleId}
+      eventId={eventId}
+      showRsvpDetails={isConfirmation}
+    />
   );
 }

@@ -32,7 +32,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         pct: 100,
         icon: <IconUsers size={16} className="text-blue-500" />,
         barColor: 'bg-blue-500',
-        activeRing: 'ring-2 ring-blue-400',
+        activeRing: 'bg-blue-50 border-blue-300',
       },
       {
         label: 'Confirmed',
@@ -42,7 +42,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         pct: pct(confirmed.length),
         icon: <IconUserCheck size={16} className="text-green-500" />,
         barColor: 'bg-green-500',
-        activeRing: 'ring-2 ring-green-400',
+        activeRing: 'bg-green-50 border-green-300',
       },
       {
         label: 'Pending',
@@ -52,7 +52,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         pct: pct(pending.length),
         icon: <IconClock size={16} className="text-amber-400" />,
         barColor: 'bg-amber-400',
-        activeRing: 'ring-2 ring-amber-400',
+        activeRing: 'bg-amber-50 border-amber-300',
       },
       {
         label: 'Declined',
@@ -62,7 +62,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         pct: pct(declined.length),
         icon: <IconUserX size={16} className="text-red-500" />,
         barColor: 'bg-red-500',
-        activeRing: 'ring-2 ring-red-400',
+        activeRing: 'bg-red-50 border-red-300',
       },
     ];
   }, [guests]);

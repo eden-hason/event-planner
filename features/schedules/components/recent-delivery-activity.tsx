@@ -168,12 +168,16 @@ interface RecentDeliveryActivityProps {
   scheduleId: string;
   eventId: string;
   showRsvpDetails?: boolean;
+  selectedStatuses: ActivityStatus[];
+  onStatusChange: (statuses: ActivityStatus[]) => void;
 }
 
 export function RecentDeliveryActivity({
   scheduleId,
   eventId,
   showRsvpDetails = true,
+  selectedStatuses,
+  onStatusChange,
 }: RecentDeliveryActivityProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { pageSize, isCalculated } = useDynamicPageSize({
@@ -191,8 +195,6 @@ export function RecentDeliveryActivity({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<ActivityStatus[]>([]);
-
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
@@ -245,8 +247,10 @@ export function RecentDeliveryActivity({
   }
 
   function toggleStatus(status: ActivityStatus) {
-    setSelectedStatuses((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    onStatusChange(
+      selectedStatuses.includes(status)
+        ? selectedStatuses.filter((s) => s !== status)
+        : [...selectedStatuses, status],
     );
   }
 
@@ -272,7 +276,7 @@ export function RecentDeliveryActivity({
               className="h-8 pl-8 text-sm"
             />
           </div>
-          <Popover>
+          {showRsvpDetails && <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 shrink-0">
                 <StatusFilterTrigger selected={selectedStatuses} />
@@ -306,7 +310,7 @@ export function RecentDeliveryActivity({
                 );
               })}
             </PopoverContent>
-          </Popover>
+          </Popover>}
         </div>
       </CardHeader>
       <CardContent ref={containerRef}>
