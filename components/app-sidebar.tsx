@@ -51,11 +51,17 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   events: EventApp[];
   currentUserId?: string;
+  user: {
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
 }
 
 export function AppSidebar({
   events,
   currentUserId,
+  user,
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -148,7 +154,7 @@ export function AppSidebar({
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavEvents events={events} currentUserId={currentUserId} />
+        <NavEvents events={events} currentUserId={currentUserId} user={user} />
       </SidebarFooter>
     </Sidebar>
   );

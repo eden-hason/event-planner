@@ -52,7 +52,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
             {/* Header: title + icon */}
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold">{label}</span>
-              {icon}
+              <div className="[&>svg]:size-5">{icon}</div>
             </div>
 
             {/* Large number */}
