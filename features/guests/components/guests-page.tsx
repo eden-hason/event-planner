@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { IconClock, IconPlus, IconTrash, IconUsers } from '@tabler/icons-react';
+import { IconClock, IconPlus, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -174,7 +174,7 @@ export function GuestsPage({
   const guestsHeaderAction = useMemo(
     () => (
       <Button onClick={handleAddGuest}>
-        <IconPlus size={16} />
+        <IconUserPlus size={16} />
         Add Guest
       </Button>
     ),
@@ -224,12 +224,14 @@ export function GuestsPage({
             value="guests"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
-            All Guests
+            <IconUsers size={16} />
+            Guests
           </TabsTrigger>
           <TabsTrigger
             value="groups"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
+            <IconUsersGroup size={16} />
             Groups
           </TabsTrigger>
         </TabsList>

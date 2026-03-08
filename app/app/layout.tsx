@@ -1,6 +1,5 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { AppHeader } from '@/components/app-header';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
@@ -33,9 +32,9 @@ export default async function Layout({
         variant="floating"
         events={events}
         currentUserId={data.user.id}
+        user={user}
       />
       <SidebarInset className="!bg-[#F4F4F6]">
-        <AppHeader user={user} />
         <div className="flex-1 py-4">
           <div className="container mx-auto h-full">{children}</div>
         </div>

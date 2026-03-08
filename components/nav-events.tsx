@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronsUpDown, Copy, Plus, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import { ChevronsUpDown, Copy, LogOutIcon, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -17,8 +17,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -32,27 +32,37 @@ import {
 } from '@/components/ui/alert-dialog';
 import { type EventApp } from '@/features/events/schemas';
 import { deleteEvent, duplicateEvent } from '@/features/events/actions';
-import { IconCarambola } from '@tabler/icons-react';
+import { logout } from '@/features/auth';
+import { IconUser } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
 interface NavEventsProps {
   events: EventApp[];
   currentUserId?: string;
+  user: {
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
 }
 
-export function NavEvents({ events, currentUserId }: NavEventsProps) {
+export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { isMobile } = useSidebar();
 
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
 
   // Find the current event
   const currentEvent = events.find((event) => event.id === currentEventId);
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    await logout();
+  };
 
   const handleNewEventClick = () => {
     setDropdownOpen(false);
@@ -103,16 +113,12 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
         setDeleteDialogOpen(false);
         setEventToDelete(null);
 
-        // Navigation logic
-        const remainingEvents = events.filter(e => e.id !== eventId);
+        const remainingEvents = events.filter((e) => e.id !== eventId);
         if (remainingEvents.length === 0) {
-          // No events left - navigate to empty state
           router.push('/app');
         } else if (currentEventId === eventId) {
-          // Deleted current event - navigate to first remaining
           router.push(`/app/${remainingEvents[0].id}/dashboard`);
         }
-        // else: viewing different event, stay put
 
         return data.message || 'Event deleted successfully';
       },
@@ -139,15 +145,25 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <IconCarambola className="size-5" />
-              </div>
+              <Avatar className="size-8 rounded-lg">
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name}
+                    width={32}
+                    height={32}
+                    className="aspect-square size-full object-cover"
+                  />
+                ) : (
+                  <AvatarFallback className="rounded-lg">
+                    <IconUser className="size-4" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
+                <span className="truncate font-semibold">{user.name}</span>
+                <span className="text-muted-foreground truncate text-xs">
                   {currentEvent ? currentEvent.title : 'No event selected'}
-                </span>
-                <span className="truncate text-xs">
-                  {currentEvent?.eventType}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -156,35 +172,62 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? 'bottom' : 'right'}
+            side="top"
             sideOffset={4}
           >
+            {/* Section 1: User header */}
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="size-8 rounded-lg">
+                  {user.avatar ? (
+                    <Image
+                      src={user.avatar}
+                      alt={user.name}
+                      width={32}
+                      height={32}
+                      className="aspect-square size-full object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="rounded-lg">
+                      <IconUser className="size-4" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    {user.email}
+                  </span>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+
+            <DropdownMenuSeparator />
+
+            {/* Section 2: Events */}
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Events
             </DropdownMenuLabel>
             <div className="flex flex-col gap-1">
               {events.length === 0 ? (
                 <DropdownMenuItem disabled>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="text-muted-foreground">No events yet</span>
-                  </div>
+                  <span className="text-muted-foreground">No events yet</span>
                 </DropdownMenuItem>
               ) : (
                 events.map((event) => {
-                  const eventUrl = `/app/${event.id}/dashboard`;
                   const isActive = currentEventId === event.id;
-
-                  const isShared = currentUserId ? event.userId !== currentUserId : false;
+                  const isShared = currentUserId
+                    ? event.userId !== currentUserId
+                    : false;
 
                   return (
                     <DropdownMenuItem
                       key={event.id}
                       className={cn('gap-2 p-2 group', isActive && 'bg-accent')}
                     >
-                      {/* Clickable area for navigation */}
                       <div
                         className="flex-1 cursor-pointer grid text-left text-sm leading-tight"
-                        onClick={() => router.push(eventUrl)}
+                        onClick={() => router.push(`/app/${event.id}/dashboard`)}
                       >
                         <span className="truncate font-medium">
                           {event.title}
@@ -198,9 +241,12 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
                           )}
                         </span>
                       </div>
-
-                      {/* Action buttons - visible on hover, hidden for shared events */}
-                      <div className={cn("flex opacity-0 group-hover:opacity-100 transition-opacity", isShared && "hidden")}>
+                      <div
+                        className={cn(
+                          'flex opacity-0 group-hover:opacity-100 transition-opacity',
+                          isShared && 'hidden',
+                        )}
+                      >
                         <Button
                           variant="ghost"
                           size="icon"
@@ -233,7 +279,6 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
                 })
               )}
             </div>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="p-0">
               <button
                 type="button"
@@ -248,19 +293,35 @@ export function NavEvents({ events, currentUserId }: NavEventsProps) {
                 </div>
               </button>
             </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            {/* Section 3: Log out */}
+            <DropdownMenuItem
+              className="cursor-pointer text-red-600"
+              onClick={handleLogout}
+            >
+              <LogOutIcon className="text-red-600" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Event?</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{eventToDelete?.title}&quot;? This action cannot be undone.
+                Are you sure you want to delete &quot;{eventToDelete?.title}
+                &quot;? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={handleConfirmDelete}>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleConfirmDelete}
+              >
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>

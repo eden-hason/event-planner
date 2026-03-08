@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { IconClock, IconUserCheck, IconUsers, IconUserX } from '@tabler/icons-react';
+import { IconUserCheck, IconUserQuestion, IconUsers, IconUserX } from '@tabler/icons-react';
 import { GuestWithGroupApp } from '../schemas';
 import { StatsCards, StatItem } from '@/components/ui/stats-cards';
 
@@ -30,7 +30,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: totalRecords,
         secondaryText: `${totalPeople.toLocaleString()} people`,
         pct: 100,
-        icon: <IconUsers size={16} className="text-blue-500" />,
+        icon: <IconUsers className="text-blue-500" />,
         barColor: 'bg-blue-500',
         activeRing: 'bg-blue-50 border-blue-300',
       },
@@ -40,7 +40,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: confirmed.length,
         secondaryText: `${confirmed.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(confirmed.length),
-        icon: <IconUserCheck size={16} className="text-green-500" />,
+        icon: <IconUserCheck className="text-green-500" />,
         barColor: 'bg-green-500',
         activeRing: 'bg-green-50 border-green-300',
       },
@@ -50,7 +50,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: pending.length,
         secondaryText: `${pending.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(pending.length),
-        icon: <IconClock size={16} className="text-amber-400" />,
+        icon: <IconUserQuestion className="text-amber-400" />,
         barColor: 'bg-amber-400',
         activeRing: 'bg-amber-50 border-amber-300',
       },
@@ -60,7 +60,7 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: declined.length,
         secondaryText: `${declined.reduce((s, g) => s + g.amount, 0).toLocaleString()} people`,
         pct: pct(declined.length),
-        icon: <IconUserX size={16} className="text-red-500" />,
+        icon: <IconUserX className="text-red-500" />,
         barColor: 'bg-red-500',
         activeRing: 'bg-red-50 border-red-300',
       },
