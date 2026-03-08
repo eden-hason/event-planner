@@ -38,7 +38,7 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
   ];
 
   return (
-    <Card className={`flex flex-col ${cardHover}`}>
+    <Card className={`flex flex-col gap-2 ${cardHover}`}>
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">
