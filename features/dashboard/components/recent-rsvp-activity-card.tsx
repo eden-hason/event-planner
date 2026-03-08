@@ -1,5 +1,19 @@
 import Link from 'next/link';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '@/components/ui/item';
 import { Button } from '@/components/ui/button';
 import { cardHover } from '@/lib/utils';
 import { IconCheck, IconX, IconClock } from '@tabler/icons-react';
@@ -61,39 +75,41 @@ export function RecentRsvpActivityCard({
   eventId: string;
 }) {
   return (
-    <Card className={`flex flex-col ${cardHover}`}>
+    <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
+        <div>
           <div>
-            <CardTitle className="text-sm font-semibold">Recent Activity</CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">Latest RSVP updates</p>
+            <CardTitle className="text-sm font-semibold">
+              Recent Activity
+            </CardTitle>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Latest RSVP updates
+            </p>
           </div>
-          <Link
-            href={`/app/${eventId}/guests`}
-            className="shrink-0 text-xs text-primary underline-offset-4 hover:underline"
-          >
-            View All →
-          </Link>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-3">
+      <CardContent className="max-h-72 overflow-y-auto p-0">
         {activity.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">No recent RSVP changes</p>
+          <p className="text-muted-foreground py-4 text-center text-sm">
+            No recent RSVP changes
+          </p>
         ) : (
           activity.map((row) => (
-            <div key={row.id} className="flex items-start gap-3">
-              <StatusIcon status={row.rsvpStatus} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm leading-snug">
-                  <span className="font-medium">{row.name}</span>
-                  <span className="text-muted-foreground"> {getActionLabel(row.rsvpStatus)}</span>
-                </p>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <IconClock className="h-3 w-3 shrink-0" />
-                  <span>{formatRelativeTime(row.rsvpChangedAt)}</span>
-                </div>
-              </div>
-            </div>
+            <Item key={row.id} size="sm">
+              <ItemMedia>
+                <StatusIcon status={row.rsvpStatus} />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{row.name}</ItemTitle>
+                <ItemDescription>
+                  {getActionLabel(row.rsvpStatus)}
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions className="text-muted-foreground self-start text-xs">
+                <IconClock className="h-3 w-3 shrink-0" />
+                <span>{formatRelativeTime(row.rsvpChangedAt)}</span>
+              </ItemActions>
+            </Item>
           ))
         )}
       </CardContent>

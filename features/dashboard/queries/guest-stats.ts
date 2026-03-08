@@ -3,7 +3,7 @@ import type { RecentRsvpRow } from '../types';
 
 export async function getRecentRsvpActivity(
   eventId: string,
-  limit = 8,
+  limit = 5,
 ): Promise<RecentRsvpRow[]> {
   const supabase = await createClient();
 
@@ -11,6 +11,7 @@ export async function getRecentRsvpActivity(
     .from('guests')
     .select('id, name, rsvp_status, rsvp_changed_at, rsvp_changed_by_name, rsvp_change_source')
     .eq('event_id', eventId)
+    .eq('rsvp_change_source', 'guest')
     .not('rsvp_changed_at', 'is', null)
     .order('rsvp_changed_at', { ascending: false })
     .limit(limit);

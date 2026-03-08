@@ -23,7 +23,7 @@ export default async function DashboardPage({
     getEventById(eventId),
     getEventGuests(eventId),
     getEventGroupsWithGuests(eventId),
-    getRecentRsvpActivity(eventId, 8),
+    getRecentRsvpActivity(eventId, 5),
     getCollaboratorCount(eventId),
   ]);
 
