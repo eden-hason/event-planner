@@ -1,13 +1,11 @@
 import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
-import { getSchedulesByEventId } from '@/features/schedules/queries';
 import { getRecentRsvpActivity } from '@/features/dashboard/queries';
 import {
   DashboardHeader,
-  EventCountdownCard,
+  EventHeroBanner,
   GuestStatCards,
   RsvpBreakdownCard,
-  UpcomingSchedulesCard,
   GroupsCard,
   RecentRsvpActivityCard,
   QuickActionsCard,
@@ -21,10 +19,9 @@ export default async function DashboardPage({
 }) {
   const { eventId } = await params;
 
-  const [event, guests, schedules, groups, recentActivity] = await Promise.all([
+  const [event, guests, groups, recentActivity] = await Promise.all([
     getEventById(eventId),
     getEventGuests(eventId),
-    getSchedulesByEventId(eventId),
     getEventGroupsWithGuests(eventId),
     getRecentRsvpActivity(eventId, 8),
   ]);
@@ -40,36 +37,35 @@ export default async function DashboardPage({
     <>
       <DashboardHeader />
 
-      {/* Row 1: Countdown + Guest Stats */}
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-6">
-          {event ? (
-            <EventCountdownCard event={event} />
-          ) : (
-            <div className="flex h-full items-center justify-center rounded-xl border bg-card p-6 text-muted-foreground">
-              Event not found
-            </div>
-          )}
+      {/* Row 1: Hero banner */}
+      {event ? (
+        <EventHeroBanner event={event} />
+      ) : (
+        <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
+          Event not found
         </div>
-        <div className="col-span-6">
-          <GuestStatCards stats={stats} />
-        </div>
-      </div>
+      )}
 
-      {/* Row 2: RSVP Breakdown + Upcoming Schedules + Groups */}
-      <div className="grid grid-cols-3 gap-4">
-        <RsvpBreakdownCard stats={stats} />
-        <UpcomingSchedulesCard schedules={schedules} eventId={eventId} />
-        <GroupsCard groups={groups} />
-      </div>
+      {/* Row 2: Guest stat cards */}
+      <GuestStatCards stats={stats} />
 
-      {/* Row 3: Recent Activity + Quick Actions */}
+      {/* Row 3: RSVP Breakdown + Quick Actions */}
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-8">
-          <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} />
+        <div className="col-span-7">
+          <RsvpBreakdownCard stats={stats} />
         </div>
-        <div className="col-span-4">
+        <div className="col-span-5">
           <QuickActionsCard eventId={eventId} />
+        </div>
+      </div>
+
+      {/* Row 4: Guest Groups + Recent Activity */}
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-7">
+          <GroupsCard groups={groups} eventId={eventId} />
+        </div>
+        <div className="col-span-5">
+          <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} />
         </div>
       </div>
     </>
