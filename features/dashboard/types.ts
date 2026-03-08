@@ -16,3 +16,11 @@ export type GuestStats = {
   pending: number;
   declined: number;
 };
+
+export type OnboardingStatus = {
+  detailsComplete: boolean;
+  hasGuests: boolean;
+  hasGroups: boolean;
+  hasInvitationImage: boolean;
+  hasCollaborator: boolean;
+};
