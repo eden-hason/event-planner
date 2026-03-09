@@ -99,7 +99,7 @@ export function Onboarding({
   };
 
   return (
-    <div className="bg-card text-card-foreground rounded-lg border p-4 shadow-xs">
+    <div className="bg-card text-card-foreground h-full rounded-lg border p-4 shadow-xs">
       <div className="mr-2 mb-4 flex flex-col justify-between sm:flex-row sm:items-center">
         <h3 className="text-foreground ml-2 font-semibold text-balance">
           {title}
