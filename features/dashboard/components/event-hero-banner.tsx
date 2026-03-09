@@ -12,14 +12,6 @@ const LIGHT_CONFETTI_COLORS = [
   'rgba(248, 113, 113, 0.3)',
 ];
 
-function getDaysRemaining(eventDate: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const event = new Date(eventDate);
-  event.setHours(0, 0, 0, 0);
-  return Math.ceil((event.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
-
 function formatEventDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -29,26 +21,19 @@ function formatEventDate(dateStr: string): string {
   });
 }
 
-
 export function EventHeroBanner({ event }: { event: EventApp }) {
-  const daysRemaining = getDaysRemaining(event.eventDate);
-  const isPast = daysRemaining < 0;
-  const isToday = daysRemaining === 0;
-  const countdownValue = isToday ? '🎉' : Math.abs(daysRemaining).toString();
-  const countdownLabel = isToday ? "Today's the day!" : isPast ? 'days since' : 'days to go';
-
   return (
     <ConfettiBackground
-      className="relative rounded-xl border bg-card p-6 shadow-sm"
+      className="bg-card relative h-full overflow-hidden rounded-xl border p-6 shadow-sm"
       colors={LIGHT_CONFETTI_COLORS}
       count={30}
       gravity={0.02}
     >
-      <div className="flex items-center justify-between gap-6">
+      <div className="flex h-full items-center justify-between gap-4">
         <div className="flex flex-col gap-3">
-          <div className="flex items-start gap-2">
-            <h2 className="text-xl font-semibold leading-tight text-zinc-900">{event.title}</h2>
-          </div>
+          <h2 className="text-xl leading-tight font-semibold text-zinc-900">
+            {event.title}
+          </h2>
           <div className="space-y-1.5 text-sm text-zinc-500">
             <div className="flex items-center gap-2">
               <IconCalendar className="h-4 w-4 shrink-0" />
@@ -62,12 +47,12 @@ export function EventHeroBanner({ event }: { event: EventApp }) {
             )}
           </div>
         </div>
-
-        {/* Countdown */}
-        <div className="shrink-0 rounded-xl bg-white/80 px-6 py-4 text-center text-zinc-900 shadow-sm backdrop-blur-sm">
-          <p className="text-4xl font-bold tabular-nums leading-none">{countdownValue}</p>
-          <p className="mt-1.5 text-xs text-zinc-500">{countdownLabel}</p>
-        </div>
+        <img
+          src="/hero-wedding-2.svg"
+          alt=""
+          aria-hidden="true"
+          className="h-28 w-auto shrink-0 object-contain select-none"
+        />
       </div>
     </ConfettiBackground>
   );

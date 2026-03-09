@@ -1,16 +1,27 @@
 import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
-import { getRecentRsvpActivity, getCollaboratorCount } from '@/features/dashboard/queries';
+import { getRecentRsvpActivity, getCollaboratorCount, getPendingSchedulesCount } from '@/features/dashboard/queries';
 import {
   DashboardHeader,
   EventHeroBanner,
-  GuestStatCards,
   RsvpBreakdownCard,
   RecentRsvpActivityCard,
   QuickActionsCard,
   OnboardingChecklistCard,
+  DaysToEventCard,
+  GuestsInvitedCard,
+  ScheduledMessagesCard,
+  GroupBreakdownCard,
 } from '@/features/dashboard/components';
 import type { GuestStats, OnboardingStatus } from '@/features/dashboard/types';
+
+function getDaysRemaining(eventDate: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const event = new Date(eventDate);
+  event.setHours(0, 0, 0, 0);
+  return Math.ceil((event.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export default async function DashboardPage({
   params,
@@ -19,12 +30,13 @@ export default async function DashboardPage({
 }) {
   const { eventId } = await params;
 
-  const [event, guests, groups, recentActivity, collaboratorCount] = await Promise.all([
+  const [event, guests, groups, recentActivity, collaboratorCount, pendingSchedulesCount] = await Promise.all([
     getEventById(eventId),
     getEventGuests(eventId),
     getEventGroupsWithGuests(eventId),
     getRecentRsvpActivity(eventId, 5),
     getCollaboratorCount(eventId),
+    getPendingSchedulesCount(eventId),
   ]);
 
   const stats: GuestStats = {
@@ -46,29 +58,30 @@ export default async function DashboardPage({
     <>
       <DashboardHeader />
 
-      {/* Row 1: Hero banner */}
+      {/* Row 1: Hero banner + stat cards */}
       {event ? (
-        <EventHeroBanner event={event} />
+        <div className="grid grid-cols-5 gap-4">
+          <div className="col-span-2 h-full">
+            <EventHeroBanner event={event} />
+          </div>
+          <DaysToEventCard daysRemaining={getDaysRemaining(event.eventDate)} />
+          <GuestsInvitedCard total={stats.total} estimate={event.guestsEstimate} />
+          <ScheduledMessagesCard count={pendingSchedulesCount} />
+        </div>
       ) : (
         <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
           Event not found
         </div>
       )}
 
-      {/* Row 2: Guest stat cards */}
-      <GuestStatCards stats={stats} />
-
-      {/* Row 3: RSVP Breakdown + Quick Actions */}
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-7">
-          <RsvpBreakdownCard stats={stats} />
-        </div>
-        <div className="col-span-5">
-          <QuickActionsCard eventId={eventId} />
-        </div>
+      {/* Row 2: RSVP Breakdown + Quick Actions + Group Breakdown */}
+      <div className="grid grid-cols-3 gap-4">
+        <RsvpBreakdownCard stats={stats} />
+        <QuickActionsCard eventId={eventId} />
+        <GroupBreakdownCard groups={groups} />
       </div>
 
-      {/* Row 4: Onboarding Checklist + Recent Activity */}
+      {/* Row 3: Onboarding Checklist + Recent Activity */}
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-7">
           <OnboardingChecklistCard eventId={eventId} status={onboardingStatus} />

@@ -14,9 +14,9 @@ import type { GuestStats } from '../types';
 
 const chartConfig = {
   people: { label: 'People' },
-  confirmed: { label: 'Confirmed', color: 'oklch(0.70 0.17 150)' },
-  pending: { label: 'Pending', color: 'oklch(0.82 0.16 90)' },
-  declined: { label: 'Declined', color: 'oklch(0.65 0.20 25)' },
+  confirmed: { label: 'Confirmed', color: 'var(--color-emerald-500)' },
+  pending: { label: 'Pending', color: 'var(--color-amber-400)' },
+  declined: { label: 'Declined', color: 'var(--color-red-400)' },
 } satisfies ChartConfig;
 
 export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
@@ -24,21 +24,25 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
 
   const chartData = useMemo(
     () => [
-      { status: 'confirmed', people: confirmed, fill: 'oklch(0.70 0.17 150)' },
-      { status: 'pending', people: pending, fill: 'oklch(0.82 0.16 90)' },
-      { status: 'declined', people: declined, fill: 'oklch(0.65 0.20 25)' },
+      {
+        status: 'confirmed',
+        people: confirmed,
+        fill: 'var(--color-emerald-500)',
+      },
+      { status: 'pending', people: pending, fill: 'var(--color-amber-400)' },
+      { status: 'declined', people: declined, fill: 'var(--color-red-400)' },
     ],
     [confirmed, pending, declined],
   );
 
   const legendRows = [
-    { label: 'Confirmed', value: confirmed, color: 'oklch(0.70 0.17 150)' },
-    { label: 'Pending', value: pending, color: 'oklch(0.82 0.16 90)' },
-    { label: 'Declined', value: declined, color: 'oklch(0.65 0.20 25)' },
+    { label: 'Confirmed', value: confirmed, color: 'var(--color-emerald-500)' },
+    { label: 'Pending', value: pending, color: 'var(--color-amber-400)' },
+    { label: 'Declined', value: declined, color: 'var(--color-red-400)' },
   ];
 
   return (
-    <Card className={`flex flex-col gap-2 ${cardHover}`}>
+    <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">
@@ -49,11 +53,11 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
           </p>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 items-center gap-4 pb-6">
+      <CardContent className="flex flex-1 flex-col items-center gap-4 pb-6">
         {/* Donut chart */}
         <ChartContainer
           config={chartConfig}
-          className="aspect-square h-[160px] shrink-0"
+          className="aspect-square h-[180px] w-full shrink-0"
         >
           <PieChart>
             <ChartTooltip
@@ -101,7 +105,7 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
         </ChartContainer>
 
         {/* Legend with progress bars */}
-        <div className="flex-1 space-y-3">
+        <div className="w-full space-y-3">
           {legendRows.map(({ label, value, color }) => {
             const pct = total > 0 ? Math.round((value / total) * 100) : 0;
             return (
