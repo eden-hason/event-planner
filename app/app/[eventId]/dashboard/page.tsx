@@ -6,7 +6,7 @@ import {
   EventHeroBanner,
   RsvpBreakdownCard,
   RecentRsvpActivityCard,
-  QuickActionsCard,
+  RsvpEngagementCard,
   OnboardingChecklistCard,
   DaysToEventCard,
   GuestsInvitedCard,
@@ -77,7 +77,7 @@ export default async function DashboardPage({
       {/* Row 2: RSVP Breakdown + Quick Actions + Group Breakdown */}
       <div className="grid grid-cols-3 gap-4">
         <RsvpBreakdownCard stats={stats} />
-        <QuickActionsCard eventId={eventId} />
+        <RsvpEngagementCard groups={groups} />
         <GroupBreakdownCard groups={groups} />
       </div>
 
