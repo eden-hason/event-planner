@@ -20,7 +20,8 @@ import {
   StepperContent,
 } from '@/components/ui/stepper';
 import { UploadStep } from './upload-step';
-import { MapStep, KULULU_FIELDS, type ColumnMapping } from './map-step';
+import { AnalyzeStep } from './analyze-step';
+import { KULULU_FIELDS, type ColumnMapping } from './map-step';
 import { ValidateStep } from './validate-step';
 import { SummaryStep } from './summary-step';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
@@ -29,7 +30,7 @@ import { type ImportGuestData } from '@/features/guests/schemas';
 
 const STEPS = [
   { value: 'upload', title: 'Upload' },
-  { value: 'map', title: 'Map' },
+  { value: 'analyze', title: 'Analyze' },
   { value: 'validate', title: 'Validate' },
   { value: 'summary', title: 'Summary' },
 ] as const;
@@ -97,7 +98,6 @@ export function ImportGuestsDialog({
         const parsed = await parseCSVFile(newFiles[0]);
         setParsedData(parsed);
         setColumnMapping({}); // Reset mapping when new file is uploaded
-        setCurrentStep('map');
       } catch (error) {
         toast.error('Failed to parse CSV file', {
           description:
@@ -119,8 +119,8 @@ export function ImportGuestsDialog({
 
   // Check if Next button should be disabled
   const isNextDisabled = (): boolean => {
-    if (currentStep === 'upload') return true;
-    if (currentStep === 'map') return !isAllFieldsMapped();
+    if (currentStep === 'upload') return !parsedData;
+    if (currentStep === 'analyze') return !isAllFieldsMapped();
     if (currentStep === 'validate') return validGuestsToImport.length === 0;
     return false;
   };
@@ -170,11 +170,9 @@ export function ImportGuestsDialog({
             <UploadStep files={files} onFilesChange={handleFilesChange} />
           </StepperContent>
 
-          <StepperContent value="map" className="mt-4">
-            <MapStep
+          <StepperContent value="analyze" className="mt-4">
+            <AnalyzeStep
               parsedData={parsedData}
-              fileName={files[0]?.name ?? ''}
-              columnMapping={columnMapping}
               onColumnMappingChange={setColumnMapping}
             />
           </StepperContent>

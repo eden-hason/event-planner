@@ -8,6 +8,13 @@ export {
 } from './guests';
 
 export {
+  analyzeCsv,
+  type AnalyzeCsvMapping,
+  type AnalyzeCsvResult,
+  type AnalyzeCsvState,
+} from './analyze-csv';
+
+export {
   upsertGroup,
   deleteGroups,
   updateGroupMembers,
