@@ -280,13 +280,14 @@ export function GuestsPage({
               {selectedGuest ? selectedGuest.name : 'New Guest'}
             </SheetTitle>
             {selectedGuest ? (
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <IconClock size={12} />
-                Last edited{' '}
-                {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
-                  addSuffix: true,
-                })}
-              </p>
+              <span
+                className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
+              >
+                <span
+                  className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
+                />
+                {rsvpStatus.charAt(0).toUpperCase() + rsvpStatus.slice(1)}
+              </span>
             ) : (
               <p className="text-xs text-muted-foreground">
                 Fill out the form below to add a new guest.
@@ -294,45 +295,47 @@ export function GuestsPage({
             )}
           </SheetHeader>
 
-          {/* Status badges — edit mode only */}
+          {/* Guest details — edit mode only */}
           {selectedGuest && (
-            <div className="border-b px-6 py-3 space-y-2">
-              {/* RSVP badge — full row, single line with attribution */}
-              <span
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
-              >
-                <span
-                  className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
-                />
-                {rsvpStatus.charAt(0).toUpperCase() + rsvpStatus.slice(1)}
+            <div className="border-b px-6 py-4 space-y-3">
+              {/* Last edited */}
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <IconClock size={12} />
+                Last edited{' '}
+                {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
+                  addSuffix: true,
+                })}
+              </p>
+
+              {/* Detail list */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 text-sm">
+                  <IconUsers size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">People</span>
+                  <span className="text-foreground">
+                    {selectedGuest.amount}{' '}
+                    {selectedGuest.amount === 1 ? 'person' : 'people'}
+                  </span>
+                </div>
+                {guestGroup && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0 text-muted-foreground" />
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">Group</span>
+                    <span className="text-foreground">{guestGroup.name}</span>
+                  </div>
+                )}
                 {selectedGuest.rsvpChangedAt && (
-                  <>
-                    <span className="w-px h-3 bg-current opacity-25 shrink-0" />
-                    <span className="font-normal opacity-60">
+                  <div className="flex items-center gap-3 text-sm">
+                    <IconClock size={14} className="shrink-0 text-muted-foreground" />
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">Updated</span>
+                    <span className="text-foreground">
                       {selectedGuest.rsvpChangeSource === 'guest'
                         ? `via guest · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
                         : `via ${selectedGuest.rsvpChangedBy === currentUserId ? 'you' : (selectedGuest.rsvpChangedByName ?? 'organizer')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
                       }
                     </span>
-                  </>
+                  </div>
                 )}
-              </span>
-              {/* Group + people badges */}
-              <div className="flex gap-2 flex-wrap">
-                {guestGroup && (
-                  <Badge
-                    variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 gap-1.5"
-                  >
-                    <GroupIcon iconName={guestGroup.icon} size="sm" />
-                    {guestGroup.name}
-                  </Badge>
-                )}
-                <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-                  <IconUsers size={12} />
-                  {selectedGuest.amount}{' '}
-                  {selectedGuest.amount === 1 ? 'person' : 'people'}
-                </Badge>
               </div>
             </div>
           )}
