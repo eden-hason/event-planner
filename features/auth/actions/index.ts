@@ -1,1 +1,1 @@
-export { logout, login, signup, signInWithGoogle } from './auth';
+export { logout, sendOtp, verifyOtp, signInWithGoogle } from './auth';

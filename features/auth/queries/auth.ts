@@ -16,11 +16,13 @@ export async function getCurrentUser(): Promise<User | null> {
 
     return {
       id: user.id,
-      email: user.email || '',
+      email: user.email || undefined,
+      phone: user.phone || undefined,
       displayName:
         user.user_metadata?.full_name ||
         user.user_metadata?.name ||
         user.email ||
+        user.phone ||
         '',
       avatar:
         user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
