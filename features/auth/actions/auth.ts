@@ -23,58 +23,62 @@ export async function logout() {
   redirect('/login');
 }
 
-export async function login(
+export async function sendOtp(
   prevState: { success: boolean; message: string },
   formData: FormData,
 ) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
+  const phone = formData.get('phone') as string;
 
-  const next = (formData.get('next') as string) || '/app';
+  if (!phone) {
+    return { success: false, message: 'Phone number is required' };
+  }
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const { error } = await supabase.auth.signInWithOtp({ phone });
 
   if (error) {
     return {
       success: false,
-      message: error.message || 'Login failed',
+      message: error.message || 'Failed to send verification code',
+    };
+  }
+
+  return {
+    success: true,
+    message: 'Verification code sent',
+  };
+}
+
+export async function verifyOtp(
+  prevState: { success: boolean; message: string },
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  const phone = formData.get('phone') as string;
+  const token = formData.get('token') as string;
+  const next = (formData.get('next') as string) || '/app';
+
+  if (!phone || !token) {
+    return { success: false, message: 'Phone and verification code are required' };
+  }
+
+  const { error } = await supabase.auth.verifyOtp({
+    phone,
+    token,
+    type: 'sms',
+  });
+
+  if (error) {
+    return {
+      success: false,
+      message: error.message || 'Invalid verification code',
     };
   }
 
   revalidatePath('/', 'layout');
   redirect(next);
-}
-
-export async function signup(
-  prevState: { success: boolean; message: string },
-  formData: FormData,
-) {
-  const supabase = await createClient();
-
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
-
-  const { error } = await supabase.auth.signUp(data);
-
-  if (error) {
-    return {
-      success: false,
-      message: error.message || 'Signup failed',
-    };
-  }
-
-  revalidatePath('/', 'layout');
-  redirect('/');
 }
 
 const getURL = () => {

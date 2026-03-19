@@ -18,9 +18,14 @@ export default async function Layout({
 
   // Get user data from auth
   const user = {
-    name: data.user.user_metadata.name,
+    name:
+      data.user.user_metadata?.name ||
+      data.user.email ||
+      data.user.phone ||
+      '',
     email: data.user.email,
-    avatar: data.user.user_metadata.avatar_url,
+    phone: data.user.phone,
+    avatar: data.user.user_metadata?.avatar_url,
   };
 
   // Fetch user events

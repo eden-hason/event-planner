@@ -42,6 +42,7 @@ interface NavEventsProps {
   user: {
     name: string;
     email?: string;
+    phone?: string;
     avatar?: string;
   };
 }
@@ -196,7 +197,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                    {user.email || user.phone}
                   </span>
                 </div>
               </div>

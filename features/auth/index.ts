@@ -1,5 +1,5 @@
 // Actions (server-only)
-export { logout, login, signup, signInWithGoogle } from './actions';
+export { logout, sendOtp, verifyOtp, signInWithGoogle } from './actions';
 
 // Schemas/Types
 export type { User } from './schemas';
