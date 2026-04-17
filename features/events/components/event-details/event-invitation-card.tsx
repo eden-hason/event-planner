@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   IconLoader2,
-  IconMail,
   IconPhoto,
   IconUpload,
   IconX,
@@ -120,12 +119,7 @@ export function EventInvitationCard({
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="bg-primary/10 rounded-md p-1.5">
-            <IconMail size={16} className="text-primary" />
-          </div>
-          Event Invitation
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Event Invitation</CardTitle>
         <CardDescription>
           This image will be sent to guests as the first message they receive
           when invited to your event.

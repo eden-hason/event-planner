@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { IconMapPin } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationInput } from '@/components/ui/location-input';
 import { cardHover } from '@/lib/utils';
@@ -34,12 +33,7 @@ export function LocationCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconMapPin size={16} className="text-primary" />
-          </div>
-          Location
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Location</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FormField

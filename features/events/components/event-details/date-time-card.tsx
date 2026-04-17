@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { IconCalendarEvent } from '@tabler/icons-react';
 import {
   Card,
   CardContent,
@@ -43,12 +42,7 @@ export function DateTimeCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconCalendarEvent size={16} className="text-primary" />
-          </div>
-          Date & Time
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Date & Time</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-8">

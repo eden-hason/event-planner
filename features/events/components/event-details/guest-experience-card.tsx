@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { IconToolsKitchen2 } from '@tabler/icons-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cardHover } from '@/lib/utils';
@@ -19,12 +18,7 @@ export function GuestExperienceCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconToolsKitchen2 size={16} className="text-primary" />
-          </div>
-          Guest Experience
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Guest Experience</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-row items-center justify-between space-y-0">
