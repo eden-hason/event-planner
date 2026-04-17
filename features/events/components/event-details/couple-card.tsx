@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { IconUsers } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cardHover } from '@/lib/utils';
@@ -22,12 +21,7 @@ export function CoupleCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconUsers size={16} className="text-primary" />
-          </div>
-          The Couple
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">The Couple</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">

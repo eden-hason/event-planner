@@ -1,7 +1,6 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { IconGift } from '@tabler/icons-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,12 +23,7 @@ export function DigitalGiftCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconGift size={16} className="text-primary" />
-          </div>
-          Digital Gift
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Digital Gift</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
