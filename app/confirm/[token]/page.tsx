@@ -28,7 +28,7 @@ export default async function ConfirmationPage({
   }
 
   return (
-    <div dir="rtl" lang="he" className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30">
       <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-8">
         <EventDetailsCard event={data.event} />
         <ConfirmationForm token={token} data={data} />
@@ -39,7 +39,7 @@ export default async function ConfirmationPage({
 
 function InvalidTokenView() {
   return (
-    <div dir="rtl" lang="he" className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30">
       <div className="mx-auto flex max-w-md flex-col items-center gap-6 px-4 py-16">
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-8 text-center">

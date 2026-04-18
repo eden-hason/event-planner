@@ -218,7 +218,7 @@ export function GuestsPage({
         selectedStatuses={selectedStatuses}
         onStatClick={handleStatCardClick}
       />
-      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6">
+      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6" dir="rtl">
         <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="guests"

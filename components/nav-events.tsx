@@ -161,13 +161,13 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {currentEvent ? currentEvent.title : 'No event selected'}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -194,7 +194,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email || user.phone}
@@ -227,7 +227,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                       className={cn('gap-2 p-2 group', isActive && 'bg-accent')}
                     >
                       <div
-                        className="flex-1 cursor-pointer grid text-left text-sm leading-tight"
+                        className="flex-1 cursor-pointer grid text-start text-sm leading-tight"
                         onClick={() => router.push(`/app/${event.id}/dashboard`)}
                       >
                         <span className="truncate font-medium">
@@ -236,7 +236,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                         <span className="text-muted-foreground truncate text-xs">
                           {event.eventType}
                           {isShared && (
-                            <span className="text-primary ml-1.5 font-medium">
+                            <span className="text-primary ms-1.5 font-medium">
                               · Shared
                             </span>
                           )}
