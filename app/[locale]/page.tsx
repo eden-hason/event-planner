@@ -1,7 +1,14 @@
+import { setRequestLocale } from 'next-intl/server';
 import { SpaceBackground } from '@/components/space-background';
 import { HeroContent } from '@/components/hero-content';
 
-export default function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
       <SpaceBackground />

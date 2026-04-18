@@ -1,5 +1,6 @@
 import React from 'react';
-import { redirect } from 'next/navigation';
+import { redirect } from '@/i18n/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { getEventById } from '@/features/events/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,13 +15,14 @@ export default async function EventLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ eventId: string }>;
+  params: Promise<{ locale: string; eventId: string }>;
 }) {
-  const { eventId } = await params;
+  const { locale, eventId } = await params;
+  setRequestLocale(locale);
   const event = await getEventById(eventId);
 
   if (!event) {
-    redirect('/app/new-event');
+    redirect({ href: '/app/new-event', locale });
   }
 
   const collaboratorRole = await getCollaboratorRole(eventId);

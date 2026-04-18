@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
 import {
   IconTemplate,
   IconDashboard,
@@ -16,6 +16,7 @@ import {
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavEvents } from '@/components/nav-events';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { PartyPopper } from 'lucide-react';
 import {
   Sidebar,
@@ -154,6 +155,9 @@ export function AppSidebar({
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
+        <div className="px-2 pb-1">
+          <LanguageSwitcher />
+        </div>
         <NavEvents events={events} currentUserId={currentUserId} user={user} />
       </SidebarFooter>
     </Sidebar>

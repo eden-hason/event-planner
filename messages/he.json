@@ -1,0 +1,21 @@
+{
+  "common": {
+    "save": "שמור",
+    "cancel": "ביטול",
+    "loading": "טוען..."
+  },
+  "auth": {
+    "welcomeBack": "ברוך השב",
+    "signInPhone": "התחבר עם מספר הטלפון שלך",
+    "sendCode": "שלח קוד",
+    "sendingCode": "שולח קוד...",
+    "enterCode": "הזן קוד אימות"
+  },
+  "navigation": {
+    "dashboard": "לוח בקרה",
+    "eventDetails": "פרטי האירוע",
+    "guests": "אורחים",
+    "schedules": "לוחות זמנים",
+    "settings": "הגדרות"
+  }
+}

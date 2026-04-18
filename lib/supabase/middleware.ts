@@ -53,19 +53,23 @@ export async function updateSession(request: NextRequest) {
     // Continue without user authentication
   }
 
+  // Strip /en prefix for path matching (he has no prefix by default)
+  const rawPath = request.nextUrl.pathname;
+  const strippedPath = rawPath.replace(/^\/en/, '') || '/';
+
   if (
     !user &&
-    request.nextUrl.pathname !== '/' &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/error') &&
-    !request.nextUrl.pathname.startsWith('/confirm') &&
-    !request.nextUrl.pathname.startsWith('/invitations')
+    strippedPath !== '/' &&
+    !strippedPath.startsWith('/login') &&
+    !strippedPath.startsWith('/auth') &&
+    !strippedPath.startsWith('/error') &&
+    !strippedPath.startsWith('/confirm') &&
+    !strippedPath.startsWith('/invitations')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('next', request.nextUrl.pathname);
+    url.searchParams.set('next', rawPath);
     return NextResponse.redirect(url);
   }
 

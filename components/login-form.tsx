@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ export function LoginForm({
   next,
   ...props
 }: React.ComponentProps<'div'> & { next?: string }) {
+  const t = useTranslations('auth');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [localPhone, setLocalPhone] = useState('');
   const [e164Phone, setE164Phone] = useState('');
@@ -91,7 +93,7 @@ export function LoginForm({
       <div className={cn('flex flex-col gap-6', className)} {...props}>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Enter verification code</CardTitle>
+            <CardTitle className="text-xl">{t('enterCode')}</CardTitle>
             <CardDescription>
               We sent a code to{' '}
               <span className="font-medium text-foreground" dir="ltr">
@@ -162,8 +164,8 @@ export function LoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Sign in with your phone number</CardDescription>
+          <CardTitle className="text-xl">{t('welcomeBack')}</CardTitle>
+          <CardDescription>{t('signInPhone')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
@@ -201,7 +203,7 @@ export function LoginForm({
                   </div>
                 )}
                 <Button type="submit" className="w-full" disabled={isSending}>
-                  {isSending ? 'Sending code...' : 'Send Code'}
+                  {isSending ? t('sendingCode') : t('sendCode')}
                 </Button>
               </div>
             </form>
