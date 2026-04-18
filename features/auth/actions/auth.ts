@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
@@ -81,21 +82,18 @@ export async function verifyOtp(
   redirect(next);
 }
 
-const getURL = () => {
-  let url =
-    process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
-    process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
-    'http://localhost:3000/'; // Make sure to include `https://` when not localhost.
-  url = url.startsWith('http') ? url : `https://${url}`;
-  // Make sure to include a trailing `/`.
-  url = url.endsWith('/') ? url : `${url}/`;
-  return url;
-};
-
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
 
-  const redirectTo = `${getURL()}auth/callback?next=${encodeURIComponent(next || '/app')}`;
+  const headersList = await headers();
+  const host =
+    headersList.get('x-forwarded-host') ||
+    headersList.get('host') ||
+    'localhost:3000';
+  const isLocal = host.startsWith('localhost');
+  const baseUrl = `${isLocal ? 'http' : 'https'}://${host}`;
+
+  const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next || '/app')}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
