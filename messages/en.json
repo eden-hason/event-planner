@@ -1,0 +1,21 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInPhone": "Sign in with your phone number",
+    "sendCode": "Send Code",
+    "sendingCode": "Sending code...",
+    "enterCode": "Enter verification code"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "eventDetails": "Event Details",
+    "guests": "Guests",
+    "schedules": "Schedules",
+    "settings": "Settings"
+  }
+}

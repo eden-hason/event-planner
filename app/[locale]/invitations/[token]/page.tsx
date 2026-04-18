@@ -1,4 +1,5 @@
-import { redirect } from 'next/navigation';
+import { redirect } from '@/i18n/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getInvitationByToken } from '@/features/collaborate/queries';
 import { InvitationResponsePage } from './invitation-response-page';
@@ -6,9 +7,10 @@ import { InvitationResponsePage } from './invitation-response-page';
 export default async function InvitationPage({
   params,
 }: {
-  params: Promise<{ token: string }>;
+  params: Promise<{ locale: string; token: string }>;
 }) {
-  const { token } = await params;
+  const { locale, token } = await params;
+  setRequestLocale(locale);
   const invitation = await getInvitationByToken(token);
 
   if (!invitation) {
@@ -65,7 +67,7 @@ export default async function InvitationPage({
 
   if (!user) {
     // Redirect to login with return URL
-    redirect(`/login?next=/invitations/${token}`);
+    return redirect({ href: `/login?next=/invitations/${token}`, locale });
   }
 
   // Check email mismatch

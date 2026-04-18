@@ -4,6 +4,8 @@ import { ConfirmationForm } from '@/features/confirmation/components/confirmatio
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 
+import { setRequestLocale } from 'next-intl/server';
+
 export const dynamic = 'force-dynamic';
 
 const TOKEN_REGEX = /^[a-f0-9]{64}$/;
@@ -11,10 +13,10 @@ const TOKEN_REGEX = /^[a-f0-9]{64}$/;
 export default async function ConfirmationPage({
   params,
 }: {
-  params: Promise<{ token: string }>;
+  params: Promise<{ locale: string; token: string }>;
 }) {
-  const { token } = await params;
-  console.log('token', token);
+  const { locale, token } = await params;
+  setRequestLocale(locale);
 
   // Validate token format
   if (!TOKEN_REGEX.test(token)) {
