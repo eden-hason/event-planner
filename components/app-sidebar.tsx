@@ -130,7 +130,7 @@ export function AppSidebar({
   ];
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar side="right" collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

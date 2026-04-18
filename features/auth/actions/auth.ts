@@ -90,7 +90,7 @@ export async function signInWithGoogle(next?: string) {
     headersList.get('x-forwarded-host') ||
     headersList.get('host') ||
     'localhost:3000';
-  const isLocal = host.startsWith('localhost');
+  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
   const baseUrl = `${isLocal ? 'http' : 'https'}://${host}`;
 
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next || '/app')}`;
