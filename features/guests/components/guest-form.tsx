@@ -224,7 +224,9 @@ export function GuestForm({
                   <FormControl>
                     <Input
                       type="tel"
+                      dir="ltr"
                       placeholder={t('form.phonePlaceholder')}
+                      className="rtl:text-right"
                       {...field}
                       value={field.value || ''}
                     />
