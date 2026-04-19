@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import {
   acceptInvitation,
   declineInvitation,
@@ -23,6 +24,7 @@ export function InvitationResponsePage({
   token,
 }: InvitationResponsePageProps) {
   const router = useRouter();
+  const t = useTranslations('collaborate.invitationPage');
   const [isPending, setIsPending] = React.useState(false);
 
   const handleAccept = async () => {
@@ -33,10 +35,10 @@ export function InvitationResponsePage({
         toast.success(result.message);
         router.push(`/app/${invitation.eventId}/dashboard`);
       } else {
-        toast.error(result.message || 'Failed to accept invitation.');
+        toast.error(result.message || t('toast.acceptFailed'));
       }
     } catch {
-      toast.error('Something went wrong.');
+      toast.error(t('toast.error'));
     } finally {
       setIsPending(false);
     }
@@ -50,10 +52,10 @@ export function InvitationResponsePage({
         toast.success(result.message);
         router.push('/app');
       } else {
-        toast.error(result.message || 'Failed to decline invitation.');
+        toast.error(result.message || t('toast.declineFailed'));
       }
     } catch {
-      toast.error('Something went wrong.');
+      toast.error(t('toast.error'));
     } finally {
       setIsPending(false);
     }
@@ -63,12 +65,12 @@ export function InvitationResponsePage({
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Event Invitation</CardTitle>
+          <CardTitle className="text-2xl">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center">
             <p className="text-muted-foreground mb-2 text-sm">
-              You have been invited to collaborate on
+              {t('invitedTo')}
             </p>
             <h2 className="mb-2 text-xl font-semibold">
               {invitation.eventTitle}
@@ -78,7 +80,7 @@ export function InvitationResponsePage({
             </Badge>
             {invitation.role === 'seating_manager' && (
               <p className="text-muted-foreground mt-2 text-xs">
-                You will have view-only access to assigned guests and groups.
+                {t('seatingManagerNote')}
               </p>
             )}
           </div>
@@ -90,14 +92,14 @@ export function InvitationResponsePage({
               onClick={handleDecline}
               disabled={isPending}
             >
-              Decline
+              {t('decline')}
             </Button>
             <Button
               className="flex-1"
               onClick={handleAccept}
               disabled={isPending}
             >
-              {isPending ? 'Processing...' : 'Accept'}
+              {isPending ? t('processing') : t('accept')}
             </Button>
           </div>
         </CardContent>

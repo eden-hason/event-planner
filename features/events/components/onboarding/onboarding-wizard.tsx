@@ -60,7 +60,7 @@ export function OnboardingWizard() {
 
     const promise = createOnboardingEvent(formData).then((result) => {
       if (!result.success)
-        throw new Error(result.message || 'Failed to create event.');
+        throw new Error(result.message || t('toast.failed'));
       return result;
     });
 

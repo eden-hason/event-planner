@@ -102,17 +102,13 @@ export function MessageContentCard({
             ) : (
               <>
                 {/* Message bubble */}
-                <div className="relative max-w-[85%] self-end">
+                <div className="relative max-w-[85%] self-end rtl:self-start">
                   {/* Bubble tail */}
                   <div
-                    className="absolute top-0 -right-[7px] h-0 w-0"
-                    style={{
-                      borderLeft: '8px solid #DCF8C6',
-                      borderBottom: '8px solid transparent',
-                    }}
+                    className="absolute top-0 -right-[7px] rtl:right-auto rtl:-left-[7px] h-0 w-0 border-b-[8px] border-b-transparent border-l-[8px] border-l-[#DCF8C6] rtl:border-l-0 rtl:border-r-[8px] rtl:border-r-[#DCF8C6]"
                   />
                   <div
-                    className="overflow-hidden rounded-l-xl rounded-br-xl shadow-sm"
+                    className="overflow-hidden rounded-l-xl rounded-br-xl rtl:rounded-l-none rtl:rounded-br-none rtl:rounded-r-xl rtl:rounded-bl-xl shadow-sm"
                     style={{ backgroundColor: '#DCF8C6' }}
                   >
                     {/* Image header */}
@@ -171,7 +167,7 @@ export function MessageContentCard({
 
                 {/* Footer text */}
                 {template.footerText && (
-                  <p className="max-w-[85%] self-end pr-1 text-[11px] text-zinc-500 italic">
+                  <p className="max-w-[85%] self-end rtl:self-start pr-1 rtl:pr-0 rtl:pl-1 text-[11px] text-zinc-500 italic">
                     {template.footerText}
                   </p>
                 )}
