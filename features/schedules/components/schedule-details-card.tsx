@@ -138,10 +138,10 @@ export function ScheduleDetailsCard({
                 type="number"
                 value={daysBeforeEvent}
                 onChange={handleDaysChange}
-                className="pr-12"
+                className="pr-12 rtl:pr-3 rtl:pl-12"
                 disabled={isSaving}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+              <span className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                 {t('days')}
               </span>
             </div>

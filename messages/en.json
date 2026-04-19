@@ -6,10 +6,22 @@
   },
   "auth": {
     "welcomeBack": "Welcome back",
-    "signInPhone": "Sign in with your phone number",
+    "signInDescription": "Sign in with Google or your phone number",
+    "signInWithGoogle": "Continue with Google",
+    "loggingInGoogle": "Logging in...",
+    "orContinueWith": "Or continue with",
+    "phoneNumber": "Phone number",
     "sendCode": "Send Code",
     "sendingCode": "Sending code...",
-    "enterCode": "Enter verification code"
+    "enterCode": "Enter verification code",
+    "sentCodeTo": "We sent a code to",
+    "editPhone": "Edit",
+    "verificationCode": "Verification code",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "resendCode": "Resend code",
+    "resendIn": "Resend code in {seconds}s",
+    "googleLoginFailed": "Failed to login with Google. Please try again."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -492,7 +504,14 @@
     "relativeTime": {
       "justNow": "just now",
       "past": "{time} ago",
-      "future": "in {time}"
+      "future": "in {time}",
+      "units": {
+        "minutes": "{count}m",
+        "hours": "{count}h",
+        "days": "{count}d",
+        "weeks": "{count}w",
+        "months": "{count}mo"
+      }
     },
     "activity": {
       "cardTitle": "Recent Delivery Activity",
@@ -578,6 +597,153 @@
       "goToDashboard": "Go to Dashboard",
       "viewDetails": "View event details"
     }
+  },
+  "newEventDialog": {
+    "title": "Create New Event",
+    "description": "Enter the details for your new event. You can add more details later.",
+    "eventTitleLabel": "Event Title",
+    "eventTitlePlaceholder": "My Wedding",
+    "eventDateLabel": "Event Date",
+    "eventTypeLabel": "Event Type",
+    "eventTypePlaceholder": "Select event type",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "create": "Create Event",
+    "newEvent": "New Event",
+    "toast": {
+      "creating": "Creating {title}...",
+      "created": "Event created successfully",
+      "failed": "Failed to create event. Please try again."
+    }
+  },
+  "collaborate": {
+    "tab": {
+      "heading": "Collaborate with others",
+      "description": "Invite your partner, family, or friends to help manage this event. You can assign different roles and permissions to keep everything organized.",
+      "inviteButton": "Invite Collaborator",
+      "activeMembers": "Active Members",
+      "features": {
+        "shareWorkload": "Share the workload",
+        "shareWorkloadDesc": "Distribute tasks easily",
+        "getHelp": "Get specific help",
+        "getHelpDesc": "Assign specific tasks",
+        "keepSync": "Keep everyone in sync",
+        "keepSyncDesc": "Real-time updates"
+      }
+    },
+    "collaboratorsList": {
+      "you": "You",
+      "invitedByYou": "Invited by you",
+      "changeRole": "Change Role",
+      "remove": "Remove",
+      "removeDialog": {
+        "title": "Remove collaborator?",
+        "description": "{name} will lose access to this event. This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Remove"
+      },
+      "toast": {
+        "removing": "Removing collaborator...",
+        "removed": "Collaborator removed.",
+        "failed": "Something went wrong."
+      }
+    },
+    "configDialog": {
+      "title": "Configure Collaborator",
+      "description": "Change the role and permissions for this collaborator.",
+      "roleLabel": "Role",
+      "ownerDescription": "Full access to all event settings, guests, and collaborators.",
+      "seatingManagerDescription": "Can manage assigned guests and groups only.",
+      "scopeLabel": "Assigned Scope",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "toast": {
+        "needsScope": "Seating managers need at least one group or guest assigned.",
+        "roleFailed": "Failed to update role.",
+        "roleUpdated": "Role updated.",
+        "scopeRequired": "At least one group or guest is required.",
+        "scopeFailed": "Failed to update scope.",
+        "scopeUpdated": "Scope updated.",
+        "error": "Something went wrong."
+      }
+    },
+    "pendingInvitations": {
+      "title": "Pending Invitations",
+      "expires": "Expires",
+      "resend": "Resend",
+      "cancel": "Cancel",
+      "toast": {
+        "linkCopied": "Invitation link copied to clipboard.",
+        "revoking": "Revoking invitation...",
+        "revoked": "Invitation revoked.",
+        "failed": "Something went wrong."
+      }
+    },
+    "inviteDialog": {
+      "titleInvite": "Invite Collaborator",
+      "titleSuccess": "Invitation Created",
+      "descriptionInvite": "Add a new member to your planning team.",
+      "descriptionSuccessEmail": "An invitation email has been sent. You can also share the link manually.",
+      "descriptionSuccessLink": "Share this link with the person you invited.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "partner@example.com",
+      "roleLabel": "Role",
+      "ownerLabel": "Owner",
+      "ownerBadge": "Full Access",
+      "ownerDescription": "Full access to manage the event, guests, and settings.",
+      "seatingManagerLabel": "Seating Manager",
+      "seatingManagerBadge": "Limited Access",
+      "seatingManagerDescription": "Can manage assigned guests and seating charts only.",
+      "inviteInfo": "New collaborators will receive an email invitation to join your event.",
+      "cancel": "Cancel",
+      "nextScope": "Next: Set Scope",
+      "sendInvitation": "Send Invitation",
+      "sending": "Sending...",
+      "selectScope": "Select What They Can Manage",
+      "invitationSentTo": "Invitation email sent to {email}",
+      "copied": "Copied",
+      "copy": "Copy",
+      "done": "Done",
+      "toast": {
+        "emailRequired": "Please enter an email address.",
+        "createFailed": "Failed to create invitation.",
+        "created": "Invitation created!",
+        "linkCopied": "Link copied to clipboard."
+      }
+    },
+    "editScope": {
+      "title": "Edit Scope — {name}",
+      "description": "Choose which groups and guests this seating manager can view.",
+      "saving": "Saving...",
+      "save": "Save Scope",
+      "toast": {
+        "failed": "Failed to update scope.",
+        "updated": "Scope updated."
+      }
+    },
+    "invitationPage": {
+      "title": "Event Invitation",
+      "invitedTo": "You have been invited to collaborate on",
+      "seatingManagerNote": "You will have view-only access to assigned guests and groups.",
+      "decline": "Decline",
+      "processing": "Processing...",
+      "accept": "Accept",
+      "toast": {
+        "acceptFailed": "Failed to accept invitation.",
+        "declineFailed": "Failed to decline invitation.",
+        "error": "Something went wrong."
+      }
+    }
+  },
+  "settings": {
+    "header": {
+      "title": "Settings",
+      "description": "Manage collaborators and event preferences"
+    },
+    "team": {
+      "label": "Team & Collaborators"
+    },
+    "invite": "Invite"
   },
   "eventDetails": {
     "notFound": "Event not found",

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { IconDotsVertical, IconUserMinus, IconUserCog } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { removeCollaborator } from '../actions';
 import { RoleBadge } from './role-badge';
 import { formatScopeSummary } from '../utils';
@@ -37,6 +38,8 @@ export function CollaboratorsList({
   currentUserId,
   onConfigure,
 }: CollaboratorsListProps) {
+  const t = useTranslations('collaborate.collaboratorsList');
+
   const handleRemove = async (collaborator: CollaboratorApp) => {
     const promise = removeCollaborator(collaborator.id).then((result) => {
       if (!result.success) {
@@ -46,10 +49,10 @@ export function CollaboratorsList({
     });
 
     toast.promise(promise, {
-      loading: 'Removing collaborator...',
-      success: (data) => data.message || 'Collaborator removed.',
+      loading: t('toast.removing'),
+      success: (data) => data.message || t('toast.removed'),
       error: (err) =>
-        err instanceof Error ? err.message : 'Something went wrong.',
+        err instanceof Error ? err.message : t('toast.failed'),
     });
   };
 
@@ -88,7 +91,7 @@ export function CollaboratorsList({
                   </span>
                   {isCurrentUser && (
                     <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-500">
-                      You
+                      {t('you')}
                     </span>
                   )}
                 </div>
@@ -110,7 +113,7 @@ export function CollaboratorsList({
                     )}
                   {collaborator.role === 'owner' && !collaborator.isCreator && (
                     <span className="text-muted-foreground text-xs">
-                      &middot; Invited by you &middot;{' '}
+                      &middot; {t('invitedByYou')} &middot;{' '}
                       {new Date(collaborator.createdAt).toLocaleDateString(
                         'en-US',
                         { month: 'short', day: 'numeric' },
@@ -134,7 +137,7 @@ export function CollaboratorsList({
                       onClick={() => onConfigure(collaborator)}
                     >
                       <IconUserCog className="mr-2 h-4 w-4" />
-                      Change Role
+                      {t('changeRole')}
                     </DropdownMenuItem>
                   )}
                   <AlertDialog>
@@ -144,26 +147,25 @@ export function CollaboratorsList({
                         className="text-destructive"
                       >
                         <IconUserMinus className="mr-2 h-4 w-4" />
-                        Remove
+                        {t('remove')}
                       </DropdownMenuItem>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Remove collaborator?
+                          {t('removeDialog.title')}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          {collaborator.fullName} will lose access to this
-                          event. This action cannot be undone.
+                          {t('removeDialog.description', { name: collaborator.fullName })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('removeDialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleRemove(collaborator)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          Remove
+                          {t('removeDialog.confirm')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

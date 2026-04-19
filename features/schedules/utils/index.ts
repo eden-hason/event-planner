@@ -19,16 +19,13 @@ export {
   type ValidationIssue,
 } from './template-validation';
 
+export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
+
 export type RelativeTimeResult =
   | { type: 'justNow' }
-  | { type: 'past'; time: string }
-  | { type: 'future'; time: string };
+  | { type: 'past'; unit: TimeUnit; count: number }
+  | { type: 'future'; unit: TimeUnit; count: number };
 
-/**
- * Returns a structured relative time result for i18n-aware formatting.
- * Use `type` and `time` fields with translation keys `relativeTime.justNow`,
- * `relativeTime.past`, and `relativeTime.future`.
- */
 export function formatRelativeTime(dateStr: string): RelativeTimeResult {
   const now = new Date();
   const date = new Date(dateStr);
@@ -44,14 +41,15 @@ export function formatRelativeTime(dateStr: string): RelativeTimeResult {
 
   if (minutes < 1) return { type: 'justNow' };
 
-  let time: string;
-  if (minutes < 60) time = `${minutes}m`;
-  else if (hours < 24) time = `${hours}h`;
-  else if (days < 7) time = `${days}d`;
-  else if (weeks < 5) time = `${weeks}w`;
-  else time = `${months}mo`;
+  let unit: TimeUnit;
+  let count: number;
+  if (minutes < 60) { unit = 'minutes'; count = minutes; }
+  else if (hours < 24) { unit = 'hours'; count = hours; }
+  else if (days < 7) { unit = 'days'; count = days; }
+  else if (weeks < 5) { unit = 'weeks'; count = weeks; }
+  else { unit = 'months'; count = months; }
 
-  return { type: isPast ? 'past' : 'future', time };
+  return { type: isPast ? 'past' : 'future', unit, count };
 }
 
 /**

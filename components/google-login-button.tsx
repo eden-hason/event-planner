@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { signInWithGoogle } from '@/features/auth';
 
 export function GoogleLoginButton({ next }: { next?: string }) {
+  const t = useTranslations('auth');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +23,7 @@ export function GoogleLoginButton({ next }: { next?: string }) {
         const { success, message } = result;
 
         if (!success) {
-          setError(message || 'Failed to login with Google. Please try again.');
+          setError(message || t('googleLoginFailed'));
           setIsLoading(false);
         }
       }
@@ -34,7 +36,7 @@ export function GoogleLoginButton({ next }: { next?: string }) {
       }
 
       console.error('Google login error:', error);
-      setError('Failed to login with Google. Please try again.');
+      setError(t('googleLoginFailed'));
       setIsLoading(false);
     }
   };
@@ -51,7 +53,7 @@ export function GoogleLoginButton({ next }: { next?: string }) {
         {isLoading ? (
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-            <span>Logging in...</span>
+            <span>{t('loggingInGoogle')}</span>
           </div>
         ) : (
           <div className="flex items-center space-x-2">
@@ -73,7 +75,7 @@ export function GoogleLoginButton({ next }: { next?: string }) {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span>Continue with Google</span>
+            <span>{t('signInWithGoogle')}</span>
           </div>
         )}
       </Button>

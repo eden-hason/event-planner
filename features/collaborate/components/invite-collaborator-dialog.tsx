@@ -22,6 +22,7 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { createInvitation } from '../actions';
 import { ScopePicker } from './scope-picker';
 import { cn } from '@/lib/utils';
@@ -38,27 +39,6 @@ interface InviteCollaboratorDialogProps {
 
 type Step = 'form' | 'scope' | 'success';
 
-const roles = [
-  {
-    value: 'owner' as CollaboratorRole,
-    label: 'Owner',
-    icon: IconShieldCheck,
-    badge: 'Full Access',
-    badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
-    iconBgClass: 'bg-amber-50 text-amber-600',
-    description: 'Full access to manage the event, guests, and settings.',
-  },
-  {
-    value: 'seating_manager' as CollaboratorRole,
-    label: 'Seating Manager',
-    icon: IconArmchair,
-    badge: 'Limited Access',
-    badgeClass: 'bg-purple-100 text-purple-700 border-purple-200',
-    iconBgClass: 'bg-purple-50 text-purple-600',
-    description: 'Can manage assigned guests and seating charts only.',
-  },
-];
-
 function ScopeStep({
   email,
   groups,
@@ -70,6 +50,8 @@ function ScopeStep({
   isPending,
   onSubmit,
   onCancel,
+  seatingRole,
+  labels,
 }: {
   email: string;
   groups: GroupApp[];
@@ -81,15 +63,15 @@ function ScopeStep({
   isPending: boolean;
   onSubmit: () => void;
   onCancel: () => void;
+  seatingRole: { label: string; description: string; icon: React.ElementType; iconBgClass: string };
+  labels: { emailLabel: string; roleLabel: string; selectScope: string; cancel: string; sending: string; sendInvitation: string };
 }) {
-  const seatingRole = roles.find((r) => r.value === 'seating_manager')!;
-
   return (
     <>
       <div className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="scope-email" className="font-semibold">
-            Email Address
+            {labels.emailLabel}
           </Label>
           <div className="relative">
             <IconMail className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
@@ -104,7 +86,7 @@ function ScopeStep({
         </div>
 
         <div className="space-y-2">
-          <Label className="font-semibold">Role</Label>
+          <Label className="font-semibold">{labels.roleLabel}</Label>
           <div
             className={cn(
               'relative flex items-center gap-3 rounded-lg border-2 p-4',
@@ -132,7 +114,7 @@ function ScopeStep({
         </div>
 
         <div className="rounded-lg border bg-muted/40 p-4">
-          <p className="mb-3 text-sm font-semibold">Select What They Can Manage</p>
+          <p className="mb-3 text-sm font-semibold">{labels.selectScope}</p>
           <ScopePicker
             groups={groups}
             guests={guests}
@@ -148,14 +130,14 @@ function ScopeStep({
 
       <DialogFooter>
         <Button variant="ghost" onClick={onCancel}>
-          Cancel
+          {labels.cancel}
         </Button>
         <Button
           onClick={onSubmit}
           disabled={isPending || (selectedGroups.length === 0 && selectedGuests.length === 0)}
         >
           <IconSend className="size-4" />
-          {isPending ? 'Sending...' : 'Send Invitation'}
+          {isPending ? labels.sending : labels.sendInvitation}
         </Button>
       </DialogFooter>
     </>
@@ -169,9 +151,31 @@ export function InviteCollaboratorDialog({
   open,
   onOpenChange,
 }: InviteCollaboratorDialogProps) {
+  const t = useTranslations('collaborate.inviteDialog');
   const [step, setStep] = React.useState<Step>('form');
   const [isPending, setIsPending] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+
+  const roles = [
+    {
+      value: 'owner' as CollaboratorRole,
+      label: t('ownerLabel'),
+      icon: IconShieldCheck,
+      badge: t('ownerBadge'),
+      badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
+      iconBgClass: 'bg-amber-50 text-amber-600',
+      description: t('ownerDescription'),
+    },
+    {
+      value: 'seating_manager' as CollaboratorRole,
+      label: t('seatingManagerLabel'),
+      icon: IconArmchair,
+      badge: t('seatingManagerBadge'),
+      badgeClass: 'bg-purple-100 text-purple-700 border-purple-200',
+      iconBgClass: 'bg-purple-50 text-purple-600',
+      description: t('seatingManagerDescription'),
+    },
+  ];
 
   // Form state
   const [email, setEmail] = React.useState('');
@@ -194,7 +198,7 @@ export function InviteCollaboratorDialog({
 
   const handleNext = () => {
     if (!email) {
-      toast.error('Please enter an email address.');
+      toast.error(t('toast.emailRequired'));
       return;
     }
 
@@ -217,16 +221,16 @@ export function InviteCollaboratorDialog({
     try {
       const result = await createInvitation(eventId, formData);
       if (!result.success) {
-        toast.error(result.message || 'Failed to create invitation.');
+        toast.error(result.message || t('toast.createFailed'));
         return;
       }
 
       setInvitationLink(result.invitationLink || '');
       setEmailSent(result.emailSent ?? false);
       setStep('success');
-      toast.success('Invitation created!');
+      toast.success(t('toast.created'));
     } catch {
-      toast.error('Failed to create invitation.');
+      toast.error(t('toast.createFailed'));
     } finally {
       setIsPending(false);
     }
@@ -235,7 +239,7 @@ export function InviteCollaboratorDialog({
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(invitationLink);
     setCopied(true);
-    toast.success('Link copied to clipboard.');
+    toast.success(t('toast.linkCopied'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -250,19 +254,15 @@ export function InviteCollaboratorDialog({
       <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {step === 'form' && 'Invite Collaborator'}
-            {step === 'scope' && 'Invite Collaborator'}
-            {step === 'success' && 'Invitation Created'}
+            {step === 'form' && t('titleInvite')}
+            {step === 'scope' && t('titleInvite')}
+            {step === 'success' && t('titleSuccess')}
           </DialogTitle>
           <DialogDescription>
-            {step === 'form' &&
-              'Add a new member to your planning team.'}
-            {step === 'scope' &&
-              'Add a new member to your planning team.'}
+            {step === 'form' && t('descriptionInvite')}
+            {step === 'scope' && t('descriptionInvite')}
             {step === 'success' &&
-              (emailSent
-                ? 'An invitation email has been sent. You can also share the link manually.'
-                : 'Share this link with the person you invited.')}
+              (emailSent ? t('descriptionSuccessEmail') : t('descriptionSuccessLink'))}
           </DialogDescription>
         </DialogHeader>
 
@@ -271,14 +271,14 @@ export function InviteCollaboratorDialog({
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="font-semibold">
-                  Email Address
+                  {t('emailLabel')}
                 </Label>
                 <div className="relative">
                   <IconMail className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="partner@example.com"
+                    placeholder={t('emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-9"
@@ -287,7 +287,7 @@ export function InviteCollaboratorDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="font-semibold">Role</Label>
+                <Label className="font-semibold">{t('roleLabel')}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {roles.map((r) => {
                     const isSelected = role === r.value;
@@ -351,10 +351,7 @@ export function InviteCollaboratorDialog({
 
               <div className="flex items-start gap-2.5 rounded-lg bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                 <IconInfoCircle className="mt-0.5 size-4 shrink-0" />
-                <span>
-                  New collaborators will receive an email invitation to join your
-                  event.
-                </span>
+                <span>{t('inviteInfo')}</span>
               </div>
             </div>
 
@@ -368,13 +365,11 @@ export function InviteCollaboratorDialog({
                   resetForm();
                 }}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button onClick={handleNext} disabled={isPending}>
                 <IconSend className="size-4" />
-                {role === 'seating_manager'
-                  ? 'Next: Set Scope'
-                  : 'Send Invitation'}
+                {role === 'seating_manager' ? t('nextScope') : t('sendInvitation')}
               </Button>
             </DialogFooter>
           </>
@@ -395,6 +390,15 @@ export function InviteCollaboratorDialog({
               onOpenChange(false);
               resetForm();
             }}
+            seatingRole={roles.find((r) => r.value === 'seating_manager')!}
+            labels={{
+              emailLabel: t('emailLabel'),
+              roleLabel: t('roleLabel'),
+              selectScope: t('selectScope'),
+              cancel: t('cancel'),
+              sending: t('sending'),
+              sendInvitation: t('sendInvitation'),
+            }}
           />
         )}
 
@@ -403,7 +407,7 @@ export function InviteCollaboratorDialog({
             {emailSent && (
               <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
                 <IconMail className="h-4 w-4 shrink-0" />
-                <span>Invitation email sent to {email}</span>
+                <span>{t('invitationSentTo', { email })}</span>
               </div>
             )}
             <div className="bg-muted overflow-hidden rounded-md p-3">
@@ -420,7 +424,7 @@ export function InviteCollaboratorDialog({
               ) : (
                 <IconCopy className="mr-1.5 h-4 w-4" />
               )}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('copied') : t('copy')}
             </Button>
             <Button
               variant="outline"
@@ -430,7 +434,7 @@ export function InviteCollaboratorDialog({
                 resetForm();
               }}
             >
-              Done
+              {t('done')}
             </Button>
           </div>
         )}

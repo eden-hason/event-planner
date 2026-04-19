@@ -80,7 +80,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
 
     const promise = duplicateEvent(event.id).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to duplicate event.');
+        throw new Error(result.message || t('toast.duplicateFailed'));
       }
       return result;
     });
@@ -106,7 +106,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
 
     const promise = deleteEvent(eventId).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to delete event.');
+        throw new Error(result.message || t('toast.deleteFailed'));
       }
       return result;
     });

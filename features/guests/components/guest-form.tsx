@@ -116,7 +116,7 @@ export function GuestForm({
     ): Promise<UpsertGuestState | null> => {
       const promise = upsertGuest(eventId, formData).then((result) => {
         if (!result.success) {
-          throw new Error(result.message || 'Operation failed.');
+          throw new Error(result.message || t('form.somethingWentWrong'));
         }
         return result;
       });

@@ -7,6 +7,7 @@ import {
   IconClipboardCheck,
   IconRefresh,
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { CollaboratorsList } from './collaborators-list';
 import { PendingInvitations } from './pending-invitations';
@@ -15,27 +16,6 @@ import { CollaboratorConfigDialog } from './collaborator-config-dialog';
 import { getCollaboratorScope } from '../queries';
 import type { CollaboratorApp, InvitationApp } from '../schemas';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
-
-const FEATURES = [
-  {
-    icon: IconUsersGroup,
-    iconClassName: 'text-blue-500 bg-blue-50',
-    title: 'Share the workload',
-    description: 'Distribute tasks easily',
-  },
-  {
-    icon: IconClipboardCheck,
-    iconClassName: 'text-purple-500 bg-purple-50',
-    title: 'Get specific help',
-    description: 'Assign specific tasks',
-  },
-  {
-    icon: IconRefresh,
-    iconClassName: 'text-indigo-500 bg-indigo-50',
-    title: 'Keep everyone in sync',
-    description: 'Real-time updates',
-  },
-] as const;
 
 interface CollaborateTabProps {
   eventId: string;
@@ -54,6 +34,7 @@ export function CollaborateTab({
   groups,
   guests,
 }: CollaborateTabProps) {
+  const t = useTranslations('collaborate.tab');
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
   const [configDialogOpen, setConfigDialogOpen] = React.useState(false);
   const [editingCollaborator, setEditingCollaborator] =
@@ -75,6 +56,27 @@ export function CollaborateTab({
     setConfigDialogOpen(true);
   };
 
+  const FEATURES = [
+    {
+      icon: IconUsersGroup,
+      iconClassName: 'text-primary bg-primary/10',
+      title: t('features.shareWorkload'),
+      description: t('features.shareWorkloadDesc'),
+    },
+    {
+      icon: IconClipboardCheck,
+      iconClassName: 'text-primary bg-primary/10',
+      title: t('features.getHelp'),
+      description: t('features.getHelpDesc'),
+    },
+    {
+      icon: IconRefresh,
+      iconClassName: 'text-primary bg-primary/10',
+      title: t('features.keepSync'),
+      description: t('features.keepSyncDesc'),
+    },
+  ];
+
   // Only creator row means no other collaborators
   const hasOnlySelf =
     collaborators.length <= 1 && invitations.length === 0;
@@ -83,29 +85,23 @@ export function CollaborateTab({
     <div className="space-y-6">
       {hasOnlySelf ? (
         <div className="flex flex-col items-center px-6 py-14">
-          {/* Hero illustration */}
           <div className="relative mb-6">
-            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-blue-100/60">
-              <IconUserPlus className="h-14 w-14 text-blue-500" strokeWidth={1.5} />
+            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-primary/10">
+              <IconUserPlus className="h-14 w-14 text-primary" strokeWidth={1.5} />
             </div>
-            <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white shadow-md">
+            <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
               <span className="text-lg font-bold leading-none">+</span>
             </span>
           </div>
 
-          {/* Heading */}
           <h2 className="mb-1 text-xl font-semibold tracking-tight">
-            Collaborate with others
+            {t('heading')}
           </h2>
 
-          {/* Description */}
           <p className="text-muted-foreground mb-8 max-w-md text-center text-sm leading-relaxed">
-            Invite your partner, family, or friends to help manage this event.
-            You can assign different roles and permissions to keep everything
-            organized.
+            {t('description')}
           </p>
 
-          {/* Feature cards */}
           <div className="mb-8 grid w-full max-w-lg grid-cols-3 gap-3">
             {FEATURES.map((feature) => (
               <div
@@ -125,32 +121,21 @@ export function CollaborateTab({
             ))}
           </div>
 
-          {/* Invite button */}
           <Button
             size="lg"
             className="rounded-full px-8"
             onClick={() => setInviteDialogOpen(true)}
           >
             <IconUserPlus className="mr-2 h-5 w-5" />
-            Invite Collaborator
+            {t('inviteButton')}
           </Button>
 
-          {/* Help link */}
-          <p className="text-muted-foreground mt-4 text-xs">
-            Need help?{' '}
-            <a
-              href="#"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Read our guide on permissions
-            </a>
-          </p>
         </div>
       ) : (
         <div className="space-y-8">
           <div>
             <h3 className="text-muted-foreground mb-3 text-xs font-semibold tracking-widest uppercase">
-              Active Members
+              {t('activeMembers')}
             </h3>
             <CollaboratorsList
               collaborators={collaborators}

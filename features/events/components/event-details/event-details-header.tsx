@@ -46,6 +46,7 @@ export function EventDetailsHeader({
     title: t('title'),
     description: t('description'),
     action: headerAction,
+    containerClass: 'mx-auto w-full max-w-5xl',
   });
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export function EventDetailsHeader({
       title: t('title'),
       description: t('description'),
       action: headerAction,
+      containerClass: 'mx-auto w-full max-w-5xl',
     });
   }, [headerAction, setHeader, t]);
 

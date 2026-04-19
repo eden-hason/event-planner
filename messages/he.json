@@ -6,16 +6,28 @@
   },
   "auth": {
     "welcomeBack": "ברוך השב",
-    "signInPhone": "התחבר עם מספר הטלפון שלך",
+    "signInDescription": "התחבר עם Google או מספר הטלפון שלך",
+    "signInWithGoogle": "המשך עם Google",
+    "loggingInGoogle": "מתחבר...",
+    "orContinueWith": "או המשך עם",
+    "phoneNumber": "מספר טלפון",
     "sendCode": "שלח קוד",
     "sendingCode": "שולח קוד...",
-    "enterCode": "הזן קוד אימות"
+    "enterCode": "הזן קוד אימות",
+    "sentCodeTo": "שלחנו קוד ל",
+    "editPhone": "ערוך",
+    "verificationCode": "קוד אימות",
+    "verify": "אמת",
+    "verifying": "מאמת...",
+    "resendCode": "שלח שוב",
+    "resendIn": "שלח שוב בעוד {seconds} שניות",
+    "googleLoginFailed": "ההתחברות עם Google נכשלה. נסה שנית."
   },
   "navigation": {
     "dashboard": "לוח בקרה",
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
-    "schedules": "לוחות זמנים",
+    "schedules": "תזמונים",
     "settings": "הגדרות",
     "templates": "תבניות",
     "expenses": "הוצאות",
@@ -406,8 +418,8 @@
   },
   "schedules": {
     "header": {
-      "title": "לוחות זמנים",
-      "description": "נהל את לוח הזמנים של האירוע"
+      "title": "תזמונים",
+      "description": "נהל את תזמוני ההודעות של האירוע"
     },
     "tabs": {
       "overview": "סקירה",
@@ -492,7 +504,14 @@
     "relativeTime": {
       "justNow": "זה עתה",
       "past": "לפני {time}",
-      "future": "בעוד {time}"
+      "future": "בעוד {time}",
+      "units": {
+        "minutes": "{count} דק'",
+        "hours": "{count} ש'",
+        "days": "{count} ימים",
+        "weeks": "{count} שב'",
+        "months": "{count} חודשים"
+      }
     },
     "activity": {
       "cardTitle": "פעילות שליחה אחרונה",
@@ -578,6 +597,153 @@
       "goToDashboard": "עבור ללוח הבקרה",
       "viewDetails": "צפה בפרטי האירוע"
     }
+  },
+  "newEventDialog": {
+    "title": "יצירת אירוע חדש",
+    "description": "הזן את פרטי האירוע החדש שלך. תוכל להוסיף פרטים נוספים מאוחר יותר.",
+    "eventTitleLabel": "שם האירוע",
+    "eventTitlePlaceholder": "החתונה שלי",
+    "eventDateLabel": "תאריך האירוע",
+    "eventTypeLabel": "סוג האירוע",
+    "eventTypePlaceholder": "בחר סוג אירוע",
+    "cancel": "ביטול",
+    "creating": "יוצר...",
+    "create": "צור אירוע",
+    "newEvent": "אירוע חדש",
+    "toast": {
+      "creating": "יוצר את {title}...",
+      "created": "האירוע נוצר בהצלחה",
+      "failed": "יצירת האירוע נכשלה. נסה שנית."
+    }
+  },
+  "collaborate": {
+    "tab": {
+      "heading": "שתף פעולה עם אחרים",
+      "description": "הזמן את הבן/בת זוג, המשפחה או החברים לעזור בניהול האירוע. ניתן להקצות תפקידים והרשאות שונות כדי לשמור על סדר.",
+      "inviteButton": "הזמן שותף",
+      "activeMembers": "חברים פעילים",
+      "features": {
+        "shareWorkload": "שתף את העומס",
+        "shareWorkloadDesc": "חלק משימות בקלות",
+        "getHelp": "קבל עזרה ספציפית",
+        "getHelpDesc": "הקצה משימות מסוימות",
+        "keepSync": "שמור על סנכרון",
+        "keepSyncDesc": "עדכונים בזמן אמת"
+      }
+    },
+    "collaboratorsList": {
+      "you": "אתה",
+      "invitedByYou": "הוזמן על ידך",
+      "changeRole": "שנה תפקיד",
+      "remove": "הסר",
+      "removeDialog": {
+        "title": "הסרת שותף?",
+        "description": "{name} יאבד גישה לאירוע זה. לא ניתן לבטל פעולה זו.",
+        "cancel": "ביטול",
+        "confirm": "הסר"
+      },
+      "toast": {
+        "removing": "מסיר שותף...",
+        "removed": "השותף הוסר.",
+        "failed": "משהו השתבש."
+      }
+    },
+    "configDialog": {
+      "title": "הגדרת שותף",
+      "description": "שנה את התפקיד וההרשאות עבור שותף זה.",
+      "roleLabel": "תפקיד",
+      "ownerDescription": "גישה מלאה לכל הגדרות האירוע, האורחים והשותפים.",
+      "seatingManagerDescription": "יכול לנהל אורחים וקבוצות שהוקצו לו בלבד.",
+      "scopeLabel": "היקף מוקצה",
+      "saving": "שומר...",
+      "saveChanges": "שמור שינויים",
+      "toast": {
+        "needsScope": "מנהלי מיקום צריכים לפחות קבוצה או אורח אחד מוקצה.",
+        "roleFailed": "עדכון התפקיד נכשל.",
+        "roleUpdated": "התפקיד עודכן.",
+        "scopeRequired": "נדרשת לפחות קבוצה או אורח אחד.",
+        "scopeFailed": "עדכון ההיקף נכשל.",
+        "scopeUpdated": "ההיקף עודכן.",
+        "error": "משהו השתבש."
+      }
+    },
+    "pendingInvitations": {
+      "title": "הזמנות ממתינות",
+      "expires": "פג תוקף",
+      "resend": "שלח שוב",
+      "cancel": "ביטול",
+      "toast": {
+        "linkCopied": "קישור ההזמנה הועתק ללוח.",
+        "revoking": "מבטל הזמנה...",
+        "revoked": "ההזמנה בוטלה.",
+        "failed": "משהו השתבש."
+      }
+    },
+    "inviteDialog": {
+      "titleInvite": "הזמנת שותף",
+      "titleSuccess": "ההזמנה נוצרה",
+      "descriptionInvite": "הוסף חבר חדש לצוות התכנון שלך.",
+      "descriptionSuccessEmail": "נשלח מייל הזמנה. תוכל גם לשתף את הקישור ידנית.",
+      "descriptionSuccessLink": "שתף את הקישור הזה עם האדם שהזמנת.",
+      "emailLabel": "כתובת מייל",
+      "emailPlaceholder": "partner@example.com",
+      "roleLabel": "תפקיד",
+      "ownerLabel": "בעלים",
+      "ownerBadge": "גישה מלאה",
+      "ownerDescription": "גישה מלאה לניהול האירוע, האורחים וההגדרות.",
+      "seatingManagerLabel": "מנהל מיקום",
+      "seatingManagerBadge": "גישה מוגבלת",
+      "seatingManagerDescription": "יכול לנהל אורחים ותרשימי מיקום שהוקצו לו בלבד.",
+      "inviteInfo": "שותפים חדשים יקבלו מייל הזמנה להצטרף לאירוע שלך.",
+      "cancel": "ביטול",
+      "nextScope": "הבא: הגדר היקף",
+      "sendInvitation": "שלח הזמנה",
+      "sending": "שולח...",
+      "selectScope": "בחר מה הם יוכלו לנהל",
+      "invitationSentTo": "מייל הזמנה נשלח ל-{email}",
+      "copied": "הועתק",
+      "copy": "העתק",
+      "done": "סיום",
+      "toast": {
+        "emailRequired": "אנא הזן כתובת מייל.",
+        "createFailed": "יצירת ההזמנה נכשלה.",
+        "created": "ההזמנה נוצרה!",
+        "linkCopied": "הקישור הועתק ללוח."
+      }
+    },
+    "editScope": {
+      "title": "ערוך היקף — {name}",
+      "description": "בחר אילו קבוצות ואורחים מנהל המיקום יוכל לצפות בהם.",
+      "saving": "שומר...",
+      "save": "שמור היקף",
+      "toast": {
+        "failed": "עדכון ההיקף נכשל.",
+        "updated": "ההיקף עודכן."
+      }
+    },
+    "invitationPage": {
+      "title": "הזמנה לאירוע",
+      "invitedTo": "הוזמנת לשתף פעולה ב",
+      "seatingManagerNote": "תהיה לך גישת צפייה בלבד לאורחים ולקבוצות שהוקצו לך.",
+      "decline": "דחה",
+      "processing": "מעבד...",
+      "accept": "קבל",
+      "toast": {
+        "acceptFailed": "קבלת ההזמנה נכשלה.",
+        "declineFailed": "דחיית ההזמנה נכשלה.",
+        "error": "משהו השתבש."
+      }
+    }
+  },
+  "settings": {
+    "header": {
+      "title": "הגדרות",
+      "description": "נהל שותפים והעדפות האירוע"
+    },
+    "team": {
+      "label": "צוות ושותפים"
+    },
+    "invite": "הזמן"
   },
   "eventDetails": {
     "notFound": "האירוע לא נמצא",
