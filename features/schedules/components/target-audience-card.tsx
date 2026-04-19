@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { cardHover } from '@/lib/utils';
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
@@ -45,17 +46,17 @@ export async function TargetAudienceCard({ targetStatus, guestStats }: TargetAud
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <div className="rounded-md bg-primary/10 p-1.5">
-              <IconUsers size={16} className="text-primary" />
-            </div>
-            {t('cardTitle')}
-          </CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <div className="rounded-md bg-primary/10 p-1.5">
+            <IconUsers size={16} className="text-primary" />
+          </div>
+          {t('cardTitle')}
+        </CardTitle>
+        <CardAction>
           <Badge variant="secondary" className={badgeClass}>
             {audienceLabel}
           </Badge>
-        </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-3">

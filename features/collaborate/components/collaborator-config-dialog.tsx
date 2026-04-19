@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { IconCrown, IconArmchair2 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { updateCollaboratorRole, updateCollaboratorScope } from '../actions';
 import { ScopePicker } from './scope-picker';
 import { ROLE_LABELS, type CollaboratorApp, type CollaboratorRole } from '../schemas';
@@ -29,26 +30,6 @@ interface CollaboratorConfigDialogProps {
   initialGuestIds: string[];
 }
 
-const ROLE_OPTIONS: {
-  value: CollaboratorRole;
-  label: string;
-  description: string;
-  icon: React.ElementType;
-}[] = [
-  {
-    value: 'owner',
-    label: ROLE_LABELS.owner,
-    description: 'Full access to all event settings, guests, and collaborators.',
-    icon: IconCrown,
-  },
-  {
-    value: 'seating_manager',
-    label: ROLE_LABELS.seating_manager,
-    description: 'Can manage assigned guests and groups only.',
-    icon: IconArmchair2,
-  },
-];
-
 export function CollaboratorConfigDialog({
   collaborator,
   open,
@@ -58,6 +39,28 @@ export function CollaboratorConfigDialog({
   initialGroupIds,
   initialGuestIds,
 }: CollaboratorConfigDialogProps) {
+  const t = useTranslations('collaborate.configDialog');
+
+  const ROLE_OPTIONS: {
+    value: CollaboratorRole;
+    label: string;
+    description: string;
+    icon: React.ElementType;
+  }[] = [
+    {
+      value: 'owner',
+      label: ROLE_LABELS.owner,
+      description: t('ownerDescription'),
+      icon: IconCrown,
+    },
+    {
+      value: 'seating_manager',
+      label: ROLE_LABELS.seating_manager,
+      description: t('seatingManagerDescription'),
+      icon: IconArmchair2,
+    },
+  ];
+
   const [selectedRole, setSelectedRole] = React.useState<CollaboratorRole>(
     collaborator?.role ?? 'owner',
   );
@@ -86,7 +89,7 @@ export function CollaboratorConfigDialog({
         let formData: FormData | undefined;
         if (selectedRole === 'seating_manager') {
           if (selectedGroups.length === 0 && selectedGuests.length === 0) {
-            toast.error('Seating managers need at least one group or guest assigned.');
+            toast.error(t('toast.needsScope'));
             setIsPending(false);
             return;
           }
@@ -101,15 +104,15 @@ export function CollaboratorConfigDialog({
           formData,
         );
         if (!result.success) {
-          toast.error(result.message || 'Failed to update role.');
+          toast.error(result.message || t('toast.roleFailed'));
           setIsPending(false);
           return;
         }
-        toast.success(result.message || 'Role updated.');
+        toast.success(result.message || t('toast.roleUpdated'));
       } else if (selectedRole === 'seating_manager') {
         // Role didn't change, but scope may have
         if (selectedGroups.length === 0 && selectedGuests.length === 0) {
-          toast.error('At least one group or guest is required.');
+          toast.error(t('toast.scopeRequired'));
           setIsPending(false);
           return;
         }
@@ -119,11 +122,11 @@ export function CollaboratorConfigDialog({
 
         const result = await updateCollaboratorScope(collaborator.id, formData);
         if (!result.success) {
-          toast.error(result.message || 'Failed to update scope.');
+          toast.error(result.message || t('toast.scopeFailed'));
           setIsPending(false);
           return;
         }
-        toast.success(result.message || 'Scope updated.');
+        toast.success(result.message || t('toast.scopeUpdated'));
       } else {
         // Nothing changed
         onOpenChange(false);
@@ -133,7 +136,7 @@ export function CollaboratorConfigDialog({
 
       onOpenChange(false);
     } catch {
-      toast.error('Something went wrong.');
+      toast.error(t('toast.error'));
     } finally {
       setIsPending(false);
     }
@@ -152,10 +155,8 @@ export function CollaboratorConfigDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Configure Collaborator</DialogTitle>
-          <DialogDescription>
-            Change the role and permissions for this collaborator.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
@@ -182,7 +183,7 @@ export function CollaboratorConfigDialog({
 
           {/* Role selection */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Role</Label>
+            <Label className="text-sm font-medium">{t('roleLabel')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {ROLE_OPTIONS.map((option) => (
                 <button
@@ -211,7 +212,7 @@ export function CollaboratorConfigDialog({
           {/* Scope picker (only for seating managers) */}
           {selectedRole === 'seating_manager' && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Assigned Scope</Label>
+              <Label className="text-sm font-medium">{t('scopeLabel')}</Label>
               <div className="rounded-lg border p-3">
                 <ScopePicker
                   groups={groups}
@@ -231,7 +232,7 @@ export function CollaboratorConfigDialog({
             disabled={isPending}
             className="w-full"
           >
-            {isPending ? 'Saving...' : 'Save Changes'}
+            {isPending ? t('saving') : t('saveChanges')}
           </Button>
         </div>
       </DialogContent>

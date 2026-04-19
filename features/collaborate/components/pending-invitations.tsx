@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { IconMail, IconClock } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { revokeInvitation } from '../actions';
 import { RoleBadge } from './role-badge';
 import { buildInvitationLink, getExpiryText } from '../utils';
@@ -13,27 +14,29 @@ interface PendingInvitationsProps {
 }
 
 export function PendingInvitations({ invitations }: PendingInvitationsProps) {
+  const t = useTranslations('collaborate.pendingInvitations');
+
   if (invitations.length === 0) return null;
 
   const handleCopyLink = async (token: string) => {
     const link = buildInvitationLink(token);
     await navigator.clipboard.writeText(link);
-    toast.success('Invitation link copied to clipboard.');
+    toast.success(t('toast.linkCopied'));
   };
 
   const handleRevoke = async (invitation: InvitationApp) => {
     const promise = revokeInvitation(invitation.id).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to revoke invitation.');
+        throw new Error(result.message || t('toast.failed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: 'Revoking invitation...',
-      success: (data) => data.message || 'Invitation revoked.',
+      loading: t('toast.revoking'),
+      success: (data) => data.message || t('toast.revoked'),
       error: (err) =>
-        err instanceof Error ? err.message : 'Something went wrong.',
+        err instanceof Error ? err.message : t('toast.failed'),
     });
   };
 
@@ -41,7 +44,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
     <div>
       <div className="mb-3 flex items-center gap-2">
         <h3 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-          Pending Invitations
+          {t('title')}
         </h3>
         <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-medium text-gray-500">
           {invitations.length}
@@ -66,7 +69,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
                   <span className="text-muted-foreground flex items-center gap-1 text-xs">
                     &middot;{' '}
                     <IconClock className="h-3 w-3" />
-                    Expires{' '}
+                    {t('expires')}{' '}
                     {new Date(invitation.expiresAt).toLocaleDateString(
                       'en-US',
                       { month: 'short', day: 'numeric' },
@@ -82,7 +85,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
                 className="text-primary font-medium"
                 onClick={() => handleCopyLink(invitation.token)}
               >
-                Resend
+                {t('resend')}
               </Button>
               <span className="text-gray-300">|</span>
               <Button
@@ -91,7 +94,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
                 className="font-medium text-gray-500 hover:text-gray-700"
                 onClick={() => handleRevoke(invitation)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
             </div>
           </div>

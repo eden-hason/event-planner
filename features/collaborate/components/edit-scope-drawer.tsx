@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { updateCollaboratorScope } from '../actions';
 import { ScopePicker } from './scope-picker';
 import type { CollaboratorApp } from '../schemas';
@@ -34,6 +35,7 @@ export function EditScopeDrawer({
   initialGroupIds,
   initialGuestIds,
 }: EditScopeDrawerProps) {
+  const t = useTranslations('collaborate.editScope');
   const [selectedGroups, setSelectedGroups] =
     React.useState<string[]>(initialGroupIds);
   const [selectedGuests, setSelectedGuests] =
@@ -57,13 +59,13 @@ export function EditScopeDrawer({
     try {
       const result = await updateCollaboratorScope(collaborator.id, formData);
       if (!result.success) {
-        toast.error(result.message || 'Failed to update scope.');
+        toast.error(result.message || t('toast.failed'));
         return;
       }
-      toast.success('Scope updated.');
+      toast.success(t('toast.updated'));
       onOpenChange(false);
     } catch {
-      toast.error('Failed to update scope.');
+      toast.error(t('toast.failed'));
     } finally {
       setIsPending(false);
     }
@@ -75,10 +77,8 @@ export function EditScopeDrawer({
     <Drawer open={open} onOpenChange={onOpenChange} direction="right">
       <DrawerContent className="fixed inset-y-0 right-0 w-full max-w-md rounded-none">
         <DrawerHeader>
-          <DrawerTitle>Edit Scope — {collaborator.fullName}</DrawerTitle>
-          <DrawerDescription>
-            Choose which groups and guests this seating manager can view.
-          </DrawerDescription>
+          <DrawerTitle>{t('title', { name: collaborator.fullName })}</DrawerTitle>
+          <DrawerDescription>{t('description')}</DrawerDescription>
         </DrawerHeader>
         <div className="flex-1 overflow-y-auto p-4">
           <ScopePicker
@@ -99,7 +99,7 @@ export function EditScopeDrawer({
             }
             className="w-full"
           >
-            {isPending ? 'Saving...' : 'Save Scope'}
+            {isPending ? t('saving') : t('save')}
           </Button>
         </div>
       </DrawerContent>

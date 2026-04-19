@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useActionState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -59,6 +60,8 @@ export function NewEventDialog({
     ? (value: boolean) => controlledOnOpenChange?.(value)
     : setInternalOpen;
   const router = useRouter();
+  const t = useTranslations('newEventDialog');
+  const tEventDetails = useTranslations('eventDetails.dateTime.types');
 
   const form = useForm({
     resolver: zodResolver(EventCreateSchema),
@@ -76,23 +79,21 @@ export function NewEventDialog({
     const eventTitle = (formData.get('title') as string) || 'event';
     const promise = createEvent(formData).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to create event.');
+        throw new Error(result.message || t('toast.failed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Creating ${eventTitle}...`,
+      loading: t('toast.creating', { title: eventTitle }),
       success: (data) => {
         setOpen(false);
         form.reset();
         router.push(`/app/${data.eventId}/dashboard`);
-        return data.message || 'Event created successfully';
+        return data.message || t('toast.created');
       },
       error: (err) =>
-        err instanceof Error
-          ? err.message
-          : 'Failed to create event. Please try again.',
+        err instanceof Error ? err.message : t('toast.failed'),
     });
 
     try {
@@ -128,7 +129,7 @@ export function NewEventDialog({
       <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
         <IconPlus size={16} />
       </div>
-      <div className="text-muted-foreground font-medium">New Event</div>
+      <div className="text-muted-foreground font-medium">{t('newEvent')}</div>
     </button>
   );
 
@@ -139,11 +140,8 @@ export function NewEventDialog({
       )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
-          <DialogDescription>
-            Enter the details for your new event. You can add more details
-            later.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -152,9 +150,9 @@ export function NewEventDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Title</FormLabel>
+                  <FormLabel>{t('eventTitleLabel')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="My Wedding" {...field} />
+                    <Input placeholder={t('eventTitlePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,7 +163,7 @@ export function NewEventDialog({
               name="eventDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Date</FormLabel>
+                  <FormLabel>{t('eventDateLabel')}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -178,21 +176,21 @@ export function NewEventDialog({
               name="eventType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Type</FormLabel>
+                  <FormLabel>{t('eventTypeLabel')}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select event type" />
+                        <SelectValue placeholder={t('eventTypePlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="wedding">Wedding</SelectItem>
-                      <SelectItem value="birthday">Birthday</SelectItem>
-                      <SelectItem value="corporate">Corporate</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="wedding">{tEventDetails('wedding')}</SelectItem>
+                      <SelectItem value="birthday">{tEventDetails('birthday')}</SelectItem>
+                      <SelectItem value="corporate">{tEventDetails('corporate')}</SelectItem>
+                      <SelectItem value="other">{tEventDetails('other')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -206,10 +204,10 @@ export function NewEventDialog({
                 onClick={() => setOpen(false)}
                 disabled={isPending}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? 'Creating...' : 'Create Event'}
+                {isPending ? t('creating') : t('create')}
               </Button>
             </DialogFooter>
           </form>

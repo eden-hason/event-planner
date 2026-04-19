@@ -9,7 +9,7 @@ import {
   IconMail,
   IconUserCheck,
 } from '@tabler/icons-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +41,8 @@ export function SchedulesLayout({
   contentByType,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
+  const locale = useLocale();
+  const dir = locale === 'he' ? 'rtl' : 'ltr';
   const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('details');
@@ -151,8 +153,8 @@ export function SchedulesLayout({
 
       {/* Right content */}
       <div className="min-w-0 flex-1">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList dir="rtl" className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir}>
+          <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               id="schedule-details-tab-trigger"
               value="details"
@@ -186,8 +188,9 @@ function StatusRow({ item }: { item: ScheduleTabItem }) {
   function formatTime(str: string): string {
     const result = formatRelativeTime(str);
     if (result.type === 'justNow') return t('relativeTime.justNow');
-    if (result.type === 'past') return t('relativeTime.past', { time: result.time });
-    return t('relativeTime.future', { time: result.time });
+    const time = t(`relativeTime.units.${result.unit}`, { count: result.count });
+    if (result.type === 'past') return t('relativeTime.past', { time });
+    return t('relativeTime.future', { time });
   }
 
   return (

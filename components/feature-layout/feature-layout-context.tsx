@@ -13,6 +13,7 @@ interface FeatureLayoutContextType {
   title: string;
   description?: string;
   action: ReactNode | null;
+  containerClass?: string;
   setHeader: (config: FeatureHeaderConfig) => void;
   clearHeader: () => void;
 }
@@ -21,6 +22,7 @@ interface FeatureHeaderConfig {
   title: string;
   description?: string;
   action?: ReactNode;
+  containerClass?: string;
 }
 
 const FeatureLayoutContext = createContext<FeatureLayoutContextType | null>(
@@ -31,22 +33,25 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState<string | undefined>();
   const [action, setAction] = useState<ReactNode | null>(null);
+  const [containerClass, setContainerClass] = useState<string | undefined>();
 
   const setHeader = useCallback((config: FeatureHeaderConfig) => {
     setTitle(config.title);
     setDescription(config.description);
     setAction(config.action ?? null);
+    setContainerClass(config.containerClass);
   }, []);
 
   const clearHeader = useCallback(() => {
     setTitle('');
     setDescription(undefined);
     setAction(null);
+    setContainerClass(undefined);
   }, []);
 
   return (
     <FeatureLayoutContext.Provider
-      value={{ title, description, action, setHeader, clearHeader }}
+      value={{ title, description, action, containerClass, setHeader, clearHeader }}
     >
       {children}
     </FeatureLayoutContext.Provider>
