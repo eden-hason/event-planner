@@ -1,19 +1,25 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { redirect } from 'next/navigation';
+import { redirect } from '@/i18n/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
 
 export default async function Layout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    redirect('/login');
+    return redirect({ href: '/login', locale });
   }
 
   // Get user data from auth

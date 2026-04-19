@@ -2,6 +2,8 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { type Icon } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import { Badge } from '@/components/ui/badge';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -42,28 +44,43 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
+    comingSoon?: boolean;
   }[];
 }) {
   const pathname = usePathname();
+  const t = useTranslations('navigation');
 
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = isActiveRoute(pathname, item.url);
+            const isActive = !item.comingSoon && isActiveRoute(pathname, item.url);
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  asChild
+                  asChild={!item.comingSoon}
                   isActive={isActive}
-                  className={isActive ? 'bg-accent text-accent-foreground' : ''}
+                  className={[
+                    isActive ? 'bg-accent text-accent-foreground' : '',
+                    item.comingSoon ? 'cursor-default opacity-50 pointer-events-none' : '',
+                  ].join(' ')}
                 >
-                  <Link href={item.url}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </Link>
+                  {item.comingSoon ? (
+                    <>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      <Badge className="ms-auto rounded-sm border-none bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
+                        {t('comingSoon')}
+                      </Badge>
+                    </>
+                  ) : (
+                    <Link href={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );

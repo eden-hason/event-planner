@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Tooltip,
@@ -26,6 +29,7 @@ export function GroupBreakdownCard({
 }: {
   groups: GroupWithGuestsApp[];
 }) {
+  const t = useTranslations('dashboard.groupBreakdown');
   const rows = groups.map((group) => ({
     ...group,
     total: group.guests.reduce((sum, g) => sum + g.amount, 0),
@@ -33,12 +37,17 @@ export function GroupBreakdownCard({
 
   const grandTotal = rows.reduce((sum, g) => sum + g.total, 0);
 
+  const sideLabels: Record<string, string> = {
+    bride: t('sideLabels.bride'),
+    groom: t('sideLabels.groom'),
+  };
+
   return (
     <Card className={cn('flex h-full flex-col gap-2', cardHover)}>
       <CardHeader className="pb-3">
         <div>
-          <CardTitle className="text-sm font-semibold">Guest Groups</CardTitle>
-          <p className="text-muted-foreground mt-0.5 text-xs">Breakdown by group</p>
+          <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+          <p className="text-muted-foreground mt-0.5 text-xs">{t('description')}</p>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-5 pb-6">
@@ -61,7 +70,7 @@ export function GroupBreakdownCard({
                 <TooltipContent>
                   <p className="font-medium">{group.name}</p>
                   <p className="text-muted-foreground text-xs">
-                    {group.total} {group.total === 1 ? 'guest' : 'guests'} ·{' '}
+                    {group.total} {group.total === 1 ? t('guestSingular') : t('guests')} ·{' '}
                     {pctRounded}%
                   </p>
                 </TooltipContent>
@@ -87,8 +96,8 @@ export function GroupBreakdownCard({
                     {group.name}
                   </p>
                   <p className="text-muted-foreground mt-0.5 text-xs">
-                    {group.total} {group.total === 1 ? 'guest' : 'guests'}
-                    {group.side ? ` · ${group.side}'s side` : ''}
+                    {group.total} {group.total === 1 ? t('guestSingular') : t('guests')}
+                    {group.side ? ` · ${sideLabels[group.side] ?? group.side}` : ''}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -108,7 +117,7 @@ export function GroupBreakdownCard({
 
           {rows.length === 0 && (
             <p className="text-muted-foreground text-center text-xs">
-              No groups yet
+              {t('noGroups')}
             </p>
           )}
         </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { TableBody, TableCell, TableHead } from '@/components/ui/table';
 import { getSampleData, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { Table, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,16 +12,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Available Kululu fields for mapping
 export const KULULU_FIELDS = [
-  { value: 'name', label: 'Name', required: true },
-  { value: 'phone', label: 'Phone', required: true },
-  { value: 'amount', label: 'Amount', required: false },
+  { value: 'name', required: true },
+  { value: 'phone', required: true },
+  { value: 'amount', required: false },
 ] as const;
 
 export type KululuFieldValue = (typeof KULULU_FIELDS)[number]['value'];
-
-// Mapping state: CSV column index -> Kululu field value (or null if not mapped)
 export type ColumnMapping = Record<number, KululuFieldValue | null>;
 
 interface MapStepProps {
@@ -36,6 +34,14 @@ export function MapStep({
   columnMapping,
   onColumnMappingChange,
 }: MapStepProps) {
+  const t = useTranslations('guests');
+
+  const kululuFields = KULULU_FIELDS.map((f) => ({
+    ...f,
+    label: t(`import.map.field${f.value.charAt(0).toUpperCase() + f.value.slice(1)}` as
+      'import.map.fieldName' | 'import.map.fieldPhone' | 'import.map.fieldAmount'),
+  }));
+
   if (!parsedData) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
@@ -44,7 +50,6 @@ export function MapStep({
     );
   }
 
-  // Get all currently selected field values (excluding the current column)
   const getSelectedFields = (excludeIndex: number): Set<KululuFieldValue> => {
     const selected = new Set<KululuFieldValue>();
     Object.entries(columnMapping).forEach(([index, value]) => {
@@ -65,11 +70,10 @@ export function MapStep({
     });
   };
 
-  // Count mapped fields
   const mappedFieldsCount = new Set(
     Object.values(columnMapping).filter(Boolean),
   ).size;
-  const requiredFields = KULULU_FIELDS.filter((f) => f.required);
+  const requiredFields = kululuFields.filter((f) => f.required);
   const mappedRequiredCount = requiredFields.filter((f) =>
     Object.values(columnMapping).includes(f.value),
   ).length;
@@ -79,10 +83,9 @@ export function MapStep({
   return (
     <div className="space-y-4">
       <div className="text-sm">
-        <p className="font-medium">Map your columns</p>
+        <p className="font-medium">{t('import.map.heading')}</p>
         <p className="text-muted-foreground">
-          Match the columns from <span className="font-bold">{fileName}</span>{' '}
-          to Kululu fields
+          {t('import.map.description', { fileName })}
         </p>
       </div>
 
@@ -90,9 +93,9 @@ export function MapStep({
         <Table>
           <TableHeader className="bg-muted">
             <TableRow>
-              <TableHead>CSV Header</TableHead>
-              <TableHead>Sample Data</TableHead>
-              <TableHead>Kululu Field</TableHead>
+              <TableHead>{t('import.map.csvHeader')}</TableHead>
+              <TableHead>{t('import.map.sampleData')}</TableHead>
+              <TableHead>{t('import.map.kululuField')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="bg-muted/50">
@@ -110,18 +113,15 @@ export function MapStep({
                     <Select
                       value={currentValue ?? 'skip'}
                       onValueChange={(value) =>
-                        handleMappingChange(
-                          index,
-                          value as KululuFieldValue | 'skip',
-                        )
+                        handleMappingChange(index, value as KululuFieldValue | 'skip')
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Kululu Field" />
+                        <SelectValue placeholder={t('import.map.selectField')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="skip">Don&apos;t import</SelectItem>
-                        {KULULU_FIELDS.map((field) => (
+                        <SelectItem value="skip">{t('import.map.dontImport')}</SelectItem>
+                        {kululuFields.map((field) => (
                           <SelectItem
                             key={field.value}
                             value={field.value}
@@ -145,15 +145,15 @@ export function MapStep({
               : 'bg-muted/50 text-muted-foreground'
           }`}
         >
-          <span className="font-medium">
-            {mappedRequiredCount}/{totalFieldsRequired}
-          </span>{' '}
           {isAllMapped
-            ? 'All required fields mapped ✓'
-            : 'required fields mapped'}
+            ? t('import.map.allMapped')
+            : t('import.map.mappedCount', {
+                mapped: mappedRequiredCount,
+                total: totalFieldsRequired,
+              })}
           {mappedFieldsCount > mappedRequiredCount && (
             <span className="text-muted-foreground ml-2">
-              (+{mappedFieldsCount - mappedRequiredCount} optional)
+              {t('import.map.optional', { count: mappedFieldsCount - mappedRequiredCount })}
             </span>
           )}
         </div>

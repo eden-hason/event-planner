@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
+import { getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -20,16 +21,17 @@ export const metadata: Metadata = {
     'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const locale = await getLocale();
+  const dir = locale === 'he' ? 'rtl' : 'ltr';
+
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang={locale} dir={dir}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Toaster />
         <Analytics />

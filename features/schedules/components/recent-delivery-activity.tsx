@@ -5,6 +5,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { Search, Users, Utensils } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,24 +36,21 @@ import { type ActivityStatus, type DeliveryActivityPage } from '../types';
 
 const ACTIVITY_ROW_HEIGHT = 55; // h-8 avatar + two-line text (38px) with p-2 cell padding (8+8) + 1px border
 
-const STATUS_CONFIG: Record<
+const STATUS_STYLE: Record<
   ActivityStatus,
-  { label: string; className: string; dotColor: string; labelColor: string }
+  { className: string; dotColor: string; labelColor: string }
 > = {
   confirmed: {
-    label: 'Confirmed',
     className: 'border-green-200 bg-green-100 text-green-700',
     dotColor: 'bg-green-500',
     labelColor: 'text-green-700',
   },
   declined: {
-    label: 'Declined',
     className: 'border-orange-200 bg-orange-100 text-orange-700',
     dotColor: 'bg-orange-500',
     labelColor: 'text-orange-700',
   },
   read: {
-    label: 'Read',
     className: 'border-blue-200 bg-blue-100 text-blue-700',
     dotColor: 'bg-blue-500',
     labelColor: 'text-blue-700',
@@ -81,20 +79,22 @@ function TimeStamp({ ts }: { ts: string | null }) {
 function RsvpDetails({
   status,
   metadata,
+  t,
 }: {
   status: ActivityStatus;
   metadata: { guestCount?: number; dietaryRestrictions?: string } | null;
+  t: ReturnType<typeof useTranslations<'schedules.activity'>>;
 }) {
   if (status === 'read') return <span className="text-muted-foreground">—</span>;
   if (!metadata || (!metadata.guestCount && !metadata.dietaryRestrictions))
-    return <span className="text-muted-foreground text-xs">No details</span>;
+    return <span className="text-muted-foreground text-xs">{t('table.noDetails')}</span>;
 
   return (
     <div className="flex flex-col gap-1">
       {metadata.guestCount != null && (
         <span className="inline-flex w-fit items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
           <Users className="h-3 w-3" />
-          Party of {metadata.guestCount}
+          {t('table.partyOf', { count: metadata.guestCount })}
         </span>
       )}
       {metadata.dietaryRestrictions && (
@@ -125,24 +125,26 @@ function Initials({ name }: { name: string }) {
 
 function StatusFilterTrigger({
   selected,
+  t,
 }: {
   selected: ActivityStatus[];
+  t: ReturnType<typeof useTranslations<'schedules.activity'>>;
 }) {
   if (selected.length === 0) {
     return (
       <span className="flex items-center gap-1.5">
-        All Statuses
+        {t('allStatuses')}
         <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
       </span>
     );
   }
 
   if (selected.length === 1) {
-    const config = STATUS_CONFIG[selected[0]];
+    const style = STATUS_STYLE[selected[0]];
     return (
       <span className="flex items-center gap-1.5">
-        <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
-        <span className={config.labelColor}>{config.label}</span>
+        <span className={cn('h-2 w-2 rounded-full', style.dotColor)} />
+        <span className={style.labelColor}>{t(`statuses.${selected[0]}`)}</span>
         <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
       </span>
     );
@@ -154,11 +156,11 @@ function StatusFilterTrigger({
         {selected.map((s) => (
           <span
             key={s}
-            className={cn('h-2 w-2 rounded-full', STATUS_CONFIG[s].dotColor)}
+            className={cn('h-2 w-2 rounded-full', STATUS_STYLE[s].dotColor)}
           />
         ))}
       </span>
-      <span>{selected.length} statuses</span>
+      <span>{t('statusCount', { count: selected.length })}</span>
       <IconChevronDown className="h-3.5 w-3.5 opacity-50" />
     </span>
   );
@@ -179,6 +181,7 @@ export function RecentDeliveryActivity({
   selectedStatuses,
   onStatusChange,
 }: RecentDeliveryActivityProps) {
+  const t = useTranslations('schedules.activity');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { pageSize, isCalculated } = useDynamicPageSize({
     containerRef,
@@ -258,19 +261,19 @@ export function RecentDeliveryActivity({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Recent Delivery Activity</CardTitle>
+          <CardTitle className="text-base">{t('cardTitle')}</CardTitle>
           <Link
             href={`/app/${eventId}/guests`}
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
-            View All Recipients →
+            {t('viewAllRecipients')}
           </Link>
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div className="relative w-56">
             <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
             <Input
-              placeholder="Search by name or phone..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-8 pl-8 text-sm"
@@ -279,12 +282,12 @@ export function RecentDeliveryActivity({
           {showRsvpDetails && <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 shrink-0">
-                <StatusFilterTrigger selected={selectedStatuses} />
+                <StatusFilterTrigger selected={selectedStatuses} t={t} />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-44 p-1">
               {ALL_STATUSES.map((status) => {
-                const config = STATUS_CONFIG[status];
+                const style = STATUS_STYLE[status];
                 const isChecked = selectedStatuses.includes(status);
                 return (
                   <button
@@ -302,9 +305,9 @@ export function RecentDeliveryActivity({
                     >
                       {isChecked && <IconCheck className="h-3 w-3" />}
                     </span>
-                    <span className={cn('flex items-center gap-1.5', config.labelColor)}>
-                      <span className={cn('h-2 w-2 rounded-full', config.dotColor)} />
-                      {config.label}
+                    <span className={cn('flex items-center gap-1.5', style.labelColor)}>
+                      <span className={cn('h-2 w-2 rounded-full', style.dotColor)} />
+                      {t(`statuses.${status}`)}
                     </span>
                   </button>
                 );
@@ -318,17 +321,17 @@ export function RecentDeliveryActivity({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Guest Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sent</TableHead>
-                <TableHead>Read</TableHead>
-                {showRsvpDetails && <TableHead>Responded</TableHead>}
-                {showRsvpDetails && <TableHead>RSVP Details</TableHead>}
+                <TableHead>{t('table.guestName')}</TableHead>
+                <TableHead>{t('table.status')}</TableHead>
+                <TableHead>{t('table.sent')}</TableHead>
+                <TableHead>{t('table.read')}</TableHead>
+                {showRsvpDetails && <TableHead>{t('table.responded')}</TableHead>}
+                {showRsvpDetails && <TableHead>{t('table.rsvpDetails')}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.rows.map((row) => {
-                const status = STATUS_CONFIG[row.activityStatus];
+                const status = STATUS_STYLE[row.activityStatus];
                 return (
                   <TableRow
                     key={row.id}
@@ -349,7 +352,7 @@ export function RecentDeliveryActivity({
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={status.className}>
-                        {status.label}
+                        {t(`statuses.${row.activityStatus}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -368,6 +371,7 @@ export function RecentDeliveryActivity({
                         <RsvpDetails
                           status={row.activityStatus}
                           metadata={row.interactionMetadata}
+                          t={t}
                         />
                       </TableCell>
                     )}
@@ -382,7 +386,7 @@ export function RecentDeliveryActivity({
         className={`flex items-center justify-between pt-4 ${!isReady ? 'invisible' : ''}`}
       >
         <p className="text-muted-foreground text-sm">
-          Showing {showing} of {data.total} recipients
+          {t('showing', { showing, total: data.total })}
         </p>
         <div className="flex gap-2">
           <Button
@@ -391,7 +395,7 @@ export function RecentDeliveryActivity({
             disabled={page <= 1 || loading}
             onClick={() => goToPage(page - 1)}
           >
-            Previous
+            {t('previous')}
           </Button>
           <Button
             variant="outline"
@@ -399,7 +403,7 @@ export function RecentDeliveryActivity({
             disabled={page >= totalPages || loading}
             onClick={() => goToPage(page + 1)}
           >
-            Next
+            {t('next')}
           </Button>
         </div>
       </CardFooter>

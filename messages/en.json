@@ -1,0 +1,647 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInPhone": "Sign in with your phone number",
+    "sendCode": "Send Code",
+    "sendingCode": "Sending code...",
+    "enterCode": "Enter verification code"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "eventDetails": "Event Details",
+    "guests": "Guests",
+    "schedules": "Schedules",
+    "settings": "Settings",
+    "templates": "Templates",
+    "expenses": "Expenses",
+    "gifts": "Gifts",
+    "getHelp": "Get Help",
+    "comingSoon": "Soon"
+  },
+  "sidebar": {
+    "noEventSelected": "No event selected",
+    "events": "Events",
+    "noEventsYet": "No events yet",
+    "shared": "Shared",
+    "newEvent": "New Event",
+    "logOut": "Log out",
+    "duplicateEvent": "Duplicate event",
+    "deleteEvent": "Delete event",
+    "deleteEventTitle": "Delete Event?",
+    "deleteEventDescription": "Are you sure you want to delete \"{title}\"? This action cannot be undone.",
+    "toast": {
+      "duplicating": "Duplicating {title}...",
+      "duplicated": "Event duplicated successfully",
+      "duplicateFailed": "Failed to duplicate event. Please try again.",
+      "deleting": "Deleting {title}...",
+      "deleted": "Event deleted successfully",
+      "deleteFailed": "Failed to delete event. Please try again."
+    }
+  },
+  "guests": {
+    "title": "Guests",
+    "description": "Manage your event guests",
+    "addGuest": "Add Guest",
+    "addGroup": "Add Group",
+    "tabGuests": "Guests",
+    "tabGroups": "Groups",
+    "sheet": {
+      "editGuest": "Edit Guest",
+      "addNewGuest": "Add New Guest",
+      "newGuest": "New Guest",
+      "addGuestHint": "Fill out the form below to add a new guest.",
+      "lastEdited": "Last edited",
+      "people": "People",
+      "group": "Group",
+      "updated": "Updated",
+      "viaGuest": "via guest",
+      "viaYou": "via you",
+      "viaOrganizer": "via organizer",
+      "deleteGuest": "Delete Guest",
+      "updateGuest": "Update Guest"
+    },
+    "toast": {
+      "creatingGroup": "Creating {name}...",
+      "groupCreated": "Group created successfully.",
+      "groupCreateFailed": "Failed to create group. Please try again.",
+      "deletingGuest": "Deleting {name}...",
+      "guestDeleted": "Guest deleted successfully.",
+      "guestDeleteFailed": "Failed to delete guest."
+    },
+    "form": {
+      "contactInfo": "Contact Information",
+      "name": "Name",
+      "namePlaceholder": "Guest name",
+      "phone": "Phone",
+      "phonePlaceholder": "Phone number",
+      "amount": "Amount",
+      "person": "person",
+      "people": "people",
+      "eventDetails": "Event Details",
+      "rsvpStatus": "RSVP Status",
+      "rsvpPlaceholder": "Select RSVP status",
+      "group": "Group",
+      "groupPlaceholder": "Select group",
+      "noGroup": "No group",
+      "dietaryRestrictions": "Dietary Restrictions",
+      "notes": "Notes",
+      "notesPlaceholder": "Add any additional notes about this guest...",
+      "updatingGuest": "Updating guest...",
+      "addingGuest": "Adding guest...",
+      "guestUpdated": "Guest updated.",
+      "guestAdded": "Guest added.",
+      "somethingWentWrong": "Something went wrong.",
+      "updateGuest": "Update Guest",
+      "addGuest": "Add Guest",
+      "updating": "Updating...",
+      "adding": "Adding..."
+    },
+    "rsvp": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "declined": "Declined"
+    },
+    "stats": {
+      "totalGuests": "Total Guests",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "declined": "Declined",
+      "people": "{count} people"
+    },
+    "table": {
+      "name": "Name",
+      "phone": "Phone",
+      "group": "Group",
+      "rsvpStatus": "RSVP Status",
+      "dietaryRestrictions": "Dietary Restrictions",
+      "dietaryNone": "None",
+      "amount": "Amount",
+      "notes": "Notes",
+      "openMenu": "Open menu",
+      "deleteGuest": "Delete guest",
+      "emptyTitle": "No Guests Yet",
+      "emptyDescription": "Get started by uploading a guest list or adding guests manually.",
+      "uploadFile": "Upload File",
+      "addGuest": "Add Guest",
+      "noGuestsSearch": "No guests found matching your search.",
+      "noGuestsFound": "No guests found.",
+      "showing": "Showing {start}-{end} of {total} guests",
+      "firstPage": "First page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "lastPage": "Last page"
+    },
+    "directory": {
+      "importCsv": "Import CSV",
+      "deletingGuest": "Deleting {name}...",
+      "guestDeleted": "Guest deleted successfully.",
+      "guestDeleteFailed": "Failed to delete guest. Please try again."
+    },
+    "filters": {
+      "filterByStatus": "Filter by status",
+      "filterByGroup": "Filter by group",
+      "filterBySide": "Filter by side",
+      "groupsSelected": "{count} groups selected",
+      "sidesSelected": "{count} sides selected",
+      "selectAll": "Select All"
+    },
+    "search": {
+      "placeholder": "Search guests..."
+    },
+    "dietary": {
+      "vegan": "Vegan",
+      "vegetarian": "Vegetarian",
+      "glatt": "Glatt",
+      "glutenFree": "Gluten Free"
+    },
+    "sides": {
+      "bride": "Bride's side",
+      "groom": "Groom's side"
+    },
+    "groups": {
+      "createNew": "Create new group",
+      "createNewDescription": "Add a new segment to your guests",
+      "searchPlaceholder": "Search groups...",
+      "selected": "{count} group selected",
+      "selectedPlural": "{count} groups selected",
+      "openMenu": "Open menu",
+      "select": "Select",
+      "deleteGroup": "Delete group",
+      "guestCount": "{count} guests",
+      "noGuests": "No guests assigned yet",
+      "assignGuests": "Assign guests",
+      "dialog": {
+        "title": "Create New Group",
+        "description": "Add a new group to organize your guests",
+        "nameLabel": "Group Name",
+        "namePlaceholder": "e.g., Family, Friends, Colleagues",
+        "sideLabel": "Side (optional)",
+        "sidePlaceholder": "Select a side",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Add a brief description for this group...",
+        "iconLabel": "Icon",
+        "create": "Create Group"
+      },
+      "assign": {
+        "manageMembers": "Manage Members",
+        "groupTitle": "'{name}' Group",
+        "assignDescription": "Assign guests to this group for easier management",
+        "availableGuests": "Available Guests",
+        "guestsInGroup": "Guests in Group",
+        "guestsLabel": "Guests",
+        "membersLabel": "Members",
+        "selectedToMove": "{count} guests selected to move",
+        "saveChanges": "Save Changes",
+        "updatingMembers": "Updating {name} members...",
+        "membersUpdated": "Group members updated successfully.",
+        "membersFailed": "Failed to update group members. Please try again."
+      },
+      "toast": {
+        "deletingGroups": "Deleting {count} groups...",
+        "groupsDeleted": "Groups deleted successfully.",
+        "groupsDeleteFailed": "Failed to delete groups. Please try again.",
+        "deletingGroup": "Deleting {name}...",
+        "groupDeleted": "Group deleted successfully.",
+        "groupDeleteFailed": "Failed to delete group. Please try again."
+      }
+    },
+    "import": {
+      "title": "Import Guests from CSV",
+      "stepUpload": "Upload",
+      "stepAnalyze": "Analyze",
+      "stepValidate": "Validate",
+      "stepSummary": "Summary",
+      "previous": "Previous",
+      "next": "Next",
+      "import": "Import",
+      "done": "Done",
+      "close": "Close",
+      "importSuccess": "Guests imported successfully!",
+      "upload": {
+        "heading": "Upload your guests list",
+        "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse"
+      },
+      "analyze": {
+        "heading": "Analyzing your file\u2026",
+        "description": "Our AI is reading your columns and mapping your guest data automatically",
+        "rowsDetected": "File parsed \u2014 {count} rows detected",
+        "readingHeaders": "Reading column headers\u2026",
+        "analyzingSample": "Analyzing sample data\u2026",
+        "mappingSchema": "Mapping to guest schema\u2026",
+        "failedHeading": "Analysis failed",
+        "tryAgain": "Try again",
+        "successHeading": "Mapping Complete",
+        "successDescription": "Our AI has successfully mapped your guest data to the correct fields. Everything looks good to go!",
+        "columnsIdentified": "Columns identified:",
+        "mappingComplete": "Mapping to guest schema complete"
+      },
+      "map": {
+        "heading": "Map your columns",
+        "description": "Match the columns from {fileName} to Kululu fields",
+        "csvHeader": "CSV Header",
+        "sampleData": "Sample Data",
+        "kululuField": "Kululu Field",
+        "selectField": "Select Kululu Field",
+        "dontImport": "Don't import",
+        "fieldName": "Name",
+        "fieldPhone": "Phone",
+        "fieldAmount": "Amount",
+        "mappedCount": "{mapped}/{total} required fields mapped",
+        "allMapped": "All required fields mapped \u2713",
+        "optional": "(+{count} optional)"
+      },
+      "validate": {
+        "heading": "Validate your data",
+        "description": "Review the data below. Invalid rows can be removed before importing.",
+        "colStatus": "Status",
+        "colRow": "Row",
+        "colName": "Name",
+        "colPhone": "Phone",
+        "colAmount": "Amount",
+        "colErrors": "Errors",
+        "rowCount": "{valid} valid, {invalid} invalid out of {total} rows",
+        "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows \u2713"
+      },
+      "summary": {
+        "importing": "Importing guests...",
+        "importingDescription": "Please wait while we add {count} guests to your event.",
+        "importingDescriptionSingular": "Please wait while we add {count} guest to your event.",
+        "successHeading": "Import Successful!",
+        "successMessage": "{count} guests have been added to your event.",
+        "successMessageSingular": "{count} guest has been added to your event.",
+        "failedHeading": "Import Failed"
+      }
+    }
+  },
+  "dashboard": {
+    "header": {
+      "title": "Dashboard",
+      "description": "Overview of your event"
+    },
+    "eventNotFound": "Event not found",
+    "stats": {
+      "daysToEvent": "Days to Event",
+      "todayIsTheDay": "Today's the day!",
+      "daysSince": "days since the event",
+      "daysTo": "days to go",
+      "guestsInvited": "Guests Invited",
+      "ofEstimated": "of ~{estimate} estimated",
+      "pctOfEstimate": "{pct}% of estimate",
+      "scheduledMessages": "Scheduled Messages",
+      "pendingMessageSingular": "pending message",
+      "pendingMessages": "pending messages"
+    },
+    "guestStats": {
+      "totalGuests": "Total Guests",
+      "invited": "invited",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "ofTotal": "of {total}"
+    },
+    "rsvpBreakdown": {
+      "title": "RSVP Breakdown",
+      "description": "Guest response overview",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "declined": "Declined",
+      "total": "Total"
+    },
+    "groupBreakdown": {
+      "title": "Guest Groups",
+      "description": "Breakdown by group",
+      "guestSingular": "guest",
+      "guests": "guests",
+      "noGroups": "No groups yet",
+      "sideLabels": {
+        "bride": "bride's side",
+        "groom": "groom's side"
+      }
+    },
+    "rsvpEngagement": {
+      "title": "RSVP by Group",
+      "description": "Guest responses per group",
+      "noGroups": "No groups yet",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
+    "countdown": {
+      "today": "Today is the day!",
+      "daysSince": "days since the event",
+      "daysTo": "days to go"
+    },
+    "upcomingSchedules": {
+      "title": "Upcoming Schedules",
+      "noSchedules": "No upcoming schedules",
+      "createOne": "Create one",
+      "viewAll": "View all schedules →",
+      "actionTypes": {
+        "initial_invitation": "Initial Invitation",
+        "confirmation": "Confirmation",
+        "event_reminder": "Event Reminder",
+        "post_event": "Thank You"
+      }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "description": "Common tasks",
+      "addGuest": "Add Guest",
+      "addGuestDesc": "Invite new guests",
+      "createSchedule": "Create Schedule",
+      "createScheduleDesc": "Plan event timeline",
+      "viewGuests": "View All Guests",
+      "viewGuestsDesc": "Manage guest list",
+      "importCsv": "Import CSV",
+      "importCsvDesc": "Bulk upload guests"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "description": "Latest RSVP updates",
+      "noActivity": "No recent RSVP changes",
+      "viewAllGuests": "View All Guests",
+      "confirmedAttendance": "confirmed attendance",
+      "declinedInvitation": "declined invitation",
+      "updatedRsvp": "updated their RSVP",
+      "justNow": "just now",
+      "minutesAgo": "{count} minutes ago",
+      "hoursAgo": "{count} hours ago",
+      "dayAgo": "{count} day ago",
+      "daysAgo": "{count} days ago"
+    },
+    "onboarding": {
+      "title": "Get started with Kululu",
+      "outOf": " out of ",
+      "stepsLeft": " steps left",
+      "details": {
+        "title": "Complete your event details",
+        "description": "Add ceremony time and other key details so guests know what to expect.",
+        "action": "Edit details"
+      },
+      "guests": {
+        "title": "Add your first guest",
+        "description": "Start building your guest list by adding guests one by one or via CSV import.",
+        "action": "Manage guests"
+      },
+      "groups": {
+        "title": "Organize guests into groups",
+        "description": "Create groups to keep your guest list organized by family, side, or relationship.",
+        "action": "Manage groups"
+      },
+      "invitation": {
+        "title": "Upload your invitation design",
+        "description": "Add a beautiful invitation image so guests see it when they open their RSVP link.",
+        "action": "Upload invitation"
+      },
+      "collaborator": {
+        "title": "Add a co-organizer",
+        "description": "Invite a partner or family member to help manage RSVPs and guest details.",
+        "action": "Manage collaborators"
+      }
+    }
+  },
+  "schedules": {
+    "header": {
+      "title": "Schedules",
+      "description": "Manage your event schedule and timeline"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "activity": "Activity"
+    },
+    "status": {
+      "cardTitle": "Status",
+      "label": {
+        "sent": "Sent",
+        "pending": "Pending",
+        "cancelled": "Cancelled"
+      },
+      "description": {
+        "sent": "Messages have been sent to eligible guests.",
+        "pending": "Messages will be sent on the scheduled date.",
+        "cancelled": "This schedule has been cancelled."
+      }
+    },
+    "timing": {
+      "cardTitle": "Schedule Timing",
+      "save": "Save",
+      "saving": "Saving...",
+      "daysBeforeEvent": "Days before event",
+      "days": "days",
+      "daysHelper": "How far in advance to schedule this",
+      "scheduledDate": "Scheduled date",
+      "scheduledDateHelper": "Derived from the event date",
+      "toast": {
+        "updating": "Updating scheduled date...",
+        "updated": "Scheduled date updated.",
+        "failed": "Failed to update scheduled date.",
+        "error": "Something went wrong."
+      }
+    },
+    "audience": {
+      "cardTitle": "Target Audience",
+      "guestsWillReceive": "guests will receive this message",
+      "outOfTotal": "out of {total} total guests",
+      "allGuests": "All Guests",
+      "confirmedGuests": "Confirmed Guests",
+      "pendingGuests": "Pending Guests"
+    },
+    "messagePreview": {
+      "cardTitle": "Message Preview",
+      "cardDescription": "The message guests will receive for this schedule.",
+      "noMessage": "No message configured yet.",
+      "imagePlaceholder": "Image",
+      "button": "Button {index}",
+      "missingFields": {
+        "title": "Missing event details",
+        "description": "Some required fields aren't filled in yet. Complete them to see the full message preview.",
+        "link": "Event Details"
+      }
+    },
+    "sendDialog": {
+      "sendNow": "Send Now",
+      "sending": "Sending...",
+      "title": "Send Messages Now?",
+      "description": "Messages will be sent immediately via WhatsApp. This action cannot be undone.",
+      "whoWillReceive": "Who will receive this?",
+      "recipients": "Recipients",
+      "guestCount": "{count} guests",
+      "cancel": "Cancel",
+      "confirm": "Send Now \u2192",
+      "toast": {
+        "sending": "Sending messages...",
+        "failed": "Failed to send."
+      }
+    },
+    "emptyState": {
+      "title": "Insights are almost ready",
+      "description": "Once your first message is sent, you'll see real-time delivery stats, read rates, and RSVP conversions right here. Your schedule is currently set for {date}.",
+      "editSchedule": "Edit Schedule"
+    },
+    "noSchedules": "No schedules configured for this event.",
+    "actionTypes": {
+      "initial_invitation": "Initial Invitation",
+      "confirmation": "Confirmation",
+      "event_reminder": "Event Reminder",
+      "post_event": "Thank You"
+    },
+    "relativeTime": {
+      "justNow": "just now",
+      "past": "{time} ago",
+      "future": "in {time}"
+    },
+    "activity": {
+      "cardTitle": "Recent Delivery Activity",
+      "viewAllRecipients": "View All Recipients \u2192",
+      "searchPlaceholder": "Search by name or phone...",
+      "allStatuses": "All Statuses",
+      "statusCount": "{count} statuses",
+      "statuses": {
+        "confirmed": "Confirmed",
+        "declined": "Declined",
+        "read": "Read"
+      },
+      "table": {
+        "guestName": "Guest Name",
+        "status": "Status",
+        "sent": "Sent",
+        "read": "Read",
+        "responded": "Responded",
+        "rsvpDetails": "RSVP Details",
+        "noDetails": "No details",
+        "partyOf": "Party of {count}"
+      },
+      "showing": "Showing {showing} of {total} recipients",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "performance": {
+      "totalDeliveries": "Total Deliveries",
+      "success": "Success",
+      "failed": "Failed",
+      "read": "Read",
+      "confirmed": "Confirmed",
+      "declined": "Declined"
+    }
+  },
+  "newEvent": {
+    "back": "Back",
+    "stepOf": "Step {step} of 3",
+    "step1": {
+      "title": "Welcome to Kululu 🎉",
+      "description": "Tell us about the happy couple",
+      "brideLabel": "Bride's name",
+      "bridePlaceholder": "Enter bride's name",
+      "groomLabel": "Groom's name",
+      "groomPlaceholder": "Enter groom's name",
+      "featureTitle": "All-in-one Management",
+      "featureDescription": "Guests, schedules, invitations, and more — all in one place.",
+      "continue": "Continue",
+      "skip": "Skip for now"
+    },
+    "step2": {
+      "title": "When and where?",
+      "description": "Set your date and venue",
+      "dateLabel": "Wedding date",
+      "datePlaceholder": "Pick the wedding date",
+      "venueLabel": "Venue",
+      "venuePlaceholder": "Search for your venue...",
+      "venueHelper": "You can fill this in later",
+      "continue": "Continue",
+      "goBack": "Go Back"
+    },
+    "step3": {
+      "title": "How many guests?",
+      "description": "This helps us tailor your experience",
+      "create": "Create my event! 🎊",
+      "skip": "Skip for now",
+      "guestOptions": {
+        "up_to_100": "Up to 100",
+        "100_200": "100–200",
+        "200_350": "200–350",
+        "350_plus": "350+"
+      }
+    },
+    "toast": {
+      "creating": "Creating your event...",
+      "created": "Event created!",
+      "failed": "Failed to create event.",
+      "error": "Something went wrong."
+    },
+    "success": {
+      "title": "Your event is ready!",
+      "description": "Your wedding event has been created. Time to start planning the big day!",
+      "goToDashboard": "Go to Dashboard",
+      "viewDetails": "View event details"
+    }
+  },
+  "eventDetails": {
+    "notFound": "Event not found",
+    "header": {
+      "title": "Event Details",
+      "description": "View and manage your event information",
+      "discard": "Discard",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "dateTime": {
+      "title": "Date & Time",
+      "date": "Date",
+      "eventType": "Event Type",
+      "receptionTime": "Reception Time",
+      "ceremonyTime": "Ceremony Time",
+      "types": {
+        "wedding": "Wedding",
+        "birthday": "Birthday Party",
+        "corporate": "Corporate Event",
+        "other": "Other"
+      }
+    },
+    "couple": {
+      "title": "The Couple",
+      "coupleNames": "Couple Names",
+      "brideName": "Bride Name",
+      "groomName": "Groom Name",
+      "brideNamePlaceholder": "Enter bride's name",
+      "groomNamePlaceholder": "Enter groom's name",
+      "parentsNames": "Parents' Names",
+      "brideSide": "Bride's Side",
+      "groomSide": "Groom's Side",
+      "brideSidePlaceholder": "Enter bride's parents names",
+      "groomSidePlaceholder": "Enter groom's parents names"
+    },
+    "location": {
+      "title": "Location",
+      "label": "Location",
+      "placeholder": "Search for venue address..."
+    },
+    "invitation": {
+      "title": "Event Invitation",
+      "description": "This image will be sent to guests as the first message they receive when invited to your event.",
+      "dropImage": "Drop image here",
+      "clickToBrowse": "or click to browse",
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "removeImage": "Remove image",
+      "failedUpload": "Failed to upload image"
+    },
+    "guestExperience": {
+      "title": "Guest Experience",
+      "dietaryOptions": "Dietary Options",
+      "dietaryDescription": "Ask guests for meal requests"
+    },
+    "digitalGift": {
+      "title": "Digital Gift",
+      "payboxLabel": "PayBox Group Invite Link",
+      "payboxPlaceholder": "Paste your PayBox group invite link",
+      "payboxHelper": "How to: Open the PayBox app, create a new Group for your event, click Invite Friends, copy the link, and paste it here.",
+      "bitLabel": "Bit Phone Number",
+      "bitPlaceholder": "Enter phone number",
+      "bitHelper": "Enter the mobile phone number connected to your Bit account"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconCircleCheck, IconCircleX, IconTrash } from '@tabler/icons-react';
 import {
   Table,
@@ -35,19 +36,15 @@ export function ValidateStep({
   onExcludedRowsChange,
   existingPhones,
 }: ValidateStepProps) {
-  // Validate all rows
+  const t = useTranslations('guests');
+
   const validatedRows = useMemo(() => {
     if (!parsedData) return [];
-
     return validateCsvRows(parsedData.rows, columnMapping, existingPhones);
   }, [parsedData, columnMapping, existingPhones]);
 
-  // Filter out excluded rows for display
-  const displayRows = validatedRows.filter(
-    (row) => !excludedRows.has(row.rowIndex),
-  );
+  const displayRows = validatedRows.filter((row) => !excludedRows.has(row.rowIndex));
 
-  // Count stats
   const validCount = displayRows.filter((r) => r.isValid).length;
   const invalidCount = displayRows.filter((r) => !r.isValid).length;
   const totalCount = displayRows.length;
@@ -69,9 +66,9 @@ export function ValidateStep({
   return (
     <div className="space-y-4">
       <div className="text-sm">
-        <p className="font-medium">Validate your data</p>
+        <p className="font-medium">{t('import.validate.heading')}</p>
         <p className="text-muted-foreground">
-          Review the data below. Invalid rows can be removed before importing.
+          {t('import.validate.description')}
         </p>
       </div>
 
@@ -80,12 +77,12 @@ export function ValidateStep({
           <Table>
             <TableHeader className="bg-muted sticky top-0">
               <TableRow>
-                <TableHead className="w-[60px]">Status</TableHead>
-                <TableHead className="w-[60px]">Row</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead className="w-[80px]">Amount</TableHead>
-                <TableHead>Errors</TableHead>
+                <TableHead className="w-[60px]">{t('import.validate.colStatus')}</TableHead>
+                <TableHead className="w-[60px]">{t('import.validate.colRow')}</TableHead>
+                <TableHead>{t('import.validate.colName')}</TableHead>
+                <TableHead>{t('import.validate.colPhone')}</TableHead>
+                <TableHead className="w-[80px]">{t('import.validate.colAmount')}</TableHead>
+                <TableHead>{t('import.validate.colErrors')}</TableHead>
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -111,9 +108,7 @@ export function ValidateStep({
                   <TableCell className="max-w-[120px] truncate p-3">
                     {row.data.phone || '—'}
                   </TableCell>
-                  <TableCell className="p-3">
-                    {row.data.amount}
-                  </TableCell>
+                  <TableCell className="p-3">{row.data.amount}</TableCell>
                   <TableCell className="max-w-[150px] p-3">
                     {row.errors.length > 0 && (
                       <Tooltip>
@@ -150,7 +145,6 @@ export function ValidateStep({
           </Table>
         </div>
 
-        {/* Footer with stats */}
         <div
           className={`border-t px-4 py-3 text-sm ${
             invalidCount === 0
@@ -158,12 +152,9 @@ export function ValidateStep({
               : 'bg-muted/50 text-muted-foreground'
           }`}
         >
-          <span className="font-medium">{validCount}</span> valid,{' '}
-          <span className={invalidCount > 0 ? 'font-medium text-red-600' : ''}>
-            {invalidCount}
-          </span>{' '}
-          invalid out of <span className="font-medium">{totalCount}</span> rows
-          {invalidCount === 0 && ' ✓'}
+          {invalidCount === 0
+            ? t('import.validate.rowCountSuccess', { valid: validCount, invalid: invalidCount, total: totalCount })
+            : t('import.validate.rowCount', { valid: validCount, invalid: invalidCount, total: totalCount })}
         </div>
       </div>
     </div>

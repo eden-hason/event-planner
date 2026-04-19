@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useFeatureHeader } from '@/components/feature-layout';
 
 interface SchedulesHeaderProps {
@@ -7,10 +8,11 @@ interface SchedulesHeaderProps {
 }
 
 export function SchedulesHeader({ onAddSchedule }: SchedulesHeaderProps) {
+  const t = useTranslations('schedules.header');
 
   useFeatureHeader({
-    title: 'Schedules',
-    description: 'Manage your event schedule and timeline',
+    title: t('title'),
+    description: t('description'),
   });
 
   return null;

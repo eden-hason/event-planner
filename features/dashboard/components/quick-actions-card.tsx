@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cardHover, cn } from '@/lib/utils';
 import {
@@ -11,28 +12,30 @@ import {
 } from '@tabler/icons-react';
 
 export function QuickActionsCard({ eventId }: { eventId: string }) {
+  const t = useTranslations('dashboard.quickActions');
+
   const actions = [
     {
-      label: 'Add Guest',
-      description: 'Invite new guests',
+      label: t('addGuest'),
+      description: t('addGuestDesc'),
       icon: <IconUserPlus className="h-4 w-4" />,
       href: `/app/${eventId}/guests`,
     },
     {
-      label: 'Create Schedule',
-      description: 'Plan event timeline',
+      label: t('createSchedule'),
+      description: t('createScheduleDesc'),
       icon: <IconCalendarPlus className="h-4 w-4" />,
       href: `/app/${eventId}/schedules`,
     },
     {
-      label: 'View All Guests',
-      description: 'Manage guest list',
+      label: t('viewGuests'),
+      description: t('viewGuestsDesc'),
       icon: <IconUsers className="h-4 w-4" />,
       href: `/app/${eventId}/guests`,
     },
     {
-      label: 'Import CSV',
-      description: 'Bulk upload guests',
+      label: t('importCsv'),
+      description: t('importCsvDesc'),
       icon: <IconFileImport className="h-4 w-4" />,
       href: `/app/${eventId}/guests`,
     },
@@ -41,8 +44,8 @@ export function QuickActionsCard({ eventId }: { eventId: string }) {
   return (
     <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
-        <p className="text-xs text-muted-foreground">Common tasks</p>
+        <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t('description')}</p>
       </CardHeader>
       <CardContent className="flex-1 p-0">
         {actions.map(({ label, description, icon, href }, i) => (

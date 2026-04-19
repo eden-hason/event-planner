@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { IconSend } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,6 @@ import { cn } from '@/lib/utils';
 
 import { executeSchedule } from '../actions/execute-schedule';
 import { type ScheduleApp } from '../schemas';
-import { getAudienceLabel } from '../utils';
 
 interface SendConfirmDialogProps {
   scheduleId: string;
@@ -37,7 +37,15 @@ export function SendConfirmDialog({
   triggerClassName,
   triggerSize = 'default',
 }: SendConfirmDialogProps) {
+  const t = useTranslations('schedules');
   const [isSending, startSendTransition] = useTransition();
+
+  const audienceLabel =
+    targetStatus === 'confirmed'
+      ? t('audience.confirmedGuests')
+      : targetStatus === 'pending'
+        ? t('audience.pendingGuests')
+        : t('audience.allGuests');
 
   const handleSendNow = () => {
     startSendTransition(async () => {
@@ -47,9 +55,9 @@ export function SendConfirmDialog({
       });
 
       toast.promise(promise, {
-        loading: 'Sending messages...',
+        loading: t('sendDialog.toast.sending'),
         success: (data) => data.message,
-        error: (err) => (err instanceof Error ? err.message : 'Failed to send.'),
+        error: (err) => (err instanceof Error ? err.message : t('sendDialog.toast.failed')),
       });
 
       await promise.catch(() => {});
@@ -65,36 +73,36 @@ export function SendConfirmDialog({
           className={cn('gap-2', triggerClassName)}
         >
           <IconSend size={triggerSize === 'sm' ? 14 : 16} />
-          {isSending ? 'Sending...' : 'Send Now'}
+          {isSending ? t('sendDialog.sending') : t('sendDialog.sendNow')}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <IconSend size={18} />
-            Send Messages Now?
+            {t('sendDialog.title')}
           </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogDescription>
-          Messages will be sent immediately via WhatsApp. This action cannot be undone.
+          {t('sendDialog.description')}
         </AlertDialogDescription>
         <div className="rounded-lg border bg-muted/40 p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Who will receive this?</span>
+            <span className="text-muted-foreground">{t('sendDialog.whoWillReceive')}</span>
             <span className="bg-background rounded-md border px-2 py-0.5 text-xs font-medium">
-              {getAudienceLabel(targetStatus)}
+              {audienceLabel}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Recipients</span>
+            <span className="text-muted-foreground">{t('sendDialog.recipients')}</span>
             <span className="bg-background rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums">
-              {guestCount} guests
+              {t('sendDialog.guestCount', { count: guestCount })}
             </span>
           </div>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleSendNow}>Send Now →</AlertDialogAction>
+          <AlertDialogCancel>{t('sendDialog.cancel')}</AlertDialogCancel>
+          <AlertDialogAction onClick={handleSendNow}>{t('sendDialog.confirm')}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

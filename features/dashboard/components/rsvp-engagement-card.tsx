@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,31 +14,31 @@ import { cardHover } from '@/lib/utils';
 import { computeGroupRsvpData } from '../utils/rsvp-engagement';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
 
-const chartConfig = {
-  confirmed: { label: 'Confirmed', color: '#10b981' },
-  pending: { label: 'Pending', color: '#f59e0b' },
-  declined: { label: 'Declined', color: '#ef4444' },
-} satisfies ChartConfig;
-
 const BAR_WIDTH = 80;
 const MIN_CHART_WIDTH = 400;
 
 export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] }) {
+  const t = useTranslations('dashboard.rsvpEngagement');
   const data = useMemo(() => computeGroupRsvpData(groups), [groups]);
-
   const chartWidth = Math.max(groups.length * BAR_WIDTH, MIN_CHART_WIDTH);
+
+  const chartConfig = useMemo(() => ({
+    confirmed: { label: t('confirmed'), color: '#10b981' },
+    pending: { label: t('pending'), color: '#f59e0b' },
+    declined: { label: t('declined'), color: '#ef4444' },
+  }) satisfies ChartConfig, [t]);
 
   if (groups.length === 0) {
     return (
       <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
         <CardHeader className="pb-3">
           <div>
-            <CardTitle className="text-sm font-semibold">RSVP by Group</CardTitle>
-            <p className="text-muted-foreground mt-0.5 text-xs">Guest responses per group</p>
+            <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+            <p className="text-muted-foreground mt-0.5 text-xs">{t('description')}</p>
           </div>
         </CardHeader>
         <CardContent className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground text-sm">No groups yet</p>
+          <p className="text-muted-foreground text-sm">{t('noGroups')}</p>
         </CardContent>
       </Card>
     );
@@ -47,8 +48,8 @@ export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] })
     <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
       <CardHeader className="pb-3">
         <div>
-          <CardTitle className="text-sm font-semibold">RSVP by Group</CardTitle>
-          <p className="text-muted-foreground mt-0.5 text-xs">Guest responses per group</p>
+          <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+          <p className="text-muted-foreground mt-0.5 text-xs">{t('description')}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pb-4">

@@ -9,13 +9,14 @@ import {
   IconMail,
   IconUserCheck,
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
-import { ACTION_TYPE_LABELS, type ActionType } from '../schemas';
+import { type ActionType } from '../schemas';
 
 const ACTION_TYPE_ICONS: Record<ActionType, React.ComponentType<{ size?: number | string; className?: string }>> = {
   initial_invitation: IconMail,
@@ -39,6 +40,7 @@ export function SchedulesLayout({
   visibleTypes,
   contentByType,
 }: SchedulesLayoutProps) {
+  const t = useTranslations('schedules');
   const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('details');
@@ -63,8 +65,8 @@ export function SchedulesLayout({
 
   useEffect(() => {
     setHeader({
-      title: 'Schedules',
-      description: 'Manage your event schedule and timeline',
+      title: t('header.title'),
+      description: t('header.description'),
       action:
         isPending && activeItem?.scheduleId ? (
           <SendConfirmDialog
@@ -138,7 +140,7 @@ export function SchedulesLayout({
               <div className="flex flex-1 items-start gap-2">
                 <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex flex-1 flex-col items-start gap-0.5">
-                  <span>{ACTION_TYPE_LABELS[type]}</span>
+                  <span>{t(`actionTypes.${type}`)}</span>
                   {typeItems[0] && <StatusRow item={typeItems[0]} />}
                 </div>
               </div>
@@ -150,19 +152,19 @@ export function SchedulesLayout({
       {/* Right content */}
       <div className="min-w-0 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+          <TabsList dir="rtl" className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               id="schedule-details-tab-trigger"
               value="details"
               className={tabTriggerClassName}
             >
               <IconFileDescription size={16} />
-              Overview
+              {t('tabs.overview')}
             </TabsTrigger>
             {hasDeliveryTab && (
               <TabsTrigger value="delivery" className={tabTriggerClassName}>
                 <IconChartBar size={16} />
-                Activity
+                {t('tabs.activity')}
               </TabsTrigger>
             )}
           </TabsList>
@@ -177,8 +179,16 @@ export function SchedulesLayout({
 }
 
 function StatusRow({ item }: { item: ScheduleTabItem }) {
+  const t = useTranslations('schedules');
   const isSent = item.scheduleStatus === 'sent';
   const dateStr = isSent ? item.sentAt : item.scheduledDate;
+
+  function formatTime(str: string): string {
+    const result = formatRelativeTime(str);
+    if (result.type === 'justNow') return t('relativeTime.justNow');
+    if (result.type === 'past') return t('relativeTime.past', { time: result.time });
+    return t('relativeTime.future', { time: result.time });
+  }
 
   return (
     <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -188,11 +198,11 @@ function StatusRow({ item }: { item: ScheduleTabItem }) {
           isSent ? 'bg-green-500' : 'bg-amber-500',
         )}
       />
-      {isSent ? 'Sent' : 'Pending'}
+      {isSent ? t('status.label.sent') : t('status.label.pending')}
       {dateStr && (
         <>
           <span>·</span>
-          {formatRelativeTime(dateStr)}
+          {formatTime(dateStr)}
         </>
       )}
     </span>
