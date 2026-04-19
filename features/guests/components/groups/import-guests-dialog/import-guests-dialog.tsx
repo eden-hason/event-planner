@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -45,6 +45,7 @@ export function ImportGuestsDialog({
   existingPhones,
 }: ImportGuestsDialogProps) {
   const t = useTranslations('guests');
+  const locale = useLocale();
 
   const STEPS: { value: StepKey; title: string }[] = [
     { value: 'upload', title: t('import.stepUpload') },
@@ -142,6 +143,7 @@ export function ImportGuestsDialog({
           onValueChange={(value) => setCurrentStep(value as StepKey)}
           className="w-full"
           nonInteractive
+          dir={locale === 'he' ? 'rtl' : 'ltr'}
         >
           <StepperList className="justify-center gap-8 rounded-lg bg-muted/50 px-6 py-4">
             {STEPS.map((step) => (
