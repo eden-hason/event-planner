@@ -138,6 +138,7 @@ export function GuestDirectory({
             onSelectGuest={handleSelectGuest}
             onDeleteGuest={handleDeleteGuest}
             onAddGuest={handleAddGuestClick}
+            onUploadFile={() => setImportDialogOpen(true)}
             pageSize={pageSize}
             showDietary={showDietary}
           />
