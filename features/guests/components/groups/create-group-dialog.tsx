@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,6 @@ import {
   GroupUpsertSchema,
   GROUP_ICONS,
   GROUP_SIDES,
-  GROUP_SIDE_LABELS,
   type GroupUpsert,
 } from '@/features/guests/schemas';
 import {
@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/select';
 import * as TablerIcons from '@tabler/icons-react';
 
-// Legacy icon map for group icons stored as 'LucideBeer' in the database
 const LegacyIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   LucideBeer: TablerIcons.IconBeer,
 };
@@ -55,6 +54,9 @@ export function CreateGroupDialog({
   onOpenChange,
   onCreateGroup,
 }: CreateGroupDialogProps) {
+  const t = useTranslations('guests');
+  const tCommon = useTranslations('common');
+
   const form = useForm<GroupUpsert>({
     resolver: zodResolver(GroupUpsertSchema),
     defaultValues: {
@@ -73,11 +75,8 @@ export function CreateGroupDialog({
       }
     });
 
-    // Close dialog and reset form immediately
     onOpenChange(false);
     form.reset();
-
-    // Invoke the parent's create handler
     onCreateGroup(formData);
   };
 
@@ -92,9 +91,9 @@ export function CreateGroupDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
+          <DialogTitle>{t('groups.dialog.title')}</DialogTitle>
           <DialogDescription>
-            Add a new group to organize your guests
+            {t('groups.dialog.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,10 +104,10 @@ export function CreateGroupDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group Name</FormLabel>
+                  <FormLabel>{t('groups.dialog.nameLabel')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., Family, Friends, Colleagues"
+                      placeholder={t('groups.dialog.namePlaceholder')}
                       autoFocus
                       {...field}
                     />
@@ -123,20 +122,20 @@ export function CreateGroupDialog({
               name="side"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Side (optional)</FormLabel>
+                  <FormLabel>{t('groups.dialog.sideLabel')}</FormLabel>
                   <Select
                     value={field.value || undefined}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a side" />
+                        <SelectValue placeholder={t('groups.dialog.sidePlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {GROUP_SIDES.map((side) => (
                         <SelectItem key={side} value={side}>
-                          {GROUP_SIDE_LABELS[side]}
+                          {t(`sides.${side}` as 'sides.bride' | 'sides.groom')}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -151,10 +150,10 @@ export function CreateGroupDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel>{t('groups.dialog.descriptionLabel')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Add a brief description for this group..."
+                      placeholder={t('groups.dialog.descriptionPlaceholder')}
                       className="min-h-[80px] resize-none"
                       {...field}
                       value={field.value || ''}
@@ -170,28 +169,22 @@ export function CreateGroupDialog({
               name="icon"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Icon</FormLabel>
+                  <FormLabel>{t('groups.dialog.iconLabel')}</FormLabel>
                   <FormControl>
                     <div className="grid grid-cols-6 gap-2">
                       {GROUP_ICONS.map((iconName) => {
-                        // Check if it's a Lucide icon (prefixed with 'Lucide')
                         const isLucideIcon = iconName.startsWith('Lucide');
                         const isSelected = field.value === iconName;
 
-                        // Get the appropriate icon component
                         const renderIcon = () => {
                           if (isLucideIcon) {
                             const LegacyIcon = LegacyIcons[iconName];
-                            return LegacyIcon ? (
-                              <LegacyIcon className="h-6 w-6" />
-                            ) : null;
+                            return LegacyIcon ? <LegacyIcon className="h-6 w-6" /> : null;
                           }
                           const TablerIcon = TablerIcons[
                             iconName as keyof typeof TablerIcons
                           ] as React.ComponentType<{ className?: string }>;
-                          return TablerIcon ? (
-                            <TablerIcon className="h-6 w-6" />
-                          ) : null;
+                          return TablerIcon ? <TablerIcon className="h-6 w-6" /> : null;
                         };
 
                         const iconElement = renderIcon();
@@ -227,9 +220,9 @@ export function CreateGroupDialog({
                 variant="outline"
                 onClick={() => handleClose(false)}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
-              <Button type="submit">Create Group</Button>
+              <Button type="submit">{t('groups.dialog.create')}</Button>
             </DialogFooter>
           </form>
         </Form>

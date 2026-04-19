@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cardHover } from '@/lib/utils';
@@ -13,12 +14,13 @@ import {
 import { EventDetailsUpdate } from '../../schemas';
 
 export function GuestExperienceCard() {
+  const t = useTranslations('eventDetails.guestExperience');
   const form = useFormContext<EventDetailsUpdate>();
 
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Guest Experience</CardTitle>
+        <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-row items-center justify-between space-y-0">
@@ -28,9 +30,9 @@ export function GuestExperienceCard() {
             render={({ field }) => (
               <FormItem className="flex w-full flex-row items-center justify-between">
                 <div className="space-y-0.5">
-                  <FormLabel>Dietary Options</FormLabel>
+                  <FormLabel>{t('dietaryOptions')}</FormLabel>
                   <p className="text-muted-foreground text-sm">
-                    Ask guests for meal requests
+                    {t('dietaryDescription')}
                   </p>
                 </div>
                 <FormControl>

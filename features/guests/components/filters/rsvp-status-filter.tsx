@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -8,10 +9,10 @@ import {
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 
-const RSVP_STATUSES = [
-  { value: 'confirmed', label: 'Confirmed', className: 'text-green-700' },
-  { value: 'pending', label: 'Pending', className: 'text-yellow-700' },
-  { value: 'declined', label: 'Declined', className: 'text-red-700' },
+const RSVP_STATUS_VALUES = [
+  { value: 'confirmed', className: 'text-green-700' },
+  { value: 'pending', className: 'text-yellow-700' },
+  { value: 'declined', className: 'text-red-700' },
 ] as const;
 
 interface RsvpStatusFilterProps {
@@ -23,13 +24,20 @@ export function RsvpStatusFilter({
   selectedStatuses,
   onStatusToggle,
 }: RsvpStatusFilterProps) {
+  const t = useTranslations('guests');
+
+  const statuses = RSVP_STATUS_VALUES.map((s) => ({
+    ...s,
+    label: t(`rsvp.${s.value}` as 'rsvp.confirmed' | 'rsvp.pending' | 'rsvp.declined'),
+  }));
+
   const label =
     selectedStatuses.length === 0
-      ? 'Filter by status'
+      ? t('filters.filterByStatus')
       : selectedStatuses.length === 1
-        ? RSVP_STATUSES.find((s) => s.value === selectedStatuses[0])?.label ??
+        ? statuses.find((s) => s.value === selectedStatuses[0])?.label ??
           selectedStatuses[0]
-        : `${selectedStatuses.length} statuses`;
+        : `${selectedStatuses.length} ${t('filters.filterByStatus').toLowerCase()}`;
 
   return (
     <Popover>
@@ -41,7 +49,7 @@ export function RsvpStatusFilter({
       </PopoverTrigger>
       <PopoverContent className="w-[180px] p-0" align="start">
         <div className="p-2">
-          {RSVP_STATUSES.map((status) => {
+          {statuses.map((status) => {
             const isSelected = selectedStatuses.includes(status.value);
             return (
               <div

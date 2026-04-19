@@ -98,7 +98,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
                 </div>
                 <div className="text-muted-foreground flex items-center justify-between text-xs">
                   {secondaryText && <span>{secondaryText}</span>}
-                  <span className="ml-auto">{pct}%</span>
+                  <span>{pct}%</span>
                 </div>
               </div>
             )}

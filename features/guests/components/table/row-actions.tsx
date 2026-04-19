@@ -13,28 +13,26 @@ import { GuestWithGroupApp } from '@/features/guests/schemas';
 interface RowActionsProps {
   guest: GuestWithGroupApp;
   onDelete: (guest: GuestWithGroupApp) => void;
+  t: (key: string) => string;
 }
 
-export function RowActions({ guest, onDelete }: RowActionsProps) {
+export function RowActions({ guest, onDelete, t }: RowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           className="h-8 w-8 p-0"
-          onClick={(e) => {
-            // Prevent row click when clicking the menu button
-            e.stopPropagation();
-          }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">{t('table.openMenu')}</span>
           <IconDots size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
         <DropdownMenuItem variant="destructive" onClick={() => onDelete(guest)}>
           <IconTrash size={16} className="mr-2" />
-          Delete guest
+          {t('table.deleteGuest')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

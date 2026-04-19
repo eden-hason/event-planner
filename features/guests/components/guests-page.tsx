@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { useTranslations, useLocale } from 'next-intl';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import { GuestStats } from './guest-stats';
@@ -63,6 +64,10 @@ export function GuestsPage({
   showDietary = false,
   currentUserId = null,
 }: GuestsPageProps) {
+  const t = useTranslations('guests');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
@@ -87,7 +92,6 @@ export function GuestsPage({
     );
   };
 
-  // Create group action with toast
   const createGroupActionWithToast = async (
     _prevState: UpsertGroupState | null,
     params: { formData: FormData },
@@ -96,21 +100,16 @@ export function GuestsPage({
 
     const promise = upsertGroup(eventId, params.formData).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to create group.');
+        throw new Error(result.message || t('toast.groupCreateFailed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Creating ${groupName}...`,
-      success: (data) => {
-        return data.message || 'Group created successfully.';
-      },
-      error: (err) => {
-        return err instanceof Error
-          ? err.message
-          : 'Failed to create group. Please try again.';
-      },
+      loading: t('toast.creatingGroup', { name: groupName }),
+      success: (data) => data.message || t('toast.groupCreated'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('toast.groupCreateFailed'),
     });
 
     try {
@@ -154,20 +153,20 @@ export function GuestsPage({
     const guestName = selectedGuest.name;
     const guestId = selectedGuest.id;
 
-    handleDrawerClose(false); // Close the sheet optimistically
+    handleDrawerClose(false);
 
     const promise = deleteGuest(guestId).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to delete guest.');
+        throw new Error(result.message || t('toast.guestDeleteFailed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Deleting ${guestName}...`,
-      success: (data) => data.message || 'Guest deleted successfully.',
+      loading: t('toast.deletingGuest', { name: guestName }),
+      success: (data) => data.message || t('toast.guestDeleted'),
       error: (err) =>
-        err instanceof Error ? err.message : 'Failed to delete guest.',
+        err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
     });
   };
 
@@ -175,7 +174,7 @@ export function GuestsPage({
     () => (
       <Button onClick={handleAddGuest}>
         <IconUserPlus size={16} />
-        Add Guest
+        {t('addGuest')}
       </Button>
     ),
     [handleAddGuest],
@@ -185,23 +184,23 @@ export function GuestsPage({
     () => (
       <Button onClick={handleOpenGroupDialog}>
         <IconPlus size={16} />
-        Add Group
+        {t('addGroup')}
       </Button>
     ),
     [],
   );
 
   const { setHeader } = useFeatureHeader({
-    title: 'Guests',
-    description: 'Manage your event guests',
+    title: t('title'),
+    description: t('description'),
     action: guestsHeaderAction,
   });
 
   const handleTabsChange = useCallback(
     (value: string) => {
       setHeader({
-        title: 'Guests',
-        description: 'Manage your event guests',
+        title: t('title'),
+        description: t('description'),
         action: value === 'guests' ? guestsHeaderAction : groupHeaderAction,
       });
     },
@@ -218,21 +217,21 @@ export function GuestsPage({
         selectedStatuses={selectedStatuses}
         onStatClick={handleStatCardClick}
       />
-      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6" dir="rtl">
+      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6" dir={locale === 'he' ? 'rtl' : 'ltr'}>
         <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="guests"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <IconUsers size={16} />
-            Guests
+            {t('tabGuests')}
           </TabsTrigger>
           <TabsTrigger
             value="groups"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <IconUsersGroup size={16} />
-            Groups
+            {t('tabGroups')}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="guests">
@@ -257,14 +256,12 @@ export function GuestsPage({
         </TabsContent>
       </Tabs>
 
-      {/* Create group dialog */}
       <CreateGroupDialog
         open={isGroupDialogOpen}
         onOpenChange={setIsGroupDialogOpen}
         onCreateGroup={handleCreateGroup}
       />
 
-      {/* Guest form sheet */}
       <Sheet open={isDrawerOpen} onOpenChange={handleDrawerClose}>
         <SheetContent
           className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[520px]"
@@ -274,10 +271,10 @@ export function GuestsPage({
         >
           <SheetHeader className="border-b px-6 py-5">
             <SheetDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {selectedGuest ? 'Edit Guest' : 'Add New Guest'}
+              {selectedGuest ? t('sheet.editGuest') : t('sheet.addNewGuest')}
             </SheetDescription>
             <SheetTitle className="text-xl">
-              {selectedGuest ? selectedGuest.name : 'New Guest'}
+              {selectedGuest ? selectedGuest.name : t('sheet.newGuest')}
             </SheetTitle>
             {selectedGuest ? (
               <span
@@ -286,52 +283,49 @@ export function GuestsPage({
                 <span
                   className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
                 />
-                {rsvpStatus.charAt(0).toUpperCase() + rsvpStatus.slice(1)}
+                {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
               </span>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Fill out the form below to add a new guest.
+                {t('sheet.addGuestHint')}
               </p>
             )}
           </SheetHeader>
 
-          {/* Guest details — edit mode only */}
           {selectedGuest && (
             <div className="border-b px-6 py-4 space-y-3">
-              {/* Last edited */}
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <IconClock size={12} />
-                Last edited{' '}
+                {t('sheet.lastEdited')}{' '}
                 {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
                   addSuffix: true,
                 })}
               </p>
 
-              {/* Detail list */}
               <div className="space-y-2">
                 <div className="flex items-center gap-3 text-sm">
                   <IconUsers size={14} className="shrink-0 text-muted-foreground" />
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">People</span>
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.people')}</span>
                   <span className="text-foreground">
                     {selectedGuest.amount}{' '}
-                    {selectedGuest.amount === 1 ? 'person' : 'people'}
+                    {selectedGuest.amount === 1 ? t('form.person') : t('form.people')}
                   </span>
                 </div>
                 {guestGroup && (
                   <div className="flex items-center gap-3 text-sm">
                     <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0 text-muted-foreground" />
-                    <span className="w-20 shrink-0 text-xs text-muted-foreground">Group</span>
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.group')}</span>
                     <span className="text-foreground">{guestGroup.name}</span>
                   </div>
                 )}
                 {selectedGuest.rsvpChangedAt && (
                   <div className="flex items-center gap-3 text-sm">
                     <IconClock size={14} className="shrink-0 text-muted-foreground" />
-                    <span className="w-20 shrink-0 text-xs text-muted-foreground">Updated</span>
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.updated')}</span>
                     <span className="text-foreground">
                       {selectedGuest.rsvpChangeSource === 'guest'
-                        ? `via guest · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
-                        : `via ${selectedGuest.rsvpChangedBy === currentUserId ? 'you' : (selectedGuest.rsvpChangedByName ?? 'organizer')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
+                        ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
+                        : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
                       }
                     </span>
                   </div>
@@ -363,16 +357,16 @@ export function GuestsPage({
                   onClick={handleDeleteGuest}
                 >
                   <IconTrash size={16} />
-                  Delete Guest
+                  {t('sheet.deleteGuest')}
                 </Button>
               )}
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => handleDrawerClose(false)}>
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" form="guest-form" disabled={isSubmitting}>
-                {selectedGuest ? 'Update Guest' : 'Add Guest'}
+                {selectedGuest ? t('sheet.updateGuest') : t('addGuest')}
               </Button>
             </div>
           </SheetFooter>

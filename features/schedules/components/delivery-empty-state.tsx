@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { IconCalendarClock, IconChartDots3 } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,8 @@ interface DeliveryEmptyStateProps {
 }
 
 export function DeliveryEmptyState({ scheduleId, scheduledDate, guestCount, targetStatus }: DeliveryEmptyStateProps) {
-  const formattedDate = new Date(scheduledDate).toLocaleDateString('en-US', {
+  const t = useTranslations('schedules.emptyState');
+  const formattedDate = new Date(scheduledDate).toLocaleDateString(undefined, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -38,12 +40,10 @@ export function DeliveryEmptyState({ scheduleId, scheduledDate, guestCount, targ
         </div>
       </div>
 
-      <h3 className="mb-3 text-2xl font-bold text-slate-900">Insights are almost ready</h3>
+      <h3 className="mb-3 text-2xl font-bold text-slate-900">{t('title')}</h3>
 
       <p className="max-w-md leading-relaxed text-slate-500">
-        Once your first message is sent, you&apos;ll see real-time delivery stats, read rates, and
-        RSVP conversions right here. Your schedule is currently set for{' '}
-        <span className="font-semibold text-slate-700">{formattedDate}</span>.
+        {t('description', { date: formattedDate })}
       </p>
 
       <div className="mt-10 flex gap-3">
@@ -59,7 +59,7 @@ export function DeliveryEmptyState({ scheduleId, scheduledDate, guestCount, targ
           className="gap-2 transition-all hover:-translate-y-0.5"
         >
           <IconCalendarClock size={16} />
-          Edit Schedule
+          {t('editSchedule')}
         </Button>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { IconCalendarClock, IconCalendarEvent } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ export function ScheduleDetailsCard({
   schedule,
   eventDate,
 }: ScheduleDetailsCardProps) {
+  const t = useTranslations('schedules.timing');
   const [isSaving, startSaveTransition] = useTransition();
 
   const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
@@ -94,9 +96,9 @@ export function ScheduleDetailsCard({
       });
 
       toast.promise(promise, {
-        loading: 'Updating scheduled date...',
-        success: (data) => data.message ?? 'Scheduled date updated.',
-        error: (err) => (err instanceof Error ? err.message : 'Something went wrong.'),
+        loading: t('toast.updating'),
+        success: (data) => data.message ?? t('toast.updated'),
+        error: (err) => (err instanceof Error ? err.message : t('toast.error')),
       });
 
       try {
@@ -117,11 +119,11 @@ export function ScheduleDetailsCard({
           <div className="rounded-md bg-primary/10 p-1.5">
             <IconCalendarClock size={16} className="text-primary" />
           </div>
-          Schedule Timing
+          {t('cardTitle')}
         </CardTitle>
         <CardAction className={isDirty ? undefined : 'invisible'}>
           <Button onClick={handleSave} disabled={isSaving || !isDirty} size="sm">
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? t('saving') : t('save')}
           </Button>
         </CardAction>
       </CardHeader>
@@ -129,7 +131,7 @@ export function ScheduleDetailsCard({
         <div className="grid grid-cols-2 gap-6">
           <div>
             <Label className="text-xs text-muted-foreground tracking-wide">
-              Days before event
+              {t('daysBeforeEvent')}
             </Label>
             <div className="relative mt-1">
               <Input
@@ -140,21 +142,21 @@ export function ScheduleDetailsCard({
                 disabled={isSaving}
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                days
+                {t('days')}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">How far in advance to schedule this</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('daysHelper')}</p>
           </div>
 
           <div>
             <Label className="text-xs text-muted-foreground tracking-wide">
-              Scheduled date
+              {t('scheduledDate')}
             </Label>
             <div className="flex items-center gap-2 mt-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
               <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
               <span>{resolvedDateDisplay}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Derived from the event date</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('scheduledDateHelper')}</p>
           </div>
         </div>
       </CardContent>

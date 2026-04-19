@@ -8,6 +8,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useFormContext } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -36,6 +37,7 @@ export function EventInvitationCard({
   eventId,
   imageUrl: existingUrl,
 }: EventInvitationCardProps) {
+  const t = useTranslations('eventDetails.invitation');
   const form = useFormContext<EventDetailsUpdate>();
   const [files, setFiles] = React.useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = React.useState<string | undefined>(
@@ -96,7 +98,7 @@ export function EventInvitationCard({
           });
         }
       } catch {
-        setUploadError('Failed to upload image');
+        setUploadError(t('failedUpload'));
         setFiles([]);
         setPreviewUrl(existingUrl);
       } finally {
@@ -119,11 +121,8 @@ export function EventInvitationCard({
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Event Invitation</CardTitle>
-        <CardDescription>
-          This image will be sent to guests as the first message they receive
-          when invited to your event.
-        </CardDescription>
+        <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <FileUpload
@@ -141,7 +140,7 @@ export function EventInvitationCard({
                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/50">
                   <div className="flex flex-col items-center gap-2 text-white">
                     <IconLoader2 size={32} className="animate-spin" />
-                    <span className="text-sm">Uploading...</span>
+                    <span className="text-sm">{t('uploading')}</span>
                   </div>
                 </div>
               )}
@@ -161,7 +160,7 @@ export function EventInvitationCard({
                       disabled={isUploading}
                     >
                       <IconX size={16} />
-                      <span className="sr-only">Remove image</span>
+                      <span className="sr-only">{t('removeImage')}</span>
                     </Button>
                   </FileUploadItemDelete>
                 </FileUploadItem>
@@ -182,7 +181,7 @@ export function EventInvitationCard({
                     disabled={isUploading}
                   >
                     <IconX size={16} />
-                    <span className="sr-only">Remove image</span>
+                    <span className="sr-only">{t('removeImage')}</span>
                   </Button>
                 </>
               )}
@@ -204,9 +203,9 @@ export function EventInvitationCard({
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-slate-600">
-                    Drop image here
+                    {t('dropImage')}
                   </p>
-                  <p className="text-xs text-slate-400">or click to browse</p>
+                  <p className="text-xs text-slate-400">{t('clickToBrowse')}</p>
                 </div>
                 <Button
                   type="button"
@@ -215,7 +214,7 @@ export function EventInvitationCard({
                   className="mt-1 gap-1.5"
                 >
                   <IconUpload size={14} />
-                  Upload
+                  {t('upload')}
                 </Button>
               </div>
             </FileUploadDropzone>

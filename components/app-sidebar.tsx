@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
   IconTemplate,
@@ -31,8 +32,7 @@ import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
 import { Badge } from '@/components/ui/badge';
 
-// Sidebar nav items that seating managers can see
-const SEATING_MANAGER_ALLOWED = ['Dashboard', 'Guests', 'Settings'];
+const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'settings'];
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -68,48 +68,62 @@ export function AppSidebar({
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
   const { isOwner } = useCollaboration();
+  const tNav = useTranslations('navigation');
+  const locale = useLocale();
+  const isRTL = locale === 'he';
+
   const navMainBase = [
     {
-      title: 'Dashboard',
+      id: 'dashboard',
+      title: tNav('dashboard'),
       url: '/app/dashboard',
       icon: IconDashboard,
     },
     {
-      title: 'Event Details',
+      id: 'eventDetails',
+      title: tNav('eventDetails'),
       url: '/app/details',
       icon: IconAlertSquareRounded,
     },
     {
-      title: 'Guests',
+      id: 'guests',
+      title: tNav('guests'),
       url: '/app/guests',
       icon: IconUsers,
     },
     {
-      title: 'Templates',
-      url: '/app/templates',
-      icon: IconTemplate,
-    },
-    {
-      title: 'Schedules',
+      id: 'schedules',
+      title: tNav('schedules'),
       url: '/app/schedules',
       icon: IconCalendar,
     },
     {
-      title: 'Expenses',
-      url: '/app/expenses',
-      icon: IconCoins,
+      id: 'templates',
+      title: tNav('templates'),
+      url: '/app/templates',
+      icon: IconTemplate,
+      comingSoon: true,
     },
     {
-      title: 'Gifts',
+      id: 'expenses',
+      title: tNav('expenses'),
+      url: '/app/expenses',
+      icon: IconCoins,
+      comingSoon: true,
+    },
+    {
+      id: 'gifts',
+      title: tNav('gifts'),
       url: '/app/gifts',
       icon: IconGift,
+      comingSoon: true,
     },
   ];
 
   const filteredNavMain = isOwner
     ? navMainBase
     : navMainBase.filter((item) =>
-        SEATING_MANAGER_ALLOWED.includes(item.title),
+        SEATING_MANAGER_ALLOWED.includes(item.id),
       );
 
   const navMain = filteredNavMain.map((item) => ({
@@ -119,19 +133,19 @@ export function AppSidebar({
 
   const navSecondary = [
     {
-      title: 'Settings',
+      title: tNav('settings'),
       url: buildNavUrl('/app/settings', eventId),
       icon: IconSettings,
     },
     {
-      title: 'Get Help',
+      title: tNav('getHelp'),
       url: '#',
       icon: IconHelp,
     },
   ];
 
   return (
-    <Sidebar side="right" collapsible="offcanvas" {...props}>
+    <Sidebar side={isRTL ? 'right' : 'left'} collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -139,7 +153,7 @@ export function AppSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
                 <PartyPopper className="!size-5" />
                 <span className="text-base font-semibold">Kululu</span>
                 <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">

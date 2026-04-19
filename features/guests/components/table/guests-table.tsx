@@ -1,6 +1,7 @@
 'use client';
 
 import { flexRender } from '@tanstack/react-table';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Table,
   TableBody,
@@ -33,7 +34,7 @@ import { useGuestsTable } from '@/features/guests/hooks';
 interface GuestsTableProps {
   guests: GuestWithGroupApp[];
   searchTerm: string;
-  groupFilter: string[]; // Array of group IDs
+  groupFilter: string[];
   statusFilter: string[];
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
@@ -55,6 +56,9 @@ export function GuestsTable({
   pageSize,
   showDietary = false,
 }: GuestsTableProps) {
+  const t = useTranslations('guests');
+  const isRTL = useLocale() === 'he';
+
   const table = useGuestsTable({
     guests,
     searchTerm,
@@ -69,19 +73,16 @@ export function GuestsTable({
     onSelectGuest(guest.id);
   };
 
-  // Use paginated rows for display, filtered rows for count
   const paginatedRows = table.getRowModel().rows;
   const totalFilteredRows = table.getFilteredRowModel().rows.length;
   const hasFilters = searchTerm || groupFilter.length > 0 || statusFilter.length > 0;
   const isEmpty = guests.length === 0;
 
-  // Pagination info
   const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
   const pageCount = table.getPageCount();
   const startRow = pageIndex * currentPageSize + 1;
   const endRow = Math.min((pageIndex + 1) * currentPageSize, totalFilteredRows);
 
-  // Show empty state only when there are no guests and no filters applied
   if (isEmpty && !hasFilters) {
     return (
       <div>
@@ -90,20 +91,20 @@ export function GuestsTable({
             <EmptyMedia variant="icon">
               <IconUsers className="text-muted-foreground size-6" />
             </EmptyMedia>
-            <EmptyTitle>No Guests Yet</EmptyTitle>
+            <EmptyTitle>{t('table.emptyTitle')}</EmptyTitle>
             <EmptyDescription>
-              Get started by uploading a guest list or adding guests manually.
+              {t('table.emptyDescription')}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <div className="flex gap-2">
               <Button onClick={onUploadFile}>
                 <IconUpload size={16} />
-                Upload File
+                {t('table.uploadFile')}
               </Button>
               <Button variant="outline" onClick={onAddGuest}>
                 <IconPlus size={16} />
-                Add Guest
+                {t('table.addGuest')}
               </Button>
             </div>
           </EmptyContent>
@@ -119,18 +120,16 @@ export function GuestsTable({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -143,8 +142,8 @@ export function GuestsTable({
                 >
                   <div className="p-8 text-center text-gray-500">
                     {searchTerm
-                      ? 'No guests found matching your search.'
-                      : 'No guests found.'}
+                      ? t('table.noGuestsSearch')
+                      : t('table.noGuestsFound')}
                   </div>
                 </TableCell>
               </TableRow>
@@ -156,7 +155,6 @@ export function GuestsTable({
                   onClick={() => handleRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {
-                    // Special handling for name column to match original styling
                     const isNameColumn = cell.column.id === 'name';
                     return (
                       <TableCell
@@ -179,11 +177,10 @@ export function GuestsTable({
         </Table>
       </div>
 
-      {/* Pagination Controls */}
       {totalFilteredRows > 0 && (
         <div className="flex items-center justify-between px-2">
           <p className="text-muted-foreground text-sm">
-            Showing {startRow}-{endRow} of {totalFilteredRows} guests
+            {t('table.showing', { start: startRow, end: endRow, total: totalFilteredRows })}
           </p>
           <div className="flex items-center gap-1">
             <Button
@@ -193,8 +190,8 @@ export function GuestsTable({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <IconChevronsLeft size={16} />
-              <span className="sr-only">First page</span>
+              {isRTL ? <IconChevronsRight size={16} /> : <IconChevronsLeft size={16} />}
+              <span className="sr-only">{t('table.firstPage')}</span>
             </Button>
             <Button
               variant="outline"
@@ -203,8 +200,8 @@ export function GuestsTable({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <IconChevronLeft size={16} />
-              <span className="sr-only">Previous page</span>
+              {isRTL ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+              <span className="sr-only">{t('table.previousPage')}</span>
             </Button>
             <div className="flex items-center gap-1 px-2">
               <span className="text-sm font-medium">
@@ -218,8 +215,8 @@ export function GuestsTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <IconChevronRight size={16} />
-              <span className="sr-only">Next page</span>
+              {isRTL ? <IconChevronLeft size={16} /> : <IconChevronRight size={16} />}
+              <span className="sr-only">{t('table.nextPage')}</span>
             </Button>
             <Button
               variant="outline"
@@ -228,8 +225,8 @@ export function GuestsTable({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              <IconChevronsRight size={16} />
-              <span className="sr-only">Last page</span>
+              {isRTL ? <IconChevronsLeft size={16} /> : <IconChevronsRight size={16} />}
+              <span className="sr-only">{t('table.lastPage')}</span>
             </Button>
           </div>
         </div>

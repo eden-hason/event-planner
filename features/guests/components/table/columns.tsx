@@ -5,51 +5,46 @@ import { Badge } from '@/components/ui/badge';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
-import { DIETARY_LABEL_MAP } from '@/features/guests/utils';
 
-const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus']) => {
+type TFn = (key: string) => string;
+
+const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus'], t: TFn) => {
   const statusConfig = {
-    confirmed: {
-      className: 'bg-green-100 text-green-800 border-green-200',
-      label: 'Confirmed',
-    },
-    pending: {
-      className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      label: 'Pending',
-    },
-    declined: {
-      className: 'bg-red-100 text-red-800 border-red-200',
-      label: 'Declined',
-    },
+    confirmed: { className: 'bg-green-100 text-green-800 border-green-200' },
+    pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    declined: { className: 'bg-red-100 text-red-800 border-red-200' },
   };
 
   const config = statusConfig[status] || statusConfig.pending;
-  return <Badge className={config.className}>{config.label}</Badge>;
+  const label = t(`rsvp.${status}`);
+  return <Badge className={config.className}>{label}</Badge>;
 };
 
 interface GuestColumnsOptions {
   onDelete: (guest: GuestWithGroupApp) => void;
   showDietary?: boolean;
+  t: TFn;
+  dietaryLabelMap: Record<string, string>;
 }
 
 export const createGuestColumns = (
   options: GuestColumnsOptions,
 ): ColumnDef<GuestWithGroupApp>[] => {
+  const { t, dietaryLabelMap } = options;
+
   const cols: ColumnDef<GuestWithGroupApp>[] = [
     {
       accessorKey: 'name',
-      header: () => <div>Name</div>,
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-center">
-            <span>{row.getValue('name')}</span>
-          </div>
-        );
-      },
+      header: () => <div>{t('table.name')}</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center">
+          <span>{row.getValue('name')}</span>
+        </div>
+      ),
     },
     {
       accessorKey: 'phone',
-      header: () => <div>Phone</div>,
+      header: () => <div>{t('table.phone')}</div>,
       cell: ({ row }) => {
         const phone = row.getValue('phone') as string;
         return phone ? (
@@ -61,7 +56,7 @@ export const createGuestColumns = (
     },
     {
       accessorKey: 'group',
-      header: () => <div>Group</div>,
+      header: () => <div>{t('table.group')}</div>,
       cell: ({ row }) => {
         const group = row.original.group;
         return group ? (
@@ -75,7 +70,6 @@ export const createGuestColumns = (
       },
       filterFn: (row, _id, value) => {
         const group = row.original.group;
-        // If group is undefined, exclude from group filters unless no filters are selected
         if (!group) {
           return Array.isArray(value) ? value.length === 0 : false;
         }
@@ -87,12 +81,10 @@ export const createGuestColumns = (
     },
     {
       accessorKey: 'rsvpStatus',
-      header: () => <div>RSVP Status</div>,
+      header: () => <div>{t('table.rsvpStatus')}</div>,
       cell: ({ row }) => {
-        const status = row.getValue(
-          'rsvpStatus',
-        ) as GuestWithGroupApp['rsvpStatus'];
-        return getStatusBadge(status);
+        const status = row.getValue('rsvpStatus') as GuestWithGroupApp['rsvpStatus'];
+        return getStatusBadge(status, t);
       },
       filterFn: (row, _id, value: string[]) => {
         return value.length === 0 || value.includes(row.original.rsvpStatus);
@@ -103,17 +95,17 @@ export const createGuestColumns = (
   if (options.showDietary) {
     cols.push({
       accessorKey: 'dietaryRestrictions',
-      header: () => <div>Dietary Restrictions</div>,
+      header: () => <div>{t('table.dietaryRestrictions')}</div>,
       cell: ({ row }) => {
         const dietaryRestrictions = row.getValue('dietaryRestrictions') as
           | string
           | undefined;
         return dietaryRestrictions ? (
           <span className="text-sm text-gray-600">
-            {DIETARY_LABEL_MAP[dietaryRestrictions] ?? dietaryRestrictions}
+            {dietaryLabelMap[dietaryRestrictions] ?? dietaryRestrictions}
           </span>
         ) : (
-          <span className="text-sm text-gray-400">None</span>
+          <span className="text-sm text-gray-400">{t('table.dietaryNone')}</span>
         );
       },
     });
@@ -122,7 +114,7 @@ export const createGuestColumns = (
   cols.push(
     {
       accessorKey: 'amount',
-      header: () => <div>Amount</div>,
+      header: () => <div>{t('table.amount')}</div>,
       cell: ({ row }) => {
         const amount = row.getValue('amount') as number;
         return (
@@ -134,7 +126,7 @@ export const createGuestColumns = (
     },
     {
       accessorKey: 'notes',
-      header: () => <div>Notes</div>,
+      header: () => <div>{t('table.notes')}</div>,
       cell: ({ row }) => {
         const notes = row.getValue('notes') as string | undefined;
         return notes ? (
@@ -151,9 +143,7 @@ export const createGuestColumns = (
       enableHiding: false,
       cell: ({ row }) => {
         const guest = row.original;
-        return (
-          <RowActions guest={guest} onDelete={options.onDelete} />
-        );
+        return <RowActions guest={guest} onDelete={options.onDelete} t={t} />;
       },
     },
   );

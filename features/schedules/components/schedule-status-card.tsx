@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { IconActivity } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -10,35 +11,22 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import type { ScheduleApp, ScheduleStatus } from '../schemas';
+import type { ScheduleApp } from '../schemas';
 
 interface ScheduleStatusCardProps {
   schedule: ScheduleApp;
 }
 
-type StatusConfig = { description: string; label: string; className: string };
+const STATUS_CLASS = {
+  sent: 'bg-blue-100 text-blue-800 border-blue-200',
+  cancelled: 'bg-red-100 text-red-800 border-red-200',
+  pending: 'bg-amber-100 text-amber-800 border-amber-200',
+} as const;
 
-const STATUS_CONFIG: Record<ScheduleStatus, StatusConfig> = {
-  sent: {
-    description: 'Messages have been sent to eligible guests.',
-    label: 'Sent',
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
-  },
-  cancelled: {
-    description: 'This schedule has been cancelled.',
-    label: 'Cancelled',
-    className: 'bg-red-100 text-red-800 border-red-200',
-  },
-};
-
-const PENDING_CONFIG: StatusConfig = {
-  description: 'Messages will be sent on the scheduled date.',
-  label: 'Pending',
-  className: 'bg-amber-100 text-amber-800 border-amber-200',
-};
-
-export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
-  const config = schedule.status ? STATUS_CONFIG[schedule.status] : PENDING_CONFIG;
+export async function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
+  const t = await getTranslations('schedules');
+  const key = schedule.status ?? 'pending';
+  const className = STATUS_CLASS[key];
 
   return (
     <Card className={cardHover}>
@@ -47,16 +35,16 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
           <div className="rounded-md bg-primary/10 p-1.5">
             <IconActivity size={16} className="text-primary" />
           </div>
-          Status
+          {t('status.cardTitle')}
         </CardTitle>
         <CardAction>
-          <Badge variant="secondary" className={config.className}>
-            {config.label}
+          <Badge variant="secondary" className={className}>
+            {t(`status.label.${key}`)}
           </Badge>
         </CardAction>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm">{config.description}</p>
+        <p className="text-muted-foreground text-sm">{t(`status.description.${key}`)}</p>
       </CardContent>
     </Card>
   );

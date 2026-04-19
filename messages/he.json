@@ -16,6 +16,632 @@
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
     "schedules": "לוחות זמנים",
-    "settings": "הגדרות"
+    "settings": "הגדרות",
+    "templates": "תבניות",
+    "expenses": "הוצאות",
+    "gifts": "מתנות",
+    "getHelp": "עזרה",
+    "comingSoon": "בקרוב"
+  },
+  "sidebar": {
+    "noEventSelected": "לא נבחר אירוע",
+    "events": "אירועים",
+    "noEventsYet": "אין אירועים עדיין",
+    "shared": "משותף",
+    "newEvent": "אירוע חדש",
+    "logOut": "התנתקות",
+    "duplicateEvent": "שכפול אירוע",
+    "deleteEvent": "מחיקת אירוע",
+    "deleteEventTitle": "מחיקת אירוע?",
+    "deleteEventDescription": "האם אתה בטוח שברצונך למחוק את \"{title}\"? לא ניתן לבטל פעולה זו.",
+    "toast": {
+      "duplicating": "משכפל את {title}...",
+      "duplicated": "האירוע שוכפל בהצלחה",
+      "duplicateFailed": "שכפול האירוע נכשל. נסה שנית.",
+      "deleting": "מוחק את {title}...",
+      "deleted": "האירוע נמחק בהצלחה",
+      "deleteFailed": "מחיקת האירוע נכשלה. נסה שנית."
+    }
+  },
+  "guests": {
+    "title": "אורחים",
+    "description": "נהל את אורחי האירוע",
+    "addGuest": "הוסף אורח",
+    "addGroup": "הוסף קבוצה",
+    "tabGuests": "אורחים",
+    "tabGroups": "קבוצות",
+    "sheet": {
+      "editGuest": "עריכת אורח",
+      "addNewGuest": "הוספת אורח חדש",
+      "newGuest": "אורח חדש",
+      "addGuestHint": "מלא את הטופס להוספת אורח חדש.",
+      "lastEdited": "עודכן לאחרונה",
+      "people": "אנשים",
+      "group": "קבוצה",
+      "updated": "עודכן",
+      "viaGuest": "על ידי האורח",
+      "viaYou": "על ידך",
+      "viaOrganizer": "על ידי המארגן",
+      "deleteGuest": "מחק אורח",
+      "updateGuest": "עדכן אורח"
+    },
+    "toast": {
+      "creatingGroup": "יוצר את {name}...",
+      "groupCreated": "הקבוצה נוצרה בהצלחה.",
+      "groupCreateFailed": "יצירת הקבוצה נכשלה. נסה שנית.",
+      "deletingGuest": "מוחק את {name}...",
+      "guestDeleted": "האורח נמחק בהצלחה.",
+      "guestDeleteFailed": "מחיקת האורח נכשלה."
+    },
+    "form": {
+      "contactInfo": "פרטי קשר",
+      "name": "שם",
+      "namePlaceholder": "שם האורח",
+      "phone": "טלפון",
+      "phonePlaceholder": "מספר טלפון",
+      "amount": "כמות",
+      "person": "אדם",
+      "people": "אנשים",
+      "eventDetails": "פרטי האירוע",
+      "rsvpStatus": "סטטוס אישור",
+      "rsvpPlaceholder": "בחר סטטוס אישור",
+      "group": "קבוצה",
+      "groupPlaceholder": "בחר קבוצה",
+      "noGroup": "ללא קבוצה",
+      "dietaryRestrictions": "הגבלות תזונה",
+      "notes": "הערות",
+      "notesPlaceholder": "הוסף הערות על האורח...",
+      "updatingGuest": "מעדכן אורח...",
+      "addingGuest": "מוסיף אורח...",
+      "guestUpdated": "האורח עודכן.",
+      "guestAdded": "האורח נוסף.",
+      "somethingWentWrong": "משהו השתבש.",
+      "updateGuest": "עדכן אורח",
+      "addGuest": "הוסף אורח",
+      "updating": "מעדכן...",
+      "adding": "מוסיף..."
+    },
+    "rsvp": {
+      "pending": "ממתין",
+      "confirmed": "אישר",
+      "declined": "סירב"
+    },
+    "stats": {
+      "totalGuests": "סה\"כ אורחים",
+      "confirmed": "אישרו",
+      "pending": "ממתינים",
+      "declined": "סירבו",
+      "people": "{count} אנשים"
+    },
+    "table": {
+      "name": "שם",
+      "phone": "טלפון",
+      "group": "קבוצה",
+      "rsvpStatus": "סטטוס אישור",
+      "dietaryRestrictions": "הגבלות תזונה",
+      "dietaryNone": "ללא",
+      "amount": "כמות",
+      "notes": "הערות",
+      "openMenu": "פתח תפריט",
+      "deleteGuest": "מחק אורח",
+      "emptyTitle": "אין אורחים עדיין",
+      "emptyDescription": "התחל בהעלאת רשימת אורחים או הוספה ידנית.",
+      "uploadFile": "העלה קובץ",
+      "addGuest": "הוסף אורח",
+      "noGuestsSearch": "לא נמצאו אורחים התואמים לחיפוש.",
+      "noGuestsFound": "לא נמצאו אורחים.",
+      "showing": "מציג {start}-{end} מתוך {total} אורחים",
+      "firstPage": "עמוד ראשון",
+      "previousPage": "עמוד קודם",
+      "nextPage": "עמוד הבא",
+      "lastPage": "עמוד אחרון"
+    },
+    "directory": {
+      "importCsv": "ייבוא CSV",
+      "deletingGuest": "מוחק את {name}...",
+      "guestDeleted": "האורח נמחק בהצלחה.",
+      "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
+    },
+    "filters": {
+      "filterByStatus": "סנן לפי סטטוס",
+      "filterByGroup": "סנן לפי קבוצה",
+      "filterBySide": "סנן לפי צד",
+      "groupsSelected": "{count} קבוצות נבחרו",
+      "sidesSelected": "{count} צדדים נבחרו",
+      "selectAll": "בחר הכל"
+    },
+    "search": {
+      "placeholder": "חפש אורחים..."
+    },
+    "dietary": {
+      "vegan": "טבעוני",
+      "vegetarian": "צמחוני",
+      "glatt": "גלאט",
+      "glutenFree": "ללא גלוטן"
+    },
+    "sides": {
+      "bride": "צד הכלה",
+      "groom": "צד החתן"
+    },
+    "groups": {
+      "createNew": "צור קבוצה חדשה",
+      "createNewDescription": "הוסף מקטע חדש לאורחים שלך",
+      "searchPlaceholder": "חפש קבוצות...",
+      "selected": "{count} קבוצה נבחרה",
+      "selectedPlural": "{count} קבוצות נבחרו",
+      "openMenu": "פתח תפריט",
+      "select": "בחר",
+      "deleteGroup": "מחק קבוצה",
+      "guestCount": "{count} אורחים",
+      "noGuests": "טרם שויכו אורחים",
+      "assignGuests": "שייך אורחים",
+      "dialog": {
+        "title": "יצירת קבוצה חדשה",
+        "description": "הוסף קבוצה חדשה לארגון האורחים",
+        "nameLabel": "שם הקבוצה",
+        "namePlaceholder": "למשל: משפחה, חברים, עמיתים",
+        "sideLabel": "צד (אופציונלי)",
+        "sidePlaceholder": "בחר צד",
+        "descriptionLabel": "תיאור (אופציונלי)",
+        "descriptionPlaceholder": "הוסף תיאור קצר לקבוצה...",
+        "iconLabel": "אייקון",
+        "create": "צור קבוצה"
+      },
+      "assign": {
+        "manageMembers": "ניהול חברים",
+        "groupTitle": "קבוצת '{name}'",
+        "assignDescription": "שייך אורחים לקבוצה לניהול נוח יותר",
+        "availableGuests": "אורחים זמינים",
+        "guestsInGroup": "אורחים בקבוצה",
+        "guestsLabel": "אורחים",
+        "membersLabel": "חברים",
+        "selectedToMove": "{count} אורחים נבחרו להזזה",
+        "saveChanges": "שמור שינויים",
+        "updatingMembers": "מעדכן חברי {name}...",
+        "membersUpdated": "חברי הקבוצה עודכנו בהצלחה.",
+        "membersFailed": "עדכון חברי הקבוצה נכשל. נסה שנית."
+      },
+      "toast": {
+        "deletingGroups": "מוחק {count} קבוצות...",
+        "groupsDeleted": "הקבוצות נמחקו בהצלחה.",
+        "groupsDeleteFailed": "מחיקת הקבוצות נכשלה. נסה שנית.",
+        "deletingGroup": "מוחק את {name}...",
+        "groupDeleted": "הקבוצה נמחקה בהצלחה.",
+        "groupDeleteFailed": "מחיקת הקבוצה נכשלה. נסה שנית."
+      }
+    },
+    "import": {
+      "title": "ייבוא אורחים מ-CSV",
+      "stepUpload": "העלאה",
+      "stepAnalyze": "ניתוח",
+      "stepValidate": "אימות",
+      "stepSummary": "סיכום",
+      "previous": "הקודם",
+      "next": "הבא",
+      "import": "ייבא",
+      "done": "סיים",
+      "close": "סגור",
+      "importSuccess": "האורחים יובאו בהצלחה!",
+      "upload": {
+        "heading": "העלה את רשימת האורחים",
+        "instruction": "גרור ושחרר את קובץ ה-.csv או ה-.xlsx לכאן, או לחץ לבחירה"
+      },
+      "analyze": {
+        "heading": "מנתח את הקובץ\u2026",
+        "description": "הבינה המלאכותית קוראת את העמודות וממפה את נתוני האורחים אוטומטית",
+        "rowsDetected": "הקובץ פוענח \u2014 {count} שורות זוהו",
+        "readingHeaders": "קורא כותרות עמודות\u2026",
+        "analyzingSample": "מנתח נתוני דוגמה\u2026",
+        "mappingSchema": "ממפה לסכמת האורחים\u2026",
+        "failedHeading": "הניתוח נכשל",
+        "tryAgain": "נסה שנית",
+        "successHeading": "המיפוי הושלם",
+        "successDescription": "הבינה המלאכותית מיפתה בהצלחה את נתוני האורחים לשדות הנכונים. הכל מוכן!",
+        "columnsIdentified": "עמודות זוהו:",
+        "mappingComplete": "המיפוי לסכמת האורחים הושלם"
+      },
+      "map": {
+        "heading": "מפה את העמודות",
+        "description": "התאם את העמודות מ-{fileName} לשדות Kululu",
+        "csvHeader": "כותרת CSV",
+        "sampleData": "נתוני דוגמה",
+        "kululuField": "שדה Kululu",
+        "selectField": "בחר שדה Kululu",
+        "dontImport": "אל תייבא",
+        "fieldName": "שם",
+        "fieldPhone": "טלפון",
+        "fieldAmount": "כמות",
+        "mappedCount": "{mapped}/{total} שדות נדרשים מופו",
+        "allMapped": "כל השדות הנדרשים מופו \u2713",
+        "optional": "(+{count} אופציונלי)"
+      },
+      "validate": {
+        "heading": "אמת את הנתונים",
+        "description": "בדוק את הנתונים למטה. שורות לא תקינות ניתן להסיר לפני הייבוא.",
+        "colStatus": "סטטוס",
+        "colRow": "שורה",
+        "colName": "שם",
+        "colPhone": "טלפון",
+        "colAmount": "כמות",
+        "colErrors": "שגיאות",
+        "rowCount": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות",
+        "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות \u2713"
+      },
+      "summary": {
+        "importing": "מייבא אורחים...",
+        "importingDescription": "אנא המתן בזמן שאנו מוסיפים {count} אורחים לאירוע שלך.",
+        "importingDescriptionSingular": "אנא המתן בזמן שאנו מוסיפים {count} אורח לאירוע שלך.",
+        "successHeading": "הייבוא הצליח!",
+        "successMessage": "{count} אורחים נוספו לאירוע שלך.",
+        "successMessageSingular": "אורח {count} נוסף לאירוע שלך.",
+        "failedHeading": "הייבוא נכשל"
+      }
+    }
+  },
+  "dashboard": {
+    "header": {
+      "title": "לוח בקרה",
+      "description": "סקירה כללית של האירוע"
+    },
+    "eventNotFound": "האירוע לא נמצא",
+    "stats": {
+      "daysToEvent": "ימים לאירוע",
+      "todayIsTheDay": "היום זה היום!",
+      "daysSince": "ימים מאז האירוע",
+      "daysTo": "ימים נותרו",
+      "guestsInvited": "אורחים שהוזמנו",
+      "ofEstimated": "מתוך ~{estimate} המשוערים",
+      "pctOfEstimate": "{pct}% מהאומדן",
+      "scheduledMessages": "הודעות מתוזמנות",
+      "pendingMessageSingular": "הודעה ממתינה",
+      "pendingMessages": "הודעות ממתינות"
+    },
+    "guestStats": {
+      "totalGuests": "סה\"כ אורחים",
+      "invited": "מוזמנים",
+      "confirmed": "אישרו",
+      "pending": "ממתינים",
+      "ofTotal": "מתוך {total}"
+    },
+    "rsvpBreakdown": {
+      "title": "פירוט אישורי הגעה",
+      "description": "סקירת תגובות אורחים",
+      "confirmed": "אישרו",
+      "pending": "ממתינים",
+      "declined": "סירבו",
+      "total": "סה\"כ"
+    },
+    "groupBreakdown": {
+      "title": "קבוצות אורחים",
+      "description": "פירוט לפי קבוצות",
+      "guestSingular": "אורח",
+      "guests": "אורחים",
+      "noGroups": "אין קבוצות עדיין",
+      "sideLabels": {
+        "bride": "צד הכלה",
+        "groom": "צד החתן"
+      }
+    },
+    "rsvpEngagement": {
+      "title": "אישורי הגעה לפי קבוצה",
+      "description": "תגובות אורחים לפי קבוצה",
+      "noGroups": "אין קבוצות עדיין",
+      "confirmed": "אישרו",
+      "pending": "ממתינים",
+      "declined": "סירבו"
+    },
+    "countdown": {
+      "today": "היום זה היום!",
+      "daysSince": "ימים מאז האירוע",
+      "daysTo": "ימים נותרו"
+    },
+    "upcomingSchedules": {
+      "title": "לוחות זמנים קרובים",
+      "noSchedules": "אין לוחות זמנים קרובים",
+      "createOne": "צור אחד",
+      "viewAll": "צפה בכל לוחות הזמנים ←",
+      "actionTypes": {
+        "initial_invitation": "הזמנה ראשונית",
+        "confirmation": "אישור",
+        "event_reminder": "תזכורת אירוע",
+        "post_event": "תודה"
+      }
+    },
+    "quickActions": {
+      "title": "פעולות מהירות",
+      "description": "משימות נפוצות",
+      "addGuest": "הוסף אורח",
+      "addGuestDesc": "הזמן אורחים חדשים",
+      "createSchedule": "צור לוח זמנים",
+      "createScheduleDesc": "תכנן את ציר הזמן",
+      "viewGuests": "כל האורחים",
+      "viewGuestsDesc": "נהל את רשימת האורחים",
+      "importCsv": "ייבוא CSV",
+      "importCsvDesc": "העלאה המונית של אורחים"
+    },
+    "recentActivity": {
+      "title": "פעילות אחרונה",
+      "description": "עדכוני אישור הגעה אחרונים",
+      "noActivity": "אין שינויים באישורי הגעה לאחרונה",
+      "viewAllGuests": "כל האורחים",
+      "confirmedAttendance": "אישר הגעה",
+      "declinedInvitation": "סירב להזמנה",
+      "updatedRsvp": "עדכן את אישורו",
+      "justNow": "זה עתה",
+      "minutesAgo": "לפני {count} דקות",
+      "hoursAgo": "לפני {count} שעות",
+      "dayAgo": "לפני {count} יום",
+      "daysAgo": "לפני {count} ימים"
+    },
+    "onboarding": {
+      "title": "התחל עם Kululu",
+      "outOf": " מתוך ",
+      "stepsLeft": " שלבים נותרו",
+      "details": {
+        "title": "השלם את פרטי האירוע",
+        "description": "הוסף שעת טקס ופרטים מרכזיים אחרים כדי שהאורחים ידעו מה לצפות.",
+        "action": "ערוך פרטים"
+      },
+      "guests": {
+        "title": "הוסף את האורח הראשון",
+        "description": "התחל לבנות את רשימת האורחים שלך על ידי הוספה ידנית או ייבוא CSV.",
+        "action": "נהל אורחים"
+      },
+      "groups": {
+        "title": "ארגן אורחים לקבוצות",
+        "description": "צור קבוצות לשמירת סדר ברשימת האורחים לפי משפחה, צד, או קשר.",
+        "action": "נהל קבוצות"
+      },
+      "invitation": {
+        "title": "העלה את עיצוב ההזמנה",
+        "description": "הוסף תמונת הזמנה יפה כדי שהאורחים יראו אותה כשהם פותחים את קישור האישור.",
+        "action": "העלה הזמנה"
+      },
+      "collaborator": {
+        "title": "הוסף שותף לניהול",
+        "description": "הזמן שותף או בן משפחה לעזור לנהל אישורי הגעה ופרטי אורחים.",
+        "action": "נהל שותפים"
+      }
+    }
+  },
+  "schedules": {
+    "header": {
+      "title": "לוחות זמנים",
+      "description": "נהל את לוח הזמנים של האירוע"
+    },
+    "tabs": {
+      "overview": "סקירה",
+      "activity": "פעילות"
+    },
+    "status": {
+      "cardTitle": "סטטוס",
+      "label": {
+        "sent": "נשלח",
+        "pending": "ממתין",
+        "cancelled": "בוטל"
+      },
+      "description": {
+        "sent": "ההודעות נשלחו לאורחים הזכאים.",
+        "pending": "ההודעות יישלחו בתאריך המתוזמן.",
+        "cancelled": "לוח הזמנים הזה בוטל."
+      }
+    },
+    "timing": {
+      "cardTitle": "תזמון שליחה",
+      "save": "שמור",
+      "saving": "שומר...",
+      "daysBeforeEvent": "ימים לפני האירוע",
+      "days": "ימים",
+      "daysHelper": "כמה ימים מראש לתזמן את זה",
+      "scheduledDate": "תאריך מתוזמן",
+      "scheduledDateHelper": "נגזר מתאריך האירוע",
+      "toast": {
+        "updating": "מעדכן תאריך מתוזמן...",
+        "updated": "התאריך המתוזמן עודכן.",
+        "failed": "עדכון התאריך המתוזמן נכשל.",
+        "error": "משהו השתבש."
+      }
+    },
+    "audience": {
+      "cardTitle": "קהל יעד",
+      "guestsWillReceive": "אורחים יקבלו הודעה זו",
+      "outOfTotal": "מתוך {total} אורחים סה\"כ",
+      "allGuests": "כל האורחים",
+      "confirmedGuests": "אורחים שאישרו",
+      "pendingGuests": "אורחים ממתינים"
+    },
+    "messagePreview": {
+      "cardTitle": "תצוגה מקדימה",
+      "cardDescription": "ההודעה שהאורחים יקבלו עבור לוח הזמנים הזה.",
+      "noMessage": "לא הוגדרה הודעה עדיין.",
+      "imagePlaceholder": "תמונה",
+      "button": "כפתור {index}",
+      "missingFields": {
+        "title": "פרטי אירוע חסרים",
+        "description": "חלק מהשדות הנדרשים עדיין לא מולאו. השלם אותם כדי לראות את תצוגת ההודעה המלאה.",
+        "link": "פרטי האירוע"
+      }
+    },
+    "sendDialog": {
+      "sendNow": "שלח עכשיו",
+      "sending": "שולח...",
+      "title": "לשלוח הודעות עכשיו?",
+      "description": "ההודעות יישלחו מיידית דרך WhatsApp. לא ניתן לבטל פעולה זו.",
+      "whoWillReceive": "מי יקבל את זה?",
+      "recipients": "נמענים",
+      "guestCount": "{count} אורחים",
+      "cancel": "ביטול",
+      "confirm": "שלח עכשיו \u2190",
+      "toast": {
+        "sending": "שולח הודעות...",
+        "failed": "השליחה נכשלה."
+      }
+    },
+    "emptyState": {
+      "title": "התובנות כמעט מוכנות",
+      "description": "ברגע שההודעה הראשונה תישלח, תראה כאן סטטיסטיקות שליחה בזמן אמת, שיעורי קריאה ואישורי הגעה. לוח הזמנים שלך מוגדר כעת ל-{date}.",
+      "editSchedule": "ערוך לוח זמנים"
+    },
+    "noSchedules": "לא הוגדרו לוחות זמנים לאירוע זה.",
+    "actionTypes": {
+      "initial_invitation": "הזמנה ראשונית",
+      "confirmation": "אישור",
+      "event_reminder": "תזכורת אירוע",
+      "post_event": "תודה"
+    },
+    "relativeTime": {
+      "justNow": "זה עתה",
+      "past": "לפני {time}",
+      "future": "בעוד {time}"
+    },
+    "activity": {
+      "cardTitle": "פעילות שליחה אחרונה",
+      "viewAllRecipients": "כל הנמענים \u2190",
+      "searchPlaceholder": "חפש לפי שם או טלפון...",
+      "allStatuses": "כל הסטטוסים",
+      "statusCount": "{count} סטטוסים",
+      "statuses": {
+        "confirmed": "אישר",
+        "declined": "סירב",
+        "read": "נקרא"
+      },
+      "table": {
+        "guestName": "שם האורח",
+        "status": "סטטוס",
+        "sent": "נשלח",
+        "read": "נקרא",
+        "responded": "הגיב",
+        "rsvpDetails": "פרטי אישור",
+        "noDetails": "אין פרטים",
+        "partyOf": "קבוצה של {count}"
+      },
+      "showing": "מציג {showing} מתוך {total} נמענים",
+      "previous": "הקודם",
+      "next": "הבא"
+    },
+    "performance": {
+      "totalDeliveries": "סה\"כ שליחות",
+      "success": "הצליח",
+      "failed": "נכשל",
+      "read": "נקרא",
+      "confirmed": "אישר",
+      "declined": "סירב"
+    }
+  },
+  "newEvent": {
+    "back": "חזור",
+    "stepOf": "שלב {step} מתוך 3",
+    "step1": {
+      "title": "ברוכים הבאים ל-Kululu 🎉",
+      "description": "ספרו לנו על הזוג המאושר",
+      "brideLabel": "שם הכלה",
+      "bridePlaceholder": "הזן שם כלה",
+      "groomLabel": "שם החתן",
+      "groomPlaceholder": "הזן שם חתן",
+      "featureTitle": "ניהול הכל במקום אחד",
+      "featureDescription": "אורחים, לוחות זמנים, הזמנות ועוד — הכל במקום אחד.",
+      "continue": "המשך",
+      "skip": "דלג"
+    },
+    "step2": {
+      "title": "מתי ואיפה?",
+      "description": "קבע תאריך ומקום",
+      "dateLabel": "תאריך החתונה",
+      "datePlaceholder": "בחר תאריך חתונה",
+      "venueLabel": "אולם",
+      "venuePlaceholder": "חפש את האולם שלך...",
+      "venueHelper": "אפשר למלא זאת מאוחר יותר",
+      "continue": "המשך",
+      "goBack": "חזור"
+    },
+    "step3": {
+      "title": "כמה אורחים?",
+      "description": "זה עוזר לנו להתאים את החוויה שלך",
+      "create": "צור את האירוע שלי! 🎊",
+      "skip": "דלג",
+      "guestOptions": {
+        "up_to_100": "עד 100",
+        "100_200": "100–200",
+        "200_350": "200–350",
+        "350_plus": "350+"
+      }
+    },
+    "toast": {
+      "creating": "יוצר את האירוע שלך...",
+      "created": "האירוע נוצר!",
+      "failed": "יצירת האירוע נכשלה.",
+      "error": "משהו השתבש."
+    },
+    "success": {
+      "title": "האירוע שלך מוכן!",
+      "description": "אירוע החתונה שלך נוצר. הגיע הזמן להתחיל לתכנן את היום הגדול!",
+      "goToDashboard": "עבור ללוח הבקרה",
+      "viewDetails": "צפה בפרטי האירוע"
+    }
+  },
+  "eventDetails": {
+    "notFound": "האירוע לא נמצא",
+    "header": {
+      "title": "פרטי האירוע",
+      "description": "צפה ונהל את פרטי האירוע שלך",
+      "discard": "בטל שינויים",
+      "save": "שמור",
+      "saving": "שומר..."
+    },
+    "dateTime": {
+      "title": "תאריך ושעה",
+      "date": "תאריך",
+      "eventType": "סוג האירוע",
+      "receptionTime": "שעת קבלת פנים",
+      "ceremonyTime": "שעת טקס",
+      "types": {
+        "wedding": "חתונה",
+        "birthday": "יום הולדת",
+        "corporate": "אירוע עסקי",
+        "other": "אחר"
+      }
+    },
+    "couple": {
+      "title": "הזוג",
+      "coupleNames": "שמות הזוג",
+      "brideName": "שם הכלה",
+      "groomName": "שם החתן",
+      "brideNamePlaceholder": "הזן שם כלה",
+      "groomNamePlaceholder": "הזן שם חתן",
+      "parentsNames": "שמות ההורים",
+      "brideSide": "צד הכלה",
+      "groomSide": "צד החתן",
+      "brideSidePlaceholder": "הזן שמות הורי הכלה",
+      "groomSidePlaceholder": "הזן שמות הורי החתן"
+    },
+    "location": {
+      "title": "מיקום",
+      "label": "מיקום",
+      "placeholder": "חפש כתובת אולם..."
+    },
+    "invitation": {
+      "title": "הזמנת האירוע",
+      "description": "תמונה זו תישלח לאורחים כהודעה הראשונה שהם יקבלו בהזמנה לאירוע.",
+      "dropImage": "שחרר תמונה כאן",
+      "clickToBrowse": "או לחץ לבחירה",
+      "upload": "העלה",
+      "uploading": "מעלה...",
+      "removeImage": "הסר תמונה",
+      "failedUpload": "העלאת התמונה נכשלה"
+    },
+    "guestExperience": {
+      "title": "חוויית האורח",
+      "dietaryOptions": "אפשרויות תזונה",
+      "dietaryDescription": "בקש מהאורחים הגבלות תזונה"
+    },
+    "digitalGift": {
+      "title": "מתנה דיגיטלית",
+      "payboxLabel": "קישור לקבוצת PayBox",
+      "payboxPlaceholder": "הדבק כאן את קישור קבוצת PayBox",
+      "payboxHelper": "כיצד לעשות: פתח את אפליקציית PayBox, צור קבוצה חדשה לאירוע, לחץ על הזמן חברים, העתק את הקישור והדבק אותו כאן.",
+      "bitLabel": "מספר טלפון Bit",
+      "bitPlaceholder": "הזן מספר טלפון",
+      "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך"
+    }
   }
 }

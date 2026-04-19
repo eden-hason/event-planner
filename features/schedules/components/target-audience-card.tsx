@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { IconUsers } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -9,23 +10,28 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { type GuestStats } from '../schemas';
-import { getAudienceLabel } from '../utils';
 
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
   guestStats: GuestStats;
 }
 
-export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceCardProps) {
-  const config = {
-    label: getAudienceLabel(targetStatus),
-    className:
-      targetStatus === 'confirmed'
-        ? 'bg-green-100 text-green-800 border-green-200'
-        : targetStatus === 'pending'
-          ? 'bg-amber-100 text-amber-800 border-amber-200'
-          : '',
-  };
+export async function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceCardProps) {
+  const t = await getTranslations('schedules.audience');
+
+  const audienceLabel =
+    targetStatus === 'confirmed'
+      ? t('confirmedGuests')
+      : targetStatus === 'pending'
+        ? t('pendingGuests')
+        : t('allGuests');
+
+  const badgeClass =
+    targetStatus === 'confirmed'
+      ? 'bg-green-100 text-green-800 border-green-200'
+      : targetStatus === 'pending'
+        ? 'bg-amber-100 text-amber-800 border-amber-200'
+        : '';
 
   const targetCount =
     targetStatus === 'confirmed'
@@ -44,10 +50,10 @@ export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceC
             <div className="rounded-md bg-primary/10 p-1.5">
               <IconUsers size={16} className="text-primary" />
             </div>
-            Target Audience
+            {t('cardTitle')}
           </CardTitle>
-          <Badge variant="secondary" className={config.className}>
-            {config.label}
+          <Badge variant="secondary" className={badgeClass}>
+            {audienceLabel}
           </Badge>
         </div>
       </CardHeader>
@@ -58,13 +64,13 @@ export function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceC
               {targetCount}
             </span>
             <span className="text-sm text-muted-foreground">
-              guests will receive this message
+              {t('guestsWillReceive')}
             </span>
           </div>
 
           {isFiltered && (
             <p className="text-xs text-muted-foreground">
-              out of {guestStats.total} total guests
+              {t('outOfTotal', { total: guestStats.total })}
             </p>
           )}
         </div>

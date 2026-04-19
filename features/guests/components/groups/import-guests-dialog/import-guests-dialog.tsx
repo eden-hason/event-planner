@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -28,14 +29,7 @@ import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv'
 import { validateCsvRows } from '@/features/guests/utils';
 import { type ImportGuestData } from '@/features/guests/schemas';
 
-const STEPS = [
-  { value: 'upload', title: 'Upload' },
-  { value: 'analyze', title: 'Analyze' },
-  { value: 'validate', title: 'Validate' },
-  { value: 'summary', title: 'Summary' },
-] as const;
-
-type StepValue = (typeof STEPS)[number]['value'];
+type StepKey = 'upload' | 'analyze' | 'validate' | 'summary';
 
 interface ImportGuestsDialogProps {
   open: boolean;
@@ -50,22 +44,25 @@ export function ImportGuestsDialog({
   eventId,
   existingPhones,
 }: ImportGuestsDialogProps) {
-  const [currentStep, setCurrentStep] = useState<StepValue>('upload');
+  const t = useTranslations('guests');
+
+  const STEPS: { value: StepKey; title: string }[] = [
+    { value: 'upload', title: t('import.stepUpload') },
+    { value: 'analyze', title: t('import.stepAnalyze') },
+    { value: 'validate', title: t('import.stepValidate') },
+    { value: 'summary', title: t('import.stepSummary') },
+  ];
+
+  const [currentStep, setCurrentStep] = useState<StepKey>('upload');
   const [files, setFiles] = useState<File[]>([]);
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set());
   const [importComplete, setImportComplete] = useState(false);
 
-  // Get valid guests to import (excluding removed rows and invalid rows)
   const validGuestsToImport = useMemo((): ImportGuestData[] => {
     if (!parsedData) return [];
-
-    const validatedRows = validateCsvRows(
-      parsedData.rows,
-      columnMapping,
-      existingPhones,
-    );
+    const validatedRows = validateCsvRows(parsedData.rows, columnMapping, existingPhones);
     return validatedRows
       .filter((row) => row.isValid && !excludedRows.has(row.rowIndex))
       .map((row) => row.data as ImportGuestData);
@@ -86,18 +83,17 @@ export function ImportGuestsDialog({
   const handleImportComplete = useCallback((success: boolean) => {
     setImportComplete(true);
     if (success) {
-      toast.success('Guests imported successfully!');
+      toast.success(t('import.importSuccess'));
     }
-  }, []);
+  }, [t]);
 
   const handleFilesChange = async (newFiles: File[]) => {
     setFiles(newFiles);
-
     if (newFiles.length > 0) {
       try {
         const parsed = await parseCSVFile(newFiles[0]);
         setParsedData(parsed);
-        setColumnMapping({}); // Reset mapping when new file is uploaded
+        setColumnMapping({});
       } catch (error) {
         toast.error('Failed to parse CSV file', {
           description:
@@ -107,17 +103,14 @@ export function ImportGuestsDialog({
     }
   };
 
-  // Check if all required Kululu fields are mapped
   const isAllFieldsMapped = (): boolean => {
     const mappedValues = new Set(Object.values(columnMapping).filter(Boolean));
     const requiredFields = KULULU_FIELDS.filter((field) => field.required);
     return requiredFields.every((field) => mappedValues.has(field.value));
   };
 
-  // Get current step index
   const currentStepIndex = STEPS.findIndex((s) => s.value === currentStep);
 
-  // Check if Next button should be disabled
   const isNextDisabled = (): boolean => {
     if (currentStep === 'upload') return !parsedData;
     if (currentStep === 'analyze') return !isAllFieldsMapped();
@@ -125,7 +118,6 @@ export function ImportGuestsDialog({
     return false;
   };
 
-  // Navigation handlers
   const handlePrevious = () => {
     if (currentStepIndex > 0) {
       setCurrentStep(STEPS[currentStepIndex - 1].value);
@@ -142,22 +134,18 @@ export function ImportGuestsDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Import Guests from CSV</DialogTitle>
+          <DialogTitle>{t('import.title')}</DialogTitle>
         </DialogHeader>
 
         <Stepper
           value={currentStep}
-          onValueChange={(value) => setCurrentStep(value as StepValue)}
+          onValueChange={(value) => setCurrentStep(value as StepKey)}
           className="w-full"
           nonInteractive
         >
           <StepperList className="justify-center gap-8 rounded-lg bg-muted/50 px-6 py-4">
             {STEPS.map((step) => (
-              <StepperItem
-                key={step.value}
-                value={step.value}
-                className="flex-none"
-              >
+              <StepperItem key={step.value} value={step.value} className="flex-none">
                 <StepperTrigger className="flex-col gap-2">
                   <StepperIndicator />
                   <StepperTitle>{step.title}</StepperTitle>
@@ -199,7 +187,7 @@ export function ImportGuestsDialog({
         <DialogFooter className="bg-muted/50 -mx-6 mt-4 -mb-6 gap-2 rounded-b-lg px-6 py-4">
           {currentStep === 'summary' ? (
             <Button onClick={() => handleOpenChange(false)}>
-              {importComplete ? 'Done' : 'Close'}
+              {importComplete ? t('import.done') : t('import.close')}
             </Button>
           ) : (
             <>
@@ -208,10 +196,10 @@ export function ImportGuestsDialog({
                 onClick={handlePrevious}
                 disabled={currentStepIndex === 0}
               >
-                Previous
+                {t('import.previous')}
               </Button>
               <Button onClick={handleNext} disabled={isNextDisabled()}>
-                {currentStep === 'validate' ? 'Import' : 'Next'}
+                {currentStep === 'validate' ? t('import.import') : t('import.next')}
               </Button>
             </>
           )}

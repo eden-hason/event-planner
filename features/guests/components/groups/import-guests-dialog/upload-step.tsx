@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { IconUpload } from '@tabler/icons-react';
 import { FileUpload, FileUploadDropzone } from '@/components/ui/file-upload';
 
@@ -9,6 +10,8 @@ interface UploadStepProps {
 }
 
 export function UploadStep({ files, onFilesChange }: UploadStepProps) {
+  const t = useTranslations('guests');
+
   return (
     <FileUpload
       value={files}
@@ -23,9 +26,9 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
             <IconUpload size={32} />
           </div>
           <div className="text-center">
-            <p className="font-medium">Upload your guests list</p>
+            <p className="font-medium">{t('import.upload.heading')}</p>
             <p className="text-muted-foreground text-sm">
-              Drag and drop your .csv or .xlsx file here, or click to browse
+              {t('import.upload.instruction')}
             </p>
           </div>
         </div>

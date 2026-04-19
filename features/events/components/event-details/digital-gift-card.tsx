@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import {
 import { EventDetailsUpdate } from '../../schemas';
 
 export function DigitalGiftCard() {
+  const t = useTranslations('eventDetails.digitalGift');
   const form = useFormContext<EventDetailsUpdate>();
   const payboxEnabled = form.watch('eventSettings.payboxConfig.enabled');
   const bitEnabled = form.watch('eventSettings.bitConfig.enabled');
@@ -23,7 +25,7 @@ export function DigitalGiftCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Digital Gift</CardTitle>
+        <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
@@ -33,7 +35,7 @@ export function DigitalGiftCard() {
               name="eventSettings.payboxConfig.enabled"
               render={({ field }) => (
                 <FormItem className="flex w-full flex-row items-center justify-between">
-                  <FormLabel>PayBox Group Invite Link</FormLabel>
+                  <FormLabel>{t('payboxLabel')}</FormLabel>
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -52,7 +54,7 @@ export function DigitalGiftCard() {
                 <FormControl>
                   <Input
                     type="url"
-                    placeholder="Paste your PayBox group invite link"
+                    placeholder={t('payboxPlaceholder')}
                     disabled={!payboxEnabled}
                     {...field}
                   />
@@ -61,10 +63,7 @@ export function DigitalGiftCard() {
               </FormItem>
             )}
           />
-          <p className="text-muted-foreground text-sm">
-            How to: Open the PayBox app, create a new Group for your event,
-            click Invite Friends, copy the link, and paste it here.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('payboxHelper')}</p>
         </div>
 
         <Separator className="my-4" />
@@ -76,7 +75,7 @@ export function DigitalGiftCard() {
               name="eventSettings.bitConfig.enabled"
               render={({ field }) => (
                 <FormItem className="flex w-full flex-row items-center justify-between">
-                  <FormLabel>Bit Phone Number</FormLabel>
+                  <FormLabel>{t('bitLabel')}</FormLabel>
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -95,7 +94,7 @@ export function DigitalGiftCard() {
                 <FormControl>
                   <Input
                     type="tel"
-                    placeholder="Enter phone number"
+                    placeholder={t('bitPlaceholder')}
                     disabled={!bitEnabled}
                     {...field}
                   />
@@ -104,9 +103,7 @@ export function DigitalGiftCard() {
               </FormItem>
             )}
           />
-          <p className="text-muted-foreground text-sm">
-            Enter the mobile phone number connected to your Bit account
-          </p>
+          <p className="text-muted-foreground text-sm">{t('bitHelper')}</p>
         </div>
       </CardContent>
     </Card>
