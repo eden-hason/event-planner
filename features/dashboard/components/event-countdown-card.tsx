@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cardHover } from '@/lib/utils';
@@ -28,6 +31,7 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 };
 
 export function EventCountdownCard({ event }: { event: EventApp }) {
+  const t = useTranslations('dashboard.countdown');
   const daysRemaining = getDaysRemaining(event.eventDate);
   const isPast = daysRemaining < 0;
   const isToday = daysRemaining === 0;
@@ -49,7 +53,7 @@ export function EventCountdownCard({ event }: { event: EventApp }) {
             {isPast ? Math.abs(daysRemaining) : daysRemaining}
           </p>
           <p className="mt-2 text-lg text-muted-foreground">
-            {isToday ? 'Today is the day!' : isPast ? 'days since the event' : 'days to go'}
+            {isToday ? t('today') : isPast ? t('daysSince') : t('daysTo')}
           </p>
         </div>
 

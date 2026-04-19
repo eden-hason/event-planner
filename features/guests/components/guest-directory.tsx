@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useActionState, startTransition, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter, RsvpStatusFilter } from '@/features/guests/components/filters';
@@ -8,7 +10,6 @@ import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
-import { toast } from 'sonner';
 import { IconUpload } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ export function GuestDirectory({
   selectedStatuses: externalStatuses,
   onStatusToggle: externalStatusToggle,
 }: GuestDirectoryProps) {
+  const t = useTranslations('guests');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const { pageSize, isCalculated } = useDynamicPageSize({
@@ -53,28 +55,22 @@ export function GuestDirectory({
   const selectedStatuses = externalStatuses ?? internalStatuses;
   const handleStatusToggle = externalStatusToggle ?? internalStatusToggle;
 
-  // Delete guest action with toast
   const deleteActionWithToast = async (
     prevState: DeleteGuestState | null,
     params: { guestId: string; guestName: string },
   ): Promise<DeleteGuestState | null> => {
     const promise = deleteGuest(params.guestId).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to delete guest.');
+        throw new Error(result.message || t('directory.guestDeleteFailed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Deleting ${params.guestName}...`,
-      success: (data) => {
-        return data.message || 'Guest deleted successfully.';
-      },
-      error: (err) => {
-        return err instanceof Error
-          ? err.message
-          : 'Failed to delete guest. Please try again.';
-      },
+      loading: t('directory.deletingGuest', { name: params.guestName }),
+      success: (data) => data.message || t('directory.guestDeleted'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('directory.guestDeleteFailed'),
     });
 
     try {
@@ -115,7 +111,7 @@ export function GuestDirectory({
             className="gap-2"
           >
             <IconUpload size={16} />
-            Import CSV
+            {t('directory.importCsv')}
           </Button>
         </div>
         <div className="flex items-center gap-2">

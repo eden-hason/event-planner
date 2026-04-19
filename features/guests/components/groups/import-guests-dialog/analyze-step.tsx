@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { IconSparkles } from '@tabler/icons-react';
 import { PulseRingIcon } from '@/components/icons/svg-spinners-pulse-ring';
@@ -19,26 +20,39 @@ const AI_FIELD_TO_KULULU: Record<string, KululuFieldValue> = {
   amount: 'amount',
 };
 
-const FIELD_LABELS: Record<string, string> = {
-  full_name: 'Name',
-  phone: 'Phone',
-  amount: 'Amount',
-};
+function convertAiMappingToColumnMapping(
+  aiMapping: Record<string, string>,
+  headers: string[],
+): ColumnMapping {
+  const result: ColumnMapping = {};
+  for (const [header, aiField] of Object.entries(aiMapping)) {
+    const colIndex = headers.findIndex((h) => h === header);
+    const kuluField = AI_FIELD_TO_KULULU[aiField];
+    if (colIndex !== -1 && kuluField) {
+      result[colIndex] = kuluField;
+    }
+  }
+  return result;
+}
 
-const STATUS_LINES = [
-  (rowCount: number) => `File parsed — ${rowCount} rows detected`,
-  () => 'Reading column headers…',
-  () => 'Analyzing sample data…',
-  () => 'Mapping to guest schema…',
-];
+type Status = 'idle' | 'loading' | 'success' | 'error';
 
-export function AnalyzeLoadingPreview({
+interface AnalyzeStepProps {
+  parsedData: ParsedCSV | null;
+  onColumnMappingChange: (mapping: ColumnMapping) => void;
+}
+
+function AnalyzeLoadingPreview({
   rowCount,
   currentLine,
+  statusLines,
 }: {
   rowCount: number;
   currentLine: number;
+  statusLines: ((rowCount: number) => string)[];
 }) {
+  const t = useTranslations('guests');
+
   return (
     <div className="flex flex-col items-center gap-6 pt-8 text-center">
       <div className="relative flex items-center justify-center">
@@ -48,22 +62,18 @@ export function AnalyzeLoadingPreview({
         </div>
       </div>
 
-      {/* Text */}
       <div className="space-y-1.5">
         <p className="mt-4 text-xl font-bold tracking-tight">
-          Analyzing your file…
+          {t('import.analyze.heading')}
         </p>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Our AI is reading your columns and mapping
-          <br />
-          your guest data automatically
+          {t('import.analyze.description')}
         </p>
       </div>
 
-      {/* Log box */}
       <div className="bg-muted/40 w-full rounded-xl border px-5 py-4 text-left">
         <div className="space-y-2 font-mono text-sm">
-          {STATUS_LINES.map((getLine, i) => {
+          {statusLines.map((getLine, i) => {
             const done = i < currentLine;
             const active = i === currentLine;
             if (i > currentLine) return null;
@@ -89,32 +99,25 @@ export function AnalyzeLoadingPreview({
   );
 }
 
-function convertAiMappingToColumnMapping(
-  aiMapping: Record<string, string>,
-  headers: string[],
-): ColumnMapping {
-  const result: ColumnMapping = {};
-  for (const [header, aiField] of Object.entries(aiMapping)) {
-    const colIndex = headers.findIndex((h) => h === header);
-    const kuluField = AI_FIELD_TO_KULULU[aiField];
-    if (colIndex !== -1 && kuluField) {
-      result[colIndex] = kuluField;
-    }
-  }
-  return result;
-}
-
-type Status = 'idle' | 'loading' | 'success' | 'error';
-
-interface AnalyzeStepProps {
-  parsedData: ParsedCSV | null;
-  onColumnMappingChange: (mapping: ColumnMapping) => void;
-}
-
 export function AnalyzeStep({
   parsedData,
   onColumnMappingChange,
 }: AnalyzeStepProps) {
+  const t = useTranslations('guests');
+
+  const statusLines = [
+    (rowCount: number) => t('import.analyze.rowsDetected', { count: rowCount }),
+    () => t('import.analyze.readingHeaders'),
+    () => t('import.analyze.analyzingSample'),
+    () => t('import.analyze.mappingSchema'),
+  ];
+
+  const fieldLabels: Record<string, string> = {
+    full_name: t('import.map.fieldName'),
+    phone: t('import.map.fieldPhone'),
+    amount: t('import.map.fieldAmount'),
+  };
+
   const [status, setStatus] = useState<Status>('idle');
   const [result, setResult] = useState<AnalyzeCsvResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -145,12 +148,11 @@ export function AnalyzeStep({
       );
       onColumnMappingChange(mapping);
     } else {
-      setErrorMessage(state.message ?? 'Analysis failed.');
+      setErrorMessage(state.message ?? t('import.analyze.failedHeading'));
       setStatus('error');
     }
   };
 
-  // Auto-trigger on mount (Strict Mode safe)
   useEffect(() => {
     if (hasRun.current || !parsedData) return;
     hasRun.current = true;
@@ -158,12 +160,11 @@ export function AnalyzeStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsedData]);
 
-  // Advance status lines one by one during loading
   useEffect(() => {
     if (status !== 'loading') return;
     const interval = setInterval(() => {
       setCurrentLine((prev) => {
-        if (prev >= STATUS_LINES.length - 1) {
+        if (prev >= statusLines.length - 1) {
           clearInterval(interval);
           return prev;
         }
@@ -183,7 +184,11 @@ export function AnalyzeStep({
 
   if (status === 'idle' || status === 'loading') {
     return (
-      <AnalyzeLoadingPreview rowCount={rowCount} currentLine={currentLine} />
+      <AnalyzeLoadingPreview
+        rowCount={rowCount}
+        currentLine={currentLine}
+        statusLines={statusLines}
+      />
     );
   }
 
@@ -192,7 +197,7 @@ export function AnalyzeStep({
       <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 text-center">
         <AlertCircle className="text-destructive h-8 w-8" />
         <div>
-          <p className="font-medium">Analysis failed</p>
+          <p className="font-medium">{t('import.analyze.failedHeading')}</p>
           <p className="text-muted-foreground text-sm">{errorMessage}</p>
         </div>
         <Button
@@ -202,50 +207,40 @@ export function AnalyzeStep({
             runAnalysis();
           }}
         >
-          Try again
+          {t('import.analyze.tryAgain')}
         </Button>
       </div>
     );
   }
 
-  // success
   const mappedLabels =
-    result?.preview.map((r) => FIELD_LABELS[r.field] ?? r.field) ?? [];
+    result?.preview.map((r) => fieldLabels[r.field] ?? r.field) ?? [];
 
   return (
     <div className="flex flex-col items-center gap-6 py-4 text-center">
-      {/* Check icon */}
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
         <CheckCircle2 className="h-10 w-10 text-green-500 dark:text-green-400" />
       </div>
 
-      {/* Text */}
       <div className="space-y-1.5">
-        <p className="text-xl font-bold tracking-tight">Mapping Complete</p>
+        <p className="text-xl font-bold tracking-tight">{t('import.analyze.successHeading')}</p>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          Our AI has successfully mapped your guest data to the
-          <br />
-          correct fields. Everything looks good to go!
+          {t('import.analyze.successDescription')}
         </p>
       </div>
 
-      {/* Log box */}
       <div className="bg-muted/40 w-full rounded-xl border px-5 py-4 text-left">
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-2.5">
             <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
             <span>
-              File parsed —{' '}
-              <span className="font-bold">
-                {parsedData?.rows.length ?? 0} rows
-              </span>{' '}
-              detected
+              {t('import.analyze.rowsDetected', { count: parsedData?.rows.length ?? 0 })}
             </span>
           </div>
           <div className="flex items-start gap-2.5">
             <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
             <span className="flex flex-wrap items-center gap-1">
-              Columns identified:
+              {t('import.analyze.columnsIdentified')}
               {mappedLabels.map((label) => (
                 <span
                   key={label}
@@ -258,7 +253,7 @@ export function AnalyzeStep({
           </div>
           <div className="flex items-start gap-2.5">
             <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
-            <span>Mapping to guest schema complete</span>
+            <span>{t('import.analyze.mappingComplete')}</span>
           </div>
 
           {result && result.warnings.length > 0 && (

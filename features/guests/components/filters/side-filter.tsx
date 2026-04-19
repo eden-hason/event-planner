@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -7,11 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import {
-  GROUP_SIDES,
-  GROUP_SIDE_LABELS,
-  GroupSide,
-} from '@/features/guests/schemas';
+import { GROUP_SIDES, GroupSide } from '@/features/guests/schemas';
 
 interface SideFilterProps {
   selectedSides: GroupSide[];
@@ -26,14 +23,15 @@ export function SideFilter({
   onSelectAll,
   isAllSelected,
 }: SideFilterProps) {
+  const t = useTranslations('guests');
+
+  const sideLabel = (side: GroupSide) =>
+    t(`sides.${side}` as 'sides.bride' | 'sides.groom');
+
   const getButtonLabel = () => {
-    if (selectedSides.length === 0) {
-      return 'Filter by side';
-    }
-    if (selectedSides.length === 1) {
-      return GROUP_SIDE_LABELS[selectedSides[0]];
-    }
-    return `${selectedSides.length} sides selected`;
+    if (selectedSides.length === 0) return t('filters.filterBySide');
+    if (selectedSides.length === 1) return sideLabel(selectedSides[0]);
+    return t('filters.sidesSelected', { count: selectedSides.length });
   };
 
   return (
@@ -63,7 +61,7 @@ export function SideFilter({
                   ) : (
                     <div className="h-4 w-4 shrink-0" />
                   )}
-                  <span>{GROUP_SIDE_LABELS[side]}</span>
+                  <span>{sideLabel(side)}</span>
                 </div>
               );
             })}
@@ -77,7 +75,7 @@ export function SideFilter({
             ) : (
               <div className="h-4 w-4 shrink-0" />
             )}
-            <span>Select All</span>
+            <span>{t('filters.selectAll')}</span>
           </div>
         </div>
       </PopoverContent>

@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import {
   IconChevronRight,
+  IconChevronLeft,
   IconCircleCheckFilled,
   IconCircleDashed,
 } from '@tabler/icons-react';
+import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -82,10 +84,16 @@ function StepIndicator({ completed }: { completed: boolean }) {
 export function Onboarding({
   steps,
   title = 'Get started',
+  outOf = ' out of ',
+  stepsLeft = ' steps left',
 }: {
   steps: OnboardingStep[];
   title?: string;
+  outOf?: string;
+  stepsLeft?: string;
 }) {
+  const isRTL = useLocale() === 'he';
+
   const [openStepId, setOpenStepId] = useState<string | null>(() => {
     const firstIncomplete = steps.find((s) => !s.completed);
     return firstIncomplete?.id ?? steps[0]?.id ?? null;
@@ -100,21 +108,21 @@ export function Onboarding({
 
   return (
     <div className="bg-card text-card-foreground h-full rounded-lg border p-4 shadow-xs">
-      <div className="mr-2 mb-4 flex flex-col justify-between sm:flex-row sm:items-center">
-        <h3 className="text-foreground ml-2 font-semibold text-balance">
+      <div className="me-2 mb-4 flex flex-col justify-between sm:flex-row sm:items-center">
+        <h3 className="text-foreground ms-2 font-semibold text-balance">
           {title}
         </h3>
         <div className="mt-2 flex items-center justify-end sm:mt-0">
           <CircularProgress remaining={remainingCount} total={steps.length} />
-          <div className="text-muted-foreground mr-3 ml-1.5 text-sm">
+          <div className="text-muted-foreground me-3 ms-1.5 text-sm">
             <span className="text-foreground font-medium">
               {remainingCount}
-            </span>{' '}
-            out of{' '}
+            </span>
+            {outOf}
             <span className="text-foreground font-medium">
-              {steps.length} steps
-            </span>{' '}
-            left
+              {steps.length}
+            </span>
+            {stepsLeft}
           </div>
         </div>
       </div>
@@ -148,7 +156,7 @@ export function Onboarding({
                   }
                 }}
                 className={cn(
-                  'focus-visible:ring-ring block w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
+                  'focus-visible:ring-ring block w-full cursor-pointer text-start focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                   isOpen && 'rounded-lg',
                 )}
               >
@@ -158,7 +166,7 @@ export function Onboarding({
                     isOpen && 'border-border bg-muted border',
                   )}
                 >
-                  <div className="relative flex items-center justify-between gap-3 py-3 pr-2 pl-4">
+                  <div className="relative flex items-center justify-between gap-3 py-3 pe-2 ps-4">
                     <div className="flex w-full gap-3">
                       <div className="shrink-0">
                         <StepIndicator completed={step.completed} />
@@ -190,10 +198,9 @@ export function Onboarding({
                       </div>
                     </div>
                     {!isOpen && (
-                      <IconChevronRight
-                        className="text-muted-foreground h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
+                      isRTL
+                        ? <IconChevronLeft className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true" />
+                        : <IconChevronRight className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true" />
                     )}
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationInput } from '@/components/ui/location-input';
 import { cardHover } from '@/lib/utils';
@@ -15,6 +16,7 @@ import {
 import { EventDetailsUpdate, LocationCoords, Location } from '../../schemas';
 
 export function LocationCard() {
+  const t = useTranslations('eventDetails.location');
   const form = useFormContext<EventDetailsUpdate>();
   const location = form.watch('location');
 
@@ -33,7 +35,7 @@ export function LocationCard() {
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Location</CardTitle>
+        <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FormField
@@ -41,10 +43,10 @@ export function LocationCard() {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel>{t('label')}</FormLabel>
               <FormControl>
                 <LocationInput
-                  placeholder="Search for venue address..."
+                  placeholder={t('placeholder')}
                   value={field.value?.name || ''}
                   onChange={handleLocationChange}
                 />

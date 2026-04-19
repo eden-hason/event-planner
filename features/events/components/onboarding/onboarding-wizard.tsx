@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import { IconArrowLeft, IconArrowRight, IconConfetti } from '@tabler/icons-react';
 import { toast } from 'sonner';
@@ -24,15 +25,16 @@ interface WizardData {
   guestsEstimate: GuestsEstimate | null;
 }
 
-const GUEST_OPTIONS: { value: GuestsEstimate; label: string }[] = [
-  { value: 'up_to_100', label: 'Up to 100' },
-  { value: '100_200', label: '100–200' },
-  { value: '200_350', label: '200–350' },
-  { value: '350_plus', label: '350+' },
+const GUEST_OPTION_VALUES: GuestsEstimate[] = [
+  'up_to_100',
+  '100_200',
+  '200_350',
+  '350_plus',
 ];
 
 export function OnboardingWizard() {
   const router = useRouter();
+  const t = useTranslations('newEvent');
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>({
     brideName: '',
@@ -63,14 +65,14 @@ export function OnboardingWizard() {
     });
 
     toast.promise(promise, {
-      loading: 'Creating your event...',
+      loading: t('toast.creating'),
       success: (result) => {
         setCreatedEventId(result.eventId ?? null);
         setStep('success');
-        return result.message || 'Event created!';
+        return result.message || t('toast.created');
       },
       error: (err) =>
-        err instanceof Error ? err.message : 'Something went wrong.',
+        err instanceof Error ? err.message : t('toast.error'),
     });
 
     try {
@@ -122,10 +124,9 @@ export function OnboardingWizard() {
 
           <div className="flex w-full -translate-y-[50px] flex-col items-center gap-8">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-bold">Your event is ready!</h1>
+              <h1 className="text-3xl font-bold">{t('success.title')}</h1>
               <p className="text-muted-foreground max-w-xs text-base">
-                Your wedding event has been created. Time to start planning the
-                big day!
+                {t('success.description')}
               </p>
             </div>
 
@@ -134,14 +135,14 @@ export function OnboardingWizard() {
                 onClick={() => router.push(`/app/${createdEventId}/dashboard`)}
                 className="w-full gap-2"
               >
-                Go to Dashboard <IconArrowRight size={16} />
+                {t('success.goToDashboard')} <IconArrowRight size={16} className="rtl:rotate-180" />
               </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push(`/app/${createdEventId}/details`)}
                 className="w-full"
               >
-                View event details
+                {t('success.viewDetails')}
               </Button>
             </div>
           </div>
@@ -163,7 +164,7 @@ export function OnboardingWizard() {
                 }
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
               >
-                <IconArrowLeft size={14} /> Back
+                <IconArrowLeft size={14} /> {t('back')}
               </button>
             )}
             <span
@@ -172,7 +173,7 @@ export function OnboardingWizard() {
                 step === 1 && 'ml-auto',
               )}
             >
-              Step {step} of 3
+              {t('stepOf', { step })}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
@@ -187,19 +188,19 @@ export function OnboardingWizard() {
         {step === 1 && (
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="mb-1 text-xl font-bold">Welcome to Kululu 🎉</h2>
+              <h2 className="mb-1 text-xl font-bold">{t('step1.title')}</h2>
               <p className="text-muted-foreground text-sm">
-                Tell us about the happy couple
+                {t('step1.description')}
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs font-medium">
-                  Bride&apos;s name
+                  {t('step1.brideLabel')}
                 </label>
                 <Input
-                  placeholder="Enter bride's name"
+                  placeholder={t('step1.bridePlaceholder')}
                   value={data.brideName}
                   onChange={(e) =>
                     setData((d) => ({ ...d, brideName: e.target.value }))
@@ -208,10 +209,10 @@ export function OnboardingWizard() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs font-medium">
-                  Groom&apos;s name
+                  {t('step1.groomLabel')}
                 </label>
                 <Input
-                  placeholder="Enter groom's name"
+                  placeholder={t('step1.groomPlaceholder')}
                   value={data.groomName}
                   onChange={(e) =>
                     setData((d) => ({ ...d, groomName: e.target.value }))
@@ -226,23 +227,23 @@ export function OnboardingWizard() {
                 ✨
               </div>
               <div>
-                <p className="text-xs font-semibold">All-in-one Management</p>
+                <p className="text-xs font-semibold">{t('step1.featureTitle')}</p>
                 <p className="text-muted-foreground mt-0.5 text-xs">
-                  Guests, schedules, invitations, and more — all in one place.
+                  {t('step1.featureDescription')}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <Button onClick={() => setStep(2)} className="w-full">
-                Continue
+                {t('step1.continue')}
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => setStep(2)}
                 className="text-muted-foreground w-full"
               >
-                Skip for now
+                {t('step1.skip')}
               </Button>
             </div>
           </div>
@@ -252,16 +253,16 @@ export function OnboardingWizard() {
         {step === 2 && (
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="mb-1 text-xl font-bold">When and where?</h2>
+              <h2 className="mb-1 text-xl font-bold">{t('step2.title')}</h2>
               <p className="text-muted-foreground text-sm">
-                Set your date and venue
+                {t('step2.description')}
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs font-medium">
-                  Wedding date <span className="text-destructive">*</span>
+                  {t('step2.dateLabel')} <span className="text-destructive">*</span>
                 </label>
                 <DatePicker
                   date={
@@ -275,12 +276,12 @@ export function OnboardingWizard() {
                       eventDate: date ? format(date, 'yyyy-MM-dd') : '',
                     }))
                   }
-                  placeholder="Pick the wedding date"
+                  placeholder={t('step2.datePlaceholder')}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-muted-foreground text-xs font-medium">
-                  Venue
+                  {t('step2.venueLabel')}
                 </label>
                 <LocationInput
                   value={data.location?.name || ''}
@@ -290,10 +291,10 @@ export function OnboardingWizard() {
                       location: value ? { name: value, coords } : null,
                     }));
                   }}
-                  placeholder="Search for your venue..."
+                  placeholder={t('step2.venuePlaceholder')}
                 />
                 <p className="text-muted-foreground text-xs">
-                  You can fill this in later
+                  {t('step2.venueHelper')}
                 </p>
               </div>
             </div>
@@ -304,14 +305,14 @@ export function OnboardingWizard() {
                 disabled={!data.eventDate}
                 className="w-full"
               >
-                Continue
+                {t('step2.continue')}
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => setStep(1)}
                 className="text-muted-foreground w-full"
               >
-                Go Back
+                {t('step2.goBack')}
               </Button>
             </div>
           </div>
@@ -321,31 +322,31 @@ export function OnboardingWizard() {
         {step === 3 && (
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="mb-1 text-xl font-bold">How many guests?</h2>
+              <h2 className="mb-1 text-xl font-bold">{t('step3.title')}</h2>
               <p className="text-muted-foreground text-sm">
-                This helps us tailor your experience
+                {t('step3.description')}
               </p>
             </div>
 
             <div className="flex flex-col gap-2">
-              {GUEST_OPTIONS.map((opt) => (
+              {GUEST_OPTION_VALUES.map((value) => (
                 <button
-                  key={opt.value}
+                  key={value}
                   onClick={() =>
                     setData((d) => ({
                       ...d,
                       guestsEstimate:
-                        d.guestsEstimate === opt.value ? null : opt.value,
+                        d.guestsEstimate === value ? null : value,
                     }))
                   }
                   className={cn(
                     'rounded-md border-2 px-4 py-3 text-sm font-medium transition-colors',
-                    data.guestsEstimate === opt.value
+                    data.guestsEstimate === value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-card text-foreground hover:border-primary/40',
                   )}
                 >
-                  {opt.label}
+                  {t(`step3.guestOptions.${value}`)}
                 </button>
               ))}
             </div>
@@ -356,7 +357,7 @@ export function OnboardingWizard() {
                 disabled={isPending}
                 className="w-full"
               >
-                Create my event! 🎊
+                {t('step3.create')}
               </Button>
               <Button
                 variant="ghost"
@@ -364,7 +365,7 @@ export function OnboardingWizard() {
                 disabled={isPending}
                 className="text-muted-foreground w-full"
               >
-                Skip for now
+                {t('step3.skip')}
               </Button>
             </div>
           </div>

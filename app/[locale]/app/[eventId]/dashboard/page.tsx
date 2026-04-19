@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
 import { getRecentRsvpActivity, getCollaboratorCount, getPendingSchedulesCount } from '@/features/dashboard/queries';
@@ -30,7 +31,8 @@ export default async function DashboardPage({
 }) {
   const { eventId } = await params;
 
-  const [event, guests, groups, recentActivity, collaboratorCount, pendingSchedulesCount] = await Promise.all([
+  const [t, event, guests, groups, recentActivity, collaboratorCount, pendingSchedulesCount] = await Promise.all([
+    getTranslations('dashboard'),
     getEventById(eventId),
     getEventGuests(eventId),
     getEventGroupsWithGuests(eventId),
@@ -70,7 +72,7 @@ export default async function DashboardPage({
         </div>
       ) : (
         <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
-          Event not found
+          {t('eventNotFound')}
         </div>
       )}
 

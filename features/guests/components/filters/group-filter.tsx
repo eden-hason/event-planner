@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -24,20 +25,24 @@ export function GroupFilter({
   onSelectAll,
   isAllSelected,
 }: GroupFilterProps) {
-  // Find selected group names for display
+  const t = useTranslations('guests');
+
   const selectedGroupNames = groups
     .filter((g) => selectedGroupIds.includes(g.id))
     .map((g) => g.name);
+
+  const label =
+    selectedGroupIds.length === 0
+      ? t('filters.filterByGroup')
+      : selectedGroupIds.length === 1
+        ? selectedGroupNames[0]
+        : t('filters.groupsSelected', { count: selectedGroupIds.length });
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-[180px] justify-between">
-          {selectedGroupIds.length === 0
-            ? 'Filter by group'
-            : selectedGroupIds.length === 1
-              ? selectedGroupNames[0]
-              : `${selectedGroupIds.length} groups selected`}
+          {label}
           <IconChevronDown size={16} className="ml-2 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -71,7 +76,7 @@ export function GroupFilter({
             ) : (
               <div className="h-4 w-4 shrink-0" />
             )}
-            <span>Select All</span>
+            <span>{t('filters.selectAll')}</span>
           </div>
         </div>
       </PopoverContent>

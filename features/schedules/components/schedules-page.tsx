@@ -1,8 +1,9 @@
+import { getTranslations } from 'next-intl/server';
+
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import {
-  ACTION_TYPE_LABELS,
   ACTION_TYPES,
   type ActionType,
   type GuestStats,
@@ -45,6 +46,8 @@ export async function SchedulesPage({
   schedules,
   event,
 }: SchedulesPageProps) {
+  const t = await getTranslations('schedules');
+
   // Resolve all templates for schedules from local config
   const templateKeys = schedules
     .map((s) => s.templateKey)
@@ -82,7 +85,7 @@ export async function SchedulesPage({
       <>
         <SchedulesHeader />
         <p className="text-muted-foreground py-8 text-center text-sm">
-          No schedules configured for this event.
+          {t('noSchedules')}
         </p>
       </>
     );
@@ -93,7 +96,7 @@ export async function SchedulesPage({
 
   for (const type of visibleTypes) {
     const items = schedulesByActionType[type]!;
-    const baseLabel = ACTION_TYPE_LABELS[type];
+    const baseLabel = t(`actionTypes.${type}`);
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(({ schedule, template }, index) => {

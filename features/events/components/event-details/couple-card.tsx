@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cardHover } from '@/lib/utils';
@@ -16,17 +17,18 @@ import {
 import { EventDetailsUpdate } from '../../schemas';
 
 export function CoupleCard() {
+  const t = useTranslations('eventDetails.couple');
   const form = useFormContext<EventDetailsUpdate>();
 
   return (
     <Card className={cardHover}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">The Couple</CardTitle>
+        <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <h4 className="text-muted-foreground text-sm font-medium">
-            Couple Names
+            {t('coupleNames')}
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -34,9 +36,9 @@ export function CoupleCard() {
               name="hostDetails.bride.name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bride Name</FormLabel>
+                  <FormLabel>{t('brideName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter bride's name" {...field} />
+                    <Input placeholder={t('brideNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -47,9 +49,9 @@ export function CoupleCard() {
               name="hostDetails.groom.name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Groom Name</FormLabel>
+                  <FormLabel>{t('groomName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter groom's name" {...field} />
+                    <Input placeholder={t('groomNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -62,7 +64,7 @@ export function CoupleCard() {
 
         <div className="space-y-4">
           <h4 className="text-muted-foreground text-sm font-medium">
-            Parents&apos; Names
+            {t('parentsNames')}
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -70,10 +72,10 @@ export function CoupleCard() {
               name="hostDetails.bride.parents"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bride&apos;s Side</FormLabel>
+                  <FormLabel>{t('brideSide')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter bride's parents names"
+                      placeholder={t('brideSidePlaceholder')}
                       rows={3}
                       {...field}
                     />
@@ -87,10 +89,10 @@ export function CoupleCard() {
               name="hostDetails.groom.parents"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Groom&apos;s Side</FormLabel>
+                  <FormLabel>{t('groomSide')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter groom's parents names"
+                      placeholder={t('groomSidePlaceholder')}
                       rows={3}
                       {...field}
                     />

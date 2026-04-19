@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   IconArrowBack,
   IconExternalLink,
@@ -59,6 +60,7 @@ export function MessageContentCard({
   template,
   event,
 }: MessageContentCardProps) {
+  const t = useTranslations('schedules.messagePreview');
   const { resolvedBody, hasMissingFields } = template
     ? resolveTemplateBodyForPreview(template, event)
     : { resolvedBody: '', hasMissingFields: false };
@@ -77,10 +79,10 @@ export function MessageContentCard({
           <div className="bg-primary/10 rounded-md p-1.5">
             <IconMessage size={16} className="text-primary" />
           </div>
-          Message Preview
+          {t('cardTitle')}
         </CardTitle>
         <CardDescription>
-          The message guests will receive for this schedule.
+          {t('cardDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -94,7 +96,7 @@ export function MessageContentCard({
             {template === null ? (
               <div className="flex min-h-[140px] flex-1 items-center justify-center">
                 <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
-                  No message configured yet.
+                  {t('noMessage')}
                 </p>
               </div>
             ) : (
@@ -127,7 +129,7 @@ export function MessageContentCard({
                         <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
                           <IconPhoto size={28} className="text-zinc-400" />
                           <span className="text-[10px] text-zinc-400">
-                            Image
+                            {t('imagePlaceholder')}
                           </span>
                         </div>
                       ))}
@@ -159,7 +161,7 @@ export function MessageContentCard({
                             ) : (
                               <IconArrowBack size={14} />
                             )}
-                            <span>{btn.text ?? `Button ${btn.index + 1}`}</span>
+                            <span>{btn.text ?? t('button', { index: btn.index + 1 })}</span>
                           </div>
                         ))}
                       </div>
@@ -180,15 +182,12 @@ export function MessageContentCard({
         {hasMissingFields && event && (
           <Alert className="mt-3">
             <IconInfoCircle />
-            <AlertTitle>Missing event details</AlertTitle>
+            <AlertTitle>{t('missingFields.title')}</AlertTitle>
             <AlertDescription>
-              <p>
-                Some required fields aren&apos;t filled in yet. Complete them to
-                see the full message preview.
-              </p>
+              <p>{t('missingFields.description')}</p>
               <Button size="xs" variant="link" className="mt-1 px-0" asChild>
                 <Link href={`/app/${event.id}/details`}>
-                  Event Details
+                  {t('missingFields.link')}
                   <IconExternalLink />
                 </Link>
               </Button>

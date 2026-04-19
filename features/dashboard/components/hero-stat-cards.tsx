@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { GuestsEstimate } from '@/features/events/schemas';
 
@@ -45,13 +48,14 @@ export function DaysToEventCard({
 }: {
   daysRemaining: number;
 }) {
+  const t = useTranslations('dashboard.stats');
   const isToday = daysRemaining === 0;
   const isPast = daysRemaining < 0;
 
   const value = isToday ? '🎉' : Math.abs(daysRemaining).toString();
-  const sub = isToday ? "Today's the day!" : isPast ? 'days since the event' : 'days to go';
+  const sub = isToday ? t('todayIsTheDay') : isPast ? t('daysSince') : t('daysTo');
 
-  return <StatCard label="Days to Event" value={value} sub={sub} />;
+  return <StatCard label={t('daysToEvent')} value={value} sub={sub} />;
 }
 
 export function GuestsInvitedCard({
@@ -61,14 +65,15 @@ export function GuestsInvitedCard({
   total: number;
   estimate?: GuestsEstimate;
 }) {
+  const t = useTranslations('dashboard.stats');
   const upper = estimate ? ESTIMATE_UPPER[estimate] : null;
   const pct = upper ? Math.min(100, Math.round((total / upper) * 100)) : null;
 
   return (
     <StatCard
-      label="Guests Invited"
+      label={t('guestsInvited')}
       value={total}
-      sub={estimate ? `of ~${ESTIMATE_LABEL[estimate]} estimated` : undefined}
+      sub={estimate ? t('ofEstimated', { estimate: ESTIMATE_LABEL[estimate] }) : undefined}
     >
       {pct !== null && (
         <div className="mt-3">
@@ -78,7 +83,7 @@ export function GuestsInvitedCard({
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">{pct}% of estimate</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('pctOfEstimate', { pct })}</p>
         </div>
       )}
     </StatCard>
@@ -90,11 +95,12 @@ export function ScheduledMessagesCard({
 }: {
   count: number;
 }) {
+  const t = useTranslations('dashboard.stats');
   return (
     <StatCard
-      label="Scheduled Messages"
+      label={t('scheduledMessages')}
       value={count}
-      sub={count === 1 ? 'pending message' : 'pending messages'}
+      sub={count === 1 ? t('pendingMessageSingular') : t('pendingMessages')}
     />
   );
 }

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useActionState, startTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,7 +67,16 @@ export function GuestForm({
   onPendingChange,
   showDietary = false,
 }: GuestFormProps) {
+  const t = useTranslations('guests');
+  const tCommon = useTranslations('common');
   const isEditMode = !!guest;
+
+  const dietaryLabels: Record<string, string> = {
+    vegan: t('dietary.vegan'),
+    vegetarian: t('dietary.vegetarian'),
+    glatt: t('dietary.glatt'),
+    'gluten-free': t('dietary.glutenFree'),
+  };
 
   const form = useForm({
     resolver: zodResolver(GuestUpsertSchema),
@@ -112,15 +122,15 @@ export function GuestForm({
       });
 
       toast.promise(promise, {
-        loading: isEditMode ? 'Updating guest...' : 'Adding guest...',
+        loading: isEditMode ? t('form.updatingGuest') : t('form.addingGuest'),
         success: (data) => {
           if (!isEditMode) {
             form.reset();
           }
-          return data.message || (isEditMode ? 'Guest updated.' : 'Guest added.');
+          return data.message || (isEditMode ? t('form.guestUpdated') : t('form.guestAdded'));
         },
         error: (err) =>
-          err instanceof Error ? err.message : 'Something went wrong.',
+          err instanceof Error ? err.message : t('form.somethingWentWrong'),
       });
 
       try {
@@ -148,10 +158,9 @@ export function GuestForm({
         formData.append(key, value ? String(value) : 'null');
         return;
       }
-      // dietaryRestrictions and notes can be intentionally cleared (empty string → null in DB)
       if (key === 'dietaryRestrictions' || key === 'notes') {
         if (value !== undefined && value !== null) {
-          formData.append(key, String(value)); // '' is valid; schema/transformer handles it
+          formData.append(key, String(value));
         }
         return;
       }
@@ -160,7 +169,7 @@ export function GuestForm({
       }
     });
 
-    onSuccess?.(); // Close the sheet optimistically
+    onSuccess?.();
 
     startTransition(() => {
       formAction(formData);
@@ -186,11 +195,11 @@ export function GuestForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
-        {/* Card 1: Contact Information */}
+        {/* Contact Information */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
             <IconAddressBook size={16} className="text-muted-foreground" />
-            Contact Information
+            {t('form.contactInfo')}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -198,9 +207,9 @@ export function GuestForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t('form.name')}</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Guest name" {...field} />
+                    <Input type="text" placeholder={t('form.namePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -211,11 +220,11 @@ export function GuestForm({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t('form.phone')}</FormLabel>
                   <FormControl>
                     <Input
                       type="tel"
-                      placeholder="Phone number"
+                      placeholder={t('form.phonePlaceholder')}
                       {...field}
                       value={field.value || ''}
                     />
@@ -230,7 +239,7 @@ export function GuestForm({
             name="amount"
             render={() => (
               <FormItem>
-                <FormLabel>Amount</FormLabel>
+                <FormLabel>{t('form.amount')}</FormLabel>
                 <FormControl>
                   <div className="flex items-center gap-3">
                     <Button
@@ -253,7 +262,7 @@ export function GuestForm({
                         {amountValue}
                       </span>
                       <p className="text-xs text-muted-foreground">
-                        {amountValue === 1 ? 'person' : 'people'}
+                        {amountValue === 1 ? t('form.person') : t('form.people')}
                       </p>
                     </div>
                     <Button
@@ -277,11 +286,11 @@ export function GuestForm({
           />
         </div>
 
-        {/* Card 2: Event Details */}
+        {/* Event Details */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
             <IconLayoutList size={16} className="text-muted-foreground" />
-            Event Details
+            {t('form.eventDetails')}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -289,17 +298,17 @@ export function GuestForm({
               name="rsvpStatus"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>RSVP Status</FormLabel>
+                  <FormLabel>{t('form.rsvpStatus')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select RSVP status" />
+                        <SelectValue placeholder={t('form.rsvpPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="declined">Declined</SelectItem>
+                      <SelectItem value="pending">{t('rsvp.pending')}</SelectItem>
+                      <SelectItem value="confirmed">{t('rsvp.confirmed')}</SelectItem>
+                      <SelectItem value="declined">{t('rsvp.declined')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -313,7 +322,7 @@ export function GuestForm({
                 const selectedGroup = groups.find((g) => g.id === field.value);
                 return (
                   <FormItem>
-                    <FormLabel>Group</FormLabel>
+                    <FormLabel>{t('form.group')}</FormLabel>
                     <Select
                       value={field.value || 'none'}
                       onValueChange={(value) =>
@@ -322,7 +331,7 @@ export function GuestForm({
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select group">
+                          <SelectValue placeholder={t('form.groupPlaceholder')}>
                             {selectedGroup ? (
                               <span className="flex items-center gap-2">
                                 <GroupIcon
@@ -332,13 +341,13 @@ export function GuestForm({
                                 {selectedGroup.name}
                               </span>
                             ) : (
-                              'No group'
+                              t('form.noGroup')
                             )}
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No group</SelectItem>
+                        <SelectItem value="none">{t('form.noGroup')}</SelectItem>
                         {groups.map((group) => (
                           <SelectItem key={group.id} value={group.id}>
                             <span className="flex items-center gap-2">
@@ -357,12 +366,12 @@ export function GuestForm({
           </div>
         </div>
 
-        {/* Card 3: Dietary Restrictions */}
+        {/* Dietary Restrictions */}
         {showDietary && (
           <div className="rounded-lg border bg-card p-5 space-y-4">
             <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
               <IconToolsKitchen size={16} className="text-muted-foreground" />
-              Dietary Restrictions
+              {t('form.dietaryRestrictions')}
             </h3>
             <FormField
               control={form.control}
@@ -386,7 +395,7 @@ export function GuestForm({
                             )}
                           >
                             {isActive && <IconCheck size={12} />}
-                            {preset.label}
+                            {dietaryLabels[preset.value] ?? preset.label}
                           </button>
                         );
                       })}
@@ -399,11 +408,11 @@ export function GuestForm({
           </div>
         )}
 
-        {/* Card 4: Notes */}
+        {/* Notes */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
             <IconNote size={16} className="text-muted-foreground" />
-            Notes
+            {t('form.notes')}
           </h3>
           <FormField
             control={form.control}
@@ -412,7 +421,7 @@ export function GuestForm({
               <FormItem>
                 <FormControl>
                   <Textarea
-                    placeholder="Add any additional notes about this guest..."
+                    placeholder={t('form.notesPlaceholder')}
                     className="min-h-[100px]"
                     {...field}
                     value={field.value || ''}
@@ -429,15 +438,15 @@ export function GuestForm({
             <Button type="submit" disabled={isPending}>
               {isPending
                 ? isEditMode
-                  ? 'Updating...'
-                  : 'Adding...'
+                  ? t('form.updating')
+                  : t('form.adding')
                 : isEditMode
-                  ? 'Update Guest'
-                  : 'Add Guest'}
+                  ? t('form.updateGuest')
+                  : t('form.addGuest')}
             </Button>
             {isEditMode && (
               <Button type="button" variant="secondary" onClick={onCancel}>
-                Cancel
+                {tCommon('cancel')}
               </Button>
             )}
           </div>

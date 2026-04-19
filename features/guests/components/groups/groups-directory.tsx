@@ -2,6 +2,7 @@
 
 import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { useState, useActionState, startTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,19 +30,17 @@ export function GroupsDirectory({
   guests,
   onAddGroup,
 }: GroupsDirectoryProps) {
+  const t = useTranslations('guests');
+  const tCommon = useTranslations('common');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [assignDrawerOpen, setAssignDrawerOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<GroupWithGuestsApp | null>(
-    null,
-  );
-  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedGroup, setSelectedGroup] = useState<GroupWithGuestsApp | null>(null);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [selectedSides, setSelectedSides] = useState<GroupSide[]>([]);
 
   const selectionMode = selectedGroupIds.size > 0;
 
-  // Side filter handlers
   const handleSideToggle = (side: GroupSide) => {
     setSelectedSides((prev) =>
       prev.includes(side) ? prev.filter((s) => s !== side) : [...prev, side],
@@ -57,8 +56,6 @@ export function GroupsDirectory({
   };
 
   const isAllSidesSelected = selectedSides.length === GROUP_SIDES.length;
-
-  // Compute available guests (only ungrouped guests)
   const availableGuests = guests.filter((guest) => !guest.groupId);
 
   const handleToggleGroupSelection = (groupId: string) => {
@@ -81,48 +78,39 @@ export function GroupsDirectory({
     const groupIdsToDelete = Array.from(selectedGroupIds);
     const count = groupIdsToDelete.length;
 
-    // Clear selection immediately
     setSelectedGroupIds(new Set());
 
     const promise = deleteGroups(eventId, groupIdsToDelete).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to delete groups.');
+        throw new Error(result.message || t('groups.toast.groupsDeleteFailed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Deleting ${count} group${count > 1 ? 's' : ''}...`,
-      success: (data) => data.message || 'Groups deleted successfully.',
+      loading: t('groups.toast.deletingGroups', { count }),
+      success: (data) => data.message || t('groups.toast.groupsDeleted'),
       error: (err) =>
-        err instanceof Error
-          ? err.message
-          : 'Failed to delete groups. Please try again.',
+        err instanceof Error ? err.message : t('groups.toast.groupsDeleteFailed'),
     });
   };
 
-  // Delete group action with toast
   const deleteActionWithToast = async (
     prevState: DeleteGroupsState | null,
     params: { groupId: string; groupName: string },
   ): Promise<DeleteGroupsState | null> => {
     const promise = deleteGroups(eventId, params.groupId).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || 'Failed to delete group.');
+        throw new Error(result.message || t('groups.toast.groupDeleteFailed'));
       }
       return result;
     });
 
     toast.promise(promise, {
-      loading: `Deleting ${params.groupName}...`,
-      success: (data) => {
-        return data.message || 'Group deleted successfully.';
-      },
-      error: (err) => {
-        return err instanceof Error
-          ? err.message
-          : 'Failed to delete group. Please try again.';
-      },
+      loading: t('groups.toast.deletingGroup', { name: params.groupName }),
+      success: (data) => data.message || t('groups.toast.groupDeleted'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('groups.toast.groupDeleteFailed'),
     });
 
     try {
@@ -139,9 +127,7 @@ export function GroupsDirectory({
   };
 
   const filteredGroups = groups.filter((group) => {
-    const matchesSearch = group.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesSearch = group.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSide =
       selectedSides.length === 0 ||
       (group.side && selectedSides.includes(group.side));
@@ -164,19 +150,16 @@ export function GroupsDirectory({
       {selectionMode ? (
         <div className="bg-muted/50 flex items-center justify-between rounded-lg border px-4 py-3">
           <span className="text-sm font-medium">
-            {selectedGroupIds.size} group{selectedGroupIds.size > 1 ? 's' : ''}{' '}
-            selected
+            {selectedGroupIds.size === 1
+              ? t('groups.selected', { count: selectedGroupIds.size })
+              : t('groups.selectedPlural', { count: selectedGroupIds.size })}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleCancelSelection}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteSelected}
-            >
-              Delete
+            <Button variant="destructive" size="sm" onClick={handleDeleteSelected}>
+              {t('groups.deleteGroup')}
             </Button>
           </div>
         </div>
@@ -185,7 +168,7 @@ export function GroupsDirectory({
           <div className="relative">
             <IconSearch size={16} className="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400" />
             <Input
-              placeholder="Search groups..."
+              placeholder={t('groups.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearchChange}
               className="w-[250px] bg-white pl-10"
@@ -220,9 +203,9 @@ export function GroupsDirectory({
           <div className="rounded-full bg-white p-4">
             <IconPlus size={24} className="text-primary" />
           </div>
-          <span className="text-lg font-bold">Create new group</span>
+          <span className="text-lg font-bold">{t('groups.createNew')}</span>
           <span className="text-muted-foreground text-sm">
-            Add a new segment to your guests
+            {t('groups.createNewDescription')}
           </span>
         </button>
       </div>

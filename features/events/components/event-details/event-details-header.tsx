@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
 import { useFeatureHeader } from '@/components/feature-layout';
@@ -18,6 +19,8 @@ export function EventDetailsHeader({
   isPending = false,
   onDiscard,
 }: EventDetailsHeaderProps) {
+  const t = useTranslations('eventDetails.header');
+
   const headerAction = useMemo(
     () => (
       <div className="flex items-center gap-2">
@@ -28,31 +31,30 @@ export function EventDetailsHeader({
           onClick={onDiscard}
         >
           <IconX className="size-4" />
-          Discard
+          {t('discard')}
         </Button>
         <Button type="submit" form={formId} disabled={!isDirty || isPending}>
           <IconDeviceFloppy className="size-4" />
-          {isPending ? 'Saving...' : 'Save'}
+          {isPending ? t('saving') : t('save')}
         </Button>
       </div>
     ),
-    [formId, isDirty, isPending, onDiscard],
+    [formId, isDirty, isPending, onDiscard, t],
   );
 
   const { setHeader } = useFeatureHeader({
-    title: 'Event Details',
-    description: 'View and manage your event information',
+    title: t('title'),
+    description: t('description'),
     action: headerAction,
   });
 
-  // Update header action when isDirty or isPending changes
   useEffect(() => {
     setHeader({
-      title: 'Event Details',
-      description: 'View and manage your event information',
+      title: t('title'),
+      description: t('description'),
       action: headerAction,
     });
-  }, [headerAction, setHeader]);
+  }, [headerAction, setHeader, t]);
 
   return null;
 }

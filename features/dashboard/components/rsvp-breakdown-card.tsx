@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Label, Pie, PieChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cardHover } from '@/lib/utils';
@@ -12,15 +13,16 @@ import {
 } from '@/components/ui/chart';
 import type { GuestStats } from '../types';
 
-const chartConfig = {
-  people: { label: 'People' },
-  confirmed: { label: 'Confirmed', color: 'var(--color-emerald-500)' },
-  pending: { label: 'Pending', color: 'var(--color-amber-400)' },
-  declined: { label: 'Declined', color: 'var(--color-red-400)' },
-} satisfies ChartConfig;
-
 export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
+  const t = useTranslations('dashboard.rsvpBreakdown');
   const { total, confirmed, pending, declined } = stats;
+
+  const chartConfig = useMemo(() => ({
+    people: { label: t('total') },
+    confirmed: { label: t('confirmed'), color: 'var(--color-emerald-500)' },
+    pending: { label: t('pending'), color: 'var(--color-amber-400)' },
+    declined: { label: t('declined'), color: 'var(--color-red-400)' },
+  }) satisfies ChartConfig, [t]);
 
   const chartData = useMemo(
     () => [
@@ -36,9 +38,9 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
   );
 
   const legendRows = [
-    { label: 'Confirmed', value: confirmed, color: 'var(--color-emerald-500)' },
-    { label: 'Pending', value: pending, color: 'var(--color-amber-400)' },
-    { label: 'Declined', value: declined, color: 'var(--color-red-400)' },
+    { label: t('confirmed'), value: confirmed, color: 'var(--color-emerald-500)' },
+    { label: t('pending'), value: pending, color: 'var(--color-amber-400)' },
+    { label: t('declined'), value: declined, color: 'var(--color-red-400)' },
   ];
 
   return (
@@ -46,10 +48,10 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">
-            RSVP Breakdown
+            {t('title')}
           </CardTitle>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Guest response overview
+            {t('description')}
           </p>
         </div>
       </CardHeader>
@@ -93,7 +95,7 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
                           y={(viewBox.cy || 0) + 18}
                           className="fill-muted-foreground text-xs"
                         >
-                          Total
+                          {t('total')}
                         </tspan>
                       </text>
                     );

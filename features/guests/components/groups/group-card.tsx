@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardAction,
@@ -50,6 +51,8 @@ export function GroupCard({
   onSelectGroup,
   selectionMode = false,
 }: GroupCardProps) {
+  const t = useTranslations('guests');
+
   return (
     <Card
       className={`relative gap-2 transition-all ${
@@ -71,7 +74,7 @@ export function GroupCard({
                   : 'border-primary bg-primary/10 text-primary'
               }
             >
-              {group.side}
+              {t(`sides.${group.side}` as 'sides.bride' | 'sides.groom')}
             </Badge>
           )}
           {selectionMode ? (
@@ -84,18 +87,18 @@ export function GroupCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t('groups.openMenu')}</span>
                   <IconDotsVertical size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={onSelectGroup}>
                   <IconPointer size={16} className="mr-2" />
-                  Select
+                  {t('groups.select')}
                 </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onClick={onDeleteGroup}>
                   <IconTrash size={16} className="mr-2" />
-                  Delete group
+                  {t('groups.deleteGroup')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -135,14 +138,14 @@ export function GroupCard({
             </div>
 
             <Badge variant="secondary" className="rounded-sm">
-              {group.guestCount} guests
+              {t('groups.guestCount', { count: group.guestCount })}
             </Badge>
           </div>
         ) : (
           <div className="flex flex-row items-center gap-2 py-[2px]">
             <IconUserFilled className="text-muted-foreground bg-muted-foreground/10 size-6 rounded-full border border-dashed border-gray-500 p-1" />
             <p className="text-muted-foreground text-sm">
-              No guests assigned yet
+              {t('groups.noGuests')}
             </p>
           </div>
         )}
@@ -155,7 +158,7 @@ export function GroupCard({
           onClick={onAssignGuestsClick}
         >
           <IconUserPlus className="size-4" />
-          Assign guests
+          {t('groups.assignGuests')}
         </Button>
       </CardFooter>
     </Card>

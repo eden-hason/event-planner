@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ColumnFiltersState,
   PaginationState,
@@ -18,7 +19,7 @@ const DEFAULT_PAGE_SIZE = 10;
 interface UseGuestsTableProps {
   guests: GuestWithGroupApp[];
   searchTerm: string;
-  groupFilter: string[]; // Array of group IDs
+  groupFilter: string[];
   statusFilter: string[];
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
@@ -34,6 +35,15 @@ export function useGuestsTable({
   pageSize = DEFAULT_PAGE_SIZE,
   showDietary = false,
 }: UseGuestsTableProps) {
+  const t = useTranslations('guests');
+
+  const dietaryLabelMap: Record<string, string> = {
+    vegan: t('dietary.vegan'),
+    vegetarian: t('dietary.vegetarian'),
+    glatt: t('dietary.glatt'),
+    'gluten-free': t('dietary.glutenFree'),
+  };
+
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -41,25 +51,20 @@ export function useGuestsTable({
     pageSize,
   });
 
-  // Update page size when it changes (e.g., from window resize)
   useEffect(() => {
     setPagination((prev) => {
       if (prev.pageSize === pageSize) return prev;
-      // Calculate new page index to keep roughly the same position
       const firstVisibleRow = prev.pageIndex * prev.pageSize;
       const newPageIndex = Math.floor(firstVisibleRow / pageSize);
       return { pageIndex: newPageIndex, pageSize };
     });
   }, [pageSize]);
 
-  // Update global filter when searchTerm changes
   useEffect(() => {
     setGlobalFilter(searchTerm);
-    // Reset to first page when search changes
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [searchTerm]);
 
-  // Update column filters when groupFilter changes
   useEffect(() => {
     if (groupFilter.length === 0) {
       setColumnFilters((prev) => prev.filter((f) => f.id !== 'group'));
@@ -69,11 +74,9 @@ export function useGuestsTable({
         return [...filtered, { id: 'group', value: groupFilter }];
       });
     }
-    // Reset to first page when filters change
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [groupFilter]);
 
-  // Update column filters when statusFilter changes
   useEffect(() => {
     if (statusFilter.length === 0) {
       setColumnFilters((prev) => prev.filter((f) => f.id !== 'rsvpStatus'));
@@ -86,7 +89,6 @@ export function useGuestsTable({
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [statusFilter]);
 
-  // Custom global filter function for searching across multiple columns
   const globalFilterFn = (
     row: Row<GuestWithGroupApp>,
     _columnId: string,
@@ -106,6 +108,8 @@ export function useGuestsTable({
   const columns = createGuestColumns({
     onDelete: onDeleteGuest,
     showDietary,
+    t,
+    dietaryLabelMap,
   });
 
   const table = useReactTable({

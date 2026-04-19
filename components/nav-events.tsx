@@ -35,6 +35,7 @@ import { deleteEvent, duplicateEvent } from '@/features/events/actions';
 import { logout } from '@/features/auth';
 import { IconUser } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface NavEventsProps {
   events: EventApp[];
@@ -53,6 +54,10 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
   const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations('sidebar');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const dir = locale === 'he' ? 'rtl' : 'ltr';
 
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
@@ -81,17 +86,15 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
     });
 
     toast.promise(promise, {
-      loading: `Duplicating ${event.title}...`,
+      loading: t('toast.duplicating', { title: event.title }),
       success: (data) => {
         if (data.eventId) {
           router.push(`/app/${data.eventId}/dashboard`);
         }
-        return data.message || 'Event duplicated successfully';
+        return data.message || t('toast.duplicated');
       },
       error: (err) =>
-        err instanceof Error
-          ? err.message
-          : 'Failed to duplicate event. Please try again.',
+        err instanceof Error ? err.message : t('toast.duplicateFailed'),
     });
   };
 
@@ -109,7 +112,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
     });
 
     toast.promise(promise, {
-      loading: `Deleting ${eventTitle}...`,
+      loading: t('toast.deleting', { title: eventTitle }),
       success: (data) => {
         setDeleteDialogOpen(false);
         setEventToDelete(null);
@@ -121,12 +124,10 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
           router.push(`/app/${remainingEvents[0].id}/dashboard`);
         }
 
-        return data.message || 'Event deleted successfully';
+        return data.message || t('toast.deleted');
       },
       error: (err) =>
-        err instanceof Error
-          ? err.message
-          : 'Failed to delete event. Please try again.',
+        err instanceof Error ? err.message : t('toast.deleteFailed'),
     });
 
     try {
@@ -140,7 +141,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen} dir={dir}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -164,7 +165,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
               <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-semibold">{user.name}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {currentEvent ? currentEvent.title : 'No event selected'}
+                  {currentEvent ? currentEvent.title : t('noEventSelected')}
                 </span>
               </div>
               <ChevronsUpDown className="ms-auto" />
@@ -178,7 +179,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
           >
             {/* Section 1: User header */}
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                 <Avatar className="size-8 rounded-lg">
                   {user.avatar ? (
                     <Image
@@ -207,12 +208,12 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
 
             {/* Section 2: Events */}
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Events
+              {t('events')}
             </DropdownMenuLabel>
             <div className="flex flex-col gap-1">
               {events.length === 0 ? (
                 <DropdownMenuItem disabled>
-                  <span className="text-muted-foreground">No events yet</span>
+                  <span className="text-muted-foreground">{t('noEventsYet')}</span>
                 </DropdownMenuItem>
               ) : (
                 events.map((event) => {
@@ -237,7 +238,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                           {event.eventType}
                           {isShared && (
                             <span className="text-primary ms-1.5 font-medium">
-                              · Shared
+                              · {t('shared')}
                             </span>
                           )}
                         </span>
@@ -256,7 +257,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                             e.stopPropagation();
                             handleDuplicate(event);
                           }}
-                          aria-label="Duplicate event"
+                          aria-label={t('duplicateEvent')}
                         >
                           <Copy className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -270,7 +271,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                             setDeleteDialogOpen(true);
                             setDropdownOpen(false);
                           }}
-                          aria-label="Delete event"
+                          aria-label={t('deleteEvent')}
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -290,7 +291,7 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
                   <Plus className="size-4" />
                 </div>
                 <div className="text-muted-foreground font-medium">
-                  New Event
+                  {t('newEvent')}
                 </div>
               </button>
             </DropdownMenuItem>
@@ -302,8 +303,8 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
               className="cursor-pointer text-red-600"
               onClick={handleLogout}
             >
-              <LogOutIcon className="text-red-600" />
-              Log out
+              <LogOutIcon className="text-red-600 rtl:scale-x-[-1]" />
+              {t('logOut')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -311,19 +312,18 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+              <AlertDialogTitle>{t('deleteEventTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{eventToDelete?.title}
-                &quot;? This action cannot be undone.
+                {t('deleteEventDescription', { title: eventToDelete?.title ?? '' })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
                 onClick={handleConfirmDelete}
               >
-                Delete
+                {t('deleteEvent')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

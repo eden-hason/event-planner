@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -18,32 +21,6 @@ import { Button } from '@/components/ui/button';
 import { cardHover } from '@/lib/utils';
 import { IconCheck, IconX, IconClock } from '@tabler/icons-react';
 import type { RecentRsvpRow } from '../types';
-
-function getActionLabel(status: RecentRsvpRow['rsvpStatus']): string {
-  switch (status) {
-    case 'confirmed':
-      return 'confirmed attendance';
-    case 'declined':
-      return 'declined invitation';
-    case 'pending':
-      return 'updated their RSVP';
-  }
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} minutes ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} hours ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function StatusIcon({ status }: { status: RecentRsvpRow['rsvpStatus'] }) {
   if (status === 'confirmed') {
@@ -74,16 +51,41 @@ export function RecentRsvpActivityCard({
   activity: RecentRsvpRow[];
   eventId: string;
 }) {
+  const t = useTranslations('dashboard.recentActivity');
+
+  function getActionLabel(status: RecentRsvpRow['rsvpStatus']): string {
+    switch (status) {
+      case 'confirmed': return t('confirmedAttendance');
+      case 'declined': return t('declinedInvitation');
+      case 'pending': return t('updatedRsvp');
+    }
+  }
+
+  function formatRelativeTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return t('justNow');
+    if (diffMins < 60) return t('minutesAgo', { count: diffMins });
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return t('hoursAgo', { count: diffHours });
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return diffDays === 1 ? t('dayAgo', { count: diffDays }) : t('daysAgo', { count: diffDays });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
   return (
     <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
       <CardHeader className="pb-2">
         <div>
           <div>
             <CardTitle className="text-sm font-semibold">
-              Recent Activity
+              {t('title')}
             </CardTitle>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              Latest RSVP updates
+              {t('description')}
             </p>
           </div>
         </div>
@@ -91,7 +93,7 @@ export function RecentRsvpActivityCard({
       <CardContent className="max-h-72 overflow-y-auto p-0">
         {activity.length === 0 ? (
           <p className="text-muted-foreground py-4 text-center text-sm">
-            No recent RSVP changes
+            {t('noActivity')}
           </p>
         ) : (
           activity.map((row) => (
@@ -115,7 +117,7 @@ export function RecentRsvpActivityCard({
       </CardContent>
       <CardFooter className="pt-2">
         <Button variant="outline" size="sm" className="w-full" asChild>
-          <Link href={`/app/${eventId}/guests`}>View All Guests</Link>
+          <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
         </Button>
       </CardFooter>
     </Card>

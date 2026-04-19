@@ -19,10 +19,17 @@ export {
   type ValidationIssue,
 } from './template-validation';
 
+export type RelativeTimeResult =
+  | { type: 'justNow' }
+  | { type: 'past'; time: string }
+  | { type: 'future'; time: string };
+
 /**
- * Formats a date string as a relative time (e.g., "2 days ago", "in 10 days").
+ * Returns a structured relative time result for i18n-aware formatting.
+ * Use `type` and `time` fields with translation keys `relativeTime.justNow`,
+ * `relativeTime.past`, and `relativeTime.future`.
  */
-export function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(dateStr: string): RelativeTimeResult {
   const now = new Date();
   const date = new Date(dateStr);
   const diffMs = date.getTime() - now.getTime();
@@ -35,16 +42,16 @@ export function formatRelativeTime(dateStr: string): string {
   const weeks = Math.floor(days / 7);
   const months = Math.floor(days / 30);
 
-  let label: string;
-  if (minutes < 1) label = 'just now';
-  else if (minutes < 60) label = `${minutes}m`;
-  else if (hours < 24) label = `${hours}h`;
-  else if (days < 7) label = `${days}d`;
-  else if (weeks < 5) label = `${weeks}w`;
-  else label = `${months}mo`;
+  if (minutes < 1) return { type: 'justNow' };
 
-  if (label === 'just now') return label;
-  return isPast ? `${label} ago` : `in ${label}`;
+  let time: string;
+  if (minutes < 60) time = `${minutes}m`;
+  else if (hours < 24) time = `${hours}h`;
+  else if (days < 7) time = `${days}d`;
+  else if (weeks < 5) time = `${weeks}w`;
+  else time = `${months}mo`;
+
+  return { type: isPast ? 'past' : 'future', time };
 }
 
 /**

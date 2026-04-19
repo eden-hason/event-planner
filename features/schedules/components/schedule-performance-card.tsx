@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import {
   IconCircleCheck,
   IconCircleX,
@@ -28,6 +29,7 @@ export async function SchedulePerformanceCard({
   actionType,
   eventId,
 }: SchedulePerformanceCardProps) {
+  const t = await getTranslations('schedules.performance');
   const isConfirmation = actionType === 'confirmation';
 
   const [deliveryStats, rsvpStats] = await Promise.all([
@@ -61,7 +63,7 @@ export async function SchedulePerformanceCard({
   const stats: StatItem[] = isConfirmation
     ? [
         {
-          label: 'Total Deliveries',
+          label: t('totalDeliveries'),
           status: null,
           value: totalAttempts,
           pct: 0,
@@ -69,16 +71,12 @@ export async function SchedulePerformanceCard({
           icon: <IconSend size={20} className="text-teal-500" />,
           activeRing: '',
           breakdown: [
-            { label: 'Success', value: successful, color: 'bg-teal-500' },
-            {
-              label: 'Failed',
-              value: failed,
-              color: 'bg-orange-500',
-            },
+            { label: t('success'), value: successful, color: 'bg-teal-500' },
+            { label: t('failed'), value: failed, color: 'bg-orange-500' },
           ],
         },
         {
-          label: 'Read',
+          label: t('read'),
           status: 'read',
           value: deliveryStats.read,
           pct:
@@ -90,7 +88,7 @@ export async function SchedulePerformanceCard({
           activeRing: 'bg-blue-50 border-blue-300',
         },
         {
-          label: 'Confirmed',
+          label: t('confirmed'),
           status: 'confirmed',
           value: rsvpStats.confirmed,
           pct:
@@ -102,7 +100,7 @@ export async function SchedulePerformanceCard({
           activeRing: 'bg-green-50 border-green-300',
         },
         {
-          label: 'Declined',
+          label: t('declined'),
           status: 'declined',
           value: rsvpStats.declined,
           pct:
@@ -116,7 +114,7 @@ export async function SchedulePerformanceCard({
       ]
     : [
         {
-          label: 'Total Deliveries',
+          label: t('totalDeliveries'),
           status: null,
           value: totalAttempts,
           pct: 0,
@@ -124,16 +122,12 @@ export async function SchedulePerformanceCard({
           icon: <IconSend size={20} className="text-teal-500" />,
           activeRing: '',
           breakdown: [
-            { label: 'Success', value: successful, color: 'bg-teal-500' },
-            {
-              label: 'Failed',
-              value: failed,
-              color: 'bg-orange-500',
-            },
+            { label: t('success'), value: successful, color: 'bg-teal-500' },
+            { label: t('failed'), value: failed, color: 'bg-orange-500' },
           ],
         },
         {
-          label: 'Read',
+          label: t('read'),
           status: 'read',
           value: deliveryStats.read,
           pct:

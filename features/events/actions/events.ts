@@ -13,6 +13,7 @@ import {
 } from '../schemas';
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
+import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
 import { createDefaultSchedules } from '@/features/schedules/actions/schedules';
@@ -148,13 +149,26 @@ export async function createOnboardingEvent(
       validationResult.data;
 
     // Auto-generate title
-    let title = 'My Wedding';
-    if (brideName && groomName) {
-      title = `${brideName} & ${groomName}'s Wedding`;
-    } else if (brideName) {
-      title = `${brideName}'s Wedding`;
-    } else if (groomName) {
-      title = `${groomName}'s Wedding`;
+    const locale = await getLocale();
+    let title: string;
+    if (locale === 'he') {
+      if (brideName && groomName) {
+        title = `חתונת ${brideName} ו${groomName}`;
+      } else if (brideName || groomName) {
+        title = `חתונת ${brideName ?? groomName}`;
+      } else {
+        title = 'החתונה שלי';
+      }
+    } else {
+      if (brideName && groomName) {
+        title = `${brideName} & ${groomName}'s Wedding`;
+      } else if (brideName) {
+        title = `${brideName}'s Wedding`;
+      } else if (groomName) {
+        title = `${groomName}'s Wedding`;
+      } else {
+        title = 'My Wedding';
+      }
     }
 
     const supabase = await createClient();

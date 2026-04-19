@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconSearch } from '@tabler/icons-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,10 +39,11 @@ export function GuestListCard({
   countLabel,
   onSelectionChange,
 }: GuestListCardProps) {
+  const t = useTranslations('guests');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Reset selections when guests list changes
   useEffect(() => {
     setSelectedIds(new Set());
     onSelectionChange?.([]);
@@ -83,7 +85,7 @@ export function GuestListCard({
         <div className="relative px-6">
           <IconSearch size={16} className="text-muted-foreground absolute top-1/2 left-9 -translate-y-1/2" />
           <Input
-            placeholder="Search guests..."
+            placeholder={t('search.placeholder')}
             value={searchTerm}
             onChange={handleSearchChange}
             className="bg-muted/50 pl-10"
@@ -92,7 +94,6 @@ export function GuestListCard({
 
         <Separator />
 
-        {/* Guest list */}
         <div className="flex flex-1 flex-col overflow-y-auto px-6 min-h-0">
           {filteredGuests.map((guest) => (
             <Item
@@ -116,7 +117,7 @@ export function GuestListCard({
               <ItemContent>
                 <ItemTitle>{guest.name}</ItemTitle>
                 <ItemDescription className="text-muted-foreground">
-                  {guest.rsvpStatus}
+                  {t(`rsvp.${guest.rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
                 </ItemDescription>
               </ItemContent>
             </Item>

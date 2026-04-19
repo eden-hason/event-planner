@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cardHover } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { IconBrandWhatsapp, IconMessage, IconCalendarPlus } from '@tabler/icons-react';
-import { ACTION_TYPE_LABELS, type ScheduleApp } from '@/features/schedules/schemas';
+import { type ActionType, type ScheduleApp } from '@/features/schedules/schemas';
 
 function formatScheduleDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -20,6 +23,7 @@ export function UpcomingSchedulesCard({
   schedules: ScheduleApp[];
   eventId: string;
 }) {
+  const t = useTranslations('dashboard.upcomingSchedules');
   const upcoming = schedules
     .filter((s) => !s.status)
     .slice(0, 3);
@@ -27,18 +31,18 @@ export function UpcomingSchedulesCard({
   return (
     <Card className={`flex flex-col ${cardHover}`}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Upcoming Schedules</CardTitle>
+        <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-3">
         {upcoming.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-6 text-center text-sm text-muted-foreground">
             <IconCalendarPlus className="h-8 w-8 opacity-40" />
-            <p>No upcoming schedules</p>
+            <p>{t('noSchedules')}</p>
             <Link
               href={`/app/${eventId}/schedules`}
               className="text-xs text-primary underline-offset-4 hover:underline"
             >
-              Create one
+              {t('createOne')}
             </Link>
           </div>
         ) : (
@@ -54,7 +58,7 @@ export function UpcomingSchedulesCard({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                    {ACTION_TYPE_LABELS[schedule.actionType]}
+                    {t(`actionTypes.${schedule.actionType}` as `actionTypes.${ActionType}`)}
                   </Badge>
                   {schedule.targetStatus && (
                     <span className="text-xs text-muted-foreground capitalize">→ {schedule.targetStatus}</span>
@@ -74,7 +78,7 @@ export function UpcomingSchedulesCard({
             href={`/app/${eventId}/schedules`}
             className="text-xs text-primary underline-offset-4 hover:underline"
           >
-            View all schedules →
+            {t('viewAll')}
           </Link>
         </CardFooter>
       )}
