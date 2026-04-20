@@ -1,4 +1,31 @@
+import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { z } from 'zod';
+
+function isIsraeliMobile(val: string): boolean {
+  try {
+    const phone = parsePhoneNumberWithError(val, 'IL');
+    // Israeli mobile prefixes (050, 052–059) always have a national number starting with 5.
+    // Avoids requiring the "max" metadata build which getType() needs.
+    return phone.isValid() && phone.nationalNumber.startsWith('5');
+  } catch {
+    return false;
+  }
+}
+
+export function israeliMobilePhoneSchema(message: string) {
+  return z
+    .string()
+    .nullable()
+    .optional()
+    .refine(
+      (val) => !val || val.trim().length === 0 || isIsraeliMobile(val),
+      { message },
+    );
+}
+
+const israeliMobilePhone = israeliMobilePhoneSchema(
+  'Must be a valid Israeli mobile number (e.g. 054-1234567)',
+);
 
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what a "Guest" object
@@ -12,7 +39,7 @@ export const GuestAppSchema = z.object({
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long'),
-  phone: z.string().max(20, 'Phone number is too long').nullable().optional(),
+  phone: israeliMobilePhone,
   // Foreign key to groups table
   groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
@@ -123,7 +150,7 @@ export const GuestUpsertSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long')
     .optional(),
-  phone: z.string().max(20, 'Phone number is too long').nullable().optional(),
+  phone: israeliMobilePhone,
   // Foreign key to groups table
   groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
@@ -327,30 +354,12 @@ export const ImportGuestSchema = z.object({
     .min(1, 'Name is required')
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long'),
-  phone: z.string().superRefine((val, ctx) => {
-    // Check if empty first - show friendly required message
-    if (!val || val.trim().length === 0) {
-      ctx.addIssue('Phone number is required');
-      return;
-    }
-
-    // Only validate format if there's a value
-    if (val.length < 7) {
-      ctx.addIssue('Phone number must be at least 7 characters');
-      return;
-    }
-
-    if (val.length > 20) {
-      ctx.addIssue('Phone number is too long');
-      return;
-    }
-
-    if (!/^[+]?[\d\s\-().]+$/.test(val)) {
-      ctx.addIssue(
-        'Invalid phone format (use digits, spaces, +, -, or parentheses)',
-      );
-    }
-  }),
+  phone: z
+    .string()
+    .min(1, 'Phone number is required')
+    .refine(isIsraeliMobile, {
+      message: 'Must be a valid Israeli mobile number (e.g. 054-1234567)',
+    }),
   amount: z.coerce
     .number()
     .int('Amount must be a whole number')

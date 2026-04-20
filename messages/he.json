@@ -112,7 +112,8 @@
       "updateGuest": "עדכן אורח",
       "addGuest": "הוסף אורח",
       "updating": "מעדכן...",
-      "adding": "מוסיף..."
+      "adding": "מוסיף...",
+      "phoneInvalid": "יש להזין מספר נייד ישראלי תקין (למשל 054-1234567)"
     },
     "rsvp": {
       "pending": "ממתין",
@@ -240,12 +241,12 @@
         "instruction": "גרור ושחרר את קובץ ה-.csv או ה-.xlsx לכאן, או לחץ לבחירה"
       },
       "analyze": {
-        "heading": "מנתח את הקובץ\u2026",
+        "heading": "מנתח את הקובץ…",
         "description": "הבינה המלאכותית קוראת את העמודות וממפה את נתוני האורחים אוטומטית",
-        "rowsDetected": "הקובץ פוענח \u2014 {count} שורות זוהו",
-        "readingHeaders": "קורא כותרות עמודות\u2026",
-        "analyzingSample": "מנתח נתוני דוגמה\u2026",
-        "mappingSchema": "ממפה לסכמת האורחים\u2026",
+        "rowsDetected": "הקובץ פוענח — {count} שורות זוהו",
+        "readingHeaders": "קורא כותרות עמודות…",
+        "analyzingSample": "מנתח נתוני דוגמה…",
+        "mappingSchema": "ממפה לסכמת האורחים…",
         "failedHeading": "הניתוח נכשל",
         "tryAgain": "נסה שנית",
         "successHeading": "המיפוי הושלם",
@@ -265,7 +266,7 @@
         "fieldPhone": "טלפון",
         "fieldAmount": "כמות",
         "mappedCount": "{mapped}/{total} שדות נדרשים מופו",
-        "allMapped": "כל השדות הנדרשים מופו \u2713",
+        "allMapped": "כל השדות הנדרשים מופו ✓",
         "optional": "(+{count} אופציונלי)"
       },
       "validate": {
@@ -278,7 +279,7 @@
         "colAmount": "כמות",
         "colErrors": "שגיאות",
         "rowCount": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות",
-        "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות \u2713"
+        "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות ✓"
       },
       "summary": {
         "importing": "מייבא אורחים...",
@@ -484,7 +485,7 @@
       "recipients": "נמענים",
       "guestCount": "{count} אורחים",
       "cancel": "ביטול",
-      "confirm": "שלח עכשיו \u2190",
+      "confirm": "שלח עכשיו ←",
       "toast": {
         "sending": "שולח הודעות...",
         "failed": "השליחה נכשלה."
@@ -516,7 +517,7 @@
     },
     "activity": {
       "cardTitle": "פעילות שליחה אחרונה",
-      "viewAllRecipients": "כל הנמענים \u2190",
+      "viewAllRecipients": "כל הנמענים ←",
       "searchPlaceholder": "חפש לפי שם או טלפון...",
       "allStatuses": "כל הסטטוסים",
       "statusCount": "{count} סטטוסים",
