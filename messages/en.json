@@ -112,7 +112,8 @@
       "updateGuest": "Update Guest",
       "addGuest": "Add Guest",
       "updating": "Updating...",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)"
     },
     "rsvp": {
       "pending": "Pending",
@@ -240,12 +241,12 @@
         "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse"
       },
       "analyze": {
-        "heading": "Analyzing your file\u2026",
+        "heading": "Analyzing your file…",
         "description": "Our AI is reading your columns and mapping your guest data automatically",
-        "rowsDetected": "File parsed \u2014 {count} rows detected",
-        "readingHeaders": "Reading column headers\u2026",
-        "analyzingSample": "Analyzing sample data\u2026",
-        "mappingSchema": "Mapping to guest schema\u2026",
+        "rowsDetected": "File parsed — {count} rows detected",
+        "readingHeaders": "Reading column headers…",
+        "analyzingSample": "Analyzing sample data…",
+        "mappingSchema": "Mapping to guest schema…",
         "failedHeading": "Analysis failed",
         "tryAgain": "Try again",
         "successHeading": "Mapping Complete",
@@ -265,7 +266,7 @@
         "fieldPhone": "Phone",
         "fieldAmount": "Amount",
         "mappedCount": "{mapped}/{total} required fields mapped",
-        "allMapped": "All required fields mapped \u2713",
+        "allMapped": "All required fields mapped ✓",
         "optional": "(+{count} optional)"
       },
       "validate": {
@@ -278,7 +279,7 @@
         "colAmount": "Amount",
         "colErrors": "Errors",
         "rowCount": "{valid} valid, {invalid} invalid out of {total} rows",
-        "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows \u2713"
+        "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows ✓"
       },
       "summary": {
         "importing": "Importing guests...",
@@ -484,7 +485,7 @@
       "recipients": "Recipients",
       "guestCount": "{count} guests",
       "cancel": "Cancel",
-      "confirm": "Send Now \u2192",
+      "confirm": "Send Now →",
       "toast": {
         "sending": "Sending messages...",
         "failed": "Failed to send."
@@ -516,7 +517,7 @@
     },
     "activity": {
       "cardTitle": "Recent Delivery Activity",
-      "viewAllRecipients": "View All Recipients \u2192",
+      "viewAllRecipients": "View All Recipients →",
       "searchPlaceholder": "Search by name or phone...",
       "allStatuses": "All Statuses",
       "statusCount": "{count} statuses",
