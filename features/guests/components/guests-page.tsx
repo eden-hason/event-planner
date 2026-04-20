@@ -22,7 +22,6 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { IconClock, IconPlus, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
@@ -32,7 +31,7 @@ import {
   CreateGroupDialog,
   GroupIcon,
 } from '@/features/guests/components/groups';
-import { upsertGroup, UpsertGroupState } from '../actions/groups';
+import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
 import { deleteGuest } from '@/features/guests/actions';
 
 interface GuestsPageProps {
@@ -98,16 +97,25 @@ export function GuestsPage({
   ): Promise<UpsertGroupState | null> => {
     const groupName = params.formData.get('name') as string;
 
+    const errorMessages: Record<UpsertGroupErrorCode, string> = {
+      GROUP_NAME_TAKEN: t('toast.groupNameTaken'),
+      UNKNOWN: t('toast.groupCreateFailed'),
+    };
+
     const promise = upsertGroup(eventId, params.formData).then((result) => {
       if (!result.success) {
-        throw new Error(result.message || t('toast.groupCreateFailed'));
+        throw new Error(
+          result.errorCode
+            ? errorMessages[result.errorCode]
+            : t('toast.groupCreateFailed'),
+        );
       }
       return result;
     });
 
     toast.promise(promise, {
       loading: t('toast.creatingGroup', { name: groupName }),
-      success: (data) => data.message || t('toast.groupCreated'),
+      success: () => t('toast.groupCreated'),
       error: (err) =>
         err instanceof Error ? err.message : t('toast.groupCreateFailed'),
     });

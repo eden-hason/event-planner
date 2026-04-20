@@ -81,6 +81,7 @@
       "creatingGroup": "Creating {name}...",
       "groupCreated": "Group created successfully.",
       "groupCreateFailed": "Failed to create group. Please try again.",
+      "groupNameTaken": "A group with this name already exists for this side",
       "deletingGuest": "Deleting {name}...",
       "guestDeleted": "Guest deleted successfully.",
       "guestDeleteFailed": "Failed to delete guest."
