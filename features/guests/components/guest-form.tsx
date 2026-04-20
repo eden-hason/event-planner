@@ -28,6 +28,7 @@ import { upsertGuest, type UpsertGuestState } from '@/features/guests/actions';
 import {
   type GuestUpsert,
   GuestUpsertSchema,
+  israeliMobilePhoneSchema,
   GuestApp,
   GroupApp,
 } from '@/features/guests/schemas';
@@ -78,8 +79,12 @@ export function GuestForm({
     'gluten-free': t('dietary.glutenFree'),
   };
 
+  const formSchema = GuestUpsertSchema.extend({
+    phone: israeliMobilePhoneSchema(t('form.phoneInvalid')),
+  });
+
   const form = useForm({
-    resolver: zodResolver(GuestUpsertSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: guest?.name || '',
       phone: guest?.phone || '',
