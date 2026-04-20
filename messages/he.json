@@ -81,6 +81,7 @@
       "creatingGroup": "יוצר את {name}...",
       "groupCreated": "הקבוצה נוצרה בהצלחה.",
       "groupCreateFailed": "יצירת הקבוצה נכשלה. נסה שנית.",
+      "groupNameTaken": "קבוצה עם שם זה כבר קיימת עבור הצד הזה",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה.",
       "guestDeleteFailed": "מחיקת האורח נכשלה."

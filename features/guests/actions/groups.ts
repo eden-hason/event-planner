@@ -9,10 +9,13 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+export type UpsertGroupErrorCode = 'GROUP_NAME_TAKEN' | 'UNKNOWN';
+
 export type UpsertGroupState = {
   success: boolean;
   errors?: z.ZodError<z.input<typeof GroupUpsertSchema>>;
   message?: string | null;
+  errorCode?: UpsertGroupErrorCode;
 };
 
 export type DeleteGroupsState = {
@@ -66,10 +69,10 @@ export async function upsertGroup(
 
     if (error) {
       console.error(error);
-      return {
-        success: false,
-        message: 'Database error: Could not upsert group.',
-      };
+      if (error.code === '23505') {
+        return { success: false, errorCode: 'GROUP_NAME_TAKEN' };
+      }
+      return { success: false, errorCode: 'UNKNOWN' };
     }
 
     revalidatePath(`/app/${eventId}/guests`);
