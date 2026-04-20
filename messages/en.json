@@ -784,7 +784,7 @@
     },
     "location": {
       "title": "Location",
-      "label": "Location",
+      "label": "Venue Name",
       "placeholder": "Search for venue address..."
     },
     "invitation": {
