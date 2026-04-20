@@ -784,7 +784,7 @@
     },
     "location": {
       "title": "מיקום",
-      "label": "מיקום",
+      "label": "שם האולם",
       "placeholder": "חפש כתובת אולם..."
     },
     "invitation": {
