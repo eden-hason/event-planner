@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Label, Pie, PieChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cardHover } from '@/lib/utils';
 import {
   ChartConfig,
   ChartContainer,
@@ -44,7 +43,7 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
   ];
 
   return (
-    <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
+    <Card className="flex h-full flex-col gap-2">
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">

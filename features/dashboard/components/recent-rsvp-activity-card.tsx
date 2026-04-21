@@ -18,7 +18,6 @@ import {
   ItemActions,
 } from '@/components/ui/item';
 import { Button } from '@/components/ui/button';
-import { cardHover } from '@/lib/utils';
 import { IconCheck, IconX, IconClock } from '@tabler/icons-react';
 import type { RecentRsvpRow } from '../types';
 
@@ -77,7 +76,7 @@ export function RecentRsvpActivityCard({
   }
 
   return (
-    <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
+    <Card className="flex h-full flex-col gap-2">
       <CardHeader className="pb-2">
         <div>
           <div>

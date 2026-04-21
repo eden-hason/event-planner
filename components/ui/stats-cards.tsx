@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, cardHover } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export interface StatItem {
   label: string;
@@ -46,7 +46,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
             className={cn(
               'flex flex-col gap-3 rounded-xl border p-4 shadow-sm transition-colors',
               isActive ? activeRing : 'bg-card',
-              isClickable && `cursor-pointer ${cardHover}`,
+              isClickable && 'cursor-pointer',
             )}
           >
             {/* Header: title + icon */}

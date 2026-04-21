@@ -11,7 +11,6 @@ import {
 
 import Link from 'next/link';
 
-import { cardHover } from '@/lib/utils';
 import {
   Alert,
   AlertDescription,
@@ -73,7 +72,7 @@ export function MessageContentCard({
   const buttons = template?.parameters?.buttonPlaceholders ?? [];
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="bg-primary/10 rounded-md p-1.5">
