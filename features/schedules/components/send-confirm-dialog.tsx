@@ -28,6 +28,7 @@ interface SendConfirmDialogProps {
   targetStatus: ScheduleApp['targetStatus'];
   triggerClassName?: string;
   triggerSize?: 'sm' | 'default';
+  disabled?: boolean;
 }
 
 export function SendConfirmDialog({
@@ -36,6 +37,7 @@ export function SendConfirmDialog({
   targetStatus,
   triggerClassName,
   triggerSize = 'default',
+  disabled,
 }: SendConfirmDialogProps) {
   const t = useTranslations('schedules');
   const [isSending, startSendTransition] = useTransition();
@@ -69,7 +71,7 @@ export function SendConfirmDialog({
       <AlertDialogTrigger asChild>
         <Button
           size={triggerSize}
-          disabled={isSending}
+          disabled={isSending || disabled}
           className={cn('gap-2', triggerClassName)}
         >
           <IconSend size={triggerSize === 'sm' ? 14 : 16} />

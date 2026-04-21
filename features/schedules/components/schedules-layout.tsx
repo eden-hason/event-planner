@@ -76,6 +76,7 @@ export function SchedulesLayout({
             guestCount={activeItem.guestCount}
             targetStatus={activeItem.targetStatus}
             triggerSize="sm"
+            disabled
           />
         ) : undefined,
     });
