@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { IconCalendarClock, IconCalendarEvent } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
-import { cardHover } from '@/lib/utils';
 import {
   Card,
   CardAction,
@@ -113,7 +112,7 @@ export function ScheduleDetailsCard({
   if (!schedule || !eventDate) return null;
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">

@@ -4,7 +4,6 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationInput } from '@/components/ui/location-input';
-import { cardHover } from '@/lib/utils';
 import { GoogleMap } from '@/components/ui/google-map';
 import {
   FormControl,
@@ -33,7 +32,7 @@ export function LocationCard() {
   };
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>

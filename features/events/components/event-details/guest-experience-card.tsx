@@ -4,7 +4,6 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cardHover } from '@/lib/utils';
 import {
   FormControl,
   FormField,
@@ -18,7 +17,7 @@ export function GuestExperienceCard() {
   const form = useFormContext<EventDetailsUpdate>();
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>

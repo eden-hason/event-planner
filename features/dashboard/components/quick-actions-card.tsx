@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cardHover, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   IconUserPlus,
   IconCalendarPlus,
@@ -42,7 +42,7 @@ export function QuickActionsCard({ eventId }: { eventId: string }) {
   ];
 
   return (
-    <Card className={`flex flex-col ${cardHover}`}>
+    <Card className="flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
         <p className="text-xs text-muted-foreground">{t('description')}</p>
