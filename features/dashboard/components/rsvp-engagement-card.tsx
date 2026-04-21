@@ -10,7 +10,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { cardHover } from '@/lib/utils';
 import { computeGroupRsvpData } from '../utils/rsvp-engagement';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
 
@@ -30,7 +29,7 @@ export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] })
 
   if (groups.length === 0) {
     return (
-      <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
+      <Card className="flex h-full flex-col gap-2">
         <CardHeader className="pb-3">
           <div>
             <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
@@ -45,7 +44,7 @@ export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] })
   }
 
   return (
-    <Card className={`flex h-full flex-col gap-2 ${cardHover}`}>
+    <Card className="flex h-full flex-col gap-2">
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>

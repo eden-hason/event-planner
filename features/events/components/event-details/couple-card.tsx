@@ -4,7 +4,6 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { cardHover } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -21,7 +20,7 @@ export function CoupleCard() {
   const form = useFormContext<EventDetailsUpdate>();
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>

@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server';
 import { IconActivity } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
-import { cardHover } from '@/lib/utils';
 import {
   Card,
   CardAction,
@@ -29,7 +28,7 @@ export async function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) 
   const className = STATUS_CLASS[key];
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">

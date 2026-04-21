@@ -24,7 +24,7 @@ import {
   FileUploadItemDelete,
 } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
-import { cn, cardHover } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { uploadInvitationImage } from '@/lib/storage';
 import { EventDetailsUpdate } from '../../schemas';
 
@@ -119,7 +119,7 @@ export function EventInvitationCard({
   const hasPreview = previewUrl && !isRemoved;
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
         <CardDescription>{t('description')}</CardDescription>

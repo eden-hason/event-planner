@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server';
 import { IconUsers } from '@tabler/icons-react';
 
 import { Badge } from '@/components/ui/badge';
-import { cardHover } from '@/lib/utils';
 import {
   Card,
   CardAction,
@@ -44,7 +43,7 @@ export async function TargetAudienceCard({ targetStatus, guestStats }: TargetAud
   const isFiltered = targetStatus != null;
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="rounded-md bg-primary/10 p-1.5">

@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { cardHover } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import {
   FormControl,
@@ -23,7 +22,7 @@ export function DigitalGiftCard() {
   const bitEnabled = form.watch('eventSettings.bitConfig.enabled');
 
   return (
-    <Card className={cardHover}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
       </CardHeader>

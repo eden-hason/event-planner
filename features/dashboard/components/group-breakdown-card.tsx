@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn, cardHover } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
 
 // Tone scale derived from --primary: order 900,700,800,500,600,300,400,100,200
@@ -43,7 +43,7 @@ export function GroupBreakdownCard({
   };
 
   return (
-    <Card className={cn('flex h-full flex-col gap-2', cardHover)}>
+    <Card className="flex h-full flex-col gap-2">
       <CardHeader className="pb-3">
         <div>
           <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
