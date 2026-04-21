@@ -52,11 +52,12 @@ export function DeliveryEmptyState({ scheduleId, scheduledDate, guestCount, targ
           guestCount={guestCount}
           targetStatus={targetStatus}
           triggerClassName="shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5"
+          disabled
         />
         <Button
           variant="outline"
           onClick={handleEditSchedule}
-          className="gap-2 transition-all hover:-translate-y-0.5"
+          className="gap-2"
         >
           <IconCalendarClock size={16} />
           {t('editSchedule')}
