@@ -96,12 +96,16 @@ export function AppSidebar({
       url: '/app/schedules',
       icon: IconCalendar,
     },
-    {
-      id: 'budget',
-      title: tNav('budget'),
-      url: '/app/budget',
-      icon: IconCoins,
-    },
+    ...(process.env.NEXT_PUBLIC_ENABLE_BUDGET === 'true'
+      ? [
+          {
+            id: 'budget',
+            title: tNav('budget'),
+            url: '/app/budget',
+            icon: IconCoins,
+          },
+        ]
+      : []),
     {
       id: 'templates',
       title: tNav('templates'),
