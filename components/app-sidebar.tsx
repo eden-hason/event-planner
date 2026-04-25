@@ -9,7 +9,6 @@ import {
   IconHelp,
   IconSettings,
   IconUsers,
-  IconGift,
   IconCalendar,
   IconCoins,
   IconAlertSquareRounded,
@@ -98,24 +97,16 @@ export function AppSidebar({
       icon: IconCalendar,
     },
     {
+      id: 'budget',
+      title: tNav('budget'),
+      url: '/app/budget',
+      icon: IconCoins,
+    },
+    {
       id: 'templates',
       title: tNav('templates'),
       url: '/app/templates',
       icon: IconTemplate,
-      comingSoon: true,
-    },
-    {
-      id: 'expenses',
-      title: tNav('expenses'),
-      url: '/app/expenses',
-      icon: IconCoins,
-      comingSoon: true,
-    },
-    {
-      id: 'gifts',
-      title: tNav('gifts'),
-      url: '/app/gifts',
-      icon: IconGift,
       comingSoon: true,
     },
   ];
