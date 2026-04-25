@@ -5,16 +5,6 @@ export type { ExpenseApp, GiftApp };
 
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
-export function paidAmount(exp: ExpenseApp): number {
-  if (exp.fullyPaid) return Number(exp.estimate);
-  if (exp.hasAdvance && exp.advancePaid) return Number(exp.advanceAmount);
-  return 0;
-}
-
-export function remainingAmount(exp: ExpenseApp): number {
-  return Math.max(0, Number(exp.estimate) - paidAmount(exp));
-}
-
 export function getExpenseStatus(exp: ExpenseApp): ExpenseStatus {
   if (exp.fullyPaid) return 'fully-paid';
   if (exp.hasAdvance && exp.advancePaid) return 'advance-paid';

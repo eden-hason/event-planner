@@ -65,12 +65,6 @@
     "addGift": "Add gift",
 
     "stats": {
-      "totalBudget": "Total budget",
-      "paidSoFar": "Paid so far",
-      "remaining": "{amount} remaining",
-      "paid": "paid",
-      "leftToPay": "Left to pay",
-      "statusBreakdown": "Status breakdown",
       "totalReceived": "Total received",
       "ofPledged": "of {amount} pledged",
       "averageGift": "Average gift",
@@ -134,7 +128,6 @@
       "noVendor": "No vendor",
       "advancePaidBadge": "Advance paid",
       "advanceDueBadge": "Advance due",
-      "left": "{amount} left",
       "statusFullyPaid": "Fully paid",
       "statusAdvancePaid": "Advance paid",
       "statusAdvanceDue": "Advance due",
@@ -175,6 +168,27 @@
       "weddingCake": "Wedding Cake",
       "attractions": "Attractions"
     },
+    "budgetCard": {
+      "title": "Budget overview",
+      "description": "Track spending against your total budget",
+      "emptyDescription": "Set a budget to track your spending progress",
+      "addBudget": "Add Budget",
+      "edit": "Edit",
+      "legendExpenses": "Expenses",
+      "legendRemaining": "Remaining"
+    },
+    "pieCard": {
+      "title": "Cost breakdown",
+      "noData": "Add expenses to see breakdown"
+    },
+    "budgetDialog": {
+      "titleAdd": "Set event budget",
+      "titleEdit": "Edit budget",
+      "inputLabel": "Total budget (₪)",
+      "inputPlaceholder": "e.g. 80000",
+      "saving": "Saving…",
+      "save": "Save budget"
+    },
     "toast": {
       "savingExpense": "Saving expense...",
       "addingExpense": "Adding expense...",
@@ -188,6 +202,8 @@
       "giftAdded": "Gift added.",
       "deletingGift": "Deleting gift...",
       "giftDeleted": "Gift deleted.",
+      "savingBudget": "Saving budget...",
+      "budgetSaved": "Budget saved.",
       "error": "Something went wrong."
     }
   },

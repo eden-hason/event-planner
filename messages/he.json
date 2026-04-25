@@ -65,12 +65,6 @@
     "addGift": "הוסף מתנה",
 
     "stats": {
-      "totalBudget": "תקציב כולל",
-      "paidSoFar": "שולם עד כה",
-      "remaining": "{amount} נותר",
-      "paid": "שולם",
-      "leftToPay": "נותר לתשלום",
-      "statusBreakdown": "פילוח סטטוס",
       "totalReceived": "סה\"כ התקבל",
       "ofPledged": "מתוך {amount} שהובטח",
       "averageGift": "מתנה ממוצעת",
@@ -134,7 +128,6 @@
       "noVendor": "אין ספק",
       "advancePaidBadge": "מקדמה שולמה",
       "advanceDueBadge": "מקדמה לתשלום",
-      "left": "{amount} נותר",
       "statusFullyPaid": "שולם במלואו",
       "statusAdvancePaid": "מקדמה שולמה",
       "statusAdvanceDue": "מקדמה לתשלום",
@@ -175,6 +168,27 @@
       "weddingCake": "עוגת חתונה",
       "attractions": "אטרקציות"
     },
+    "budgetCard": {
+      "title": "סקירת תקציב",
+      "description": "עקוב אחר ההוצאות מול התקציב הכולל",
+      "emptyDescription": "הגדר תקציב כדי לעקוב אחר ההוצאות שלך",
+      "addBudget": "הוסף תקציב",
+      "edit": "ערוך",
+      "legendExpenses": "הוצאות",
+      "legendRemaining": "נותר"
+    },
+    "pieCard": {
+      "title": "פירוט הוצאות",
+      "noData": "הוסף הוצאות כדי לראות פירוט"
+    },
+    "budgetDialog": {
+      "titleAdd": "הגדר תקציב לאירוע",
+      "titleEdit": "ערוך תקציב",
+      "inputLabel": "תקציב כולל (₪)",
+      "inputPlaceholder": "לדוג׳ 80000",
+      "saving": "שומר...",
+      "save": "שמור תקציב"
+    },
     "toast": {
       "savingExpense": "שומר הוצאה...",
       "addingExpense": "מוסיף הוצאה...",
@@ -188,6 +202,8 @@
       "giftAdded": "מתנה נוספה.",
       "deletingGift": "מוחק מתנה...",
       "giftDeleted": "מתנה נמחקה.",
+      "savingBudget": "שומר תקציב...",
+      "budgetSaved": "התקציב נשמר.",
       "error": "משהו השתבש."
     }
   },
