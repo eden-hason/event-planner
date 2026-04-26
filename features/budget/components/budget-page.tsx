@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
 import { IconCoins, IconGift, IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -12,6 +13,7 @@ import { ExpensesTab } from './expenses-tab';
 import { GiftsTab } from './gifts-tab';
 import { ExpenseSheet } from './expense-sheet';
 import { GiftSheet } from './gift-sheet';
+import { Badge } from '@/components/ui/badge';
 
 interface GuestOption {
   id: string;
@@ -23,10 +25,14 @@ interface BudgetPageProps {
   gifts: GiftApp[];
   eventId: string;
   guests: GuestOption[];
+  eventBudget: number | null;
 }
 
-export function BudgetPage({ expenses, gifts, eventId, guests }: BudgetPageProps) {
+const giftsEnabled = process.env.NEXT_PUBLIC_ENABLE_GIFTS === 'true';
+
+export function BudgetPage({ expenses, gifts, eventId, guests, eventBudget }: BudgetPageProps) {
   const t = useTranslations('budget');
+  const tNav = useTranslations('navigation');
   const locale = useLocale();
 
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
@@ -63,7 +69,7 @@ export function BudgetPage({ expenses, gifts, eventId, guests }: BudgetPageProps
       setHeader({
         title: t('title'),
         description: t('description'),
-        action: value === 'expenses' ? expensesHeaderAction : giftsHeaderAction,
+        action: value === 'expenses' || !giftsEnabled ? expensesHeaderAction : giftsHeaderAction,
       });
     },
     [setHeader, expensesHeaderAction, giftsHeaderAction, t],
@@ -86,7 +92,11 @@ export function BudgetPage({ expenses, gifts, eventId, guests }: BudgetPageProps
           </TabsTrigger>
           <TabsTrigger
             value="gifts"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            disabled={!giftsEnabled}
+            className={cn(
+              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+              !giftsEnabled && 'cursor-default opacity-60',
+            )}
           >
             <IconGift size={16} />
             {t('tabs.gifts')}
@@ -97,18 +107,21 @@ export function BudgetPage({ expenses, gifts, eventId, guests }: BudgetPageProps
           <ExpensesTab
             expenses={expenses}
             eventId={eventId}
+            eventBudget={eventBudget}
             onAddExpense={() => setExpenseSheetOpen(true)}
           />
         </TabsContent>
 
-        <TabsContent value="gifts">
-          <GiftsTab
-            gifts={gifts}
-            eventId={eventId}
-            guests={guests}
-            onAddGift={() => setGiftSheetOpen(true)}
-          />
-        </TabsContent>
+        {giftsEnabled && (
+          <TabsContent value="gifts">
+            <GiftsTab
+              gifts={gifts}
+              eventId={eventId}
+              guests={guests}
+              onAddGift={() => setGiftSheetOpen(true)}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ExpenseSheet
@@ -119,13 +132,15 @@ export function BudgetPage({ expenses, gifts, eventId, guests }: BudgetPageProps
         existingExpenses={expenses}
       />
 
-      <GiftSheet
-        open={giftSheetOpen}
-        onOpenChange={setGiftSheetOpen}
-        gift={null}
-        eventId={eventId}
-        guests={guests}
-      />
+      {giftsEnabled && (
+        <GiftSheet
+          open={giftSheetOpen}
+          onOpenChange={setGiftSheetOpen}
+          gift={null}
+          eventId={eventId}
+          guests={guests}
+        />
+      )}
     </>
   );
 }
