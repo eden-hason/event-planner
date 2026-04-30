@@ -33,3 +33,19 @@ export async function setEventBudget(
   revalidatePath(`/app/${eventId}/budget`);
   return { success: true, message: 'Budget saved.' };
 }
+
+export async function removeEventBudget(eventId: string): Promise<SetEventBudgetState> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('events')
+    .update({ budget: null })
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('removeEventBudget error:', error);
+    return { success: false, message: 'Failed to remove budget. Please try again.' };
+  }
+
+  revalidatePath(`/app/${eventId}/budget`);
+  return { success: true, message: 'Budget removed.' };
+}

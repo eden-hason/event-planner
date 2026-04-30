@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import { IconCircleCheck } from '@tabler/icons-react';
 
 interface ConfirmationSuccessProps {
   status: 'confirmed' | 'declined';
@@ -22,11 +22,10 @@ export function ConfirmationSuccess({
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-        {isConfirmed ? (
-          <IconCircleCheck size={64} className="text-primary" />
-        ) : (
-          <IconCircleX size={64} className="text-muted-foreground" />
-        )}
+        <IconCircleCheck
+          size={64}
+          className="text-primary"
+        />
 
         <h2 className="text-2xl font-semibold">תודה!</h2>
 

@@ -33,6 +33,7 @@ import {
 } from '@/features/guests/components/groups';
 import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
 import { deleteGuest } from '@/features/guests/actions';
+import { GuestActionsSection } from './guest-actions-section';
 
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
@@ -342,7 +343,7 @@ export function GuestsPage({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/30">
+          <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/30 flex flex-col gap-4">
             <GuestForm
               formId="guest-form"
               eventId={eventId}
@@ -354,6 +355,9 @@ export function GuestsPage({
               onPendingChange={setIsSubmitting}
               showDietary={showDietary}
             />
+            {selectedGuest && (
+              <GuestActionsSection invitationToken={selectedGuest.invitationToken} />
+            )}
           </div>
 
           <SheetFooter className="flex-row justify-between border-t px-6 py-4 sm:flex-row">
