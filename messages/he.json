@@ -703,7 +703,7 @@
   },
   "newEvent": {
     "back": "חזור",
-    "stepOf": "שלב {step} מתוך 3",
+    "stepOf": "שלב {step} מתוך 2",
     "step1": {
       "title": "ברוכים הבאים ל-Kululu 🎉",
       "description": "ספרו לנו על הזוג המאושר",
@@ -711,8 +711,8 @@
       "bridePlaceholder": "הזן שם כלה",
       "groomLabel": "שם החתן",
       "groomPlaceholder": "הזן שם חתן",
-      "featureTitle": "ניהול הכל במקום אחד",
-      "featureDescription": "אורחים, לוחות זמנים, הזמנות ועוד — הכל במקום אחד.",
+      "featureTitle": "ניהול אירוע חכם",
+      "featureDescription": "הזמנות, אורחים, הושבה, תקציב ושותפים",
       "continue": "המשך",
       "skip": "דלג"
     },
@@ -724,20 +724,8 @@
       "venueLabel": "אולם",
       "venuePlaceholder": "חפש את האולם שלך...",
       "venueHelper": "אפשר למלא זאת מאוחר יותר",
-      "continue": "המשך",
+      "continue": "צור את האירוע שלי! 🎊",
       "goBack": "חזור"
-    },
-    "step3": {
-      "title": "כמה אורחים?",
-      "description": "זה עוזר לנו להתאים את החוויה שלך",
-      "create": "צור את האירוע שלי! 🎊",
-      "skip": "דלג",
-      "guestOptions": {
-        "up_to_100": "עד 100",
-        "100_200": "100–200",
-        "200_350": "200–350",
-        "350_plus": "350+"
-      }
     },
     "toast": {
       "creating": "יוצר את האירוע שלך...",
