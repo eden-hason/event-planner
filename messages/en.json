@@ -703,7 +703,7 @@
   },
   "newEvent": {
     "back": "Back",
-    "stepOf": "Step {step} of 3",
+    "stepOf": "Step {step} of 2",
     "step1": {
       "title": "Welcome to Kululu 🎉",
       "description": "Tell us about the happy couple",
@@ -711,8 +711,8 @@
       "bridePlaceholder": "Enter bride's name",
       "groomLabel": "Groom's name",
       "groomPlaceholder": "Enter groom's name",
-      "featureTitle": "All-in-one Management",
-      "featureDescription": "Guests, schedules, invitations, and more — all in one place.",
+      "featureTitle": "Smart Event Management",
+      "featureDescription": "Invitations, guests, seating, budget and partners",
       "continue": "Continue",
       "skip": "Skip for now"
     },
@@ -724,20 +724,8 @@
       "venueLabel": "Venue",
       "venuePlaceholder": "Search for your venue...",
       "venueHelper": "You can fill this in later",
-      "continue": "Continue",
+      "continue": "Create my event! 🎊",
       "goBack": "Go Back"
-    },
-    "step3": {
-      "title": "How many guests?",
-      "description": "This helps us tailor your experience",
-      "create": "Create my event! 🎊",
-      "skip": "Skip for now",
-      "guestOptions": {
-        "up_to_100": "Up to 100",
-        "100_200": "100–200",
-        "200_350": "200–350",
-        "350_plus": "350+"
-      }
     },
     "toast": {
       "creating": "Creating your event...",
