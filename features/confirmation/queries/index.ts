@@ -1,6 +1,13 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type { ConfirmationPageData } from '../schemas';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isGuestInvitationToken(token: string): boolean {
+  return UUID_REGEX.test(token);
+}
+
 /**
  * Fetches confirmation page data by token using the service role client.
  * Also updates clicked_at on first visit.
@@ -116,5 +123,72 @@ export async function getConfirmationDataByToken(
       eventType: event.event_type ?? undefined,
     },
     scheduleId: schedule.id,
+  };
+}
+
+/**
+ * Fetches confirmation page data by the guest's own invitation_token.
+ * Used when a guest accesses the RSVP page before any schedule is executed.
+ */
+export async function getConfirmationDataByGuestToken(
+  token: string,
+): Promise<ConfirmationPageData | null> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('guests')
+    .select(
+      `
+      id, name, amount, rsvp_status, dietary_restrictions,
+      events!inner (
+        id, title, event_date, ceremony_time, reception_time,
+        location, host_details, guests_experience, event_type
+      )
+    `,
+    )
+    .eq('invitation_token', token)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const event = data.events as unknown as {
+    id: string;
+    title: string;
+    event_date: string;
+    ceremony_time: string | null;
+    reception_time: string | null;
+    location: { name: string; coords?: { lat: number; lng: number } } | null;
+    host_details: Record<string, unknown> | null;
+    guests_experience: { dietary_options?: boolean } | null;
+    event_type: string | null;
+  };
+
+  return {
+    deliveryId: data.id,
+    respondedAt: null,
+    responseData: null,
+    guest: {
+      id: data.id,
+      name: data.name,
+      amount: data.amount,
+      rsvpStatus: data.rsvp_status as 'pending' | 'confirmed' | 'declined',
+      dietaryRestrictions: data.dietary_restrictions ?? undefined,
+    },
+    event: {
+      id: event.id,
+      title: event.title,
+      eventDate: event.event_date,
+      ceremonyTime: event.ceremony_time ?? undefined,
+      receptionTime: event.reception_time ?? undefined,
+      location: event.location ?? undefined,
+      hostDetails: event.host_details ?? undefined,
+      guestExperience: event.guests_experience
+        ? { dietaryOptions: event.guests_experience.dietary_options }
+        : undefined,
+      eventType: event.event_type ?? undefined,
+    },
+    scheduleId: null,
   };
 }

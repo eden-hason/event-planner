@@ -122,6 +122,13 @@
       "saveChanges": "Save changes",
       "delete": "Delete"
     },
+    "expensesCard": {
+      "title": "Expenses"
+    },
+    "expenseListEmpty": {
+      "title": "No expenses yet",
+      "description": "Start recording your expenses to keep track of every detail."
+    },
     "expenseSearchPlaceholder": "Search expenses...",
     "expenseSearchEmpty": "No expenses match your search.",
     "expenseRow": {
@@ -166,7 +173,9 @@
       "officiantRabbi": "Officiating Rabbi",
       "invitations": "Invitations",
       "weddingCake": "Wedding Cake",
-      "attractions": "Attractions"
+      "attractions": "Attractions",
+      "social": "Social",
+      "transport": "Transport"
     },
     "budgetCard": {
       "title": "Budget overview",
@@ -187,7 +196,9 @@
       "inputLabel": "Total budget (₪)",
       "inputPlaceholder": "e.g. 80000",
       "saving": "Saving…",
-      "save": "Save budget"
+      "save": "Save budget",
+      "delete": "Remove budget",
+      "deleting": "Removing…"
     },
     "toast": {
       "savingExpense": "Saving expense...",
@@ -204,6 +215,8 @@
       "giftDeleted": "Gift deleted.",
       "savingBudget": "Saving budget...",
       "budgetSaved": "Budget saved.",
+      "removingBudget": "Removing budget...",
+      "budgetRemoved": "Budget removed.",
       "error": "Something went wrong."
     }
   },
@@ -227,7 +240,12 @@
       "viaYou": "via you",
       "viaOrganizer": "via organizer",
       "deleteGuest": "Delete Guest",
-      "updateGuest": "Update Guest"
+      "updateGuest": "Update Guest",
+      "actionsSection": "Actions",
+      "copyInvitationLink": "Copy Invitation Link",
+      "copyInvitationLinkDescription": "Share a personal RSVP link with this guest",
+      "copied": "Copied!",
+      "linkCopied": "Link copied to clipboard"
     },
     "toast": {
       "creatingGroup": "Creating {name}...",
@@ -735,7 +753,7 @@
     },
     "success": {
       "title": "Your event is ready!",
-      "description": "Your wedding event has been created. Time to start planning the big day!",
+      "description": "Time to start planning the big day!",
       "goToDashboard": "Go to Dashboard",
       "viewDetails": "View event details"
     }

@@ -122,6 +122,13 @@
       "saveChanges": "שמור שינויים",
       "delete": "מחק"
     },
+    "expensesCard": {
+      "title": "הוצאות"
+    },
+    "expenseListEmpty": {
+      "title": "עדיין אין הוצאות",
+      "description": "התחל לתעד את ההוצאות שלך כדי לעקוב אחר כל פרט."
+    },
     "expenseSearchPlaceholder": "חיפוש הוצאות...",
     "expenseSearchEmpty": "לא נמצאו הוצאות תואמות.",
     "expenseRow": {
@@ -166,7 +173,9 @@
       "officiantRabbi": "רב מקדש",
       "invitations": "הזמנות",
       "weddingCake": "עוגת חתונה",
-      "attractions": "אטרקציות"
+      "attractions": "אטרקציות",
+      "social": "סושיאל",
+      "transport": "הסעות"
     },
     "budgetCard": {
       "title": "סקירת תקציב",
@@ -187,7 +196,9 @@
       "inputLabel": "תקציב כולל (₪)",
       "inputPlaceholder": "לדוג׳ 80000",
       "saving": "שומר...",
-      "save": "שמור תקציב"
+      "save": "שמור תקציב",
+      "delete": "הסר תקציב",
+      "deleting": "מסיר..."
     },
     "toast": {
       "savingExpense": "שומר הוצאה...",
@@ -204,6 +215,8 @@
       "giftDeleted": "מתנה נמחקה.",
       "savingBudget": "שומר תקציב...",
       "budgetSaved": "התקציב נשמר.",
+      "removingBudget": "מסיר תקציב...",
+      "budgetRemoved": "התקציב הוסר.",
       "error": "משהו השתבש."
     }
   },
@@ -227,7 +240,12 @@
       "viaYou": "על ידך",
       "viaOrganizer": "על ידי המארגן",
       "deleteGuest": "מחק אורח",
-      "updateGuest": "עדכן אורח"
+      "updateGuest": "עדכן אורח",
+      "actionsSection": "פעולות",
+      "copyInvitationLink": "העתק קישור הזמנה",
+      "copyInvitationLinkDescription": "שתף קישור אישי לאישור הגעה עם האורח",
+      "copied": "הועתק!",
+      "linkCopied": "הקישור הועתק ללוח"
     },
     "toast": {
       "creatingGroup": "יוצר את {name}...",
@@ -735,7 +753,7 @@
     },
     "success": {
       "title": "האירוע שלך מוכן!",
-      "description": "אירוע החתונה שלך נוצר. הגיע הזמן להתחיל לתכנן את היום הגדול!",
+      "description": "הגיע הזמן להתחיל לתכנן את היום הגדול!",
       "goToDashboard": "עבור ללוח הבקרה",
       "viewDetails": "צפה בפרטי האירוע"
     }
