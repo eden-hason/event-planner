@@ -11,26 +11,17 @@ import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { LocationInput } from '@/components/ui/location-input';
 import { createOnboardingEvent } from '@/features/events/actions';
-import type { GuestsEstimate } from '@/features/events/schemas';
 import type { LocationCoords } from '@/components/ui/google-map';
 import { cn } from '@/lib/utils';
 
-type WizardStep = 1 | 2 | 3 | 'success';
+type WizardStep = 1 | 2 | 'success';
 
 interface WizardData {
   brideName: string;
   groomName: string;
   eventDate: string;
   location: { name: string; coords?: LocationCoords } | null;
-  guestsEstimate: GuestsEstimate | null;
 }
-
-const GUEST_OPTION_VALUES: GuestsEstimate[] = [
-  'up_to_100',
-  '100_200',
-  '200_350',
-  '350_plus',
-];
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -41,14 +32,13 @@ export function OnboardingWizard() {
     groomName: '',
     eventDate: '',
     location: null,
-    guestsEstimate: null,
   });
   const [isPending, setIsPending] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
 
-  const progressPercent = step === 1 ? 33 : step === 2 ? 66 : 100;
+  const progressPercent = step === 1 ? 50 : 100;
 
-  const handleSubmit = async (guestsEstimate: GuestsEstimate | null) => {
+  const handleSubmit = async () => {
     setIsPending(true);
 
     const formData = new FormData();
@@ -56,7 +46,6 @@ export function OnboardingWizard() {
     if (data.groomName) formData.set('groomName', data.groomName);
     formData.set('eventDate', data.eventDate);
     if (data.location) formData.set('location', JSON.stringify(data.location));
-    if (guestsEstimate) formData.set('guestsEstimate', guestsEstimate);
 
     const promise = createOnboardingEvent(formData).then((result) => {
       if (!result.success)
@@ -160,7 +149,7 @@ export function OnboardingWizard() {
             {step !== 1 && (
               <button
                 onClick={() =>
-                  setStep((s) => (s === 2 ? 1 : s === 3 ? 2 : s) as WizardStep)
+                  setStep((s) => (s === 2 ? 1 : s) as WizardStep)
                 }
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
               >
@@ -301,8 +290,8 @@ export function OnboardingWizard() {
 
             <div className="flex flex-col gap-2">
               <Button
-                onClick={() => setStep(3)}
-                disabled={!data.eventDate}
+                onClick={() => handleSubmit()}
+                disabled={!data.eventDate || isPending}
                 className="w-full"
               >
                 {t('step2.continue')}
@@ -313,59 +302,6 @@ export function OnboardingWizard() {
                 className="text-muted-foreground w-full"
               >
                 {t('step2.goBack')}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3 */}
-        {step === 3 && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="mb-1 text-xl font-bold">{t('step3.title')}</h2>
-              <p className="text-muted-foreground text-sm">
-                {t('step3.description')}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {GUEST_OPTION_VALUES.map((value) => (
-                <button
-                  key={value}
-                  onClick={() =>
-                    setData((d) => ({
-                      ...d,
-                      guestsEstimate:
-                        d.guestsEstimate === value ? null : value,
-                    }))
-                  }
-                  className={cn(
-                    'rounded-md border-2 px-4 py-3 text-sm font-medium transition-colors',
-                    data.guestsEstimate === value
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-card text-foreground hover:border-primary/40',
-                  )}
-                >
-                  {t(`step3.guestOptions.${value}`)}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={() => handleSubmit(data.guestsEstimate)}
-                disabled={isPending}
-                className="w-full"
-              >
-                {t('step3.create')}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => handleSubmit(null)}
-                disabled={isPending}
-                className="text-muted-foreground w-full"
-              >
-                {t('step3.skip')}
               </Button>
             </div>
           </div>
