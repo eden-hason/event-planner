@@ -42,6 +42,8 @@ export const EXPENSE_PRESETS = [
   { key: 'invitations',           emoji: '✉️', estimate: 2500  },
   { key: 'weddingCake',           emoji: '🎂', estimate: 2500  },
   { key: 'attractions',           emoji: '🎪', estimate: 5000  },
+  { key: 'social',                emoji: '📱', estimate: 3000  },
+  { key: 'transport',             emoji: '🚌', estimate: 2000  },
 ] as const;
 
 export function formatCurrency(amount: number): string {

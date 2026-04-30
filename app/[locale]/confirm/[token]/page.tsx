@@ -1,4 +1,8 @@
-import { getConfirmationDataByToken } from '@/features/confirmation/queries';
+import {
+  getConfirmationDataByToken,
+  getConfirmationDataByGuestToken,
+  isGuestInvitationToken,
+} from '@/features/confirmation/queries';
 import { EventDetailsCard } from '@/features/confirmation/components/event-details-card';
 import { ConfirmationForm } from '@/features/confirmation/components/confirmation-form';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,12 +22,11 @@ export default async function ConfirmationPage({
   const { locale, token } = await params;
   setRequestLocale(locale);
 
-  // Validate token format
-  if (!TOKEN_REGEX.test(token)) {
-    return <InvalidTokenView />;
-  }
-
-  const data = await getConfirmationDataByToken(token);
+  const data = isGuestInvitationToken(token)
+    ? await getConfirmationDataByGuestToken(token)
+    : TOKEN_REGEX.test(token)
+      ? await getConfirmationDataByToken(token)
+      : null;
 
   if (!data) {
     return <InvalidTokenView />;

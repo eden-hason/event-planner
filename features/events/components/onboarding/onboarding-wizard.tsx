@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
-import { IconArrowLeft, IconArrowRight, IconConfetti } from '@tabler/icons-react';
+import { IconArrowRight, IconConfetti } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,6 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { LocationInput } from '@/components/ui/location-input';
 import { createOnboardingEvent } from '@/features/events/actions';
 import type { LocationCoords } from '@/components/ui/google-map';
-import { cn } from '@/lib/utils';
 
 type WizardStep = 1 | 2 | 'success';
 
@@ -145,23 +144,8 @@ export function OnboardingWizard() {
       <div className="bg-card border-border mx-auto w-full max-w-sm rounded-lg border p-8">
         {/* Progress */}
         <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            {step !== 1 && (
-              <button
-                onClick={() =>
-                  setStep((s) => (s === 2 ? 1 : s) as WizardStep)
-                }
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
-              >
-                <IconArrowLeft size={14} /> {t('back')}
-              </button>
-            )}
-            <span
-              className={cn(
-                'text-primary text-xs font-semibold tracking-widest',
-                step === 1 && 'ml-auto',
-              )}
-            >
+          <div className="mb-2 flex items-center justify-end">
+            <span className="text-primary text-xs font-semibold tracking-widest">
               {t('stepOf', { step })}
             </span>
           </div>
@@ -223,18 +207,13 @@ export function OnboardingWizard() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => setStep(2)} className="w-full">
-                {t('step1.continue')}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setStep(2)}
-                className="text-muted-foreground w-full"
-              >
-                {t('step1.skip')}
-              </Button>
-            </div>
+            <Button
+              onClick={() => setStep(2)}
+              disabled={!data.brideName || !data.groomName}
+              className="w-full"
+            >
+              {t('step1.continue')}
+            </Button>
           </div>
         )}
 

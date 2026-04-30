@@ -42,5 +42,5 @@ export type ConfirmationPageData = {
     | 'guestExperience'
     | 'eventType'
   >;
-  scheduleId: string;
+  scheduleId: string | null;
 };

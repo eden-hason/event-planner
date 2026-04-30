@@ -52,6 +52,7 @@ export const GuestAppSchema = z.object({
   notes: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  invitationToken: z.string().uuid(),
   // RSVP attribution tracking
   rsvpChangedBy: z.uuid().nullable().optional(),
   rsvpChangedByName: z.string().nullable().optional(),
@@ -100,6 +101,7 @@ export const GuestDbSchema = z.object({
   notes: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  invitation_token: z.string().uuid(),
   // RSVP attribution tracking
   rsvp_changed_by: z.uuid().nullable().optional(),
   rsvp_changed_by_name: z.string().max(255).nullable().optional(),
@@ -130,6 +132,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     notes: dbData.notes ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
+    invitationToken: dbData.invitation_token,
     rsvpChangedBy: dbData.rsvp_changed_by ?? null,
     rsvpChangedByName: dbData.rsvp_changed_by_name ?? null,
     rsvpChangedAt: dbData.rsvp_changed_at ?? null,
