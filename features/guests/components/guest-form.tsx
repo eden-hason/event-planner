@@ -44,6 +44,7 @@ import {
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { DIETARY_PRESETS } from '@/features/guests/utils';
+import { OfflineRsvpDialog } from './offline-rsvp-dialog';
 
 interface GuestFormProps {
   eventId: string;
@@ -55,6 +56,10 @@ interface GuestFormProps {
   hideActions?: boolean;
   onPendingChange?: (pending: boolean) => void;
   showDietary?: boolean;
+  hasReceivedInitialInvitation?: boolean;
+  nonOfflineCount?: number;
+  capacity?: number | null;
+  onOfflineRsvpChange?: (isOffline: boolean) => void;
 }
 
 export function GuestForm({
@@ -67,10 +72,17 @@ export function GuestForm({
   hideActions = false,
   onPendingChange,
   showDietary = false,
+  hasReceivedInitialInvitation = false,
+  nonOfflineCount,
+  capacity,
+  onOfflineRsvpChange,
 }: GuestFormProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const isEditMode = !!guest;
+
+  const [pendingRsvpStatus, setPendingRsvpStatus] = React.useState<'confirmed' | 'declined' | null>(null);
+  const [offlineRsvpDialogOpen, setOfflineRsvpDialogOpen] = React.useState(false);
 
   const dietaryLabels: Record<string, string> = {
     vegan: t('dietary.vegan'),
@@ -95,8 +107,14 @@ export function GuestForm({
       dietaryRestrictions: guest?.dietaryRestrictions || '',
       amount: guest?.amount || 1,
       notes: guest?.notes || '',
+      isOfflineRsvp: guest?.isOfflineRsvp ?? false,
     },
   });
+
+  const isOfflineRsvpValue = form.watch('isOfflineRsvp');
+  React.useEffect(() => {
+    onOfflineRsvpChange?.(isOfflineRsvpValue ?? false);
+  }, [isOfflineRsvpValue, onOfflineRsvpChange]);
 
   React.useEffect(() => {
     if (guest) {
@@ -110,6 +128,7 @@ export function GuestForm({
         dietaryRestrictions: guest.dietaryRestrictions || '',
         amount: guest.amount || 1,
         notes: guest.notes || '',
+        isOfflineRsvp: guest.isOfflineRsvp ?? false,
       });
     }
   }, [guest, form]);
@@ -194,12 +213,13 @@ export function GuestForm({
   };
 
   return (
-    <Form {...form}>
-      <form
-        id={formId}
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
-      >
+    <>
+      <Form {...form}>
+        <form
+          id={formId}
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
         {/* Contact Information */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
@@ -306,7 +326,26 @@ export function GuestForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('form.rsvpStatus')}</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(newValue) => {
+                      const shouldWarn =
+                        isEditMode &&
+                        newValue !== 'pending' &&
+                        !hasReceivedInitialInvitation &&
+                        !isOfflineRsvpValue;
+
+                      if (shouldWarn) {
+                        setPendingRsvpStatus(newValue as 'confirmed' | 'declined');
+                        setOfflineRsvpDialogOpen(true);
+                      } else {
+                        field.onChange(newValue);
+                        if (newValue === 'pending') {
+                          form.setValue('isOfflineRsvp', false);
+                        }
+                      }
+                    }}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder={t('form.rsvpPlaceholder')} />
@@ -458,7 +497,27 @@ export function GuestForm({
             )}
           </div>
         )}
-      </form>
-    </Form>
+        </form>
+      </Form>
+      <OfflineRsvpDialog
+        open={offlineRsvpDialogOpen}
+        newStatus={pendingRsvpStatus ?? 'confirmed'}
+        guestName={guest?.name ?? ''}
+        nonOfflineCount={nonOfflineCount}
+        capacity={capacity}
+        onConfirm={() => {
+          if (pendingRsvpStatus) {
+            form.setValue('rsvpStatus', pendingRsvpStatus);
+            form.setValue('isOfflineRsvp', true);
+          }
+          setOfflineRsvpDialogOpen(false);
+          setPendingRsvpStatus(null);
+        }}
+        onCancel={() => {
+          setOfflineRsvpDialogOpen(false);
+          setPendingRsvpStatus(null);
+        }}
+      />
+    </>
   );
 }

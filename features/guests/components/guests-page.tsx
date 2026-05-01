@@ -42,6 +42,8 @@ interface GuestsPageProps {
   existingPhones: Set<string>;
   showDietary?: boolean;
   currentUserId?: string | null;
+  initialInvitedGuestIds?: string[];
+  capacity?: number | null;
 }
 
 const RSVP_BADGE_STYLES: Record<string, string> = {
@@ -63,10 +65,16 @@ export function GuestsPage({
   existingPhones,
   showDietary = false,
   currentUserId = null,
+  initialInvitedGuestIds = [],
+  capacity = null,
 }: GuestsPageProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const locale = useLocale();
+
+  const nonOfflineCount = guests
+    .filter((g) => !g.isOfflineRsvp)
+    .reduce((sum, g) => sum + g.amount, 0);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
@@ -75,6 +83,7 @@ export function GuestsPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [formIsOfflineRsvp, setFormIsOfflineRsvp] = useState(false);
 
   const handleStatCardClick = (status: string | null) => {
     if (status === null) {
@@ -145,11 +154,13 @@ export function GuestsPage({
 
   const handleAddGuest = () => {
     setSelectedGuest(null);
+    setFormIsOfflineRsvp(false);
     setIsDrawerOpen(true);
   };
 
   const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
     setSelectedGuest(guest);
+    setFormIsOfflineRsvp(guest?.isOfflineRsvp ?? false);
     setIsDrawerOpen(true);
   };
 
@@ -221,13 +232,8 @@ export function GuestsPage({
 
   return (
     <>
-      <GuestStats
-        guests={guests}
-        selectedStatuses={selectedStatuses}
-        onStatClick={handleStatCardClick}
-      />
-      <Tabs defaultValue="guests" onValueChange={handleTabsChange} className="mt-6" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+      <Tabs defaultValue="guests" onValueChange={handleTabsChange} dir={locale === 'he' ? 'rtl' : 'ltr'}>
+        <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="guests"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
@@ -243,7 +249,12 @@ export function GuestsPage({
             {t('tabGroups')}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="guests">
+        <GuestStats
+          guests={guests}
+          selectedStatuses={selectedStatuses}
+          onStatClick={handleStatCardClick}
+        />
+        <TabsContent value="guests" className="mt-6">
           <GuestDirectory
             guests={guests}
             groups={groups}
@@ -286,14 +297,21 @@ export function GuestsPage({
               {selectedGuest ? selectedGuest.name : t('sheet.newGuest')}
             </SheetTitle>
             {selectedGuest ? (
-              <span
-                className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
-              >
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
-                />
-                {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
-              </span>
+                  className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
+                >
+                  <span
+                    className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
+                  />
+                  {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
+                </span>
+                {selectedGuest.isOfflineRsvp && (
+                  <span className="inline-flex w-fit items-center rounded-full border border-dashed px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {t('rsvp.offlineRsvp')}
+                  </span>
+                )}
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 {t('sheet.addGuestHint')}
@@ -354,8 +372,16 @@ export function GuestsPage({
               hideActions
               onPendingChange={setIsSubmitting}
               showDietary={showDietary}
+              hasReceivedInitialInvitation={
+                selectedGuest
+                  ? initialInvitedGuestIds.includes(selectedGuest.id)
+                  : false
+              }
+              nonOfflineCount={nonOfflineCount}
+              capacity={capacity}
+              onOfflineRsvpChange={setFormIsOfflineRsvp}
             />
-            {selectedGuest && (
+            {selectedGuest && !selectedGuest.isOfflineRsvp && !formIsOfflineRsvp && (
               <GuestActionsSection invitationToken={selectedGuest.invitationToken} />
             )}
           </div>

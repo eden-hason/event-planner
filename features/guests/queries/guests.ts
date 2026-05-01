@@ -52,6 +52,24 @@ export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
  * Fetches all existing phone numbers for guests in an event.
  * Used for duplicate detection during CSV import.
  */
+export const getGuestsWithInitialInvitation = async (
+  eventId: string,
+): Promise<Set<string>> => {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('message_deliveries')
+      .select('guest_id, schedules!inner(action_type, event_id)')
+      .eq('schedules.event_id', eventId)
+      .eq('schedules.action_type', 'initial_invitation')
+      .in('status', ['sent', 'delivered', 'read']);
+    return new Set(data?.map((d) => d.guest_id) ?? []);
+  } catch (error) {
+    console.error('Error fetching guests with initial invitation:', error);
+    return new Set();
+  }
+};
+
 export const getEventGuestPhones = async (
   eventId: string,
 ): Promise<Set<string>> => {

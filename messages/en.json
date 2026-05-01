@@ -288,7 +288,20 @@
     "rsvp": {
       "pending": "Pending",
       "confirmed": "Confirmed",
-      "declined": "Declined"
+      "declined": "Declined",
+      "offlineRsvp": "Offline RSVP"
+    },
+    "offlineRsvpDialog": {
+      "title": "Guest hasn't received invitation yet",
+      "description": "Setting {name} as {status} will mark them as Offline RSVP:",
+      "bullet1": "Won't receive confirmation follow-up messages",
+      "bullet1Sub": "Invitation, reminder, and thank-you messages will still be sent as usual",
+      "bullet2": "Won't count toward guest capacity",
+      "bullet2Sub": "Ideal for close family or guaranteed guests",
+      "confirm": "Confirm Change",
+      "cancel": "Cancel",
+      "tooltipDescription": "RSVP was set manually before the invitation was sent. This guest won't receive confirmation follow-ups and won't count toward guest capacity.",
+      "capacityGuests": "guests"
     },
     "stats": {
       "totalGuests": "Total Guests",

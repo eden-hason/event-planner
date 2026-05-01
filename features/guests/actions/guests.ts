@@ -46,6 +46,10 @@ export async function upsertGuest(
     if (parsedData.groupId === 'null') {
       parsedData.groupId = null;
     }
+    // Coerce boolean string from FormData
+    if (parsedData.isOfflineRsvp !== undefined) {
+      parsedData.isOfflineRsvp = parsedData.isOfflineRsvp === 'true';
+    }
 
     const validationResult = GuestUpsertSchema.safeParse(parsedData);
     if (!validationResult.success) {
@@ -76,6 +80,11 @@ export async function upsertGuest(
         dbData.rsvp_changed_by_name = currentUser.displayName;
         dbData.rsvp_changed_at = new Date().toISOString();
         dbData.rsvp_change_source = 'manual';
+
+        // Clear offline RSVP flag when status is reverted to pending
+        if (dbData.rsvp_status === 'pending') {
+          dbData.is_offline_rsvp = false;
+        }
       }
     }
 
