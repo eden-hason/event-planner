@@ -85,8 +85,17 @@ export function calculateScheduledDate(
 export function filterGuestsByTarget(
   guests: GuestApp[],
   targetStatus?: 'pending' | 'confirmed' | null,
+  actionType?: string,
 ): GuestApp[] {
   if (!targetStatus) return guests;
+
+  if (actionType === 'initial_invitation') {
+    // Offline RSVP guests receive the initial invitation even though they're not pending
+    return guests.filter(
+      (guest) => guest.rsvpStatus === targetStatus || guest.isOfflineRsvp,
+    );
+  }
+
   return guests.filter((guest) => guest.rsvpStatus === targetStatus);
 }
 

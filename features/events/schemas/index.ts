@@ -126,6 +126,7 @@ export const EventAppSchema = z.object({
     .default('draft'),
   isDefault: z.boolean().optional(),
   guestsEstimate: GuestsEstimateSchema.optional(),
+  guestsCapacity: z.number().int().positive().optional(),
   budget: z.number().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -167,6 +168,7 @@ export const EventDbSchema = z.object({
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
   guests_estimate: GuestsEstimateSchema.optional().nullable(),
+  guests_capacity: z.number().int().positive().optional().nullable(),
   budget: z.number().optional().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -196,6 +198,7 @@ export function dbToAppTransformer(dbData: {
   status?: string | null;
   is_default?: boolean | null;
   guests_estimate?: GuestsEstimate | null;
+  guests_capacity?: number | null;
   budget?: number | null;
   created_at: string;
   updated_at: string;
@@ -241,6 +244,7 @@ export function dbToAppTransformer(dbData: {
     status,
     isDefault: dbData.is_default ?? undefined,
     guestsEstimate: dbData.guests_estimate ?? undefined,
+    guestsCapacity: dbData.guests_capacity ?? undefined,
     budget: dbData.budget ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
@@ -294,6 +298,7 @@ export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
     status,
     isDefault: dbData.is_default ?? undefined,
     guestsEstimate: dbData.guests_estimate ?? undefined,
+    guestsCapacity: dbData.guests_capacity ?? undefined,
     budget: dbData.budget ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,

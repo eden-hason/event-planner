@@ -1,0 +1,2 @@
+ALTER TABLE guests
+  ADD COLUMN is_offline_rsvp BOOLEAN NOT NULL DEFAULT FALSE;
