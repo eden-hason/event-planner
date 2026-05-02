@@ -421,7 +421,8 @@
       "importSuccess": "Guests imported successfully!",
       "upload": {
         "heading": "Upload your guests list",
-        "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse"
+        "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse",
+        "replace": "Replace file"
       },
       "analyze": {
         "heading": "Analyzing your file…",
