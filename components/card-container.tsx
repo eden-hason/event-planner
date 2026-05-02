@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { startCase } from 'lodash';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { ReactNode } from 'react';
 
 interface CardContainerProps {

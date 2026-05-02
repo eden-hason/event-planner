@@ -3,7 +3,7 @@
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Search, Users, Utensils } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';

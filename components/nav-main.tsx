@@ -1,6 +1,5 @@
 'use client';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { usePathname, Link } from '@/i18n/navigation';
 import { type Icon } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
