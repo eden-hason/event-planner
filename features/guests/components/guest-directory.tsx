@@ -7,12 +7,17 @@ import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
 import { GroupFilter, RsvpStatusFilter } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
+import { ContactPickerDialog, type ContactInfo } from './contact-picker-dialog';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
-import { IconUpload } from '@tabler/icons-react';
+import { IconAddressBook, IconUpload } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
+interface ContactManager {
+  select(props: string[], opts?: { multiple?: boolean }): Promise<ContactInfo[]>;
+}
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
@@ -37,6 +42,8 @@ export function GuestDirectory({
 }: GuestDirectoryProps) {
   const t = useTranslations('guests');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [pickedContacts, setPickedContacts] = useState<ContactInfo[]>([]);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const { pageSize, isCalculated } = useDynamicPageSize({
     containerRef: tableContainerRef,
@@ -100,6 +107,15 @@ export function GuestDirectory({
     onSelectGuest(null);
   };
 
+  const handleImportFromContacts = async () => {
+    const contacts = await (navigator as unknown as { contacts: ContactManager }).contacts
+      .select(['name', 'tel'], { multiple: true });
+    if (contacts.length > 0) {
+      setPickedContacts(contacts);
+      setContactDialogOpen(true);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
@@ -113,6 +129,16 @@ export function GuestDirectory({
             <IconUpload size={16} />
             {t('directory.importCsv')}
           </Button>
+          {'contacts' in navigator && (
+            <Button
+              variant="outline"
+              onClick={handleImportFromContacts}
+              className="gap-2"
+            >
+              <IconAddressBook size={16} />
+              {t('directory.importFromContacts')}
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <RsvpStatusFilter
@@ -150,6 +176,14 @@ export function GuestDirectory({
         onOpenChange={setImportDialogOpen}
         eventId={eventId}
         existingPhones={existingPhones}
+      />
+
+      <ContactPickerDialog
+        rawContacts={pickedContacts}
+        eventId={eventId}
+        existingPhones={existingPhones}
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
       />
     </Card>
   );
