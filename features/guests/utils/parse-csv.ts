@@ -1,5 +1,5 @@
 /**
- * Client-side CSV parsing utility using PapaParse
+ * Client-side CSV/Excel parsing utility
  */
 
 import Papa from 'papaparse';
@@ -12,11 +12,6 @@ export interface ParsedCSV {
 /**
  * Gets sample data for a specific column from parsed CSV rows.
  * Returns the first non-empty value found in the first few rows.
- *
- * @param rows - The parsed CSV rows
- * @param columnIndex - The column index to get sample data for
- * @param maxRowsToCheck - Maximum number of rows to check (default: 5)
- * @returns The first non-empty value found, or empty string if none found
  */
 export function getSampleData(
   rows: string[][],
@@ -32,11 +27,46 @@ export function getSampleData(
   return '';
 }
 
-/**
- * Parses a CSV file and returns headers and rows using PapaParse.
- * Handles quoted fields, different delimiters, and edge cases automatically.
- */
+export function isExcelFile(file: File): boolean {
+  return (
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    file.type === 'application/vnd.ms-excel' ||
+    file.name.endsWith('.xlsx') ||
+    file.name.endsWith('.xls')
+  );
+}
+
+async function parseExcelFile(file: File): Promise<ParsedCSV> {
+  const { read, utils } = await import('xlsx');
+  const buffer = await file.arrayBuffer();
+  const workbook = read(buffer, { type: 'array' });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const data = utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' });
+
+  const nonEmptyRows = data.filter((row) => row.some((cell) => String(cell).trim() !== ''));
+
+  if (nonEmptyRows.length === 0) {
+    throw new Error('Excel file is empty');
+  }
+
+  const [headerRow, ...dataRows] = nonEmptyRows;
+
+  if (!headerRow || headerRow.length === 0) {
+    throw new Error('Excel file must have at least a header row');
+  }
+
+  const headers = headerRow.map((h) => String(h).trim());
+  const rows = dataRows.map((row) => row.map((cell) => String(cell).trim()));
+
+  return { headers, rows };
+}
+
 export async function parseCSVFile(file: File): Promise<ParsedCSV> {
+  if (isExcelFile(file)) {
+    return parseExcelFile(file);
+  }
+
   return new Promise((resolve, reject) => {
     Papa.parse<string[]>(file, {
       skipEmptyLines: true,
@@ -60,7 +90,6 @@ export async function parseCSVFile(file: File): Promise<ParsedCSV> {
           return;
         }
 
-        // Trim all values
         const trimmedHeaders = headers.map((h: string) => h.trim());
         const trimmedRows = rows.map((row: string[]) =>
           row.map((cell: string) => cell.trim()),

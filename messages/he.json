@@ -334,7 +334,7 @@
       "lastPage": "עמוד אחרון"
     },
     "directory": {
-      "importCsv": "ייבוא CSV",
+      "importCsv": "ייבוא קובץ",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה.",
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
@@ -554,7 +554,7 @@
       "createScheduleDesc": "תכנן את ציר הזמן",
       "viewGuests": "כל האורחים",
       "viewGuestsDesc": "נהל את רשימת האורחים",
-      "importCsv": "ייבוא CSV",
+      "importCsv": "ייבוא קובץ",
       "importCsvDesc": "העלאה המונית של אורחים"
     },
     "recentActivity": {
