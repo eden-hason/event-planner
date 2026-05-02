@@ -8,7 +8,6 @@ export type AnalyzeCsvResult = {
   mapping: AnalyzeCsvMapping; // e.g. { "שם": "full_name", "טלפון": "phone" }
   preview: Array<{ header: string; field: string; sample: string }>;
   detectedCount: number;
-  warnings: string[];
 };
 
 export type AnalyzeCsvState = {
@@ -35,8 +34,7 @@ Return ONLY a valid JSON object with this exact structure:
 {
   "mapping": { "<csv_header>": "<field_name>" },
   "preview": [{ "header": "<csv_header>", "field": "<field_name>", "sample": "<first_value>" }],
-  "detectedCount": <number>,
-  "warnings": ["<warning_message>"]
+  "detectedCount": <number>
 }
 
 Rules:
@@ -45,7 +43,6 @@ Rules:
 - The "mapping" object maps CSV header names to field names
 - "preview" should include all mapped columns with a sample value
 - "detectedCount" is the number of successfully mapped fields
-- "warnings" is an array of any issues found (empty array if none)
 - Do not include unmapped headers in the mapping or preview`,
       messages: [
         {
