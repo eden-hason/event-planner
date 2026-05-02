@@ -334,7 +334,7 @@
       "lastPage": "Last page"
     },
     "directory": {
-      "importCsv": "Import CSV",
+      "importCsv": "Import File",
       "deletingGuest": "Deleting {name}...",
       "guestDeleted": "Guest deleted successfully.",
       "guestDeleteFailed": "Failed to delete guest. Please try again."
@@ -554,7 +554,7 @@
       "createScheduleDesc": "Plan event timeline",
       "viewGuests": "View All Guests",
       "viewGuestsDesc": "Manage guest list",
-      "importCsv": "Import CSV",
+      "importCsv": "Import File",
       "importCsvDesc": "Bulk upload guests"
     },
     "recentActivity": {

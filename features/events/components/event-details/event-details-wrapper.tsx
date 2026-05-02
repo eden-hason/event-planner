@@ -128,22 +128,16 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           onDiscard={handleDiscard}
         />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          {/* Left column: Date & Time → Couple → Location */}
-          <div className="flex flex-col gap-4 lg:col-span-7">
-            <DateTimeCard />
-            <CoupleCard />
-            <LocationCard />
-          </div>
-          {/* Right column: Event Invitation → Guest Experience → Digital Gift */}
-          <div className="flex flex-col gap-4 lg:col-span-5">
-            <EventInvitationCard
-              eventId={event.id}
-              imageUrl={event.invitations?.imageUrl}
-            />
-            <GuestExperienceCard />
-            <DigitalGiftCard />
-          </div>
+        <div className="flex flex-col gap-4">
+          <DateTimeCard />
+          <CoupleCard />
+          <LocationCard />
+          <EventInvitationCard
+            eventId={event.id}
+            imageUrl={event.invitations?.imageUrl}
+          />
+          <GuestExperienceCard />
+          <DigitalGiftCard />
         </div>
       </form>
     </Form>
