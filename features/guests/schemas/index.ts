@@ -373,7 +373,7 @@ export const ImportGuestSchema = z.object({
   amount: z.coerce
     .number()
     .int('Amount must be a whole number')
-    .min(1, 'Amount must be at least 1')
+    .transform((val) => Math.max(1, val))
     .default(1),
 });
 
