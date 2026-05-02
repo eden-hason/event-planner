@@ -334,7 +334,7 @@
       "lastPage": "עמוד אחרון"
     },
     "directory": {
-      "importCsv": "ייבוא CSV",
+      "importCsv": "ייבוא קובץ",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה.",
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
@@ -426,7 +426,7 @@
       },
       "analyze": {
         "heading": "מנתח את הקובץ…",
-        "description": "הבינה המלאכותית קוראת את העמודות וממפה את נתוני האורחים אוטומטית",
+        "description": "מערכת ה-AI שלנו קוראת את העמודות וממפה את נתוני האורחים באופן אוטומתי",
         "rowsDetected": "הקובץ פוענח — {count} שורות זוהו",
         "readingHeaders": "קורא כותרות עמודות…",
         "analyzingSample": "מנתח נתוני דוגמה…",
@@ -434,7 +434,7 @@
         "failedHeading": "הניתוח נכשל",
         "tryAgain": "נסה שנית",
         "successHeading": "המיפוי הושלם",
-        "successDescription": "הבינה המלאכותית מיפתה בהצלחה את נתוני האורחים לשדות הנכונים. הכל מוכן!",
+        "successDescription": "מערכת ה-AI מיפתה בהצלחה את נתוני האורחים לשדות הנכונים. הכל מוכן!",
         "columnsIdentified": "עמודות זוהו:",
         "mappingComplete": "המיפוי לסכמת האורחים הושלם"
       },
@@ -554,7 +554,7 @@
       "createScheduleDesc": "תכנן את ציר הזמן",
       "viewGuests": "כל האורחים",
       "viewGuestsDesc": "נהל את רשימת האורחים",
-      "importCsv": "ייבוא CSV",
+      "importCsv": "ייבוא קובץ",
       "importCsvDesc": "העלאה המונית של אורחים"
     },
     "recentActivity": {

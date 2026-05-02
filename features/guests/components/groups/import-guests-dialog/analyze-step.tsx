@@ -255,14 +255,6 @@ export function AnalyzeStep({
             <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
             <span>{t('import.analyze.mappingComplete')}</span>
           </div>
-
-          {result && result.warnings.length > 0 && (
-            <div className="border-t pt-1 text-yellow-600 dark:text-yellow-400">
-              {result.warnings.map((w, i) => (
-                <p key={i}>{w}</p>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 import { ChevronsUpDown, Copy, LogOutIcon, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';

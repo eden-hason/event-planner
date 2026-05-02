@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { IconUpload, IconX, IconFileTypeCsv, IconRefresh } from '@tabler/icons-react';
+import { IconUpload, IconX, IconFileTypeCsv, IconFileTypeXls, IconRefresh } from '@tabler/icons-react';
+import { isExcelFile } from '@/features/guests/utils/parse-csv';
 import {
   FileUpload,
   FileUploadDropzone,
@@ -47,7 +48,7 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
     <FileUpload
       value={files}
       onValueChange={handleFilesChange}
-      accept=".csv,text/csv"
+      accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
       maxSize={5 * 1024 * 1024}
       dir={dir}
     >
@@ -75,7 +76,7 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
           <FileUploadItem key={file.name} value={file} className="border-0 p-0 rounded-none gap-0">
             <Item variant="outline" className="flex-1">
               <ItemMedia variant="icon">
-                <IconFileTypeCsv />
+                {isExcelFile(file) ? <IconFileTypeXls /> : <IconFileTypeCsv />}
               </ItemMedia>
               <ItemContent>
                 <ItemTitle>{file.name}</ItemTitle>
