@@ -64,7 +64,8 @@ export async function updateSession(request: NextRequest) {
     !strippedPath.startsWith('/auth') &&
     !strippedPath.startsWith('/error') &&
     !strippedPath.startsWith('/confirm') &&
-    !strippedPath.startsWith('/invitations')
+    !strippedPath.startsWith('/invitations') &&
+    !strippedPath.startsWith('/privacy')
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
