@@ -110,8 +110,8 @@ function latestOf(...timestamps: (string | null | undefined)[]): string {
 }
 
 /**
- * Fetches engaged delivery activity for a schedule (read/confirmed/declined guests only).
- * RSVP status takes precedence over read status.
+ * Fetches delivery activity for a schedule: engaged guests (read/confirmed/declined)
+ * plus any failed deliveries. RSVP status takes precedence over read status.
  */
 export async function getDeliveryActivity(
   scheduleId: string,
@@ -125,7 +125,7 @@ export async function getDeliveryActivity(
   const [deliveryResult, interactionResult] = await Promise.all([
     supabase
       .from('message_deliveries')
-      .select('id, sent_at, delivered_at, read_at, guest_id, guests(name, phone_number)')
+      .select('id, status, sent_at, delivered_at, read_at, error_message, error_code, guest_id, guests(name, phone_number)')
       .eq('schedule_id', scheduleId),
     supabase
       .from('guest_interactions')
@@ -156,20 +156,26 @@ export async function getDeliveryActivity(
     }
   }
 
-  // Build rows for engaged guests only (read or RSVP'd)
+  // Build rows for engaged guests (read/RSVP'd) and failed deliveries
   const allRows: DeliveryActivityRow[] = [];
 
   for (const d of deliveryResult.data ?? []) {
     const hasRead = d.read_at !== null;
+    const hasFailed = d.status === 'failed';
     const rsvp = rsvpMap.get(d.guest_id);
-    if (!hasRead && !rsvp) continue;
 
-    let activityStatus: ActivityStatus = 'read';
+    if (!hasRead && !rsvp && !hasFailed) continue;
+
+    let activityStatus: ActivityStatus;
     let respondedAt: string | null = null;
 
-    if (rsvp) {
+    if (hasFailed && !rsvp && !hasRead) {
+      activityStatus = 'failed';
+    } else if (rsvp) {
       activityStatus = rsvp.type === 'rsvp_confirm' ? 'confirmed' : 'declined';
       respondedAt = rsvp.createdAt;
+    } else {
+      activityStatus = 'read';
     }
 
     const guest = Array.isArray(d.guests) ? d.guests[0] : d.guests;
@@ -184,13 +190,15 @@ export async function getDeliveryActivity(
       readAt: d.read_at,
       respondedAt,
       interactionMetadata: rsvp?.metadata ?? null,
+      errorCode: (d as { error_code?: number | null }).error_code ?? null,
+      errorMessage: hasFailed ? ((d as { error_message?: string | null }).error_message ?? null) : null,
     });
   }
 
-  // Sort by most recent engagement timestamp descending
+  // Sort by most recent activity descending; failed rows (no timestamps) sort last
   allRows.sort((a, b) =>
-    latestOf(b.readAt, b.respondedAt).localeCompare(
-      latestOf(a.readAt, a.respondedAt),
+    latestOf(b.readAt, b.respondedAt, b.sentAt).localeCompare(
+      latestOf(a.readAt, a.respondedAt, a.sentAt),
     ),
   );
 

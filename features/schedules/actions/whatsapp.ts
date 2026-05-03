@@ -7,6 +7,7 @@ export type SendWhatsAppTemplateResult = {
   success: boolean;
   message: string;
   messageId?: string;
+  errorCode?: number;
 };
 
 /**
@@ -99,11 +100,17 @@ export async function sendWhatsAppTemplateMessage(params: {
         template: params.templateName,
       });
 
+      const metaErrorCode =
+        typeof errorData?.error?.code === 'number'
+          ? errorData.error.code
+          : undefined;
+
       return {
         success: false,
         message:
           errorData?.error?.message ||
           `WhatsApp API error: ${response.statusText}`,
+        errorCode: metaErrorCode,
       };
     }
 

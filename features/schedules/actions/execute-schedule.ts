@@ -1,24 +1,19 @@
 'use server';
 
-import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getScheduleById } from '../queries/schedules';
 import { getTemplateByKey } from '../config/whatsapp-templates';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { getGroupById } from '@/features/guests/queries/groups';
-import { sendWhatsAppTemplateMessage } from './whatsapp';
-import { sendSmsMessage, buildSmsFallbackBody } from './sms';
-import type { DeliveryMethod } from '../schemas';
 import {
   filterGuestsByTarget,
   validatePhoneNumber,
-  formatPhoneE164,
-  buildDynamicTemplateParameters,
-  buildDynamicButtonParameters,
+  sendInChunks,
+  buildDeliveryRecord,
+  generateConfirmationToken,
   type ParameterResolutionContext,
 } from '../utils';
-import { buildDynamicHeaderParameters } from '../utils/parameter-resolvers';
 import type { GroupApp } from '@/features/guests/schemas';
 
 /**
@@ -178,107 +173,40 @@ export async function executeSchedule(
       }),
     );
 
-    // 11. Send messages concurrently with dynamic parameter resolution
-    const sendResults = await Promise.allSettled(
-      guestsWithPhones.map(async (guest) => {
-        const phoneE164 = formatPhoneE164(guest.phone!);
-
-        // Generate a unique confirmation token for this guest's delivery
-        const confirmationToken = randomBytes(32).toString('hex');
-
-        // Build parameter resolution context
-        const context: ParameterResolutionContext = {
-          guest,
-          event: schedule.event,
-          group: guest.groupId ? groupsMap.get(guest.groupId) : null,
-          schedule,
-          confirmationToken,
-        };
-
-        // Build template parameters dynamically
-        // Safe to use non-null assertion because we validated above
-        const parameters = buildDynamicTemplateParameters(
-          template.parameters!.placeholders,
-          context,
-        );
-
-        // Build header parameters dynamically if configured
-        const headerParameters = template.parameters?.headerPlaceholders?.length
-          ? buildDynamicHeaderParameters(
-            template.parameters.headerPlaceholders,
-            context,
-          )
-          : undefined;
-
-        // Build button parameters dynamically if configured
-        const buttonParameters = template.parameters?.buttonPlaceholders?.length
-          ? buildDynamicButtonParameters(
-            template.parameters.buttonPlaceholders,
-            context,
-          )
-          : undefined;
-
-        // Send WhatsApp message
-        const whatsappResult = await sendWhatsAppTemplateMessage({
-          to: phoneE164,
-          templateName: template.templateName,
-          languageCode: template.languageCode,
-          parameters,
-          headerParameters,
-          buttonParameters,
-        });
-
-        let result = whatsappResult;
-        let channel: DeliveryMethod = 'whatsapp';
-
-        if (!whatsappResult.success) {
-          const smsBody = buildSmsFallbackBody(context, confirmationToken);
-          const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
-          if (smsResult.success) {
-            result = smsResult;
-            channel = 'sms';
-          }
-        }
-
-        return {
-          guest,
-          result,
-          confirmationToken,
-          channel,
-        };
-      }),
-    );
+    // 11. Send messages in rate-limited chunks
+    const sendResults = await sendInChunks(guestsWithPhones, (guest) => {
+      const confirmationToken = generateConfirmationToken();
+      const context: ParameterResolutionContext = {
+        guest,
+        event: schedule.event,
+        group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+        schedule,
+        confirmationToken,
+      };
+      return { context, template, confirmationToken };
+    });
 
     // 12. Process results and create delivery records
     const deliveryRecords = [];
     let sentCount = 0;
     let failedCount = 0;
 
-    for (const promiseResult of sendResults) {
-      if (promiseResult.status === 'fulfilled') {
-        const { guest, result, confirmationToken, channel } = promiseResult.value;
-
-        deliveryRecords.push({
-          schedule_id: scheduleId,
-          guest_id: guest.id,
-          delivery_method: channel,
-          status: result.success ? ('sent' as const) : ('failed' as const),
-          sent_at: result.success ? new Date().toISOString() : null,
-          external_message_id: result.messageId || null,
-          error_message: result.success ? null : result.message,
-          confirmation_token: confirmationToken,
-        });
-
-        if (result.success) {
+    for (const settled of sendResults) {
+      if (settled.status === 'fulfilled') {
+        const r = settled.value;
+        deliveryRecords.push(buildDeliveryRecord(scheduleId, r));
+        if (r.success) {
           sentCount++;
         } else {
           failedCount++;
-          console.error(`Failed to send to ${guest.name}:`, result.message);
+          console.error(
+            `Failed to send to ${r.guest.name} (code: ${r.errorCode ?? 'none'}):`,
+            r.message,
+          );
         }
       } else {
-        // Promise rejected (unexpected error)
         failedCount++;
-        console.error('Send promise rejected:', promiseResult.reason);
+        console.error('Send promise rejected:', settled.reason);
       }
     }
 

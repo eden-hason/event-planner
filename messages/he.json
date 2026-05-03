@@ -708,13 +708,15 @@
       "statuses": {
         "confirmed": "אישר",
         "declined": "סירב",
-        "read": "נקרא"
+        "read": "נקרא",
+        "failed": "נכשל"
       },
       "table": {
         "guestName": "שם האורח",
         "status": "סטטוס",
         "sent": "נשלח",
         "read": "נקרא",
+        "error": "שגיאה",
         "responded": "הגיב",
         "rsvpDetails": "פרטי אישור",
         "noDetails": "אין פרטים",

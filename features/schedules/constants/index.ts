@@ -12,7 +12,7 @@ export type DefaultScheduleConfig = {
 // These are created automatically when a new wedding event is created
 export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
   {
-    templateKey: 'initial_invitation',
+    templateKey: 'invitation_casual',
     actionType: 'initial_invitation',
     daysOffset: -30,
     defaultTime: '10:00',

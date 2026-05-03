@@ -1,7 +1,7 @@
 // View-model types for the schedules feature.
 // These are not Zod-backed DB schemas — use schemas/ for those.
 
-export type ActivityStatus = 'read' | 'confirmed' | 'declined';
+export type ActivityStatus = 'read' | 'confirmed' | 'declined' | 'failed';
 
 export type DeliveryActivityRow = {
   id: string;
@@ -16,6 +16,8 @@ export type DeliveryActivityRow = {
     guestCount?: number;
     dietaryRestrictions?: string;
   } | null;
+  errorCode?: number | null;
+  errorMessage?: string | null;
 };
 
 export type DeliveryActivityPage = {

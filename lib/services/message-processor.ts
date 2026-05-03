@@ -1,4 +1,3 @@
-import { randomBytes } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ScheduleDbToAppSchema } from '@/features/schedules/schemas';
 import { getTemplateByKey } from '@/features/schedules/config/whatsapp-templates';
@@ -6,18 +5,14 @@ import {
   DbToAppTransformerSchema,
   GroupDbToAppTransformerSchema,
 } from '@/features/guests/schemas';
-import { sendWhatsAppTemplateMessage } from '@/features/schedules/actions/whatsapp';
-import { sendSmsMessage, buildSmsFallbackBody } from '@/features/schedules/actions/sms';
-import type { DeliveryMethod } from '@/features/schedules/schemas';
 import {
   filterGuestsByTarget,
   validatePhoneNumber,
-  formatPhoneE164,
-  buildDynamicTemplateParameters,
-  buildDynamicButtonParameters,
+  sendInChunks,
+  buildDeliveryRecord,
+  generateConfirmationToken,
   type ParameterResolutionContext,
 } from '@/features/schedules/utils';
-import { buildDynamicHeaderParameters } from '@/features/schedules/utils/parameter-resolvers';
 import type { GroupApp } from '@/features/guests/schemas';
 
 /**
@@ -228,93 +223,40 @@ async function processSingleSchedule(
     }
   }
 
-  // 9. Send messages concurrently
-  const sendResults = await Promise.allSettled(
-    guestsWithPhones.map(async (guest) => {
-      const phoneE164 = formatPhoneE164(guest.phone!);
-      const confirmationToken = randomBytes(32).toString('hex');
-
-      const context: ParameterResolutionContext = {
-        guest,
-        event,
-        group: guest.groupId ? groupsMap.get(guest.groupId) : null,
-        schedule,
-        confirmationToken,
-      };
-
-      const parameters = buildDynamicTemplateParameters(
-        template.parameters!.placeholders,
-        context,
-      );
-
-      const headerParameters = template.parameters?.headerPlaceholders?.length
-        ? buildDynamicHeaderParameters(
-            template.parameters.headerPlaceholders,
-            context,
-          )
-        : undefined;
-
-      const buttonParameters = template.parameters?.buttonPlaceholders?.length
-        ? buildDynamicButtonParameters(
-            template.parameters.buttonPlaceholders,
-            context,
-          )
-        : undefined;
-
-      const whatsappResult = await sendWhatsAppTemplateMessage({
-        to: phoneE164,
-        templateName: template.templateName,
-        languageCode: template.languageCode,
-        parameters,
-        headerParameters,
-        buttonParameters,
-      });
-
-      let result = whatsappResult;
-      let channel: DeliveryMethod = 'whatsapp';
-
-      if (!whatsappResult.success) {
-        const smsBody = buildSmsFallbackBody(context, confirmationToken);
-        const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
-        if (smsResult.success) {
-          result = smsResult;
-          channel = 'sms';
-        }
-      }
-
-      return { guest, result, confirmationToken, channel };
-    }),
-  );
+  // 9. Send messages in rate-limited chunks
+  const sendResults = await sendInChunks(guestsWithPhones, (guest) => {
+    const confirmationToken = generateConfirmationToken();
+    const context: ParameterResolutionContext = {
+      guest,
+      event,
+      group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+      schedule,
+      confirmationToken,
+    };
+    return { context, template, confirmationToken };
+  });
 
   // 10. Process results and build delivery records
   const deliveryRecords = [];
   let sentCount = 0;
   let failedCount = 0;
 
-  for (const promiseResult of sendResults) {
-    if (promiseResult.status === 'fulfilled') {
-      const { guest, result, confirmationToken, channel } = promiseResult.value;
-
-      deliveryRecords.push({
-        schedule_id: schedule.id,
-        guest_id: guest.id,
-        delivery_method: channel,
-        status: result.success ? ('sent' as const) : ('failed' as const),
-        sent_at: result.success ? new Date().toISOString() : null,
-        external_message_id: result.messageId || null,
-        error_message: result.success ? null : result.message,
-        confirmation_token: confirmationToken,
-      });
-
-      if (result.success) {
+  for (const settled of sendResults) {
+    if (settled.status === 'fulfilled') {
+      const r = settled.value;
+      deliveryRecords.push(buildDeliveryRecord(schedule.id, r));
+      if (r.success) {
         sentCount++;
       } else {
         failedCount++;
-        console.error(`[cron] Failed to send to ${guest.name}:`, result.message);
+        console.error(
+          `[cron] Failed to send to ${r.guest.name} (code: ${r.errorCode ?? 'none'}):`,
+          r.message,
+        );
       }
     } else {
       failedCount++;
-      console.error('[cron] Send promise rejected:', promiseResult.reason);
+      console.error('[cron] Send promise rejected:', settled.reason);
     }
   }
 

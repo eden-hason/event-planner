@@ -3,13 +3,13 @@ import type { TemplateConfig } from '../schemas/whatsapp-templates';
 export type { TemplateConfig };
 
 export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
-  initial_invitation: {
+  invitation_casual: {
     whatsapp: {
-      templateKey: 'initial_invitation',
-      templateName: 'initial_invitation',
+      templateKey: 'invitation_casual',
+      templateName: 'invitation_casual',
       bodyText:
-        "Hey! 🎉\n{{1}} & {{2}} are getting married and you're invited!\n📅 {{3}}\n📍 {{4}}\nLooking forward to seeing you there! ❤️",
-      languageCode: 'en',
+        'אורחים יקרים,\nשמחים להזמין אתכם לחתונתנו  🎉\nמצורפת ההזמנה עם כל הפרטים – נשמח לראותכם!\n{{1}} ו{{2}} 👰🏻‍♀️🤵🏻',
+      languageCode: 'he',
       headerType: 'IMAGE',
       headerText: null,
       footerText: null,
@@ -29,20 +29,11 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
             source: 'event.hostDetails.groom.name',
             transformer: 'none',
           },
-          event_date: {
-            source: 'event.eventDate',
-            transformer: 'formatDate',
-            transformerOptions: { format: 'long', locale: 'en-US' },
-          },
-          event_location: {
-            source: 'event.location.name',
-            transformer: 'none',
-          },
         },
         buttonPlaceholders: [],
       },
       description:
-        "First message sent to guests announcing the wedding. Includes the couple's uploaded invitation image, bride and groom names, event date, and venue location. Sets a warm, celebratory tone for the event.",
+        'Initial wedding invitation sent to guests with the couple\'s image. Includes bride and groom names.',
     },
     sms: undefined,
   },
