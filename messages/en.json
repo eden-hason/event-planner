@@ -335,26 +335,9 @@
     },
     "directory": {
       "importCsv": "Import File",
-      "importFromContacts": "Import from Contacts",
       "deletingGuest": "Deleting {name}...",
       "guestDeleted": "Guest deleted successfully.",
       "guestDeleteFailed": "Failed to delete guest. Please try again."
-    },
-    "contactPicker": {
-      "dialogTitle": "Import from Phone Contacts",
-      "dialogDescription": "Contacts with invalid or duplicate phone numbers will be skipped.",
-      "willImport": "{count} contacts will be imported",
-      "willSkip": "{count} will be skipped",
-      "import": "Import {count} contacts",
-      "cancel": "Cancel",
-      "noPhone": "No valid phone",
-      "noName": "No name",
-      "duplicatePhone": "Already in list",
-      "invalidPhone": "Invalid phone",
-      "unnamed": "Unnamed",
-      "importing": "Importing contacts...",
-      "importSuccess": "{count} contacts imported successfully",
-      "importError": "Failed to import contacts. Please try again."
     },
     "filters": {
       "filterByStatus": "Filter by status",
