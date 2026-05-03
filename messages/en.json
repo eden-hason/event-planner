@@ -708,13 +708,15 @@
       "statuses": {
         "confirmed": "Confirmed",
         "declined": "Declined",
-        "read": "Read"
+        "read": "Read",
+        "failed": "Failed"
       },
       "table": {
         "guestName": "Guest Name",
         "status": "Status",
         "sent": "Sent",
         "read": "Read",
+        "error": "Error",
         "responded": "Responded",
         "rsvpDetails": "RSVP Details",
         "noDetails": "No details",

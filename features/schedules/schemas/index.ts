@@ -184,6 +184,7 @@ export const MessageDeliveryAppSchema = z.object({
   clickedAt: z.string().nullable().optional(),
   externalMessageId: z.string().max(255).nullable().optional(),
   errorMessage: z.string().nullable().optional(),
+  errorCode: z.number().int().nullish(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -203,6 +204,7 @@ export const MessageDeliveryDbSchema = z.object({
   clicked_at: z.string().nullable(),
   external_message_id: z.string().max(255).nullable(),
   error_message: z.string().nullable(),
+  error_code: z.number().int().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -223,6 +225,7 @@ export const MessageDeliveryDbToAppSchema = MessageDeliveryDbSchema.transform(
     clickedAt: db.clicked_at ?? undefined,
     externalMessageId: db.external_message_id ?? undefined,
     errorMessage: db.error_message ?? undefined,
+    errorCode: db.error_code ?? undefined,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   }),

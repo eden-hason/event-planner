@@ -11,6 +11,17 @@ export {
   type ButtonComponent,
 } from './parameter-resolvers';
 
+// Re-export send helpers
+export {
+  categoriseWhatsAppError,
+  sendToGuest,
+  sendInChunks,
+  buildDeliveryRecord,
+  generateConfirmationToken,
+  type WhatsAppErrorCategory,
+  type GuestSendResult,
+} from './send-helpers';
+
 // Re-export template validation utilities
 export {
   validateTemplateConfig,
