@@ -55,9 +55,23 @@ const STATUS_STYLE: Record<
     dotColor: 'bg-blue-500',
     labelColor: 'text-blue-700',
   },
+  failed: {
+    className: 'border-red-200 bg-red-100 text-red-700',
+    dotColor: 'bg-red-500',
+    labelColor: 'text-red-700',
+  },
 };
 
-const ALL_STATUSES: ActivityStatus[] = ['confirmed', 'declined', 'read'];
+const FAILED_ERROR_LABELS: Record<number, string> = {
+  130429: 'Rate limit exceeded',
+  131048: 'Rate limit exceeded',
+  131056: 'Rate limit exceeded',
+  131057: 'Temporary service issue',
+  131021: 'Invalid phone number',
+  131049: 'Recipient message cap',
+};
+
+const ALL_STATUSES: ActivityStatus[] = ['confirmed', 'declined', 'read', 'failed'];
 
 function TimeStamp({ ts }: { ts: string | null }) {
   if (!ts) return <span>—</span>;
@@ -76,6 +90,26 @@ function TimeStamp({ ts }: { ts: string | null }) {
   }
 }
 
+function FailedReason({
+  errorCode,
+  errorMessage,
+}: {
+  errorCode?: number | null;
+  errorMessage?: string | null;
+}) {
+  const label =
+    (errorCode != null && FAILED_ERROR_LABELS[errorCode]) ||
+    errorMessage ||
+    'Delivery failed';
+
+  return (
+    <span className="text-xs font-medium text-red-600">
+      {errorCode != null ? `[${errorCode}] ` : ''}
+      {label}
+    </span>
+  );
+}
+
 function RsvpDetails({
   status,
   metadata,
@@ -85,7 +119,8 @@ function RsvpDetails({
   metadata: { guestCount?: number; dietaryRestrictions?: string } | null;
   t: ReturnType<typeof useTranslations<'schedules.activity'>>;
 }) {
-  if (status === 'read') return <span className="text-muted-foreground">—</span>;
+  if (status === 'read' || status === 'failed')
+    return <span className="text-muted-foreground">—</span>;
   if (!metadata || (!metadata.guestCount && !metadata.dietaryRestrictions))
     return <span className="text-muted-foreground text-xs">{t('table.noDetails')}</span>;
 
@@ -325,6 +360,7 @@ export function RecentDeliveryActivity({
                 <TableHead>{t('table.status')}</TableHead>
                 <TableHead>{t('table.sent')}</TableHead>
                 <TableHead>{t('table.read')}</TableHead>
+                <TableHead>{t('table.error')}</TableHead>
                 {showRsvpDetails && <TableHead>{t('table.responded')}</TableHead>}
                 {showRsvpDetails && <TableHead>{t('table.rsvpDetails')}</TableHead>}
               </TableRow>
@@ -360,6 +396,16 @@ export function RecentDeliveryActivity({
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       <TimeStamp ts={row.readAt} />
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {row.activityStatus === 'failed' ? (
+                        <FailedReason
+                          errorCode={row.errorCode}
+                          errorMessage={row.errorMessage}
+                        />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     {showRsvpDetails && (
                       <TableCell className="text-muted-foreground text-sm">
