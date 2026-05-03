@@ -335,26 +335,9 @@
     },
     "directory": {
       "importCsv": "ייבוא קובץ",
-      "importFromContacts": "ייבוא מאנשי קשר",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה.",
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
-    },
-    "contactPicker": {
-      "dialogTitle": "ייבוא מאנשי קשר בטלפון",
-      "dialogDescription": "אנשי קשר עם מספר טלפון לא תקין או כפול יידלגו.",
-      "willImport": "{count} אנשי קשר יוטענו",
-      "willSkip": "{count} יידלגו",
-      "import": "ייבא {count} אנשי קשר",
-      "cancel": "ביטול",
-      "noPhone": "אין טלפון תקין",
-      "noName": "ללא שם",
-      "duplicatePhone": "כבר ברשימה",
-      "invalidPhone": "טלפון לא תקין",
-      "unnamed": "ללא שם",
-      "importing": "מייבא אנשי קשר...",
-      "importSuccess": "{count} אנשי קשר יובאו בהצלחה",
-      "importError": "ייבוא אנשי הקשר נכשל. נסה שנית."
     },
     "filters": {
       "filterByStatus": "סנן לפי סטטוס",
