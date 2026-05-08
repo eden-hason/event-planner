@@ -72,7 +72,7 @@ export function MessageContentCard({
   const buttons = template?.parameters?.buttonPlaceholders ?? [];
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="bg-primary/10 rounded-md p-1.5">
@@ -84,16 +84,16 @@ export function MessageContentCard({
           {t('cardDescription')}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-1 flex-col">
         {/* WhatsApp phone mockup */}
-        <div className="overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
           {/* Chat area */}
           <div
-            className="flex min-h-[180px] flex-col gap-1 px-3 py-4"
+            className="flex flex-1 flex-col gap-1 px-3 py-4"
             style={chatBgStyle}
           >
             {template === null ? (
-              <div className="flex min-h-[140px] flex-1 items-center justify-center">
+              <div className="flex flex-1 items-center justify-center">
                 <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
                   {t('noMessage')}
                 </p>

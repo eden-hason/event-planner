@@ -23,13 +23,28 @@ export type UpdateScheduledDateState = {
 export async function updateScheduledDate(
   scheduleId: string,
   scheduledDate: string,
+  scheduledTime: string,
 ): Promise<UpdateScheduledDateState> {
   try {
     const supabase = await createClient();
 
+    const { data: existing, error: fetchError } = await supabase
+      .from('schedules')
+      .select('status')
+      .eq('id', scheduleId)
+      .single();
+
+    if (fetchError || !existing) {
+      return { success: false, message: 'Schedule not found.' };
+    }
+
+    if (existing.status === 'sent') {
+      return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
+    }
+
     const { error } = await supabase
       .from('schedules')
-      .update({ scheduled_date: scheduledDate })
+      .update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime })
       .eq('id', scheduleId);
 
     if (error) {
@@ -52,6 +67,51 @@ export async function updateScheduledDate(
       success: false,
       message: 'An unexpected error occurred.',
     };
+  }
+}
+
+export type UpdateScheduleStatusState = {
+  success: boolean;
+  message?: string | null;
+};
+
+export async function updateScheduleStatus(
+  scheduleId: string,
+  enabled: boolean,
+): Promise<UpdateScheduleStatusState> {
+  try {
+    const supabase = await createClient();
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('schedules')
+      .select('status')
+      .eq('id', scheduleId)
+      .single();
+
+    if (fetchError || !existing) {
+      return { success: false, message: 'Schedule not found.' };
+    }
+
+    if (existing.status === 'sent') {
+      return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
+    }
+
+    const { error } = await supabase
+      .from('schedules')
+      .update({ status: enabled ? null : 'cancelled' })
+      .eq('id', scheduleId);
+
+    if (error) {
+      console.error('Error updating schedule status:', error);
+      return { success: false, message: 'Failed to update schedule status.' };
+    }
+
+    revalidatePath('/app');
+
+    return { success: true, message: enabled ? 'Schedule enabled.' : 'Schedule disabled.' };
+  } catch (error) {
+    console.error('Error in updateScheduleStatus:', error);
+    return { success: false, message: 'An unexpected error occurred.' };
   }
 }
 
@@ -139,18 +199,24 @@ export async function createDefaultSchedules(
     }
 
     // 6. Create schedule records
-    const records = schedulesToCreate.map((schedule) => ({
-      event_id: eventId,
-      template_key: schedule.templateKey,
-      scheduled_date: calculateScheduledDate(
+    const records = schedulesToCreate.map((schedule) => {
+      const scheduled_date = calculateScheduledDate(
         eventDate,
         schedule.daysOffset,
         schedule.defaultTime,
-      ),
-      delivery_method: 'whatsapp' as const,
-      target_status: schedule.targetStatus ?? null,
-      action_type: schedule.actionType,
-    }));
+      );
+      const d = new Date(scheduled_date);
+      const scheduled_time = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+      return {
+        event_id: eventId,
+        template_key: schedule.templateKey,
+        scheduled_date,
+        scheduled_time,
+        delivery_method: 'whatsapp' as const,
+        target_status: schedule.targetStatus ?? null,
+        action_type: schedule.actionType,
+      };
+    });
 
     const { error: insertError } = await supabase
       .from('schedules')

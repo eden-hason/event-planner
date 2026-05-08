@@ -63,7 +63,6 @@
     },
     "addExpense": "הוסף הוצאה",
     "addGift": "הוסף מתנה",
-
     "stats": {
       "totalReceived": "סה\"כ התקבל",
       "ofPledged": "מתוך {amount} שהובטח",
@@ -622,6 +621,18 @@
         "sent": "ההודעות נשלחו לאורחים הזכאים.",
         "pending": "ההודעות יישלחו בתאריך המתוזמן.",
         "cancelled": "לוח הזמנים הזה בוטל."
+      },
+      "toggle": {
+        "enabled": "פעיל",
+        "enabledDescription": "ההודעות יישלחו בתאריך המתוזמן.",
+        "disabled": "מושבת",
+        "disabledDescription": "לוח הזמנים מושבת ולא יישלחו הודעות."
+      },
+      "toast": {
+        "updating": "מעדכן לוח זמנים...",
+        "enabled": "לוח הזמנים הופעל.",
+        "disabled": "לוח הזמנים הושבת.",
+        "error": "משהו השתבש."
       }
     },
     "timing": {
@@ -630,9 +641,11 @@
       "saving": "שומר...",
       "daysBeforeEvent": "ימים לפני האירוע",
       "days": "ימים",
-      "daysHelper": "כמה ימים מראש לתזמן את זה",
+      "daysHelper": "כמה ימים לפני האירוע לשלוח",
       "scheduledDate": "תאריך מתוזמן",
-      "scheduledDateHelper": "נגזר מתאריך האירוע",
+      "scheduledDateHelper": "מחושב אוטומטית מתאריך האירוע",
+      "scheduledTime": "שעת שליחה",
+      "scheduledTimeHelper": "השעה שבה ההודעה תצא ביום המתוזמן",
       "toast": {
         "updating": "מעדכן תאריך מתוזמן...",
         "updated": "התאריך המתוזמן עודכן.",
@@ -733,6 +746,17 @@
       "read": "נקרא",
       "confirmed": "אישר",
       "declined": "סירב"
+    },
+    "sendResults": {
+      "cardTitle": "תוצאות שליחה",
+      "byOutcome": "לפי תוצאה",
+      "byChannel": "לפי ערוץ",
+      "success": "הצליח",
+      "failed": "נכשל",
+      "whatsapp": "וואטסאפ",
+      "sms": "SMS",
+      "emptyDescription": "התוצאות יופיעו כאן לאחר שההודעות יישלחו",
+      "cancelledDescription": "לוח הזמנים הזה בוטל ולא נשלחו הודעות"
     }
   },
   "newEvent": {
