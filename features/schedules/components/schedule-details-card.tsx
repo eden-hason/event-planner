@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
-import { IconCalendarClock, IconCalendarEvent } from '@tabler/icons-react';
+import { IconCalendarClock, IconCalendarEvent, IconClock } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,13 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { updateScheduledDate } from '../actions';
 import type { ScheduleApp } from '../schemas';
@@ -51,6 +58,12 @@ export function ScheduleDetailsCard({
   const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
   const [scheduledDate, setScheduledDate] = useState(schedule?.scheduledDate ?? '');
 
+  const [scheduledTime, setScheduledTime] = useState(() => {
+    if (!schedule?.scheduledDate) return '';
+    const d = new Date(schedule.scheduledDate);
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+  });
+
   const daysBeforeEvent = useMemo(() => {
     if (!eventDate || !scheduledDate) return 0;
     return computeDaysBefore(eventDate, scheduledDate);
@@ -65,7 +78,8 @@ export function ScheduleDetailsCard({
     });
   }, [scheduledDate]);
 
-  const isDirty = scheduledDate !== savedDate;
+  const isLocked = schedule?.status === 'sent' || schedule?.status === 'cancelled';
+  const isDirty = !isLocked && scheduledDate !== savedDate;
 
   const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseInt(e.target.value, 10);
@@ -73,22 +87,30 @@ export function ScheduleDetailsCard({
 
     const event = new Date(eventDate);
     const newDate = new Date(event);
-    newDate.setDate(event.getDate() - parsed);
+    newDate.setUTCDate(event.getUTCDate() - parsed);
 
     // Preserve the time from the current scheduledDate
     if (scheduledDate) {
       const existing = new Date(scheduledDate);
-      newDate.setHours(existing.getHours(), existing.getMinutes(), existing.getSeconds());
+      newDate.setUTCHours(existing.getUTCHours(), existing.getUTCMinutes(), existing.getUTCSeconds());
     }
 
     setScheduledDate(newDate.toISOString());
+  };
+
+  const handleTimeChange = (value: string) => {
+    const [hours, minutes] = value.split(':').map(Number);
+    const newDate = new Date(scheduledDate || eventDate);
+    newDate.setUTCHours(hours, minutes, 0, 0);
+    setScheduledDate(newDate.toISOString());
+    setScheduledTime(value);
   };
 
   const handleSave = () => {
     if (!schedule || !isDirty) return;
 
     startSaveTransition(async () => {
-      const promise = updateScheduledDate(schedule.id, scheduledDate).then((result) => {
+      const promise = updateScheduledDate(schedule.id, scheduledDate, scheduledTime).then((result) => {
         if (!result.success)
           throw new Error(result.message ?? 'Failed to update scheduled date.');
         return result;
@@ -127,35 +149,59 @@ export function ScheduleDetailsCard({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <Label className="text-xs text-muted-foreground tracking-wide">
-              {t('daysBeforeEvent')}
-            </Label>
-            <div className="relative mt-1">
-              <Input
-                type="number"
-                value={daysBeforeEvent}
-                onChange={handleDaysChange}
-                className="pr-12 rtl:pr-3 rtl:pl-12"
-                disabled={isSaving}
-              />
-              <span className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                {t('days')}
-              </span>
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-xs text-muted-foreground tracking-wide">
+                {t('daysBeforeEvent')}
+              </Label>
+              <div className="relative mt-1">
+                <Input
+                  type="number"
+                  value={daysBeforeEvent}
+                  onChange={handleDaysChange}
+                  className="pr-12 rtl:pr-3 rtl:pl-12"
+                  disabled={isSaving || isLocked}
+                />
+                <span className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                  {t('days')}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{t('daysHelper')}</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{t('daysHelper')}</p>
+
+            <div>
+              <Label className="text-xs text-muted-foreground tracking-wide">
+                {t('scheduledDate')}
+              </Label>
+              <div className="flex items-center gap-2 mt-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
+                <span>{resolvedDateDisplay}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{t('scheduledDateHelper')}</p>
+            </div>
           </div>
 
           <div>
             <Label className="text-xs text-muted-foreground tracking-wide">
-              {t('scheduledDate')}
+              {t('scheduledTime')}
             </Label>
-            <div className="flex items-center gap-2 mt-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
-              <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
-              <span>{resolvedDateDisplay}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">{t('scheduledDateHelper')}</p>
+            <Select
+              value={scheduledTime}
+              onValueChange={handleTimeChange}
+              disabled={isSaving || isLocked}
+            >
+              <SelectTrigger className="mt-1 w-full">
+                <IconClock size={16} className="text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10:00">10:00</SelectItem>
+                <SelectItem value="14:00">14:00</SelectItem>
+                <SelectItem value="18:00">18:00</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">{t('scheduledTimeHelper')}</p>
           </div>
         </div>
       </CardContent>

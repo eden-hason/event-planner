@@ -63,7 +63,6 @@
     },
     "addExpense": "Add expense",
     "addGift": "Add gift",
-
     "stats": {
       "totalReceived": "Total received",
       "ofPledged": "of {amount} pledged",
@@ -622,6 +621,18 @@
         "sent": "Messages have been sent to eligible guests.",
         "pending": "Messages will be sent on the scheduled date.",
         "cancelled": "This schedule has been cancelled."
+      },
+      "toggle": {
+        "enabled": "Active",
+        "enabledDescription": "Messages will be sent on the scheduled date.",
+        "disabled": "Disabled",
+        "disabledDescription": "This schedule is disabled and won't send."
+      },
+      "toast": {
+        "updating": "Updating schedule...",
+        "enabled": "Schedule enabled.",
+        "disabled": "Schedule disabled.",
+        "error": "Something went wrong."
       }
     },
     "timing": {
@@ -630,9 +641,11 @@
       "saving": "Saving...",
       "daysBeforeEvent": "Days before event",
       "days": "days",
-      "daysHelper": "How far in advance to schedule this",
+      "daysHelper": "How many days before the event to send",
       "scheduledDate": "Scheduled date",
-      "scheduledDateHelper": "Derived from the event date",
+      "scheduledDateHelper": "Calculated automatically from the event date",
+      "scheduledTime": "Send time",
+      "scheduledTimeHelper": "The time this message goes out on the scheduled day",
       "toast": {
         "updating": "Updating scheduled date...",
         "updated": "Scheduled date updated.",
@@ -733,6 +746,17 @@
       "read": "Read",
       "confirmed": "Confirmed",
       "declined": "Declined"
+    },
+    "sendResults": {
+      "cardTitle": "Send Results",
+      "byOutcome": "By Outcome",
+      "byChannel": "By Channel",
+      "success": "Successful",
+      "failed": "Failed",
+      "whatsapp": "WhatsApp",
+      "sms": "SMS",
+      "emptyDescription": "Results will appear here once the schedule has been sent.",
+      "cancelledDescription": "This schedule was cancelled and no messages were sent"
     }
   },
   "newEvent": {
