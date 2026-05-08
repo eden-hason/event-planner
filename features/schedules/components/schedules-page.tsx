@@ -12,6 +12,7 @@ import {
 } from '../schemas';
 import { filterGuestsByTarget } from '../utils';
 import { SchedulePerformanceCard } from './schedule-performance-card';
+import { ScheduleSendResultsCard } from './schedule-send-results-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesHeader } from './schedules-header';
 import { SchedulesLayout } from './schedules-layout';
@@ -110,13 +111,16 @@ export async function SchedulesPage({
         guestCount,
         targetStatus: schedule.targetStatus,
         details: (
-          <ScheduleTabContent
-            schedule={schedule}
-            template={template}
-            eventDate={eventDate}
-            event={event}
-            guestStats={guestStats}
-          />
+          <div className="flex flex-col gap-4">
+            <ScheduleTabContent
+              schedule={schedule}
+              template={template}
+              eventDate={eventDate}
+              event={event}
+              guestStats={guestStats}
+            />
+            <ScheduleSendResultsCard schedule={schedule} />
+          </div>
         ),
         delivery: (
           <SchedulePerformanceCard

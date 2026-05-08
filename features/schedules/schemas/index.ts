@@ -91,6 +91,7 @@ export const ScheduleAppSchema = z.object({
   id: z.uuid(),
   eventId: z.uuid(),
   scheduledDate: z.string(),
+  scheduledTime: z.string().nullable().optional(),
   status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   sentAt: z.string().nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
@@ -108,6 +109,7 @@ export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
   scheduled_date: z.string(),
+  scheduled_time: z.string().nullable().optional(),
   status: z.enum(SCHEDULE_STATUSES).nullable(),
   sent_at: z.string().nullable(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
@@ -125,6 +127,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   id: db.id,
   eventId: db.event_id,
   scheduledDate: db.scheduled_date,
+  scheduledTime: db.scheduled_time ?? null,
   status: db.status,
   sentAt: db.sent_at ?? undefined,
   targetStatus: db.target_status ?? null,
@@ -140,6 +143,7 @@ export const ScheduleUpsertSchema = z.object({
   id: z.uuid().optional(),
   eventId: z.uuid(),
   scheduledDate: z.string(),
+  scheduledTime: z.string().nullable().optional(),
   status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
   templateKey: z.string().nullable().optional(),
@@ -156,6 +160,7 @@ export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   if (app.id !== undefined) dbData.id = app.id;
   dbData.event_id = app.eventId;
   dbData.scheduled_date = app.scheduledDate;
+  if (app.scheduledTime !== undefined) dbData.scheduled_time = app.scheduledTime ?? null;
   if (app.status !== undefined) dbData.status = app.status;
   if (app.targetStatus !== undefined) dbData.target_status = app.targetStatus;
   if (app.templateKey !== undefined)

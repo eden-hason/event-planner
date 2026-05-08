@@ -27,7 +27,7 @@ export function ScheduleTabContent({
         <ScheduleDetailsCard key={schedule.id} schedule={schedule} eventDate={eventDate} />
         <TargetAudienceCard targetStatus={schedule.targetStatus} guestStats={guestStats} />
       </div>
-      <div>
+      <div className="h-full">
         <MessageContentCard
           template={template}
           event={event}
