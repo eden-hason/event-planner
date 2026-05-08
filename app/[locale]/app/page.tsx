@@ -16,5 +16,5 @@ export default async function AppPage({
     redirect({ href: `/app/${event.id}/dashboard`, locale });
   }
 
-  return <div>No event found</div>;
+  redirect({ href: '/app/new-event', locale });
 }

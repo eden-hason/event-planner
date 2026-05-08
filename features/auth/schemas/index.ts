@@ -5,3 +5,11 @@ export interface User {
   displayName: string;
   avatar: string;
 }
+
+export interface ProfileData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string;
+  initialSetupComplete: boolean;
+}
