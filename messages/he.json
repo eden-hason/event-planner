@@ -1009,5 +1009,23 @@
       "bitPlaceholder": "הזן מספר טלפון",
       "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך"
     }
+  },
+  "personalInfo": {
+    "title": "בואו נכיר",
+    "description": "עזרו לנו להתאים אישית את החוויה שלכם",
+    "nameLabel": "השם שלך",
+    "namePlaceholder": "הזן את שמך",
+    "phoneLabel": "מספר טלפון",
+    "phonePlaceholder": "הזן מספר טלפון",
+    "emailLabel": "אימייל",
+    "avatarLabel": "תמונת פרופיל",
+    "save": "שמור והמשך",
+    "skip": "דלג",
+    "toast": {
+      "saving": "שומר את הפרופיל...",
+      "saved": "הפרופיל נשמר!",
+      "error": "משהו השתבש.",
+      "uploadError": "העלאת התמונה נכשלה."
+    }
   }
 }

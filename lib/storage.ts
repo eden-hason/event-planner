@@ -50,6 +50,19 @@ export async function uploadToStorage(
 }
 
 /**
+ * Uploads a user avatar to Supabase Storage.
+ * Path: {userId}/avatar.{ext} — upsert overwrites previous avatar.
+ */
+export async function uploadAvatarImage(
+  file: File,
+  userId: string,
+): Promise<UploadResult> {
+  const extension = file.name.split('.').pop() || 'jpg';
+  const path = `${userId}/avatar.${extension}`;
+  return uploadToStorage(file, 'avatars', path);
+}
+
+/**
  * Uploads an invitation image to Supabase Storage.
  * Generates a unique filename based on event ID and timestamp.
  *

@@ -1,1 +1,1 @@
-export { logout, sendOtp, verifyOtp, signInWithGoogle } from './auth';
+export { logout, sendOtp, verifyOtp, signInWithGoogle, updateUserProfile, saveAvatarUrl } from './auth';

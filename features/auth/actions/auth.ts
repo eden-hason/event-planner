@@ -5,6 +5,56 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
+export async function saveAvatarUrl(avatarUrl: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false };
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ id: user.id, avatar_url: avatarUrl });
+
+  return { success: !error };
+}
+
+export async function updateUserProfile(formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, message: 'Not authenticated' };
+  }
+
+  const fullName = formData.get('full_name') as string | null;
+  const phoneNumber = formData.get('phone_number') as string | null;
+  const avatarUrl = formData.get('avatar_url') as string | null;
+
+  const { error } = await supabase.from('profiles').upsert({
+    id: user.id,
+    ...(fullName !== null && { full_name: fullName }),
+    ...(phoneNumber !== null && { phone_number: phoneNumber }),
+    ...(avatarUrl !== null && { avatar_url: avatarUrl }),
+    initial_setup_complete: true,
+  });
+
+  if (error) {
+    return { success: false, message: 'Failed to save profile' };
+  }
+
+  return { success: true, message: 'Profile saved' };
+}
+
 export async function logout() {
   try {
     const supabase = await createClient();

@@ -22,16 +22,22 @@ export default async function Layout({
     return redirect({ href: '/login', locale });
   }
 
-  // Get user data from auth
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, avatar_url, phone_number')
+    .eq('id', data.user.id)
+    .single();
+
   const user = {
     name:
+      profile?.full_name ||
       data.user.user_metadata?.name ||
       data.user.email ||
       data.user.phone ||
       '',
     email: data.user.email,
-    phone: data.user.phone,
-    avatar: data.user.user_metadata?.avatar_url,
+    phone: profile?.phone_number || data.user.phone,
+    avatar: profile?.avatar_url || data.user.user_metadata?.avatar_url,
   };
 
   // Fetch user events

@@ -1009,5 +1009,23 @@
       "bitPlaceholder": "Enter phone number",
       "bitHelper": "Enter the mobile phone number connected to your Bit account"
     }
+  },
+  "personalInfo": {
+    "title": "Let's get to know you",
+    "description": "Help us personalize your experience",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Enter your name",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "Enter your phone number",
+    "emailLabel": "Email",
+    "avatarLabel": "Profile photo",
+    "save": "Save & Continue",
+    "skip": "Skip for now",
+    "toast": {
+      "saving": "Saving your profile...",
+      "saved": "Profile saved!",
+      "error": "Something went wrong.",
+      "uploadError": "Failed to upload image."
+    }
   }
 }
