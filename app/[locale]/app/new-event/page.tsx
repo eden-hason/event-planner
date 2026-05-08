@@ -1,5 +1,19 @@
-import { OnboardingWizard } from '@/features/events/components/onboarding/onboarding-wizard';
+import { getUserProfile } from '@/features/auth/queries';
+import { OnboardingFlow } from '@/features/events/components/onboarding/onboarding-flow';
 
-export default function NewEventPage() {
-  return <OnboardingWizard />;
+export default async function NewEventPage() {
+  const profile = await getUserProfile();
+
+  return (
+    <OnboardingFlow
+      initialSetupComplete={profile?.initialSetupComplete ?? false}
+      profile={profile ?? {
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        avatarUrl: '',
+        initialSetupComplete: false,
+      }}
+    />
+  );
 }
