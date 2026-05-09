@@ -412,7 +412,7 @@
       },
       "assign": {
         "manageMembers": "ניהול חברים",
-        "groupTitle": "קבוצת '{name}'",
+        "groupTitle": "קבוצת {name}",
         "assignDescription": "שייך אורחים לקבוצה לניהול נוח יותר",
         "availableGuests": "אורחים זמינים",
         "guestsInGroup": "אורחים בקבוצה",

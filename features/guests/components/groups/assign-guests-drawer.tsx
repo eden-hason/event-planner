@@ -136,7 +136,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <IconArrowRight size={20} />
+              <IconArrowRight size={20} className="rtl:scale-x-[-1]" />
             </Button>
             <Button
               variant="secondary"
@@ -149,7 +149,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <IconArrowLeft size={20} />
+              <IconArrowLeft size={20} className="rtl:scale-x-[-1]" />
             </Button>
           </div>
 

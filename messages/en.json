@@ -412,7 +412,7 @@
       },
       "assign": {
         "manageMembers": "Manage Members",
-        "groupTitle": "'{name}' Group",
+        "groupTitle": "{name} Group",
         "assignDescription": "Assign guests to this group for easier management",
         "availableGuests": "Available Guests",
         "guestsInGroup": "Guests in Group",
