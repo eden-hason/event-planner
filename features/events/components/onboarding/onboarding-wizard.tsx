@@ -11,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { LocationInput } from '@/components/ui/location-input';
 import { createOnboardingEvent } from '@/features/events/actions';
+import { PricingStep } from './pricing-step';
 import type { LocationCoords } from '@/components/ui/google-map';
 
-type WizardStep = 1 | 2 | 'success';
+type WizardStep = 1 | 2 | 3 | 'success';
 
 interface WizardData {
   brideName: string;
@@ -22,7 +23,11 @@ interface WizardData {
   location: { name: string; coords?: LocationCoords } | null;
 }
 
-export function OnboardingWizard() {
+interface OnboardingWizardProps {
+  showPricingStep: boolean;
+}
+
+export function OnboardingWizard({ showPricingStep }: OnboardingWizardProps) {
   const router = useRouter();
   const t = useTranslations('newEvent');
   const [step, setStep] = useState<WizardStep>(1);
@@ -35,9 +40,12 @@ export function OnboardingWizard() {
   const [isPending, setIsPending] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
 
-  const progressPercent = step === 1 ? 50 : 100;
+  const totalSteps = showPricingStep ? 3 : 2;
+  const progressPercent = showPricingStep
+    ? step === 1 ? 33 : step === 2 ? 66 : 100
+    : step === 1 ? 50 : 100;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (planId?: string) => {
     setIsPending(true);
 
     const formData = new FormData();
@@ -45,6 +53,7 @@ export function OnboardingWizard() {
     if (data.groomName) formData.set('groomName', data.groomName);
     formData.set('eventDate', data.eventDate);
     if (data.location) formData.set('location', JSON.stringify(data.location));
+    if (planId) formData.set('pricingPlan', planId);
 
     const promise = createOnboardingEvent(formData).then((result) => {
       if (!result.success)
@@ -146,7 +155,7 @@ export function OnboardingWizard() {
         <div className="mb-6">
           <div className="mb-2 flex items-center justify-end">
             <span className="text-primary text-xs font-semibold tracking-widest">
-              {t('stepOf', { step })}
+              {t('stepOf', { step, total: totalSteps })}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
@@ -160,7 +169,7 @@ export function OnboardingWizard() {
         {/* Step 1 */}
         {step === 1 && (
           <div className="flex flex-col gap-6">
-            <div>
+            <div className="[animation:slide-up_0.35s_ease_both]">
               <h2 className="mb-1 text-xl font-bold">{t('step1.title')}</h2>
               <p className="text-muted-foreground text-sm">
                 {t('step1.description')}
@@ -168,7 +177,7 @@ export function OnboardingWizard() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:60ms]">
                 <label className="text-muted-foreground text-xs font-medium">
                   {t('step1.brideLabel')}
                 </label>
@@ -180,7 +189,7 @@ export function OnboardingWizard() {
                   }
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:120ms]">
                 <label className="text-muted-foreground text-xs font-medium">
                   {t('step1.groomLabel')}
                 </label>
@@ -195,7 +204,7 @@ export function OnboardingWizard() {
             </div>
 
             {/* Feature callout */}
-            <div className="bg-accent border-border flex items-start gap-3 border p-4">
+            <div className="bg-accent border-border flex items-start gap-3 border p-4 [animation:slide-up_0.35s_ease_both] [animation-delay:180ms]">
               <div className="bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center text-sm">
                 ✨
               </div>
@@ -210,7 +219,7 @@ export function OnboardingWizard() {
             <Button
               onClick={() => setStep(2)}
               disabled={!data.brideName || !data.groomName}
-              className="w-full"
+              className="w-full [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]"
             >
               {t('step1.continue')}
             </Button>
@@ -220,7 +229,7 @@ export function OnboardingWizard() {
         {/* Step 2 */}
         {step === 2 && (
           <div className="flex flex-col gap-6">
-            <div>
+            <div className="[animation:slide-up_0.35s_ease_both]">
               <h2 className="mb-1 text-xl font-bold">{t('step2.title')}</h2>
               <p className="text-muted-foreground text-sm">
                 {t('step2.description')}
@@ -228,7 +237,7 @@ export function OnboardingWizard() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:60ms]">
                 <label className="text-muted-foreground text-xs font-medium">
                   {t('step2.dateLabel')} <span className="text-destructive">*</span>
                 </label>
@@ -247,7 +256,7 @@ export function OnboardingWizard() {
                   placeholder={t('step2.datePlaceholder')}
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:120ms]">
                 <label className="text-muted-foreground text-xs font-medium">
                   {t('step2.venueLabel')}
                 </label>
@@ -267,9 +276,9 @@ export function OnboardingWizard() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:180ms]">
               <Button
-                onClick={() => handleSubmit()}
+                onClick={() => showPricingStep ? setStep(3) : handleSubmit()}
                 disabled={!data.eventDate || isPending}
                 className="w-full"
               >
@@ -284,6 +293,15 @@ export function OnboardingWizard() {
               </Button>
             </div>
           </div>
+        )}
+
+        {/* Step 3 */}
+        {step === 3 && showPricingStep && (
+          <PricingStep
+            onConfirm={(planId) => handleSubmit(planId)}
+            onBack={() => setStep(2)}
+            isPending={isPending}
+          />
         )}
       </div>
     </div>

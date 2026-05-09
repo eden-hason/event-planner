@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin } from 'lucide-react';
 import { importLibrary } from '@googlemaps/js-api-loader';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,8 @@ export function LocationInput({
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+  const [dropdownRect, setDropdownRect] = React.useState<DOMRect | null>(null);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const autocompleteService =
@@ -58,6 +61,10 @@ export function LocationInput({
     null,
   );
   const placesServiceDivRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Initialize Google Maps
   React.useEffect(() => {
@@ -158,6 +165,17 @@ export function LocationInput({
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, []);
 
+  const hasNoResults =
+    hasSearched && !isLoading && predictions.length === 0;
+  const showCommandList = isOpen && (hasNoResults || predictions.length > 0);
+
+  // Track input position for portal-rendered dropdown
+  React.useLayoutEffect(() => {
+    if (showCommandList && containerRef.current) {
+      setDropdownRect(containerRef.current.getBoundingClientRect());
+    }
+  }, [showCommandList]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
@@ -217,17 +235,13 @@ export function LocationInput({
     }
   };
 
-  const hasNoResults =
-    hasSearched && !isLoading && predictions.length === 0;
-  const showCommandList = isOpen && (hasNoResults || predictions.length > 0);
-
   return (
     <Command
       className={cn('h-fit overflow-visible', className)}
       shouldFilter={false}
       loop
     >
-      <div ref={containerRef} className="relative z-50">
+      <div ref={containerRef} className="relative">
         <InputGroup
           className={cn(
             '!border-input !bg-popover !ring-0',
@@ -254,16 +268,18 @@ export function LocationInput({
             </InputGroupAddon>
           )}
         </InputGroup>
-        {showCommandList && (
+        {showCommandList && mounted && dropdownRect && createPortal(
           <CommandList
-            data-state={showCommandList ? 'open' : 'closed'}
             className={cn(
-              'bg-popover border-input absolute top-full right-0 left-0 rounded-b-md border border-t-0 shadow-md',
-              'data-[state=open]:animate-in data-[state=closed]:animate-out',
-              'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-              'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-              'data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2',
+              'bg-popover border-input fixed rounded-b-md border border-t-0 shadow-md',
+              'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
             )}
+            style={{
+              top: dropdownRect.bottom,
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+              zIndex: 9999,
+            }}
           >
             {hasNoResults && (
               <CommandEmpty>No locations found.</CommandEmpty>
@@ -289,7 +305,8 @@ export function LocationInput({
                 ))}
               </CommandGroup>
             )}
-          </CommandList>
+          </CommandList>,
+          document.body,
         )}
       </div>
     </Command>

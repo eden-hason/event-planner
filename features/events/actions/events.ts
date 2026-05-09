@@ -17,6 +17,7 @@ import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
 import { createDefaultSchedules } from '@/features/schedules/actions/schedules';
+import { PLAN_CAPACITY } from '@/features/events/constants';
 
 export type DeleteEventState = {
   success: boolean;
@@ -145,8 +146,10 @@ export async function createOnboardingEvent(
       return { success: false, message: firstError.message };
     }
 
-    const { brideName, groomName, eventDate, location, guestsEstimate } =
+    const { brideName, groomName, eventDate, location, guestsEstimate, pricingPlan } =
       validationResult.data;
+
+    const guestsCapacity = pricingPlan ? PLAN_CAPACITY[pricingPlan] : null;
 
     // Auto-generate title
     const locale = await getLocale();
@@ -188,6 +191,7 @@ export async function createOnboardingEvent(
         },
         location: location ?? null,
         guests_estimate: guestsEstimate ?? null,
+        guests_capacity: guestsCapacity,
       })
       .select('id')
       .single();
