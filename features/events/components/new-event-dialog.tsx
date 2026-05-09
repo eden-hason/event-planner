@@ -188,9 +188,9 @@ export function NewEventDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="wedding">{tEventDetails('wedding')}</SelectItem>
-                      <SelectItem value="birthday">{tEventDetails('birthday')}</SelectItem>
-                      <SelectItem value="corporate">{tEventDetails('corporate')}</SelectItem>
-                      <SelectItem value="other">{tEventDetails('other')}</SelectItem>
+                      <SelectItem value="henna">{tEventDetails('henna')}</SelectItem>
+                      <SelectItem value="bar_mitzva">{tEventDetails('bar_mitzva')}</SelectItem>
+                      <SelectItem value="bat_mitzva">{tEventDetails('bat_mitzva')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

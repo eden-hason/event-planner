@@ -311,7 +311,7 @@ export const EventCreateSchema = z.object({
     .min(2, 'Title must be at least 2 characters')
     .max(200, 'Title is too long'),
   eventDate: z.string().min(1, 'Event date is required'),
-  eventType: z.enum(['wedding', 'birthday', 'corporate', 'other']),
+  eventType: z.enum(['wedding', 'henna', 'bar_mitzva', 'bat_mitzva']),
 });
 
 export type EventCreate = z.infer<typeof EventCreateSchema>;
@@ -324,8 +324,10 @@ export type CreateEventState = {
 
 // --- 6. Event Onboarding Schema ---
 export const EventOnboardingSchema = z.object({
+  eventType: z.enum(['wedding', 'henna', 'bar_mitzva', 'bat_mitzva']),
   brideName: z.string().optional(),
   groomName: z.string().optional(),
+  childName: z.string().optional(),
   eventDate: z.string().min(1, 'Event date is required'),
   location: LocationSchema.optional(),
   guestsEstimate: GuestsEstimateSchema.optional(),
