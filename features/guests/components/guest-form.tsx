@@ -104,7 +104,7 @@ export function GuestForm({
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
-      dietaryRestrictions: guest?.dietaryRestrictions || '',
+      mealChoice: guest?.mealChoice || '',
       amount: guest?.amount || 1,
       notes: guest?.notes || '',
       isOfflineRsvp: guest?.isOfflineRsvp ?? false,
@@ -125,7 +125,7 @@ export function GuestForm({
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
-        dietaryRestrictions: guest.dietaryRestrictions || '',
+        mealChoice: guest.mealChoice || '',
         amount: guest.amount || 1,
         notes: guest.notes || '',
         isOfflineRsvp: guest.isOfflineRsvp ?? false,
@@ -182,7 +182,7 @@ export function GuestForm({
         formData.append(key, value ? String(value) : 'null');
         return;
       }
-      if (key === 'dietaryRestrictions' || key === 'notes') {
+      if (key === 'mealChoice' || key === 'notes') {
         if (value !== undefined && value !== null) {
           formData.append(key, String(value));
         }
@@ -200,7 +200,7 @@ export function GuestForm({
     });
   };
 
-  const rawDietary = form.watch('dietaryRestrictions') || '';
+  const rawDietary = form.watch('mealChoice') || '';
   const selectedChips = rawDietary
     .split(',')
     .map((s: string) => s.trim())
@@ -209,7 +209,7 @@ export function GuestForm({
 
   const toggleChip = (chip: string) => {
     const next = selectedChips.includes(chip) ? '' : chip;
-    form.setValue('dietaryRestrictions', next, { shouldDirty: true });
+    form.setValue('mealChoice', next, { shouldDirty: true });
   };
 
   return (
@@ -421,7 +421,7 @@ export function GuestForm({
             </h3>
             <FormField
               control={form.control}
-              name="dietaryRestrictions"
+              name="mealChoice"
               render={() => (
                 <FormItem>
                   <FormControl>

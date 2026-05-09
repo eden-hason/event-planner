@@ -171,6 +171,8 @@
       "bridalBouquet": "זר כלה",
       "officiantRabbi": "רב מקדש",
       "invitations": "הזמנות",
+      "menuPrinting": "הדפסת תפריטים",
+      "gatheringVenue": "מקום התארגנות",
       "weddingCake": "עוגת חתונה",
       "attractions": "אטרקציות",
       "social": "סושיאל",
@@ -998,7 +1000,7 @@
     },
     "invitation": {
       "title": "הזמנת האירוע",
-      "description": "תמונה זו תישלח לאורחים כהודעה הראשונה שהם יקבלו בהזמנה לאירוע.",
+      "description": "תמונה זו תישלח לאורחים בהודעה הראשונה שהם יקבלו",
       "dropImage": "שחרר תמונה כאן",
       "clickToBrowse": "או לחץ לבחירה",
       "upload": "העלה",
@@ -1008,8 +1010,22 @@
     },
     "guestExperience": {
       "title": "חוויית האורח",
-      "dietaryOptions": "אפשרויות תזונה",
-      "dietaryDescription": "בקש מהאורחים הגבלות תזונה"
+      "lockGuestCount": "נעל מספר מוזמנים",
+      "lockGuestCountDescription": "האורחים לא יוכלו לשנות את מספר המקומות שנקבע להם בהזמנה",
+      "specialMealSelection": "בחירת מנה מיוחדת",
+      "specialMealSelectionDescription": "בקש מהאורחים לבחור מנה",
+      "specialMealsLabel": "מנות מיוחדות לבחירה",
+      "specialMealsDescription": "בחר אילו מנות יוצגו לאורח",
+      "mealPlaceholder": "בחר מנה",
+      "allMeals": "כל המנות",
+      "mealsSelected": "{count} מנות נבחרו",
+      "meal": {
+        "regular": "רגילה",
+        "vegetarian": "צמחונית",
+        "vegan": "טבעונית",
+        "glutenFree": "ללא גלוטן",
+        "strictlyKosher": "כשר למהדרין"
+      }
     },
     "digitalGift": {
       "title": "מתנה דיגיטלית",

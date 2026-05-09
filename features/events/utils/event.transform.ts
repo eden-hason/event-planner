@@ -9,6 +9,8 @@ import {
 // DB shape for guests_experience (snake_case)
 type GuestsExperienceDb = {
   dietary_options?: boolean;
+  dietary_types?: string[];
+  lock_guest_count?: boolean;
 };
 
 // Type for event details update to DB
@@ -87,6 +89,8 @@ export function eventDetailsUpdateToDb(
   if (data.guestExperience !== undefined) {
     dbData.guests_experience = {
       dietary_options: data.guestExperience.dietaryOptions,
+      dietary_types: data.guestExperience.dietaryTypes,
+      lock_guest_count: data.guestExperience.lockGuestCount,
     };
   }
 

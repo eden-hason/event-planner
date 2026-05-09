@@ -187,7 +187,7 @@ export async function getDeliveryActivity(
   // Build RSVP map — latest per guest (data is ordered desc so first wins)
   const rsvpMap = new Map<
     string,
-    { type: string; createdAt: string; metadata: { guestCount?: number; dietaryRestrictions?: string } | null }
+    { type: string; createdAt: string; metadata: { guestCount?: number; mealChoice?: string } | null }
   >();
   for (const record of interactionResult.data ?? []) {
     if (!rsvpMap.has(record.guest_id)) {

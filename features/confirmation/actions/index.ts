@@ -15,7 +15,7 @@ export async function submitConfirmation(
     token: formData.get('token'),
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount') ?? undefined,
-    dietaryRestrictions: formData.get('dietaryRestrictions') ?? undefined,
+    mealChoice: formData.get('mealChoice') ?? undefined,
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
@@ -23,7 +23,7 @@ export async function submitConfirmation(
     return { success: false, message: 'נתונים לא תקינים' };
   }
 
-  const { token, rsvpStatus, guestCount, dietaryRestrictions } = parsed.data;
+  const { token, rsvpStatus, guestCount, mealChoice } = parsed.data;
 
   const supabase = createServiceClient();
 
@@ -70,8 +70,8 @@ export async function submitConfirmation(
   if (rsvpStatus === 'confirmed' && guestCount) {
     guestUpdate.amount = guestCount;
   }
-  if (rsvpStatus === 'confirmed' && dietaryRestrictions) {
-    guestUpdate.dietary_restrictions = dietaryRestrictions;
+  if (rsvpStatus === 'confirmed' && mealChoice) {
+    guestUpdate.meal_choice = mealChoice;
   }
 
   const { error: guestError } = await supabase
@@ -91,7 +91,7 @@ export async function submitConfirmation(
 
     const metadata: Record<string, unknown> = {};
     if (guestCount) metadata.guestCount = guestCount;
-    if (dietaryRestrictions) metadata.dietaryRestrictions = dietaryRestrictions;
+    if (mealChoice) metadata.mealChoice = mealChoice;
 
     const { error: interactionError } = await supabase
       .from('guest_interactions')

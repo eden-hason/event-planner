@@ -22,6 +22,15 @@ interface ConfirmationFormProps {
   data: ConfirmationPageData;
 }
 
+const DIETARY_TYPE_LABELS: Record<string, string> = {
+  vegetarian: 'צמחונית',
+  vegan: 'טבעונית',
+  gluten_free: 'ללא גלוטן',
+  strictly_kosher: 'כשר למהדרין',
+};
+
+const DEFAULT_DIETARY_TYPES = Object.keys(DIETARY_TYPE_LABELS);
+
 export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
   const { guest, event } = data;
   const alreadyResponded = !!data.respondedAt;
@@ -51,12 +60,19 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
     null,
   );
 
-  const [dietaryRestrictions, setDietaryRestrictions] = useState(
-    data.responseData?.dietaryRestrictions ?? guest.dietaryRestrictions ?? '',
+  const [mealChoice, setMealChoice] = useState(
+    data.responseData?.mealChoice ?? guest.mealChoice ?? '',
   );
 
   const showDietaryField =
     rsvpStatus === 'confirmed' && event.guestExperience?.dietaryOptions;
+
+  const dietaryTypeOptions =
+    event.guestExperience?.dietaryTypes?.length
+      ? event.guestExperience.dietaryTypes
+      : DEFAULT_DIETARY_TYPES;
+
+  const lockGuestCount = event.guestExperience?.lockGuestCount ?? false;
 
   if (showSuccess && submittedStatus) {
     return (
@@ -116,34 +132,34 @@ export function ConfirmationForm({ token, data }: ConfirmationFormProps) {
                 defaultValue={
                   data.responseData?.guestCount ?? guest.amount
                 }
+                readOnly={lockGuestCount}
                 className="text-center text-lg"
               />
             </div>
           )}
 
-          {/* Dietary Restrictions */}
+          {/* Meal Selection */}
           {showDietaryField && (
-            <div className="space-y-2">
-              <Label htmlFor="dietaryRestrictions">העדפות תזונה</Label>
+            <div className="animate-in slide-in-from-top-1 fade-in-0 duration-200 space-y-2">
+              <Label htmlFor="mealChoice">בחירת מנה</Label>
               <input
                 type="hidden"
-                name="dietaryRestrictions"
-                value={dietaryRestrictions}
+                name="mealChoice"
+                value={mealChoice}
               />
               <Select
-                value={dietaryRestrictions}
-                onValueChange={setDietaryRestrictions}
+                value={mealChoice}
+                onValueChange={setMealChoice}
               >
-                <SelectTrigger id="dietaryRestrictions">
-                  <SelectValue placeholder="בחר העדפה" />
+                <SelectTrigger id="mealChoice" className="w-full">
+                  <SelectValue placeholder="בחר מנה" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="regular">ללא הגבלה</SelectItem>
-                  <SelectItem value="vegetarian">צמחוני</SelectItem>
-                  <SelectItem value="vegan">טבעוני</SelectItem>
-                  <SelectItem value="kosher">כשר</SelectItem>
-                  <SelectItem value="gluten_free">ללא גלוטן</SelectItem>
-                  <SelectItem value="other">אחר</SelectItem>
+                <SelectContent position="popper" sideOffset={4}>
+                  {dietaryTypeOptions.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {DIETARY_TYPE_LABELS[type] ?? type}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

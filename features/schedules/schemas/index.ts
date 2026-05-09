@@ -268,13 +268,13 @@ export const MessageDeliveryAppToDbSchema =
 // Metadata: DB shape (snake_case JSON keys)
 const GuestInteractionMetadataDbSchema = z.object({
   guest_count: z.number().optional(),
-  dietary_restrictions: z.string().optional(),
+  meal_choice: z.string().optional(),
 }).nullable();
 
 // Metadata: App shape (camelCase)
 export const GuestInteractionMetadataAppSchema = z.object({
   guestCount: z.number().optional(),
-  dietaryRestrictions: z.string().optional(),
+  mealChoice: z.string().optional(),
 }).nullable();
 
 export type GuestInteractionMetadataApp = z.infer<typeof GuestInteractionMetadataAppSchema>;
@@ -297,7 +297,7 @@ export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
   metadata: db.metadata
     ? {
         guestCount: db.metadata.guest_count,
-        dietaryRestrictions: db.metadata.dietary_restrictions,
+        mealChoice: db.metadata.meal_choice,
       }
     : null,
 }));

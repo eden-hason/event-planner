@@ -7,7 +7,7 @@ export const ConfirmationFormSchema = z.object({
   token: z.string().min(1),
   rsvpStatus: z.enum(['confirmed', 'declined']),
   guestCount: z.coerce.number().int().min(1).optional(),
-  dietaryRestrictions: z.string().optional(),
+  mealChoice: z.string().optional(),
 });
 
 export type ConfirmationFormData = z.infer<typeof ConfirmationFormSchema>;
@@ -20,15 +20,15 @@ export type ConfirmationActionState = {
 
 // --- Page Data (returned by query) ---
 export type ConfirmationPageData = {
-  deliveryId: string;
+  deliveryId: string | null;
   respondedAt: string | null;
   responseData: {
     guestCount?: number;
-    dietaryRestrictions?: string;
+    mealChoice?: string;
   } | null;
   guest: Pick<
     GuestApp,
-    'id' | 'name' | 'amount' | 'rsvpStatus' | 'dietaryRestrictions'
+    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice'
   >;
   event: Pick<
     EventApp,
