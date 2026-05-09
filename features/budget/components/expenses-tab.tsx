@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ChartNoAxesColumn, Trash2, Receipt } from 'lucide-react';
+import { IconPlus } from '@tabler/icons-react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -405,7 +406,13 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
         <div className="order-2 lg:order-1 lg:col-span-2">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">{t('expensesCard.title')}</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-sm font-semibold">{t('expensesCard.title')}</CardTitle>
+                <Button size="sm" onClick={onAddExpense}>
+                  <IconPlus size={16} />
+                  {t('addExpense')}
+                </Button>
+              </div>
             </CardHeader>
             {expenses.length > 0 && (
               <CardHeader className="pb-3 pt-0">
@@ -434,7 +441,6 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
                     <p className="text-sm font-medium">{t('expenseListEmpty.title')}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{t('expenseListEmpty.description')}</p>
                   </div>
-                  <Button size="sm" onClick={onAddExpense}>{t('expenseEmpty.cta')}</Button>
                 </div>
               ) : (
                 <p className="py-10 text-center text-sm text-muted-foreground">

@@ -77,9 +77,8 @@
       "cta": "הוסף הוצאה"
     },
     "giftEmpty": {
-      "title": "אין מתנות עדיין",
-      "description": "עקוב אחר מתנות כסף מהאורחים",
-      "cta": "הוסף מתנה ראשונה"
+      "title": "עדיין אין אורחים מאושרים",
+      "description": "ברגע שאורחים יאשרו הגעה, הם יופיעו כאן ותוכלו לעקוב אחרי המתנות שלהם"
     },
     "expenseSheet": {
       "editLabel": "ערוך הוצאה",
@@ -142,6 +141,32 @@
     "giftRow": {
       "received": "התקבל",
       "pending": "ממתין"
+    },
+    "giftsChart": {
+      "title": "פילוח תשלומים",
+      "noData": "אין נתוני תשלום עדיין",
+      "breakdown": "פילוח לפי אמצעי תשלום",
+      "total": "סה\"כ"
+    },
+    "giftTable": {
+      "guestName": "שם אורח",
+      "amount": "סכום",
+      "paymentMethod": "אמצעי תשלום",
+      "notes": "הערה",
+      "searchPlaceholder": "חיפוש לפי שם אורח...",
+      "addGuestPlaceholder": "הוסף אורח",
+      "searchEmpty": "לא נמצאו אורחים עבור \"{query}\"",
+      "selectPlaceholder": "בחר...",
+      "selectPaymentMethod": "בחר אמצעי",
+      "addAmount": "הוסף סכום",
+      "addNote": "הוסף הערה"
+    },
+    "paymentMethods": {
+      "cash": "מזומן",
+      "bit": "ביט",
+      "paybox": "פייבוקס",
+      "check": "צ'ק",
+      "other": "אחר"
     },
     "presetNames": {
       "rabbinateRegistration": "רישום ברבנות",

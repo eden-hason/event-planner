@@ -1,7 +1,15 @@
 import type { ExpenseApp } from './schemas/expenses';
-import type { GiftApp } from './schemas/gifts';
 
-export type { ExpenseApp, GiftApp };
+export type { ExpenseApp };
+
+export type GiftRow = {
+  guestId: string | null;
+  guestName: string;
+  giftId: string | null;
+  amount: number | null;
+  paymentMethod: string | null;
+  notes: string | null;
+};
 
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
