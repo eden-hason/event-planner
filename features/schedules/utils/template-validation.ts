@@ -28,7 +28,7 @@ const VALID_CONTEXT_PATHS = [
   'guest.email',
   'guest.phone',
   'guest.rsvpStatus',
-  'guest.dietaryRestrictions',
+  'guest.mealChoice',
   'guest.notes',
   'guest.plusOneCount',
   'guest.groupId',

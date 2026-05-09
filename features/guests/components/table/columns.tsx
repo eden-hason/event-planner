@@ -126,15 +126,15 @@ export const createGuestColumns = (
 
   if (options.showDietary) {
     cols.push({
-      accessorKey: 'dietaryRestrictions',
+      accessorKey: 'mealChoice',
       header: () => <div>{t('table.dietaryRestrictions')}</div>,
       cell: ({ row }) => {
-        const dietaryRestrictions = row.getValue('dietaryRestrictions') as
+        const mealChoice = row.getValue('mealChoice') as
           | string
           | undefined;
-        return dietaryRestrictions ? (
+        return mealChoice ? (
           <span className="text-sm text-gray-600">
-            {dietaryLabelMap[dietaryRestrictions] ?? dietaryRestrictions}
+            {dietaryLabelMap[mealChoice] ?? mealChoice}
           </span>
         ) : (
           <span className="text-sm text-gray-400">{t('table.dietaryNone')}</span>

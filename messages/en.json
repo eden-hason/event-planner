@@ -171,6 +171,8 @@
       "bridalBouquet": "Bridal Bouquet",
       "officiantRabbi": "Officiating Rabbi",
       "invitations": "Invitations",
+      "menuPrinting": "Menu Printing",
+      "gatheringVenue": "Gathering Venue",
       "weddingCake": "Wedding Cake",
       "attractions": "Attractions",
       "social": "Social",
@@ -998,7 +1000,7 @@
     },
     "invitation": {
       "title": "Event Invitation",
-      "description": "This image will be sent to guests as the first message they receive when invited to your event.",
+      "description": "This image will be sent to guests in the first message they receive",
       "dropImage": "Drop image here",
       "clickToBrowse": "or click to browse",
       "upload": "Upload",
@@ -1008,8 +1010,22 @@
     },
     "guestExperience": {
       "title": "Guest Experience",
-      "dietaryOptions": "Dietary Options",
-      "dietaryDescription": "Ask guests for meal requests"
+      "lockGuestCount": "Lock Attendance Count",
+      "lockGuestCountDescription": "Guests won't be able to change the number of seats assigned to their invitation",
+      "specialMealSelection": "Special Meal Selection",
+      "specialMealSelectionDescription": "Ask guests to choose a meal option",
+      "specialMealsLabel": "Special Meal Options",
+      "specialMealsDescription": "Choose which options guests can pick from",
+      "mealPlaceholder": "Choose a meal",
+      "allMeals": "All meals",
+      "mealsSelected": "{count} meals selected",
+      "meal": {
+        "regular": "Regular",
+        "vegetarian": "Vegetarian",
+        "vegan": "Vegan",
+        "glutenFree": "Gluten-Free",
+        "strictlyKosher": "Strictly Kosher"
+      }
     },
     "digitalGift": {
       "title": "Digital Gift",

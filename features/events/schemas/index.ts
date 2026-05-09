@@ -82,6 +82,8 @@ export type HostDetails = z.infer<typeof HostDetailsSchema>;
 // --- Guest Experience Sub-Schemas ---
 export const GuestExperienceSchema = z.object({
   dietaryOptions: z.boolean().optional(),
+  dietaryTypes: z.array(z.string()).optional(),
+  lockGuestCount: z.boolean().optional(),
 });
 
 export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
@@ -89,6 +91,8 @@ export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
 // DB-level guest experience (snake_case)
 export const GuestExperienceDbSchema = z.object({
   dietary_options: z.boolean().optional(),
+  dietary_types: z.array(z.string()).optional(),
+  lock_guest_count: z.boolean().optional(),
 });
 
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
@@ -224,6 +228,8 @@ export function dbToAppTransformer(dbData: {
   const guestExperience: GuestExperience | undefined = dbData.guests_experience
     ? {
       dietaryOptions: dbData.guests_experience.dietary_options,
+      dietaryTypes: dbData.guests_experience.dietary_types,
+      lockGuestCount: dbData.guests_experience.lock_guest_count,
     }
     : undefined;
 
@@ -252,58 +258,8 @@ export function dbToAppTransformer(dbData: {
 }
 
 // --- 3b. Zod-based "DB to App" Transformer Schema ---
-// Uses Zod's transform to convert snake_case DB data to camelCase app data.
-// This provides validation and type safety through Zod.
-
-export const DbToAppTransformerSchema = EventDbSchema.transform((dbData) => {
-  const status: 'draft' | 'published' | 'archived' = (dbData.status ||
-    'draft') as 'draft' | 'published' | 'archived';
-
-  // Transform event_settings from snake_case to camelCase
-  const eventSettings: EventSettingsApp | undefined = dbData.event_settings
-    ? {
-      payboxConfig: dbData.event_settings.paybox_config,
-      bitConfig: dbData.event_settings.bit_config,
-    }
-    : undefined;
-
-  // Transform invitations from snake_case to camelCase
-  const invitations: Invitations | undefined = dbData.invitations
-    ? {
-      imageUrl: dbData.invitations.image_url,
-    }
-    : undefined;
-
-  // Transform guests_experience from snake_case to camelCase
-  const guestExperience: GuestExperience | undefined = dbData.guests_experience
-    ? {
-      dietaryOptions: dbData.guests_experience.dietary_options,
-    }
-    : undefined;
-
-  return {
-    id: dbData.id,
-    userId: dbData.user_id,
-    title: dbData.title,
-    description: dbData.description ?? undefined,
-    eventDate: dbData.event_date,
-    eventType: dbData.event_type ?? undefined,
-    receptionTime: dbData.reception_time ?? undefined,
-    ceremonyTime: dbData.ceremony_time ?? undefined,
-    location: dbData.location ?? undefined,
-    eventSettings,
-    hostDetails: dbData.host_details ?? undefined,
-    invitations,
-    guestExperience,
-    status,
-    isDefault: dbData.is_default ?? undefined,
-    guestsEstimate: dbData.guests_estimate ?? undefined,
-    guestsCapacity: dbData.guests_capacity ?? undefined,
-    budget: dbData.budget ?? undefined,
-    createdAt: dbData.created_at,
-    updatedAt: dbData.updated_at,
-  };
-});
+// Delegates to dbToAppTransformer so the mapping is defined once.
+export const DbToAppTransformerSchema = EventDbSchema.transform(dbToAppTransformer);
 
 // --- 4. Event Details Update Schema ---
 // Schema for updating event details from the event details page form.

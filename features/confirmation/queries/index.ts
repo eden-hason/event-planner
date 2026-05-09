@@ -25,7 +25,7 @@ export async function getConfirmationDataByToken(
       clicked_at,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, dietary_restrictions
+        id, name, amount, rsvp_status, meal_choice
       ),
       schedules!inner (
         id,
@@ -57,7 +57,7 @@ export async function getConfirmationDataByToken(
     name: string;
     amount: number;
     rsvp_status: string;
-    dietary_restrictions: string | null;
+    meal_choice: string | null;
   };
 
   const schedule = data.schedules as unknown as {
@@ -70,7 +70,11 @@ export async function getConfirmationDataByToken(
       reception_time: string | null;
       location: { name: string; coords?: { lat: number; lng: number } } | null;
       host_details: Record<string, unknown> | null;
-      guests_experience: { dietary_options?: boolean } | null;
+      guests_experience: {
+        dietary_options?: boolean;
+        dietary_types?: string[];
+        lock_guest_count?: boolean;
+      } | null;
       event_type: string | null;
     };
   };
@@ -90,7 +94,7 @@ export async function getConfirmationDataByToken(
 
   const interactionMetadata = interaction?.metadata as {
     guestCount?: number;
-    dietaryRestrictions?: string;
+    mealChoice?: string;
   } | null;
 
   return {
@@ -99,7 +103,7 @@ export async function getConfirmationDataByToken(
     responseData: interactionMetadata
       ? {
           guestCount: interactionMetadata.guestCount,
-          dietaryRestrictions: interactionMetadata.dietaryRestrictions,
+          mealChoice: interactionMetadata.mealChoice,
         }
       : null,
     guest: {
@@ -107,7 +111,7 @@ export async function getConfirmationDataByToken(
       name: guest.name,
       amount: guest.amount,
       rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
-      dietaryRestrictions: guest.dietary_restrictions ?? undefined,
+      mealChoice: guest.meal_choice ?? undefined,
     },
     event: {
       id: event.id,
@@ -118,7 +122,11 @@ export async function getConfirmationDataByToken(
       location: event.location ?? undefined,
       hostDetails: event.host_details ?? undefined,
       guestExperience: event.guests_experience
-        ? { dietaryOptions: event.guests_experience.dietary_options }
+        ? {
+            dietaryOptions: event.guests_experience.dietary_options,
+            dietaryTypes: event.guests_experience.dietary_types,
+            lockGuestCount: event.guests_experience.lock_guest_count,
+          }
         : undefined,
       eventType: event.event_type ?? undefined,
     },
@@ -139,7 +147,7 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, dietary_restrictions,
+      id, name, amount, rsvp_status, meal_choice,
       events!inner (
         id, title, event_date, ceremony_time, reception_time,
         location, host_details, guests_experience, event_type
@@ -161,12 +169,16 @@ export async function getConfirmationDataByGuestToken(
     reception_time: string | null;
     location: { name: string; coords?: { lat: number; lng: number } } | null;
     host_details: Record<string, unknown> | null;
-    guests_experience: { dietary_options?: boolean } | null;
+    guests_experience: {
+      dietary_options?: boolean;
+      dietary_types?: string[];
+      lock_guest_count?: boolean;
+    } | null;
     event_type: string | null;
   };
 
   return {
-    deliveryId: data.id,
+    deliveryId: null,
     respondedAt: null,
     responseData: null,
     guest: {
@@ -174,7 +186,7 @@ export async function getConfirmationDataByGuestToken(
       name: data.name,
       amount: data.amount,
       rsvpStatus: data.rsvp_status as 'pending' | 'confirmed' | 'declined',
-      dietaryRestrictions: data.dietary_restrictions ?? undefined,
+      mealChoice: data.meal_choice ?? undefined,
     },
     event: {
       id: event.id,
@@ -185,7 +197,11 @@ export async function getConfirmationDataByGuestToken(
       location: event.location ?? undefined,
       hostDetails: event.host_details ?? undefined,
       guestExperience: event.guests_experience
-        ? { dietaryOptions: event.guests_experience.dietary_options }
+        ? {
+            dietaryOptions: event.guests_experience.dietary_options,
+            dietaryTypes: event.guests_experience.dietary_types,
+            lockGuestCount: event.guests_experience.lock_guest_count,
+          }
         : undefined,
       eventType: event.event_type ?? undefined,
     },

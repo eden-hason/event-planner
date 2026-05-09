@@ -92,14 +92,14 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
     onOpenChange(next);
   };
 
-  const applyPreset = (key: string, name: string, emoji: string, estimate: number) => {
+  const applyPreset = (key: string, name: string, emoji: string) => {
     if (selectedPresetKey === key) {
       setSelectedPresetKey(null);
       setForm((p) => ({ ...p, name: '', emoji: '💸', estimate: '' }));
       return;
     }
     setSelectedPresetKey(key);
-    setForm((p) => ({ ...p, name, emoji, estimate: String(estimate) }));
+    setForm((p) => ({ ...p, name, emoji }));
     setAnimKey((k) => k + 1);
   };
 
@@ -188,7 +188,7 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
                     <button
                       key={preset.key}
                       type="button"
-                      onClick={() => !alreadyAdded && applyPreset(preset.key, name, preset.emoji, preset.estimate)}
+                      onClick={() => !alreadyAdded && applyPreset(preset.key, name, preset.emoji)}
                       className={cn(
                         'flex shrink-0 flex-col items-center gap-1 rounded-xl border px-3 py-2 transition-colors',
                         selected
