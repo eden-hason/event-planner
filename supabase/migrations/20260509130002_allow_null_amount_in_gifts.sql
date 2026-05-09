@@ -1,0 +1,1 @@
+ALTER TABLE public.gifts ALTER COLUMN amount DROP NOT NULL;
