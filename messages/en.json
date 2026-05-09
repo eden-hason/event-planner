@@ -790,29 +790,39 @@
     "back": "Back",
     "stepOf": "Step {step} of {total}",
     "step1": {
-      "title": "Welcome to Kululu 🎉",
+      "title": "What kind of event?",
+      "description": "Choose your event type to get started",
+      "wedding": "Wedding",
+      "henna": "Henna",
+      "barMitzva": "Bar Mitzva",
+      "batMitzva": "Bat Mitzva",
+      "continue": "Continue"
+    },
+    "step2": {
+      "title": "Who's celebrating?",
       "description": "Tell us about the happy couple",
+      "descriptionChild": "Tell us about the celebrant",
       "brideLabel": "Bride's name",
       "bridePlaceholder": "Enter bride's name",
       "groomLabel": "Groom's name",
       "groomPlaceholder": "Enter groom's name",
-      "featureTitle": "Smart Event Management",
-      "featureDescription": "Invitations, guests, seating, budget and partners",
+      "childLabel": "Child's name",
+      "childPlaceholder": "Enter child's name",
       "continue": "Continue",
-      "skip": "Skip for now"
+      "goBack": "Go Back"
     },
-    "step2": {
+    "step3": {
       "title": "When and where?",
       "description": "Set your date and venue",
-      "dateLabel": "Wedding date",
-      "datePlaceholder": "Pick the wedding date",
+      "dateLabel": "Event date",
+      "datePlaceholder": "Pick the event date",
       "venueLabel": "Venue",
       "venuePlaceholder": "Search for your venue...",
       "venueHelper": "You can fill this in later",
       "continue": "Continue",
       "goBack": "Go Back"
     },
-    "step3": {
+    "step4": {
       "title": "Choose your plan",
       "description": "Select the guest capacity that fits your event",
       "popular": "Most Popular",
@@ -1000,9 +1010,9 @@
       "ceremonyTime": "Ceremony Time",
       "types": {
         "wedding": "Wedding",
-        "birthday": "Birthday Party",
-        "corporate": "Corporate Event",
-        "other": "Other"
+        "henna": "Henna",
+        "bar_mitzva": "Bar Mitzva",
+        "bat_mitzva": "Bat Mitzva"
       }
     },
     "couple": {
