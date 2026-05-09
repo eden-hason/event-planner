@@ -2,77 +2,81 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { GiftUpsertSchema, GiftAppToDbTransformerSchema } from '../schemas/gifts';
-
-export type UpsertGiftState = {
-  success: boolean;
-  message?: string | null;
-};
-
-export type DeleteGiftState = {
-  success: boolean;
-  message: string;
-};
 
 export async function upsertGift(
   eventId: string,
-  formData: FormData,
-): Promise<UpsertGiftState> {
+  data: {
+    giftId: string | null;
+    guestId: string | null;
+    guestName: string;
+    amount: number | null;
+    paymentMethod: string | null;
+    notes: string | null;
+  },
+): Promise<{ success: boolean; giftId: string | null; message?: string }> {
   try {
-    const raw = Object.fromEntries(formData);
-    const parsedData = {
-      id: raw.id as string | undefined,
-      guestId: (raw.guestId as string) || null,
-      guestName: raw.guestName as string,
-      amount: Number(raw.amount) || 0,
-      isReceived: raw.isReceived === 'true',
-      notes: (raw.notes as string) || null,
+    const supabase = await createClient();
+    const row = {
+      event_id: eventId,
+      guest_id: data.guestId,
+      guest_name: data.guestName,
+      amount: data.amount,
+      payment_method: data.paymentMethod,
+      notes: data.notes,
     };
-    if (!parsedData.id) delete (parsedData as Record<string, unknown>).id;
-    if (!parsedData.guestId) parsedData.guestId = null;
 
-    const validation = GiftUpsertSchema.safeParse(parsedData);
-    if (!validation.success) {
-      return { success: false, message: validation.error.issues[0]?.message };
+    let result: { id: string } | null = null;
+    let error;
+
+    if (data.giftId) {
+      ({ data: result, error } = await supabase
+        .from('gifts')
+        .update(row)
+        .eq('id', data.giftId)
+        .select('id')
+        .single());
+    } else if (data.guestId) {
+      ({ data: result, error } = await supabase
+        .from('gifts')
+        .upsert(row, { onConflict: 'event_id,guest_id' })
+        .select('id')
+        .single());
+    } else {
+      ({ data: result, error } = await supabase
+        .from('gifts')
+        .insert(row)
+        .select('id')
+        .single());
     }
 
-    const dbData = GiftAppToDbTransformerSchema.parse(validation.data);
-    const supabase = await createClient();
-
-    const { error } = await supabase
-      .from('gifts')
-      .upsert({ ...dbData, event_id: eventId }, { onConflict: 'id' });
-
     if (error) {
-      console.error(error);
-      return { success: false, message: 'Database error: Could not save gift.' };
+      console.error('upsertGift error:', error);
+      return { success: false, giftId: null, message: 'Failed to save gift.' };
     }
 
     revalidatePath(`/app/${eventId}/budget`);
-    return {
-      success: true,
-      message: parsedData.id ? 'Gift updated.' : 'Gift added.',
-    };
+    return { success: true, giftId: result?.id ?? null };
   } catch (error) {
     console.error('upsertGift error:', error);
-    return { success: false, message: 'Failed to save gift. Please try again.' };
+    return { success: false, giftId: null, message: 'Failed to save gift.' };
   }
 }
 
-export async function deleteGift(giftId: string, eventId: string): Promise<DeleteGiftState> {
+export async function deleteGift(
+  eventId: string,
+  giftId: string,
+): Promise<{ success: boolean }> {
   try {
     const supabase = await createClient();
     const { error } = await supabase.from('gifts').delete().eq('id', giftId);
-
     if (error) {
-      console.error(error);
-      return { success: false, message: 'Database error: Could not delete gift.' };
+      console.error('deleteGift error:', error);
+      return { success: false };
     }
-
     revalidatePath(`/app/${eventId}/budget`);
-    return { success: true, message: 'Gift deleted.' };
+    return { success: true };
   } catch (error) {
     console.error('deleteGift error:', error);
-    return { success: false, message: 'Failed to delete gift. Please try again.' };
+    return { success: false };
   }
 }

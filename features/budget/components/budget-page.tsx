@@ -1,146 +1,73 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { cn } from '@/lib/utils';
-import { IconCoins, IconGift, IconPlus } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { type ExpenseApp } from '../schemas/expenses';
-import { type GiftApp } from '../schemas/gifts';
+import type { GiftRow } from '../types';
 import { ExpensesTab } from './expenses-tab';
-import { GiftsTab } from './gifts-tab';
 import { ExpenseSheet } from './expense-sheet';
-import { GiftSheet } from './gift-sheet';
-import { Badge } from '@/components/ui/badge';
-
-interface GuestOption {
-  id: string;
-  name: string;
-}
+import { GiftsTab } from './gifts-tab';
 
 interface BudgetPageProps {
   expenses: ExpenseApp[];
-  gifts: GiftApp[];
   eventId: string;
-  guests: GuestOption[];
   eventBudget: number | null;
+  gifts: GiftRow[];
 }
 
-const giftsEnabled = process.env.NEXT_PUBLIC_ENABLE_GIFTS === 'true';
-
-export function BudgetPage({ expenses, gifts, eventId, guests, eventBudget }: BudgetPageProps) {
+export function BudgetPage({ expenses, eventId, eventBudget, gifts }: BudgetPageProps) {
   const t = useTranslations('budget');
-  const tNav = useTranslations('navigation');
   const locale = useLocale();
-
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
-  const [giftSheetOpen, setGiftSheetOpen] = useState(false);
 
-  const expensesHeaderAction = useMemo(
-    () => (
-      <Button onClick={() => setExpenseSheetOpen(true)}>
-        <IconPlus size={16} />
-        {t('addExpense')}
-      </Button>
-    ),
-    [t],
-  );
-
-  const giftsHeaderAction = useMemo(
-    () => (
-      <Button onClick={() => setGiftSheetOpen(true)}>
-        <IconPlus size={16} />
-        {t('addGift')}
-      </Button>
-    ),
-    [t],
-  );
-
-  const { setHeader } = useFeatureHeader({
+  useFeatureHeader({
     title: t('title'),
     description: t('description'),
-    action: expensesHeaderAction,
   });
 
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setHeader({
-        title: t('title'),
-        description: t('description'),
-        action: value === 'expenses' || !giftsEnabled ? expensesHeaderAction : giftsHeaderAction,
-      });
-    },
-    [setHeader, expensesHeaderAction, giftsHeaderAction, t],
-  );
-
   return (
-    <>
-      <Tabs
-        defaultValue="expenses"
-        onValueChange={handleTabChange}
-        dir={locale === 'he' ? 'rtl' : 'ltr'}
-      >
-        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-          <TabsTrigger
-            value="expenses"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
-            <IconCoins size={16} />
-            {t('tabs.expenses')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="gifts"
-            disabled={!giftsEnabled}
-            className={cn(
-              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
-              !giftsEnabled && 'cursor-default opacity-60',
-            )}
-          >
-            <IconGift size={16} />
-            {t('tabs.gifts')}
-          </TabsTrigger>
-        </TabsList>
+    <Tabs
+      defaultValue="expenses"
+      dir={locale === 'he' ? 'rtl' : 'ltr'}
+    >
+      <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+        <TabsTrigger
+          value="expenses"
+          className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+        >
+          {t('tabs.expenses')}
+        </TabsTrigger>
+        <TabsTrigger
+          value="gifts"
+          className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+        >
+          {t('tabs.gifts')}
+        </TabsTrigger>
+      </TabsList>
 
-        <TabsContent value="expenses">
-          <ExpensesTab
-            expenses={expenses}
-            eventId={eventId}
-            eventBudget={eventBudget}
-            onAddExpense={() => setExpenseSheetOpen(true)}
-          />
-        </TabsContent>
-
-        {giftsEnabled && (
-          <TabsContent value="gifts">
-            <GiftsTab
-              gifts={gifts}
-              eventId={eventId}
-              guests={guests}
-              onAddGift={() => setGiftSheetOpen(true)}
-            />
-          </TabsContent>
-        )}
-      </Tabs>
-
-      <ExpenseSheet
-        open={expenseSheetOpen}
-        onOpenChange={setExpenseSheetOpen}
-        expense={null}
-        eventId={eventId}
-        existingExpenses={expenses}
-      />
-
-      {giftsEnabled && (
-        <GiftSheet
-          open={giftSheetOpen}
-          onOpenChange={setGiftSheetOpen}
-          gift={null}
+      <TabsContent value="expenses">
+        <ExpensesTab
+          expenses={expenses}
           eventId={eventId}
-          guests={guests}
+          eventBudget={eventBudget}
+          onAddExpense={() => setExpenseSheetOpen(true)}
         />
-      )}
-    </>
+
+        <ExpenseSheet
+          open={expenseSheetOpen}
+          onOpenChange={setExpenseSheetOpen}
+          expense={null}
+          eventId={eventId}
+          existingExpenses={expenses}
+        />
+      </TabsContent>
+
+      <TabsContent value="gifts">
+        <GiftsTab eventId={eventId} initialGifts={gifts} />
+      </TabsContent>
+    </Tabs>
   );
 }

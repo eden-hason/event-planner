@@ -77,9 +77,8 @@
       "cta": "Add expense"
     },
     "giftEmpty": {
-      "title": "No gifts yet",
-      "description": "Track money gifts from your guests",
-      "cta": "Add first gift"
+      "title": "No confirmed guests yet",
+      "description": "Once guests confirm their RSVP, they'll appear here so you can track their gifts"
     },
     "expenseSheet": {
       "editLabel": "Edit expense",
@@ -142,6 +141,32 @@
     "giftRow": {
       "received": "Received",
       "pending": "Pending"
+    },
+    "giftsChart": {
+      "title": "Payment breakdown",
+      "noData": "No payment data yet",
+      "breakdown": "Breakdown by payment method",
+      "total": "Total"
+    },
+    "giftTable": {
+      "guestName": "Guest name",
+      "amount": "Amount",
+      "paymentMethod": "Payment method",
+      "notes": "Note",
+      "searchPlaceholder": "Search by guest name...",
+      "addGuestPlaceholder": "Add guest",
+      "searchEmpty": "No guests found for \"{query}\"",
+      "selectPlaceholder": "Choose...",
+      "selectPaymentMethod": "Choose method",
+      "addAmount": "Add amount",
+      "addNote": "Add note"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "bit": "Bit",
+      "paybox": "Paybox",
+      "check": "Check",
+      "other": "Other"
     },
     "presetNames": {
       "rabbinateRegistration": "Rabbinate Registration",
