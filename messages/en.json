@@ -761,7 +761,7 @@
   },
   "newEvent": {
     "back": "Back",
-    "stepOf": "Step {step} of 2",
+    "stepOf": "Step {step} of {total}",
     "step1": {
       "title": "Welcome to Kululu 🎉",
       "description": "Tell us about the happy couple",
@@ -782,7 +782,18 @@
       "venueLabel": "Venue",
       "venuePlaceholder": "Search for your venue...",
       "venueHelper": "You can fill this in later",
-      "continue": "Create my event! 🎊",
+      "continue": "Continue",
+      "goBack": "Go Back"
+    },
+    "step3": {
+      "title": "Choose your plan",
+      "description": "Select the guest capacity that fits your event",
+      "popular": "Most Popular",
+      "recordsLabel": "records",
+      "reservedLabel": " \"reserved\" records ",
+      "reservedBonus": "Bonus gift for last-minute guests",
+      "currency": "₪",
+      "continue": "Create my event! 🎉",
       "goBack": "Go Back"
     },
     "toast": {

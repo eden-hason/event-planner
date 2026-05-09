@@ -97,14 +97,14 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
   return (
     <div className="flex h-full items-center justify-center px-4 py-8">
       <div className="bg-card border-border mx-auto w-full max-w-sm rounded-lg border p-8">
-        <div className="mb-6 flex flex-col gap-1.5">
+        <div className="mb-6 flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both]">
           <h2 className="text-xl font-bold">{t('title')}</h2>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </div>
 
         <div className="flex flex-col gap-5">
           {/* Avatar upload */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:60ms]">
             <FileUpload
               accept="image/*"
               maxFiles={1}
@@ -137,7 +137,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
           </div>
 
           {/* Name */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:120ms]">
             <label className="text-muted-foreground text-xs font-medium">
               {t('nameLabel')}
             </label>
@@ -150,7 +150,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
           </div>
 
           {/* Email (read-only) */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:180ms]">
             <label className="text-muted-foreground text-xs font-medium">
               {t('emailLabel')}
             </label>
@@ -158,7 +158,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
           </div>
 
           {/* Phone */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
             <label className="text-muted-foreground text-xs font-medium">
               {t('phoneLabel')}
             </label>
@@ -172,7 +172,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
             />
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:300ms]">
             <Button onClick={handleSave} disabled={isBusy} className="w-full">
               {t('save')}
             </Button>

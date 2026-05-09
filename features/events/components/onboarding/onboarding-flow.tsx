@@ -8,9 +8,10 @@ import type { ProfileData } from '@/features/auth/schemas';
 interface OnboardingFlowProps {
   initialSetupComplete: boolean;
   profile: ProfileData;
+  showPricingStep: boolean;
 }
 
-export function OnboardingFlow({ initialSetupComplete, profile }: OnboardingFlowProps) {
+export function OnboardingFlow({ initialSetupComplete, profile, showPricingStep }: OnboardingFlowProps) {
   const [step, setStep] = useState<'profile' | 'event'>(
     initialSetupComplete ? 'event' : 'profile',
   );
@@ -19,5 +20,5 @@ export function OnboardingFlow({ initialSetupComplete, profile }: OnboardingFlow
     return <PersonalInfoStep profile={profile} onComplete={() => setStep('event')} />;
   }
 
-  return <OnboardingWizard />;
+  return <OnboardingWizard showPricingStep={showPricingStep} />;
 }

@@ -373,6 +373,7 @@ export const EventOnboardingSchema = z.object({
   eventDate: z.string().min(1, 'Event date is required'),
   location: LocationSchema.optional(),
   guestsEstimate: GuestsEstimateSchema.optional(),
+  pricingPlan: z.enum(['tier_100', 'tier_200', 'tier_300', 'tier_400']).optional(),
 });
 
 export type EventOnboarding = z.infer<typeof EventOnboardingSchema>;

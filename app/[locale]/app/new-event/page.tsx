@@ -3,6 +3,7 @@ import { OnboardingFlow } from '@/features/events/components/onboarding/onboardi
 
 export default async function NewEventPage() {
   const profile = await getUserProfile();
+  const showPricingStep = process.env.ENABLE_PRICING_STEP === 'true';
 
   return (
     <OnboardingFlow
@@ -14,6 +15,7 @@ export default async function NewEventPage() {
         avatarUrl: '',
         initialSetupComplete: false,
       }}
+      showPricingStep={showPricingStep}
     />
   );
 }
