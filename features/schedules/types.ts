@@ -14,7 +14,7 @@ export type DeliveryActivityRow = {
   respondedAt: string | null;
   interactionMetadata: {
     guestCount?: number;
-    dietaryRestrictions?: string;
+    mealChoice?: string;
   } | null;
   errorCode?: number | null;
   errorMessage?: string | null;

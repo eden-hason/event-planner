@@ -64,6 +64,8 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
       },
       guestExperience: {
         dietaryOptions: event.guestExperience?.dietaryOptions ?? false,
+        dietaryTypes: event.guestExperience?.dietaryTypes ?? ['vegetarian', 'vegan', 'gluten_free', 'strictly_kosher'],
+        lockGuestCount: event.guestExperience?.lockGuestCount ?? false,
       },
     },
   });

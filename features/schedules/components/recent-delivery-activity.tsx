@@ -116,12 +116,12 @@ function RsvpDetails({
   t,
 }: {
   status: ActivityStatus;
-  metadata: { guestCount?: number; dietaryRestrictions?: string } | null;
+  metadata: { guestCount?: number; mealChoice?: string } | null;
   t: ReturnType<typeof useTranslations<'schedules.activity'>>;
 }) {
   if (status === 'read' || status === 'failed')
     return <span className="text-muted-foreground">—</span>;
-  if (!metadata || (!metadata.guestCount && !metadata.dietaryRestrictions))
+  if (!metadata || (!metadata.guestCount && !metadata.mealChoice))
     return <span className="text-muted-foreground text-xs">{t('table.noDetails')}</span>;
 
   return (
@@ -132,10 +132,10 @@ function RsvpDetails({
           {t('table.partyOf', { count: metadata.guestCount })}
         </span>
       )}
-      {metadata.dietaryRestrictions && (
+      {metadata.mealChoice && (
         <span className="inline-flex w-fit items-center gap-1 text-xs text-muted-foreground italic">
           <Utensils className="h-3 w-3 shrink-0" />
-          {metadata.dietaryRestrictions}
+          {metadata.mealChoice}
         </span>
       )}
     </div>

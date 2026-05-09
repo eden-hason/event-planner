@@ -47,7 +47,7 @@ export const GuestAppSchema = z.object({
       message: 'RSVP status must be pending, confirmed, or declined',
     })
     .default('pending'),
-  dietaryRestrictions: z.string().nullable().optional(),
+  mealChoice: z.string().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
   notes: z.string().nullable().optional(),
   createdAt: z.string(),
@@ -97,7 +97,7 @@ export const GuestDbSchema = z.object({
   // Foreign key to groups table
   group_id: z.uuid().nullable(),
   rsvp_status: z.enum(['pending', 'confirmed', 'declined']).default('pending'),
-  dietary_restrictions: z.string().nullable(),
+  meal_choice: z.string().nullable(),
   amount: z.number().int().default(1),
   notes: z.string().nullable(),
   created_at: z.string(),
@@ -129,7 +129,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     phone: dbData.phone_number ?? undefined,
     groupId: dbData.group_id ?? undefined,
     rsvpStatus,
-    dietaryRestrictions: dbData.dietary_restrictions ?? undefined,
+    mealChoice: dbData.meal_choice ?? undefined,
     amount: dbData.amount,
     notes: dbData.notes ?? undefined,
     createdAt: dbData.created_at,
@@ -164,7 +164,7 @@ export const GuestUpsertSchema = z.object({
       message: 'RSVP status must be pending, confirmed, or declined',
     })
     .optional(),
-  dietaryRestrictions: z.string().nullable().optional(),
+  mealChoice: z.string().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   notes: z.string().nullable().optional(),
   isOfflineRsvp: z.boolean().optional(),
@@ -196,8 +196,8 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     if (appData.rsvpStatus !== undefined) {
       dbData.rsvp_status = appData.rsvpStatus;
     }
-    if (appData.dietaryRestrictions !== undefined) {
-      dbData.dietary_restrictions = appData.dietaryRestrictions ?? null;
+    if (appData.mealChoice !== undefined) {
+      dbData.meal_choice = appData.mealChoice ?? null;
     }
     if (appData.amount !== undefined) {
       dbData.amount = appData.amount;
