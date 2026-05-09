@@ -38,9 +38,9 @@ export function DateTimeCard() {
 
   const eventTypeLabels: Record<EventType, string> = {
     wedding: t('types.wedding'),
-    birthday: t('types.birthday'),
-    corporate: t('types.corporate'),
-    other: t('types.other'),
+    henna: t('types.henna'),
+    bar_mitzva: t('types.bar_mitzva'),
+    bat_mitzva: t('types.bat_mitzva'),
   };
 
   const typeLabel = eventType

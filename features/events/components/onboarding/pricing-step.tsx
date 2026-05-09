@@ -22,7 +22,7 @@ interface PricingStepProps {
 }
 
 export function PricingStep({ onConfirm, onBack, isPending }: PricingStepProps) {
-  const t = useTranslations('newEvent.step3');
+  const t = useTranslations('newEvent.step4');
   const [selected, setSelected] = useState<string | null>(null);
 
   return (

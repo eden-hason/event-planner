@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export { EVENT_TYPES, type EventType } from '@/features/events/utils/event-types';
 
 // =====================================================
 // SHARED TYPES
@@ -14,15 +15,6 @@ export type GuestStats = {
 // =====================================================
 // ENUM TYPES
 // =====================================================
-
-// Event types for message templates
-export const EVENT_TYPES = [
-  'wedding',
-  'birthday',
-  'corporate',
-  'other',
-] as const;
-export type EventType = (typeof EVENT_TYPES)[number];
 
 // Action types for schedules (stored in DB)
 export const ACTION_TYPES = [

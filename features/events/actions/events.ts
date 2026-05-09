@@ -146,33 +146,53 @@ export async function createOnboardingEvent(
       return { success: false, message: firstError.message };
     }
 
-    const { brideName, groomName, eventDate, location, guestsEstimate, pricingPlan } =
+    const { eventType, brideName, groomName, childName, eventDate, location, guestsEstimate, pricingPlan } =
       validationResult.data;
 
     const guestsCapacity = pricingPlan ? PLAN_CAPACITY[pricingPlan] : null;
+    const isCoupleEvent = eventType === 'wedding' || eventType === 'henna';
 
     // Auto-generate title
     const locale = await getLocale();
     let title: string;
     if (locale === 'he') {
-      if (brideName && groomName) {
-        title = `חתונת ${brideName} ו${groomName}`;
-      } else if (brideName || groomName) {
-        title = `חתונת ${brideName ?? groomName}`;
+      if (isCoupleEvent) {
+        const prefix = eventType === 'henna' ? 'חינת' : 'חתונת';
+        if (brideName && groomName) {
+          title = `${prefix} ${brideName} ו${groomName}`;
+        } else if (brideName || groomName) {
+          title = `${prefix} ${brideName ?? groomName}`;
+        } else {
+          title = eventType === 'henna' ? 'החינה שלי' : 'החתונה שלי';
+        }
       } else {
-        title = 'החתונה שלי';
+        const eventLabel = eventType === 'bar_mitzva' ? 'בר מצווה' : 'בת מצווה';
+        title = childName ? `${eventLabel} של ${childName}` : eventLabel;
       }
     } else {
-      if (brideName && groomName) {
-        title = `${brideName} & ${groomName}'s Wedding`;
-      } else if (brideName) {
-        title = `${brideName}'s Wedding`;
-      } else if (groomName) {
-        title = `${groomName}'s Wedding`;
+      if (isCoupleEvent) {
+        const suffix = eventType === 'henna' ? 'Henna' : 'Wedding';
+        if (brideName && groomName) {
+          title = `${brideName} & ${groomName}'s ${suffix}`;
+        } else if (brideName) {
+          title = `${brideName}'s ${suffix}`;
+        } else if (groomName) {
+          title = `${groomName}'s ${suffix}`;
+        } else {
+          title = `My ${suffix}`;
+        }
       } else {
-        title = 'My Wedding';
+        const eventLabel = eventType === 'bar_mitzva' ? 'Bar Mitzva' : 'Bat Mitzva';
+        title = childName ? `${childName}'s ${eventLabel}` : `My ${eventLabel}`;
       }
     }
+
+    const hostDetails = isCoupleEvent
+      ? {
+          bride: brideName ? { name: brideName } : undefined,
+          groom: groomName ? { name: groomName } : undefined,
+        }
+      : { child: childName ? { name: childName } : undefined };
 
     const supabase = await createClient();
 
@@ -182,13 +202,10 @@ export async function createOnboardingEvent(
         user_id: currentUser.id,
         title,
         event_date: eventDate,
-        event_type: 'wedding',
+        event_type: eventType,
         status: 'draft',
         is_default: true,
-        host_details: {
-          bride: brideName ? { name: brideName } : undefined,
-          groom: groomName ? { name: groomName } : undefined,
-        },
+        host_details: hostDetails,
         location: location ?? null,
         guests_estimate: guestsEstimate ?? null,
         guests_capacity: guestsCapacity,

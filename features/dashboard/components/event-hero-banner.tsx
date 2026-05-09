@@ -48,7 +48,7 @@ export function EventHeroBanner({ event }: { event: EventApp }) {
           </div>
         </div>
         <img
-          src="/hero-wedding.svg"
+          src={event.eventType === 'wedding' || event.eventType === 'henna' ? '/hero-wedding.svg' : '/hero-mitzva.svg'}
           alt=""
           aria-hidden="true"
           className="h-28 w-auto shrink-0 object-contain select-none"
