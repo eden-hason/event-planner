@@ -72,34 +72,33 @@ export const getGuestsWithInitialInvitation = async (
 
 export const getEventGuestPhones = async (
   eventId: string,
-): Promise<Set<string>> => {
+): Promise<Map<string, string>> => {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('guests')
-      .select('phone_number')
+      .select('phone_number, name')
       .eq('event_id', eventId)
       .not('phone_number', 'is', null);
 
     if (error) {
       console.error('Error fetching guest phones:', error);
-      return new Set();
+      return new Map();
     }
 
-    // Normalize phone numbers (remove spaces, dashes, etc.) for comparison
-    const phones = new Set<string>();
+    // Map normalized phone → guest name for duplicate detection + conflict display
+    const phones = new Map<string, string>();
     for (const row of data || []) {
       if (row.phone_number) {
-        // Store normalized version for comparison
         const normalized = row.phone_number.replace(/[\s\-().]/g, '');
-        phones.add(normalized);
+        phones.set(normalized, row.name);
       }
     }
 
     return phones;
   } catch (error) {
     console.error('Error fetching guest phones:', error);
-    return new Set();
+    return new Map();
   }
 };
 

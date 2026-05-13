@@ -9,6 +9,22 @@ export interface ParsedCSV {
   rows: string[][];
 }
 
+const SUMMARY_ROW_PATTERN = /^\s*(total|sum|סה[״"]כ|סך הכל|grand total|subtotal|count)\s*$/i;
+
+function isSummaryRow(row: string[]): boolean {
+  const nonEmpty = row.map((c) => c.trim()).filter((c) => c !== '');
+  if (nonEmpty.length === 0) return false;
+  // Require at least one explicit summary label, plus every other non-empty
+  // cell being a label or a plain number. This avoids dropping a real guest
+  // row that happens to have a missing name (phone + amount would otherwise
+  // look like a summary).
+  const hasLabel = nonEmpty.some((cell) => SUMMARY_ROW_PATTERN.test(cell));
+  if (!hasLabel) return false;
+  return nonEmpty.every(
+    (cell) => SUMMARY_ROW_PATTERN.test(cell) || /^\d+$/.test(cell),
+  );
+}
+
 /**
  * Gets sample data for a specific column from parsed CSV rows.
  * Returns the first non-empty value found in the first few rows.
@@ -58,8 +74,9 @@ async function parseExcelFile(file: File): Promise<ParsedCSV> {
 
   const headers = headerRow.map((h) => String(h).trim());
   const rows = dataRows.map((row) => row.map((cell) => String(cell).trim()));
+  const filteredRows = rows.filter((row, i) => i < rows.length - 1 || !isSummaryRow(row));
 
-  return { headers, rows };
+  return { headers, rows: filteredRows };
 }
 
 export async function parseCSVFile(file: File): Promise<ParsedCSV> {
@@ -69,7 +86,7 @@ export async function parseCSVFile(file: File): Promise<ParsedCSV> {
 
   return new Promise((resolve, reject) => {
     Papa.parse<string[]>(file, {
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy',
       complete: (results: Papa.ParseResult<string[]>) => {
         if (results.errors.length > 0) {
           reject(new Error(results.errors[0].message));
@@ -94,10 +111,13 @@ export async function parseCSVFile(file: File): Promise<ParsedCSV> {
         const trimmedRows = rows.map((row: string[]) =>
           row.map((cell: string) => cell.trim()),
         );
+        const filteredRows = trimmedRows.filter(
+          (row, i) => i < trimmedRows.length - 1 || !isSummaryRow(row),
+        );
 
         resolve({
           headers: trimmedHeaders,
-          rows: trimmedRows,
+          rows: filteredRows,
         });
       },
       error: (error: Error) => {

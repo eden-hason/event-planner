@@ -18,7 +18,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,7 @@ interface GuestsPageProps {
   guests: GuestWithGroupApp[];
   eventId: string;
   groups: GroupWithGuestsApp[];
-  existingPhones: Set<string>;
+  existingPhones: Map<string, string>;
   showDietary?: boolean;
   currentUserId?: string | null;
   initialInvitedGuestIds?: string[];
@@ -290,76 +289,65 @@ export function GuestsPage({
           }}
         >
           <SheetHeader className="border-b px-6 py-5">
-            <SheetDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {selectedGuest ? t('sheet.editGuest') : t('sheet.addNewGuest')}
-            </SheetDescription>
-            <SheetTitle className="text-xl">
-              {selectedGuest ? selectedGuest.name : t('sheet.newGuest')}
-            </SheetTitle>
             {selectedGuest ? (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
-                >
+              <div className="flex flex-col gap-2">
+                <SheetTitle className="text-xl leading-tight">
+                  {selectedGuest.name}
+                </SheetTitle>
+
+                <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`}
-                  />
-                  {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
-                </span>
-                {selectedGuest.isOfflineRsvp && (
-                  <span className="inline-flex w-fit items-center rounded-full border border-dashed px-3 py-1 text-xs font-medium text-muted-foreground">
-                    {t('rsvp.offlineRsvp')}
+                    className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
+                  >
+                    <span className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`} />
+                    {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
                   </span>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {t('sheet.addGuestHint')}
-              </p>
-            )}
-          </SheetHeader>
-
-          {selectedGuest && (
-            <div className="border-b px-6 py-4 space-y-3">
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <IconClock size={12} />
-                {t('sheet.lastEdited')}{' '}
-                {formatDistanceToNow(new Date(selectedGuest.updatedAt), {
-                  addSuffix: true,
-                })}
-              </p>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-sm">
-                  <IconUsers size={14} className="shrink-0 text-muted-foreground" />
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.people')}</span>
-                  <span className="text-foreground">
-                    {selectedGuest.amount}{' '}
-                    {selectedGuest.amount === 1 ? t('form.person') : t('form.people')}
-                  </span>
+                  {selectedGuest.isOfflineRsvp && (
+                    <span className="inline-flex w-fit items-center rounded-full border border-dashed px-3 py-1 text-xs font-medium text-muted-foreground">
+                      {t('rsvp.offlineRsvp')}
+                    </span>
+                  )}
                 </div>
-                {guestGroup && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0 text-muted-foreground" />
-                    <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.group')}</span>
-                    <span className="text-foreground">{guestGroup.name}</span>
-                  </div>
-                )}
-                {selectedGuest.rsvpChangedAt && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <IconClock size={14} className="shrink-0 text-muted-foreground" />
-                    <span className="w-20 shrink-0 text-xs text-muted-foreground">{t('sheet.updated')}</span>
-                    <span className="text-foreground">
-                      {selectedGuest.rsvpChangeSource === 'guest'
-                        ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
-                        : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
-                      }
+
+                <div className="flex flex-wrap gap-2">
+                  <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                    <IconUsers size={12} className="shrink-0" />
+                    <span>
+                      {selectedGuest.amount}{' '}
+                      {selectedGuest.amount === 1 ? t('form.person') : t('form.people')}
                     </span>
                   </div>
-                )}
+                  {guestGroup && (
+                    <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0" />
+                      <span>{guestGroup.name}</span>
+                    </div>
+                  )}
+                  {selectedGuest.rsvpChangedAt && (
+                    <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      <IconClock size={12} className="shrink-0" />
+                      <span>
+                        {selectedGuest.rsvpChangeSource === 'guest'
+                          ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
+                          : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <p className="flex items-center gap-1 text-xs text-muted-foreground/70">
+                  <IconClock size={11} className="shrink-0" />
+                  {t('sheet.lastEdited')}{' '}
+                  {formatDistanceToNow(new Date(selectedGuest.updatedAt), { addSuffix: true })}
+                </p>
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <SheetTitle className="text-xl">{t('sheet.newGuest')}</SheetTitle>
+                <p className="text-xs text-muted-foreground">{t('sheet.addGuestHint')}</p>
+              </>
+            )}
+          </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/30 flex flex-col gap-4">
             <GuestForm

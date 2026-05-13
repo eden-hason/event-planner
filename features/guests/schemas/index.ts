@@ -50,6 +50,7 @@ export const GuestAppSchema = z.object({
   mealChoice: z.string().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
   notes: z.string().nullable().optional(),
+  side: z.enum(['bride', 'groom']).nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   invitationToken: z.string().uuid(),
@@ -100,6 +101,7 @@ export const GuestDbSchema = z.object({
   meal_choice: z.string().nullable(),
   amount: z.number().int().default(1),
   notes: z.string().nullable(),
+  side: z.enum(['bride', 'groom']).nullable(),
   created_at: z.string(),
   updated_at: z.string(),
   invitation_token: z.string().uuid(),
@@ -140,6 +142,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     rsvpChangedAt: dbData.rsvp_changed_at ?? null,
     rsvpChangeSource: dbData.rsvp_change_source ?? null,
     isOfflineRsvp: dbData.is_offline_rsvp ?? false,
+    side: dbData.side ?? null,
   };
 });
 
@@ -167,6 +170,7 @@ export const GuestUpsertSchema = z.object({
   mealChoice: z.string().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   notes: z.string().nullable().optional(),
+  side: z.enum(['bride', 'groom']).nullable().optional(),
   isOfflineRsvp: z.boolean().optional(),
 });
 
@@ -207,6 +211,9 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     }
     if (appData.isOfflineRsvp !== undefined) {
       dbData.is_offline_rsvp = appData.isOfflineRsvp;
+    }
+    if (appData.side !== undefined) {
+      dbData.side = appData.side ?? null;
     }
 
     return dbData;
@@ -361,20 +368,41 @@ export type GroupDbUpsert = z.infer<typeof GroupAppToDbTransformerSchema>;
 export const ImportGuestSchema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(255, 'Name is too long'),
+    .min(1, 'import.validate.errors.nameRequired')
+    .min(2, 'import.validate.errors.nameTooShort')
+    .max(255, 'import.validate.errors.nameTooLong'),
   phone: z
     .string()
-    .min(1, 'Phone number is required')
-    .refine(isIsraeliMobile, {
-      message: 'Must be a valid Israeli mobile number (e.g. 054-1234567)',
-    }),
+    .optional()
+    .refine(
+      (val) => !val || val.trim().length === 0 || isIsraeliMobile(val),
+      { message: 'import.validate.errors.phoneInvalid' },
+    ),
   amount: z.coerce
     .number()
-    .int('Amount must be a whole number')
+    .int('import.validate.errors.amountNotInteger')
     .transform((val) => Math.max(1, val))
     .default(1),
 });
 
 export type ImportGuestData = z.infer<typeof ImportGuestSchema>;
+
+// English fallbacks for the i18n keys above. Used by server-side callers
+// (which can't resolve next-intl keys) so they can log / surface readable
+// messages instead of raw "import.validate.errors.*" strings.
+export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
+  'import.validate.errors.nameRequired': 'Name is required',
+  'import.validate.errors.nameTooShort': 'Name must be at least 2 characters',
+  'import.validate.errors.nameTooLong': 'Name is too long',
+  'import.validate.errors.phoneInvalid':
+    'Must be a valid Israeli mobile number (e.g. 054-1234567)',
+  'import.validate.errors.phoneExists':
+    'Phone number already exists in your guest list',
+  'import.validate.errors.phoneDuplicateCsv':
+    'Duplicate phone number in CSV',
+  'import.validate.errors.amountNotInteger': 'Amount must be a whole number',
+};
+
+export function resolveImportErrorMessage(message: string): string {
+  return IMPORT_ERROR_MESSAGES[message] ?? message;
+}
