@@ -81,6 +81,13 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
     }
   };
 
+  const handleSkip = async () => {
+    setIsPending(true);
+    await updateUserProfile(new FormData());
+    setIsPending(false);
+    onComplete();
+  };
+
   const initials = fullName
     ? fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -142,8 +149,16 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
             />
           </div>
 
-          {/* Phone */}
+          {/* Email (read-only) */}
           <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:180ms]">
+            <label className="text-muted-foreground text-xs font-medium">
+              {t('emailLabel')}
+            </label>
+            <Input value={profile.email} readOnly disabled className="opacity-60" />
+          </div>
+
+          {/* Phone */}
+          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
             <label className="text-muted-foreground text-xs font-medium">
               {t('phoneLabel')}
             </label>
@@ -155,14 +170,19 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
               type="tel"
               dir={isRtl ? 'rtl' : 'ltr'}
             />
-            <p className="text-muted-foreground text-xs">
-              {t('phoneHelper')}
-            </p>
           </div>
 
-          <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
-            <Button onClick={handleSave} disabled={isBusy || !fullName.trim()} className="w-full">
+          <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:300ms]">
+            <Button onClick={handleSave} disabled={isBusy} className="w-full">
               {t('save')}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleSkip}
+              disabled={isBusy}
+              className="text-muted-foreground w-full"
+            >
+              {t('skip')}
             </Button>
           </div>
         </div>
