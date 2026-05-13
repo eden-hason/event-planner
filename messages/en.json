@@ -1079,10 +1079,10 @@
     "namePlaceholder": "Enter your name",
     "phoneLabel": "Phone number",
     "phonePlaceholder": "Enter your phone number",
+    "phoneHelper": "No spam — just updates about your event",
     "emailLabel": "Email",
     "avatarLabel": "Profile photo",
-    "save": "Save & Continue",
-    "skip": "Skip for now",
+    "save": "Continue",
     "toast": {
       "saving": "Saving your profile...",
       "saved": "Profile saved!",

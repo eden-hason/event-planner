@@ -1079,10 +1079,10 @@
     "namePlaceholder": "הזן את שמך",
     "phoneLabel": "מספר טלפון",
     "phonePlaceholder": "הזן מספר טלפון",
+    "phoneHelper": "בלי ספאם — רק עדכונים על האירוע שלך",
     "emailLabel": "אימייל",
     "avatarLabel": "תמונת פרופיל",
-    "save": "שמור והמשך",
-    "skip": "דלג",
+    "save": "המשך",
     "toast": {
       "saving": "שומר את הפרופיל...",
       "saved": "הפרופיל נשמר!",

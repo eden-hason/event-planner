@@ -14,6 +14,12 @@ export async function acceptInvitation(token: string): Promise<ActionState> {
 
     const supabase = await createClient();
 
+    // Profile rows are no longer created at signup, so ensure one exists
+    // before inserting into event_collaborators (which FKs to profiles.id).
+    await supabase
+      .from('profiles')
+      .upsert({ id: currentUser.id, email: currentUser.email }, { onConflict: 'id' });
+
     // Call the SECURITY DEFINER function that handles the entire accept flow
     // (insert collaborator, copy scope, update invitation, audit log)
     // bypassing RLS since the invitee isn't a collaborator yet.
