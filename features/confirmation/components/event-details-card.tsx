@@ -49,7 +49,7 @@ export function EventDetailsCard({ event }: EventDetailsCardProps) {
           <div className="flex items-center gap-3">
             <IconClock size={20} className="text-muted-foreground shrink-0" />
             <div className="flex flex-col">
-              {event.ceremonyTime && <span>טקס: {event.ceremonyTime}</span>}
+              {event.ceremonyTime && <span>חופה: {event.ceremonyTime}</span>}
               {event.receptionTime && (
                 <span>קבלת פנים: {event.receptionTime}</span>
               )}

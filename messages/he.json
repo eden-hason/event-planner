@@ -309,7 +309,9 @@
       "addGuest": "הוסף אורח",
       "updating": "מעדכן...",
       "adding": "מוסיף...",
-      "phoneInvalid": "יש להזין מספר נייד ישראלי תקין (למשל 054-1234567)"
+      "phoneInvalid": "יש להזין מספר נייד ישראלי תקין (למשל 054-1234567)",
+      "side": "צד",
+      "noSide": "ללא צד"
     },
     "rsvp": {
       "pending": "ממתין",
@@ -481,7 +483,7 @@
       },
       "validate": {
         "heading": "אמת את הנתונים",
-        "description": "בדוק את הנתונים למטה. שורות לא תקינות ניתן להסיר לפני הייבוא.",
+        "description": "בדוק את הנתונים למטה. לחץ על כל תא כדי לערוך אותו ישירות.",
         "colStatus": "סטטוס",
         "colRow": "שורה",
         "colName": "שם",
@@ -489,7 +491,40 @@
         "colAmount": "כמות",
         "colErrors": "שגיאות",
         "rowCount": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות",
-        "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות ✓"
+        "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות ✓",
+        "tabAll": "הכל",
+        "tabNeedsFix": "דורש תיקון",
+        "tabValid": "תקין",
+        "statusReady": "מוכן",
+        "statusNeedsFix": "דורש תיקון",
+        "summaryReady": "{valid} מתוך {total} מוכנים",
+        "autoFixPhones": "תיקון אוטומטי",
+        "autoFixPhonesCount": "({count})",
+        "autoFixNoneAvailable": "לא נמצאו מספרי טלפון לתיקון",
+        "autoFixApplied": "תוקנו {count} מספרי טלפון",
+        "resetRow": "אפס שורה",
+        "emptyNeedsFix": "כל השורות תקינות",
+        "emptyNeedsFixSub": "עבור ל\"הכל\" כדי לסקור שורות תקינות",
+        "emptyValid": "אין שורות תקינות עדיין",
+        "emptyValidSub": "תקן שגיאות או הסר שורות לא תקינות להמשך",
+        "editNameAria": "ערוך שם עבור שורה {row}",
+        "editPhoneAria": "ערוך טלפון עבור שורה {row}",
+        "editAmountAria": "ערוך כמות עבור שורה {row}",
+        "removeRow": "הסר שורה {row}",
+        "deleteDialogTitle": "הסר שורה?",
+        "deleteDialogDescription": "שורה זו תוחרג מהייבוא. ניתן לבטל זאת על ידי סגירה ופתיחה מחדש של תיבת הייבוא.",
+        "deleteDialogCancel": "ביטול",
+        "deleteDialogConfirm": "הסר",
+        "errors": {
+          "nameRequired": "שם הוא שדה חובה",
+          "nameTooShort": "השם חייב להכיל לפחות 2 תווים",
+          "nameTooLong": "השם ארוך מדי",
+          "phoneInvalid": "יש להזין מספר טלפון נייד ישראלי תקין (לדוגמה 054-1234567)",
+          "phoneExists": "מספר הטלפון כבר קיים ברשימת האורחים",
+          "phoneDuplicateCsv": "מספר טלפון כפול בקובץ ה-CSV",
+          "phoneConflictWith": "אותו מספר כמו {name}",
+          "amountNotInteger": "הכמות חייבת להיות מספר שלם"
+        }
       },
       "summary": {
         "importing": "מייבא אורחים...",
@@ -604,7 +639,7 @@
       "stepsLeft": " שלבים נותרו",
       "details": {
         "title": "השלם את פרטי האירוע",
-        "description": "הוסף שעת טקס ופרטים מרכזיים אחרים כדי שהאורחים ידעו מה לצפות.",
+        "description": "הוסף שעת חופה ופרטים מרכזיים אחרים כדי שהאורחים ידעו מה לצפות.",
         "action": "ערוך פרטים"
       },
       "guests": {
@@ -1008,7 +1043,7 @@
       "date": "תאריך",
       "eventType": "סוג האירוע",
       "receptionTime": "שעת קבלת פנים",
-      "ceremonyTime": "שעת טקס",
+      "ceremonyTime": "שעת חופה",
       "types": {
         "wedding": "חתונה",
         "henna": "חינה",

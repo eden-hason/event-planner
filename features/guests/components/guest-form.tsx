@@ -31,6 +31,7 @@ import {
   israeliMobilePhoneSchema,
   GuestApp,
   GroupApp,
+  GROUP_SIDES,
 } from '@/features/guests/schemas';
 import { GroupIcon } from './groups';
 import {
@@ -107,6 +108,7 @@ export function GuestForm({
       mealChoice: guest?.mealChoice || '',
       amount: guest?.amount || 1,
       notes: guest?.notes || '',
+      side: guest?.side ?? null,
       isOfflineRsvp: guest?.isOfflineRsvp ?? false,
     },
   });
@@ -128,6 +130,7 @@ export function GuestForm({
         mealChoice: guest.mealChoice || '',
         amount: guest.amount || 1,
         notes: guest.notes || '',
+        side: guest.side ?? null,
         isOfflineRsvp: guest.isOfflineRsvp ?? false,
       });
     }
@@ -178,7 +181,7 @@ export function GuestForm({
     }
 
     Object.entries(values).forEach(([key, value]) => {
-      if (key === 'groupId') {
+      if (key === 'groupId' || key === 'side') {
         formData.append(key, value ? String(value) : 'null');
         return;
       }
@@ -320,6 +323,36 @@ export function GuestForm({
             {t('form.eventDetails')}
           </h3>
           <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="side"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>{t('form.side')}</FormLabel>
+                  <Select
+                    value={field.value ?? 'none'}
+                    onValueChange={(value) =>
+                      field.onChange(value === 'none' ? null : value)
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t('form.noSide')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">{t('form.noSide')}</SelectItem>
+                      {GROUP_SIDES.map((side) => (
+                        <SelectItem key={side} value={side}>
+                          {t(`sides.${side}` as 'sides.bride' | 'sides.groom')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="rsvpStatus"

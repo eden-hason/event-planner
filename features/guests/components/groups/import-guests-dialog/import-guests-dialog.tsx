@@ -26,7 +26,7 @@ import { KULULU_FIELDS, type ColumnMapping } from './map-step';
 import { ValidateStep } from './validate-step';
 import { SummaryStep } from './summary-step';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
-import { validateCsvRows } from '@/features/guests/utils';
+import { validateCsvRows, validateGuestData, normalizePhone } from '@/features/guests/utils';
 import { type ImportGuestData } from '@/features/guests/schemas';
 
 type StepKey = 'upload' | 'analyze' | 'validate' | 'summary';
@@ -35,7 +35,7 @@ interface ImportGuestsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
-  existingPhones: Set<string>;
+  existingPhones: Map<string, string>;
 }
 
 export function ImportGuestsDialog({
@@ -59,15 +59,41 @@ export function ImportGuestsDialog({
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set());
+  const [rowEdits, setRowEdits] = useState<Map<number, Partial<{ name: string; phone: string; amount: number }>>>(new Map());
   const [importComplete, setImportComplete] = useState(false);
 
   const validGuestsToImport = useMemo((): ImportGuestData[] => {
     if (!parsedData) return [];
     const validatedRows = validateCsvRows(parsedData.rows, columnMapping, existingPhones);
-    return validatedRows
-      .filter((row) => row.isValid && !excludedRows.has(row.rowIndex))
-      .map((row) => row.data as ImportGuestData);
-  }, [parsedData, columnMapping, excludedRows, existingPhones]);
+    const activeRows = validatedRows.filter((row) => !excludedRows.has(row.rowIndex));
+
+    // Build phone set for all active rows (using edits when available)
+    const allActivePhones = new Set<string>(
+      activeRows
+        .map((row) => {
+          const edits = rowEdits.get(row.rowIndex);
+          return edits?.phone ?? row.data.phone ?? '';
+        })
+        .filter(Boolean)
+        .map(normalizePhone),
+    );
+
+    // Always re-validate against the live merged phone set so that an edit on
+    // row B that collides with unedited row A is caught (and vice versa).
+    return activeRows.flatMap((row) => {
+      const edits = rowEdits.get(row.rowIndex);
+      const merged = edits ? { ...row.data, ...edits } : row.data;
+
+      const otherPhones = new Set(allActivePhones);
+      if (merged.phone) otherPhones.delete(normalizePhone(merged.phone));
+      const { isValid } = validateGuestData(
+        { name: merged.name, phone: merged.phone, amount: merged.amount },
+        existingPhones,
+        otherPhones,
+      );
+      return isValid ? [merged as ImportGuestData] : [];
+    });
+  }, [parsedData, columnMapping, excludedRows, existingPhones, rowEdits]);
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -77,6 +103,7 @@ export function ImportGuestsDialog({
       setParsedData(null);
       setColumnMapping({});
       setExcludedRows(new Set());
+      setRowEdits(new Map());
       setImportComplete(false);
     }
   };
@@ -133,11 +160,12 @@ export function ImportGuestsDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-4xl">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{t('import.title')}</DialogTitle>
         </DialogHeader>
 
+        <div className="min-h-0 flex-1 overflow-y-auto">
         <Stepper
           value={currentStep}
           onValueChange={(value) => setCurrentStep(value as StepKey)}
@@ -174,6 +202,8 @@ export function ImportGuestsDialog({
               excludedRows={excludedRows}
               onExcludedRowsChange={setExcludedRows}
               existingPhones={existingPhones}
+              rowEdits={rowEdits}
+              onRowEditsChange={setRowEdits}
             />
           </StepperContent>
 
@@ -185,8 +215,9 @@ export function ImportGuestsDialog({
             />
           </StepperContent>
         </Stepper>
+        </div>
 
-        <DialogFooter className="bg-muted/50 -mx-6 mt-4 -mb-6 gap-2 rounded-b-lg px-6 py-4">
+        <DialogFooter className="flex-shrink-0 bg-muted/50 -mx-6 mt-4 -mb-6 gap-2 rounded-b-lg px-6 py-4">
           {currentStep === 'summary' ? (
             <Button onClick={() => handleOpenChange(false)}>
               {importComplete ? t('import.done') : t('import.close')}
