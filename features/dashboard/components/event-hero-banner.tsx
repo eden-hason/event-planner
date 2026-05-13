@@ -34,14 +34,14 @@ export function EventHeroBanner({ event }: { event: EventApp }) {
           <h2 className="text-xl leading-tight font-semibold text-zinc-900">
             {event.title}
           </h2>
-          <div className="space-y-1.5 text-sm text-zinc-500">
-            <div className="flex items-center gap-2">
-              <IconCalendar className="h-4 w-4 shrink-0" />
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
+              <IconCalendar className="h-3.5 w-3.5 shrink-0 text-pink-400" />
               <span>{formatEventDate(event.eventDate)}</span>
             </div>
             {event.location?.name && (
-              <div className="flex items-center gap-2">
-                <IconMapPin className="h-4 w-4 shrink-0" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
+                <IconMapPin className="h-3.5 w-3.5 shrink-0 text-violet-400" />
                 <span className="truncate">{event.location.name}</span>
               </div>
             )}

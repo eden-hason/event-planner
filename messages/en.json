@@ -533,7 +533,8 @@
       "confirmed": "Confirmed",
       "pending": "Pending",
       "declined": "Declined",
-      "total": "Total"
+      "total": "Total",
+      "noGuests": "No guests yet"
     },
     "groupBreakdown": {
       "title": "Guest Groups",
@@ -603,7 +604,7 @@
       "stepsLeft": " steps left",
       "details": {
         "title": "Complete your event details",
-        "description": "Add ceremony time and other key details so guests know what to expect.",
+        "description": "Add canopy time and other key details so guests know what to expect.",
         "action": "Edit details"
       },
       "guests": {
