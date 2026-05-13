@@ -55,6 +55,7 @@ export function LocationInput({
   const [dropdownRect, setDropdownRect] = React.useState<DOMRect | null>(null);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const autocompleteService =
     React.useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = React.useRef<google.maps.places.PlacesService | null>(
@@ -155,7 +156,9 @@ export function LocationInput({
     const handlePointerDown = (event: PointerEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -269,43 +272,45 @@ export function LocationInput({
           )}
         </InputGroup>
         {showCommandList && mounted && dropdownRect && createPortal(
-          <CommandList
-            className={cn(
-              'bg-popover border-input fixed rounded-b-md border border-t-0 shadow-md',
-              'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
-            )}
-            style={{
-              top: dropdownRect.bottom,
-              left: dropdownRect.left,
-              width: dropdownRect.width,
-              zIndex: 9999,
-            }}
-          >
-            {hasNoResults && (
-              <CommandEmpty>No locations found.</CommandEmpty>
-            )}
-            {predictions.length > 0 && (
-              <CommandGroup>
-                {predictions.map((prediction) => (
-                  <CommandItem
-                    key={prediction.place_id}
-                    value={prediction.place_id}
-                    onSelect={() => handleSelectPrediction(prediction)}
-                  >
-                    <MapPin />
-                    <div className="flex flex-col items-start text-start">
-                      <span className="font-medium">
-                        {prediction.structured_formatting.main_text}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {prediction.structured_formatting.secondary_text}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>,
+          <div ref={dropdownRef}>
+            <CommandList
+              className={cn(
+                'bg-popover border-input fixed rounded-b-md border border-t-0 shadow-md',
+                'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
+              )}
+              style={{
+                top: dropdownRect.bottom,
+                left: dropdownRect.left,
+                width: dropdownRect.width,
+                zIndex: 9999,
+              }}
+            >
+              {hasNoResults && (
+                <CommandEmpty>No locations found.</CommandEmpty>
+              )}
+              {predictions.length > 0 && (
+                <CommandGroup>
+                  {predictions.map((prediction) => (
+                    <CommandItem
+                      key={prediction.place_id}
+                      value={prediction.place_id}
+                      onSelect={() => handleSelectPrediction(prediction)}
+                    >
+                      <MapPin />
+                      <div className="flex flex-col items-start text-start">
+                        <span className="font-medium">
+                          {prediction.structured_formatting.main_text}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {prediction.structured_formatting.secondary_text}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </div>,
           document.body,
         )}
       </div>
