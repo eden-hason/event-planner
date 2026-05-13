@@ -533,7 +533,8 @@
       "confirmed": "אישרו",
       "pending": "ממתינים",
       "declined": "סירבו",
-      "total": "סה\"כ"
+      "total": "סה\"כ",
+      "noGuests": "טרם נוספו אורחים"
     },
     "groupBreakdown": {
       "title": "קבוצות אורחים",
