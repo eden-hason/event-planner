@@ -42,6 +42,22 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
     { label: t('declined'), value: declined, color: 'var(--color-red-400)' },
   ];
 
+  if (total === 0) {
+    return (
+      <Card className="flex h-full flex-col gap-2">
+        <CardHeader className="pb-3">
+          <div>
+            <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+            <p className="text-muted-foreground mt-0.5 text-xs">{t('description')}</p>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-sm">{t('noGuests')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="flex h-full flex-col gap-2">
       <CardHeader className="pb-3">

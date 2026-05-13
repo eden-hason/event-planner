@@ -7,7 +7,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
 
 // Tone scale derived from --primary: order 900,700,800,500,600,300,400,100,200
@@ -41,6 +40,22 @@ export function GroupBreakdownCard({
     bride: t('sideLabels.bride'),
     groom: t('sideLabels.groom'),
   };
+
+  if (rows.length === 0) {
+    return (
+      <Card className="flex h-full flex-col gap-2">
+        <CardHeader className="pb-3">
+          <div>
+            <CardTitle className="text-sm font-semibold">{t('title')}</CardTitle>
+            <p className="text-muted-foreground mt-0.5 text-xs">{t('description')}</p>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground text-sm">{t('noGroups')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex h-full flex-col gap-2">
@@ -115,11 +130,6 @@ export function GroupBreakdownCard({
             );
           })}
 
-          {rows.length === 0 && (
-            <p className="text-muted-foreground text-center text-xs">
-              {t('noGroups')}
-            </p>
-          )}
         </div>
       </CardContent>
     </Card>

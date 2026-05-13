@@ -157,7 +157,7 @@ export async function createOnboardingEvent(
     let title: string;
     if (locale === 'he') {
       if (isCoupleEvent) {
-        const prefix = eventType === 'henna' ? 'חינת' : 'חתונת';
+        const prefix = eventType === 'henna' ? 'החינה של' : 'החתונה של';
         if (brideName && groomName) {
           title = `${prefix} ${brideName} ו${groomName}`;
         } else if (brideName || groomName) {
@@ -171,15 +171,13 @@ export async function createOnboardingEvent(
       }
     } else {
       if (isCoupleEvent) {
-        const suffix = eventType === 'henna' ? 'Henna' : 'Wedding';
+        const prefix = eventType === 'henna' ? 'The Henna of' : 'The Wedding of';
         if (brideName && groomName) {
-          title = `${brideName} & ${groomName}'s ${suffix}`;
-        } else if (brideName) {
-          title = `${brideName}'s ${suffix}`;
-        } else if (groomName) {
-          title = `${groomName}'s ${suffix}`;
+          title = `${prefix} ${brideName} and ${groomName}`;
+        } else if (brideName || groomName) {
+          title = `${prefix} ${brideName ?? groomName}`;
         } else {
-          title = `My ${suffix}`;
+          title = eventType === 'henna' ? 'My Henna' : 'My Wedding';
         }
       } else {
         const eventLabel = eventType === 'bar_mitzva' ? 'Bar Mitzva' : 'Bat Mitzva';

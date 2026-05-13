@@ -89,11 +89,13 @@ export function RecentRsvpActivityCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="max-h-72 overflow-y-auto p-0">
+      <CardContent className="max-h-72 flex-1 overflow-y-auto p-0">
         {activity.length === 0 ? (
-          <p className="text-muted-foreground py-4 text-center text-sm">
-            {t('noActivity')}
-          </p>
+          <div className="flex h-full items-center justify-center">
+            <p className="text-muted-foreground text-center text-sm">
+              {t('noActivity')}
+            </p>
+          </div>
         ) : (
           activity.map((row) => (
             <Item key={row.id} size="sm">
@@ -114,11 +116,13 @@ export function RecentRsvpActivityCard({
           ))
         )}
       </CardContent>
-      <CardFooter className="pt-2">
-        <Button variant="outline" size="sm" className="w-full" asChild>
-          <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
-        </Button>
-      </CardFooter>
+      {activity.length > 0 && (
+        <CardFooter className="pt-2">
+          <Button variant="outline" size="sm" className="w-full" asChild>
+            <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
