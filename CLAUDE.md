@@ -123,10 +123,6 @@ Supabase RLS policies handle data ownership at the database level. **Do not add 
 - Tailwind CSS for all styling
 - shadcn/ui components as base
 
-### UI Copy
-
-- Do not add a trailing period (`.`) to UI strings — labels, helper text, button text, toasts — unless explicitly requested. Applies to both `en` and `he` translations.
-
 ## Environment Variables
 
 Required in `.env.local` (see `.env.example`):

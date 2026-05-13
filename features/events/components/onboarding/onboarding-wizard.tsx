@@ -273,7 +273,8 @@ export function OnboardingWizard({ showPricingStep }: OnboardingWizardProps) {
                 <>
                   <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:60ms]">
                     <label className="text-muted-foreground text-xs font-medium">
-                      {t('step2.brideLabel')}
+                      {t('step2.brideLabel')}{' '}
+                      <span className="text-destructive">*</span>
                     </label>
                     <Input
                       placeholder={t('step2.bridePlaceholder')}
@@ -285,7 +286,8 @@ export function OnboardingWizard({ showPricingStep }: OnboardingWizardProps) {
                   </div>
                   <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:120ms]">
                     <label className="text-muted-foreground text-xs font-medium">
-                      {t('step2.groomLabel')}
+                      {t('step2.groomLabel')}{' '}
+                      <span className="text-destructive">*</span>
                     </label>
                     <Input
                       placeholder={t('step2.groomPlaceholder')}
@@ -299,7 +301,8 @@ export function OnboardingWizard({ showPricingStep }: OnboardingWizardProps) {
               ) : (
                 <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:60ms]">
                   <label className="text-muted-foreground text-xs font-medium">
-                    {t('step2.childLabel')}
+                    {t('step2.childLabel')}{' '}
+                    <span className="text-destructive">*</span>
                   </label>
                   <Input
                     placeholder={t('step2.childPlaceholder')}
@@ -313,7 +316,11 @@ export function OnboardingWizard({ showPricingStep }: OnboardingWizardProps) {
             </div>
 
             <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
-              <Button onClick={() => setStep(3)} className="w-full">
+              <Button
+                onClick={() => setStep(3)}
+                disabled={isCoupleEvent ? !data.brideName || !data.groomName : !data.childName}
+                className="w-full"
+              >
                 {t('step2.continue')}
               </Button>
               <Button
