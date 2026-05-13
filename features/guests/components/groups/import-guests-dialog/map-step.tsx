@@ -14,7 +14,7 @@ import {
 
 export const KULULU_FIELDS = [
   { value: 'name', required: true },
-  { value: 'phone', required: true },
+  { value: 'phone', required: false },
   { value: 'amount', required: false },
 ] as const;
 

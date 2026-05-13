@@ -28,7 +28,7 @@ export async function analyzeCsv(csvSample: string): Promise<AnalyzeCsvState> {
 The available fields are:
 - full_name: The guest's full name (may be in Hebrew or English)
 - phone: Phone number (Israeli format or international)
-- amount: Monetary amount or gift value (optional)
+- amount: Number of guests in the party / how many people will attend / headcount (optional, not monetary)
 
 Return ONLY a valid JSON object with this exact structure:
 {

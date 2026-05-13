@@ -309,7 +309,9 @@
       "addGuest": "Add Guest",
       "updating": "Updating...",
       "adding": "Adding...",
-      "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)"
+      "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)",
+      "side": "Side",
+      "noSide": "No side"
     },
     "rsvp": {
       "pending": "Pending",
@@ -481,7 +483,7 @@
       },
       "validate": {
         "heading": "Validate your data",
-        "description": "Review the data below. Invalid rows can be removed before importing.",
+        "description": "Review the data below. Click any cell to edit it directly.",
         "colStatus": "Status",
         "colRow": "Row",
         "colName": "Name",
@@ -489,7 +491,40 @@
         "colAmount": "Amount",
         "colErrors": "Errors",
         "rowCount": "{valid} valid, {invalid} invalid out of {total} rows",
-        "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows ✓"
+        "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows ✓",
+        "tabAll": "All",
+        "tabNeedsFix": "Needs fix",
+        "tabValid": "Valid",
+        "statusReady": "Ready",
+        "statusNeedsFix": "Needs fix",
+        "summaryReady": "{valid} of {total} ready",
+        "autoFixPhones": "Auto-fix phones",
+        "autoFixPhonesCount": "({count})",
+        "autoFixNoneAvailable": "No fixable phone numbers found",
+        "autoFixApplied": "Fixed {count} phone {count, plural, one {number} other {numbers}}",
+        "resetRow": "Reset row",
+        "emptyNeedsFix": "All rows look good",
+        "emptyNeedsFixSub": "Switch to All to review valid rows",
+        "emptyValid": "No valid rows yet",
+        "emptyValidSub": "Fix errors or remove invalid rows to proceed",
+        "editNameAria": "Edit name for row {row}",
+        "editPhoneAria": "Edit phone for row {row}",
+        "editAmountAria": "Edit amount for row {row}",
+        "removeRow": "Remove row {row}",
+        "deleteDialogTitle": "Remove row?",
+        "deleteDialogDescription": "This row will be excluded from the import. You can undo this by closing and reopening the import dialog.",
+        "deleteDialogCancel": "Cancel",
+        "deleteDialogConfirm": "Remove",
+        "errors": {
+          "nameRequired": "Name is required",
+          "nameTooShort": "Name must be at least 2 characters",
+          "nameTooLong": "Name is too long",
+          "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)",
+          "phoneExists": "Phone number already exists in your guest list",
+          "phoneDuplicateCsv": "Duplicate phone number in CSV",
+          "phoneConflictWith": "Same phone as {name}",
+          "amountNotInteger": "Amount must be a whole number"
+        }
       },
       "summary": {
         "importing": "Importing guests...",
@@ -1008,7 +1043,7 @@
       "date": "Date",
       "eventType": "Event Type",
       "receptionTime": "Reception Time",
-      "ceremonyTime": "Ceremony Time",
+      "ceremonyTime": "Canopy Time",
       "types": {
         "wedding": "Wedding",
         "henna": "Henna",

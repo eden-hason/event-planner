@@ -5,6 +5,7 @@ import {
   GuestUpsertSchema,
   AppToDbTransformerSchema,
   ImportGuestSchema,
+  resolveImportErrorMessage,
   type ImportGuestData,
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
@@ -45,6 +46,9 @@ export async function upsertGuest(
     // Handle explicit null for groupId (remove from group)
     if (parsedData.groupId === 'null') {
       parsedData.groupId = null;
+    }
+    if (parsedData.side === 'null') {
+      parsedData.side = null;
     }
     // Coerce boolean string from FormData
     if (parsedData.isOfflineRsvp !== undefined) {
@@ -190,7 +194,7 @@ export async function importGuests(
     // Validate all guests
     const validGuests: {
       name: string;
-      phone_number: string;
+      phone_number: string | null;
       amount: number;
       event_id: string;
     }[] = [];
@@ -201,12 +205,13 @@ export async function importGuests(
       if (result.success) {
         validGuests.push({
           name: result.data.name,
-          phone_number: result.data.phone,
+          phone_number: result.data.phone || null,
           amount: result.data.amount,
           event_id: eventId,
         });
       } else {
-        errors.push(`Row ${i + 1}: ${result.error.issues[0]?.message}`);
+        const rawMessage = result.error.issues[0]?.message ?? 'Invalid row';
+        errors.push(`Row ${i + 1}: ${resolveImportErrorMessage(rawMessage)}`);
       }
     }
 

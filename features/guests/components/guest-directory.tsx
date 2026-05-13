@@ -18,7 +18,7 @@ interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
   groups: GroupInfo[];
   eventId: string;
-  existingPhones: Set<string>;
+  existingPhones: Map<string, string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
   showDietary?: boolean;
   selectedStatuses?: string[];
