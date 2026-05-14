@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
 
 const RSVP_STATUS_VALUES = [
   { value: 'confirmed', className: 'text-green-700' },
@@ -31,8 +32,10 @@ export function RsvpStatusFilter({
     label: t(`rsvp.${s.value}` as 'rsvp.confirmed' | 'rsvp.pending' | 'rsvp.declined'),
   }));
 
+  const isActive = selectedStatuses.length > 0;
+
   const label =
-    selectedStatuses.length === 0
+    !isActive
       ? t('filters.filterByStatus')
       : selectedStatuses.length === 1
         ? statuses.find((s) => s.value === selectedStatuses[0])?.label ??
@@ -42,9 +45,18 @@ export function RsvpStatusFilter({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-[180px] justify-between">
+        <Button
+          variant="outline"
+          className={cn(
+            'w-[180px] justify-between',
+            isActive && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary',
+          )}
+        >
           {label}
-          <IconChevronDown size={16} className="ml-2 shrink-0 opacity-50" />
+          <IconChevronDown
+            size={16}
+            className={cn('ml-2 shrink-0', isActive ? 'opacity-70' : 'opacity-50')}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[180px] p-0" align="start">

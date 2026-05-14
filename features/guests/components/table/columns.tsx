@@ -86,6 +86,21 @@ export const createGuestColumns = (
       },
     },
     {
+      accessorKey: 'side',
+      header: () => <div>{t('table.side')}</div>,
+      cell: ({ row }) => {
+        const side = row.getValue('side') as GuestWithGroupApp['side'];
+        return side ? (
+          <span className="text-sm">{t(`sides.${side}`)}</span>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      },
+      filterFn: (row, _id, value: string[]) => {
+        return value.length === 0 || value.includes(row.original.side ?? '');
+      },
+    },
+    {
       accessorKey: 'rsvpStatus',
       header: () => <div>{t('table.rsvpStatus')}</div>,
       cell: ({ row }) => {

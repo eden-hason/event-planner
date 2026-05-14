@@ -116,7 +116,7 @@ export function AssignGuestsDrawer({
           </p>
         </SheetHeader>
 
-        <div className="flex flex-1 flex-row gap-4 overflow-hidden p-4 min-h-0 bg-muted/30">
+        <div className="flex flex-1 flex-row gap-4 overflow-hidden p-4 min-h-0 bg-muted/30 rtl:flex-row-reverse">
           <GuestListCard
             title={t('groups.assign.availableGuests')}
             guests={localAvailable}
@@ -136,7 +136,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <IconArrowRight size={20} className="rtl:scale-x-[-1]" />
+              <IconArrowRight size={20} />
             </Button>
             <Button
               variant="secondary"
@@ -149,7 +149,7 @@ export function AssignGuestsDrawer({
                   : ''
               }`}
             >
-              <IconArrowLeft size={20} className="rtl:scale-x-[-1]" />
+              <IconArrowLeft size={20} />
             </Button>
           </div>
 
