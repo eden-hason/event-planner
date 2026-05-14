@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ColumnFiltersState,
@@ -11,7 +11,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { GuestWithGroupApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -21,6 +21,8 @@ interface UseGuestsTableProps {
   searchTerm: string;
   groupFilter: string[];
   statusFilter: string[];
+  sideFilter: GroupSide[];
+  noPhoneOnly: boolean;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
   showDietary?: boolean;
@@ -31,6 +33,8 @@ export function useGuestsTable({
   searchTerm,
   groupFilter,
   statusFilter,
+  sideFilter,
+  noPhoneOnly,
   onDeleteGuest,
   pageSize = DEFAULT_PAGE_SIZE,
   showDietary = false,
@@ -89,6 +93,25 @@ export function useGuestsTable({
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [statusFilter]);
 
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [sideFilter, noPhoneOnly]);
+
+  const filteredGuests = useMemo(() => {
+    return guests.filter((guest) => {
+      if (
+        sideFilter.length > 0 &&
+        (!guest.side || !sideFilter.includes(guest.side))
+      ) {
+        return false;
+      }
+      if (noPhoneOnly && guest.phone) {
+        return false;
+      }
+      return true;
+    });
+  }, [guests, sideFilter, noPhoneOnly]);
+
   const globalFilterFn = (
     row: Row<GuestWithGroupApp>,
     _columnId: string,
@@ -113,7 +136,7 @@ export function useGuestsTable({
   });
 
   const table = useReactTable({
-    data: guests,
+    data: filteredGuests,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

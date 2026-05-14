@@ -342,6 +342,7 @@
       "name": "Name",
       "phone": "Phone",
       "group": "Group",
+      "side": "Side",
       "rsvpStatus": "RSVP Status",
       "dietaryRestrictions": "Dietary Restrictions",
       "dietaryNone": "None",
@@ -368,11 +369,12 @@
       "guestDeleteFailed": "Failed to delete guest. Please try again."
     },
     "filters": {
-      "filterByStatus": "Filter by status",
-      "filterByGroup": "Filter by group",
-      "filterBySide": "Filter by side",
+      "filterByStatus": "Status",
+      "filterByGroup": "Group",
+      "filterBySide": "Side",
       "groupsSelected": "{count} groups selected",
       "sidesSelected": "{count} sides selected",
+      "noPhone": "No phone",
       "selectAll": "Select All"
     },
     "search": {
@@ -520,7 +522,7 @@
         "editGroupAria": "Edit group for row {row}",
         "removeRow": "Remove row {row}",
         "deleteDialogTitle": "Remove row?",
-        "deleteDialogDescription": "This row will be excluded from the import. You can undo this by closing and reopening the import dialog.",
+        "deleteDialogDescription": "Are you sure you want to remove this row?",
         "deleteDialogCancel": "Cancel",
         "deleteDialogConfirm": "Remove",
         "skipInvalidTitle": "Some rows still have errors",

@@ -5,14 +5,19 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { GuestSearch } from './guest-search';
 import { GuestsTable } from '@/features/guests/components/table';
-import { GroupFilter, RsvpStatusFilter } from '@/features/guests/components/filters';
+import {
+  GroupFilter,
+  RsvpStatusFilter,
+  SideFilter,
+} from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
-import { IconUpload } from '@tabler/icons-react';
+import { IconUpload, IconPhoneOff } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
@@ -50,6 +55,12 @@ export function GuestDirectory({
     isAllSelected,
     selectedStatuses: internalStatuses,
     handleStatusToggle: internalStatusToggle,
+    selectedSides,
+    handleSideToggle,
+    handleSelectAllSides,
+    isAllSidesSelected,
+    noPhoneOnly,
+    toggleNoPhoneOnly,
   } = useGuestFilters(groups);
 
   const selectedStatuses = externalStatuses ?? internalStatuses;
@@ -126,6 +137,20 @@ export function GuestDirectory({
             onSelectAll={handleSelectAllGroups}
             isAllSelected={isAllSelected}
           />
+          <SideFilter
+            selectedSides={selectedSides}
+            onSideToggle={handleSideToggle}
+            onSelectAll={handleSelectAllSides}
+            isAllSelected={isAllSidesSelected}
+          />
+          <Button
+            variant="outline"
+            onClick={toggleNoPhoneOnly}
+            className={cn('gap-2', noPhoneOnly && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary')}
+          >
+            <IconPhoneOff size={16} />
+            {t('filters.noPhone')}
+          </Button>
         </div>
       </CardHeader>
       <CardContent ref={tableContainerRef}>
@@ -135,6 +160,8 @@ export function GuestDirectory({
             searchTerm={searchTerm}
             groupFilter={selectedGroupIds}
             statusFilter={selectedStatuses}
+            sideFilter={selectedSides}
+            noPhoneOnly={noPhoneOnly}
             onSelectGuest={handleSelectGuest}
             onDeleteGuest={handleDeleteGuest}
             onAddGuest={handleAddGuestClick}
