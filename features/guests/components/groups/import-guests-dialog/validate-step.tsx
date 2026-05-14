@@ -338,13 +338,13 @@ export function ValidateStep({
         <TabsList className="border-border h-8 w-full justify-start rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="all"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabAll')} <span className="ms-1 text-muted-foreground">{totalCount}</span>
           </TabsTrigger>
           <TabsTrigger
             value="errors"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabNeedsFix')}
             {invalidCount > 0 && (
@@ -355,7 +355,7 @@ export function ValidateStep({
           </TabsTrigger>
           <TabsTrigger
             value="valid"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabValid')} <span className="ms-1 text-muted-foreground">{validCount}</span>
           </TabsTrigger>
