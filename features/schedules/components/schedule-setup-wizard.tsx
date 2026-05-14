@@ -41,8 +41,10 @@ type InvitationDecision = 'send' | 'skip';
 
 function combineDateTime(date: Date, time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
+  // The date picker yields a Date at local midnight, so combine using local
+  // components — setUTCHours would shift to the previous day in +UTC zones.
   const result = new Date(date);
-  result.setUTCHours(hours, minutes, 0, 0);
+  result.setHours(hours, minutes, 0, 0);
   return result.toISOString();
 }
 
