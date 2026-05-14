@@ -16,7 +16,6 @@ import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
-import { createDefaultSchedules } from '@/features/schedules/actions/schedules';
 import { PLAN_CAPACITY } from '@/features/events/constants';
 
 export type DeleteEventState = {
@@ -30,7 +29,7 @@ export type SetDefaultEventState = {
 };
 
 /**
- * Creates a new event and its default schedules.
+ * Creates a new event.
  *
  * @param formData - Form data containing title, eventDate, and eventType
  * @returns Result state with success status and new event ID
@@ -87,18 +86,6 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
       .update({ is_default: false })
       .eq('user_id', currentUser.id)
       .neq('id', newEvent.id);
-
-    // Create default schedules for the event
-    const schedulesResult = await createDefaultSchedules(
-      newEvent.id,
-      eventDate,
-      eventType,
-    );
-
-    if (!schedulesResult.success) {
-      console.warn('Failed to create default schedules:', schedulesResult.message);
-      // Don't fail the event creation if schedules fail
-    }
 
     revalidatePath('/app');
     revalidatePath('/app/dashboard');
@@ -222,11 +209,6 @@ export async function createOnboardingEvent(
       .update({ is_default: false })
       .eq('user_id', currentUser.id)
       .neq('id', newEvent.id);
-
-    const schedulesResult = await createDefaultSchedules(newEvent.id, eventDate, 'wedding');
-    if (!schedulesResult.success) {
-      console.warn('Failed to create default schedules:', schedulesResult.message);
-    }
 
     revalidatePath('/app');
     revalidatePath('/app/dashboard');

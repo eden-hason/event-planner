@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { IconCalendarClock, IconCalendarEvent, IconClock } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -53,16 +53,15 @@ export function ScheduleDetailsCard({
   eventDate,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
+  const locale = useLocale();
   const [isSaving, startSaveTransition] = useTransition();
 
   const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
   const [scheduledDate, setScheduledDate] = useState(schedule?.scheduledDate ?? '');
 
-  const [scheduledTime, setScheduledTime] = useState(() => {
-    if (!schedule?.scheduledDate) return '';
-    const d = new Date(schedule.scheduledDate);
-    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
-  });
+  const [scheduledTime, setScheduledTime] = useState(
+    schedule?.scheduledTime ? schedule.scheduledTime.slice(0, 5) : '',
+  );
 
   const daysBeforeEvent = useMemo(() => {
     if (!eventDate || !scheduledDate) return 0;
@@ -71,7 +70,7 @@ export function ScheduleDetailsCard({
 
   const resolvedDateDisplay = useMemo(() => {
     if (!scheduledDate) return '';
-    return new Date(scheduledDate).toLocaleDateString('en-US', {
+    return new Date(scheduledDate).toLocaleDateString(locale, {
       month: 'long',
       day: 'numeric',
       year: 'numeric',

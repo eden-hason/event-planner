@@ -11,10 +11,11 @@ import {
   type WhatsAppTemplateApp,
 } from '../schemas';
 import { filterGuestsByTarget } from '../utils';
+import { buildSuggestedSchedules } from '../utils/suggested-schedules';
 import { SchedulePerformanceCard } from './schedule-performance-card';
 import { ScheduleSendResultsCard } from './schedule-send-results-card';
 import { ScheduleTabContent } from './schedule-tab-content';
-import { SchedulesHeader } from './schedules-header';
+import { SchedulesEmptyState } from './schedules-empty-state';
 import { SchedulesLayout } from './schedules-layout';
 
 interface SchedulesPageProps {
@@ -82,13 +83,25 @@ export async function SchedulesPage({
   const visibleTypes = ACTION_TYPES.filter((type) => schedulesByActionType[type]);
 
   if (visibleTypes.length === 0) {
+    const eventType = event?.eventType ?? 'wedding';
+    const suggestedSchedules = buildSuggestedSchedules(eventType, eventDate);
+    const invitationTemplate =
+      getTemplatesByKeys(['invitation_casual']).get('invitation_casual')
+        ?.whatsapp ?? null;
+    const targetCounts = {
+      all: guests.length,
+      pending: filterGuestsByTarget(guests, 'pending').length,
+      confirmed: filterGuestsByTarget(guests, 'confirmed').length,
+    };
+
     return (
-      <>
-        <SchedulesHeader />
-        <p className="text-muted-foreground py-8 text-center text-sm">
-          {t('noSchedules')}
-        </p>
-      </>
+      <SchedulesEmptyState
+        eventId={eventId}
+        event={event}
+        suggestedSchedules={suggestedSchedules}
+        invitationTemplate={invitationTemplate}
+        targetCounts={targetCounts}
+      />
     );
   }
 

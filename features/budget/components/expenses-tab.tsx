@@ -363,8 +363,7 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
   if (expenses.length === 0 && eventBudget === null) {
     return (
       <>
-        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-          <div className="flex flex-col items-center py-16 text-center">
+        <div className="flex min-h-[calc(100vh-280px)] flex-col items-center justify-center overflow-hidden rounded-xl border bg-card shadow-sm text-center">
             <img src="/hero-coins.svg" alt="" aria-hidden="true" className="h-64 w-64" />
             <p className="font-semibold text-foreground">{t('expenseEmpty.title')}</p>
             <p className="mt-1 text-sm text-muted-foreground">{t('expenseEmpty.description')}</p>
@@ -376,7 +375,6 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
                 </Button>
               )}
             </div>
-          </div>
         </div>
 
         <BudgetDialog
