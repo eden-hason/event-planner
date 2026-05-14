@@ -610,13 +610,13 @@
       "daysTo": "ימים נותרו"
     },
     "upcomingSchedules": {
-      "title": "לוחות זמנים קרובים",
-      "noSchedules": "אין לוחות זמנים קרובים",
+      "title": "תזמונים קרובים",
+      "noSchedules": "אין תזמונים קרובים",
       "createOne": "צור אחד",
-      "viewAll": "צפה בכל לוחות הזמנים ←",
+      "viewAll": "צפה בכל התזמונים ←",
       "actionTypes": {
         "initial_invitation": "הזמנה ראשונית",
-        "confirmation": "אישור",
+        "confirmation": "אישור הגעה",
         "event_reminder": "תזכורת אירוע",
         "post_event": "תודה"
       }
@@ -736,7 +736,8 @@
       "outOfTotal": "מתוך {total} אורחים סה\"כ",
       "allGuests": "כל האורחים",
       "confirmedGuests": "אורחים שאישרו",
-      "pendingGuests": "אורחים ממתינים"
+      "pendingGuests": "אורחים ממתינים",
+      "sentTo": "נשלח ל"
     },
     "messagePreview": {
       "cardTitle": "תצוגה מקדימה",
@@ -770,10 +771,54 @@
       "description": "ברגע שההודעה הראשונה תישלח, תראה כאן סטטיסטיקות שליחה בזמן אמת, שיעורי קריאה ואישורי הגעה. לוח הזמנים שלך מוגדר כעת ל-{date}.",
       "editSchedule": "ערוך לוח זמנים"
     },
-    "noSchedules": "לא הוגדרו לוחות זמנים לאירוע זה.",
+    "setupWizard": {
+      "emptyTitle": "תכננו את ציר הזמן לתקשורת עם האורחים",
+      "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי — הגדירו את ציר הזמן כדי להתחיל",
+      "emptyCta": "הגדרת תזמונים",
+      "emptyUnsupported": "הצעות תזמונים עדיין אינן זמינות לסוג אירוע זה",
+      "features": {
+        "plan": "שליחת הזמנות",
+        "planDesc": "שתפו את שמירת התאריך עם כל האורחים",
+        "automate": "אוטומציה לאישורי הגעה",
+        "automateDesc": "מעקב אוטומטי אחר אורחים שטרם אישרו",
+        "track": "להישאר על המסלול",
+        "trackDesc": "תזכורות ביום האירוע והודעות תודה"
+      },
+      "step1Title": "הזמנה ראשונית",
+      "step1Description": "שלחו שמירת תאריך לאורחים שטרם אישרו",
+      "step2Title": "סקירת ציר הזמן",
+      "step2Description": "אשרו את התזמונים שתרצו לשלוח",
+      "invitationPreviewLabel": "תצוגה מקדימה של ההזמנה",
+      "sendDateLabel": "תאריך שליחה",
+      "timeLabel": "שעה",
+      "sendDateHelper": "מתי ההזמנה תישלח לאורחים",
+      "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית — לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
+      "decisionSend": "כן, לשלוח",
+      "decisionSendDesc": "ההזמנה תישלח בתאריך שתבחרו",
+      "decisionSkip": "לדלג בינתיים",
+      "decisionSkipDesc": "תוכלו להפעיל אותו בכל עת",
+      "timelineHelper": "כבו כל מה שאינכם מוכנים אליו — זה יישאר בציר הזמן, רק מושבת",
+      "recipientsCount": "{count} אורחים",
+      "continue": "המשך",
+      "back": "חזרה",
+      "submit": "יצירת תזמונים",
+      "submitting": "יוצר...",
+      "toast": {
+        "creating": "יוצר תזמונים...",
+        "created": "התזמונים נוצרו",
+        "failed": "יצירת התזמונים נכשלה",
+        "error": "משהו השתבש"
+      }
+    },
+    "noSchedules": "לא הוגדרו תזמונים לאירוע זה.",
+    "dayOffset": {
+      "onEventDay": "ביום האירוע",
+      "daysBefore": "ימים לפני האירוע",
+      "daysAfter": "ימים אחרי האירוע"
+    },
     "actionTypes": {
       "initial_invitation": "הזמנה ראשונית",
-      "confirmation": "אישור",
+      "confirmation": "אישור הגעה",
       "event_reminder": "תזכורת אירוע",
       "post_event": "תודה"
     },
@@ -902,6 +947,7 @@
     "eventTitleLabel": "שם האירוע",
     "eventTitlePlaceholder": "החתונה שלי",
     "eventDateLabel": "תאריך האירוע",
+    "eventDatePlaceholder": "בחר תאריך",
     "eventTypeLabel": "סוג האירוע",
     "eventTypePlaceholder": "בחר סוג אירוע",
     "cancel": "ביטול",

@@ -95,7 +95,7 @@ export function GroupBreakdownCard({
         </div>
 
         {/* Group rows */}
-        <div className="space-y-3">
+        <div className="max-h-72 space-y-3 overflow-y-auto scrollbar-hide">
           {rows.map((group, i) => {
             const pct =
               grandTotal > 0 ? Math.round((group.total / grandTotal) * 100) : 0;

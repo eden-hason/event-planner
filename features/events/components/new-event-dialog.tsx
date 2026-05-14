@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
+import { format, parseISO } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -165,7 +167,13 @@ export function NewEventDialog({
                 <FormItem>
                   <FormLabel>{t('eventDateLabel')}</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <DatePicker
+                      date={field.value ? parseISO(field.value) : undefined}
+                      onDateChange={(d) =>
+                        field.onChange(d ? format(d, 'yyyy-MM-dd') : '')
+                      }
+                      placeholder={t('eventDatePlaceholder')}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

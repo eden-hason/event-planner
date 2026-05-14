@@ -26,7 +26,6 @@ const ACTION_TYPE_ICONS: Record<ActionType, React.ComponentType<{ size?: number 
 };
 import { formatRelativeTime } from '../utils';
 import { type ScheduleTabItem } from './schedules-page';
-import { SendConfirmDialog } from './send-confirm-dialog';
 
 interface SchedulesLayoutProps {
   visibleTypes: ActionType[];
@@ -56,7 +55,6 @@ export function SchedulesLayout({
   const activeItem =
     (contentByType[selectedType] ?? [])[selectedSubIndex] ??
     (contentByType[selectedType] ?? [])[0];
-  const isPending = !activeItem?.scheduleStatus;
   const hasDeliveryTab = !!activeItem?.delivery;
 
   useEffect(() => {
@@ -69,26 +67,9 @@ export function SchedulesLayout({
     setHeader({
       title: t('header.title'),
       description: t('header.description'),
-      action:
-        isPending && activeItem?.scheduleId ? (
-          <SendConfirmDialog
-            scheduleId={activeItem.scheduleId}
-            guestCount={activeItem.guestCount}
-            targetStatus={activeItem.targetStatus}
-            triggerSize="sm"
-            disabled
-          />
-        ) : undefined,
     });
     return () => clearHeader();
-  }, [
-    activeItem?.scheduleId,
-    activeItem?.scheduleStatus,
-    activeItem?.guestCount,
-    activeItem?.targetStatus,
-    setHeader,
-    clearHeader,
-  ]);
+  }, [setHeader, clearHeader]);
 
   return (
     <div className="flex gap-6">

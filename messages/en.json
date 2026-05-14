@@ -616,7 +616,7 @@
       "viewAll": "View all schedules →",
       "actionTypes": {
         "initial_invitation": "Initial Invitation",
-        "confirmation": "Confirmation",
+        "confirmation": "RSVP Confirmation",
         "event_reminder": "Event Reminder",
         "post_event": "Thank You"
       }
@@ -736,7 +736,8 @@
       "outOfTotal": "out of {total} total guests",
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed Guests",
-      "pendingGuests": "Pending Guests"
+      "pendingGuests": "Pending Guests",
+      "sentTo": "Sent to"
     },
     "messagePreview": {
       "cardTitle": "Message Preview",
@@ -770,10 +771,54 @@
       "description": "Once your first message is sent, you'll see real-time delivery stats, read rates, and RSVP conversions right here. Your schedule is currently set for {date}.",
       "editSchedule": "Edit Schedule"
     },
+    "setupWizard": {
+      "emptyTitle": "Plan your guest communication timeline",
+      "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically — set up your timeline to get started",
+      "emptyCta": "Set up schedules",
+      "emptyUnsupported": "Schedule suggestions aren't available for this event type yet",
+      "features": {
+        "plan": "Send invitations",
+        "planDesc": "Share your save-the-date with all guests",
+        "automate": "Automate RSVPs",
+        "automateDesc": "Follow up with pending guests on autopilot",
+        "track": "Stay on track",
+        "trackDesc": "Day-of reminders and thank-you messages"
+      },
+      "step1Title": "Initial invitation",
+      "step1Description": "Send a save-the-date to your pending guests",
+      "step2Title": "Review your timeline",
+      "step2Description": "Approve the schedules you want to send",
+      "invitationPreviewLabel": "Invitation preview",
+      "sendDateLabel": "Send date",
+      "timeLabel": "Time",
+      "sendDateHelper": "When the invitation goes out to guests",
+      "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately — totally up to you. You can always adjust this later.",
+      "decisionSend": "Yes, send it",
+      "decisionSendDesc": "The invitation goes out on the date you pick",
+      "decisionSkip": "Skip for now",
+      "decisionSkipDesc": "It stays on your timeline as disabled — turn it on whenever you're ready",
+      "timelineHelper": "Toggle off anything you're not ready for — it stays on your timeline, just disabled",
+      "recipientsCount": "{count} guests",
+      "continue": "Continue",
+      "back": "Back",
+      "submit": "Create schedules",
+      "submitting": "Creating...",
+      "toast": {
+        "creating": "Creating schedules...",
+        "created": "Schedules created",
+        "failed": "Failed to create schedules",
+        "error": "Something went wrong"
+      }
+    },
     "noSchedules": "No schedules configured for this event.",
+    "dayOffset": {
+      "onEventDay": "on event day",
+      "daysBefore": "days before the event",
+      "daysAfter": "days after the event"
+    },
     "actionTypes": {
       "initial_invitation": "Initial Invitation",
-      "confirmation": "Confirmation",
+      "confirmation": "RSVP Confirmation",
       "event_reminder": "Event Reminder",
       "post_event": "Thank You"
     },
@@ -902,6 +947,7 @@
     "eventTitleLabel": "Event Title",
     "eventTitlePlaceholder": "My Wedding",
     "eventDateLabel": "Event Date",
+    "eventDatePlaceholder": "Pick a date",
     "eventTypeLabel": "Event Type",
     "eventTypePlaceholder": "Select event type",
     "cancel": "Cancel",

@@ -274,7 +274,7 @@ export function GiftsTab({
 
   if (initialGifts.length === 0) {
     return (
-      <Empty className="border-none bg-card shadow-sm">
+      <Empty className="min-h-[calc(100vh-280px)] border-none bg-card shadow-sm">
         <EmptyMedia>
           <img src="/hero-gifts.svg" alt="" aria-hidden="true" className="h-64 w-64" />
         </EmptyMedia>
