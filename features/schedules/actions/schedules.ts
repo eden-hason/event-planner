@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
 import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import { calculateScheduledDate } from '../utils';
+import { ScheduleSelectionSchema, type ScheduleSelectionItem } from '../schemas';
 
 export type UpdateScheduledDateState = {
   success: boolean;
@@ -125,6 +126,9 @@ export type CreateDefaultSchedulesState = {
  * Creates default schedules for a new event based on its type.
  * This function is idempotent - it skips creating schedules that already exist.
  *
+ * @deprecated Schedules are now configured proactively via the setup wizard
+ * (`createSchedulesFromSelection`). Kept for reference / potential reuse.
+ *
  * @param eventId - The event ID to create schedules for
  * @param eventDate - The event date in ISO format (YYYY-MM-DD)
  * @param eventType - The type of event (wedding, birthday, etc.)
@@ -241,5 +245,104 @@ export async function createDefaultSchedules(
       success: false,
       message: 'An unexpected error occurred.',
     };
+  }
+}
+
+export type CreateSchedulesFromSelectionState = {
+  success: boolean;
+  message?: string | null;
+  schedulesCreated?: number;
+};
+
+/**
+ * Creates schedules from a user-customized selection made in the setup wizard.
+ * Each selection carries a fully-resolved date/time decided by the user.
+ * Idempotent - skips selections whose template_key|scheduled_date already exists.
+ *
+ * @param eventId - The event ID to create schedules for
+ * @param selections - The schedules the user chose to create, with custom dates/times
+ * @returns Result state with success status and number of schedules created
+ */
+export async function createSchedulesFromSelection(
+  eventId: string,
+  selections: ScheduleSelectionItem[],
+): Promise<CreateSchedulesFromSelectionState> {
+  try {
+    const parsed = ScheduleSelectionSchema.safeParse(selections);
+    if (!parsed.success) {
+      return { success: false, message: 'Invalid schedule selection.' };
+    }
+
+    if (parsed.data.length === 0) {
+      return { success: true, message: 'No schedules selected.', schedulesCreated: 0 };
+    }
+
+    const supabase = await createClient();
+
+    // Skip selections that already exist (guards against double-submit)
+    const { data: existingSchedules, error: fetchError } = await supabase
+      .from('schedules')
+      .select('template_key, scheduled_date')
+      .eq('event_id', eventId);
+
+    if (fetchError) {
+      console.error('Error fetching existing schedules:', fetchError);
+      return { success: false, message: 'Failed to check existing schedules.' };
+    }
+
+    const existingKeys = new Set(
+      existingSchedules?.map((s) => `${s.template_key}|${s.scheduled_date}`) ?? [],
+    );
+
+    const toCreate = parsed.data.filter(
+      (s) => !existingKeys.has(`${s.templateKey}|${s.scheduledDate}`),
+    );
+
+    if (toCreate.length === 0) {
+      return { success: true, message: 'Schedules already exist.', schedulesCreated: 0 };
+    }
+
+    // Validate every template key exists in local config
+    const templateMap = getTemplatesByKeys(toCreate.map((s) => s.templateKey));
+    const missingTemplates = toCreate
+      .map((s) => s.templateKey)
+      .filter((key) => !templateMap.has(key));
+
+    if (missingTemplates.length > 0) {
+      console.error('Missing WhatsApp templates:', missingTemplates);
+      return {
+        success: false,
+        message: `Missing templates with keys: ${missingTemplates.join(', ')}`,
+      };
+    }
+
+    const records = toCreate.map((s) => ({
+      event_id: eventId,
+      template_key: s.templateKey,
+      scheduled_date: s.scheduledDate,
+      scheduled_time: s.scheduledTime,
+      delivery_method: 'whatsapp' as const,
+      target_status: s.targetStatus,
+      action_type: s.actionType,
+      status: s.status,
+    }));
+
+    const { error: insertError } = await supabase.from('schedules').insert(records);
+
+    if (insertError) {
+      console.error('Error creating schedules:', insertError);
+      return { success: false, message: 'Failed to create schedules.' };
+    }
+
+    revalidatePath('/app');
+
+    return {
+      success: true,
+      message: 'Schedules created',
+      schedulesCreated: records.length,
+    };
+  } catch (error) {
+    console.error('Unexpected error in createSchedulesFromSelection:', error);
+    return { success: false, message: 'An unexpected error occurred.' };
   }
 }

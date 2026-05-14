@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
+import { he, enUS } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,8 @@ export function DatePicker({
   disabled = false,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
+  const locale = useLocale();
+  const dateFnsLocale = locale === 'he' ? he : enUS;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -40,7 +44,7 @@ export function DatePicker({
           disabled={disabled}
         >
           <CalendarIcon className="me-2 h-4 w-4" />
-          {date ? format(date, 'PPP') : <span>{placeholder}</span>}
+          {date ? format(date, 'PPP', { locale: dateFnsLocale }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -51,6 +55,7 @@ export function DatePicker({
             onDateChange?.(d);
             setOpen(false);
           }}
+          locale={dateFnsLocale}
           initialFocus
         />
       </PopoverContent>
