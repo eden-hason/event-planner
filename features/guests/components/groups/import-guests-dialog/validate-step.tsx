@@ -14,6 +14,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -43,7 +50,13 @@ import {
   type FieldErrors,
 } from '@/features/guests/utils';
 
-type RowEdit = Partial<{ name: string; phone: string; amount: number }>;
+type RowEdit = Partial<{
+  name: string;
+  phone: string;
+  amount: number;
+  side: 'bride' | 'groom' | null;
+  group: string;
+}>;
 
 interface ValidateStepProps {
   parsedData: ParsedCSV | null;
@@ -55,7 +68,8 @@ interface ValidateStepProps {
   onRowEditsChange: (edits: Map<number, RowEdit>) => void;
 }
 
-type EditingCell = { rowIndex: number; field: 'name' | 'phone' | 'amount' } | null;
+type EditableField = 'name' | 'phone' | 'amount' | 'group';
+type EditingCell = { rowIndex: number; field: EditableField } | null;
 
 function getMergedData(row: ValidatedRow, edits: Map<number, RowEdit>) {
   const edit = edits.get(row.rowIndex);
@@ -72,7 +86,13 @@ function getRowValidation(
   // can introduce a duplicate that the cached base validation doesn't see.
   const merged = { ...row.data, ...(edits.get(row.rowIndex) ?? {}) };
   const { isValid, fieldErrors } = validateGuestData(
-    { name: merged.name, phone: merged.phone, amount: merged.amount },
+    {
+      name: merged.name,
+      phone: merged.phone,
+      amount: merged.amount,
+      side: merged.side ?? undefined,
+      group: merged.group,
+    },
     existingPhones,
     otherPhones,
   );
@@ -200,7 +220,7 @@ export function ValidateStep({
     onRowEditsChange(newEdits);
   };
 
-  const startEditing = (row: typeof enrichedRows[0], field: 'name' | 'phone' | 'amount') => {
+  const startEditing = (row: typeof enrichedRows[0], field: EditableField) => {
     setEditingCell({ rowIndex: row.rowIndex, field });
     const val = row.mergedData[field];
     setEditValue(val !== undefined && val !== null ? String(val) : '');
@@ -208,7 +228,7 @@ export function ValidateStep({
   };
 
   const commitEdit = useCallback(
-    (rowIndex: number, field: 'name' | 'phone' | 'amount', value: string) => {
+    (rowIndex: number, field: EditableField, value: string) => {
       const row = baseValidatedRows.find((r) => r.rowIndex === rowIndex);
       if (!row) return;
 
@@ -218,7 +238,7 @@ export function ValidateStep({
 
       // If value matches original, clear the edit for this field
       const updatedEdit = { ...currentEdit, [field]: newValue };
-      if (String(newValue) === String(originalValue)) {
+      if (String(newValue) === String(originalValue ?? '')) {
         delete updatedEdit[field];
       }
 
@@ -234,10 +254,33 @@ export function ValidateStep({
     [baseValidatedRows, rowEdits, onRowEditsChange],
   );
 
+  const commitSideEdit = useCallback(
+    (rowIndex: number, value: 'bride' | 'groom' | null) => {
+      const row = baseValidatedRows.find((r) => r.rowIndex === rowIndex);
+      if (!row) return;
+      const currentEdit = rowEdits.get(rowIndex) ?? {};
+      const originalValue = row.data.side ?? null;
+
+      const updatedEdit: RowEdit = { ...currentEdit, side: value };
+      if (value === originalValue) {
+        delete updatedEdit.side;
+      }
+
+      const newEdits = new Map(rowEdits);
+      if (Object.keys(updatedEdit).length === 0) {
+        newEdits.delete(rowIndex);
+      } else {
+        newEdits.set(rowIndex, updatedEdit);
+      }
+      onRowEditsChange(newEdits);
+    },
+    [baseValidatedRows, rowEdits, onRowEditsChange],
+  );
+
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
     rowIndex: number,
-    field: 'name' | 'phone' | 'amount',
+    field: EditableField,
   ) => {
     if (e.key === 'Enter') {
       commitEdit(rowIndex, field, editValue);
@@ -295,13 +338,13 @@ export function ValidateStep({
         <TabsList className="border-border h-8 w-full justify-start rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="all"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabAll')} <span className="ms-1 text-muted-foreground">{totalCount}</span>
           </TabsTrigger>
           <TabsTrigger
             value="errors"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabNeedsFix')}
             {invalidCount > 0 && (
@@ -312,7 +355,7 @@ export function ValidateStep({
           </TabsTrigger>
           <TabsTrigger
             value="valid"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t('import.validate.tabValid')} <span className="ms-1 text-muted-foreground">{validCount}</span>
           </TabsTrigger>
@@ -333,6 +376,8 @@ export function ValidateStep({
                         <TableHead className="py-2 text-xs">{t('import.validate.colName')}</TableHead>
                         <TableHead className="py-2 text-xs">{t('import.validate.colPhone')}</TableHead>
                         <TableHead className="w-[70px] py-2 text-xs">{t('import.validate.colAmount')}</TableHead>
+                        <TableHead className="w-[80px] py-2 text-xs">{t('import.validate.colSide')}</TableHead>
+                        <TableHead className="py-2 text-xs">{t('import.validate.colGroup')}</TableHead>
                         <TableHead className="w-[80px] py-2 text-xs"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -416,6 +461,48 @@ export function ValidateStep({
                               onKeyDown={(e) => handleKeyDown(e, row.rowIndex, 'amount')}
                               ariaLabel={t('import.validate.editAmountAria', { row: row.rowIndex + 1 })}
                               inputType="number"
+                            />
+
+                            {/* Side (editable) */}
+                            <TableCell className="p-2">
+                              <Select
+                                value={row.mergedData.side ?? 'none'}
+                                onValueChange={(v) =>
+                                  commitSideEdit(
+                                    row.rowIndex,
+                                    v === 'none' ? null : (v as 'bride' | 'groom'),
+                                  )
+                                }
+                              >
+                                <SelectTrigger
+                                  className="h-7 w-full px-1.5 text-xs"
+                                  aria-label={t('import.validate.editSideAria', { row: row.rowIndex + 1 })}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">—</SelectItem>
+                                  <SelectItem value="bride">{t('import.validate.sideBride')}</SelectItem>
+                                  <SelectItem value="groom">{t('import.validate.sideGroom')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+
+                            {/* Group (editable) */}
+                            <EditableCell
+                              rowIndex={row.rowIndex}
+                              field="group"
+                              value={row.mergedData.group || ''}
+                              error={row.fieldErrors.group ? t(row.fieldErrors.group as Parameters<typeof t>[0]) : undefined}
+                              isEditing={editingCell?.rowIndex === row.rowIndex && editingCell?.field === 'group'}
+                              editValue={editValue}
+                              inputRef={editingCell?.rowIndex === row.rowIndex && editingCell?.field === 'group' ? inputRef : undefined}
+                              onStartEdit={() => startEditing(row, 'group')}
+                              onEditChange={setEditValue}
+                              onCommit={(val) => commitEdit(row.rowIndex, 'group', val)}
+                              onKeyDown={(e) => handleKeyDown(e, row.rowIndex, 'group')}
+                              ariaLabel={t('import.validate.editGroupAria', { row: row.rowIndex + 1 })}
+                              inputType="text"
                             />
 
                             {/* Actions */}

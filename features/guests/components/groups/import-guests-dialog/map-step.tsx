@@ -16,6 +16,8 @@ export const KULULU_FIELDS = [
   { value: 'name', required: true },
   { value: 'phone', required: false },
   { value: 'amount', required: false },
+  { value: 'side', required: false },
+  { value: 'group', required: false },
 ] as const;
 
 export type KululuFieldValue = (typeof KULULU_FIELDS)[number]['value'];
@@ -39,7 +41,11 @@ export function MapStep({
   const kululuFields = KULULU_FIELDS.map((f) => ({
     ...f,
     label: t(`import.map.field${f.value.charAt(0).toUpperCase() + f.value.slice(1)}` as
-      'import.map.fieldName' | 'import.map.fieldPhone' | 'import.map.fieldAmount'),
+      | 'import.map.fieldName'
+      | 'import.map.fieldPhone'
+      | 'import.map.fieldAmount'
+      | 'import.map.fieldSide'
+      | 'import.map.fieldGroup'),
   }));
 
   if (!parsedData) {

@@ -18,6 +18,8 @@ const AI_FIELD_TO_KULULU: Record<string, KululuFieldValue> = {
   full_name: 'name',
   phone: 'phone',
   amount: 'amount',
+  side: 'side',
+  group: 'group',
 };
 
 function convertAiMappingToColumnMapping(
@@ -116,6 +118,8 @@ export function AnalyzeStep({
     full_name: t('import.map.fieldName'),
     phone: t('import.map.fieldPhone'),
     amount: t('import.map.fieldAmount'),
+    side: t('import.map.fieldSide'),
+    group: t('import.map.fieldGroup'),
   };
 
   const [status, setStatus] = useState<Status>('idle');

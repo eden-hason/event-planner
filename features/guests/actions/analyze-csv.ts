@@ -29,6 +29,8 @@ The available fields are:
 - full_name: The guest's full name (may be in Hebrew or English)
 - phone: Phone number (Israeli format or international)
 - amount: Number of guests in the party / how many people will attend / headcount (optional, not monetary)
+- side: Which side of the wedding the guest belongs to. Values like bride/groom (English) or כלה/חתן (Hebrew)
+- group: The guest's group, category, or table name (e.g. family, work, college friends, חברים, משפחה)
 
 Return ONLY a valid JSON object with this exact structure:
 {

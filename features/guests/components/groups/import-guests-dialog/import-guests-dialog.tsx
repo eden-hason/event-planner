@@ -12,6 +12,16 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Stepper,
   StepperItem,
   StepperIndicator,
@@ -59,8 +69,9 @@ export function ImportGuestsDialog({
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set());
-  const [rowEdits, setRowEdits] = useState<Map<number, Partial<{ name: string; phone: string; amount: number }>>>(new Map());
+  const [rowEdits, setRowEdits] = useState<Map<number, Partial<{ name: string; phone: string; amount: number; side: 'bride' | 'groom' | null; group: string }>>>(new Map());
   const [importComplete, setImportComplete] = useState(false);
+  const [showSkipInvalidAlert, setShowSkipInvalidAlert] = useState(false);
 
   const validGuestsToImport = useMemo((): ImportGuestData[] => {
     if (!parsedData) return [];
@@ -87,13 +98,27 @@ export function ImportGuestsDialog({
       const otherPhones = new Set(allActivePhones);
       if (merged.phone) otherPhones.delete(normalizePhone(merged.phone));
       const { isValid } = validateGuestData(
-        { name: merged.name, phone: merged.phone, amount: merged.amount },
+        {
+          name: merged.name,
+          phone: merged.phone,
+          amount: merged.amount,
+          side: merged.side ?? undefined,
+          group: merged.group,
+        },
         existingPhones,
         otherPhones,
       );
       return isValid ? [merged as ImportGuestData] : [];
     });
   }, [parsedData, columnMapping, excludedRows, existingPhones, rowEdits]);
+
+  const activeRowCount = useMemo(() => {
+    if (!parsedData) return 0;
+    const validatedRows = validateCsvRows(parsedData.rows, columnMapping, existingPhones);
+    return validatedRows.filter((row) => !excludedRows.has(row.rowIndex)).length;
+  }, [parsedData, columnMapping, excludedRows, existingPhones]);
+
+  const invalidRowCount = Math.max(0, activeRowCount - validGuestsToImport.length);
 
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -152,10 +177,18 @@ export function ImportGuestsDialog({
     }
   };
 
-  const handleNext = () => {
+  const advanceStep = () => {
     if (currentStepIndex < STEPS.length - 1) {
       setCurrentStep(STEPS[currentStepIndex + 1].value);
     }
+  };
+
+  const handleNext = () => {
+    if (currentStep === 'validate' && invalidRowCount > 0) {
+      setShowSkipInvalidAlert(true);
+      return;
+    }
+    advanceStep();
   };
 
   return (
@@ -238,6 +271,27 @@ export function ImportGuestsDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      <AlertDialog open={showSkipInvalidAlert} onOpenChange={setShowSkipInvalidAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('import.validate.skipInvalidTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('import.validate.skipInvalidDescription', { count: invalidRowCount })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('import.validate.skipInvalidCancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowSkipInvalidAlert(false);
+                advanceStep();
+              }}
+            >
+              {t('import.validate.skipInvalidConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
