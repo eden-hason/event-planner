@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { GroupInfo } from '@/features/guests/schemas';
+import { cn } from '@/lib/utils';
 
 interface GroupFilterProps {
   groups: GroupInfo[];
@@ -31,19 +32,29 @@ export function GroupFilter({
     .filter((g) => selectedGroupIds.includes(g.id))
     .map((g) => g.name);
 
-  const label =
-    selectedGroupIds.length === 0
-      ? t('filters.filterByGroup')
-      : selectedGroupIds.length === 1
-        ? selectedGroupNames[0]
-        : t('filters.groupsSelected', { count: selectedGroupIds.length });
+  const isActive = selectedGroupIds.length > 0;
+
+  const label = !isActive
+    ? t('filters.filterByGroup')
+    : selectedGroupIds.length === 1
+      ? selectedGroupNames[0]
+      : t('filters.groupsSelected', { count: selectedGroupIds.length });
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-[180px] justify-between">
+        <Button
+          variant="outline"
+          className={cn(
+            'w-[180px] justify-between',
+            isActive && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary',
+          )}
+        >
           {label}
-          <IconChevronDown size={16} className="ml-2 shrink-0 opacity-50" />
+          <IconChevronDown
+            size={16}
+            className={cn('ml-2 shrink-0', isActive ? 'opacity-70' : 'opacity-50')}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">

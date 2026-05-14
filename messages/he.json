@@ -342,6 +342,7 @@
       "name": "שם",
       "phone": "טלפון",
       "group": "קבוצה",
+      "side": "צד",
       "rsvpStatus": "סטטוס אישור",
       "dietaryRestrictions": "הגבלות תזונה",
       "dietaryNone": "ללא",
@@ -368,11 +369,12 @@
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
     },
     "filters": {
-      "filterByStatus": "סנן לפי סטטוס",
-      "filterByGroup": "סנן לפי קבוצה",
-      "filterBySide": "סנן לפי צד",
+      "filterByStatus": "סטטוס",
+      "filterByGroup": "קבוצה",
+      "filterBySide": "צד",
       "groupsSelected": "{count} קבוצות נבחרו",
       "sidesSelected": "{count} צדדים נבחרו",
+      "noPhone": "ללא טלפון",
       "selectAll": "בחר הכל"
     },
     "search": {
@@ -520,7 +522,7 @@
         "editGroupAria": "ערוך קבוצה עבור שורה {row}",
         "removeRow": "הסר שורה {row}",
         "deleteDialogTitle": "הסר שורה?",
-        "deleteDialogDescription": "שורה זו תוחרג מהייבוא. ניתן לבטל זאת על ידי סגירה ופתיחה מחדש של תיבת הייבוא.",
+        "deleteDialogDescription": "האם אתה בטוח שברצונך להסיר את השורה?",
         "deleteDialogCancel": "ביטול",
         "deleteDialogConfirm": "הסר",
         "skipInvalidTitle": "נשארו שורות עם שגיאות",

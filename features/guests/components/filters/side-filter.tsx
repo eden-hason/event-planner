@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { GROUP_SIDES, GroupSide } from '@/features/guests/schemas';
+import { cn } from '@/lib/utils';
 
 interface SideFilterProps {
   selectedSides: GroupSide[];
@@ -34,15 +35,23 @@ export function SideFilter({
     return t('filters.sidesSelected', { count: selectedSides.length });
   };
 
+  const isActive = selectedSides.length > 0;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-[180px] justify-between bg-white"
+          className={cn(
+            'w-[180px] justify-between',
+            isActive && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary',
+          )}
         >
           {getButtonLabel()}
-          <IconChevronDown size={16} className="ml-2 shrink-0 opacity-50" />
+          <IconChevronDown
+            size={16}
+            className={cn('ml-2 shrink-0', isActive ? 'opacity-70' : 'opacity-50')}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">

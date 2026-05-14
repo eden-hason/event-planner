@@ -28,7 +28,7 @@ import {
   IconUpload,
   IconUsers,
 } from '@tabler/icons-react';
-import { GuestWithGroupApp } from '@/features/guests/schemas';
+import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { useGuestsTable } from '@/features/guests/hooks';
 
 interface GuestsTableProps {
@@ -36,6 +36,8 @@ interface GuestsTableProps {
   searchTerm: string;
   groupFilter: string[];
   statusFilter: string[];
+  sideFilter: GroupSide[];
+  noPhoneOnly: boolean;
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   onAddGuest?: () => void;
@@ -49,6 +51,8 @@ export function GuestsTable({
   searchTerm,
   groupFilter,
   statusFilter,
+  sideFilter,
+  noPhoneOnly,
   onSelectGuest,
   onDeleteGuest,
   onAddGuest,
@@ -64,6 +68,8 @@ export function GuestsTable({
     searchTerm,
     groupFilter,
     statusFilter,
+    sideFilter,
+    noPhoneOnly,
     onDeleteGuest,
     pageSize,
     showDietary,
@@ -75,7 +81,12 @@ export function GuestsTable({
 
   const paginatedRows = table.getRowModel().rows;
   const totalFilteredRows = table.getFilteredRowModel().rows.length;
-  const hasFilters = searchTerm || groupFilter.length > 0 || statusFilter.length > 0;
+  const hasFilters =
+    searchTerm ||
+    groupFilter.length > 0 ||
+    statusFilter.length > 0 ||
+    sideFilter.length > 0 ||
+    noPhoneOnly;
   const isEmpty = guests.length === 0;
 
   const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
