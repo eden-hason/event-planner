@@ -57,7 +57,7 @@ export async function processScheduledMessages(
       )
     `,
     )
-    .eq('status', 'scheduled')
+    .is('status', null)
     .lte('scheduled_date', new Date().toISOString())
     .order('scheduled_date', { ascending: true })
     .limit(10);
@@ -129,12 +129,14 @@ async function processSingleSchedule(
       : undefined,
   };
 
-  // 2. Optimistic lock — claim by setting status to 'sent'
+  // 2. Optimistic lock — claim by setting status to 'sent'.
+  // Active schedules have status null; claiming flips null -> 'sent' so a
+  // concurrent invocation sees a non-null status and skips the row.
   const { data: claimed, error: claimError } = await supabase
     .from('schedules')
     .update({ status: 'sent', sent_at: new Date().toISOString() })
     .eq('id', schedule.id)
-    .eq('status', 'scheduled')
+    .is('status', null)
     .select('id')
     .single();
 
@@ -285,8 +287,8 @@ async function processSingleSchedule(
 }
 
 /**
- * If the schedule is less than 24 hours old, revert to 'scheduled' for retry.
- * Otherwise, mark as 'cancelled'.
+ * If the schedule is less than 24 hours old, revert to active (status null)
+ * so the next cron run retries it. Otherwise, mark as 'cancelled'.
  */
 async function revertOrCancel(
   supabase: SupabaseClient,
@@ -298,7 +300,7 @@ async function revertOrCancel(
   const twentyFourHours = 24 * 60 * 60 * 1000;
 
   const newStatus =
-    now - scheduledAt < twentyFourHours ? 'scheduled' : 'cancelled';
+    now - scheduledAt < twentyFourHours ? null : 'cancelled';
 
   await supabase
     .from('schedules')
