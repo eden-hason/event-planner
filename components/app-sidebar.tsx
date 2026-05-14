@@ -4,9 +4,7 @@ import * as React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
-  IconTemplate,
   IconDashboard,
-  IconHelp,
   IconSettings,
   IconUsers,
   IconCalendar,
@@ -106,13 +104,6 @@ export function AppSidebar({
           },
         ]
       : []),
-    {
-      id: 'templates',
-      title: tNav('templates'),
-      url: '/app/templates',
-      icon: IconTemplate,
-      comingSoon: true,
-    },
   ];
 
   const filteredNavMain = isOwner
@@ -131,11 +122,6 @@ export function AppSidebar({
       title: tNav('settings'),
       url: buildNavUrl('/app/settings', eventId),
       icon: IconSettings,
-    },
-    {
-      title: tNav('getHelp'),
-      url: '#',
-      icon: IconHelp,
     },
   ];
 
@@ -160,14 +146,17 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={navMain} disabled={!eventId} />
+        <NavSecondary items={navSecondary} disabled={!eventId} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-2 pb-1">
-          <LanguageSwitcher />
-        </div>
-        <NavEvents events={events} currentUserId={currentUserId} user={user} />
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="px-2 pb-1">
+            <LanguageSwitcher />
+          </div>
+        )}
+
+        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} user={user} />
       </SidebarFooter>
     </Sidebar>
   );
