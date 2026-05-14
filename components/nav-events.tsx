@@ -40,6 +40,7 @@ import { useTranslations, useLocale } from 'next-intl';
 interface NavEventsProps {
   events: EventApp[];
   currentUserId?: string;
+  disabled?: boolean;
   user: {
     name: string;
     email?: string;
@@ -48,7 +49,7 @@ interface NavEventsProps {
   };
 }
 
-export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
+export function NavEvents({ events, currentUserId, disabled, user }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
@@ -142,10 +143,13 @@ export function NavEvents({ events, currentUserId, user }: NavEventsProps) {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen} dir={dir}>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild disabled={disabled}>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className={cn(
+                'data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground',
+                disabled && 'cursor-default opacity-50 pointer-events-none',
+              )}
             >
               <Avatar className="size-8 rounded-lg">
                 {user.avatar ? (
