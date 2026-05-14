@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 export function NavSecondary({
   items,
+  disabled,
   ...props
 }: {
   items: {
@@ -17,6 +18,7 @@ export function NavSecondary({
     url: string;
     icon: Icon;
   }[];
+  disabled?: boolean;
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
     <SidebarGroup {...props}>
@@ -24,11 +26,21 @@ export function NavSecondary({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
+              <SidebarMenuButton
+                asChild={!disabled}
+                className={disabled ? 'cursor-default opacity-50 pointer-events-none' : ''}
+              >
+                {disabled ? (
+                  <>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </>
+                ) : (
+                  <a href={item.url}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </a>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

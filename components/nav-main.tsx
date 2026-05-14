@@ -38,6 +38,7 @@ function isActiveRoute(pathname: string, routeUrl: string): boolean {
 
 export function NavMain({
   items,
+  disabled,
 }: {
   items: {
     title: string;
@@ -45,6 +46,7 @@ export function NavMain({
     icon?: Icon;
     comingSoon?: boolean;
   }[];
+  disabled?: boolean;
 }) {
   const pathname = usePathname();
   const t = useTranslations('navigation');
@@ -54,25 +56,28 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = !item.comingSoon && isActiveRoute(pathname, item.url);
+            const isUnavailable = item.comingSoon || disabled;
+            const isActive = !isUnavailable && isActiveRoute(pathname, item.url);
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  asChild={!item.comingSoon}
+                  asChild={!isUnavailable}
                   isActive={isActive}
                   className={[
                     isActive ? 'bg-accent text-accent-foreground' : '',
-                    item.comingSoon ? 'cursor-default opacity-50 pointer-events-none' : '',
+                    isUnavailable ? 'cursor-default opacity-50 pointer-events-none' : '',
                   ].join(' ')}
                 >
-                  {item.comingSoon ? (
+                  {isUnavailable ? (
                     <>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
-                      <Badge className="ms-auto rounded-sm border-none bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
-                        {t('comingSoon')}
-                      </Badge>
+                      {item.comingSoon && (
+                        <Badge className="ms-auto rounded-sm border-none bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
+                          {t('comingSoon')}
+                        </Badge>
+                      )}
                     </>
                   ) : (
                     <Link href={item.url}>
