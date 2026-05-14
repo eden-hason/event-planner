@@ -1,13 +1,17 @@
-import { ImportGuestSchema } from '../schemas';
+import { ImportGuestSchema, normalizeSide } from '../schemas';
 import { type ColumnMapping } from '../components/groups/import-guests-dialog/map-step';
 
-export type FieldErrors = Partial<Record<'name' | 'phone' | 'amount', string>>;
+export type ImportField = 'name' | 'phone' | 'amount' | 'side' | 'group';
+
+export type FieldErrors = Partial<Record<ImportField, string>>;
 
 // Data shape for display (may be invalid)
 export interface ValidatedRowData {
   name: string;
   phone?: string;
   amount: number;
+  side?: 'bride' | 'groom' | null;
+  group?: string;
 }
 
 export interface ValidatedRow {
@@ -24,6 +28,8 @@ type RawImportGuestData = {
   name: string;
   phone: string;
   amount: string | number;
+  side?: string;
+  group?: string;
 };
 
 /**
@@ -47,6 +53,8 @@ export function transformCsvRow(
     name: data.name || '',
     phone: data.phone || '',
     amount: data.amount || 1,
+    side: data.side,
+    group: data.group,
   };
 }
 
@@ -98,8 +106,22 @@ export function autoFixPhone(raw: string): string | null {
  * Validates guest data and returns per-field errors.
  * Used for inline editing re-validation.
  */
+const IMPORT_FIELDS = new Set<ImportField>([
+  'name',
+  'phone',
+  'amount',
+  'side',
+  'group',
+]);
+
 export function validateGuestData(
-  data: { name: string; phone?: string; amount: number },
+  data: {
+    name: string;
+    phone?: string;
+    amount: number;
+    side?: string | null;
+    group?: string;
+  },
   existingPhones?: Map<string, string> | Set<string>,
   otherCsvPhones?: Set<string>,
 ): { isValid: boolean; fieldErrors: FieldErrors; errors: string[] } {
@@ -109,8 +131,8 @@ export function validateGuestData(
   const result = ImportGuestSchema.safeParse(data);
   if (!result.success) {
     for (const issue of result.error.issues) {
-      const field = issue.path[0] as 'name' | 'phone' | 'amount' | undefined;
-      if (field && (field === 'name' || field === 'phone' || field === 'amount')) {
+      const field = issue.path[0] as ImportField | undefined;
+      if (field && IMPORT_FIELDS.has(field)) {
         if (!fieldErrors[field]) fieldErrors[field] = issue.message;
       } else {
         errors.push(issue.message);
@@ -150,8 +172,8 @@ export function validateCsvRow(
   const result = ImportGuestSchema.safeParse(data);
   if (!result.success) {
     for (const issue of result.error.issues) {
-      const field = issue.path[0] as 'name' | 'phone' | 'amount' | undefined;
-      if (field && (field === 'name' || field === 'phone' || field === 'amount')) {
+      const field = issue.path[0] as ImportField | undefined;
+      if (field && IMPORT_FIELDS.has(field)) {
         if (!fieldErrors[field]) fieldErrors[field] = issue.message;
       } else {
         errors.push(issue.message);
@@ -182,8 +204,20 @@ export function validateCsvRow(
     rowIndex,
     originalRow: row,
     data: result.success
-      ? result.data
-      : { ...data, amount: Number(data.amount) || 1 },
+      ? {
+          name: result.data.name,
+          phone: result.data.phone,
+          amount: result.data.amount,
+          side: result.data.side ?? null,
+          group: result.data.group,
+        }
+      : {
+          name: data.name,
+          phone: data.phone || undefined,
+          amount: Number(data.amount) || 1,
+          side: normalizeSide(data.side),
+          group: data.group,
+        },
     isValid: allErrors.length === 0,
     errors: allErrors,
     fieldErrors,

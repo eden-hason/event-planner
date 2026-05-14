@@ -192,12 +192,14 @@ export async function importGuests(
     }
 
     // Validate all guests
-    const validGuests: {
+    type ValidGuest = {
       name: string;
-      phone_number: string | null;
+      phone: string | null;
       amount: number;
-      event_id: string;
-    }[] = [];
+      side: 'bride' | 'groom' | null;
+      group: string | null;
+    };
+    const validGuests: ValidGuest[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < guests.length; i++) {
@@ -205,9 +207,10 @@ export async function importGuests(
       if (result.success) {
         validGuests.push({
           name: result.data.name,
-          phone_number: result.data.phone || null,
+          phone: result.data.phone || null,
           amount: result.data.amount,
-          event_id: eventId,
+          side: result.data.side ?? null,
+          group: result.data.group ?? null,
         });
       } else {
         const rawMessage = result.error.issues[0]?.message ?? 'Invalid row';
@@ -225,13 +228,112 @@ export async function importGuests(
 
     const supabase = await createClient();
 
-    const { error } = await supabase.from('guests').insert(validGuests);
+    // Resolve group names → group_id, auto-creating missing groups.
+    // Backed by the unique index `idx_groups_event_name_side` on
+    // (event_id, name, COALESCE(side, '')). The index is case-sensitive, so
+    // we additionally normalize names case-insensitively in-memory to avoid
+    // creating "Family" / "family" duplicates within a single import.
+    const groupKey = (name: string, side: 'bride' | 'groom' | null) =>
+      `${name.trim().toLowerCase()}::${side ?? ''}`;
+
+    const desiredGroups = new Map<
+      string,
+      { name: string; side: 'bride' | 'groom' | null }
+    >();
+    for (const g of validGuests) {
+      if (g.group) {
+        const k = groupKey(g.group, g.side);
+        if (!desiredGroups.has(k))
+          desiredGroups.set(k, { name: g.group, side: g.side });
+      }
+    }
+
+    const groupIdByKey = new Map<string, string>();
+
+    const indexExistingGroups = (
+      rows: Array<{ id: string; name: string; side: string | null }> | null,
+    ) => {
+      for (const g of rows ?? []) {
+        groupIdByKey.set(
+          groupKey(g.name, (g.side as 'bride' | 'groom' | null) ?? null),
+          g.id,
+        );
+      }
+    };
+
+    if (desiredGroups.size > 0) {
+      const { data: existingGroups, error: gFetchErr } = await supabase
+        .from('groups')
+        .select('id, name, side')
+        .eq('event_id', eventId);
+
+      if (gFetchErr) {
+        console.error('Group fetch error:', gFetchErr);
+        return {
+          success: false,
+          message: 'Unable to load existing groups',
+        };
+      }
+
+      indexExistingGroups(existingGroups);
+
+      const toCreate = [...desiredGroups.values()]
+        .filter(({ name, side }) => !groupIdByKey.has(groupKey(name, side)))
+        .map(({ name, side }) => ({ event_id: eventId, name, side }));
+
+      if (toCreate.length > 0) {
+        const { data: created, error: gInsertErr } = await supabase
+          .from('groups')
+          .insert(toCreate)
+          .select('id, name, side');
+
+        // 23505 = unique_violation. Another concurrent import won the race;
+        // re-fetch and map. Anything still missing simply gets null group_id.
+        if (gInsertErr && gInsertErr.code === '23505') {
+          const { data: refetched, error: refetchErr } = await supabase
+            .from('groups')
+            .select('id, name, side')
+            .eq('event_id', eventId);
+
+          if (refetchErr) {
+            console.error('Group refetch error:', refetchErr);
+            return {
+              success: false,
+              message: 'Unable to load existing groups',
+            };
+          }
+
+          indexExistingGroups(refetched);
+        } else if (gInsertErr) {
+          console.error('Group insert error:', gInsertErr);
+          return {
+            success: false,
+            message: 'Unable to create groups',
+          };
+        } else {
+          indexExistingGroups(created);
+        }
+      }
+    }
+
+    const guestsToInsert = validGuests.map((g) => ({
+      name: g.name,
+      phone_number: g.phone,
+      amount: g.amount,
+      event_id: eventId,
+      side: g.side,
+      group_id: g.group
+        ? (groupIdByKey.get(groupKey(g.group, g.side)) ?? null)
+        : null,
+    }));
+
+    const { error } = await supabase.from('guests').insert(guestsToInsert);
 
     if (error) {
       console.error('Supabase insert error:', error);
       return {
         success: false,
-        message: `Database error: ${error.message}`,
+        message: 'Unable to save guests',
       };
     }
 

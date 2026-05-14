@@ -365,6 +365,24 @@ export type GroupDbUpsert = z.infer<typeof GroupAppToDbTransformerSchema>;
 // Schema for validating guest data during CSV import
 // Uses same validation rules as GuestAppSchema but only includes importable fields
 
+const SIDE_ALIASES: Record<string, 'bride' | 'groom'> = {
+  bride: 'bride',
+  groom: 'groom',
+  כלה: 'bride',
+  חתן: 'groom',
+};
+
+export function normalizeSide(
+  raw?: string | null,
+): 'bride' | 'groom' | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  return (
+    SIDE_ALIASES[trimmed.toLowerCase()] ?? SIDE_ALIASES[trimmed] ?? null
+  );
+}
+
 export const ImportGuestSchema = z.object({
   name: z
     .string()
@@ -383,6 +401,16 @@ export const ImportGuestSchema = z.object({
     .int('import.validate.errors.amountNotInteger')
     .transform((val) => Math.max(1, val))
     .default(1),
+  side: z.preprocess(
+    (v) => normalizeSide(typeof v === 'string' ? v : null),
+    z.enum(['bride', 'groom']).nullable(),
+  ),
+  group: z
+    .string()
+    .trim()
+    .max(100, 'import.validate.errors.groupTooLong')
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
 });
 
 export type ImportGuestData = z.infer<typeof ImportGuestSchema>;
@@ -401,6 +429,7 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   'import.validate.errors.phoneDuplicateCsv':
     'Duplicate phone number in CSV',
   'import.validate.errors.amountNotInteger': 'Amount must be a whole number',
+  'import.validate.errors.groupTooLong': 'Group name is too long',
 };
 
 export function resolveImportErrorMessage(message: string): string {
