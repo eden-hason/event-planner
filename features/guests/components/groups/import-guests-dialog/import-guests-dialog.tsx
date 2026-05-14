@@ -59,7 +59,7 @@ export function ImportGuestsDialog({
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set());
-  const [rowEdits, setRowEdits] = useState<Map<number, Partial<{ name: string; phone: string; amount: number }>>>(new Map());
+  const [rowEdits, setRowEdits] = useState<Map<number, Partial<{ name: string; phone: string; amount: number; side: 'bride' | 'groom' | null; group: string }>>>(new Map());
   const [importComplete, setImportComplete] = useState(false);
 
   const validGuestsToImport = useMemo((): ImportGuestData[] => {
@@ -87,7 +87,13 @@ export function ImportGuestsDialog({
       const otherPhones = new Set(allActivePhones);
       if (merged.phone) otherPhones.delete(normalizePhone(merged.phone));
       const { isValid } = validateGuestData(
-        { name: merged.name, phone: merged.phone, amount: merged.amount },
+        {
+          name: merged.name,
+          phone: merged.phone,
+          amount: merged.amount,
+          side: merged.side ?? undefined,
+          group: merged.group,
+        },
         existingPhones,
         otherPhones,
       );
