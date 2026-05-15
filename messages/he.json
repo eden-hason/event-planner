@@ -1168,6 +1168,17 @@
       "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך"
     }
   },
+  "aiChat": {
+    "openAssistant": "פתח עוזר AI",
+    "title": "שמחה",
+    "placeholder": "שאל אותי כל דבר…",
+    "suggestedPrompts": {
+      "timeline": "בנה ציר זמן לאירוע",
+      "seating": "טיפים לסידור הושבה",
+      "vendors": "רשימת ספקים",
+      "gifts": "סך המתנות עד כה"
+    }
+  },
   "personalInfo": {
     "title": "בואו נכיר",
     "description": "עזרו לנו להתאים אישית את החוויה שלכם",
