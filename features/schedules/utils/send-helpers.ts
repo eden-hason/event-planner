@@ -21,6 +21,11 @@ function formatPhoneE164(phone: string): string {
   return '+972' + cleaned;
 }
 
+// ─── SMS fallback toggle ──────────────────────────────────────────────────────
+// Temporarily disabled — schedules send via WhatsApp only until the SMS copy
+// per message type is finalised. Flip to `true` to restore the fallback.
+const SMS_FALLBACK_ENABLED = false;
+
 // ─── Error categorisation ─────────────────────────────────────────────────────
 // Edit the sets below to change fallback behavior per Meta error code.
 
@@ -103,7 +108,7 @@ export async function sendToGuest(params: {
 
   const category = categoriseWhatsAppError(waResult.errorCode);
 
-  if (category === 'permanent') {
+  if (SMS_FALLBACK_ENABLED && category === 'permanent') {
     const smsBody = buildSmsFallbackBody(context, confirmationToken);
     const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
     if (smsResult.success) {
