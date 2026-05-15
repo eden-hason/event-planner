@@ -195,6 +195,29 @@ async function processSingleSchedule(
     throw new Error('No guests with valid phone numbers');
   }
 
+  // 6b. Skip guests that already have a successful delivery for this schedule.
+  // Lets the cron resume safely after a timeout without resending duplicates.
+  const { data: existingDeliveries } = await supabase
+    .from('message_deliveries')
+    .select('guest_id')
+    .eq('schedule_id', schedule.id)
+    .in('status', ['sent', 'delivered', 'read']);
+
+  const alreadyDelivered = new Set(
+    (existingDeliveries ?? []).map((d: { guest_id: string }) => d.guest_id),
+  );
+
+  const pendingGuests = guestsWithPhones.filter(
+    (guest) => !alreadyDelivered.has(guest.id),
+  );
+
+  if (pendingGuests.length === 0) {
+    console.log(
+      `[cron] Schedule ${schedule.id}: all eligible guests already delivered`,
+    );
+    return { sentCount: 0, failedCount: 0 };
+  }
+
   // 7. Validate template has parameters configuration
   if (!template.parameters) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
@@ -204,7 +227,7 @@ async function processSingleSchedule(
   // 8. Batch fetch groups
   const uniqueGroupIds = [
     ...new Set(
-      guestsWithPhones
+      pendingGuests
         .map((guest) => guest.groupId)
         .filter((id): id is string => !!id),
     ),
@@ -225,59 +248,69 @@ async function processSingleSchedule(
     }
   }
 
-  // 9. Send messages in rate-limited chunks
-  const sendResults = await sendInChunks(guestsWithPhones, (guest) => {
-    const confirmationToken = generateConfirmationToken();
-    const context: ParameterResolutionContext = {
-      guest,
-      event,
-      group: guest.groupId ? groupsMap.get(guest.groupId) : null,
-      schedule,
-      confirmationToken,
-    };
-    return { context, template, confirmationToken };
-  });
-
-  // 10. Process results and build delivery records
-  const deliveryRecords = [];
+  // 9. Send messages in rate-limited chunks, persisting delivery records after each chunk
   let sentCount = 0;
   let failedCount = 0;
+  const totalGuests = pendingGuests.length;
 
-  for (const settled of sendResults) {
-    if (settled.status === 'fulfilled') {
-      const r = settled.value;
-      deliveryRecords.push(buildDeliveryRecord(schedule.id, r));
-      if (r.success) {
-        sentCount++;
-      } else {
-        failedCount++;
-        console.error(
-          `[cron] Failed to send to ${r.guest.name} (code: ${r.errorCode ?? 'none'}):`,
-          r.message,
-        );
+  await sendInChunks(
+    pendingGuests,
+    (guest) => {
+      const confirmationToken = generateConfirmationToken();
+      const context: ParameterResolutionContext = {
+        guest,
+        event,
+        group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+        schedule,
+        confirmationToken,
+      };
+      return { context, template, confirmationToken };
+    },
+    async (chunkResults, chunkIndex, totalChunks) => {
+      const deliveryRecords = [];
+
+      for (const settled of chunkResults) {
+        if (settled.status === 'fulfilled') {
+          const r = settled.value;
+          deliveryRecords.push(buildDeliveryRecord(schedule.id, r));
+          if (r.success) {
+            sentCount++;
+          } else {
+            failedCount++;
+            console.error(
+              `[cron] Failed to send to ${r.guest.name} (code: ${r.errorCode ?? 'none'}):`,
+              r.message,
+            );
+          }
+        } else {
+          failedCount++;
+          console.error('[cron] Send promise rejected:', settled.reason);
+        }
       }
-    } else {
-      failedCount++;
-      console.error('[cron] Send promise rejected:', settled.reason);
-    }
-  }
 
-  // 11. Upsert delivery records (skip already-processed via unique constraint)
-  if (deliveryRecords.length > 0) {
-    const { error: upsertError } = await supabase
-      .from('message_deliveries')
-      .upsert(deliveryRecords, { onConflict: 'schedule_id,guest_id' });
+      if (deliveryRecords.length > 0) {
+        const { error: upsertError } = await supabase
+          .from('message_deliveries')
+          .upsert(deliveryRecords, { onConflict: 'schedule_id,guest_id' });
 
-    if (upsertError) {
-      console.error('[cron] Error upserting delivery records:', upsertError);
-    }
-  }
+        if (upsertError) {
+          console.error(
+            `[cron] Error upserting delivery records (chunk ${chunkIndex + 1}/${totalChunks}):`,
+            upsertError,
+          );
+        }
+      }
 
-  // 12. Final status — if all failed, revert or cancel
+      console.log(
+        `[cron] Chunk ${chunkIndex + 1}/${totalChunks} complete — sent=${sentCount}, failed=${failedCount}, total=${totalGuests}`,
+      );
+    },
+  );
+
+  // 10. Final status — if all failed, revert or cancel
   if (sentCount === 0) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
   }
-  // If sentCount > 0, status is already 'sent' from step 2
 
   console.log(
     `[cron] Schedule ${schedule.id}: sent=${sentCount}, failed=${failedCount}`,
