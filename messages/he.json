@@ -1065,7 +1065,7 @@
   "collaborate": {
     "page": {
       "header": {
-        "title": "שיתוף פעולה",
+        "title": "שיתוף",
         "description": "נהל את שותפי האירוע שלך"
       }
     },
@@ -1269,11 +1269,13 @@
     "digitalGift": {
       "title": "מתנה דיגיטלית",
       "payboxLabel": "קישור לקבוצת PayBox",
-      "payboxPlaceholder": "הדבק כאן את קישור קבוצת PayBox",
+      "payboxPlaceholder": "https://payboxapp.page.link/...",
       "payboxHelper": "כיצד לעשות: פתח את אפליקציית PayBox, צור קבוצה חדשה לאירוע, לחץ על הזמן חברים, העתק את הקישור והדבק אותו כאן.",
+      "payboxSubtitle": "אפשר לאורחים להעביר לכם מתנה דרך PayBox",
       "bitLabel": "מספר טלפון Bit",
-      "bitPlaceholder": "הזן מספר טלפון",
-      "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך"
+      "bitPlaceholder": "050-000-0000",
+      "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך",
+      "bitSubtitle": "העברה מיידית דרך Bit"
     }
   },
   "aiChat": {

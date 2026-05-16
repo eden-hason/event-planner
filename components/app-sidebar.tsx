@@ -83,7 +83,9 @@ export function AppSidebar({
 
   React.useEffect(() => {
     if (isSeatingPage) {
-      prevOpenRef.current = stateRef.current === 'expanded';
+      if (prevOpenRef.current === null) {
+        prevOpenRef.current = stateRef.current === 'expanded';
+      }
       setOpen(false);
     } else if (prevOpenRef.current !== null) {
       setOpen(prevOpenRef.current);
