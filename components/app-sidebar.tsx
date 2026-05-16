@@ -83,7 +83,9 @@ export function AppSidebar({
 
   React.useEffect(() => {
     if (isSeatingPage) {
-      prevOpenRef.current = stateRef.current === 'expanded';
+      if (prevOpenRef.current === null) {
+        prevOpenRef.current = stateRef.current === 'expanded';
+      }
       setOpen(false);
     } else if (prevOpenRef.current !== null) {
       setOpen(prevOpenRef.current);
@@ -110,16 +112,16 @@ export function AppSidebar({
       url: '/app/guests',
       icon: IconUsers,
     },
-    ...(isMobile
-      ? []
-      : [
+    ...(!isMobile && process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
+      ? [
           {
             id: 'seating',
             title: tNav('seating'),
             url: '/app/seating',
             icon: IconArmchair,
           },
-        ]),
+        ]
+      : []),
     {
       id: 'schedules',
       title: tNav('schedules'),

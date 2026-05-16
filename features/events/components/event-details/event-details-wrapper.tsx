@@ -138,8 +138,8 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
             eventId={event.id}
             imageUrl={event.invitations?.imageUrl}
           />
-          <GuestExperienceCard />
           <DigitalGiftCard />
+          <GuestExperienceCard />
         </div>
       </form>
     </Form>
