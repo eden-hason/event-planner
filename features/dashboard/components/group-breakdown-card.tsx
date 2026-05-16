@@ -8,20 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
-
-// Tone scale derived from --primary: order 900,700,800,500,600,300,400,100,200
-// Adjacent slots jump across the scale for maximum contrast between consecutive groups
-const GROUP_COLORS = [
-  'oklch(from var(--primary) calc(l - 0.30) calc(c * 1.3) h)', // 900
-  'oklch(from var(--primary) calc(l - 0.15) calc(c * 1.1) h)', // 700
-  'oklch(from var(--primary) calc(l - 0.22) calc(c * 1.2) h)', // 800
-  'oklch(from var(--primary) l c h)', // 500
-  'oklch(from var(--primary) calc(l - 0.08) calc(c * 1.05) h)', // 600
-  'oklch(from var(--primary) calc(l + 0.20) calc(c * 0.7) h)', // 300
-  'oklch(from var(--primary) calc(l + 0.10) calc(c * 0.85) h)', // 400
-  'oklch(from var(--primary) calc(l + 0.40) calc(c * 0.4) h)', // 100
-  'oklch(from var(--primary) calc(l + 0.30) calc(c * 0.55) h)', // 200
-];
+import { groupColor } from '@/features/seating/utils/group-color';
 
 export function GroupBreakdownCard({
   groups,
@@ -68,7 +55,7 @@ export function GroupBreakdownCard({
       <CardContent className="flex flex-1 flex-col gap-5 pb-6">
         {/* Stacked proportional bar */}
         <div className="bg-muted flex h-3 w-full overflow-hidden rounded-full">
-          {rows.map((group, i) => {
+          {rows.map((group) => {
             const pct = grandTotal > 0 ? (group.total / grandTotal) * 100 : 0;
             const pctRounded = Math.round(pct);
             return (
@@ -78,7 +65,7 @@ export function GroupBreakdownCard({
                     className="h-full cursor-default transition-all duration-700"
                     style={{
                       width: `${pct}%`,
-                      backgroundColor: GROUP_COLORS[i % GROUP_COLORS.length],
+                      backgroundColor: groupColor(group.id).bg,
                     }}
                   />
                 </TooltipTrigger>
@@ -96,10 +83,10 @@ export function GroupBreakdownCard({
 
         {/* Group rows */}
         <div className="max-h-72 space-y-3 overflow-y-auto scrollbar-hide">
-          {rows.map((group, i) => {
+          {rows.map((group) => {
             const pct =
               grandTotal > 0 ? Math.round((group.total / grandTotal) * 100) : 0;
-            const color = GROUP_COLORS[i % GROUP_COLORS.length];
+            const color = groupColor(group.id).bg;
             return (
               <div key={group.id} className="flex items-center gap-3">
                 <div

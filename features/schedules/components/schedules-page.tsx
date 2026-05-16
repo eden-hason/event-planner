@@ -12,7 +12,6 @@ import {
 } from '../schemas';
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
-import { SchedulePerformanceCard } from './schedule-performance-card';
 import { ScheduleSendResultsCard } from './schedule-send-results-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesEmptyState } from './schedules-empty-state';
@@ -39,7 +38,6 @@ export type ScheduleTabItem = {
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
   details: React.ReactNode;
-  delivery: React.ReactNode;
 };
 
 export async function SchedulesPage({
@@ -134,16 +132,6 @@ export async function SchedulesPage({
             />
             <ScheduleSendResultsCard schedule={schedule} />
           </div>
-        ),
-        delivery: (
-          <SchedulePerformanceCard
-            scheduleId={schedule.id}
-            scheduledDate={schedule.scheduledDate}
-            guestCount={guestCount}
-            targetStatus={schedule.targetStatus}
-            actionType={schedule.actionType}
-            eventId={eventId}
-          />
         ),
       };
     });
