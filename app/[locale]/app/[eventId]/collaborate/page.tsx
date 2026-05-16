@@ -1,10 +1,9 @@
-import { SettingsPage } from '@/features/settings/components';
-import { getEventCollaborators } from '@/features/collaborate/queries';
-import { getEventInvitations } from '@/features/collaborate/queries';
+import { CollaboratePage } from '@/features/collaborate/components/collaborate-page';
+import { getEventCollaborators, getEventInvitations } from '@/features/collaborate/queries';
 import { getEventGroups, getEventGuests } from '@/features/guests/queries';
 import { createClient } from '@/lib/supabase/server';
 
-export default async function SettingsPageRoute({
+export default async function CollaboratePageRoute({
   params,
 }: {
   params: Promise<{ eventId: string }>;
@@ -24,7 +23,7 @@ export default async function SettingsPageRoute({
   ]);
 
   return (
-    <SettingsPage
+    <CollaboratePage
       eventId={eventId}
       currentUserId={user?.id}
       collaborators={collaborators}

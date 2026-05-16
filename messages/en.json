@@ -27,12 +27,114 @@
     "dashboard": "Dashboard",
     "eventDetails": "Event Details",
     "guests": "Guests",
+    "seating": "Seating",
     "schedules": "Schedules",
+    "collaboration": "Collaboration",
     "settings": "Settings",
     "templates": "Templates",
     "budget": "Budget",
     "getHelp": "Get Help",
     "comingSoon": "Soon"
+  },
+  "seating": {
+    "addTable": "Add table",
+    "searchPlaceholder": "Search guests",
+    "filterAllGroups": "All groups",
+    "filterNoGroup": "Without group",
+    "unassigned": {
+      "title": "Unassigned",
+      "empty": "Every guest is seated",
+      "noMatches": "No matching guests",
+      "help": "Drag guests to tables, or use Auto-seat to assign automatically"
+    },
+    "canvas": {
+      "empty": "Add your first table to start seating"
+    },
+    "actions": {
+      "delete": "Delete"
+    },
+    "fields": {
+      "label": "Name",
+      "labelOptional": "(optional)",
+      "labelPlaceholder": "e.g. Family, VIP, Table 1",
+      "labelAutoPlaceholder": "Leave blank for #{number}",
+      "shape": "Shape",
+      "capacity": "Capacity"
+    },
+    "shapes": {
+      "round": "Round",
+      "rectangle": "Rectangle",
+      "square": "Square"
+    },
+    "createDialog": {
+      "title": "New table",
+      "description": "Add a table to your floor plan",
+      "submit": "Create"
+    },
+    "editSheet": {
+      "title": "Edit table",
+      "description": "Adjust this table's details or manage its guests",
+      "seatedHeading": "Seated",
+      "empty": "No guests at this table",
+      "unassign": "Unassign"
+    },
+    "deleteDialog": {
+      "title": "Delete this table?",
+      "description": "Guests at this table will become unassigned"
+    },
+    "stats": {
+      "seated": "Seated",
+      "capacity": "Capacity",
+      "tables": "Tables",
+      "tablesFull": "{count} full",
+      "floorUsage": "Floor usage",
+      "healthy": "healthy",
+      "lowUsage": "low usage",
+      "tight": "tight",
+      "usage": "Capacity used"
+    },
+    "sections": {
+      "confirmed": "Confirmed",
+      "pending": "Pending"
+    },
+    "tools": {
+      "move": "Move",
+      "round": "Round",
+      "square": "Square",
+      "rectangle": "Long table"
+    },
+    "legend": {
+      "groups": "Groups",
+      "moreCount": "+{count}"
+    },
+    "zoom": {
+      "in": "Zoom in",
+      "out": "Zoom out",
+      "fit": "Fit to view"
+    },
+    "autoSeat": {
+      "label": "Auto-seat",
+      "stubTooltip": "Smart seating is coming soon"
+    },
+    "addGuest": "Add guest",
+    "toast": {
+      "creating": "Creating table",
+      "created": "Table created",
+      "updating": "Updating table",
+      "updated": "Table updated",
+      "deleting": "Deleting table",
+      "deleted": "Table deleted"
+    },
+    "errors": {
+      "createFailed": "Could not create table",
+      "updateFailed": "Could not update table",
+      "deleteFailed": "Could not delete table",
+      "assignFailed": "Could not assign guest"
+    },
+    "mobile": {
+      "title": "Open on a larger screen",
+      "description": "The seating planner works best on desktop"
+    }
   },
   "sidebar": {
     "noEventSelected": "No event selected",
@@ -961,6 +1063,12 @@
     }
   },
   "collaborate": {
+    "page": {
+      "header": {
+        "title": "Collaboration",
+        "description": "Manage your event collaborators"
+      }
+    },
     "tab": {
       "heading": "Collaborate with others",
       "description": "Invite your partner, family, or friends to help manage this event. You can assign different roles and permissions to keep everything organized.",

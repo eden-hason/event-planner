@@ -122,7 +122,7 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
 
   return (
     <Form {...form}>
-      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-5xl">
+      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-3xl">
         <EventDetailsHeader
           formId={formId}
           isDirty={isDirty}

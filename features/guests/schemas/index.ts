@@ -51,6 +51,8 @@ export const GuestAppSchema = z.object({
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
   notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
+  // Foreign key to tables table (seating assignment)
+  tableId: z.uuid().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   invitationToken: z.string().uuid(),
@@ -102,6 +104,8 @@ export const GuestDbSchema = z.object({
   amount: z.number().int().default(1),
   notes: z.string().nullable(),
   side: z.enum(['bride', 'groom']).nullable(),
+  // Foreign key to tables table (seating assignment)
+  table_id: z.uuid().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   invitation_token: z.string().uuid(),
@@ -143,6 +147,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     rsvpChangeSource: dbData.rsvp_change_source ?? null,
     isOfflineRsvp: dbData.is_offline_rsvp ?? false,
     side: dbData.side ?? null,
+    tableId: dbData.table_id ?? null,
   };
 });
 
@@ -172,6 +177,7 @@ export const GuestUpsertSchema = z.object({
   notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
   isOfflineRsvp: z.boolean().optional(),
+  tableId: z.uuid().nullable().optional(),
 });
 
 export type GuestUpsert = z.infer<typeof GuestUpsertSchema>;
@@ -214,6 +220,9 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     }
     if (appData.side !== undefined) {
       dbData.side = appData.side ?? null;
+    }
+    if (appData.tableId !== undefined) {
+      dbData.table_id = appData.tableId ?? null;
     }
 
     return dbData;

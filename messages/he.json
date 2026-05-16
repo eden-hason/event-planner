@@ -27,12 +27,114 @@
     "dashboard": "לוח בקרה",
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
+    "seating": "הושבה",
     "schedules": "תזמונים",
+    "collaboration": "שיתוף",
     "settings": "הגדרות",
     "templates": "תבניות",
     "budget": "תקציב",
     "getHelp": "עזרה",
     "comingSoon": "בקרוב"
+  },
+  "seating": {
+    "addTable": "הוסף שולחן",
+    "searchPlaceholder": "חיפוש אורחים",
+    "filterAllGroups": "כל הקבוצות",
+    "filterNoGroup": "ללא קבוצה",
+    "unassigned": {
+      "title": "ללא הושבה",
+      "empty": "כל האורחים יושבים",
+      "noMatches": "לא נמצאו אורחים תואמים",
+      "help": "גררו אורחים לשולחנות, או השתמשו בהושבה אוטומטית"
+    },
+    "canvas": {
+      "empty": "הוסיפו שולחן ראשון כדי להתחיל בהושבה"
+    },
+    "actions": {
+      "delete": "מחיקה"
+    },
+    "fields": {
+      "label": "שם",
+      "labelOptional": "(לא חובה)",
+      "labelPlaceholder": "למשל משפחה, VIP, שולחן 1",
+      "labelAutoPlaceholder": "אם תשאירו ריק, השם יהיה #{number}",
+      "shape": "צורה",
+      "capacity": "קיבולת"
+    },
+    "shapes": {
+      "round": "עגול",
+      "rectangle": "מלבני",
+      "square": "מרובע"
+    },
+    "createDialog": {
+      "title": "שולחן חדש",
+      "description": "הוסיפו שולחן לתוכנית ההושבה",
+      "submit": "יצירה"
+    },
+    "editSheet": {
+      "title": "עריכת שולחן",
+      "description": "עדכנו את פרטי השולחן או נהלו את האורחים שבו",
+      "seatedHeading": "מושבים",
+      "empty": "אין אורחים בשולחן זה",
+      "unassign": "הסרה"
+    },
+    "deleteDialog": {
+      "title": "למחוק את השולחן?",
+      "description": "האורחים שבשולחן יעברו לרשימת הלא משובצים"
+    },
+    "stats": {
+      "seated": "מושבים",
+      "capacity": "קיבולת",
+      "tables": "שולחנות",
+      "tablesFull": "{count} מלאים",
+      "floorUsage": "ניצול אולם",
+      "healthy": "תקין",
+      "lowUsage": "נמוך",
+      "tight": "מלא",
+      "usage": "ניצול קיבולת"
+    },
+    "sections": {
+      "confirmed": "מאושרים",
+      "pending": "ממתינים"
+    },
+    "tools": {
+      "move": "הזזה",
+      "round": "עגול",
+      "square": "מרובע",
+      "rectangle": "שולחן ארוך"
+    },
+    "legend": {
+      "groups": "קבוצות",
+      "moreCount": "+{count}"
+    },
+    "zoom": {
+      "in": "הגדל",
+      "out": "הקטן",
+      "fit": "התאם למסך"
+    },
+    "autoSeat": {
+      "label": "הושבה אוטומטית",
+      "stubTooltip": "הושבה חכמה בקרוב"
+    },
+    "addGuest": "הוסף אורח",
+    "toast": {
+      "creating": "יוצר שולחן",
+      "created": "השולחן נוצר",
+      "updating": "מעדכן שולחן",
+      "updated": "השולחן עודכן",
+      "deleting": "מוחק שולחן",
+      "deleted": "השולחן נמחק"
+    },
+    "errors": {
+      "createFailed": "לא ניתן ליצור את השולחן",
+      "updateFailed": "לא ניתן לעדכן את השולחן",
+      "deleteFailed": "לא ניתן למחוק את השולחן",
+      "assignFailed": "לא ניתן לשבץ את האורח"
+    },
+    "mobile": {
+      "title": "פתחו במסך גדול יותר",
+      "description": "מתכנן ההושבה פועל בצורה הטובה ביותר במחשב"
+    }
   },
   "sidebar": {
     "noEventSelected": "לא נבחר אירוע",
@@ -961,6 +1063,12 @@
     }
   },
   "collaborate": {
+    "page": {
+      "header": {
+        "title": "שיתוף פעולה",
+        "description": "נהל את שותפי האירוע שלך"
+      }
+    },
     "tab": {
       "heading": "שתף פעולה עם אחרים",
       "description": "הזמן את הבן/בת זוג, המשפחה או החברים לעזור בניהול האירוע. ניתן להקצות תפקידים והרשאות שונות כדי לשמור על סדר.",

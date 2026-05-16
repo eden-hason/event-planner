@@ -34,7 +34,7 @@ export default async function EventLayout({
       <FeatureLayoutProvider>
         <Card className="min-h-[calc(100vh-101px)] gap-4 border-none bg-transparent p-0 shadow-none">
           <FeatureLayoutHeader />
-          <CardContent className="space-y-6">{children}</CardContent>
+          <CardContent className="space-y-6 p-0">{children}</CardContent>
         </Card>
       </FeatureLayoutProvider>
     </CollaborationProvider>
