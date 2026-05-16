@@ -65,7 +65,9 @@ export function NavMain({
                   asChild={!isUnavailable}
                   isActive={isActive}
                   className={[
-                    isActive ? 'bg-accent text-accent-foreground' : '',
+                    isActive
+                      ? '!bg-sidebar-primary !text-sidebar-primary-foreground font-semibold shadow-sm [&>svg]:text-sidebar-primary-foreground'
+                      : 'hover:!bg-sidebar-accent/60',
                     isUnavailable ? 'cursor-default opacity-50 pointer-events-none' : '',
                   ].join(' ')}
                 >

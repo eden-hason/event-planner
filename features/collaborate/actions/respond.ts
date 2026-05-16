@@ -77,6 +77,10 @@ export async function declineInvitation(token: string): Promise<ActionState> {
       return { success: false, message: 'Invitation not found.' };
     }
 
+    if (invitation.invited_email !== currentUser.email) {
+      return { success: false, message: 'This invitation is not for your account.' };
+    }
+
     if (invitation.status !== 'pending') {
       return {
         success: false,

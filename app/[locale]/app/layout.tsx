@@ -4,6 +4,8 @@ import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
+import { AiChatButton } from '@/features/ai-chat/components/ai-chat-button';
+import { LayoutContentWrapper } from '@/components/layout-content-wrapper';
 
 export default async function Layout({
   children,
@@ -52,9 +54,8 @@ export default async function Layout({
         user={user}
       />
       <SidebarInset className="!bg-[#F4F4F6]">
-        <div className="flex-1 py-4">
-          <div className="container mx-auto h-full">{children}</div>
-        </div>
+        <LayoutContentWrapper>{children}</LayoutContentWrapper>
+        {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
       </SidebarInset>
     </SidebarProvider>
   );
