@@ -786,8 +786,7 @@
       "description": "Manage your event schedule and timeline"
     },
     "tabs": {
-      "overview": "Overview",
-      "activity": "Activity"
+      "overview": "Overview"
     },
     "status": {
       "cardTitle": "Status",
@@ -868,11 +867,6 @@
         "failed": "Failed to send."
       }
     },
-    "emptyState": {
-      "title": "Insights are almost ready",
-      "description": "Once your first message is sent, you'll see real-time delivery stats, read rates, and RSVP conversions right here. Your schedule is currently set for {date}.",
-      "editSchedule": "Edit Schedule"
-    },
     "setupWizard": {
       "emptyTitle": "Plan your guest communication timeline",
       "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically — set up your timeline to get started",
@@ -935,41 +929,6 @@
         "weeks": "{count}w",
         "months": "{count}mo"
       }
-    },
-    "activity": {
-      "cardTitle": "Recent Delivery Activity",
-      "viewAllRecipients": "View All Recipients →",
-      "searchPlaceholder": "Search by name or phone...",
-      "allStatuses": "All Statuses",
-      "statusCount": "{count} statuses",
-      "statuses": {
-        "confirmed": "Confirmed",
-        "declined": "Declined",
-        "read": "Read",
-        "failed": "Failed"
-      },
-      "table": {
-        "guestName": "Guest Name",
-        "status": "Status",
-        "sent": "Sent",
-        "read": "Read",
-        "error": "Error",
-        "responded": "Responded",
-        "rsvpDetails": "RSVP Details",
-        "noDetails": "No details",
-        "partyOf": "Party of {count}"
-      },
-      "showing": "Showing {showing} of {total} recipients",
-      "previous": "Previous",
-      "next": "Next"
-    },
-    "performance": {
-      "totalDeliveries": "Total Deliveries",
-      "success": "Success",
-      "failed": "Failed",
-      "read": "Read",
-      "confirmed": "Confirmed",
-      "declined": "Declined"
     },
     "sendResults": {
       "cardTitle": "Send Results",

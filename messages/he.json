@@ -786,8 +786,7 @@
       "description": "נהל את תזמוני ההודעות של האירוע"
     },
     "tabs": {
-      "overview": "סקירה",
-      "activity": "פעילות"
+      "overview": "סקירה"
     },
     "status": {
       "cardTitle": "סטטוס",
@@ -868,11 +867,6 @@
         "failed": "השליחה נכשלה."
       }
     },
-    "emptyState": {
-      "title": "התובנות כמעט מוכנות",
-      "description": "ברגע שההודעה הראשונה תישלח, תראה כאן סטטיסטיקות שליחה בזמן אמת, שיעורי קריאה ואישורי הגעה. לוח הזמנים שלך מוגדר כעת ל-{date}.",
-      "editSchedule": "ערוך לוח זמנים"
-    },
     "setupWizard": {
       "emptyTitle": "תכננו את ציר הזמן לתקשורת עם האורחים",
       "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי — הגדירו את ציר הזמן כדי להתחיל",
@@ -935,41 +929,6 @@
         "weeks": "{count} שב'",
         "months": "{count} חודשים"
       }
-    },
-    "activity": {
-      "cardTitle": "פעילות שליחה אחרונה",
-      "viewAllRecipients": "כל הנמענים ←",
-      "searchPlaceholder": "חפש לפי שם או טלפון...",
-      "allStatuses": "כל הסטטוסים",
-      "statusCount": "{count} סטטוסים",
-      "statuses": {
-        "confirmed": "אישר",
-        "declined": "סירב",
-        "read": "נקרא",
-        "failed": "נכשל"
-      },
-      "table": {
-        "guestName": "שם האורח",
-        "status": "סטטוס",
-        "sent": "נשלח",
-        "read": "נקרא",
-        "error": "שגיאה",
-        "responded": "הגיב",
-        "rsvpDetails": "פרטי אישור",
-        "noDetails": "אין פרטים",
-        "partyOf": "קבוצה של {count}"
-      },
-      "showing": "מציג {showing} מתוך {total} נמענים",
-      "previous": "הקודם",
-      "next": "הבא"
-    },
-    "performance": {
-      "totalDeliveries": "סה\"כ שליחות",
-      "success": "הצליח",
-      "failed": "נכשל",
-      "read": "נקרא",
-      "confirmed": "אישר",
-      "declined": "סירב"
     },
     "sendResults": {
       "cardTitle": "תוצאות שליחה",

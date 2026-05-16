@@ -16,9 +16,6 @@ export {
 export {
   getSchedulesByEventId,
   getScheduleById,
-  getMessageDeliveriesByScheduleId,
-  getDeliveryStats,
-  getRsvpStats,
 } from './queries';
 
 // Constants
