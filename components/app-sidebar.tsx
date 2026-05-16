@@ -110,16 +110,16 @@ export function AppSidebar({
       url: '/app/guests',
       icon: IconUsers,
     },
-    ...(isMobile
-      ? []
-      : [
+    ...(!isMobile && process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
+      ? [
           {
             id: 'seating',
             title: tNav('seating'),
             url: '/app/seating',
             icon: IconArmchair,
           },
-        ]),
+        ]
+      : []),
     {
       id: 'schedules',
       title: tNav('schedules'),
