@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 
 export type DeliveryMethodStats = {
   whatsapp: { successful: number; failed: number; total: number };
@@ -11,7 +11,7 @@ export type DeliveryMethodStats = {
 export async function getDeliveryMethodStats(
   scheduleId: string,
 ): Promise<DeliveryMethodStats> {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
   const empty: DeliveryMethodStats = {
     whatsapp: { successful: 0, failed: 0, total: 0 },
     sms: { successful: 0, failed: 0, total: 0 },

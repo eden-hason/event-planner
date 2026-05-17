@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import { ScheduleDbToAppSchema, type ScheduleApp } from '../schemas';
 
 /**
@@ -10,7 +10,7 @@ import { ScheduleDbToAppSchema, type ScheduleApp } from '../schemas';
 export async function getSchedulesByEventId(
   eventId: string,
 ): Promise<ScheduleApp[]> {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
 
   const { data, error } = await supabase
     .from('schedules')
@@ -54,7 +54,7 @@ export async function getScheduleById(
   })
   | null
 > {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
 
   const { data, error } = await supabase
     .from('schedules')

@@ -1,10 +1,10 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import { DbToAppTransformerSchema, type EventApp } from '../schemas';
 
 export async function getEventById(eventId: string): Promise<EventApp | null> {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
   const { data: event, error } = await supabase
     .from('events')
     .select('*')
@@ -30,14 +30,19 @@ export async function getEventById(eventId: string): Promise<EventApp | null> {
  */
 export async function getLastUserEvent(): Promise<EventApp | null> {
   try {
-    const supabase = await createClient();
+    const { supabase, impersonation } = await getEffectiveClient();
 
-    const { data: event, error } = await supabase
+    let query = supabase
       .from('events')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    if (impersonation) {
+      query = query.eq('user_id', impersonation.userId);
+    }
+
+    const { data: event, error } = await query.maybeSingle();
 
     if (error) {
       console.error('Error fetching last user event:', error);
@@ -58,11 +63,15 @@ export async function getLastUserEvent(): Promise<EventApp | null> {
 }
 
 export async function getAllUserEvents(): Promise<EventApp[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { supabase, impersonation } = await getEffectiveClient();
+
+  let query = supabase.from('events').select('*').order('created_at', { ascending: false });
+
+  if (impersonation) {
+    query = query.eq('user_id', impersonation.userId);
+  }
+
+  const { data, error } = await query;
   if (error) {
     console.error('Error fetching all user events:', error);
     return [];

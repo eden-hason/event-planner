@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/features/auth/queries';
+import { assertNotImpersonating } from '@/lib/supabase/admin';
 import {
   GuestUpsertSchema,
   AppToDbTransformerSchema,
@@ -27,6 +28,8 @@ export async function upsertGuest(
   eventId: string,
   formData: FormData,
 ): Promise<UpsertGuestState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -127,6 +130,8 @@ export async function upsertGuest(
 }
 
 export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -175,6 +180,8 @@ export async function importGuests(
   eventId: string,
   guests: ImportGuestData[],
 ): Promise<ImportGuestsState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
