@@ -184,6 +184,7 @@ export async function sendInChunks(
 export function buildDeliveryRecord(
   scheduleId: string,
   result: GuestSendResult,
+  triggeredBy: 'scheduled' | 'manual' = 'scheduled',
 ): Record<string, unknown> {
   return {
     schedule_id: scheduleId,
@@ -195,6 +196,7 @@ export function buildDeliveryRecord(
     error_message: result.success ? null : result.message,
     error_code: result.errorCode ?? null,
     confirmation_token: result.confirmationToken,
+    triggered_by: triggeredBy,
   };
 }
 

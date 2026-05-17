@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 import { getGuestsForManualSend } from '../queries/event-detail';
@@ -70,9 +71,10 @@ export function ManualSendCard({
     setLoadingGuests(true);
     try {
       const result = await getGuestsForManualSend(eventId, scheduleId);
-      setGuests(result);
+      const sorted = [...result.filter((g) => g.phone), ...result.filter((g) => !g.phone)];
+      setGuests(sorted);
       // Default-select guests with no delivery
-      setSelectedGuestIds(new Set(result.filter((g) => !g.hasDelivery).map((g) => g.id)));
+      setSelectedGuestIds(new Set(sorted.filter((g) => g.phone && !g.hasDelivery).map((g) => g.id)));
     } finally {
       setLoadingGuests(false);
     }
@@ -88,10 +90,11 @@ export function ManualSendCard({
   }
 
   function toggleAll() {
-    if (selectedGuestIds.size === guests.length) {
+    const selectableIds = guests.filter((g) => g.phone).map((g) => g.id);
+    if (selectedGuestIds.size === selectableIds.length) {
       setSelectedGuestIds(new Set());
     } else {
-      setSelectedGuestIds(new Set(guests.map((g) => g.id)));
+      setSelectedGuestIds(new Set(selectableIds));
     }
   }
 
@@ -187,30 +190,37 @@ export function ManualSendCard({
                 </div>
               ) : (
                 <div className="max-h-72 overflow-y-auto rounded-lg border divide-y">
-                  {guests.map((guest) => (
-                    <label
-                      key={guest.id}
-                      className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted/50"
-                    >
-                      <Checkbox
-                        checked={selectedGuestIds.has(guest.id)}
-                        onCheckedChange={() => toggleGuest(guest.id)}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{guest.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {guest.phone ?? 'No phone'}
-                          <span className="mx-1.5">·</span>
-                          {guest.rsvpStatus}
-                        </p>
-                      </div>
-                      {guest.hasDelivery && (
-                        <Badge variant="secondary" className="shrink-0 text-xs">
-                          Sent
-                        </Badge>
-                      )}
-                    </label>
-                  ))}
+                  {guests.map((guest) => {
+                    const noPhone = !guest.phone;
+                    return (
+                      <label
+                        key={guest.id}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2.5',
+                          noPhone ? 'cursor-not-allowed opacity-40' : 'cursor-pointer hover:bg-muted/50',
+                        )}
+                      >
+                        <Checkbox
+                          checked={selectedGuestIds.has(guest.id)}
+                          onCheckedChange={() => !noPhone && toggleGuest(guest.id)}
+                          disabled={noPhone}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{guest.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {guest.phone ?? 'No phone'}
+                            <span className="mx-1.5">·</span>
+                            {guest.rsvpStatus}
+                          </p>
+                        </div>
+                        {guest.hasDelivery && (
+                          <Badge variant="secondary" className="shrink-0 text-xs">
+                            Sent
+                          </Badge>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>

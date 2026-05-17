@@ -194,7 +194,7 @@ export async function executeSchedule(
     for (const settled of sendResults) {
       if (settled.status === 'fulfilled') {
         const r = settled.value;
-        deliveryRecords.push(buildDeliveryRecord(scheduleId, r));
+        deliveryRecords.push(buildDeliveryRecord(scheduleId, r, 'manual'));
         if (r.success) {
           sentCount++;
         } else {
