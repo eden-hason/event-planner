@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
+import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
 import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import { calculateScheduledDate } from '../utils';
@@ -26,6 +27,8 @@ export async function updateScheduledDate(
   scheduledDate: string,
   scheduledTime: string,
 ): Promise<UpdateScheduledDateState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const supabase = await createClient();
 
@@ -80,6 +83,8 @@ export async function updateScheduleStatus(
   scheduleId: string,
   enabled: boolean,
 ): Promise<UpdateScheduleStatusState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const supabase = await createClient();
 
@@ -139,6 +144,8 @@ export async function createDefaultSchedules(
   eventDate: string,
   eventType: string = 'wedding',
 ): Promise<CreateDefaultSchedulesState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const supabase = await createClient();
 
@@ -267,6 +274,8 @@ export async function createSchedulesFromSelection(
   eventId: string,
   selections: ScheduleSelectionItem[],
 ): Promise<CreateSchedulesFromSelectionState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const parsed = ScheduleSelectionSchema.safeParse(selections);
     if (!parsed.success) {

@@ -1,9 +1,9 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import type { GiftRow } from '../types';
 
 export async function getEventGifts(eventId: string): Promise<GiftRow[]> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const [{ data: guests }, { data: gifts }] = await Promise.all([
       supabase
         .from('guests')

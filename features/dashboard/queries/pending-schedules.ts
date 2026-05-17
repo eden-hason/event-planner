@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 
 export async function getPendingSchedulesCount(eventId: string): Promise<number> {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
 
   const { count, error } = await supabase
     .from('schedules')

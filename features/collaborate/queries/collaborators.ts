@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import type { CollaboratorApp, CollaboratorRole } from '../schemas';
 
 /**
@@ -11,7 +11,7 @@ export async function getEventCollaborators(
   eventId: string,
 ): Promise<CollaboratorApp[]> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     const { data, error } = await supabase
       .from('event_collaborators')
@@ -94,7 +94,7 @@ export async function getCollaboratorRole(
   eventId: string,
 ): Promise<{ role: CollaboratorRole; isCreator: boolean } | null> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -139,7 +139,7 @@ export async function getCollaboratorScope(
   collaboratorId: string,
 ): Promise<{ guestIds: string[]; groupIds: string[] }> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     const { data, error } = await supabase
       .from('collaborator_guest_scope')

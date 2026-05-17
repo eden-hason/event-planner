@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/features/auth/queries';
+import { assertNotImpersonating } from '@/lib/supabase/admin';
 import {
   EventDetailsUpdateSchema,
   UpdateEventDetailsState,
@@ -35,6 +36,8 @@ export type SetDefaultEventState = {
  * @returns Result state with success status and new event ID
  */
 export async function createEvent(formData: FormData): Promise<CreateEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -110,6 +113,8 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
 export async function createOnboardingEvent(
   formData: FormData,
 ): Promise<CreateOnboardingEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -237,6 +242,8 @@ function processInvitations(invitations: Invitations): Invitations {
 export async function updateEventDetails(
   formData: FormData,
 ): Promise<UpdateEventDetailsState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -376,6 +383,8 @@ export async function updateEventDetails(
 }
 
 export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -415,6 +424,8 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
 export async function setDefaultEvent(
   eventId: string,
 ): Promise<SetDefaultEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {

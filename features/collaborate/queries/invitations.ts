@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
   InvitationDbToAppSchema,
   type InvitationApp,
@@ -13,7 +13,7 @@ export async function getEventInvitations(
   eventId: string,
 ): Promise<InvitationApp[]> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     const { data, error } = await supabase
       .from('collaboration_invitations')
@@ -45,7 +45,7 @@ export async function getInvitationByToken(
   token: string,
 ): Promise<(InvitationApp & { eventTitle: string }) | null> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     const { data, error } = await supabase.rpc('get_invitation_by_token', {
       p_token: token,

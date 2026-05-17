@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import { TableDbToAppTransformerSchema, type TableApp } from '../schemas';
 import { getEventGuestsWithGroups } from '@/features/guests/queries';
 import type { SeatingPageData, SeatingStatsView, TableWithGuestsApp } from '../types';
 
 export const getEventTables = async (eventId: string): Promise<TableApp[]> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data, error } = await supabase
       .from('tables')
       .select('*')
