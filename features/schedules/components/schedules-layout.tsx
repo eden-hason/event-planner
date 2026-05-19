@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   IconBell,
-  IconChartBar,
-  IconFileDescription,
   IconHeart,
   IconMail,
   IconUserCheck,
@@ -12,7 +10,6 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
@@ -26,26 +23,19 @@ const ACTION_TYPE_ICONS: Record<ActionType, React.ComponentType<{ size?: number 
 };
 import { formatRelativeTime } from '../utils';
 import { type ScheduleTabItem } from './schedules-page';
-import { SendConfirmDialog } from './send-confirm-dialog';
 
 interface SchedulesLayoutProps {
   visibleTypes: ActionType[];
   contentByType: Record<ActionType, ScheduleTabItem[]>;
 }
 
-const tabTriggerClassName =
-  'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none cursor-pointer rounded-none border-none bg-transparent px-1 pb-3 shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none';
-
 export function SchedulesLayout({
   visibleTypes,
   contentByType,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
-  const locale = useLocale();
-  const dir = locale === 'he' ? 'rtl' : 'ltr';
   const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState('details');
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
   const handleTypeChange = (type: ActionType) => {
@@ -56,39 +46,14 @@ export function SchedulesLayout({
   const activeItem =
     (contentByType[selectedType] ?? [])[selectedSubIndex] ??
     (contentByType[selectedType] ?? [])[0];
-  const isPending = !activeItem?.scheduleStatus;
-  const hasDeliveryTab = !!activeItem?.delivery;
-
-  useEffect(() => {
-    if (!hasDeliveryTab && activeTab === 'delivery') {
-      setActiveTab('details');
-    }
-  }, [hasDeliveryTab, activeTab]);
 
   useEffect(() => {
     setHeader({
       title: t('header.title'),
       description: t('header.description'),
-      action:
-        isPending && activeItem?.scheduleId ? (
-          <SendConfirmDialog
-            scheduleId={activeItem.scheduleId}
-            guestCount={activeItem.guestCount}
-            targetStatus={activeItem.targetStatus}
-            triggerSize="sm"
-            disabled
-          />
-        ) : undefined,
     });
     return () => clearHeader();
-  }, [
-    activeItem?.scheduleId,
-    activeItem?.scheduleStatus,
-    activeItem?.guestCount,
-    activeItem?.targetStatus,
-    setHeader,
-    clearHeader,
-  ]);
+  }, [setHeader, clearHeader]);
 
   return (
     <div className="flex gap-6">
@@ -154,28 +119,7 @@ export function SchedulesLayout({
 
       {/* Right content */}
       <div className="min-w-0 flex-1">
-        <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir}>
-          <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-            <TabsTrigger
-              id="schedule-details-tab-trigger"
-              value="details"
-              className={tabTriggerClassName}
-            >
-              <IconFileDescription size={16} />
-              {t('tabs.overview')}
-            </TabsTrigger>
-            {hasDeliveryTab && (
-              <TabsTrigger value="delivery" className={tabTriggerClassName}>
-                <IconChartBar size={16} />
-                {t('tabs.activity')}
-              </TabsTrigger>
-            )}
-          </TabsList>
-          <TabsContent value="details">{activeItem?.details}</TabsContent>
-          {hasDeliveryTab && (
-            <TabsContent value="delivery">{activeItem?.delivery}</TabsContent>
-          )}
-        </Tabs>
+        {activeItem?.details}
       </div>
     </div>
   );

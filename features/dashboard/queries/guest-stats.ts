@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import type { RecentRsvpRow } from '../types';
 
 export async function getRecentRsvpActivity(
   eventId: string,
   limit = 5,
 ): Promise<RecentRsvpRow[]> {
-  const supabase = await createClient();
+  const { supabase } = await getEffectiveClient();
 
   const { data, error } = await supabase
     .from('guests')

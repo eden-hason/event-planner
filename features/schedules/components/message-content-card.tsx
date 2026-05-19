@@ -84,16 +84,16 @@ export function MessageContentCard({
           {t('cardDescription')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+      <CardContent className="flex flex-col flex-1 min-h-0">
         {/* WhatsApp phone mockup */}
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
+        <div className="flex flex-col overflow-hidden rounded-xl border border-zinc-200 shadow-sm flex-1 min-h-0">
           {/* Chat area */}
           <div
             className="flex flex-1 flex-col gap-1 px-3 py-4"
             style={chatBgStyle}
           >
             {template === null ? (
-              <div className="flex flex-1 items-center justify-center">
+              <div className="flex items-center justify-center py-6">
                 <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
                   {t('noMessage')}
                 </p>

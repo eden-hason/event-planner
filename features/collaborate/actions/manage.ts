@@ -111,12 +111,24 @@ export async function updateCollaboratorScope(
       return { success: false, message: 'You must be logged in.' };
     }
 
-    const scopeGroups: string[] = JSON.parse(
-      (formData.get('scopeGroups') as string) || '[]',
-    );
-    const scopeGuests: string[] = JSON.parse(
-      (formData.get('scopeGuests') as string) || '[]',
-    );
+    const uuidArray = (raw: string | null) => {
+      try {
+        const arr = JSON.parse(raw || '[]');
+        if (!Array.isArray(arr) || !arr.every((v) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v))) {
+          return null;
+        }
+        return arr as string[];
+      } catch {
+        return null;
+      }
+    };
+
+    const scopeGroups = uuidArray(formData.get('scopeGroups') as string);
+    const scopeGuests = uuidArray(formData.get('scopeGuests') as string);
+
+    if (!scopeGroups || !scopeGuests) {
+      return { success: false, message: 'Invalid scope data.' };
+    }
 
     if (scopeGroups.length === 0 && scopeGuests.length === 0) {
       return {
@@ -297,12 +309,20 @@ export async function updateCollaboratorRole(
 
     // If changing to seating_manager, update scope
     if (newRole === 'seating_manager' && formData) {
-      const scopeGroups: string[] = JSON.parse(
-        (formData.get('scopeGroups') as string) || '[]',
-      );
-      const scopeGuests: string[] = JSON.parse(
-        (formData.get('scopeGuests') as string) || '[]',
-      );
+      const uuidArray = (raw: string | null) => {
+        try {
+          const arr = JSON.parse(raw || '[]');
+          if (!Array.isArray(arr) || !arr.every((v) => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v))) {
+            return null;
+          }
+          return arr as string[];
+        } catch {
+          return null;
+        }
+      };
+
+      const scopeGroups = uuidArray(formData.get('scopeGroups') as string) ?? [];
+      const scopeGuests = uuidArray(formData.get('scopeGuests') as string) ?? [];
 
       // Delete existing scope
       await supabase
@@ -380,6 +400,18 @@ export async function revokeInvitation(
 
     if (fetchError || !invitation) {
       return { success: false, message: 'Invitation not found.' };
+    }
+
+    // Verify caller is an owner of this event
+    const { data: callerCollab } = await supabase
+      .from('event_collaborators')
+      .select('role')
+      .eq('event_id', invitation.event_id)
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (!callerCollab || callerCollab.role !== 'owner') {
+      return { success: false, message: 'Only owners can revoke invitations.' };
     }
 
     // Delete invitation

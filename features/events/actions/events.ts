@@ -1,6 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/features/auth/queries';
+import { assertNotImpersonating } from '@/lib/supabase/admin';
 import {
   EventDetailsUpdateSchema,
   UpdateEventDetailsState,
@@ -16,7 +17,6 @@ import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
-import { createDefaultSchedules } from '@/features/schedules/actions/schedules';
 import { PLAN_CAPACITY } from '@/features/events/constants';
 
 export type DeleteEventState = {
@@ -30,12 +30,14 @@ export type SetDefaultEventState = {
 };
 
 /**
- * Creates a new event and its default schedules.
+ * Creates a new event.
  *
  * @param formData - Form data containing title, eventDate, and eventType
  * @returns Result state with success status and new event ID
  */
 export async function createEvent(formData: FormData): Promise<CreateEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -88,18 +90,6 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
       .eq('user_id', currentUser.id)
       .neq('id', newEvent.id);
 
-    // Create default schedules for the event
-    const schedulesResult = await createDefaultSchedules(
-      newEvent.id,
-      eventDate,
-      eventType,
-    );
-
-    if (!schedulesResult.success) {
-      console.warn('Failed to create default schedules:', schedulesResult.message);
-      // Don't fail the event creation if schedules fail
-    }
-
     revalidatePath('/app');
     revalidatePath('/app/dashboard');
 
@@ -123,6 +113,8 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
 export async function createOnboardingEvent(
   formData: FormData,
 ): Promise<CreateOnboardingEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -223,11 +215,6 @@ export async function createOnboardingEvent(
       .eq('user_id', currentUser.id)
       .neq('id', newEvent.id);
 
-    const schedulesResult = await createDefaultSchedules(newEvent.id, eventDate, 'wedding');
-    if (!schedulesResult.success) {
-      console.warn('Failed to create default schedules:', schedulesResult.message);
-    }
-
     revalidatePath('/app');
     revalidatePath('/app/dashboard');
 
@@ -255,6 +242,8 @@ function processInvitations(invitations: Invitations): Invitations {
 export async function updateEventDetails(
   formData: FormData,
 ): Promise<UpdateEventDetailsState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -394,6 +383,8 @@ export async function updateEventDetails(
 }
 
 export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -433,6 +424,8 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
 export async function setDefaultEvent(
   eventId: string,
 ): Promise<SetDefaultEventState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {

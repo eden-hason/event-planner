@@ -5,12 +5,15 @@ import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
   IconDashboard,
-  IconSettings,
+
   IconUsers,
+  IconUsersGroup,
   IconCalendar,
   IconCoins,
-  IconAlertSquareRounded,
+  IconListDetails,
+  IconArmchair,
 } from '@tabler/icons-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavEvents } from '@/components/nav-events';
@@ -24,12 +27,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
 import { Badge } from '@/components/ui/badge';
 
-const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'settings'];
+const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -68,6 +72,26 @@ export function AppSidebar({
   const tNav = useTranslations('navigation');
   const locale = useLocale();
   const isRTL = locale === 'he';
+  const isMobile = useIsMobile();
+  const isSeatingPage = pathname.includes('/seating');
+  const { setOpen, state } = useSidebar();
+
+  // Track what the open state was before entering seating so we can restore it on exit
+  const prevOpenRef = React.useRef<boolean | null>(null);
+  const stateRef = React.useRef(state);
+  React.useEffect(() => { stateRef.current = state; });
+
+  React.useEffect(() => {
+    if (isSeatingPage) {
+      if (prevOpenRef.current === null) {
+        prevOpenRef.current = stateRef.current === 'expanded';
+      }
+      setOpen(false);
+    } else if (prevOpenRef.current !== null) {
+      setOpen(prevOpenRef.current);
+      prevOpenRef.current = null;
+    }
+  }, [isSeatingPage, setOpen]);
 
   const navMainBase = [
     {
@@ -80,7 +104,7 @@ export function AppSidebar({
       id: 'eventDetails',
       title: tNav('eventDetails'),
       url: '/app/details',
-      icon: IconAlertSquareRounded,
+      icon: IconListDetails,
     },
     {
       id: 'guests',
@@ -88,11 +112,27 @@ export function AppSidebar({
       url: '/app/guests',
       icon: IconUsers,
     },
+    ...(!isMobile && process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
+      ? [
+          {
+            id: 'seating',
+            title: tNav('seating'),
+            url: '/app/seating',
+            icon: IconArmchair,
+          },
+        ]
+      : []),
     {
       id: 'schedules',
       title: tNav('schedules'),
       url: '/app/schedules',
       icon: IconCalendar,
+    },
+    {
+      id: 'collaboration',
+      title: tNav('collaboration'),
+      url: '/app/collaborate',
+      icon: IconUsersGroup,
     },
     ...(process.env.NEXT_PUBLIC_ENABLE_BUDGET === 'true'
       ? [
@@ -117,31 +157,38 @@ export function AppSidebar({
     url: buildNavUrl(item.url, eventId),
   }));
 
-  const navSecondary = [
-    {
-      title: tNav('settings'),
-      url: buildNavUrl('/app/settings', eventId),
-      icon: IconSettings,
-    },
-  ];
+  const navSecondary: { title: string; url: string; icon: import('@tabler/icons-react').Icon }[] = [];
 
   return (
-    <Sidebar side={isRTL ? 'right' : 'left'} collapsible="offcanvas" {...props}>
+    <Sidebar
+      side={isRTL ? 'right' : 'left'}
+      collapsible={isSeatingPage ? 'icon' : 'offcanvas'}
+      {...props}
+      variant={isSeatingPage ? 'sidebar' : props.variant}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
-                <PartyPopper className="!size-5" />
-                <span className="text-base font-semibold">Kululu</span>
-                <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
-                  Beta
-                </Badge>
-              </a>
-            </SidebarMenuButton>
+            {state === 'collapsed' ? (
+              <SidebarMenuButton asChild>
+                <a href="#" className="justify-center">
+                  <PartyPopper className="!size-5" />
+                </a>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                asChild
+                className="data-[slot=sidebar-menu-button]:!p-1.5"
+              >
+                <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
+                  <PartyPopper className="!size-5" />
+                  <span className="text-base font-semibold">Kululu</span>
+                  <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
+                    Beta
+                  </Badge>
+                </a>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -150,7 +197,7 @@ export function AppSidebar({
         <NavSecondary items={navSecondary} disabled={!eventId} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        {process.env.NODE_ENV !== 'production' && (
+        {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
           <div className="px-2 pb-1">
             <LanguageSwitcher />
           </div>

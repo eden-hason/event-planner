@@ -4,6 +4,10 @@ import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
+import { getEffectiveUser } from '@/features/auth/queries';
+import { AiChatButton } from '@/features/ai-chat/components/ai-chat-button';
+import { LayoutContentWrapper } from '@/components/layout-content-wrapper';
+import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
 
 export default async function Layout({
   children,
@@ -22,25 +26,16 @@ export default async function Layout({
     return redirect({ href: '/login', locale });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, avatar_url, phone_number')
-    .eq('id', data.user.id)
-    .single();
+  const effectiveUser = await getEffectiveUser();
 
   const user = {
-    name:
-      profile?.full_name ||
-      data.user.user_metadata?.name ||
-      data.user.email ||
-      data.user.phone ||
-      '',
-    email: data.user.email,
-    phone: profile?.phone_number || data.user.phone,
-    avatar: profile?.avatar_url || data.user.user_metadata?.avatar_url,
+    name: effectiveUser?.displayName || '',
+    email: effectiveUser?.email,
+    phone: effectiveUser?.phone,
+    avatar: effectiveUser?.avatar,
   };
 
-  // Fetch user events
+  // Fetch events for the effective user (impersonation-aware)
   const events = await getAllUserEvents();
 
   return (
@@ -48,13 +43,13 @@ export default async function Layout({
       <AppSidebar
         variant="floating"
         events={events}
-        currentUserId={data.user.id}
+        currentUserId={effectiveUser?.id ?? data.user.id}
         user={user}
       />
       <SidebarInset className="!bg-[#F4F4F6]">
-        <div className="flex-1 py-4">
-          <div className="container mx-auto h-full">{children}</div>
-        </div>
+        <ImpersonationBanner />
+        <LayoutContentWrapper>{children}</LayoutContentWrapper>
+        {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
       </SidebarInset>
     </SidebarProvider>
   );

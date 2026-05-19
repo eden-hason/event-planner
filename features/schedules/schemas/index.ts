@@ -145,6 +145,22 @@ export const ScheduleUpsertSchema = z.object({
 
 export type ScheduleUpsert = z.infer<typeof ScheduleUpsertSchema>;
 
+// --- Setup Wizard Selection Schema ---
+// One user-customized schedule chosen in the schedule setup wizard.
+export const ScheduleSelectionItemSchema = z.object({
+  templateKey: z.string().min(1),
+  actionType: z.enum(ACTION_TYPES),
+  scheduledDate: z.string(),
+  scheduledTime: z.string(),
+  targetStatus: z.enum(['pending', 'confirmed']).nullable(),
+  // null = active; 'cancelled' = created but disabled (user opted out in the wizard)
+  status: z.enum(SCHEDULE_STATUSES).nullable(),
+});
+
+export type ScheduleSelectionItem = z.infer<typeof ScheduleSelectionItemSchema>;
+
+export const ScheduleSelectionSchema = z.array(ScheduleSelectionItemSchema);
+
 // --- App to DB Transformer ---
 export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
   const dbData: Record<string, unknown> = {};

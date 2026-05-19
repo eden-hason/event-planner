@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
   GroupDbToAppTransformerSchema,
   GroupApp,
@@ -8,7 +8,7 @@ import {
 
 export const getEventGroups = async (eventId: string): Promise<GroupApp[]> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data: groups, error } = await supabase
       .from('groups')
       .select('*')
@@ -53,7 +53,7 @@ export const getEventGroupsWithGuests = async (
   eventId: string,
 ): Promise<GroupWithGuestsApp[]> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     // Fetch groups with their guests using Supabase's relation syntax
     // This assumes you have set up the foreign key relationship in Supabase
@@ -118,7 +118,7 @@ export const getGroupById = async (
   groupId: string,
 ): Promise<GroupApp | null> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data: group, error } = await supabase
       .from('groups')
       .select('*')

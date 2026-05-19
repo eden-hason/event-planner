@@ -341,3 +341,10 @@ a:focus-visible {
 }
 
 /* Toast styling - using default background colors */
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

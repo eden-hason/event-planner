@@ -21,6 +21,11 @@ function formatPhoneE164(phone: string): string {
   return '+972' + cleaned;
 }
 
+// ─── SMS fallback toggle ──────────────────────────────────────────────────────
+// Temporarily disabled — schedules send via WhatsApp only until the SMS copy
+// per message type is finalised. Flip to `true` to restore the fallback.
+const SMS_FALLBACK_ENABLED = false;
+
 // ─── Error categorisation ─────────────────────────────────────────────────────
 // Edit the sets below to change fallback behavior per Meta error code.
 
@@ -103,7 +108,7 @@ export async function sendToGuest(params: {
 
   const category = categoriseWhatsAppError(waResult.errorCode);
 
-  if (category === 'permanent') {
+  if (SMS_FALLBACK_ENABLED && category === 'permanent') {
     const smsBody = buildSmsFallbackBody(context, confirmationToken);
     const smsResult = await sendSmsMessage({ to: phoneE164, body: smsBody });
     if (smsResult.success) {
@@ -131,8 +136,8 @@ export async function sendToGuest(params: {
 // ─── Chunked batch sender ─────────────────────────────────────────────────────
 // Sends in chunks of CHUNK_SIZE to stay within Meta's 80 MPS throughput limit.
 
-const CHUNK_SIZE = 50;
-const CHUNK_DELAY_MS = 1200;
+const CHUNK_SIZE = 25;
+const CHUNK_DELAY_MS = 500;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -143,10 +148,17 @@ export async function sendInChunks(
   buildParams: (
     guest: GuestApp,
   ) => Omit<Parameters<typeof sendToGuest>[0], 'guest'>,
+  onChunkComplete?: (
+    results: PromiseSettledResult<GuestSendResult>[],
+    chunkIndex: number,
+    totalChunks: number,
+  ) => Promise<void>,
 ): Promise<PromiseSettledResult<GuestSendResult>[]> {
   const allResults: PromiseSettledResult<GuestSendResult>[] = [];
+  const totalChunks = Math.ceil(guests.length / CHUNK_SIZE);
 
   for (let i = 0; i < guests.length; i += CHUNK_SIZE) {
+    const chunkIndex = Math.floor(i / CHUNK_SIZE);
     const chunk = guests.slice(i, i + CHUNK_SIZE);
 
     const chunkResults = await Promise.allSettled(
@@ -154,6 +166,10 @@ export async function sendInChunks(
     );
 
     allResults.push(...chunkResults);
+
+    if (onChunkComplete) {
+      await onChunkComplete(chunkResults, chunkIndex, totalChunks);
+    }
 
     if (i + CHUNK_SIZE < guests.length) {
       await sleep(CHUNK_DELAY_MS);
@@ -168,6 +184,7 @@ export async function sendInChunks(
 export function buildDeliveryRecord(
   scheduleId: string,
   result: GuestSendResult,
+  triggeredBy: 'scheduled' | 'manual' = 'scheduled',
 ): Record<string, unknown> {
   return {
     schedule_id: scheduleId,
@@ -179,6 +196,7 @@ export function buildDeliveryRecord(
     error_message: result.success ? null : result.message,
     error_code: result.errorCode ?? null,
     confirmation_token: result.confirmationToken,
+    triggered_by: triggeredBy,
   };
 }
 

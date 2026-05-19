@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
   DbToAppTransformerSchema,
   GuestApp,
@@ -8,7 +8,7 @@ import {
 
 export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data: guests, error } = await supabase
       .from('guests')
       .select('*')
@@ -56,7 +56,7 @@ export const getGuestsWithInitialInvitation = async (
   eventId: string,
 ): Promise<Set<string>> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data } = await supabase
       .from('message_deliveries')
       .select('guest_id, schedules!inner(action_type, event_id)')
@@ -74,7 +74,7 @@ export const getEventGuestPhones = async (
   eventId: string,
 ): Promise<Map<string, string>> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data, error } = await supabase
       .from('guests')
       .select('phone_number, name')
@@ -106,7 +106,7 @@ export const getEventGuestsWithGroups = async (
   eventId: string,
 ): Promise<GuestWithGroupApp[]> => {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
 
     // Fetch guests with their group using Supabase's relation syntax
     const { data: guests, error } = await supabase

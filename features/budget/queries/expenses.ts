@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { getEffectiveClient } from '@/lib/supabase/admin';
 import { ExpenseDbToAppTransformerSchema } from '../schemas/expenses';
 import type { ExpenseApp } from '../schemas/expenses';
 
 export async function getEventExpenses(eventId: string): Promise<ExpenseApp[]> {
   try {
-    const supabase = await createClient();
+    const { supabase } = await getEffectiveClient();
     const { data, error } = await supabase
       .from('expenses')
       .select('*')

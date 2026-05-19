@@ -135,7 +135,7 @@ export function EventInvitationCard({
           disabled={isUploading}
         >
           {hasPreview ? (
-            <div className="group relative aspect-[3/4] w-56 overflow-hidden rounded-lg border-0 bg-[#F4E5D8] p-6">
+            <div className="group relative aspect-[3/4] w-56 overflow-hidden rounded-lg border-0">
               {isUploading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/50">
                   <div className="flex flex-col items-center gap-2 text-white">
@@ -149,7 +149,7 @@ export function EventInvitationCard({
                   value={files[0]}
                   className="size-full border-0 bg-transparent p-0"
                 >
-                  <FileUploadItemPreview className="size-full rounded-lg border-0 bg-transparent [&>img]:rounded-md [&>img]:object-contain" />
+                  <FileUploadItemPreview className="size-full rounded-lg border-0 bg-transparent [&>img]:size-full [&>img]:object-cover" />
                   <FileUploadItemDelete asChild>
                     <Button
                       variant="destructive"
@@ -170,7 +170,7 @@ export function EventInvitationCard({
                   <img
                     src={previewUrl}
                     alt="Invitation"
-                    className="size-full rounded-md object-contain"
+                    className="size-full object-cover"
                   />
                   <Button
                     variant="destructive"

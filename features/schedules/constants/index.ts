@@ -33,13 +33,6 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
     targetStatus: 'pending',
   },
   {
-    templateKey: 'confirmation_casual_v1_he',
-    actionType: 'confirmation',
-    daysOffset: -10,
-    defaultTime: '10:00',
-    targetStatus: 'pending',
-  },
-  {
     templateKey: 'event_reminder_v1_he',
     actionType: 'event_reminder',
     daysOffset: 0,
