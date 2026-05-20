@@ -10,49 +10,53 @@ export interface LocationCoords {
   lng: number;
 }
 
-// Silver/Gray map style - elegant monochrome theme with visible POI labels
-const silverMapStyle: google.maps.MapTypeStyle[] = [
+const vibrantMapStyle: google.maps.MapTypeStyle[] = [
   {
     elementType: 'geometry',
-    stylers: [{ color: '#f5f5f5' }],
+    stylers: [{ color: '#f2efe9' }],
   },
   {
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#616161' }],
+    stylers: [{ color: '#4a4a4a' }],
   },
   {
     elementType: 'labels.text.stroke',
-    stylers: [{ color: '#f5f5f5' }],
+    stylers: [{ color: '#ffffff' }],
   },
   {
-    featureType: 'administrative.land_parcel',
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#4fc3f7' }],
+  },
+  {
+    featureType: 'water',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#bdbdbd' }],
+    stylers: [{ color: '#0277bd' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#66bb6a' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#2e7d32' }],
   },
   {
     featureType: 'poi',
     elementType: 'geometry',
-    stylers: [{ color: '#eeeeee' }],
+    stylers: [{ color: '#e8d5b0' }],
   },
   {
     featureType: 'poi',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#555555' }],
+    stylers: [{ color: '#6d4c41' }],
   },
   {
     featureType: 'poi',
     elementType: 'labels.icon',
-    stylers: [{ saturation: -100 }, { lightness: 20 }],
-  },
-  {
-    featureType: 'poi.park',
-    elementType: 'geometry',
-    stylers: [{ color: '#e8e8e8' }],
-  },
-  {
-    featureType: 'poi.park',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#7a7a7a' }],
+    stylers: [{ saturation: 40 }, { lightness: -10 }],
   },
   {
     featureType: 'road',
@@ -60,19 +64,24 @@ const silverMapStyle: google.maps.MapTypeStyle[] = [
     stylers: [{ color: '#ffffff' }],
   },
   {
-    featureType: 'road.arterial',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#757575' }],
-  },
-  {
     featureType: 'road.highway',
     elementType: 'geometry',
-    stylers: [{ color: '#dadada' }],
+    stylers: [{ color: '#fdd835' }],
   },
   {
     featureType: 'road.highway',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#616161' }],
+    stylers: [{ color: '#5d4037' }],
+  },
+  {
+    featureType: 'road.arterial',
+    elementType: 'geometry',
+    stylers: [{ color: '#fce4b0' }],
+  },
+  {
+    featureType: 'road.arterial',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#795548' }],
   },
   {
     featureType: 'road.local',
@@ -82,22 +91,17 @@ const silverMapStyle: google.maps.MapTypeStyle[] = [
   {
     featureType: 'transit.line',
     elementType: 'geometry',
-    stylers: [{ color: '#e5e5e5' }],
+    stylers: [{ color: '#ce93d8' }],
   },
   {
     featureType: 'transit.station',
     elementType: 'geometry',
-    stylers: [{ color: '#eeeeee' }],
+    stylers: [{ color: '#f3e5f5' }],
   },
   {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#c9c9c9' }],
-  },
-  {
-    featureType: 'water',
+    featureType: 'administrative.land_parcel',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#9e9e9e' }],
+    stylers: [{ color: '#a1887f' }],
   },
 ];
 
@@ -190,11 +194,11 @@ export function GoogleMap({
           markerRef.current = null;
         }
 
-        // Create map with silver styles (no mapId to avoid cloud styling override)
+        // No mapId — avoids cloud styling override so custom styles apply
         mapRef.current = new Map(mapContainerRef.current, {
           center: coords,
           zoom,
-          styles: silverMapStyle,
+          styles: vibrantMapStyle,
           disableDefaultUI: true,
           zoomControl: true,
         });

@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { createPortal } from 'react-dom';
 import { MapPin } from 'lucide-react';
 import { importLibrary } from '@googlemaps/js-api-loader';
 import { cn } from '@/lib/utils';
@@ -17,6 +16,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
 import { initGoogleMapsOptions, LocationCoords } from './google-map';
 
@@ -51,21 +51,11 @@ export function LocationInput({
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-  const [dropdownRect, setDropdownRect] = React.useState<DOMRect | null>(null);
 
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const autocompleteService =
     React.useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = React.useRef<google.maps.places.PlacesService | null>(
-    null,
-  );
+  const placesService = React.useRef<google.maps.places.PlacesService | null>(null);
   const placesServiceDivRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Initialize Google Maps
   React.useEffect(() => {
@@ -151,33 +141,8 @@ export function LocationInput({
     return () => clearTimeout(timer);
   }, [searchQuery, fetchPredictions, isInitialized]);
 
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, []);
-
-  const hasNoResults =
-    hasSearched && !isLoading && predictions.length === 0;
+  const hasNoResults = hasSearched && !isLoading && predictions.length === 0;
   const showCommandList = isOpen && (hasNoResults || predictions.length > 0);
-
-  // Track input position for portal-rendered dropdown
-  React.useLayoutEffect(() => {
-    if (showCommandList && containerRef.current) {
-      setDropdownRect(containerRef.current.getBoundingClientRect());
-    }
-  }, [showCommandList]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -195,7 +160,6 @@ export function LocationInput({
     setHasSearched(false);
     setIsOpen(false);
 
-    // Get place details to get coordinates
     if (placesService.current) {
       try {
         const placeDetails =
@@ -244,76 +208,69 @@ export function LocationInput({
       shouldFilter={false}
       loop
     >
-      <div ref={containerRef} className="relative">
-        <InputGroup
-          className={cn(
-            '!border-input !bg-popover !ring-0',
-            showCommandList && 'rounded-b-none',
-          )}
-        >
-          <InputGroupAddon>
-            <MapPin />
-          </InputGroupAddon>
-          <InputGroupInput
-            placeholder={placeholder}
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={() => {
-              if (predictions.length > 0 || hasNoResults) {
-                setIsOpen(true);
-              }
-            }}
-            disabled={disabled || !isInitialized}
-          />
-          {(isLoading || !isInitialized) && (
-            <InputGroupAddon align="inline-end">
-              <Spinner />
+      <Popover open={showCommandList}>
+        <PopoverAnchor asChild>
+          <InputGroup
+            className={cn(
+              '!border-input !bg-popover !ring-0',
+              showCommandList && 'rounded-b-none',
+            )}
+          >
+            <InputGroupAddon>
+              <MapPin />
             </InputGroupAddon>
-          )}
-        </InputGroup>
-        {showCommandList && mounted && dropdownRect && createPortal(
-          <div ref={dropdownRef}>
-            <CommandList
-              className={cn(
-                'bg-popover border-input fixed rounded-b-md border border-t-0 shadow-md',
-                'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
-              )}
-              style={{
-                top: dropdownRect.bottom,
-                left: dropdownRect.left,
-                width: dropdownRect.width,
-                zIndex: 9999,
+            <InputGroupInput
+              placeholder={placeholder}
+              value={inputValue}
+              onChange={handleInputChange}
+              onFocus={() => {
+                if (predictions.length > 0 || hasNoResults) {
+                  setIsOpen(true);
+                }
               }}
-            >
-              {hasNoResults && (
-                <CommandEmpty>No locations found.</CommandEmpty>
-              )}
-              {predictions.length > 0 && (
-                <CommandGroup>
-                  {predictions.map((prediction) => (
-                    <CommandItem
-                      key={prediction.place_id}
-                      value={prediction.place_id}
-                      onSelect={() => handleSelectPrediction(prediction)}
-                    >
-                      <MapPin />
-                      <div className="flex flex-col items-start text-start">
-                        <span className="font-medium">
-                          {prediction.structured_formatting.main_text}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          {prediction.structured_formatting.secondary_text}
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </div>,
-          document.body,
-        )}
-      </div>
+              disabled={disabled || !isInitialized}
+            />
+            {(isLoading || !isInitialized) && (
+              <InputGroupAddon align="inline-end">
+                <Spinner />
+              </InputGroupAddon>
+            )}
+          </InputGroup>
+        </PopoverAnchor>
+        <PopoverContent
+          align="start"
+          sideOffset={0}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={() => setIsOpen(false)}
+          className="rounded-t-none border-t-0 p-0"
+          style={{ width: 'var(--radix-popover-trigger-width)' }}
+        >
+          <CommandList>
+            {hasNoResults && <CommandEmpty>No locations found.</CommandEmpty>}
+            {predictions.length > 0 && (
+              <CommandGroup>
+                {predictions.map((prediction) => (
+                  <CommandItem
+                    key={prediction.place_id}
+                    value={prediction.place_id}
+                    onSelect={() => handleSelectPrediction(prediction)}
+                  >
+                    <MapPin />
+                    <div className="flex flex-col items-start text-start">
+                      <span className="font-medium">
+                        {prediction.structured_formatting.main_text}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        {prediction.structured_formatting.secondary_text}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </PopoverContent>
+      </Popover>
     </Command>
   );
 }
