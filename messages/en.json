@@ -1158,10 +1158,23 @@
   },
   "eventDetails": {
     "notFound": "Event not found",
+    "statusAlert": {
+      "success": {
+        "title": "Your event is ready to go",
+        "description": "All required details are set and guests will receive all messages"
+      },
+      "warning": {
+        "title": "Some details are missing",
+        "description": "Complete the following to ensure guests receive all messages"
+      },
+      "items": {
+        "venueLocation": "Venue location (needed for the reminder message navigation link)",
+        "invitationImage": "Invitation image (needed for the initial invitation message)"
+      }
+    },
     "header": {
       "title": "Event Details",
-      "description": "View and manage your event information",
-      "discard": "Discard",
+      "description": "Manage your event information",
       "save": "Save",
       "saving": "Saving..."
     },
@@ -1180,6 +1193,8 @@
     },
     "couple": {
       "title": "The Couple",
+      "bride": "Bride",
+      "groom": "Groom",
       "coupleNames": "Couple Names",
       "brideName": "Bride Name",
       "groomName": "Groom Name",
@@ -1194,7 +1209,17 @@
     "location": {
       "title": "Location",
       "label": "Venue Name",
-      "placeholder": "Search for venue address..."
+      "placeholder": "Search for venue address...",
+      "status": {
+        "set": {
+          "title": "You're all set!",
+          "description": "Guests will receive a navigation link to the venue in their reminder message"
+        },
+        "notSet": {
+          "title": "No venue added yet",
+          "description": "Guests won't get a navigation link in their day-of reminder"
+        }
+      }
     },
     "invitation": {
       "title": "Event Invitation",
@@ -1204,7 +1229,17 @@
       "upload": "Upload",
       "uploading": "Uploading...",
       "removeImage": "Remove image",
-      "failedUpload": "Failed to upload image"
+      "failedUpload": "Failed to upload image",
+      "status": {
+        "set": {
+          "title": "You're all set!",
+          "description": "Guests will receive this invitation image in their first message"
+        },
+        "notSet": {
+          "title": "No invitation image yet",
+          "description": "Guests won't receive an invitation image in their first message"
+        }
+      }
     },
     "guestExperience": {
       "title": "Guest Experience",

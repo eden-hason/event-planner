@@ -1,10 +1,7 @@
 'use client';
 
-import { useActionState, startTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
-import { Form } from '@/components/ui/form';
+import { useTranslations } from 'next-intl';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import { EventDetailsHeader } from './event-details-header';
 import { DateTimeCard } from './date-time-card';
 import { LocationCard } from './location-card';
@@ -12,136 +9,64 @@ import { CoupleCard } from './couple-card';
 import { DigitalGiftCard } from './digital-gift-card';
 import { GuestExperienceCard } from './guest-experience-card';
 import { EventInvitationCard } from './event-invitation-card';
-import {
-  EventApp,
-  EventDetailsUpdateSchema,
-  EventDetailsUpdate,
-  UpdateEventDetailsState,
-  WeddingHostDetails,
-} from '../../schemas';
-import { updateEventDetails } from '../../actions';
+import { EventApp } from '../../schemas';
 
 interface EventDetailsWrapperProps {
   event: EventApp;
 }
 
 export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
-  // Cast hostDetails to WeddingHostDetails for type safety
-  const hostDetails = event.hostDetails as WeddingHostDetails | undefined;
+  const t = useTranslations('eventDetails.statusAlert');
 
-  // Set up react-hook-form with zodResolver
-  const form = useForm<EventDetailsUpdate>({
-    resolver: zodResolver(EventDetailsUpdateSchema),
-    defaultValues: {
-      id: event.id,
-      eventDate: event.eventDate || '',
-      eventType: event.eventType || '',
-      receptionTime: event.receptionTime || '',
-      ceremonyTime: event.ceremonyTime || '',
-      location: event.location || undefined,
-      hostDetails: {
-        bride: {
-          name: hostDetails?.bride?.name || '',
-          parents: hostDetails?.bride?.parents || '',
-        },
-        groom: {
-          name: hostDetails?.groom?.name || '',
-          parents: hostDetails?.groom?.parents || '',
-        },
-      },
-      eventSettings: {
-        payboxConfig: {
-          enabled: event.eventSettings?.payboxConfig?.enabled || false,
-          link: event.eventSettings?.payboxConfig?.link || '',
-        },
-        bitConfig: {
-          enabled: event.eventSettings?.bitConfig?.enabled || false,
-          phoneNumber: event.eventSettings?.bitConfig?.phoneNumber || '',
-        },
-      },
-      invitations: {
-        imageUrl: event.invitations?.imageUrl || undefined,
-      },
-      guestExperience: {
-        dietaryOptions: event.guestExperience?.dietaryOptions ?? false,
-        dietaryTypes: event.guestExperience?.dietaryTypes ?? ['vegetarian', 'vegan', 'gluten_free', 'strictly_kosher'],
-        lockGuestCount: event.guestExperience?.lockGuestCount ?? false,
-      },
-    },
-  });
+  const hasVenueLocation = !!event.location?.coords;
+  const hasInvitationImage = !!event.invitations?.imageUrl;
+  const allSet = hasVenueLocation && hasInvitationImage;
 
-  const isDirty = form.formState.isDirty;
-
-  // Server action state management
-  const [, formAction, isPending] = useActionState(
-    async (prevState: UpdateEventDetailsState | null, formData: FormData) => {
-      try {
-        const result = await updateEventDetails(formData);
-
-        if (result.success) {
-          toast.success(result.message);
-          form.reset(form.getValues());
-        } else {
-          toast.error(result.message);
-        }
-
-        return result;
-      } catch (error) {
-        console.error('Form submission error:', error);
-        return { success: false, message: 'An unexpected error occurred' };
-      }
-    },
-    null,
-  );
-
-  // Handle form submission - convert form values to FormData
-  const onSubmit = (values: EventDetailsUpdate) => {
-    const formData = new FormData();
-
-    Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        // Stringify objects (hostDetails, eventSettings) for FormData
-        if (typeof value === 'object') {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, String(value));
-        }
-      }
-    });
-
-    startTransition(() => {
-      formAction(formData);
-    });
-  };
-
-  const handleDiscard = () => {
-    form.reset();
-  };
-
-  const formId = 'event-details-form';
+  const missingItems = [
+    !hasVenueLocation && t('items.venueLocation'),
+    !hasInvitationImage && t('items.invitationImage'),
+  ].filter(Boolean) as string[];
 
   return (
-    <Form {...form}>
-      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-3xl">
-        <EventDetailsHeader
-          formId={formId}
-          isDirty={isDirty}
-          isPending={isPending}
-          onDiscard={handleDiscard}
-        />
+    <div className="mx-auto max-w-3xl">
+      <EventDetailsHeader />
 
-        <div className="flex flex-col gap-4">
-          <DateTimeCard />
-          <CoupleCard />
-          <LocationCard />
-          <EventInvitationCard
-            eventId={event.id}
-            imageUrl={event.invitations?.imageUrl}
-          />
-          <DigitalGiftCard />
-          <GuestExperienceCard />
-        </div>
-      </form>
-    </Form>
+      <div className="mb-4">
+        {allSet ? (
+          <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+            <div>
+              <p className="font-medium">{t('success.title')}</p>
+              <p className="text-xs opacity-80">{t('success.description')}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div>
+              <p className="font-medium">{t('warning.title')}</p>
+              <p className="text-xs opacity-80">{t('warning.description')}</p>
+              <ul className="mt-1 list-disc ps-4 text-xs opacity-80">
+                {missingItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <DateTimeCard event={event} />
+        <CoupleCard event={event} />
+        <LocationCard event={event} />
+        <EventInvitationCard
+          eventId={event.id}
+          imageUrl={event.invitations?.imageUrl}
+        />
+        <DigitalGiftCard event={event} />
+        <GuestExperienceCard event={event} />
+      </div>
+    </div>
   );
 }
