@@ -83,6 +83,18 @@ export function HomepageClient() {
 
   const selectedTable = tabIdx === 1 ? 7 : tabIdx === 2 ? 2 : 4;
 
+  const [activeScene, setActiveScene] = useState<string>('guests');
+  const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0]));
+
+  function toggleFaq(i: number) {
+    setOpenFaqs((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
   return (
     <>
       <style>{`
@@ -125,8 +137,9 @@ export function HomepageClient() {
         .btn-ghost:hover{border-color:rgba(26,11,46,0.18);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
         .btn-lg{padding:16px 28px;font-size:16px;border-radius:16px}
 
-        .hero{position:relative;padding:64px 0 96px;overflow:hidden}
-        .hero::before{content:"";position:absolute;inset:-20% -10% 30% -10%;background:var(--grad-soft);filter:blur(40px);z-index:-2;border-radius:50%;opacity:.9}
+        .hero{position:relative;min-height:calc(100vh - 76px);display:flex;align-items:center;padding:64px 0;overflow:hidden}
+        .hero .wrap{width:100%}
+        .hero::before{content:"";position:absolute;inset:-20% -10% -10% -10%;background:var(--grad-soft);filter:blur(40px);z-index:-2;border-radius:50%;opacity:.9}
         .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:center}
         .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;background:#fff;border:1px solid var(--line);border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-2);box-shadow:var(--shadow-sm)}
         .badge .dot{width:22px;height:22px;border-radius:999px;background:var(--grad-bold);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
@@ -212,6 +225,109 @@ export function HomepageClient() {
         .f-icon.peach{background:linear-gradient(135deg,#FFBCAD,#FF8E73);color:#5a1b0c;box-shadow:0 6px 16px rgba(255,142,115,0.28)}
         .f-title{font-size:19px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
         .f-text{font-size:14.5px;color:var(--ink-2);line-height:1.5;margin:0}
+
+        /* ===== DEEP DIVE / ACCORDION ===== */
+        .deep{background:radial-gradient(60% 80% at 100% 0%,rgba(167,139,250,0.06) 0%,transparent 60%),radial-gradient(60% 80% at 0% 100%,rgba(210,60,194,0.05) 0%,transparent 60%),#FAFAFA}
+        .deep-head{text-align:right;max-width:720px;margin-bottom:48px}
+        .deep-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:48px;align-items:stretch}
+        .acc{display:flex;flex-direction:column;gap:12px}
+        .acc-item{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:border-color .25s ease,box-shadow .25s ease}
+        .acc-item.active{border-color:rgba(210,60,194,0.3);box-shadow:0 12px 32px rgba(210,60,194,0.08),0 2px 8px rgba(26,11,46,0.04)}
+        .acc-trigger{width:100%;display:flex;align-items:center;gap:16px;padding:20px 22px;text-align:right;transition:background .15s ease}
+        .acc-trigger:hover{background:rgba(26,11,46,0.02)}
+        .acc-item.active .acc-trigger:hover{background:transparent}
+        .acc-ic{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;transition:transform .3s cubic-bezier(.2,.7,.4,1)}
+        .acc-item.active .acc-ic{transform:scale(1.08)}
+        .acc-ic.magenta{background:linear-gradient(135deg,#D23CC2,#B92AAB);box-shadow:0 4px 12px rgba(210,60,194,0.28)}
+        .acc-ic.green{background:linear-gradient(135deg,#25D366,#1FB358);box-shadow:0 4px 12px rgba(37,211,102,0.25)}
+        .acc-ic.lavender{background:linear-gradient(135deg,#A78BFA,#7F5AF0);box-shadow:0 4px 12px rgba(167,139,250,0.28)}
+        .acc-ic.peach{background:linear-gradient(135deg,#FFBCAD,#FF8E73);color:#5a1b0c;box-shadow:0 4px 12px rgba(255,142,115,0.28)}
+        .acc-ic.sun{background:linear-gradient(135deg,#FFE08A,#FFB84D);color:#5a3a00;box-shadow:0 4px 12px rgba(255,184,77,0.25)}
+        .acc-title{flex:1;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+        .acc-chev{width:32px;height:32px;border-radius:999px;background:rgba(26,11,46,0.05);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);flex-shrink:0;transition:transform .35s cubic-bezier(.2,.7,.4,1),background .2s ease,color .2s ease}
+        .acc-item.active .acc-chev{background:var(--primary);color:#fff;transform:rotate(180deg)}
+        .acc-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+        .acc-item.active .acc-body{max-height:320px}
+        .acc-content{padding:0 78px 22px 22px;color:var(--ink-2);font-size:15px;line-height:1.6}
+        .acc-content p{margin:0 0 14px}
+        .acc-bullets{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+        .acc-bullets li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);font-weight:500}
+        .acc-bullets li::before{content:"";width:6px;height:6px;border-radius:999px;background:var(--primary);flex-shrink:0}
+        .deep-visual{position:sticky;top:100px;align-self:start;background:linear-gradient(160deg,#FFEAF8 0%,#F1E8FF 55%,#FFE6DC 100%);border-radius:28px;padding:36px;min-height:520px;border:1px solid rgba(210,60,194,0.08);box-shadow:var(--shadow-md);overflow:hidden}
+        .deep-visual::before{content:"";position:absolute;width:220px;height:220px;background:radial-gradient(circle,rgba(255,255,255,0.6) 0%,transparent 65%);top:-60px;right:-60px;border-radius:50%;pointer-events:none}
+        .dv-panel{position:relative;width:100%;height:100%;min-height:450px}
+        .dv-scene{position:absolute;inset:0;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease;pointer-events:none;display:flex;flex-direction:column;gap:14px}
+        .dv-scene.active{opacity:1;transform:none;pointer-events:auto}
+        .dv-card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(26,11,46,0.08),0 2px 6px rgba(26,11,46,0.04);border:1px solid rgba(26,11,46,0.04)}
+        .dv-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);font-weight:700;margin-bottom:8px}
+        .dv-h{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin:0 0 4px}
+        .dv-s{font-size:12px;color:var(--ink-3);margin:0}
+        .dv-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .dv-stat{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid rgba(26,11,46,0.04)}
+        .dv-stat .n{font-size:22px;font-weight:800;letter-spacing:-0.02em}
+        .dv-stat .l{font-size:10px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+        .dv-stat.magenta .n{color:#D23CC2}
+        .dv-stat.lavender .n{color:#7F5AF0}
+        .dv-stat.peach .n{color:#C45A3E}
+        .dv-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+        .dv-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(26,11,46,0.025);font-size:12px}
+        .dv-row .av{width:28px;height:28px;border-radius:999px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+        .dv-row .nm{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .dv-row .meta{font-size:10px;color:var(--ink-3);font-weight:500;margin-left:4px}
+        .dv-row .tg{font-size:9px;font-weight:700;padding:3px 8px;border-radius:999px}
+        .dv-wa-thread{display:flex;flex-direction:column;gap:10px}
+        .dv-wa-line{max-width:80%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.4;box-shadow:0 2px 6px rgba(26,11,46,0.05)}
+        .dv-wa-line.out{align-self:flex-end;background:linear-gradient(135deg,#DCF8C6,#B7E4C7);color:#14361f;border-bottom-right-radius:4px}
+        .dv-wa-line.in{align-self:flex-start;background:#fff;color:var(--ink);border-bottom-left-radius:4px}
+        .dv-wa-line .who{font-size:10px;color:var(--ink-3);font-weight:700;margin-bottom:2px}
+        .dv-wa-line .stamp{font-size:10px;color:var(--ink-3);margin-top:4px;display:flex;align-items:center;gap:4px;justify-content:flex-end}
+        .dv-wa-bar{height:6px;border-radius:999px;background:rgba(26,11,46,0.08);overflow:hidden;position:relative}
+        .dv-wa-bar i{position:absolute;inset:0 auto 0 0;width:82%;background:linear-gradient(90deg,#25D366,#1FB358);border-radius:999px}
+        .seat-stage{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px}
+        .seat-t{aspect-ratio:1;border-radius:999px;background:rgba(26,11,46,0.05);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink-2);transition:all .25s ease}
+        .seat-t.full{background:linear-gradient(135deg,#D23CC2,#A78BFA);color:#fff;box-shadow:0 6px 14px rgba(210,60,194,0.28)}
+        .seat-t.partial{background:rgba(255,188,173,0.55);color:#8C2E1B}
+        .seat-t.empty{border:2px dashed rgba(26,11,46,0.12);background:transparent;color:var(--ink-3)}
+        .seat-t.sel{background:#fff;border:2px solid var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(210,60,194,0.12),0 6px 14px rgba(210,60,194,0.18);transform:scale(1.06)}
+        .ai-sug{background:linear-gradient(135deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06));border:1px solid rgba(210,60,194,0.15);border-radius:14px;padding:14px;display:flex;gap:12px;margin-top:8px}
+        .ai-sug .spark2{width:32px;height:32px;border-radius:10px;background:var(--grad-bold);display:inline-flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+        .ai-sug .copy{flex:1}
+        .ai-sug .t{font-size:13px;font-weight:700}
+        .ai-sug .s{font-size:11px;color:var(--ink-2);margin-top:2px;line-height:1.4}
+        .ai-acts{display:flex;gap:6px;margin-top:10px}
+        .ai-acts .chip{padding:5px 10px;font-size:11px;font-weight:600;border-radius:999px;background:#fff;border:1px solid rgba(26,11,46,0.08);color:var(--ink)}
+        .ai-acts .chip.prim{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .inv-card{background:linear-gradient(160deg,#FFFFFF 0%,#FFF5FB 100%);border-radius:16px;padding:22px;text-align:center;border:1px solid rgba(210,60,194,0.12);box-shadow:0 6px 18px rgba(26,11,46,0.05);position:relative;overflow:hidden}
+        .inv-monogram{width:56px;height:56px;border-radius:999px;background:var(--grad-bold);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;margin:0 auto 12px;box-shadow:0 8px 20px rgba(210,60,194,0.3)}
+        .inv-title{font-size:18px;font-weight:800;letter-spacing:-0.01em}
+        .inv-sub{font-size:12px;color:var(--ink-3);margin-top:4px}
+        .inv-acts{display:flex;gap:8px;justify-content:center;margin-top:16px}
+        .inv-btn-yes{padding:8px 14px;font-size:12px;font-weight:700;border-radius:10px;background:var(--primary);color:#fff}
+        .inv-btn-no{padding:8px 14px;font-size:12px;font-weight:700;border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+        @media(max-width:980px){.deep-grid{grid-template-columns:1fr;gap:32px}.deep-visual{position:static;min-height:460px;padding:28px}.acc-content{padding:0 22px 22px}}
+        @media(max-width:560px){.dv-stat-row{gap:6px}.dv-stat{padding:10px}.dv-stat .n{font-size:18px}}
+
+        /* ===== FAQ ===== */
+        .faq-wrap{max-width:780px;margin:0 auto}
+        .faq-list{display:flex;flex-direction:column;gap:12px}
+        .faq-item{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:border-color .25s ease,box-shadow .25s ease}
+        .faq-item:hover{border-color:rgba(26,11,46,0.14);box-shadow:var(--shadow-sm)}
+        .faq-item.open{border-color:rgba(210,60,194,0.25);box-shadow:0 8px 24px rgba(210,60,194,0.06),0 2px 6px rgba(26,11,46,0.04)}
+        .faq-trigger{width:100%;display:flex;align-items:center;gap:18px;padding:22px 26px;text-align:right}
+        .faq-q{flex:1;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--ink);line-height:1.4}
+        .faq-plus{width:32px;height:32px;border-radius:999px;background:rgba(26,11,46,0.05);color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s ease,color .2s ease}
+        .faq-plus svg{transition:transform .35s cubic-bezier(.2,.7,.4,1)}
+        .faq-item.open .faq-plus{background:var(--primary);color:#fff}
+        .faq-item.open .faq-plus svg{transform:rotate(45deg)}
+        .faq-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+        .faq-item.open .faq-body{max-height:360px}
+        .faq-a{padding:0 26px 24px;font-size:15px;line-height:1.65;color:var(--ink-2)}
+        .faq-a p{margin:0}
+        .faq-a p+p{margin-top:10px}
+        .faq-foot{margin-top:64px;text-align:center;padding:48px 40px;border-radius:24px;background:linear-gradient(135deg,rgba(210,60,194,0.04),rgba(167,139,250,0.05),rgba(255,188,173,0.04));border:1px solid rgba(210,60,194,0.08)}
+        .faq-foot .ft{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-0.01em}
+        .faq-foot .fs{font-size:14.5px;color:var(--ink-2);margin-bottom:16px}
+
         .how{background:linear-gradient(180deg,#FAFAFA 0%,#FFFFFF 100%);position:relative}
         .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;position:relative}
         .step{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 28px 32px;text-align:center;position:relative;transition:transform .25s ease,box-shadow .25s ease}
@@ -259,7 +375,7 @@ export function HomepageClient() {
         .cta-banner p{font-size:18px;opacity:.92;margin:0 auto 32px;max-width:560px;line-height:1.5}
         .cta-banner .btn{background:#fff;color:var(--ink);padding:16px 32px;font-size:16px;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,0.18)}
         .cta-banner .btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,0.22)}
-        .footer{padding:64px 0 40px;border-top:1px solid var(--line);margin-top:96px}
+        .footer{padding:32px 0 24px;border-top:1px solid var(--line);margin-top:0}
         .footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
         .footer-links{display:flex;gap:28px}
         .footer-links a{font-size:14.5px;color:var(--ink-2);font-weight:500;transition:color .15s ease}
@@ -302,6 +418,7 @@ export function HomepageClient() {
             <a href="#features">תכונות</a>
             <a href="#how">איך זה עובד</a>
             <a href="#pricing">תמחור</a>
+            <a href="#faq">שאלות</a>
           </nav>
           <button className="btn btn-primary heb" id="navCta" onClick={handleCtaClick}>
             התחילו עכשיו
@@ -322,28 +439,18 @@ export function HomepageClient() {
           <circle cx="780" cy="720" r="340" fill="url(#bg3)"/>
         </svg>
         <svg className="hero-decor" viewBox="0 0 1440 800" preserveAspectRatio="none" aria-hidden="true" style={{zIndex:-1}}>
-          <circle cx="90" cy="380" r="42" fill="none" stroke="#D23CC2" strokeWidth="2" strokeDasharray="6 6" opacity="0.5"/>
-          <circle cx="1350" cy="500" r="56" fill="none" stroke="#A78BFA" strokeWidth="2" strokeDasharray="4 8" opacity="0.5"/>
-          <rect x="160" y="640" width="14" height="14" fill="#FFBCAD" transform="rotate(20 167 647)"/>
-          <rect x="1240" y="250" width="12" height="12" fill="#D23CC2" transform="rotate(-15 1246 256)" opacity="0.7"/>
-          <rect x="60" y="540" width="10" height="10" fill="#A78BFA" transform="rotate(35 65 545)"/>
-          <polygon points="1320,640 1335,665 1305,665" fill="#FFE08A" opacity="0.9"/>
-          <polygon points="120,160 132,180 108,180" fill="#A78BFA" opacity="0.7"/>
           <circle cx="1200" cy="60" r="8" fill="#FFBCAD"/>
           <circle cx="200" cy="100" r="6" fill="#D23CC2" opacity="0.6"/>
           <circle cx="1400" cy="380" r="5" fill="#A78BFA"/>
-          <g transform="translate(1100, 200)" opacity="0.7"><path d="M0,-14 L3,-3 L14,0 L3,3 L0,14 L-3,3 L-14,0 L-3,-3 Z" fill="#D23CC2"/></g>
-          <g transform="translate(180, 270)" opacity="0.6"><path d="M0,-10 L2,-2 L10,0 L2,2 L0,10 L-2,2 L-10,0 L-2,-2 Z" fill="#A78BFA"/></g>
+          <circle cx="380" cy="680" r="7" fill="#A78BFA" opacity="0.55"/>
+          <circle cx="1320" cy="160" r="5" fill="#B7E4C7" opacity="0.8"/>
+          <circle cx="900" cy="30" r="6" fill="#A78BFA" opacity="0.5"/>
+          <circle cx="140" cy="520" r="4" fill="#FFBCAD" opacity="0.65"/>
+          <circle cx="1420" cy="620" r="5" fill="#FFE08A" opacity="0.7"/>
         </svg>
         <div className="wrap">
           <div className="hero-grid">
             <div className="hero-copy reveal">
-              <div className="badge">
-                <span className="dot">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z" fill="currentColor"/></svg>
-                </span>
-                חדש · סידור מושבים AI + תובנות חכמות על אורחים
-              </div>
               <h1 className="hero-title">
                 תכננו חתונה<br/>שמרגישה כמו <span className="grad">חגיגה</span>, לא כמו גיליון אלקטרוני.
               </h1>
@@ -354,17 +461,8 @@ export function HomepageClient() {
                 <button className="btn btn-primary btn-lg heb" onClick={handleCtaClick}>התחילו עכשיו</button>
                 <a href="#how" className="btn btn-ghost btn-lg">
                   ראה איך זה עובד
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{transform:'scaleX(-1)'}}><path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </a>
-              </div>
-              <div className="hero-meta">
-                <div className="avatar-stack">
-                  <span className="av" style={{background:'#D23CC2'}}>מ</span>
-                  <span className="av" style={{background:'#A78BFA'}}>ר</span>
-                  <span className="av" style={{background:'#FFBCAD',color:'#5a1b0c'}}>ד</span>
-                  <span className="av" style={{background:'#1A0B2E'}}>+</span>
-                </div>
-                <span>סומכים עלינו מעל 2,400 זוגות ומארגני אירועים</span>
               </div>
             </div>
 
@@ -496,42 +594,188 @@ export function HomepageClient() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="section" id="features" dir="rtl">
+      {/* FEATURES — DEEP DIVE ACCORDION */}
+      <section className="section deep" id="features" dir="rtl">
         <div className="wrap">
-          <div className="section-head reveal">
-            <div className="eyebrow">כל מה שצריך</div>
-            <h2 className="section-title">נבנה ליום החשוב ביותר.</h2>
-            <p className="section-sub">מה-save the date הראשון ועד הריקוד האחרון — קולולו מחליף שישה גיליונות אלקטרוניים ושלוש קבוצות וואטסאפ במרחב עבודה אחד יפהפה.</p>
+          <div className="section-head deep-head reveal">
+            <div className="eyebrow">מבט קרוב</div>
+            <h2 className="section-title">כל פרט, מתוכנן ליום.</h2>
+            <p className="section-sub" style={{marginRight:0}}>לחצו על הנושאים כדי לראות איך קולולו מטפל בכל הפרטים של האירוע שלכם — מההזמנה הראשונה ועד חשיפת סידור המושבים הסופי.</p>
           </div>
-          <div className="features">
-            <div className="feature reveal">
-              <div className="f-icon magenta">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+
+          <div className="deep-grid">
+            {/* Visual panel — RIGHT in RTL (order:1 pushes it after accordion) */}
+            <div className="deep-visual reveal" aria-hidden="true" style={{order:1}}>
+              <div className="dv-panel">
+
+                {/* Scene: guests */}
+                <div className={`dv-scene${activeScene === 'guests' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">סקירה כללית</div>
+                    <h4 className="dv-h">מאיה &amp; רועי · רשימת אורחים</h4>
+                    <p className="dv-s">245 הוזמנו · 186 הגיבו</p>
+                  </div>
+                  <div className="dv-stat-row">
+                    <div className="dv-stat magenta"><div className="n">142</div><div className="l">אישרו</div></div>
+                    <div className="dv-stat lavender"><div className="n">28</div><div className="l">אולי</div></div>
+                    <div className="dv-stat peach"><div className="n">16</div><div className="l">סירבו</div></div>
+                  </div>
+                  <div className="dv-card" style={{padding:'14px'}}>
+                    <div className="dv-eyebrow">משפחות</div>
+                    <div className="dv-list">
+                      <div className="dv-row"><span className="av" style={{background:'#D23CC2'}}>ב</span><span className="nm">משפחת בר-און</span><span className="meta">4 אורחים</span><span className="tg tag-ok">כולם כן</span></div>
+                      <div className="dv-row"><span className="av" style={{background:'#A78BFA'}}>כ</span><span className="nm">משפחת כהן</span><span className="meta">3 אורחים</span><span className="tg tag-wait">2 ממתינים</span></div>
+                      <div className="dv-row"><span className="av" style={{background:'#FFBCAD',color:'#5a1b0c'}}>ל</span><span className="nm">משפחת לוי</span><span className="meta">5 אורחים</span><span className="tg tag-ok">כולם כן</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scene: whatsapp */}
+                <div className={`dv-scene${activeScene === 'whatsapp' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">הפצת וואטסאפ</div>
+                    <h4 className="dv-h">תזכורת · עוד 6 ימים</h4>
+                    <p className="dv-s">נשלח ל-142 מוזמנים · 11:42</p>
+                  </div>
+                  <div className="dv-wa-thread">
+                    <div className="dv-wa-line out">
+                      <div className="who">מאיה &amp; רועי ✨</div>
+                      היי עדי! תזכורת קצרה — החתונה שלנו עוד 6 ימים. שמרי את המקום וענה כן לאישור.
+                      <div className="stamp">11:42 ✓✓</div>
+                    </div>
+                    <div className="dv-wa-line in">
+                      <div className="who">עדי בר-און</div>
+                      כן! מגיע/ה עם +1 כמו שדיברנו 🎉
+                      <div className="stamp" style={{justifyContent:'flex-start'}}>11:48</div>
+                    </div>
+                    <div className="dv-wa-line out">
+                      נרשמתם 🎊 מחכים לכם ביום שבת!
+                      <div className="stamp">11:49 ✓✓</div>
+                    </div>
+                  </div>
+                  <div className="dv-card" style={{padding:'12px 14px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:12,fontWeight:600,marginBottom:8}}><span>אחוז מסירה</span><span style={{color:'#1FB358'}}>82%</span></div>
+                    <div className="dv-wa-bar"><i/></div>
+                  </div>
+                </div>
+
+                {/* Scene: seating */}
+                <div className={`dv-scene${activeScene === 'seating' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">תרשים מושבים</div>
+                    <h4 className="dv-h">האנגר 11 · 15 שולחנות</h4>
+                    <p className="dv-s">168 מתוך 245 מקומות הוצבו · 12 שולחנות מלאים</p>
+                  </div>
+                  <div className="dv-card" style={{background:'linear-gradient(180deg,#FFFFFF 0%,#FCFAFE 100%)'}}>
+                    <div className="seat-stage">
+                      {(['full','full','partial','full','sel','full','partial','empty','full','full','partial','empty'] as const).map((cls, i) => (
+                        <div key={i} className={`seat-t${cls ? ` ${cls}` : ''}`}>{i+1}</div>
+                      ))}
+                    </div>
+                    <div style={{display:'flex',gap:14,marginTop:14,fontSize:10,color:'var(--ink-2)',fontWeight:600}}>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5}}><i style={{width:8,height:8,borderRadius:999,background:'linear-gradient(135deg,#D23CC2,#A78BFA)',display:'inline-block'}}/> מלא</span>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5}}><i style={{width:8,height:8,borderRadius:999,background:'rgba(255,188,173,0.7)',display:'inline-block'}}/> חלקי</span>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:5}}><i style={{width:8,height:8,borderRadius:999,background:'transparent',border:'1.5px dashed rgba(26,11,46,0.2)',display:'inline-block'}}/> פנוי</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scene: ai */}
+                <div className={`dv-scene${activeScene === 'ai' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">עוזר AI</div>
+                    <h4 className="dv-h">הצעות ישיבה חכמות</h4>
+                    <p className="dv-s">על בסיס תגיות הקשרים של האורחים שלך</p>
+                  </div>
+                  <div className="ai-sug">
+                    <span className="spark2"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
+                    <div className="copy">
+                      <div className="t">קבצו &quot;חברים של הכלה&quot; בשולחן 5</div>
+                      <div className="s">8 אורחים · גילאים 28–34 · מסומנים &quot;חברים קרובים&quot;. מפחית 4 קונפליקטים.</div>
+                      <div className="ai-acts">
+                        <button className="chip prim">אשר</button>
+                        <button className="chip">ערוך</button>
+                        <button className="chip">דחה</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ai-sug" style={{background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(255,188,173,0.06))',borderColor:'rgba(167,139,250,0.18)'}}>
+                    <span className="spark2" style={{background:'linear-gradient(135deg,#A78BFA,#FFBCAD)'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+                    <div className="copy">
+                      <div className="t">טיוטת תזכורת 6 ימים, טון חם</div>
+                      <div className="s">&quot;עוד שישה לילות! אנחנו כל כך מרגשים לחגוג אתכם...&quot;</div>
+                    </div>
+                  </div>
+                  <div className="dv-card" style={{padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div>
+                      <div className="dv-eyebrow" style={{marginBottom:0}}>השבוע</div>
+                      <div style={{fontSize:14,fontWeight:700}}>12 אורחים לא הגיבו</div>
+                    </div>
+                    <button className="chip prim" style={{padding:'6px 12px',fontSize:11,fontWeight:600,borderRadius:999,background:'var(--primary)',color:'#fff',border:'none'}}>שלח תזכורת</button>
+                  </div>
+                </div>
+
+                {/* Scene: invite */}
+                <div className={`dv-scene${activeScene === 'invite' ? ' active' : ''}`}>
+                  <div className="inv-card">
+                    <svg style={{position:'absolute',top:12,right:16,width:24,height:24}} viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="#D23CC2" opacity="0.4"/></svg>
+                    <svg style={{position:'absolute',bottom:14,left:18,width:24,height:24}} viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="#FFBCAD" opacity="0.5" transform="rotate(15 12 12)"/></svg>
+                    <div className="inv-monogram">מ&amp;ר</div>
+                    <div className="inv-title">הוזמנתם</div>
+                    <div className="inv-sub">מאיה &amp; רועי · שבת 14 ביוני<br/>האנגר 11, תל אביב · 19:00</div>
+                    <div className="inv-acts">
+                      <button className="inv-btn-yes">כן, אגיע!</button>
+                      <button className="inv-btn-no">לא אוכל להגיע</button>
+                    </div>
+                  </div>
+                  <div className="dv-card" style={{display:'flex',gap:12}}>
+                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(210,60,194,0.06)'}}><div className="n" style={{color:'#D23CC2'}}>3.2k</div><div className="l">צפיות</div></div>
+                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(167,139,250,0.08)'}}><div className="n" style={{color:'#7F5AF0'}}>1.8k</div><div className="l">פתיחות RSVP</div></div>
+                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(37,211,102,0.08)'}}><div className="n" style={{color:'#1FB358'}}>82%</div><div className="l">השלמה</div></div>
+                  </div>
+                  <div className="dv-card" style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px'}}>
+                    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#D23CC2,#A78BFA)',color:'#fff'}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                    </span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:11,color:'var(--ink-3)',fontWeight:600}}>הלינק שלכם</div>
+                      <div style={{fontSize:13,fontWeight:700,color:'var(--ink)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>kululu.app/maya-roy</div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
-              <div className="f-title">ניהול אורחים</div>
-              <p className="f-text">עקבו אחר הזמנות, מלווים, דרישות תזונה ואישורי הגעה מרשימת אורחים אלגנטית אחת — עם תגיות חכמות וקיבוץ משפחתי.</p>
             </div>
-            <div className="feature reveal">
-              <div className="f-icon green">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.512 5.26l.213.341-1.001 3.656 3.765-.956z"/></svg>
-              </div>
-              <div className="f-title">הודעות וואטסאפ</div>
-              <p className="f-text">שלחו הזמנות אישיות, תזכורות ותודות ישירות לוואטסאפ. תשובות דו-כיווניות מסונכרנות לפרופיל של כל אורח.</p>
-            </div>
-            <div className="feature reveal">
-              <div className="f-icon lavender">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
-              </div>
-              <div className="f-title">תרשים מושבים</div>
-              <p className="f-text">גררו שולחנות, הימנעו משכנים מביכים, וקבעו סידורים עם עורך ויזואלי שהאולם שלכם יאהב.</p>
-            </div>
-            <div className="feature reveal">
-              <div className="f-icon peach">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>
-              </div>
-              <div className="f-title">כלים חכמים AI</div>
-              <p className="f-text">סידור מושבים אוטומטי לפי קשרים, כתיבת הודעות שמתאימות לסגנון שלכם, והצגת התזכורות הנכונות ברגע הנכון.</p>
+
+            {/* Accordion — LEFT in RTL */}
+            <div className="acc reveal">
+
+              {([
+                { scene:'guests', color:'magenta', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, title:'ניהול אורחים', body:'רשימת אורחים אלגנטית עם שדות חכמים למלווים, העדפות תזונה, צד משפחה וקיבוץ משפחתי — ללא ריבוי גיליונות.', bullets:['ייבוא מ-CSV, Excel או Google Contacts','זיהוי אוטומטי של משפחות וכפילויות','תגיות, סגמנטים ומסננים שמורים'] },
+                { scene:'whatsapp', color:'green', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.512 5.26l.213.341-1.001 3.656 3.765-.956z"/></svg>, title:'הודעות וואטסאפ', body:'שלחו הזמנות אישיות, תזכורות ותודות ישירות לוואטסאפ. תשובות מסונכרנות לפרופיל כל אורח.', bullets:['תבניות עם שדות מיזוג ותצוגה מקדימה חיה','מעקב תשובות דו-כיווני לכל אורח','שליחה מתוזמנת בהפצות בכל גודל'] },
+                { scene:'seating', color:'lavender', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>, title:'תרשים מושבים ויזואלי', body:'גררו שולחנות, הימנעו משכנים מביכים, וקבעו סידורים עם עורך ויזואלי שהאולם שלכם יאהב.', bullets:['צורות שולחן עגולות, מלבניות ומעורבות','אזהרות קונפליקט לכללי "לא לסמוך"','ייצוא כרטיסי PDF, גיליונות לספקים ומפות'] },
+                { scene:'ai', color:'peach', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>, title:'כלים חכמים AI', body:'סידור אוטומטי לפי קשרים, טיוטות הודעות שמתאימות לסגנון שלכם, ותזכורות בזמן הנכון.', bullets:['ישיבה חכמת מתגי קשרים','טיוטות הזמנה ותודה מותאמות לטון','התראות חיות: &quot;12 אורחים לא הגיבו&quot;'] },
+                { scene:'invite', color:'sun', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>, title:'דפי הזמנה ממותגים', body:'דף RSVP יפהפה על לינק קצר משלכם — עם מפת הגעה, בקשת שירים, טופס תזונה ועד לחגיגה.', bullets:['צבעים, תמונות ומונוגרמה מותאמים אישית','RSVP + מלווה + בחירת מנה בזרימה אחת','רב-לשוני: עברית, אנגלית, ערבית ועוד'] },
+              ] as Array<{scene:string,color:string,icon:React.ReactNode,title:string,body:string,bullets:string[]}>).map(({scene,color,icon,title,body,bullets}) => (
+                <div key={scene} className={`acc-item${activeScene === scene ? ' active' : ''}`}>
+                  <button className="acc-trigger" type="button" onClick={() => { if (activeScene !== scene) setActiveScene(scene); }}>
+                    <span className={`acc-ic ${color}`}>{icon}</span>
+                    <span className="acc-title">{title}</span>
+                    <span className="acc-chev">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div className="acc-body">
+                    <div className="acc-content">
+                      <p dangerouslySetInnerHTML={{__html: body}}/>
+                      <ul className="acc-bullets">
+                        {bullets.map((b, i) => <li key={i} dangerouslySetInnerHTML={{__html: b}}/>)}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
             </div>
           </div>
         </div>
@@ -677,27 +921,56 @@ export function HomepageClient() {
         </div>
       </section>
 
-      {/* CTA BANNER */}
-      <section className="wrap" id="cta" dir="rtl">
-        <div className="cta-banner reveal">
-          <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}} aria-hidden="true">
-            <circle cx="8%" cy="22%" r="6" fill="#fff" opacity="0.3"/>
-            <circle cx="92%" cy="14%" r="4" fill="#fff" opacity="0.4"/>
-            <rect x="14%" y="78%" width="10" height="10" fill="#fff" opacity="0.25" transform="rotate(20 14 78)"/>
-            <rect x="86%" y="68%" width="8" height="8" fill="#fff" opacity="0.3" transform="rotate(-15 86 68)"/>
-            <circle cx="50%" cy="10%" r="60" fill="none" stroke="#fff" strokeWidth="1.5" strokeDasharray="4 8" opacity="0.18"/>
-            <circle cx="6%" cy="88%" r="48" fill="none" stroke="#fff" strokeWidth="1.5" strokeDasharray="4 8" opacity="0.18"/>
-            <g transform="translate(120, 80)" opacity="0.5"><path d="M0,-12 L2.5,-2.5 L12,0 L2.5,2.5 L0,12 L-2.5,2.5 L-12,0 L-2.5,-2.5 Z" fill="#fff"/></g>
-            <g transform="translate(900, 220)" opacity="0.45"><path d="M0,-9 L2,-2 L9,0 L2,2 L0,9 L-2,2 L-9,0 L-2,-2 Z" fill="#fff"/></g>
-          </svg>
-          <h2>החתונה שלכם ראויה למרחב עבודה יפה כמו היום עצמו.</h2>
-          <p>התחילו בחינם. הזמינו את בן/בת הזוג, המתכנן שלכם, אפילו את החמות. שדרגו רק כשאתם מוכנים לשלוח.</p>
-          <button className="btn heb" id="ctaBtn" onClick={handleCtaClick}>התחילו עכשיו</button>
+      {/* FAQ */}
+      <section className="section" id="faq" style={{paddingTop:32,paddingBottom:56}} dir="rtl">
+        <div className="wrap">
+          <div className="section-head reveal">
+            <div className="eyebrow">שאלות ותשובות</div>
+            <h2 className="section-title">כדאי לדעת.</h2>
+            <p className="section-sub">תשובות מהירות לשאלות שזוגות ומתכנני אירועים שואלים אותנו הכי הרבה. עוד סקרנים? אנחנו רק הודעה אחת משם.</p>
+          </div>
+
+          <div className="faq-wrap">
+            <div className="faq-list reveal">
+              {([
+                { q:'האם קולולו מחויב לפי אירוע או מנוי?', a:'לפי אירוע — תשלום חד פעמי לפי גודל רשימת האורחים שלכם. ללא דמי מנוי חודשיים, ללא חידוש אוטומטי, ללא חיובים מפתיעים אחרי החתונה.' },
+                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:'ניתן לשדרג לתוכנית גדולה יותר בכל עת — אנחנו מזכים את מה ששולמתם כנגד הרמה החדשה. מאגר האורחים השמורים החינמי (10–40 רשומות לפי תוכנית) נועד בדיוק לתוספות של הרגע האחרון.' },
+                { q:'איך עובדות הודעות וואטסאפ בדיוק?', a:'ההודעות נשלחות דרך WhatsApp Business API הרשמי, כך שהן מגיעות לוואטסאפ הרגיל של האורחים מגוון קולולו מאומת. ניתן להתאים אישית עם שדות מיזוג (שם, שולחן, שעה) ותשובות מסונכרנות לדשבורד אוטומטית.' },
+                { q:'האם אני יכול/ה להזמין את בן/בת הזוג, המתכנן/ת או המשפחה לעזור?', a:'כן — כל תוכנית כוללת שיתופי פעולה ללא הגבלה עם הרשאות מבוססות תפקיד. תנו לבן/בת הזוג גישה מלאה, למתכנן/ת הרשאות עריכה, ולחמא/חמות גישת צפייה בלבד לרשימת האורחים. כולם מסונכרנים.' },
+                { q:'אילו שפות קולולו תומך בהן?', a:'הדשבורד זמין בעברית ובאנגלית עם תמיכה מלאה ב-RTL. דפי ההזמנה והודעות וואטסאפ ניתן לשלוח בכל שפה — עברית, אנגלית, ערבית, רוסית, צרפתית וספרדית.' },
+                { q:'איך ה-AI מחליט מי יושב איפה?', a:<>הוא משתמש בתגיות ובהערות שכבר הוספתם — &quot;חברים של הכלה&quot;, &quot;משפחה&quot;, &quot;מכיר את יוסי&quot;, &quot;לא לסמוך ליד תמר&quot; — ומציע קיבוצים שניתן לאשר, לערוך או להתעלם מהם.<br/>ה-AI לא מזיז אף אחד ללא אישורכם. הוא מנוע הצעות, לא מקבל החלטות.</> },
+                { q:'האם נתוני האורחים שלי פרטיים?', a:'תמיד. רשימת האורחים שלכם שייכת לכם — אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק. הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.' },
+                { q:'האם אתם מציעים החזרים אם התוכניות משתנות?', a:'החיים קורים. אנחנו מציעים החזר מלא תוך 14 יום מהרכישה, והחזר חלקי עד 60 יום לפני תאריך האירוע — ללא שאלות.' },
+              ] as Array<{q:string,a:React.ReactNode}>).map(({q,a},i) => (
+                <div key={i} className={`faq-item${openFaqs.has(i) ? ' open' : ''}`}>
+                  <button className="faq-trigger" type="button" onClick={() => toggleFaq(i)}>
+                    <span className="faq-q">{q}</span>
+                    <span className="faq-plus">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </span>
+                  </button>
+                  <div className="faq-body">
+                    <div className="faq-a"><p>{a}</p></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="faq-foot reveal">
+            <div className="ft">עוד שאלות?</div>
+            <div className="fs">אנחנו צוות קטן וחם — בדרך כלל עונים תוך מספר שעות.</div>
+            <a href={`https://wa.me/972556839696?text=${encodeURIComponent('היי! ראיתי את קולולו ורציתי לשמוע עוד')}`} target="_blank" rel="noopener" className="btn btn-ghost">
+              דברו עם אנשים אמיתיים
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:'scaleX(-1)'}}><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            </a>
+          </div>
         </div>
       </section>
 
+
       {/* FOOTER */}
-      <footer className="footer" dir="rtl">
+      <footer className="footer" dir="ltr">
         <div className="wrap">
           <div className="footer-inner">
             <a href="#" className="logo" aria-label="Kululu home">
