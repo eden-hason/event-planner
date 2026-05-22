@@ -16,6 +16,7 @@ export async function submitConfirmation(
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount') ?? undefined,
     mealChoice: formData.get('mealChoice') ?? undefined,
+    notes: formData.get('notes') ?? undefined,
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
@@ -23,7 +24,7 @@ export async function submitConfirmation(
     return { success: false, message: 'נתונים לא תקינים' };
   }
 
-  const { token, rsvpStatus, guestCount, mealChoice } = parsed.data;
+  const { token, rsvpStatus, guestCount, mealChoice, notes } = parsed.data;
 
   const supabase = createServiceClient();
 
@@ -72,6 +73,9 @@ export async function submitConfirmation(
   }
   if (rsvpStatus === 'confirmed' && mealChoice) {
     guestUpdate.meal_choice = mealChoice;
+  }
+  if (notes !== undefined) {
+    guestUpdate.notes = notes;
   }
 
   const { error: guestError } = await supabase

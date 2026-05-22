@@ -5,13 +5,13 @@ import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
   IconDashboard,
-
   IconUsers,
   IconUsersGroup,
   IconCalendar,
   IconCoins,
   IconListDetails,
   IconArmchair,
+  IconPalette,
 } from '@tabler/icons-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NavMain } from '@/components/nav-main';
@@ -128,6 +128,16 @@ export function AppSidebar({
       url: '/app/schedules',
       icon: IconCalendar,
     },
+    ...(process.env.NEXT_PUBLIC_ENABLE_TEMPLATES === 'true'
+      ? [
+          {
+            id: 'templates',
+            title: tNav('templates'),
+            url: '/app/templates',
+            icon: IconPalette,
+          },
+        ]
+      : []),
     {
       id: 'collaboration',
       title: tNav('collaboration'),

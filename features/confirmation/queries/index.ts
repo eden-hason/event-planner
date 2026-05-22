@@ -25,13 +25,13 @@ export async function getConfirmationDataByToken(
       clicked_at,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, meal_choice
+        id, name, amount, rsvp_status, meal_choice, notes
       ),
       schedules!inner (
         id,
         events!inner (
           id, title, event_date, ceremony_time, reception_time,
-          location, host_details, guests_experience, event_type
+          location, host_details, guests_experience, event_type, landing_template_id
         )
       )
     `,
@@ -58,6 +58,7 @@ export async function getConfirmationDataByToken(
     amount: number;
     rsvp_status: string;
     meal_choice: string | null;
+    notes: string | null;
   };
 
   const schedule = data.schedules as unknown as {
@@ -76,6 +77,7 @@ export async function getConfirmationDataByToken(
         lock_guest_count?: boolean;
       } | null;
       event_type: string | null;
+      landing_template_id: string | null;
     };
   };
 
@@ -112,6 +114,7 @@ export async function getConfirmationDataByToken(
       amount: guest.amount,
       rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
       mealChoice: guest.meal_choice ?? undefined,
+      notes: guest.notes ?? undefined,
     },
     event: {
       id: event.id,
@@ -129,6 +132,7 @@ export async function getConfirmationDataByToken(
           }
         : undefined,
       eventType: event.event_type ?? undefined,
+      landingTemplateId: event.landing_template_id ?? undefined,
     },
     scheduleId: schedule.id,
   };
@@ -147,10 +151,10 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, meal_choice,
+      id, name, amount, rsvp_status, meal_choice, notes,
       events!inner (
         id, title, event_date, ceremony_time, reception_time,
-        location, host_details, guests_experience, event_type
+        location, host_details, guests_experience, event_type, landing_template_id
       )
     `,
     )
@@ -175,6 +179,7 @@ export async function getConfirmationDataByGuestToken(
       lock_guest_count?: boolean;
     } | null;
     event_type: string | null;
+    landing_template_id: string | null;
   };
 
   return {
@@ -187,6 +192,7 @@ export async function getConfirmationDataByGuestToken(
       amount: data.amount,
       rsvpStatus: data.rsvp_status as 'pending' | 'confirmed' | 'declined',
       mealChoice: data.meal_choice ?? undefined,
+      notes: data.notes ?? undefined,
     },
     event: {
       id: event.id,
@@ -204,6 +210,7 @@ export async function getConfirmationDataByGuestToken(
           }
         : undefined,
       eventType: event.event_type ?? undefined,
+      landingTemplateId: event.landing_template_id ?? undefined,
     },
     scheduleId: null,
   };

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Plus_Jakarta_Sans, Heebo } from 'next/font/google';
+import { Geist, Geist_Mono, Plus_Jakarta_Sans, Heebo, Rubik, Assistant } from 'next/font/google';
 import { getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
@@ -27,6 +27,18 @@ const heebo = Heebo({
   weight: ['500', '700'],
 });
 
+const rubik = Rubik({
+  variable: '--font-rubik',
+  subsets: ['latin', 'hebrew'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+});
+
+const assistant = Assistant({
+  variable: '--font-assistant',
+  subsets: ['latin', 'hebrew'],
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
+});
+
 export const metadata: Metadata = {
   title: 'Kululu Events',
   description:
@@ -43,7 +55,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} dir={dir}>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} ${heebo.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} ${heebo.variable} ${rubik.variable} ${assistant.variable} antialiased`}>
         {children}
         <Toaster />
         <Analytics />
