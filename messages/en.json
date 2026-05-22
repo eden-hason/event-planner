@@ -1298,5 +1298,44 @@
       "error": "Something went wrong.",
       "uploadError": "Failed to upload image."
     }
+  },
+  "templates": {
+    "header": {
+      "title": "Templates",
+      "description": "Choose the design your guests will see on their invitation page"
+    },
+    "showcase": {
+      "title": "Selected design",
+      "subtitle": "This is the page your guests will land on when they tap the link in their invitation message",
+      "activeBadge": "Active",
+      "preview": "Preview",
+      "browse": "Browse designs"
+    },
+    "library": {
+      "title": "Design library",
+      "description": "Pick a design for your guest invitation page"
+    },
+    "card": {
+      "preview": "Preview",
+      "select": "Select",
+      "selected": "Selected"
+    },
+    "dialog": {
+      "use": "Use this design"
+    },
+    "categories": {
+      "classic": "Classic",
+      "modern": "Modern",
+      "minimal": "Minimal",
+      "floral": "Floral",
+      "festive": "Festive",
+      "elegant": "Elegant",
+      "celebration": "Celebration"
+    },
+    "toast": {
+      "saving": "Saving design...",
+      "saved": "Design saved",
+      "saveFailed": "Failed to save design"
+    }
   }
 }

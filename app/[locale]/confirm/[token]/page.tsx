@@ -3,10 +3,10 @@ import {
   getConfirmationDataByGuestToken,
   isGuestInvitationToken,
 } from '@/features/confirmation/queries';
-import { EventDetailsCard } from '@/features/confirmation/components/event-details-card';
-import { ConfirmationForm } from '@/features/confirmation/components/confirmation-form';
+import { ConfirmationExperience } from '@/features/confirmation/components/confirmation-experience';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import { KULULU_CONFETTI_ID } from '@/features/templates/designs/kululu-confetti/constants';
 
 import { setRequestLocale } from 'next-intl/server';
 
@@ -32,14 +32,8 @@ export default async function ConfirmationPage({
     return <InvalidTokenView />;
   }
 
-  return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-8">
-        <EventDetailsCard event={data.event} />
-        <ConfirmationForm token={token} data={data} />
-      </div>
-    </div>
-  );
+  const templateId = data.event.landingTemplateId ?? KULULU_CONFETTI_ID;
+  return <ConfirmationExperience token={token} data={data} templateId={templateId} />;
 }
 
 function InvalidTokenView() {

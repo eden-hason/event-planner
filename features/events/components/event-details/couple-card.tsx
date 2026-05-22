@@ -6,7 +6,8 @@ import { useActionState, startTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Ampersand, Heart } from 'lucide-react';
+import { Ampersand } from 'lucide-react';
+import { CoupleCardIcon } from '@/components/icons/couple-card-icon';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -175,7 +176,7 @@ export function CoupleCard({ event }: CoupleCardProps) {
         <Card className="overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Heart className="size-4 shrink-0 fill-primary/30 text-primary" />
+              <CoupleCardIcon className="size-4 shrink-0 text-primary" />
               <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
             </div>
             {isDirty && (

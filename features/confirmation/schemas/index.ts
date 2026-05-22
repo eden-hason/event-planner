@@ -8,6 +8,7 @@ export const ConfirmationFormSchema = z.object({
   rsvpStatus: z.enum(['confirmed', 'declined']),
   guestCount: z.coerce.number().int().min(1).optional(),
   mealChoice: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export type ConfirmationFormData = z.infer<typeof ConfirmationFormSchema>;
@@ -28,7 +29,7 @@ export type ConfirmationPageData = {
   } | null;
   guest: Pick<
     GuestApp,
-    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice'
+    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice' | 'notes'
   >;
   event: Pick<
     EventApp,
@@ -41,6 +42,7 @@ export type ConfirmationPageData = {
     | 'hostDetails'
     | 'guestExperience'
     | 'eventType'
+    | 'landingTemplateId'
   >;
   scheduleId: string | null;
 };
