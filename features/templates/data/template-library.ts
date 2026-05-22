@@ -4,7 +4,7 @@ import { DARK_ROMANTIC_ID } from '../designs/dark-romantic/constants';
 import { IVORY_EDITORIAL_ID } from '../designs/ivory-editorial/constants';
 import { LINEN_ID } from '../designs/linen/constants';
 
-export const DEFAULT_TEMPLATE_ID = KULULU_CONFETTI_ID;
+export const DEFAULT_TEMPLATE_ID = LINEN_ID;
 
 export const TEMPLATE_LIBRARY: LandingTemplate[] = [
   {

@@ -10,10 +10,9 @@ import { IVORY_EDITORIAL_ID } from './designs/ivory-editorial/constants';
 import { LinenDesign } from './designs/linen/linen-design';
 import { LINEN_ID } from './designs/linen/constants';
 import type { DishOption } from './utils';
+import { TEMPLATE_LIBRARY } from './data/template-library';
 
 export type { DishOption };
-
-const DEFAULT_PALETTE: [string, string] = ['#FF6B6B', '#4ECDC4'];
 
 export interface SubmitValues {
   rsvpStatus: 'confirmed' | 'declined';
@@ -42,10 +41,13 @@ export interface DesignProps {
 }
 
 export function renderTemplate(templateId: string, props: DesignProps): ReactNode {
-  const { palette = DEFAULT_PALETTE, showConfetti, ...common } = props;
+  const { palette: propPalette, showConfetti, ...common } = props;
 
+  const templateMeta = TEMPLATE_LIBRARY.find((t) => t.id === templateId);
+  const palette = propPalette ?? (templateMeta?.accentPair as [string, string] | undefined);
+
+  if (templateId === KULULU_CONFETTI_ID) return <KululuConfettiDesign {...common} palette={palette} showConfetti={showConfetti} />;
   if (templateId === DARK_ROMANTIC_ID) return <DarkRomanticDesign {...common} />;
   if (templateId === IVORY_EDITORIAL_ID) return <IvoryEditorialDesign {...common} />;
-  if (templateId === LINEN_ID) return <LinenDesign {...common} palette={palette} />;
-  return <KululuConfettiDesign {...common} palette={palette} showConfetti={showConfetti} />;
+  return <LinenDesign {...common} palette={palette} />;
 }

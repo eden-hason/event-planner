@@ -6,7 +6,7 @@ import {
 import { ConfirmationExperience } from '@/features/confirmation/components/confirmation-experience';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { KULULU_CONFETTI_ID } from '@/features/templates/designs/kululu-confetti/constants';
+import { DEFAULT_TEMPLATE_ID } from '@/features/templates/data/template-library';
 
 import { setRequestLocale } from 'next-intl/server';
 
@@ -32,7 +32,7 @@ export default async function ConfirmationPage({
     return <InvalidTokenView />;
   }
 
-  const templateId = data.event.landingTemplateId ?? KULULU_CONFETTI_ID;
+  const templateId = data.event.landingTemplateId ?? DEFAULT_TEMPLATE_ID;
   return <ConfirmationExperience token={token} data={data} templateId={templateId} />;
 }
 
