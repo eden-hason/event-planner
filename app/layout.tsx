@@ -39,10 +39,23 @@ const assistant = Assistant({
   weight: ['200', '300', '400', '500', '600', '700', '800'],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : 'http://localhost:3000');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'Kululu Events',
   description:
     'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
+  openGraph: {
+    title: 'Kululu Events',
+    description:
+      'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
+    images: [{ url: '/landing_page_hero.png', width: 1296, height: 816 }],
+  },
 };
 
 export default async function RootLayout({

@@ -331,21 +331,20 @@
     "toast": {
       "savingExpense": "Saving expense...",
       "addingExpense": "Adding expense...",
-      "expenseUpdated": "Expense updated.",
-      "expenseAdded": "Expense added.",
+      "expenseUpdated": "Expense updated",
+      "expenseAdded": "Expense added",
       "deletingExpense": "Deleting expense...",
-      "expenseDeleted": "Expense deleted.",
-      "savingGift": "Saving gift...",
       "addingGift": "Adding gift...",
-      "giftUpdated": "Gift updated.",
-      "giftAdded": "Gift added.",
+      "giftUpdated": "Gift updated",
+      "giftAdded": "Gift added",
       "deletingGift": "Deleting gift...",
-      "giftDeleted": "Gift deleted.",
+      "giftDeleted": "Gift deleted",
+      "savingGift": "Saving gift...",
       "savingBudget": "Saving budget...",
-      "budgetSaved": "Budget saved.",
+      "budgetSaved": "Budget saved",
       "removingBudget": "Removing budget...",
-      "budgetRemoved": "Budget removed.",
-      "error": "Something went wrong."
+      "budgetRemoved": "Budget removed",
+      "error": "Something went wrong"
     }
   },
   "guests": {
@@ -377,12 +376,12 @@
     },
     "toast": {
       "creatingGroup": "Creating {name}...",
-      "groupCreated": "Group created successfully.",
-      "groupCreateFailed": "Failed to create group. Please try again.",
+      "groupCreated": "Group created successfully",
+      "groupCreateFailed": "Failed to create group. Please try again",
       "groupNameTaken": "A group with this name already exists for this side",
       "deletingGuest": "Deleting {name}...",
-      "guestDeleted": "Guest deleted successfully.",
-      "guestDeleteFailed": "Failed to delete guest."
+      "guestDeleted": "Guest deleted successfully",
+      "guestDeleteFailed": "Failed to delete guest"
     },
     "form": {
       "contactInfo": "Contact Information",
@@ -404,9 +403,9 @@
       "notesPlaceholder": "Add any additional notes about this guest...",
       "updatingGuest": "Updating guest...",
       "addingGuest": "Adding guest...",
-      "guestUpdated": "Guest updated.",
-      "guestAdded": "Guest added.",
-      "somethingWentWrong": "Something went wrong.",
+      "guestUpdated": "Guest updated",
+      "guestAdded": "Guest added",
+      "somethingWentWrong": "Something went wrong",
       "updateGuest": "Update Guest",
       "addGuest": "Add Guest",
       "updating": "Updating...",
@@ -467,8 +466,8 @@
     "directory": {
       "importCsv": "Import File",
       "deletingGuest": "Deleting {name}...",
-      "guestDeleted": "Guest deleted successfully.",
-      "guestDeleteFailed": "Failed to delete guest. Please try again."
+      "guestDeleted": "Guest deleted successfully",
+      "guestDeleteFailed": "Failed to delete guest. Please try again"
     },
     "filters": {
       "filterByStatus": "Status",
@@ -528,15 +527,15 @@
         "saveChanges": "Save Changes",
         "updatingMembers": "Updating {name} members...",
         "membersUpdated": "Group members updated successfully.",
-        "membersFailed": "Failed to update group members. Please try again."
+        "membersFailed": "Failed to update group members. Please try again"
       },
       "toast": {
         "deletingGroups": "Deleting {count} groups...",
-        "groupsDeleted": "Groups deleted successfully.",
-        "groupsDeleteFailed": "Failed to delete groups. Please try again.",
+        "groupsDeleted": "Groups deleted successfully",
+        "groupsDeleteFailed": "Failed to delete groups. Please try again",
         "deletingGroup": "Deleting {name}...",
-        "groupDeleted": "Group deleted successfully.",
-        "groupDeleteFailed": "Failed to delete group. Please try again."
+        "groupDeleted": "Group deleted successfully",
+        "groupDeleteFailed": "Failed to delete group. Please try again"
       }
     },
     "import": {
@@ -550,7 +549,7 @@
       "import": "Import",
       "done": "Done",
       "close": "Close",
-      "importSuccess": "Guests imported successfully!",
+      "importSuccess": "Guests imported successfully",
       "upload": {
         "heading": "Upload your guests list",
         "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse",
@@ -559,7 +558,7 @@
       "analyze": {
         "heading": "Analyzing your file…",
         "description": "Our AI is reading your columns and mapping your guest data automatically",
-        "rowsDetected": "File parsed — {count} rows detected",
+        "rowsDetected": "File parsed - {count} rows detected",
         "readingHeaders": "Reading column headers…",
         "analyzingSample": "Analyzing sample data…",
         "mappingSchema": "Mapping to guest schema…",
@@ -808,9 +807,9 @@
       },
       "toast": {
         "updating": "Updating schedule...",
-        "enabled": "Schedule enabled.",
-        "disabled": "Schedule disabled.",
-        "error": "Something went wrong."
+        "enabled": "Schedule enabled",
+        "disabled": "Schedule disabled",
+        "error": "Something went wrong"
       }
     },
     "timing": {
@@ -826,9 +825,9 @@
       "scheduledTimeHelper": "The time this message goes out on the scheduled day",
       "toast": {
         "updating": "Updating scheduled date...",
-        "updated": "Scheduled date updated.",
-        "failed": "Failed to update scheduled date.",
-        "error": "Something went wrong."
+        "updated": "Scheduled date updated",
+        "failed": "Failed to update scheduled date",
+        "error": "Something went wrong"
       }
     },
     "audience": {
@@ -864,12 +863,12 @@
       "confirm": "Send Now →",
       "toast": {
         "sending": "Sending messages...",
-        "failed": "Failed to send."
+        "failed": "Failed to send"
       }
     },
     "setupWizard": {
       "emptyTitle": "Plan your guest communication timeline",
-      "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically — set up your timeline to get started",
+      "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically - set up your timeline to get started",
       "emptyCta": "Set up schedules",
       "emptyUnsupported": "Schedule suggestions aren't available for this event type yet",
       "features": {
@@ -888,12 +887,12 @@
       "sendDateLabel": "Send date",
       "timeLabel": "Time",
       "sendDateHelper": "When the invitation goes out to guests",
-      "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately — totally up to you. You can always adjust this later.",
+      "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately - totally up to you. You can always adjust this later.",
       "decisionSend": "Yes, send it",
       "decisionSendDesc": "The invitation goes out on the date you pick",
       "decisionSkip": "Skip for now",
-      "decisionSkipDesc": "It stays on your timeline as disabled — turn it on whenever you're ready",
-      "timelineHelper": "Toggle off anything you're not ready for — it stays on your timeline, just disabled",
+      "decisionSkipDesc": "It stays on your timeline as disabled - turn it on whenever you're ready",
+      "timelineHelper": "Toggle off anything you're not ready for - it stays on your timeline, just disabled",
       "recipientsCount": "{count} guests",
       "continue": "Continue",
       "back": "Back",
@@ -991,9 +990,9 @@
     },
     "toast": {
       "creating": "Creating your event...",
-      "created": "Event created!",
-      "failed": "Failed to create event.",
-      "error": "Something went wrong."
+      "created": "Event created",
+      "failed": "Failed to create event",
+      "error": "Something went wrong"
     },
     "success": {
       "title": "Your event is ready!",
@@ -1018,7 +1017,7 @@
     "toast": {
       "creating": "Creating {title}...",
       "created": "Event created successfully",
-      "failed": "Failed to create event. Please try again."
+      "failed": "Failed to create event. Please try again"
     }
   },
   "collaborate": {
@@ -1055,8 +1054,8 @@
       },
       "toast": {
         "removing": "Removing collaborator...",
-        "removed": "Collaborator removed.",
-        "failed": "Something went wrong."
+        "removed": "Collaborator removed",
+        "failed": "Something went wrong"
       }
     },
     "configDialog": {
@@ -1069,13 +1068,13 @@
       "saving": "Saving...",
       "saveChanges": "Save Changes",
       "toast": {
-        "needsScope": "Seating managers need at least one group or guest assigned.",
-        "roleFailed": "Failed to update role.",
-        "roleUpdated": "Role updated.",
-        "scopeRequired": "At least one group or guest is required.",
-        "scopeFailed": "Failed to update scope.",
-        "scopeUpdated": "Scope updated.",
-        "error": "Something went wrong."
+        "needsScope": "Seating managers need at least one group or guest assigned",
+        "roleFailed": "Failed to update role",
+        "roleUpdated": "Role updated",
+        "scopeRequired": "At least one group or guest is required",
+        "scopeFailed": "Failed to update scope",
+        "scopeUpdated": "Scope updated",
+        "error": "Something went wrong"
       }
     },
     "pendingInvitations": {
@@ -1084,10 +1083,10 @@
       "resend": "Resend",
       "cancel": "Cancel",
       "toast": {
-        "linkCopied": "Invitation link copied to clipboard.",
+        "linkCopied": "Invitation link copied to clipboard",
         "revoking": "Revoking invitation...",
-        "revoked": "Invitation revoked.",
-        "failed": "Something went wrong."
+        "revoked": "Invitation revoked",
+        "failed": "Something went wrong"
       }
     },
     "inviteDialog": {
@@ -1116,20 +1115,20 @@
       "copy": "Copy",
       "done": "Done",
       "toast": {
-        "emailRequired": "Please enter an email address.",
-        "createFailed": "Failed to create invitation.",
-        "created": "Invitation created!",
-        "linkCopied": "Link copied to clipboard."
+        "emailRequired": "Please enter an email address",
+        "createFailed": "Failed to create invitation",
+        "created": "Invitation created",
+        "linkCopied": "Link copied to clipboard"
       }
     },
     "editScope": {
-      "title": "Edit Scope — {name}",
+      "title": "Edit Scope - {name}",
       "description": "Choose which groups and guests this seating manager can view.",
       "saving": "Saving...",
       "save": "Save Scope",
       "toast": {
-        "failed": "Failed to update scope.",
-        "updated": "Scope updated."
+        "failed": "Failed to update scope",
+        "updated": "Scope updated"
       }
     },
     "invitationPage": {
@@ -1140,9 +1139,9 @@
       "processing": "Processing...",
       "accept": "Accept",
       "toast": {
-        "acceptFailed": "Failed to accept invitation.",
-        "declineFailed": "Failed to decline invitation.",
-        "error": "Something went wrong."
+        "acceptFailed": "Failed to accept invitation",
+        "declineFailed": "Failed to decline invitation",
+        "error": "Something went wrong"
       }
     }
   },
@@ -1288,15 +1287,16 @@
     "namePlaceholder": "Enter your name",
     "phoneLabel": "Phone number",
     "phonePlaceholder": "Enter your phone number",
+    "phoneHelper": "Only used to send your event updates - no spam, ever",
     "emailLabel": "Email",
     "avatarLabel": "Profile photo",
     "save": "Save & Continue",
     "skip": "Skip for now",
     "toast": {
       "saving": "Saving your profile...",
-      "saved": "Profile saved!",
-      "error": "Something went wrong.",
-      "uploadError": "Failed to upload image."
+      "saved": "Profile saved",
+      "error": "Something went wrong",
+      "uploadError": "Failed to upload image"
     }
   },
   "templates": {

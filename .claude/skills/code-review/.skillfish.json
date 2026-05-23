@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "code-review",
+  "owner": "xd3an",
+  "repo": "awesome-ai-coding-all-in-one",
+  "path": ".claude/skills/code-review",
+  "branch": "main",
+  "sha": "fcbb1d2c019c3a98c844053bd5859af73dd58bd5",
+  "source": "manual"
+}
