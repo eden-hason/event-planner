@@ -123,6 +123,11 @@ Supabase RLS policies handle data ownership at the database level. **Do not add 
 - Tailwind CSS for all styling
 - shadcn/ui components as base
 
+### Copy & Typography
+
+- **No em dashes**: Use regular hyphens (`-`) instead of em dashes (`—`). E.g. "Set up your timeline - get started" not "Set up your timeline — get started"
+- **No trailing periods on UI text**: Remove periods from the end of single-line UI text like toast messages, labels, button text, and error messages. E.g. "Expense updated" not "Expense updated." (Multi-line descriptions/paragraphs may retain periods if they read as complete sentences)
+
 ## Environment Variables
 
 Required in `.env.local` (see `.env.example`):
