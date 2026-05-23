@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconBrandWhatsapp } from '@tabler/icons-react';
 
+const WHATSAPP_NUMBER = '972556839696';
 const WHATSAPP_OPENING_MESSAGE = 'היי, אשמח לקבל פרטים נוספים על Kululu';
 
 export function HomepageClient() {
@@ -100,6 +101,11 @@ export function HomepageClient() {
   function handleCtaClick(e: React.MouseEvent<HTMLElement>) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     burst(r.left + r.width / 2, r.top + r.height / 2);
+  }
+
+  function handlePlanCtaClick(records: number) {
+    const message = `היי, אשמח לשמוע עוד על החבילה של ${records} רשומות`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
   }
 
   const selectedTable = tabIdx === 1 ? 7 : tabIdx === 2 ? 2 : 4;
@@ -265,6 +271,7 @@ export function HomepageClient() {
         .acc-ic.lavender{background:linear-gradient(135deg,#A78BFA,#7F5AF0);box-shadow:0 4px 12px rgba(167,139,250,0.28)}
         .acc-ic.peach{background:linear-gradient(135deg,#FFBCAD,#FF8E73);color:#5a1b0c;box-shadow:0 4px 12px rgba(255,142,115,0.28)}
         .acc-ic.sun{background:linear-gradient(135deg,#FFE08A,#FFB84D);color:#5a3a00;box-shadow:0 4px 12px rgba(255,184,77,0.25)}
+        .acc-ic.blue{background:linear-gradient(135deg,#3B9EFF,#1A7FE8);box-shadow:0 4px 12px rgba(26,127,232,0.28)}
         .acc-title{flex:1;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
         .acc-chev{width:32px;height:32px;border-radius:999px;background:rgba(26,11,46,0.05);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);flex-shrink:0;transition:transform .35s cubic-bezier(.2,.7,.4,1),background .2s ease,color .2s ease}
         .acc-item.active .acc-chev{background:var(--primary);color:#fff;transform:rotate(180deg)}
@@ -365,8 +372,7 @@ export function HomepageClient() {
         .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:stretch}
         .plan{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:28px 24px 26px;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;overflow:hidden}
         .plan:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:rgba(26,11,46,0.14)}
-        .plan-name{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-3);margin-bottom:6px}
-        .plan-tagline{font-size:15px;color:var(--ink-2);margin:0 0 24px;line-height:1.4;min-height:42px}
+.plan-tagline{font-size:15px;color:var(--ink-2);margin:0 0 24px;line-height:1.4}
         .plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
         .plan-price .cur{font-size:22px;font-weight:700;color:var(--ink-2);letter-spacing:-0.01em}
         .plan-price .amt{font-size:48px;font-weight:800;letter-spacing:-0.03em;color:var(--ink);line-height:1}
@@ -378,13 +384,7 @@ export function HomepageClient() {
         .plan-meta .row .reserve-ic{background:rgba(255,188,173,0.25);color:#c45a3e}
         .plan-cta{margin-top:auto;width:100%;padding:13px 18px;border-radius:12px;background:#fff;border:1.5px solid var(--line);color:var(--ink);font-weight:700;font-size:14.5px;transition:all .15s ease;cursor:pointer}
         .plan-cta:hover{border-color:var(--primary);color:var(--primary)}
-        .plan.featured{background:linear-gradient(180deg,#FFFFFF 0%,#FDFAFF 100%);border-color:rgba(210,60,194,0.35);box-shadow:0 16px 40px rgba(210,60,194,0.12),0 4px 12px rgba(167,139,250,0.08);transform:translateY(-8px)}
-        .plan.featured::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--grad-bold)}
-        .plan.featured:hover{transform:translateY(-12px);box-shadow:0 24px 56px rgba(210,60,194,0.18),0 8px 16px rgba(167,139,250,0.1)}
-        .plan.featured .plan-name{color:var(--primary)}
-        .plan.featured .plan-cta{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 6px 16px rgba(210,60,194,0.28),inset 0 -2px 0 rgba(0,0,0,0.08)}
-        .plan.featured .plan-cta:hover{background:var(--primary-deep);border-color:var(--primary-deep);transform:translateY(-1px);box-shadow:0 10px 22px rgba(210,60,194,0.35),inset 0 -2px 0 rgba(0,0,0,0.08)}
-        .plan .pop-badge{position:absolute;top:18px;right:18px;background:var(--grad-bold);color:#fff;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;box-shadow:0 4px 10px rgba(210,60,194,0.3)}
+        .plan .pop-badge{position:absolute;top:18px;left:18px;background:rgba(210,60,194,0.08);color:var(--primary);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px}
         .pricing-incl{margin-top:40px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 28px;display:flex;align-items:center;flex-wrap:wrap;gap:12px 28px}
         .pricing-incl .lbl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary)}
         .pricing-incl .item{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--ink);font-weight:500}
@@ -408,8 +408,6 @@ export function HomepageClient() {
         .reveal.in{opacity:1;transform:none}
         @media(max-width:1080px){
           .pricing-grid{grid-template-columns:repeat(2,1fr)}
-          .plan.featured{transform:none}
-          .plan.featured:hover{transform:translateY(-4px)}
           .hero-grid{grid-template-columns:1fr;gap:64px}
           .mockup-wrap{max-width:560px;margin:0 auto}
           .features{grid-template-columns:repeat(2,1fr)}
@@ -439,7 +437,7 @@ export function HomepageClient() {
           
           <nav className="nav-links" aria-label="ניווט ראשי">
             <a href="#features" className={activeSection === 'features' ? 'active' : ''}>פיצ׳רים</a>
-            <a href="#how" className={activeSection === 'how' ? 'active' : ''}>יצירת ארוע</a>
+            <a href="#how" className={activeSection === 'how' ? 'active' : ''}>יצירת אירוע</a>
             <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''}>חבילות</a>
             {/* <a href="#faq" className={activeSection === 'faq' ? 'active' : ''}>שאלות ותשובות</a> */}
           </nav>
@@ -476,14 +474,14 @@ export function HomepageClient() {
           <div className="hero-grid">
             <div className="hero-copy reveal">
               <h1 className="hero-title">
-                תהנו מהארוע שלכם, אנחנו נדאג לשאר
+                תהנו מהאירוע שלכם, אנחנו נדאג לשאר
               </h1>
               <p className="hero-sub">
                 מערכת חכמה לניהול האירוע - מוזמנים, אישורי הגעה, סידורי הושבה, תקציב ועוד הרבה
               </p>
               <div className="hero-cta">
                 <a
-                  href={`https://wa.me/972556839696?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`}
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-lg heb"
@@ -631,7 +629,7 @@ export function HomepageClient() {
       <section className="section deep" id="features" dir="rtl">
         <div className="wrap">
           <div className="section-head deep-head reveal">
-            <h2 className="section-title">כל הפיצ׳רים שיעשו לכם סדר בארוע</h2>
+            <h2 className="section-title">כל הפיצ׳רים שיעשו לכם סדר באירוע</h2>
             <p className="section-sub" style={{marginRight:0}}>מהתקציב ועד ההושבה - דאגנו להכל</p>
           </div>
 
@@ -691,6 +689,51 @@ export function HomepageClient() {
                   </div>
                 </div>
 
+                {/* Scene: phone */}
+                <div className={`dv-scene${activeScene === 'phone' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">מעקב שיחות · סבב 2</div>
+                    <h4 className="dv-h">18 מוזמנים טרם אישרו</h4>
+                    <p className="dv-s">11 שוחח · 5 לא ענו · 2 לתיאום</p>
+                  </div>
+                  <div className="dv-card" style={{padding:'14px'}}>
+                    <div className="dv-eyebrow">רשימת שיחות</div>
+                    <div className="dv-list">
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#3B9EFF,#1A7FE8)'}}>ד</span>
+                        <span className="nm">דוד גולדברג</span>
+                        <span className="meta">13:24</span>
+                        <span className="tg" style={{background:'rgba(59,158,255,0.13)',color:'#1264b8'}}>אישר ✓</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'#FFBCAD',color:'#5a1b0c'}}>ר</span>
+                        <span className="nm">רחל שרון</span>
+                        <span className="meta">לא ענתה</span>
+                        <span className="tg" style={{background:'rgba(255,188,173,0.4)',color:'#8B3A1A'}}>התקשר שוב</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'#A78BFA'}}>נ</span>
+                        <span className="nm">נועה ביטון</span>
+                        <span className="meta">14:07</span>
+                        <span className="tg" style={{background:'rgba(59,158,255,0.13)',color:'#1264b8'}}>אישרה ✓</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'#FFE08A',color:'#5a3a00'}}>א</span>
+                        <span className="nm">אמיר כהן</span>
+                        <span className="meta">לא ענה</span>
+                        <span className="tg tag-wait">תיאום מחדש</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="dv-card" style={{padding:'12px 14px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:12,fontWeight:600,marginBottom:8}}>
+                      <span>התקדמות סבב שיחות</span>
+                      <span style={{color:'#1A7FE8'}}>61%</span>
+                    </div>
+                    <div className="dv-wa-bar"><i style={{width:'61%',background:'linear-gradient(90deg,#3B9EFF,#1A7FE8)'}}/></div>
+                  </div>
+                </div>
+
                 {/* Scene: seating */}
                 <div className={`dv-scene${activeScene === 'seating' ? ' active' : ''}`}>
                   <div className="dv-card">
@@ -712,67 +755,89 @@ export function HomepageClient() {
                   </div>
                 </div>
 
-                {/* Scene: ai */}
-                <div className={`dv-scene${activeScene === 'ai' ? ' active' : ''}`}>
+                {/* Scene: budget */}
+                <div className={`dv-scene${activeScene === 'budget' ? ' active' : ''}`}>
                   <div className="dv-card">
-                    <div className="dv-eyebrow">עוזר AI</div>
-                    <h4 className="dv-h">הצעות ישיבה חכמות</h4>
-                    <p className="dv-s">על בסיס תגיות הקשרים של האורחים שלך</p>
+                    <div className="dv-eyebrow">ניהול תקציב</div>
+                    <h4 className="dv-h">מאיה &amp; רועי · חתונה</h4>
+                    <p className="dv-s">תקציב כולל: ₪85,000</p>
                   </div>
-                  <div className="ai-sug">
-                    <span className="spark2"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                    <div className="copy">
-                      <div className="t">קבצו &quot;חברים של הכלה&quot; בשולחן 5</div>
-                      <div className="s">8 אורחים · גילאים 28–34 · מסומנים &quot;חברים קרובים&quot;. מפחית 4 קונפליקטים.</div>
-                      <div className="ai-acts">
-                        <button className="chip prim">אשר</button>
-                        <button className="chip">ערוך</button>
-                        <button className="chip">דחה</button>
+                  <div className="dv-stat-row">
+                    <div className="dv-stat peach"><div className="n">₪61.2k</div><div className="l">הוצאות</div></div>
+                    <div className="dv-stat"><div className="n" style={{color:'#1FB358'}}>₪23.8k</div><div className="l">נותר</div></div>
+                    <div className="dv-stat"><div className="n" style={{color:'#1A7FE8'}}>₪14.5k</div><div className="l">מתנות</div></div>
+                  </div>
+                  <div className="dv-card" style={{padding:'14px'}}>
+                    <div className="dv-eyebrow">ספקים ותשלומים</div>
+                    <div className="dv-list">
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#FFBCAD,#FF8E73)',color:'#5a1b0c'}}>א</span>
+                        <span className="nm">אולם האנגר 11</span>
+                        <span className="meta">₪28,000</span>
+                        <span className="tg tag-ok">שולם ✓</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#FFE08A,#FFB84D)',color:'#5a3a00'}}>ק</span>
+                        <span className="nm">קייטרינג דלתא</span>
+                        <span className="meta">₪18,500</span>
+                        <span className="tg tag-ok">שולם ✓</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#A78BFA,#7F5AF0)'}}>פ</span>
+                        <span className="nm">פרחים עדן</span>
+                        <span className="meta">₪6,200</span>
+                        <span className="tg tag-wait">בקרוב</span>
                       </div>
                     </div>
                   </div>
-                  <div className="ai-sug" style={{background:'linear-gradient(135deg,rgba(167,139,250,0.08),rgba(255,188,173,0.06))',borderColor:'rgba(167,139,250,0.18)'}}>
-                    <span className="spark2" style={{background:'linear-gradient(135deg,#A78BFA,#FFBCAD)'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
-                    <div className="copy">
-                      <div className="t">טיוטת תזכורת 6 ימים, טון חם</div>
-                      <div className="s">&quot;עוד שישה לילות! אנחנו כל כך מרגשים לחגוג אתכם...&quot;</div>
+                  <div className="dv-card" style={{padding:'12px 14px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:12,fontWeight:600,marginBottom:8}}>
+                      <span>ניצול תקציב</span>
+                      <span style={{color:'#C45A3E'}}>72%</span>
                     </div>
-                  </div>
-                  <div className="dv-card" style={{padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div>
-                      <div className="dv-eyebrow" style={{marginBottom:0}}>השבוע</div>
-                      <div style={{fontSize:14,fontWeight:700}}>12 אורחים לא הגיבו</div>
-                    </div>
-                    <button className="chip prim" style={{padding:'6px 12px',fontSize:11,fontWeight:600,borderRadius:999,background:'var(--primary)',color:'#fff',border:'none'}}>שלח תזכורת</button>
+                    <div className="dv-wa-bar"><i style={{width:'72%',background:'linear-gradient(90deg,#FFBCAD,#FF8E73)'}}/></div>
                   </div>
                 </div>
 
-                {/* Scene: invite */}
-                <div className={`dv-scene${activeScene === 'invite' ? ' active' : ''}`}>
-                  <div className="inv-card">
-                    <svg style={{position:'absolute',top:12,right:16,width:24,height:24}} viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="#D23CC2" opacity="0.4"/></svg>
-                    <svg style={{position:'absolute',bottom:14,left:18,width:24,height:24}} viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" fill="#FFBCAD" opacity="0.5" transform="rotate(15 12 12)"/></svg>
-                    <div className="inv-monogram">מ&amp;ר</div>
-                    <div className="inv-title">הוזמנתם</div>
-                    <div className="inv-sub">מאיה &amp; רועי · שבת 14 ביוני<br/>האנגר 11, תל אביב · 19:00</div>
-                    <div className="inv-acts">
-                      <button className="inv-btn-yes">כן, אגיע!</button>
-                      <button className="inv-btn-no">לא אוכל להגיע</button>
-                    </div>
+                {/* Scene: sharing */}
+                <div className={`dv-scene${activeScene === 'sharing' ? ' active' : ''}`}>
+                  <div className="dv-card">
+                    <div className="dv-eyebrow">שיתוף ושיתוף פעולה</div>
+                    <h4 className="dv-h">מאיה &amp; רועי · צוות האירוע</h4>
+                    <p className="dv-s">3 משתתפים · עדכון אחרון לפני 4 דקות</p>
                   </div>
-                  <div className="dv-card" style={{display:'flex',gap:12}}>
-                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(210,60,194,0.06)'}}><div className="n" style={{color:'#D23CC2'}}>3.2k</div><div className="l">צפיות</div></div>
-                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(167,139,250,0.08)'}}><div className="n" style={{color:'#7F5AF0'}}>1.8k</div><div className="l">פתיחות RSVP</div></div>
-                    <div className="dv-stat" style={{flex:1,border:'none',background:'rgba(37,211,102,0.08)'}}><div className="n" style={{color:'#1FB358'}}>82%</div><div className="l">השלמה</div></div>
+                  <div className="dv-card" style={{padding:'14px'}}>
+                    <div className="dv-eyebrow">משתתפים</div>
+                    <div className="dv-list">
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#D23CC2,#A78BFA)'}}>מ</span>
+                        <span className="nm">מאיה (את)</span>
+                        <span className="meta">בעלים</span>
+                        <span className="tg" style={{background:'rgba(210,60,194,0.12)',color:'#A020A0'}}>ניהול מלא</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#3B9EFF,#1A7FE8)'}}>ר</span>
+                        <span className="nm">רועי</span>
+                        <span className="meta">שותף</span>
+                        <span className="tg" style={{background:'rgba(59,158,255,0.12)',color:'#1264b8'}}>עריכה</span>
+                      </div>
+                      <div className="dv-row">
+                        <span className="av" style={{background:'linear-gradient(135deg,#FFE08A,#FFB84D)',color:'#5a3a00'}}>ד</span>
+                        <span className="nm">דנה - מתכננת</span>
+                        <span className="meta">מוזמנת</span>
+                        <span className="tg tag-wait">ממתין לאישור</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="dv-card" style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px'}}>
-                    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#D23CC2,#A78BFA)',color:'#fff'}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:10,background:'linear-gradient(135deg,#FFE08A,#FFB84D)',color:'#5a3a00',flexShrink:0}}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
                     </span>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:11,color:'var(--ink-3)',fontWeight:600}}>הלינק שלכם</div>
-                      <div style={{fontSize:13,fontWeight:700,color:'var(--ink)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>kululu.app/maya-roy</div>
+                      <div style={{fontSize:11,color:'var(--ink-3)',fontWeight:600}}>הזמינו שותף נוסף</div>
+                      <div style={{fontSize:13,fontWeight:700,color:'var(--ink)'}}>הוסיפו מייל וקבעו הרשאות</div>
                     </div>
+                    <button style={{padding:'6px 14px',fontSize:11,fontWeight:700,borderRadius:999,background:'linear-gradient(135deg,#FFE08A,#FFB84D)',color:'#5a3a00',border:'none',cursor:'pointer',flexShrink:0}}>הזמן</button>
                   </div>
                 </div>
 
@@ -784,10 +849,11 @@ export function HomepageClient() {
 
               {([
                 { scene:'guests', color:'magenta', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, title:'ניהול מוזמנים', body:'ניהול מוזמנים חכם, פשוט ומהיר', bullets:['ייבוא בלתי מוגבל של קבצי Excel ו-CSV','מערכת AI חכמה למיפוי וסידור אוטומטי של הרשומות','חלוקה מהירה ופשוטה של המוזמנים לקבוצות וקטגוריות'] },
-                { scene:'whatsapp', color:'green', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.512 5.26l.213.341-1.001 3.656 3.765-.956z"/></svg>, title:'הודעות וואטסאפ', body:'שלחו הזמנות אישיות, תזכורות ותודות ישירות לוואטסאפ. תשובות מסונכרנות לפרופיל כל אורח.', bullets:['תבניות עם שדות מיזוג ותצוגה מקדימה חיה','מעקב תשובות דו-כיווני לכל אורח','שליחה מתוזמנת בהפצות בכל גודל'] },
-                { scene:'seating', color:'lavender', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>, title:'תרשים מושבים ויזואלי', body:'גררו שולחנות, הימנעו משכנים מביכים, וקבעו סידורים עם עורך ויזואלי שהאולם שלכם יאהב', bullets:['צורות שולחן עגולות, מלבניות ומעורבות','אזהרות קונפליקט לכללי "לא לסמוך"','ייצוא כרטיסי PDF, גיליונות לספקים ומפות'] },
-                { scene:'ai', color:'peach', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>, title:'כלים חכמים AI', body:'סידור אוטומטי לפי קשרים, טיוטות הודעות שמתאימות לסגנון שלכם, ותזכורות בזמן הנכון', bullets:['ישיבה חכמת מתגי קשרים','טיוטות הזמנה ותודה מותאמות לטון','התראות חיות: &quot;12 אורחים לא הגיבו&quot;'] },
-                { scene:'invite', color:'sun', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>, title:'דפי הזמנה ממותגים', body:'דף RSVP יפהפה על לינק קצר משלכם — עם מפת הגעה, בקשת שירים, טופס תזונה ועד לחגיגה', bullets:['צבעים, תמונות ומונוגרמה מותאמים אישית','RSVP + מלווה + בחירת מנה בזרימה אחת','רב-לשוני: עברית, אנגלית, ערבית ועוד'] },
+                { scene:'whatsapp', color:'green', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.512 5.26l.213.341-1.001 3.656 3.765-.956z"/></svg>, title:'הודעות וואטסאפ', body:'שלחו הזמנות, אישורי הגעה ותזכורות ישירות לוואטסאפ בתזמון מראש', bullets:['שליחת הזמנות, 2 סבבי אישורי הגעה ותזכורת ישירות לוואטסאפ','תזמון ההודעות מראש ושליחה אוטומטית','הודעת תזכורת ביום האירוע עם לינק ניווט לאירוע, מספר שולחן וקישור למתנה בביט או PayBox'] },
+                { scene:'phone', color:'blue', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.52 9.77a19.79 19.79 0 01-3.07-8.67A2 2 0 012.43 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.44a16 16 0 006.63 6.63l1.27-.78a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>, title:'שיחות טלפון', body:'לא נותנים לאף מוזמן ליפול בין הכיסאות', bullets:['2 סבבי שיחות טלפון למוזמנים שטרם אישרו הגעה','מעקב מסודר אחרי סטטוס כל שיחה','תיעוד מלא של תוצאות השיחות ישירות במערכת','מעלים משמעותית את אחוזי אישורי ההגעה לאירוע'] },
+                { scene:'seating', color:'lavender', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>, title:'סידורי הושבה', body:'סידורי הושבה מודרניים שמשנים את כל החוויה', bullets:['מסדרים את המוזמנים לשולחנות בצורה פשוטה ונוחה','מערכת AI שיוצרת סידורי הושבה לפי קבוצות וקטגוריות','משנים ומעדכנים את סידורי ההושבה בקלות באמצעות AI'] },
+                { scene:'budget', color:'peach', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z"/><path d="M20 12h-4a2 2 0 000 4h4V12z"/><path d="M4 6V5a2 2 0 012-2h12a2 2 0 012 2v1"/></svg>, title:'ניהול תקציב', body:'ניהול כל ההוצאות, הספקים והמתנות במקום אחד', bullets:['מעקב מסודר אחרי הוצאות, תשלומים וספקים','תיעוד מלא של מתנות האורחים וההכנסות מהאירוע','הגדרת תקציב ומעקב אחריו בזמן אמת בדשבורד חכם'] },
+                { scene:'sharing', color:'sun', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>, title:'שיתוף', body:'תכנון אירוע טוב יותר מתחיל בשיתוף פעולה', bullets:['מצרפים שותף לניהול האירוע בכמה קליקים','מגדירים הרשאות צפייה או עריכה לכל שותף','עובדים יחד בצורה מסודרת ומסונכרנת','שקיפות מלאה ושיתוף פעולה נוח בתהליך תכנון האירוע'] },
               ] as Array<{scene:string,color:string,icon:React.ReactNode,title:string,body:string,bullets:string[]}>).map(({scene,color,icon,title,body,bullets}) => (
                 <div key={scene} className={`acc-item${activeScene === scene ? ' active' : ''}`}>
                   <button className="acc-trigger" type="button" onClick={() => { if (activeScene !== scene) setActiveScene(scene); }}>
@@ -817,7 +883,7 @@ export function HomepageClient() {
       <section className="section how" id="how" dir="rtl">
         <div className="wrap">
           <div className="section-head reveal">
-            <div className="eyebrow">יצירת ארוע</div>
+            <div className="eyebrow">יצירת אירוע</div>
             <h2 className="section-title">שלושה צעדים ליום ללא לחץ</h2>
             <p className="section-sub">ללא עלויות הקמה, ללא מיגרציות, ללא סיוט גיליונות אלקטרוניים. רוב הזוגות שולחים הזמנות תוך 15 דקות.</p>
           </div>
@@ -849,7 +915,7 @@ export function HomepageClient() {
             <div className="step reveal">
               <div className="step-num">3</div>
               <h3>סדרו את כולם בדקות</h3>
-              <p>גררו אורחים לשולחנות — או תנו ל-AI של קולולו להציע קיבוצים לפי מי מכיר את מי. הדפיסו, שתפו, סיימתם.</p>
+              <p>גררו אורחים לשולחנות — או תנו ל-AI של Kululu להציע קיבוצים לפי מי מכיר את מי. הדפיסו, שתפו, סיימתם.</p>
             </div>
           </div>
         </div>
@@ -861,14 +927,12 @@ export function HomepageClient() {
           <div className="section-head reveal">
             <div className="eyebrow">חבילות</div>
             <h2 className="section-title">תשלום לפי אירוע. ללא הפתעות.</h2>
-            <p className="section-sub">בחרו את התוכנית שמתאימה לרשימת האורחים שלכם. כל תוכנית כוללת מאגר חינמי של מקומות שמורים לתוספות של הרגע האחרון.</p>
+            <p className="section-sub">בוחרים את החבילה שמתאימה בדיוק לאירוע שלכם</p>
           </div>
           <div className="pricing-grid">
             {/* Plan 1 */}
             <div className="plan reveal">
-              <div className="plan-name">אינטימי</div>
-              <p className="plan-tagline">חגיגות קטנות ומפגשים עם קרובים</p>
-              <div className="plan-price"><span className="cur">₪</span><span className="amt">190</span></div>
+              <div className="plan-price"><span className="amt">190</span><span className="cur">₪</span></div>
               <div className="plan-per">חד פעמי · לאירוע</div>
               <div className="plan-meta">
                 <div className="row">
@@ -877,17 +941,14 @@ export function HomepageClient() {
                 </div>
                 <div className="row">
                   <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+10</b> שמורים · חינם</span>
+                  <span><b>+10</b> רזרבה · חינם</span>
                 </div>
               </div>
-              <button className="plan-cta" onClick={handleCtaClick}>בחרו אינטימי</button>
+              <button className="plan-cta" onClick={() => handlePlanCtaClick(100)}>בחרו תוכנית</button>
             </div>
             {/* Plan 2 Featured */}
             <div className="plan featured reveal">
-              <span className="pop-badge">הכי פופולרי</span>
-              <div className="plan-name">חגיגה</div>
-              <p className="plan-tagline">המקום האידאלי לרוב החתונות ואירועים בינוניים</p>
-              <div className="plan-price"><span className="cur">₪</span><span className="amt">360</span></div>
+<div className="plan-price"><span className="amt">360</span><span className="cur">₪</span></div>
               <div className="plan-per">חד פעמי · לאירוע</div>
               <div className="plan-meta">
                 <div className="row">
@@ -896,16 +957,14 @@ export function HomepageClient() {
                 </div>
                 <div className="row">
                   <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+20</b> שמורים · חינם</span>
+                  <span><b>+20</b> רזרבה · חינם</span>
                 </div>
               </div>
-              <button className="plan-cta" onClick={handleCtaClick}>בחרו חגיגה</button>
+              <button className="plan-cta" onClick={() => handlePlanCtaClick(200)}>בחרו תוכנית</button>
             </div>
             {/* Plan 3 */}
             <div className="plan reveal">
-              <div className="plan-name">גרנד</div>
-              <p className="plan-tagline">חתונות גדולות, מסיבות יובל, כל הכפר</p>
-              <div className="plan-price"><span className="cur">₪</span><span className="amt">510</span></div>
+              <div className="plan-price"><span className="amt">510</span><span className="cur">₪</span></div>
               <div className="plan-per">חד פעמי · לאירוע</div>
               <div className="plan-meta">
                 <div className="row">
@@ -914,16 +973,14 @@ export function HomepageClient() {
                 </div>
                 <div className="row">
                   <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+30</b> שמורים · חינם</span>
+                  <span><b>+30</b> רזרבה · חינם</span>
                 </div>
               </div>
-              <button className="plan-cta" onClick={handleCtaClick}>בחרו גרנד</button>
+              <button className="plan-cta" onClick={() => handlePlanCtaClick(300)}>בחרו תוכנית</button>
             </div>
             {/* Plan 4 */}
             <div className="plan reveal">
-              <div className="plan-name">רויאל</div>
-              <p className="plan-tagline">ליום המפואר שבו כולם מוזמנים</p>
-              <div className="plan-price"><span className="cur">₪</span><span className="amt">640</span></div>
+              <div className="plan-price"><span className="amt">640</span><span className="cur">₪</span></div>
               <div className="plan-per">חד פעמי · לאירוע</div>
               <div className="plan-meta">
                 <div className="row">
@@ -932,23 +989,15 @@ export function HomepageClient() {
                 </div>
                 <div className="row">
                   <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+40</b> שמורים · חינם</span>
+                  <span><b>+40</b> רזרבה · חינם</span>
                 </div>
               </div>
-              <button className="plan-cta" onClick={handleCtaClick}>בחרו רויאל</button>
+              <button className="plan-cta" onClick={() => handlePlanCtaClick(400)}>בחרו תוכנית</button>
             </div>
           </div>
-          <div className="pricing-incl reveal">
-            <span className="lbl">כל תוכנית כוללת</span>
-            {['ניהול אורחים','הודעות וואטסאפ','תרשים מושבים ויזואלי','כלים חכמים AI','שיתופי פעולה ללא הגבלה'].map((item) => (
-              <span key={item} className="item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                {item}
-              </span>
-            ))}
-          </div>
+
           <p className="pricing-foot reveal">
-            צריכים יותר מ-400 אורחים? <a href="#contact">דברו איתנו</a> — נתאים תוכנית במיוחד בשבילכם
+            צריכים יותר מ-400 אורחים? <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener noreferrer">דברו איתנו</a> — נתאים תוכנית במיוחד בשבילכם
           </p>
         </div>
       </section>
@@ -959,20 +1008,21 @@ export function HomepageClient() {
           <div className="section-head reveal">
             <div className="eyebrow">שאלות ותשובות</div>
             <h2 className="section-title">כדאי לדעת</h2>
-            <p className="section-sub">תשובות מהירות לשאלות שזוגות ומתכנני אירועים שואלים אותנו הכי הרבה. עוד סקרנים? אנחנו רק הודעה אחת משם.</p>
+            <p className="section-sub">יש לכם שאלות? יש לנו תשובות.</p>
           </div>
 
           <div className="faq-wrap">
             <div className="faq-list reveal">
               {([
-                { q:'האם קולולו מחויב לפי אירוע או מנוי?', a:'לפי אירוע — תשלום חד פעמי לפי גודל רשימת האורחים שלכם. ללא דמי מנוי חודשיים, ללא חידוש אוטומטי, ללא חיובים מפתיעים אחרי החתונה.' },
-                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:'ניתן לשדרג לתוכנית גדולה יותר בכל עת — אנחנו מזכים את מה ששולמתם כנגד הרמה החדשה. מאגר האורחים השמורים החינמי (10–40 רשומות לפי תוכנית) נועד בדיוק לתוספות של הרגע האחרון.' },
-                { q:'איך עובדות הודעות וואטסאפ בדיוק?', a:'ההודעות נשלחות דרך WhatsApp Business API הרשמי, כך שהן מגיעות לוואטסאפ הרגיל של האורחים מגוון קולולו מאומת. ניתן להתאים אישית עם שדות מיזוג (שם, שולחן, שעה) ותשובות מסונכרנות לדשבורד אוטומטית.' },
-                { q:'האם אני יכול/ה להזמין את בן/בת הזוג, המתכנן/ת או המשפחה לעזור?', a:'כן — כל תוכנית כוללת שיתופי פעולה ללא הגבלה עם הרשאות מבוססות תפקיד. תנו לבן/בת הזוג גישה מלאה, למתכנן/ת הרשאות עריכה, ולחמא/חמות גישת צפייה בלבד לרשימת האורחים. כולם מסונכרנים.' },
-                { q:'אילו שפות קולולו תומך בהן?', a:'הדשבורד זמין בעברית ובאנגלית עם תמיכה מלאה ב-RTL. דפי ההזמנה והודעות וואטסאפ ניתן לשלוח בכל שפה — עברית, אנגלית, ערבית, רוסית, צרפתית וספרדית.' },
-                { q:'איך ה-AI מחליט מי יושב איפה?', a:<>הוא משתמש בתגיות ובהערות שכבר הוספתם — &quot;חברים של הכלה&quot;, &quot;משפחה&quot;, &quot;מכיר את יוסי&quot;, &quot;לא לסמוך ליד תמר&quot; — ומציע קיבוצים שניתן לאשר, לערוך או להתעלם מהם.<br/>ה-AI לא מזיז אף אחד ללא אישורכם. הוא מנוע הצעות, לא מקבל החלטות.</> },
-                { q:'האם נתוני האורחים שלי פרטיים?', a:'תמיד. רשימת האורחים שלכם שייכת לכם — אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק. הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.' },
-                { q:'האם אתם מציעים החזרים אם התוכניות משתנות?', a:'החיים קורים. אנחנו מציעים החזר מלא תוך 14 יום מהרכישה, והחזר חלקי עד 60 יום לפני תאריך האירוע — ללא שאלות.' },
+                { q:'איך מתבצע החיוב ב Kululu?', a:'החיוב מתבצע לפי אירוע - תשלום חד פעמי לפי כמות רשומות המוזמנים שלכם' },
+                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>ניתן לשדרג לחבילה גדולה יותר בכל עת, בקיזוז החבילה ששולמה כבר.<br/>בנוסף, אנו מעניקים לכם 10% רשומות רזרבה שנועדו בדיוק לתוספות של הרגע האחרון.</> },
+                { q:'האם ניתן לנהל את האירוע יחד עם בן/בת הזוג או מפיק האירוע?', a:'בטח, ניתן לצרף שותפים לניהול האירוע עם הרשאות צפייה או עריכה.' },
+                { q:'איך עוזר ה-AI מסדר הושבה?', a:<>הוא משתמש בקבוצות ובהערות שהוספתם - &quot;חברים של הכלה&quot;, &quot;משפחה חתן&quot;, &quot;חברים צבא&quot; ומציע שיבוצים שתוכלו לאשר, לערוך או להתעלם מהם.<br/>עוזר ה-AI לא מזיז אף אחד ללא אישורכם.</> },
+                { q:'האם פרטי האורחים שלי מאובטחים?', a:<>בוודאי. רשימת האורחים שלכם שייכת לכם, אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק.<br/>הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.</> },
+                { q:'האם המערכת מתאימה לכל סוגי האירועים?', a:'כן, המערכת מתאימה לחתונות, חינה, בר/בת מצוות, אירועים עסקיים, ימי הולדת ועוד.' },
+                { q:'האם אפשר לייבא רשימות מוזמנים מקובץ אקסל?', a:'כן, ניתן לייבא קבצי Excel ו-CSV בצורה פשוטה ומהירה.' },
+                { q:'מה קורה אם מוזמנים לא עונים?', a:'המערכת מבצעת סבב הודעות נוסף ולאחר מכן שני סבבי שיחות טלפון למוזמנים שטרם אישרו הגעה.' },
+                { q:'האם המערכת עובדת גם מהטלפון?', a:'כן, המערכת מותאמת לשימוש מלא גם מהמובייל וגם מהמחשב.' },
               ] as Array<{q:string,a:React.ReactNode}>).map(({q,a},i) => (
                 <div key={i} className={`faq-item${openFaqs.has(i) ? ' open' : ''}`}>
                   <button className="faq-trigger" type="button" onClick={() => toggleFaq(i)}>
@@ -990,11 +1040,11 @@ export function HomepageClient() {
           </div>
 
           <div className="faq-foot reveal">
-            <div className="ft">עוד שאלות?</div>
-            <div className="fs">אנחנו צוות קטן וחם — בדרך כלל עונים תוך מספר שעות.</div>
-            <a href={`https://wa.me/972556839696?text=${encodeURIComponent('היי! ראיתי את קולולו ורציתי לשמוע עוד')}`} target="_blank" rel="noopener" className="btn btn-ghost">
-              דברו עם אנשים אמיתיים
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{transform:'scaleX(-1)'}}><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            <div className="ft">לא מצאתם את מה שחיפשתם?</div>
+            <div className="fs">יש לכם שאלה ספציפית? שמחים לענות ישירות בוואטסאפ</div>
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener" className="btn btn-ghost">
+              <IconBrandWhatsapp size={18} stroke={1.75} />
+              דברו איתנו
             </a>
           </div>
         </div>
@@ -1007,7 +1057,7 @@ export function HomepageClient() {
           <div className="footer-inner">
             <div className="footer-links">
               <a href="#features">פיצ׳רים</a>
-              <a href="#how">יצירת ארוע</a>
+              <a href="#how">יצירת אירוע</a>
               <a href="#pricing">חבילות</a>
             </div>
             <a href="#" className="logo" aria-label="Kululu home">
