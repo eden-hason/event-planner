@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 
-// Status progression order — higher index = more advanced
+// Status progression order - higher index = more advanced
 const STATUS_RANK: Record<string, number> = {
   pending: 0,
   sent: 1,
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   const payload = JSON.parse(body);
 
-  // Always return 200 to Meta immediately — process in the same request but
+  // Always return 200 to Meta immediately - process in the same request but
   // never let processing errors bubble up as non-200 responses.
   try {
     await processStatusUpdates(payload);
@@ -159,7 +159,7 @@ async function processOneStatus(
     .single();
 
   if (lookupError || !delivery) {
-    // Message not found — could be from a different system or already deleted
+    // Message not found - could be from a different system or already deleted
     return;
   }
 

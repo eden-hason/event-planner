@@ -420,9 +420,9 @@ export function HomepageClient() {
             <a href="#pricing">תמחור</a>
             <a href="#faq">שאלות</a>
           </nav>
-          <button className="btn btn-primary heb" id="navCta" onClick={handleCtaClick}>
-            התחילו עכשיו
-          </button>
+          <a href="/login" className="btn btn-primary heb" id="navCta">
+            כניסה / הרשמה
+          </a>
         </div>
       </header>
 
@@ -458,7 +458,7 @@ export function HomepageClient() {
                 קולולו מאחד כל אורח, שולחן, אישור הגעה ותזכורת וואטסאפ למרחב עבודה אחד חם ושמח — כדי שתתמקדו ברגעים שחשובים.
               </p>
               <div className="hero-cta">
-                <button className="btn btn-primary btn-lg heb" onClick={handleCtaClick}>התחילו עכשיו</button>
+                <a href="/login" className="btn btn-primary btn-lg heb">כניסה לאפליקציה</a>
                 <a href="#how" className="btn btn-ghost btn-lg">
                   ראה איך זה עובד
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{transform:'scaleX(-1)'}}><path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>

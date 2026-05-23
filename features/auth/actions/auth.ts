@@ -39,12 +39,14 @@ export async function updateUserProfile(formData: FormData) {
   const fullName = formData.get('full_name') as string | null;
   const phoneNumber = formData.get('phone_number') as string | null;
   const avatarUrl = formData.get('avatar_url') as string | null;
+  const email = formData.get('email') as string | null;
 
   const { error } = await supabase.from('profiles').upsert({
     id: user.id,
     ...(fullName !== null && { full_name: fullName }),
     ...(phoneNumber !== null && { phone_number: phoneNumber }),
     ...(avatarUrl !== null && { avatar_url: avatarUrl }),
+    ...(email !== null && { email }),
     initial_setup_complete: true,
   });
 

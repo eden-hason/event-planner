@@ -59,6 +59,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
     const formData = new FormData();
     formData.set('full_name', fullName);
     formData.set('phone_number', phoneNumber);
+    formData.set('email', profile.email);
     if (avatarUrl) formData.set('avatar_url', avatarUrl);
 
     const promise = updateUserProfile(formData).then((result) => {
@@ -79,13 +80,6 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
     } finally {
       setIsPending(false);
     }
-  };
-
-  const handleSkip = async () => {
-    setIsPending(true);
-    await updateUserProfile(new FormData());
-    setIsPending(false);
-    onComplete();
   };
 
   const initials = fullName
@@ -139,7 +133,7 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
           {/* Name */}
           <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:120ms]">
             <label className="text-muted-foreground text-xs font-medium">
-              {t('nameLabel')}
+              {t('nameLabel')} <span className="text-destructive">*</span>
             </label>
             <Input
               placeholder={t('namePlaceholder')}
@@ -149,18 +143,10 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
             />
           </div>
 
-          {/* Email (read-only) */}
+          {/* Phone */}
           <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:180ms]">
             <label className="text-muted-foreground text-xs font-medium">
-              {t('emailLabel')}
-            </label>
-            <Input value={profile.email} readOnly disabled className="opacity-60" />
-          </div>
-
-          {/* Phone */}
-          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
-            <label className="text-muted-foreground text-xs font-medium">
-              {t('phoneLabel')}
+              {t('phoneLabel')} <span className="text-destructive">*</span>
             </label>
             <Input
               placeholder={t('phonePlaceholder')}
@@ -170,19 +156,20 @@ export function PersonalInfoStep({ profile, onComplete }: PersonalInfoStepProps)
               type="tel"
               dir={isRtl ? 'rtl' : 'ltr'}
             />
+            <p className="text-muted-foreground text-xs">{t('phoneHelper')}</p>
+          </div>
+
+          {/* Email (read-only) */}
+          <div className="flex flex-col gap-1.5 [animation:slide-up_0.35s_ease_both] [animation-delay:240ms]">
+            <label className="text-muted-foreground text-xs font-medium">
+              {t('emailLabel')}
+            </label>
+            <Input value={profile.email} readOnly disabled className="opacity-60" />
           </div>
 
           <div className="flex flex-col gap-2 [animation:slide-up_0.35s_ease_both] [animation-delay:300ms]">
-            <Button onClick={handleSave} disabled={isBusy} className="w-full">
+            <Button onClick={handleSave} disabled={isBusy || !phoneNumber.trim() || !fullName.trim()} className="w-full">
               {t('save')}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={handleSkip}
-              disabled={isBusy}
-              className="text-muted-foreground w-full"
-            >
-              {t('skip')}
             </Button>
           </div>
         </div>

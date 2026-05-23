@@ -175,7 +175,7 @@
     },
     "expenseEmpty": {
       "title": "לדעת בדיוק לאן כל שקל הולך",
-      "description": "התחל לעקוב אחר ההוצאות עכשיו — כדי שלא יהיו הפתעות לפני האירוע.",
+      "description": "התחל לעקוב אחר ההוצאות עכשיו - כדי שלא יהיו הפתעות לפני האירוע.",
       "cta": "הוסף הוצאה"
     },
     "giftEmpty": {
@@ -331,21 +331,21 @@
     "toast": {
       "savingExpense": "שומר הוצאה...",
       "addingExpense": "מוסיף הוצאה...",
-      "expenseUpdated": "הוצאה עודכנה.",
-      "expenseAdded": "הוצאה נוספה.",
+      "expenseUpdated": "הוצאה עודכנה",
+      "expenseAdded": "הוצאה נוספה",
       "deletingExpense": "מוחק הוצאה...",
-      "expenseDeleted": "הוצאה נמחקה.",
+      "expenseDeleted": "הוצאה נמחקה",
       "savingGift": "שומר מתנה...",
       "addingGift": "מוסיף מתנה...",
-      "giftUpdated": "מתנה עודכנה.",
-      "giftAdded": "מתנה נוספה.",
+      "giftUpdated": "מתנה עודכנה",
+      "giftAdded": "מתנה נוספה",
       "deletingGift": "מוחק מתנה...",
-      "giftDeleted": "מתנה נמחקה.",
+      "giftDeleted": "מתנה נמחקה",
       "savingBudget": "שומר תקציב...",
-      "budgetSaved": "התקציב נשמר.",
+      "budgetSaved": "התקציב נשמר",
       "removingBudget": "מסיר תקציב...",
-      "budgetRemoved": "התקציב הוסר.",
-      "error": "משהו השתבש."
+      "budgetRemoved": "התקציב הוסר",
+      "error": "משהו השתבש"
     }
   },
   "guests": {
@@ -377,12 +377,12 @@
     },
     "toast": {
       "creatingGroup": "יוצר את {name}...",
-      "groupCreated": "הקבוצה נוצרה בהצלחה.",
-      "groupCreateFailed": "יצירת הקבוצה נכשלה. נסה שנית.",
+      "groupCreated": "הקבוצה נוצרה בהצלחה",
+      "groupCreateFailed": "יצירת הקבוצה נכשלה. נסה שנית",
       "groupNameTaken": "קבוצה עם שם זה כבר קיימת עבור הצד הזה",
       "deletingGuest": "מוחק את {name}...",
-      "guestDeleted": "האורח נמחק בהצלחה.",
-      "guestDeleteFailed": "מחיקת האורח נכשלה."
+      "guestDeleted": "האורח נמחק בהצלחה",
+      "guestDeleteFailed": "מחיקת האורח נכשלה"
     },
     "form": {
       "contactInfo": "פרטי קשר",
@@ -404,9 +404,9 @@
       "notesPlaceholder": "הוסף הערות על האורח...",
       "updatingGuest": "מעדכן אורח...",
       "addingGuest": "מוסיף אורח...",
-      "guestUpdated": "האורח עודכן.",
-      "guestAdded": "האורח נוסף.",
-      "somethingWentWrong": "משהו השתבש.",
+      "guestUpdated": "האורח עודכן",
+      "guestAdded": "האורח נוסף",
+      "somethingWentWrong": "משהו השתבש",
       "updateGuest": "עדכן אורח",
       "addGuest": "הוסף אורח",
       "updating": "מעדכן...",
@@ -467,8 +467,8 @@
     "directory": {
       "importCsv": "ייבוא קובץ",
       "deletingGuest": "מוחק את {name}...",
-      "guestDeleted": "האורח נמחק בהצלחה.",
-      "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית."
+      "guestDeleted": "האורח נמחק בהצלחה",
+      "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית"
     },
     "filters": {
       "filterByStatus": "סטטוס",
@@ -527,16 +527,16 @@
         "selectedToMove": "{count} אורחים נבחרו להזזה",
         "saveChanges": "שמור שינויים",
         "updatingMembers": "מעדכן חברי {name}...",
-        "membersUpdated": "חברי הקבוצה עודכנו בהצלחה.",
-        "membersFailed": "עדכון חברי הקבוצה נכשל. נסה שנית."
+        "membersUpdated": "חברי הקבוצה עודכנו בהצלחה",
+        "membersFailed": "עדכון חברי הקבוצה נכשל. נסה שנית"
       },
       "toast": {
         "deletingGroups": "מוחק {count} קבוצות...",
-        "groupsDeleted": "הקבוצות נמחקו בהצלחה.",
-        "groupsDeleteFailed": "מחיקת הקבוצות נכשלה. נסה שנית.",
+        "groupsDeleted": "הקבוצות נמחקו בהצלחה",
+        "groupsDeleteFailed": "מחיקת הקבוצות נכשלה. נסה שנית",
         "deletingGroup": "מוחק את {name}...",
-        "groupDeleted": "הקבוצה נמחקה בהצלחה.",
-        "groupDeleteFailed": "מחיקת הקבוצה נכשלה. נסה שנית."
+        "groupDeleted": "הקבוצה נמחקה בהצלחה",
+        "groupDeleteFailed": "מחיקת הקבוצה נכשלה. נסה שנית"
       }
     },
     "import": {
@@ -550,7 +550,7 @@
       "import": "ייבא",
       "done": "סיים",
       "close": "סגור",
-      "importSuccess": "האורחים יובאו בהצלחה!",
+      "importSuccess": "האורחים יובאו בהצלחה",
       "upload": {
         "heading": "העלה את רשימת האורחים",
         "instruction": "גרור ושחרר את קובץ ה-.csv או ה-.xlsx לכאן, או לחץ לבחירה",
@@ -559,7 +559,7 @@
       "analyze": {
         "heading": "מנתח את הקובץ…",
         "description": "מערכת ה-AI שלנו קוראת את העמודות וממפה את נתוני האורחים באופן אוטומתי",
-        "rowsDetected": "הקובץ פוענח — {count} שורות זוהו",
+        "rowsDetected": "הקובץ פוענח - {count} שורות זוהו",
         "readingHeaders": "קורא כותרות עמודות…",
         "analyzingSample": "מנתח נתוני דוגמה…",
         "mappingSchema": "ממפה לסכמת האורחים…",
@@ -808,9 +808,9 @@
       },
       "toast": {
         "updating": "מעדכן לוח זמנים...",
-        "enabled": "לוח הזמנים הופעל.",
-        "disabled": "לוח הזמנים הושבת.",
-        "error": "משהו השתבש."
+        "enabled": "לוח הזמנים הופעל",
+        "disabled": "לוח הזמנים הושבת",
+        "error": "משהו השתבש"
       }
     },
     "timing": {
@@ -826,9 +826,9 @@
       "scheduledTimeHelper": "השעה שבה ההודעה תצא ביום המתוזמן",
       "toast": {
         "updating": "מעדכן תאריך מתוזמן...",
-        "updated": "התאריך המתוזמן עודכן.",
-        "failed": "עדכון התאריך המתוזמן נכשל.",
-        "error": "משהו השתבש."
+        "updated": "התאריך המתוזמן עודכן",
+        "failed": "עדכון התאריך המתוזמן נכשל",
+        "error": "משהו השתבש"
       }
     },
     "audience": {
@@ -864,12 +864,12 @@
       "confirm": "שלח עכשיו ←",
       "toast": {
         "sending": "שולח הודעות...",
-        "failed": "השליחה נכשלה."
+        "failed": "השליחה נכשלה"
       }
     },
     "setupWizard": {
       "emptyTitle": "תכננו את ציר הזמן לתקשורת עם האורחים",
-      "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי — הגדירו את ציר הזמן כדי להתחיל",
+      "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי - הגדירו את ציר הזמן כדי להתחיל",
       "emptyCta": "הגדרת תזמונים",
       "emptyUnsupported": "הצעות תזמונים עדיין אינן זמינות לסוג אירוע זה",
       "features": {
@@ -888,12 +888,12 @@
       "sendDateLabel": "תאריך שליחה",
       "timeLabel": "שעה",
       "sendDateHelper": "מתי ההזמנה תישלח לאורחים",
-      "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית — לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
+      "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית - לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
       "decisionSend": "כן, לשלוח",
       "decisionSendDesc": "ההזמנה תישלח בתאריך שתבחרו",
       "decisionSkip": "לדלג בינתיים",
       "decisionSkipDesc": "תוכלו להפעיל אותו בכל עת",
-      "timelineHelper": "כבו כל מה שאינכם מוכנים אליו — זה יישאר בציר הזמן, רק מושבת",
+      "timelineHelper": "כבו כל מה שאינכם מוכנים אליו - זה יישאר בציר הזמן, רק מושבת",
       "recipientsCount": "{count} אורחים",
       "continue": "המשך",
       "back": "חזרה",
@@ -991,9 +991,9 @@
     },
     "toast": {
       "creating": "יוצר את האירוע שלך...",
-      "created": "האירוע נוצר!",
-      "failed": "יצירת האירוע נכשלה.",
-      "error": "משהו השתבש."
+      "created": "האירוע נוצר",
+      "failed": "יצירת האירוע נכשלה",
+      "error": "משהו השתבש"
     },
     "success": {
       "title": "האירוע שלך מוכן!",
@@ -1018,7 +1018,7 @@
     "toast": {
       "creating": "יוצר את {title}...",
       "created": "האירוע נוצר בהצלחה",
-      "failed": "יצירת האירוע נכשלה. נסה שנית."
+      "failed": "יצירת האירוע נכשלה. נסה שנית"
     }
   },
   "collaborate": {
@@ -1055,8 +1055,8 @@
       },
       "toast": {
         "removing": "מסיר שותף...",
-        "removed": "השותף הוסר.",
-        "failed": "משהו השתבש."
+        "removed": "השותף הוסר",
+        "failed": "משהו השתבש"
       }
     },
     "configDialog": {
@@ -1069,13 +1069,13 @@
       "saving": "שומר...",
       "saveChanges": "שמור שינויים",
       "toast": {
-        "needsScope": "מנהלי מיקום צריכים לפחות קבוצה או אורח אחד מוקצה.",
-        "roleFailed": "עדכון התפקיד נכשל.",
-        "roleUpdated": "התפקיד עודכן.",
-        "scopeRequired": "נדרשת לפחות קבוצה או אורח אחד.",
-        "scopeFailed": "עדכון ההיקף נכשל.",
-        "scopeUpdated": "ההיקף עודכן.",
-        "error": "משהו השתבש."
+        "needsScope": "מנהלי מיקום צריכים לפחות קבוצה או אורח אחד מוקצה",
+        "roleFailed": "עדכון התפקיד נכשל",
+        "roleUpdated": "התפקיד עודכן",
+        "scopeRequired": "נדרשת לפחות קבוצה או אורח אחד",
+        "scopeFailed": "עדכון ההיקף נכשל",
+        "scopeUpdated": "ההיקף עודכן",
+        "error": "משהו השתבש"
       }
     },
     "pendingInvitations": {
@@ -1084,10 +1084,10 @@
       "resend": "שלח שוב",
       "cancel": "ביטול",
       "toast": {
-        "linkCopied": "קישור ההזמנה הועתק ללוח.",
+        "linkCopied": "קישור ההזמנה הועתק ללוח",
         "revoking": "מבטל הזמנה...",
-        "revoked": "ההזמנה בוטלה.",
-        "failed": "משהו השתבש."
+        "revoked": "ההזמנה בוטלה",
+        "failed": "משהו השתבש"
       }
     },
     "inviteDialog": {
@@ -1116,20 +1116,20 @@
       "copy": "העתק",
       "done": "סיום",
       "toast": {
-        "emailRequired": "אנא הזן כתובת מייל.",
-        "createFailed": "יצירת ההזמנה נכשלה.",
-        "created": "ההזמנה נוצרה!",
-        "linkCopied": "הקישור הועתק ללוח."
+        "emailRequired": "אנא הזן כתובת מייל",
+        "createFailed": "יצירת ההזמנה נכשלה",
+        "created": "ההזמנה נוצרה",
+        "linkCopied": "הקישור הועתק ללוח"
       }
     },
     "editScope": {
-      "title": "ערוך היקף — {name}",
+      "title": "ערוך היקף - {name}",
       "description": "בחר אילו קבוצות ואורחים מנהל המיקום יוכל לצפות בהם.",
       "saving": "שומר...",
       "save": "שמור היקף",
       "toast": {
-        "failed": "עדכון ההיקף נכשל.",
-        "updated": "ההיקף עודכן."
+        "failed": "עדכון ההיקף נכשל",
+        "updated": "ההיקף עודכן"
       }
     },
     "invitationPage": {
@@ -1140,9 +1140,9 @@
       "processing": "מעבד...",
       "accept": "קבל",
       "toast": {
-        "acceptFailed": "קבלת ההזמנה נכשלה.",
-        "declineFailed": "דחיית ההזמנה נכשלה.",
-        "error": "משהו השתבש."
+        "acceptFailed": "קבלת ההזמנה נכשלה",
+        "declineFailed": "דחיית ההזמנה נכשלה",
+        "error": "משהו השתבש"
       }
     }
   },
@@ -1290,15 +1290,16 @@
     "namePlaceholder": "הזן את שמך",
     "phoneLabel": "מספר טלפון",
     "phonePlaceholder": "הזן מספר טלפון",
+    "phoneHelper": "ישמש לשליחת עדכוני האירוע - ללא ספאם",
     "emailLabel": "אימייל",
     "avatarLabel": "תמונת פרופיל",
     "save": "שמור והמשך",
     "skip": "דלג",
     "toast": {
       "saving": "שומר את הפרופיל...",
-      "saved": "הפרופיל נשמר!",
-      "error": "משהו השתבש.",
-      "uploadError": "העלאת התמונה נכשלה."
+      "saved": "הפרופיל נשמר",
+      "error": "משהו השתבש",
+      "uploadError": "העלאת התמונה נכשלה"
     }
   },
   "templates": {
