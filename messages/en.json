@@ -1,4 +1,10 @@
 {
+  "mobileBlock": {
+    "title": "Best viewed on desktop",
+    "description": "Please open this app on a larger screen for the best experience",
+    "comingSoon": "Mobile support",
+    "comingSoonBadge": "Coming soon"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

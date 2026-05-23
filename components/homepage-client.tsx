@@ -112,6 +112,7 @@ export function HomepageClient() {
 
   const [activeScene, setActiveScene] = useState<string>('guests');
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0]));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   function toggleFaq(i: number) {
     setOpenFaqs((prev) => {
@@ -363,12 +364,10 @@ export function HomepageClient() {
         .step:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
         .step-num{width:76px;height:76px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff;margin:0 auto 22px;position:relative;letter-spacing:-0.02em}
         .step-num::after{content:"";position:absolute;inset:-10px;border-radius:999px;border:1.5px dashed rgba(210,60,194,0.3);animation:spin 30s linear infinite}
-        .step:nth-child(odd) .step-num{background:linear-gradient(135deg,#D23CC2,#A78BFA);box-shadow:0 12px 28px rgba(210,60,194,0.28)}
-        .step:nth-child(even) .step-num{background:linear-gradient(135deg,#A78BFA,#FFBCAD);box-shadow:0 12px 28px rgba(167,139,250,0.28)}
+        .step .step-num{background:linear-gradient(135deg,#D23CC2,#A78BFA);box-shadow:0 12px 28px rgba(210,60,194,0.28)}
         @keyframes spin{to{transform:rotate(360deg)}}
         .step h3{font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.01em}
         .step p{font-size:15px;color:var(--ink-2);line-height:1.55;margin:0}
-        .connector{position:absolute;top:60px;left:0;right:0;height:32px;pointer-events:none;z-index:0}
         .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:stretch}
         .plan{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:28px 24px 26px;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;overflow:hidden}
         .plan:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:rgba(26,11,46,0.14)}
@@ -412,20 +411,39 @@ export function HomepageClient() {
           .mockup-wrap{max-width:560px;margin:0 auto}
           .features{grid-template-columns:repeat(2,1fr)}
           .how-grid{grid-template-columns:1fr}
-          .connector{display:none}
         }
         @media(max-width:720px){
           .nav-links{display:none}
           .section{padding:72px 0}
           .features{grid-template-columns:1fr}
           .cta-banner{padding:56px 28px}
-          .footer-inner{flex-direction:column;align-items:flex-start}
+          .footer-inner{flex-direction:column;align-items:center;text-align:center}
+          .footer-links{justify-content:center}
           .wa-bubble{right:-8px;width:200px}
           .ai-chip{left:-8px}
+          .mockup-wrap{display:none}
+          .deep-visual{display:none}
+          .hero{min-height:unset;padding:56px 0}
+          .hero-cta{justify-content:center}
+          .how{background:linear-gradient(160deg,#FFF0FC 0%,#F3EEFF 55%,#FFF4F0 100%)}
+          #faq{background:linear-gradient(160deg,#FFF0FC 0%,#F3EEFF 55%,#FFF4F0 100%)}
+          .faq-foot{background:#fff;border-color:rgba(210,60,194,0.14)}
         }
         @media(max-width:560px){
           .pricing-grid{grid-template-columns:1fr}
         }
+        .hp-nav-hamburger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:background .15s ease;flex-shrink:0}
+        .hp-nav-hamburger:hover{background:rgba(26,11,46,0.06)}
+        .mobile-menu-overlay{position:fixed;inset:0;background:rgba(26,11,46,0.3);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s ease;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+        .mobile-menu-overlay.open{opacity:1;pointer-events:auto}
+        .mobile-menu-drawer{position:fixed;top:0;right:0;bottom:0;width:280px;background:#fff;z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.7,.4,1);display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(26,11,46,0.14)}
+        .mobile-menu-drawer.open{transform:translateX(0)}
+        .mobile-menu-links{display:flex;flex-direction:column;gap:4px;padding:20px 16px}
+        .mobile-menu-links a{display:block;padding:14px 16px;border-radius:14px;font-size:17px;font-weight:600;color:var(--ink-2);transition:background .15s ease,color .15s ease}
+        .mobile-menu-links a:hover,.mobile-menu-links a.active{background:rgba(210,60,194,0.08);color:var(--primary)}
+        .mobile-menu-cta{margin:4px 16px 0;display:block;padding:14px 22px;background:var(--primary);color:#fff;border-radius:14px;font-size:16px;font-weight:700;text-align:center;box-shadow:0 6px 16px rgba(210,60,194,0.25);transition:background .15s ease}
+        .mobile-menu-cta:hover{background:var(--primary-deep)}
+        @media(max-width:720px){.hp-nav-hamburger{display:flex}#navCta{display:none}}
       `}</style>
 
       {/* NAV */}
@@ -434,7 +452,19 @@ export function HomepageClient() {
           <a href="/login" className="btn btn-primary heb" id="navCta">
             כניסה / הרשמה
           </a>
-          
+
+          <button
+            className="hp-nav-hamburger"
+            aria-label="פתח תפריט"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+
           <nav className="nav-links" aria-label="ניווט ראשי">
             <a href="#features" className={activeSection === 'features' ? 'active' : ''}>פיצ׳רים</a>
             <a href="#how" className={activeSection === 'how' ? 'active' : ''}>יצירת אירוע</a>
@@ -447,6 +477,23 @@ export function HomepageClient() {
           </a>
         </div>
       </header>
+
+      {/* Mobile menu */}
+      <div
+        className={`mobile-menu-overlay${mobileMenuOpen ? ' open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+      <div className={`mobile-menu-drawer${mobileMenuOpen ? ' open' : ''}`} dir="rtl">
+        <nav className="mobile-menu-links" aria-label="ניווט ראשי">
+          <a href="#features" className={activeSection === 'features' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>פיצ׳רים</a>
+          <a href="#how" className={activeSection === 'how' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>יצירת אירוע</a>
+          <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>חבילות</a>
+        </nav>
+        <a href="/login" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>
+          כניסה / הרשמה
+        </a>
+      </div>
 
       {/* HERO */}
       <section className="hero" dir="rtl">
@@ -884,38 +931,25 @@ export function HomepageClient() {
         <div className="wrap">
           <div className="section-head reveal">
             <div className="eyebrow">יצירת אירוע</div>
-            <h2 className="section-title">שלושה צעדים ליום ללא לחץ</h2>
-            <p className="section-sub">ללא עלויות הקמה, ללא מיגרציות, ללא סיוט גיליונות אלקטרוניים. רוב הזוגות שולחים הזמנות תוך 15 דקות.</p>
+            <h2 className="section-title">ניהול אירוע חכם מתחיל כאן</h2>
+            <p className="section-sub">מהרשימה ועד ההושבה - מנהלים את כל האירוע במקום אחד</p>
           </div>
           <div className="how-grid">
-            <svg className="connector" viewBox="0 0 1200 32" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="connector" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#D23CC2"/>
-                  <stop offset="50%" stopColor="#A78BFA"/>
-                  <stop offset="100%" stopColor="#FFBCAD"/>
-                </linearGradient>
-              </defs>
-              <path d="M 180 16 Q 400 -10 600 16 T 1020 16" fill="none" stroke="url(#connector)" strokeWidth="2" strokeDasharray="3 7" strokeLinecap="round" opacity="0.6"/>
-              <circle cx="280" cy="6" r="3" fill="#D23CC2" opacity="0.7"/>
-              <circle cx="510" cy="22" r="2.5" fill="#A78BFA" opacity="0.6"/>
-              <rect x="710" y="2" width="5" height="5" fill="#FFBCAD" transform="rotate(15 712 4)"/>
-              <polygon points="930,18 938,28 922,28" fill="#FFE08A" opacity="0.8"/>
-            </svg>
+
             <div className="step reveal">
               <div className="step-num">1</div>
-              <h3>ייבוא האורחים שלכם</h3>
-              <p>העלו CSV, הדביקו מ-Excel, או בנו את הרשימה שלכם בעורך שלנו. אנחנו מזהים אוטומטית שמות, טלפונים ומשקי בית.</p>
+              <h3>בונים רשימת מוזמנים בקלות</h3>
+              <p>מעלים Excel או CSV, ו-Kululu מזהה לבד שמות, טלפונים, משפחות וקבוצות.</p>
             </div>
             <div className="step reveal">
               <div className="step-num">2</div>
-              <h3>שלחו הזמנות ואספו אישורים</h3>
-              <p>הפצת וואטסאפ בלחיצה אחת ודפי הזמנה יפהפיים עושים את העבודה. התשובות זורמות לדשבורד שלכם בזמן אמת.</p>
+              <h3>שולחים הודעות אוטומטיות ב-WhatsApp</h3>
+              <p>מגדירים נוסח ותזמון, והמערכת שולחת דרך WhatsApp Business הרשמי ואוספת תשובות בזמן אמת.</p>
             </div>
             <div className="step reveal">
               <div className="step-num">3</div>
-              <h3>סדרו את כולם בדקות</h3>
-              <p>גררו אורחים לשולחנות — או תנו ל-AI של Kululu להציע קיבוצים לפי מי מכיר את מי. הדפיסו, שתפו, סיימתם.</p>
+              <h3>מסדרים הושבה בלי כאב ראש</h3>
+              <p>ממשק נוח ויפה עוזר לכם לסדר שולחנות, וה-AI מציע שיבוצים חכמים בשניות.</p>
             </div>
           </div>
         </div>

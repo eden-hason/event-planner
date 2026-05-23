@@ -1,4 +1,10 @@
 {
+  "mobileBlock": {
+    "title": "מומלץ לפתוח במחשב",
+    "description": "לחוויה הטובה ביותר, פתחו את האפליקציה במסך גדול יותר",
+    "comingSoon": "תמיכה במובייל",
+    "comingSoonBadge": "בקרוב"
+  },
   "common": {
     "save": "שמור",
     "cancel": "ביטול",
