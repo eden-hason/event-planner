@@ -26,6 +26,7 @@ interface SchedulesEmptyStateProps {
   suggestedSchedules: SuggestedSchedule[];
   invitationTemplate: WhatsAppTemplateApp | null;
   targetCounts: { all: number; pending: number; confirmed: number };
+  canCreateSchedules: boolean;
 }
 
 export function SchedulesEmptyState({
@@ -34,6 +35,7 @@ export function SchedulesEmptyState({
   suggestedSchedules,
   invitationTemplate,
   targetCounts,
+  canCreateSchedules,
 }: SchedulesEmptyStateProps) {
   const t = useTranslations('schedules.setupWizard');
   const [wizardOpen, setWizardOpen] = React.useState(false);
@@ -58,20 +60,20 @@ export function SchedulesEmptyState({
           <EmptyDescription>{t('emptyDescription')}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          {hasSuggestions ? (
+          {hasSuggestions && canCreateSchedules ? (
             <Button onClick={() => setWizardOpen(true)}>
               <IconCalendarPlus className="h-5 w-5" />
               {t('emptyCta')}
             </Button>
-          ) : (
+          ) : !hasSuggestions ? (
             <p className="text-muted-foreground text-sm">
               {t('emptyUnsupported')}
             </p>
-          )}
+          ) : null}
         </EmptyContent>
       </Empty>
 
-      {hasSuggestions && (
+      {hasSuggestions && canCreateSchedules && (
         <ScheduleSetupWizard
           open={wizardOpen}
           onOpenChange={setWizardOpen}

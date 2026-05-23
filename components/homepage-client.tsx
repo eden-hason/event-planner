@@ -631,9 +631,8 @@ export function HomepageClient() {
       <section className="section deep" id="features" dir="rtl">
         <div className="wrap">
           <div className="section-head deep-head reveal">
-            <div className="eyebrow">פיצ׳רים</div>
-            <h2 className="section-title">כל פרט, מתוכנן ליום</h2>
-            <p className="section-sub" style={{marginRight:0}}>לחצו על הנושאים כדי לראות איך קולולו מטפל בכל הפרטים של האירוע שלכם — מההזמנה הראשונה ועד חשיפת סידור המושבים הסופי</p>
+            <h2 className="section-title">כל הפיצ׳רים שיעשו לכם סדר בארוע</h2>
+            <p className="section-sub" style={{marginRight:0}}>מהתקציב ועד ההושבה - דאגנו להכל</p>
           </div>
 
           <div className="deep-grid">
@@ -784,7 +783,7 @@ export function HomepageClient() {
             <div className="acc reveal">
 
               {([
-                { scene:'guests', color:'magenta', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, title:'ניהול אורחים', body:'רשימת אורחים אלגנטית עם שדות חכמים למלווים, העדפות תזונה, צד משפחה וקיבוץ משפחתי — ללא ריבוי גיליונות', bullets:['ייבוא מ-CSV, Excel או Google Contacts','זיהוי אוטומטי של משפחות וכפילויות','תגיות, סגמנטים ומסננים שמורים'] },
+                { scene:'guests', color:'magenta', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, title:'ניהול מוזמנים', body:'ניהול מוזמנים חכם, פשוט ומהיר', bullets:['ייבוא בלתי מוגבל של קבצי Excel ו-CSV','מערכת AI חכמה למיפוי וסידור אוטומטי של הרשומות','חלוקה מהירה ופשוטה של המוזמנים לקבוצות וקטגוריות'] },
                 { scene:'whatsapp', color:'green', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.414c-.003 6.555-5.338 11.89-11.893 11.89a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.512 5.26l.213.341-1.001 3.656 3.765-.956z"/></svg>, title:'הודעות וואטסאפ', body:'שלחו הזמנות אישיות, תזכורות ותודות ישירות לוואטסאפ. תשובות מסונכרנות לפרופיל כל אורח.', bullets:['תבניות עם שדות מיזוג ותצוגה מקדימה חיה','מעקב תשובות דו-כיווני לכל אורח','שליחה מתוזמנת בהפצות בכל גודל'] },
                 { scene:'seating', color:'lavender', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>, title:'תרשים מושבים ויזואלי', body:'גררו שולחנות, הימנעו משכנים מביכים, וקבעו סידורים עם עורך ויזואלי שהאולם שלכם יאהב', bullets:['צורות שולחן עגולות, מלבניות ומעורבות','אזהרות קונפליקט לכללי "לא לסמוך"','ייצוא כרטיסי PDF, גיליונות לספקים ומפות'] },
                 { scene:'ai', color:'peach', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>, title:'כלים חכמים AI', body:'סידור אוטומטי לפי קשרים, טיוטות הודעות שמתאימות לסגנון שלכם, ותזכורות בזמן הנכון', bullets:['ישיבה חכמת מתגי קשרים','טיוטות הזמנה ותודה מותאמות לטון','התראות חיות: &quot;12 אורחים לא הגיבו&quot;'] },
@@ -1003,18 +1002,17 @@ export function HomepageClient() {
 
 
       {/* FOOTER */}
-      <footer className="footer" dir="ltr">
+      <footer className="footer" dir="rtl">
         <div className="wrap">
           <div className="footer-inner">
+            <div className="footer-links">
+              <a href="#features">פיצ׳רים</a>
+              <a href="#how">יצירת ארוע</a>
+              <a href="#pricing">חבילות</a>
+            </div>
             <a href="#" className="logo" aria-label="Kululu home">
               <img src="/logo-navbar.png" alt="Kululu" />
             </a>
-            <div className="footer-links">
-              <a href="#features">תכונות</a>
-              <a href="#how">איך זה עובד</a>
-              <a href="#pricing">חבילות</a>
-              <a href="#contact">יצירת קשר</a>
-            </div>
           </div>
         </div>
       </footer>

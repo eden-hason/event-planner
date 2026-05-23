@@ -133,6 +133,7 @@ export const EventAppSchema = z.object({
   guestsCapacity: z.number().int().positive().optional(),
   budget: z.number().optional(),
   landingTemplateId: z.string().optional(),
+  canCreateSchedules: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -176,6 +177,7 @@ export const EventDbSchema = z.object({
   guests_capacity: z.number().int().positive().optional().nullable(),
   budget: z.number().optional().nullable(),
   landing_template_id: z.string().optional().nullable(),
+  can_create_schedules: z.boolean().default(false),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -207,6 +209,7 @@ export function dbToAppTransformer(dbData: {
   guests_capacity?: number | null;
   budget?: number | null;
   landing_template_id?: string | null;
+  can_create_schedules?: boolean | null;
   created_at: string;
   updated_at: string;
 }): EventApp {
@@ -256,6 +259,7 @@ export function dbToAppTransformer(dbData: {
     guestsCapacity: dbData.guests_capacity ?? undefined,
     budget: dbData.budget ?? undefined,
     landingTemplateId: dbData.landing_template_id ?? undefined,
+    canCreateSchedules: dbData.can_create_schedules ?? false,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
   };

@@ -56,6 +56,7 @@ export async function SchedulesPage({
   const uniqueTemplateKeys = Array.from(new Set(templateKeys));
   const templateMap = getTemplatesByKeys(uniqueTemplateKeys);
   const guests = await getEventGuests(eventId);
+  const canCreateSchedules = event?.canCreateSchedules ?? false;
 
   const guestStats: GuestStats = {
     total: guests.length,
@@ -99,6 +100,7 @@ export async function SchedulesPage({
         suggestedSchedules={suggestedSchedules}
         invitationTemplate={invitationTemplate}
         targetCounts={targetCounts}
+        canCreateSchedules={canCreateSchedules}
       />
     );
   }
