@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { IconChevronLeft } from '@tabler/icons-react';
 import { getAdminEvent, getAdminEventSchedules } from '@/features/admin/queries/event-detail';
 import { ManualSendCard } from '@/features/admin/components/manual-send-card';
+import { TriggerScheduleCard } from '@/features/admin/components/trigger-schedule-card';
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
   published: 'default',
@@ -62,6 +63,7 @@ export default async function AdminEventDetailPage({
         <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <ManualSendCard eventId={eventId} schedules={schedules} />
+          <TriggerScheduleCard schedules={schedules} />
         </div>
       </div>
     </div>

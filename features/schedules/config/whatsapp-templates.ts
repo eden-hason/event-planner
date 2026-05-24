@@ -41,15 +41,20 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
   confirmation_casual_v1_he: {
     whatsapp: {
       templateKey: 'confirmation_casual_v1_he',
-      templateName: 'confirmation_casual_v1_he',
+      templateName: 'confirmation_initial_with_header_casual',
       bodyText:
-        'היי, \nהוזמנת לחתונתם של {{1}} ו{{2}}\nשתתקיים בתאריך {{3}} ב{{4}}\nמחכים לדעת אם נזכה לראות אותך באירוע.\nלאישור הגעה ופרטים נוספים, לחצו על הכפתור למטה',
+        'היי אורחים יקרים\nהחתונה של {{1}} ו{{2}} מתקרבת, נשמח לדעת אם תגיעו.\n\n📅 {{3}}\n📍 {{4}}\n\nמחכים לחגוג איתכם ❤️\nלאישור הגעה, לחצו על הכפתור 👇🏼',
       languageCode: 'he',
-      headerType: null,
+      headerType: 'IMAGE',
       headerText: null,
       footerText: null,
       parameters: {
-        headerPlaceholders: [],
+        headerPlaceholders: [
+          {
+            type: 'image',
+            source: 'event.invitations.imageUrl',
+          },
+        ],
         placeholders: {
           'host.bride.name': {
             source: 'event.hostDetails.bride.name',
