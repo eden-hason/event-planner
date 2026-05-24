@@ -111,48 +111,52 @@ export function GuestDirectory({
     onSelectGuest(null);
   };
 
+  const isEmpty = guests.length === 0;
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-          <Button
-            variant="outline"
-            onClick={() => setImportDialogOpen(true)}
-            className="gap-2"
-          >
-            <IconUpload size={16} />
-            {t('directory.importCsv')}
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <RsvpStatusFilter
-            selectedStatuses={selectedStatuses}
-            onStatusToggle={handleStatusToggle}
-          />
-          <GroupFilter
-            groups={groups}
-            selectedGroupIds={selectedGroupIds}
-            onGroupToggle={handleGroupToggle}
-            onSelectAll={handleSelectAllGroups}
-            isAllSelected={isAllSelected}
-          />
-          <SideFilter
-            selectedSides={selectedSides}
-            onSideToggle={handleSideToggle}
-            onSelectAll={handleSelectAllSides}
-            isAllSelected={isAllSidesSelected}
-          />
-          <Button
-            variant="outline"
-            onClick={toggleNoPhoneOnly}
-            className={cn('gap-2', noPhoneOnly && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary')}
-          >
-            <IconPhoneOff size={16} />
-            {t('filters.noPhone')}
-          </Button>
-        </div>
-      </CardHeader>
+      {!isEmpty && (
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+            <Button
+              variant="outline"
+              onClick={() => setImportDialogOpen(true)}
+              className="gap-2"
+            >
+              <IconUpload size={16} />
+              {t('directory.importCsv')}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <RsvpStatusFilter
+              selectedStatuses={selectedStatuses}
+              onStatusToggle={handleStatusToggle}
+            />
+            <GroupFilter
+              groups={groups}
+              selectedGroupIds={selectedGroupIds}
+              onGroupToggle={handleGroupToggle}
+              onSelectAll={handleSelectAllGroups}
+              isAllSelected={isAllSelected}
+            />
+            <SideFilter
+              selectedSides={selectedSides}
+              onSideToggle={handleSideToggle}
+              onSelectAll={handleSelectAllSides}
+              isAllSelected={isAllSidesSelected}
+            />
+            <Button
+              variant="outline"
+              onClick={toggleNoPhoneOnly}
+              className={cn('gap-2', noPhoneOnly && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary')}
+            >
+              <IconPhoneOff size={16} />
+              {t('filters.noPhone')}
+            </Button>
+          </div>
+        </CardHeader>
+      )}
       <CardContent ref={tableContainerRef}>
         {isCalculated ? (
           <GuestsTable
