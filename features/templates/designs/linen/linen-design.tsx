@@ -66,35 +66,15 @@ function Header({
       style={{
         background: C.bg,
         borderBottom: `1px solid ${C.border}`,
-        padding: '52px 24px 40px',
+        padding: '32px 24px 28px',
         textAlign: 'center',
       }}
     >
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          background: `${primary}12`,
-          border: `1px solid ${primary}28`,
-          color: primary,
-          padding: '4px 14px',
-          borderRadius: 999,
-          fontSize: 12,
-          fontWeight: 500,
-          letterSpacing: '0.06em',
-          marginBottom: 28,
-          animation: 'linenFadeUp 0.5s ease both',
-        }}
-      >
-        💍 הזמנה לחתונה
-      </div>
-
       {p1 && (
         <div style={{ marginBottom: 20, animation: 'linenFadeUp 0.55s ease 0.1s both' }}>
           <div
             style={{
-              fontSize: 'clamp(36px, 9vw, 50px)',
+              fontSize: 'clamp(28px, 7vw, 38px)',
               fontWeight: 700,
               color: C.text,
               letterSpacing: '-0.03em',
@@ -119,7 +99,7 @@ function Header({
               </div>
               <div
                 style={{
-                  fontSize: 'clamp(36px, 9vw, 50px)',
+                  fontSize: 'clamp(28px, 7vw, 38px)',
                   fontWeight: 700,
                   color: C.text,
                   letterSpacing: '-0.03em',
@@ -481,12 +461,6 @@ function RSVPCard({
           {isPending ? '...' : 'שליחת תשובה'}
         </button>
       )}
-
-      {!attendance && (
-        <p style={{ textAlign: 'center', fontSize: 13, color: C.muted, margin: 0 }}>
-          בחרו תחילה אם תגיעו
-        </p>
-      )}
     </form>
   );
 }
@@ -549,22 +523,7 @@ export function LinenDesign({
         primary={primary}
       />
 
-      <section style={{ maxWidth: 390, margin: '0 auto', padding: '28px 20px 64px' }}>
-        <p
-          style={{
-            textAlign: 'center',
-            fontSize: 14,
-            color: C.muted,
-            marginBottom: 24,
-            lineHeight: 1.7,
-            animation: 'linenFadeUp 0.55s ease 0.5s both',
-          }}
-        >
-          אנחנו מתרגשים לחגוג איתכם את היום הכי מיוחד שלנו.
-          <br />
-          מלאו את הטופס כדי שנדע שאתם איתנו.
-        </p>
-
+      <section style={{ maxWidth: 390, margin: '0 auto', padding: '28px 20px 16px' }}>
         <div
           style={{
             background: C.bg,
@@ -599,6 +558,26 @@ export function LinenDesign({
           />
         </div>
       </section>
+
+      <footer
+        style={{
+          padding: '16px 24px',
+          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          animation: 'linenFadeIn 0.5s ease 0.8s both',
+        }}
+      >
+        <span style={{ fontSize: 12, color: C.muted, letterSpacing: '0.03em' }}>נוצר עם</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-navbar.png"
+          alt="Kululu"
+          style={{ height: 18, opacity: 0.7, display: 'block' }}
+        />
+      </footer>
     </div>
   );
 }
