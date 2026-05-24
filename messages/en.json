@@ -791,7 +791,22 @@
       "description": "Manage your event schedule and timeline"
     },
     "tabs": {
-      "overview": "Overview"
+      "overview": "Overview",
+      "results": "Schedule Results"
+    },
+    "interactions": {
+      "cardTitle": "Guest Interactions",
+      "views": "Views",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "emptyDescription": "No interactions recorded yet - results appear once the schedule has been sent and guests have engaged",
+      "columnGuest": "Guest",
+      "columnViewed": "Viewed",
+      "columnResponse": "Response",
+      "columnDate": "Date",
+      "responseConfirmed": "Confirmed",
+      "responseDeclined": "Declined",
+      "responsePending": "No response"
     },
     "status": {
       "cardTitle": "Status",

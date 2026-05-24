@@ -1,7 +1,9 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { IconChartBar, IconLayoutGrid } from '@tabler/icons-react';
 
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getTemplatesByKeys } from '../config/whatsapp-templates';
 import {
   ACTION_TYPES,
@@ -12,6 +14,7 @@ import {
 } from '../schemas';
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
+import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleSendResultsCard } from './schedule-send-results-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesEmptyState } from './schedules-empty-state';
@@ -47,6 +50,7 @@ export async function SchedulesPage({
   event,
 }: SchedulesPageProps) {
   const t = await getTranslations('schedules');
+  const locale = await getLocale();
 
   // Resolve all templates for schedules from local config
   const templateKeys = schedules
@@ -124,16 +128,41 @@ export async function SchedulesPage({
         guestCount,
         targetStatus: schedule.targetStatus,
         details: (
-          <div className="flex flex-col gap-4">
-            <ScheduleTabContent
-              schedule={schedule}
-              template={template}
-              eventDate={eventDate}
-              event={event}
-              guestStats={guestStats}
-            />
-            <ScheduleSendResultsCard schedule={schedule} />
-          </div>
+          <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+            <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+              <TabsTrigger
+                value="overview"
+                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-base shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                <IconLayoutGrid size={18} />
+                {t('tabs.overview')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="results"
+                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-base shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                <IconChartBar size={18} />
+                {t('tabs.results')}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              <ScheduleTabContent
+                schedule={schedule}
+                template={template}
+                eventDate={eventDate}
+                event={event}
+                guestStats={guestStats}
+              />
+            </TabsContent>
+            <TabsContent value="results">
+              <div className="flex flex-col gap-4">
+                <ScheduleSendResultsCard schedule={schedule} />
+                {schedule.actionType === 'confirmation' && (
+                  <ScheduleInteractionsCard scheduleId={schedule.id} />
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         ),
       };
     });
