@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { renderTemplate } from '@/features/templates/registry';
 import {
   buildCoupleName,
@@ -8,7 +8,7 @@ import {
   buildTime,
   buildDishOptions,
 } from '@/features/templates/utils';
-import { submitConfirmation } from '../actions';
+import { submitConfirmation, recordViewInteraction } from '../actions';
 import type { ConfirmationPageData } from '../schemas';
 
 interface ConfirmationExperienceProps {
@@ -18,7 +18,14 @@ interface ConfirmationExperienceProps {
 }
 
 export function ConfirmationExperience({ token, data, templateId }: ConfirmationExperienceProps) {
-  const { guest, event } = data;
+  const { guest, event, scheduleId } = data;
+
+  useEffect(() => {
+    if (scheduleId) {
+      recordViewInteraction(guest.id, scheduleId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formattedDate = useMemo(
     () => buildFormattedDate(event.eventDate),

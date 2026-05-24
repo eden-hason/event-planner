@@ -117,3 +117,16 @@ export async function submitConfirmation(
     message: rsvpStatus === 'confirmed' ? 'תודה! אישרת הגעה' : 'תודה על העדכון',
   };
 }
+
+export async function recordViewInteraction(
+  guestId: string,
+  scheduleId: string,
+): Promise<void> {
+  const supabase = createServiceClient();
+  await supabase
+    .from('guest_interactions')
+    .upsert(
+      { guest_id: guestId, schedule_id: scheduleId, interaction_type: 'view', created_at: new Date().toISOString() },
+      { onConflict: 'guest_id,schedule_id', ignoreDuplicates: false },
+    );
+}

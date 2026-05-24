@@ -792,7 +792,22 @@
       "description": "נהל את תזמוני ההודעות של האירוע"
     },
     "tabs": {
-      "overview": "סקירה"
+      "overview": "סקירה",
+      "results": "תוצאות שליחה"
+    },
+    "interactions": {
+      "cardTitle": "אינטראקציות אורחים",
+      "views": "צפיות",
+      "confirmed": "אישרו",
+      "declined": "סירבו",
+      "emptyDescription": "אין אינטראקציות עדיין - התוצאות יופיעו לאחר שהתזמון נשלח והאורחים פעלו",
+      "columnGuest": "אורח",
+      "columnViewed": "צפה",
+      "columnResponse": "תגובה",
+      "columnDate": "תאריך",
+      "responseConfirmed": "אישר",
+      "responseDeclined": "סירב",
+      "responsePending": "לא הגיב"
     },
     "status": {
       "cardTitle": "סטטוס",
