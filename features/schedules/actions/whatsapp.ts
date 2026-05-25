@@ -92,13 +92,13 @@ export async function sendWhatsAppTemplateMessage(params: {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('WhatsApp API error:', {
+      console.error('WhatsApp API error:', JSON.stringify({
         status: response.status,
         statusText: response.statusText,
         error: errorData,
         to: params.to,
         template: params.templateName,
-      });
+      }, null, 2));
 
       const metaErrorCode =
         typeof errorData?.error?.code === 'number'
