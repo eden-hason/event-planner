@@ -367,7 +367,7 @@
       "newGuest": "אורח חדש",
       "addGuestHint": "מלא את הטופס להוספת אורח חדש.",
       "lastEdited": "עודכן לאחרונה",
-      "people": "אנשים",
+      "people": "אורחים",
       "group": "קבוצה",
       "updated": "עודכן",
       "viaGuest": "על ידי האורח",
@@ -397,8 +397,8 @@
       "phone": "טלפון",
       "phonePlaceholder": "מספר טלפון",
       "amount": "כמות",
-      "person": "אדם",
-      "people": "אנשים",
+      "person": "אורח",
+      "people": "אורחים",
       "eventDetails": "פרטי האירוע",
       "rsvpStatus": "סטטוס אישור",
       "rsvpPlaceholder": "בחר סטטוס אישור",
@@ -440,11 +440,11 @@
       "capacityGuests": "אורחים"
     },
     "stats": {
-      "totalGuests": "סה\"כ אורחים",
+      "totalGuests": "סה\"כ רשומות",
       "confirmed": "אישרו",
       "pending": "ממתינים",
       "declined": "סירבו",
-      "people": "{count} אנשים"
+      "people": "{count} אורחים"
     },
     "table": {
       "name": "שם",
