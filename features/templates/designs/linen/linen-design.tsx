@@ -71,7 +71,7 @@ function Header({
       }}
     >
       {p1 && (
-        <div style={{ marginBottom: 20, animation: 'linenFadeUp 0.55s ease 0.1s both' }}>
+        <div style={{ marginBottom: 20, animation: 'linenFadeUp 0.55s ease 0.1s both', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <div
             style={{
               fontSize: 'clamp(28px, 7vw, 38px)',
@@ -88,11 +88,10 @@ function Header({
             <>
               <div
                 style={{
-                  fontSize: 13,
+                  fontSize: 'clamp(32px, 8vw, 44px)',
                   color: primary,
-                  fontWeight: 600,
-                  margin: '6px 0',
-                  letterSpacing: '0.12em',
+                  fontWeight: 700,
+                  lineHeight: 1,
                 }}
               >
                 &amp;
@@ -116,7 +115,7 @@ function Header({
 
       <div
         style={{
-          width: 28,
+          width: 64,
           height: 2,
           background: primary,
           margin: '0 auto 28px',
@@ -127,7 +126,7 @@ function Header({
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, animation: 'linenFadeUp 0.5s ease 0.35s both' }}>
-        {formattedDate && <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>{formattedDate}</span>}
+        {formattedDate && <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>🗓️ {formattedDate}</span>}
         {time && <span style={{ fontSize: 14, color: C.muted }}>{time}</span>}
         {venue && (
           mapsLink ? (
@@ -210,17 +209,25 @@ function RSVPCard({
   if (submitted && submittedStatus) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 0', animation: 'linenScaleIn 0.4s ease both' }}>
-        <div style={{ fontSize: 44, marginBottom: 14 }}>
-          {submittedStatus === 'confirmed' ? '🎉' : '💛'}
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: `${primary}14`,
+            border: `1.5px solid ${primary}30`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            fontSize: 32,
+          }}
+        >
+          {submittedStatus === 'confirmed' ? '🎉' : '❤️'}
         </div>
-        <h3 style={{ fontSize: 20, fontWeight: 600, color: C.text, marginBottom: 8 }}>
+        <h3 style={{ fontSize: 20, fontWeight: 600, color: primary, marginBottom: 24 }}>
           {submittedStatus === 'confirmed' ? 'תודה! נשמח לראותכם' : 'תודה שעדכנתם'}
         </h3>
-        <p style={{ fontSize: 14, color: C.muted, marginBottom: 24 }}>
-          {submittedStatus === 'confirmed'
-            ? `שמרנו לכם ${guests} ${guests === 1 ? 'מקום' : 'מקומות'}`
-            : 'נחמיץ אתכם — שולחים אהבה גדולה'}
-        </p>
         {interactive && (
           <button
             onClick={() => setSubmitted(false)}
@@ -408,7 +415,7 @@ function RSVPCard({
       {/* Notes */}
       <div>
         <p style={{ fontSize: 13, fontWeight: 500, color: C.muted, marginBottom: 8 }}>
-          הערות <span style={{ fontWeight: 400 }}>— לא חובה</span>
+          הערות <span style={{ fontWeight: 400 }}>(לא חובה)</span>
         </p>
         <textarea
           value={notes}

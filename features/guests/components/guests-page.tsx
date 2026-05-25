@@ -7,7 +7,7 @@ import {
   useActionState,
   startTransition,
 } from 'react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
 import { GuestDirectory } from './guest-directory';
@@ -21,7 +21,7 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { IconClock, IconPlus, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
+import { IconClock, IconPlus, IconProgressHelp, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -45,17 +45,31 @@ interface GuestsPageProps {
   capacity?: number | null;
 }
 
-const RSVP_BADGE_STYLES: Record<string, string> = {
-  confirmed: 'bg-green-100 text-green-700 border-green-200',
-  pending: 'bg-yellow-100 text-yellow-700 border-yellow-200' ,
-  declined: 'bg-red-100 text-red-700 border-red-200',
-};
 
 const RSVP_DOT_STYLES: Record<string, string> = {
   confirmed: 'bg-green-500',
   pending: 'bg-yellow-500',
   declined: 'bg-red-500',
 };
+
+const AVATAR_COLORS = [
+  'bg-violet-100 text-violet-700',
+  'bg-sky-100 text-sky-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-blue-100 text-blue-700',
+  'bg-orange-100 text-orange-700',
+  'bg-pink-100 text-pink-700',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 
 export function GuestsPage({
   guests,
@@ -288,58 +302,85 @@ export function GuestsPage({
             if (selectedGuest) e.preventDefault();
           }}
         >
-          <SheetHeader className="border-b px-6 py-5">
+          <SheetHeader className="border-b px-6 pt-5 pb-4">
             {selectedGuest ? (
-              <div className="flex flex-col gap-2">
-                <SheetTitle className="text-xl leading-tight">
-                  {selectedGuest.name}
-                </SheetTitle>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${RSVP_BADGE_STYLES[rsvpStatus]}`}
+              <div className="flex flex-col gap-0">
+                {/* Avatar + name row */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className={`size-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold ${getAvatarColor(selectedGuest.name)}`}
                   >
-                    <span className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`} />
-                    {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
-                  </span>
-                  {selectedGuest.isOfflineRsvp && (
-                    <span className="inline-flex w-fit items-center rounded-full border border-dashed px-3 py-1 text-xs font-medium text-muted-foreground">
-                      {t('rsvp.offlineRsvp')}
-                    </span>
-                  )}
+                    {selectedGuest.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <SheetTitle className="text-[19px] font-semibold leading-tight truncate">
+                      {selectedGuest.name}
+                    </SheetTitle>
+                    {selectedGuest.isOfflineRsvp && (
+                      <span className="inline-flex w-fit items-center rounded-full border border-dashed px-2 py-0.5 text-[11px] font-medium text-muted-foreground mt-1">
+                        {t('rsvp.offlineRsvp')}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                    <IconUsers size={12} className="shrink-0" />
-                    <span>
+                {/* Labeled data badges */}
+                <div className="flex flex-col gap-1.5 items-start">
+                  {/* Status */}
+                  <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
+                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
+                      <IconProgressHelp size={12} className="shrink-0" />
+                      {t('form.rsvpStatus')}
+                    </span>
+                    <span className="w-px bg-border" />
+                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-foreground">
+                      <span className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`} />
+                      {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
+                    </span>
+                  </span>
+
+                  {/* Guests */}
+                  <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
+                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
+                      <IconUsers size={12} className="shrink-0" />
+                      {t('sheet.people')}
+                    </span>
+                    <span className="w-px bg-border" />
+                    <span className="px-2.5 py-1 text-foreground">
                       {selectedGuest.amount}{' '}
                       {selectedGuest.amount === 1 ? t('form.person') : t('form.people')}
                     </span>
-                  </div>
+                  </span>
+
+                  {/* Group */}
                   {guestGroup && (
-                    <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0" />
-                      <span>{guestGroup.name}</span>
-                    </div>
-                  )}
-                  {selectedGuest.rsvpChangedAt && (
-                    <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      <IconClock size={12} className="shrink-0" />
-                      <span>
-                        {selectedGuest.rsvpChangeSource === 'guest'
-                          ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`
-                          : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'MMM d · HH:mm')}`}
+                    <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
+                      <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
+                        <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0" />
+                        {t('form.group')}
                       </span>
-                    </div>
+                      <span className="w-px bg-border" />
+                      <span className="px-2.5 py-1 text-foreground">{guestGroup.name}</span>
+                    </span>
+                  )}
+
+                  {/* RSVP Updated */}
+                  {selectedGuest.rsvpChangedAt && (
+                    <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
+                      <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
+                        <IconClock size={12} className="shrink-0" />
+                        {t('sheet.updated')}
+                      </span>
+                      <span className="w-px bg-border" />
+                      <span className="px-2.5 py-1 text-muted-foreground">
+                        {selectedGuest.rsvpChangeSource === 'guest'
+                          ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`
+                          : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`}
+                      </span>
+                    </span>
                   )}
                 </div>
 
-                <p className="flex items-center gap-1 text-xs text-muted-foreground/70">
-                  <IconClock size={11} className="shrink-0" />
-                  {t('sheet.lastEdited')}{' '}
-                  {formatDistanceToNow(new Date(selectedGuest.updatedAt), { addSuffix: true })}
-                </p>
               </div>
             ) : (
               <>
