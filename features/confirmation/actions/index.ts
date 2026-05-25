@@ -123,10 +123,12 @@ export async function recordViewInteraction(
   scheduleId: string,
 ): Promise<void> {
   const supabase = createServiceClient();
-  await supabase
+  const { error } = await supabase
     .from('guest_interactions')
-    .upsert(
-      { guest_id: guestId, schedule_id: scheduleId, interaction_type: 'view', created_at: new Date().toISOString() },
-      { onConflict: 'guest_id,schedule_id', ignoreDuplicates: false },
-    );
+    .insert({ guest_id: guestId, schedule_id: scheduleId, interaction_type: 'view' });
+
+  // 23505 = unique_violation: guest already viewed this schedule, ignore
+  if (error && error.code !== '23505') {
+    console.error('Error recording view interaction:', error);
+  }
 }
