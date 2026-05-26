@@ -15,7 +15,6 @@ import {
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
-import { ScheduleSendResultsCard } from './schedule-send-results-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesEmptyState } from './schedules-empty-state';
 import { SchedulesLayout } from './schedules-layout';
@@ -127,19 +126,19 @@ export async function SchedulesPage({
         scheduledDate: schedule.scheduledDate,
         guestCount,
         targetStatus: schedule.targetStatus,
-        details: (
+        details: schedule.actionType === 'confirmation' ? (
           <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
             <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-base shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <IconLayoutGrid size={18} />
                 {t('tabs.overview')}
               </TabsTrigger>
               <TabsTrigger
                 value="results"
-                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-base shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 <IconChartBar size={18} />
                 {t('tabs.results')}
@@ -155,14 +154,17 @@ export async function SchedulesPage({
               />
             </TabsContent>
             <TabsContent value="results">
-              <div className="flex flex-col gap-4">
-                <ScheduleSendResultsCard schedule={schedule} />
-                {schedule.actionType === 'confirmation' && (
-                  <ScheduleInteractionsCard scheduleId={schedule.id} />
-                )}
-              </div>
+              <ScheduleInteractionsCard scheduleId={schedule.id} />
             </TabsContent>
           </Tabs>
+        ) : (
+          <ScheduleTabContent
+            schedule={schedule}
+            template={template}
+            eventDate={eventDate}
+            event={event}
+            guestStats={guestStats}
+          />
         ),
       };
     });
