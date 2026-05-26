@@ -806,7 +806,8 @@
       "columnDate": "Date",
       "responseConfirmed": "Confirmed",
       "responseDeclined": "Declined",
-      "responsePending": "No response"
+      "responsePending": "No response",
+      "refresh": "Refresh"
     },
     "status": {
       "cardTitle": "Status",

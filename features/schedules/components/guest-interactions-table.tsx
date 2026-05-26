@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { IconCheck, IconChevronLeft, IconChevronRight, IconEye, IconX } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ interface GuestInteractionsTableProps {
 
 export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTableProps) {
   const [page, setPage] = useState(0);
+  const isRTL = useLocale() === 'he';
   const totalPages = Math.ceil(guests.length / PAGE_SIZE);
   const slice = guests.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -112,7 +114,7 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
         <TableFooter>
           <TableRow>
             <TableCell colSpan={4}>
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 rtl:justify-start">
                 <span className="text-muted-foreground text-xs">{page + 1} / {totalPages}</span>
                 <Button
                   variant="outline"
@@ -121,7 +123,7 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
                   onClick={() => setPage((p) => p - 1)}
                   disabled={page === 0}
                 >
-                  <IconChevronLeft size={14} />
+                  {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
                 </Button>
                 <Button
                   variant="outline"
@@ -130,7 +132,7 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page === totalPages - 1}
                 >
-                  <IconChevronRight size={14} />
+                  {isRTL ? <IconChevronLeft size={14} /> : <IconChevronRight size={14} />}
                 </Button>
               </div>
             </TableCell>

@@ -8,10 +8,11 @@ import {
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { getScheduleInteractionData } from '../queries/guest-interactions';
 import { GuestInteractionsTable } from './guest-interactions-table';
+import { InteractionsRefreshButton } from './interactions-refresh-button';
 
 interface ScheduleInteractionsCardProps {
   scheduleId: string;
@@ -54,6 +55,9 @@ export async function ScheduleInteractionsCard({ scheduleId }: ScheduleInteracti
           </div>
           {t('cardTitle')}
         </CardTitle>
+        <CardAction>
+          <InteractionsRefreshButton />
+        </CardAction>
       </CardHeader>
       <CardContent>
         {isEmpty ? (

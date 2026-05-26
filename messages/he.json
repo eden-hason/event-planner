@@ -807,7 +807,8 @@
       "columnDate": "תאריך",
       "responseConfirmed": "אישר",
       "responseDeclined": "סירב",
-      "responsePending": "לא הגיב"
+      "responsePending": "לא הגיב",
+      "refresh": "רענן"
     },
     "status": {
       "cardTitle": "סטטוס",
