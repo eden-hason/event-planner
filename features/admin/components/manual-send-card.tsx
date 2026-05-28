@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { IconSend, IconLoader2 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 import { getGuestsForManualSend } from '../queries/event-detail';
@@ -58,36 +60,58 @@ export function ManualSendCard({
   const [open, setOpen] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
   const [guests, setGuests] = useState<GuestWithDeliveryStatus[]>([]);
+  const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [loadingGuests, setLoadingGuests] = useState(false);
   const [isSending, startSending] = useTransition();
 
-  const recipientIds = guests
-    .filter((g) => g.rsvpStatus === 'confirmed' && g.phone && !g.hasDelivery)
-    .map((g) => g.id);
-
   async function handleScheduleChange(scheduleId: string) {
     setSelectedScheduleId(scheduleId);
+    setSelectedGuestIds(new Set());
     setGuests([]);
     setLoadingGuests(true);
     try {
       const result = await getGuestsForManualSend(eventId, scheduleId);
-      setGuests(result);
+      const sorted = [...result.filter((g) => g.phone), ...result.filter((g) => !g.phone)];
+      setGuests(sorted);
+      // Default-select guests with no delivery
+      setSelectedGuestIds(new Set(sorted.filter((g) => g.phone && !g.hasDelivery).map((g) => g.id)));
     } finally {
       setLoadingGuests(false);
     }
   }
 
+  function toggleGuest(id: string) {
+    setSelectedGuestIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    const selectableIds = guests.filter((g) => g.phone).map((g) => g.id);
+    if (selectedGuestIds.size === selectableIds.length) {
+      setSelectedGuestIds(new Set());
+    } else {
+      setSelectedGuestIds(new Set(selectableIds));
+    }
+  }
+
   function handleSend() {
-    if (!selectedScheduleId || recipientIds.length === 0) return;
+    if (!selectedScheduleId || selectedGuestIds.size === 0) return;
     startSending(async () => {
-      const promise = sendManualMessages(selectedScheduleId, recipientIds).then((result) => {
-        if (!result.success) throw new Error(result.message);
-        return result;
-      });
+      const promise = sendManualMessages(selectedScheduleId, [...selectedGuestIds]).then(
+        (result) => {
+          if (!result.success) throw new Error(result.message);
+          return result;
+        },
+      );
       toast.promise(promise, {
-        loading: `Sending to ${recipientIds.length} guest${recipientIds.length !== 1 ? 's' : ''}…`,
+        loading: `Sending to ${selectedGuestIds.size} guest${selectedGuestIds.size !== 1 ? 's' : ''}…`,
         success: (data) => {
           setOpen(false);
+          // Refresh guest list to reflect new deliveries
           handleScheduleChange(selectedScheduleId);
           return data.message ?? 'Messages sent';
         },
@@ -136,17 +160,68 @@ export function ManualSendCard({
           </div>
 
           {selectedScheduleId && (
-            <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Guests
+                  {guests.length > 0 && (
+                    <span className="ml-1.5 text-muted-foreground">({guests.length})</span>
+                  )}
+                </label>
+                {guests.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {selectedGuestIds.size === guests.length ? 'Deselect all' : 'Select all'}
+                  </button>
+                )}
+              </div>
+
               {loadingGuests ? (
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <IconLoader2 className="h-4 w-4 animate-spin" />
-                  Loading…
-                </span>
+                <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                  <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading guests…
+                </div>
+              ) : guests.length === 0 ? (
+                <div className="flex h-20 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+                  No guests found
+                </div>
               ) : (
-                <span>
-                  Will be sent to{' '}
-                  <span className="font-semibold">{recipientIds.length} confirmed guest{recipientIds.length !== 1 ? 's' : ''}</span>
-                </span>
+                <div className="max-h-72 overflow-y-auto rounded-lg border divide-y">
+                  {guests.map((guest) => {
+                    const noPhone = !guest.phone;
+                    return (
+                      <label
+                        key={guest.id}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2.5',
+                          noPhone ? 'cursor-not-allowed opacity-40' : 'cursor-pointer hover:bg-muted/50',
+                        )}
+                      >
+                        <Checkbox
+                          checked={selectedGuestIds.has(guest.id)}
+                          onCheckedChange={() => !noPhone && toggleGuest(guest.id)}
+                          disabled={noPhone}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{guest.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {guest.phone ?? 'No phone'}
+                            <span className="mx-1.5">·</span>
+                            {guest.rsvpStatus}
+                          </p>
+                        </div>
+                        {guest.hasDelivery && (
+                          <Badge variant="secondary" className="shrink-0 text-xs">
+                            Sent
+                          </Badge>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -157,10 +232,10 @@ export function ManualSendCard({
             </Button>
             <Button
               onClick={handleSend}
-              disabled={!selectedScheduleId || recipientIds.length === 0 || isSending || loadingGuests}
+              disabled={!selectedScheduleId || selectedGuestIds.size === 0 || isSending}
             >
               {isSending && <IconLoader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              Send to {selectedScheduleId && !loadingGuests ? recipientIds.length : '…'}
+              Send to {selectedGuestIds.size > 0 ? selectedGuestIds.size : '…'}
             </Button>
           </div>
         </div>

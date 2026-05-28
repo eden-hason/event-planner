@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/select';
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
+import { getGuestsForManualSend } from '../queries/event-detail';
+import type { GuestWithDeliveryStatus } from '../queries/event-detail';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
 
 function formatDate(dateStr: string) {
@@ -30,9 +32,22 @@ function formatDate(dateStr: string) {
   });
 }
 
+function recipientCount(
+  guests: GuestWithDeliveryStatus[],
+  targetStatus: ScheduleApp['targetStatus'],
+): number {
+  return guests.filter((g) => {
+    if (!g.phone) return false;
+    if (!targetStatus) return true;
+    return g.rsvpStatus === targetStatus;
+  }).length;
+}
+
 export function TriggerScheduleCard({
+  eventId,
   schedules,
 }: {
+  eventId: string;
   schedules: ScheduleApp[];
 }) {
   const unsentSchedules = schedules.filter(
@@ -41,7 +56,24 @@ export function TriggerScheduleCard({
 
   const [open, setOpen] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
+  const [guests, setGuests] = useState<GuestWithDeliveryStatus[]>([]);
+  const [loadingGuests, setLoadingGuests] = useState(false);
   const [isSending, startSending] = useTransition();
+
+  const selectedSchedule = unsentSchedules.find((s) => s.id === selectedScheduleId);
+  const count = selectedSchedule ? recipientCount(guests, selectedSchedule.targetStatus) : 0;
+
+  async function handleScheduleChange(scheduleId: string) {
+    setSelectedScheduleId(scheduleId);
+    setGuests([]);
+    setLoadingGuests(true);
+    try {
+      const result = await getGuestsForManualSend(eventId, scheduleId);
+      setGuests(result);
+    } finally {
+      setLoadingGuests(false);
+    }
+  }
 
   function handleTrigger() {
     if (!selectedScheduleId) return;
@@ -92,7 +124,7 @@ export function TriggerScheduleCard({
           ) : (
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Schedule</label>
-              <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+              <Select value={selectedScheduleId} onValueChange={handleScheduleChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a schedule…" />
                 </SelectTrigger>
@@ -112,13 +144,31 @@ export function TriggerScheduleCard({
             </div>
           )}
 
+          {selectedScheduleId && (
+            <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+              {loadingGuests ? (
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <IconLoader2 className="h-4 w-4 animate-spin" />
+                  Loading…
+                </span>
+              ) : (
+                <span>
+                  Will be sent to{' '}
+                  <span className="font-semibold">
+                    {count} {selectedSchedule?.targetStatus ?? 'eligible'} guest{count !== 1 ? 's' : ''}
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleTrigger}
-              disabled={!selectedScheduleId || isSending || unsentSchedules.length === 0}
+              disabled={!selectedScheduleId || isSending || unsentSchedules.length === 0 || loadingGuests}
             >
               {isSending && <IconLoader2 className="mr-1.5 h-4 w-4 animate-spin" />}
               Trigger
