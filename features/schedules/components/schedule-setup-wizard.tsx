@@ -77,6 +77,7 @@ export function ScheduleSetupWizard({
           enabled: true,
           date: new Date(s.scheduledDate),
           time: s.defaultTime,
+          deliveryMethod: s.deliveryMethod,
         })),
     [suggestedSchedules],
   );
@@ -122,6 +123,7 @@ export function ScheduleSetupWizard({
         scheduledTime: invitationSuggestion.defaultTime,
         targetStatus: invitationSuggestion.targetStatus,
         status: invitationDecision === 'send' ? null : 'cancelled',
+        deliveryMethod: invitationSuggestion.deliveryMethod,
       });
     }
 
@@ -133,6 +135,7 @@ export function ScheduleSetupWizard({
         scheduledTime: row.time,
         targetStatus: row.targetStatus,
         status: row.enabled ? null : 'cancelled',
+        deliveryMethod: row.deliveryMethod,
       });
     }
 

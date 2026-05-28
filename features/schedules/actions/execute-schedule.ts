@@ -10,9 +10,11 @@ import {
   filterGuestsByTarget,
   validatePhoneNumber,
   sendInChunks,
+  sendSmsToGuest,
   buildDeliveryRecord,
   generateConfirmationToken,
   type ParameterResolutionContext,
+  type GuestSendResult,
 } from '../utils';
 import type { GroupApp } from '@/features/guests/schemas';
 
@@ -146,45 +148,64 @@ export async function executeSchedule(
 
     const skippedCount = targetedGuests.length - guestsWithPhones.length;
 
-    // 9. Validate template has parameters configuration
-    if (!template.parameters) {
-      return {
-        success: false,
-        message: 'Template missing parameter configuration',
-      };
+    // 9-11. Send messages — dispatched by delivery method
+    let sendResults: PromiseSettledResult<GuestSendResult>[];
+
+    if (schedule.deliveryMethod === 'sms') {
+      sendResults = await Promise.allSettled(
+        guestsWithPhones.map((guest) => {
+          const confirmationToken = generateConfirmationToken();
+          const context: ParameterResolutionContext = {
+            guest,
+            event: schedule.event,
+            group: null,
+            schedule,
+            confirmationToken,
+          };
+          return sendSmsToGuest({ guest, context, confirmationToken });
+        }),
+      );
+    } else {
+      // 9. Validate template has parameters configuration
+      if (!template.parameters) {
+        return {
+          success: false,
+          message: 'Template missing parameter configuration',
+        };
+      }
+
+      // 10. Batch fetch all needed groups for performance
+      const uniqueGroupIds = [
+        ...new Set(
+          guestsWithPhones
+            .map((guest) => guest.groupId)
+            .filter((id): id is string => !!id),
+        ),
+      ];
+
+      const groupsMap = new Map<string, GroupApp>();
+      await Promise.all(
+        uniqueGroupIds.map(async (groupId) => {
+          const group = await getGroupById(groupId);
+          if (group) {
+            groupsMap.set(groupId, group);
+          }
+        }),
+      );
+
+      // 11. Send messages in rate-limited chunks
+      sendResults = await sendInChunks(guestsWithPhones, (guest) => {
+        const confirmationToken = generateConfirmationToken();
+        const context: ParameterResolutionContext = {
+          guest,
+          event: schedule.event,
+          group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+          schedule,
+          confirmationToken,
+        };
+        return { context, template, confirmationToken };
+      });
     }
-
-    // 10. Batch fetch all needed groups for performance
-    const uniqueGroupIds = [
-      ...new Set(
-        guestsWithPhones
-          .map((guest) => guest.groupId)
-          .filter((id): id is string => !!id),
-      ),
-    ];
-
-    const groupsMap = new Map<string, GroupApp>();
-    await Promise.all(
-      uniqueGroupIds.map(async (groupId) => {
-        const group = await getGroupById(groupId);
-        if (group) {
-          groupsMap.set(groupId, group);
-        }
-      }),
-    );
-
-    // 11. Send messages in rate-limited chunks
-    const sendResults = await sendInChunks(guestsWithPhones, (guest) => {
-      const confirmationToken = generateConfirmationToken();
-      const context: ParameterResolutionContext = {
-        guest,
-        event: schedule.event,
-        group: guest.groupId ? groupsMap.get(guest.groupId) : null,
-        schedule,
-        confirmationToken,
-      };
-      return { context, template, confirmationToken };
-    });
 
     // 12. Process results and create delivery records
     const deliveryRecords = [];

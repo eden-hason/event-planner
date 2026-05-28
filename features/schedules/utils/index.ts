@@ -15,6 +15,7 @@ export {
 export {
   categoriseWhatsAppError,
   sendToGuest,
+  sendSmsToGuest,
   sendInChunks,
   buildDeliveryRecord,
   generateConfirmationToken,

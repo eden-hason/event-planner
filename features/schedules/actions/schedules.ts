@@ -223,7 +223,7 @@ export async function createDefaultSchedules(
         template_key: schedule.templateKey,
         scheduled_date,
         scheduled_time,
-        delivery_method: 'whatsapp' as const,
+        delivery_method: (schedule.deliveryMethod ?? 'whatsapp') as 'whatsapp' | 'sms',
         target_status: schedule.targetStatus ?? null,
         action_type: schedule.actionType,
       };
@@ -330,7 +330,7 @@ export async function createSchedulesFromSelection(
       template_key: s.templateKey,
       scheduled_date: s.scheduledDate,
       scheduled_time: s.scheduledTime,
-      delivery_method: 'whatsapp' as const,
+      delivery_method: (s.deliveryMethod ?? 'whatsapp') as 'whatsapp' | 'sms',
       target_status: s.targetStatus,
       action_type: s.actionType,
       status: s.status,
