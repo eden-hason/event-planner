@@ -8,6 +8,7 @@ import {
   filterGuestsByTarget,
   validatePhoneNumber,
   sendInChunks,
+  sendSmsToGuest,
   buildDeliveryRecord,
   generateConfirmationToken,
 } from '@/features/schedules/utils';
@@ -51,11 +52,10 @@ export async function triggerScheduleAdmin(scheduleId: string): Promise<TriggerS
     }
 
     const templateConfig = getTemplateByKey(scheduleRow.template_key);
-    if (!templateConfig?.whatsapp?.parameters) {
-      return { success: false, message: 'Template not found or missing parameter config' };
+    if (!templateConfig) {
+      return { success: false, message: 'Template not found' };
     }
 
-    const template = templateConfig.whatsapp;
     const eventRow = scheduleRow.events;
     const schedule = ScheduleDbToAppSchema.parse(scheduleRow);
 
@@ -111,19 +111,41 @@ export async function triggerScheduleAdmin(scheduleId: string): Promise<TriggerS
       }
     }
 
-    console.log(`${tag} sending to ${guests.length} guests…`);
+    console.log(`${tag} sending to ${guests.length} guests via ${schedule.deliveryMethod}…`);
 
-    const sendResults = await sendInChunks(guests, (guest) => {
-      const confirmationToken = generateConfirmationToken();
-      const context: ParameterResolutionContext = {
-        guest,
-        event: eventContext,
-        group: guest.groupId ? (groupsMap.get(guest.groupId) ?? null) : null,
-        schedule,
-        confirmationToken,
-      };
-      return { context, template, confirmationToken };
-    });
+    let sendResults;
+
+    if (schedule.deliveryMethod === 'sms') {
+      sendResults = await Promise.allSettled(
+        guests.map((guest) => {
+          const confirmationToken = generateConfirmationToken();
+          const context: ParameterResolutionContext = {
+            guest,
+            event: eventContext,
+            group: null,
+            schedule,
+            confirmationToken,
+          };
+          return sendSmsToGuest({ guest, context, confirmationToken });
+        }),
+      );
+    } else {
+      if (!templateConfig.whatsapp?.parameters) {
+        return { success: false, message: 'Template missing parameter configuration' };
+      }
+      const template = templateConfig.whatsapp;
+      sendResults = await sendInChunks(guests, (guest) => {
+        const confirmationToken = generateConfirmationToken();
+        const context: ParameterResolutionContext = {
+          guest,
+          event: eventContext,
+          group: guest.groupId ? (groupsMap.get(guest.groupId) ?? null) : null,
+          schedule,
+          confirmationToken,
+        };
+        return { context, template, confirmationToken };
+      });
+    }
 
     const deliveryRecords: Record<string, unknown>[] = [];
     let sentCount = 0;
