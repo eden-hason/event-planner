@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { IconBolt, IconLoader2 } from '@tabler/icons-react';
+import { IconBolt, IconLoader2, IconUsers } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 import { getAudienceLabel } from '@/features/schedules';
+import type { GuestCounts } from '../queries/event-detail';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
 
 function formatDate(dateStr: string) {
@@ -31,10 +32,22 @@ function formatDate(dateStr: string) {
   });
 }
 
+function getRecipientCount(schedule: ScheduleApp, counts: GuestCounts): number {
+  if (schedule.actionType === 'initial_invitation') {
+    // pending guests + offline RSVP guests (which may be confirmed/declined but still get invite)
+    return counts.pending + counts.offlineRsvp;
+  }
+  if (schedule.targetStatus === 'pending') return counts.pending;
+  if (schedule.targetStatus === 'confirmed') return counts.confirmed;
+  return counts.total;
+}
+
 export function TriggerScheduleCard({
   schedules,
+  guestCounts,
 }: {
   schedules: ScheduleApp[];
+  guestCounts: GuestCounts;
 }) {
   const unsentSchedules = schedules.filter(
     (s) => s.status !== 'sent' && s.status !== 'cancelled',
@@ -43,6 +56,9 @@ export function TriggerScheduleCard({
   const [open, setOpen] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
   const [isSending, startSending] = useTransition();
+
+  const selectedSchedule = unsentSchedules.find((s) => s.id === selectedScheduleId) ?? null;
+  const recipientCount = selectedSchedule ? getRecipientCount(selectedSchedule, guestCounts) : null;
 
   function handleTrigger() {
     if (!selectedScheduleId) return;
@@ -110,6 +126,13 @@ export function TriggerScheduleCard({
                   ))}
                 </SelectContent>
               </Select>
+
+              {recipientCount !== null && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <IconUsers className="h-3.5 w-3.5" />
+                  <span>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
             </div>
           )}
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { IconChevronLeft } from '@tabler/icons-react';
-import { getAdminEvent, getAdminEventSchedules } from '@/features/admin/queries/event-detail';
+import { getAdminEvent, getAdminEventSchedules, getGuestCountsForEvent } from '@/features/admin/queries/event-detail';
 import { ManualSendCard } from '@/features/admin/components/manual-send-card';
 import { TriggerScheduleCard } from '@/features/admin/components/trigger-schedule-card';
 
@@ -28,9 +28,10 @@ export default async function AdminEventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const [event, schedules] = await Promise.all([
+  const [event, schedules, guestCounts] = await Promise.all([
     getAdminEvent(eventId),
     getAdminEventSchedules(eventId),
+    getGuestCountsForEvent(eventId),
   ]);
 
   if (!event) notFound();
@@ -63,7 +64,7 @@ export default async function AdminEventDetailPage({
         <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <ManualSendCard eventId={eventId} schedules={schedules} />
-          <TriggerScheduleCard schedules={schedules} />
+          <TriggerScheduleCard schedules={schedules} guestCounts={guestCounts} />
         </div>
       </div>
     </div>

@@ -66,6 +66,43 @@ export async function getAdminEventSchedules(eventId: string): Promise<ScheduleA
   return data.map((row) => ScheduleDbToAppSchema.parse(row));
 }
 
+export type GuestCounts = {
+  pending: number;
+  confirmed: number;
+  declined: number;
+  offlineRsvp: number;
+  total: number;
+};
+
+export async function getGuestCountsForEvent(eventId: string): Promise<GuestCounts> {
+  await assertAdmin();
+  const supabase = createServiceClient();
+
+  const { data } = await supabase
+    .from('guests')
+    .select('rsvp_status, is_offline_rsvp, phone_number')
+    .eq('event_id', eventId)
+    .not('phone_number', 'is', null)
+    .neq('phone_number', '');
+
+  const rows = data ?? [];
+  const counts: GuestCounts = { pending: 0, confirmed: 0, declined: 0, offlineRsvp: 0, total: 0 };
+
+  for (const row of rows) {
+    // Mirror the validatePhoneNumber logic: stripped length >= 7
+    const cleaned = (row.phone_number as string).replace(/[^\d+]/g, '');
+    if (cleaned.length < 7) continue;
+
+    counts.total++;
+    if (row.rsvp_status === 'pending') counts.pending++;
+    else if (row.rsvp_status === 'confirmed') counts.confirmed++;
+    else if (row.rsvp_status === 'declined') counts.declined++;
+    if (row.is_offline_rsvp) counts.offlineRsvp++;
+  }
+
+  return counts;
+}
+
 export async function getGuestsForManualSend(
   eventId: string,
   scheduleId: string,
