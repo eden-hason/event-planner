@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
+import { getAudienceLabel } from '@/features/schedules';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
 
 function formatDate(dateStr: string) {
@@ -73,7 +74,7 @@ export function TriggerScheduleCard({
           <div>
             <p className="text-sm font-semibold text-foreground">Trigger Schedule</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Run a schedule for all eligible guests
+              Manually trigger a schedule for its target audience
             </p>
           </div>
         </button>
@@ -102,7 +103,7 @@ export function TriggerScheduleCard({
                       <span>
                         {s.actionType ? ACTION_TYPE_LABELS[s.actionType] : 'Schedule'}
                         <span className="ml-2 text-muted-foreground">
-                          · {formatDate(s.scheduledDate)}
+                          · {formatDate(s.scheduledDate)} · {getAudienceLabel(s.targetStatus)}
                         </span>
                       </span>
                     </SelectItem>

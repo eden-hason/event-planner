@@ -31,6 +31,7 @@ export {
   filterGuestsByTarget,
   validatePhoneNumber,
   formatPhoneE164,
+  getAudienceLabel,
 } from './utils';
 
 // Schemas/Types
