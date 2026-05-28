@@ -21,7 +21,7 @@ import {
 import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 import { getAudienceLabel } from '@/features/schedules';
-import type { GuestCounts } from '../queries/event-detail';
+import type { GuestCounts } from '../types';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
 
 function formatDate(dateStr: string) {

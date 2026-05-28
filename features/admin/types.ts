@@ -1,3 +1,11 @@
+export type GuestCounts = {
+  pending: number;
+  confirmed: number;
+  declined: number;
+  offlineRsvp: number;
+  total: number;
+};
+
 export type AdminUser = {
   id: string;
   email: string;

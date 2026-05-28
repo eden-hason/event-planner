@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ScheduleDbToAppSchema } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
+import type { GuestCounts } from '../types';
 
 export type AdminEventDetail = {
   id: string;
@@ -65,14 +66,6 @@ export async function getAdminEventSchedules(eventId: string): Promise<ScheduleA
 
   return data.map((row) => ScheduleDbToAppSchema.parse(row));
 }
-
-export type GuestCounts = {
-  pending: number;
-  confirmed: number;
-  declined: number;
-  offlineRsvp: number;
-  total: number;
-};
 
 export async function getGuestCountsForEvent(eventId: string): Promise<GuestCounts> {
   await assertAdmin();
