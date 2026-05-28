@@ -6,6 +6,7 @@ export type DefaultScheduleConfig = {
   daysOffset: number; // Negative = before event, positive = after
   defaultTime: string; // HH:MM format
   targetStatus?: 'pending' | 'confirmed';
+  deliveryMethod?: 'whatsapp' | 'sms';
 };
 
 // Default schedules for wedding events
@@ -24,6 +25,14 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
     daysOffset: -21,
     defaultTime: '10:00',
     targetStatus: 'pending',
+  },
+  {
+    templateKey: 'confirmation_casual_v1_he',
+    actionType: 'confirmation',
+    daysOffset: -17,
+    defaultTime: '10:00',
+    targetStatus: 'pending',
+    deliveryMethod: 'sms',
   },
   {
     templateKey: 'confirmation_casual_v1_he',

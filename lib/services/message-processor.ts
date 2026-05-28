@@ -9,6 +9,7 @@ import {
   filterGuestsByTarget,
   validatePhoneNumber,
   sendInChunks,
+  sendSmsToGuest,
   buildDeliveryRecord,
   generateConfirmationToken,
   type ParameterResolutionContext,
@@ -216,6 +217,59 @@ async function processSingleSchedule(
       `[cron] Schedule ${schedule.id}: all eligible guests already delivered`,
     );
     return { sentCount: 0, failedCount: 0 };
+  }
+
+  // SMS schedules: send via ActiveTrail and return early (no WhatsApp template needed)
+  if (schedule.deliveryMethod === 'sms') {
+    let sentCount = 0;
+    let failedCount = 0;
+
+    const results = await Promise.allSettled(
+      pendingGuests.map((guest) => {
+        const confirmationToken = generateConfirmationToken();
+        const context: ParameterResolutionContext = {
+          guest,
+          event,
+          group: null,
+          schedule,
+          confirmationToken,
+        };
+        return sendSmsToGuest({ guest, context, confirmationToken });
+      }),
+    );
+
+    const deliveryRecords = [];
+    for (const settled of results) {
+      if (settled.status === 'fulfilled') {
+        const r = settled.value;
+        deliveryRecords.push(buildDeliveryRecord(schedule.id, r));
+        if (r.success) {
+          sentCount++;
+        } else {
+          failedCount++;
+          console.error(`[cron] SMS failed to send to ${r.guest.name}:`, r.message);
+        }
+      } else {
+        failedCount++;
+        console.error('[cron] SMS send promise rejected:', settled.reason);
+      }
+    }
+
+    if (deliveryRecords.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('message_deliveries')
+        .upsert(deliveryRecords, { onConflict: 'schedule_id,guest_id' });
+      if (upsertError) {
+        console.error('[cron] Error upserting SMS delivery records:', upsertError);
+      }
+    }
+
+    if (sentCount === 0) {
+      await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
+    }
+
+    console.log(`[cron] Schedule ${schedule.id} (SMS): sent=${sentCount}, failed=${failedCount}`);
+    return { sentCount, failedCount };
   }
 
   // 7. Validate template has parameters configuration

@@ -155,6 +155,7 @@ export const ScheduleSelectionItemSchema = z.object({
   targetStatus: z.enum(['pending', 'confirmed']).nullable(),
   // null = active; 'cancelled' = created but disabled (user opted out in the wizard)
   status: z.enum(SCHEDULE_STATUSES).nullable(),
+  deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
 });
 
 export type ScheduleSelectionItem = z.infer<typeof ScheduleSelectionItemSchema>;

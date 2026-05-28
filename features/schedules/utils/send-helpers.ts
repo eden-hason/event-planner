@@ -4,6 +4,7 @@ import type { DeliveryMethod } from '../schemas';
 import type { WhatsAppTemplateApp } from '../schemas/whatsapp-templates';
 import { sendWhatsAppTemplateMessage } from '../actions/whatsapp';
 import { sendSmsMessage, buildSmsFallbackBody } from '../actions/sms';
+import { buildSmsConfirmationBody } from '../config/sms-bodies';
 import {
   buildDynamicTemplateParameters,
   buildDynamicButtonParameters,
@@ -129,6 +130,28 @@ export async function sendToGuest(params: {
     message: waResult.message,
     channel: 'whatsapp',
     errorCode: waResult.errorCode,
+    confirmationToken,
+  };
+}
+
+// ─── SMS primary send ─────────────────────────────────────────────────────────
+
+export async function sendSmsToGuest(params: {
+  guest: GuestApp;
+  context: ParameterResolutionContext;
+  confirmationToken: string;
+}): Promise<GuestSendResult> {
+  const { guest, context, confirmationToken } = params;
+  const phoneE164 = formatPhoneE164(guest.phone!);
+  const body = buildSmsConfirmationBody(context, confirmationToken);
+  const result = await sendSmsMessage({ to: phoneE164, body });
+
+  return {
+    guest,
+    success: result.success,
+    messageId: result.messageId,
+    message: result.message,
+    channel: 'sms',
     confirmationToken,
   };
 }

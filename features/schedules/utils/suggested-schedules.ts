@@ -9,6 +9,7 @@ export type SuggestedSchedule = {
   defaultTime: string;
   targetStatus: 'pending' | 'confirmed' | null;
   scheduledDate: string; // concrete ISO date derived from the event date
+  deliveryMethod: 'whatsapp' | 'sms';
 };
 
 /**
@@ -34,5 +35,6 @@ export function buildSuggestedSchedules(
       config.daysOffset,
       config.defaultTime,
     ),
+    deliveryMethod: config.deliveryMethod ?? 'whatsapp',
   }));
 }
