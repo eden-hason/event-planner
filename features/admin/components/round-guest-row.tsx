@@ -14,30 +14,43 @@ const OUTCOME_CONFIG: Record<
 > = {
   no_answer: {
     label: 'No answer',
-    buttonClass: 'hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300',
+    buttonClass: 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700 hover:border-slate-300',
     badgeClass: 'bg-slate-100 text-slate-600',
   },
   confirmed: {
     label: 'Confirmed',
-    buttonClass: 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300',
+    buttonClass: 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-700 hover:border-emerald-300',
     badgeClass: 'bg-emerald-100 text-emerald-700',
   },
   declined: {
     label: 'Declined',
-    buttonClass: 'hover:bg-red-50 hover:text-red-600 hover:border-red-300',
+    buttonClass: 'bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:text-red-600 hover:border-red-300',
     badgeClass: 'bg-red-100 text-red-600',
   },
 };
 
 const OUTCOMES: CallOutcome[] = ['no_answer', 'confirmed', 'declined'];
 
+const CELL_TEXT = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' } as const;
+const NAME_TEXT = { sm: 'text-sm', md: 'text-base', lg: 'text-lg' } as const;
+
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const local = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
+  if (local.length === 10) {
+    return `${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`;
+  }
+  return phone;
+}
+
 interface RoundGuestRowProps {
   log: CallLogWithGuest;
   eventId: string;
+  fontSize?: 'sm' | 'md' | 'lg';
   onOutcomeChange: (logId: string, outcome: CallOutcome) => void;
 }
 
-export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowProps) {
+export function RoundGuestRow({ log, eventId, fontSize = 'sm', onOutcomeChange }: RoundGuestRowProps) {
   const [outcome, setOutcome] = useState<CallOutcome | null>(log.outcome);
   const [pendingOutcome, setPendingOutcome] = useState<CallOutcome | null>(null);
   const [amount, setAmount] = useState<number>(log.amount);
@@ -90,7 +103,8 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
     save('confirmed', amount);
   }
 
-  const sideLabel = log.side === 'bride' ? 'Bride' : log.side === 'groom' ? 'Groom' : null;
+  const SIDE_LABELS: Record<string, string> = { bride: 'כלה', groom: 'חתן' };
+  const sideLabel = log.side ? (SIDE_LABELS[log.side] ?? null) : null;
 
   return (
     <tr
@@ -104,45 +118,52 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
         <div className="flex items-baseline gap-2">
           <span
             className={cn(
-              'text-sm font-medium',
+              NAME_TEXT[fontSize],
+              'font-medium',
               isResolved && !isEditing && 'line-through text-muted-foreground',
             )}
           >
             {log.name}
           </span>
           {amount > 1 && (
-            <span className="text-xs text-muted-foreground tabular-nums">×{amount}</span>
+            <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground tabular-nums')}>×{amount}</span>
           )}
         </div>
       </td>
 
+      {/* Phone */}
+      <td className="px-4 py-3 align-middle w-32 whitespace-nowrap">
+        {log.phone ? (
+          <a
+            href={`tel:${log.phone}`}
+            className={cn(CELL_TEXT[fontSize], 'text-blue-600 tabular-nums hover:underline transition-colors')}
+          >
+            {formatPhone(log.phone)}
+          </a>
+        ) : (
+          <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground/40')}>—</span>
+        )}
+      </td>
+
       {/* Group */}
       <td className="px-4 py-3 align-middle w-28">
-        <span className="text-xs text-muted-foreground">{log.groupName ?? '—'}</span>
+        {log.groupName ? (
+          <span className={cn(CELL_TEXT[fontSize], 'inline-flex items-center rounded-full bg-muted px-2 py-0.5')}>
+            {log.groupName}
+          </span>
+        ) : (
+          <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground/40')}>—</span>
+        )}
       </td>
 
       {/* Side */}
       <td className="px-4 py-3 align-middle w-20">
         {sideLabel ? (
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+          <span className={cn(CELL_TEXT[fontSize], 'inline-flex items-center rounded-full bg-muted px-2 py-0.5')}>
             {sideLabel}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground/40">—</span>
-        )}
-      </td>
-
-      {/* Phone */}
-      <td className="px-4 py-3 align-middle w-32">
-        {log.phone ? (
-          <a
-            href={`tel:${log.phone}`}
-            className="text-xs text-blue-600 tabular-nums hover:underline transition-colors"
-          >
-            {log.phone}
-          </a>
-        ) : (
-          <span className="text-xs text-muted-foreground/40">—</span>
+          <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground/40')}>—</span>
         )}
       </td>
 
@@ -152,7 +173,8 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                'inline-flex items-center rounded-full px-2 py-0.5 font-medium',
+                CELL_TEXT[fontSize],
                 OUTCOME_CONFIG[outcome!].badgeClass,
               )}
             >
@@ -163,7 +185,7 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
             </span>
             <button
               onClick={() => setIsEditing(true)}
-              className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+              className={cn(CELL_TEXT[fontSize], 'text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground')}
             >
               Edit
             </button>
@@ -176,7 +198,8 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
                 disabled={isPending}
                 onClick={() => handleOutcomeClick(o)}
                 className={cn(
-                  'rounded border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-all disabled:opacity-50',
+                  'rounded border px-2 py-1 font-medium transition-all disabled:opacity-50',
+                  CELL_TEXT[fontSize],
                   OUTCOME_CONFIG[o].buttonClass,
                   outcome === o && 'bg-foreground/10 border-foreground/30 text-foreground',
                 )}
@@ -194,7 +217,7 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
                   setIsEditing(false);
                   setPendingOutcome(null);
                 }}
-                className="px-1 text-xs text-muted-foreground hover:text-foreground"
+                className={cn(CELL_TEXT[fontSize], 'px-1 text-muted-foreground hover:text-foreground')}
               >
                 Cancel
               </button>
@@ -202,21 +225,21 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-muted-foreground">Guests</label>
+            <label className={cn(CELL_TEXT[fontSize], 'font-medium text-muted-foreground')}>Guests</label>
             <input
               type="number"
               min={1}
               value={amount}
               onChange={(e) => setAmount(Math.max(1, Number(e.target.value)))}
-              className="w-14 rounded border px-2 py-1 text-xs bg-background"
+              className={cn(CELL_TEXT[fontSize], 'w-14 rounded border px-2 py-1 bg-background')}
             />
-            <Button size="sm" className="h-7 text-xs" onClick={handleConfirmSave} disabled={isPending}>
+            <Button size="sm" className={cn('h-7', CELL_TEXT[fontSize])} onClick={handleConfirmSave} disabled={isPending}>
               {isPending && <IconLoader2 className="mr-1 h-3 w-3 animate-spin" />}
               Save
             </Button>
             <button
               onClick={() => setPendingOutcome(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className={cn(CELL_TEXT[fontSize], 'text-muted-foreground hover:text-foreground')}
             >
               Cancel
             </button>
@@ -227,7 +250,7 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
       {/* Notes */}
       <td className="px-4 py-3 align-middle w-44">
         {isResolved && !isEditing ? (
-          <span className="text-xs text-muted-foreground italic">
+          <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground italic')}>
             {notes || '—'}
           </span>
         ) : showNotes ? (
@@ -236,12 +259,12 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes…"
             rows={2}
-            className="w-full rounded border px-2 py-1 text-xs resize-none bg-background"
+            className={cn(CELL_TEXT[fontSize], 'w-full rounded border px-2 py-1 resize-none bg-background')}
           />
         ) : (
           <button
             onClick={() => setShowNotes(true)}
-            className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+            className={cn(CELL_TEXT[fontSize], 'text-muted-foreground/40 hover:text-muted-foreground transition-colors')}
           >
             + Add note
           </button>

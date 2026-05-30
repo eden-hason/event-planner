@@ -6,6 +6,7 @@ import { IconChevronLeft, IconChevronRight, IconLoader2, IconPhone, IconSearch, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import {
   AlertDialog,
@@ -54,8 +55,10 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
   const [activeFilter, setActiveFilter] = useState<SummaryFilterKey | null>(null);
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
+  const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg'>('lg');
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const { pageSize } = useDynamicPageSize({ containerRef: tableContainerRef, rowHeight: 51 });
+  const ROW_HEIGHT = { sm: 51, md: 59, lg: 67 } as const;
+  const { pageSize } = useDynamicPageSize({ containerRef: tableContainerRef, rowHeight: ROW_HEIGHT[fontSize] });
 
   useEffect(() => {
     if (!selectedRoundId) return;
@@ -141,7 +144,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
     ? sortedLogs.filter(
         (l) =>
           l.name.toLowerCase().includes(searchQuery) ||
-          (l.phone ?? '').includes(searchQuery),
+          (l.phone ?? '').replace(/-/g, '').includes(searchQuery.replace(/-/g, '')),
       )
     : sortedLogs;
 
@@ -269,6 +272,20 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
               )}
             </div>
             )}
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={fontSize}
+              onValueChange={(v) => { if (v) { setFontSize(v as 'sm' | 'md' | 'lg'); setPageIndex(0); } }}
+              className="ml-auto"
+            >
+              {(['sm', 'md', 'lg'] as const).map((size) => (
+                <ToggleGroupItem key={size} value={size} className="h-7 w-9 text-xs">
+                  {size.toUpperCase()}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
 
           {/* Table */}
@@ -287,24 +304,21 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        Guest
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-28">
-                        Group
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-20">
-                        Side
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-32">
-                        Phone
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        Outcome
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-44">
-                        Notes
-                      </th>
+                      {(['Guest', 'Phone', 'Group', 'Side', 'Outcome', 'Notes'] as const).map((col) => (
+                        <th
+                          key={col}
+                          className={cn(
+                            'px-4 py-2.5 text-left font-medium uppercase tracking-wide text-muted-foreground',
+                            { sm: 'text-[11px]', md: 'text-xs', lg: 'text-sm' }[fontSize],
+                            col === 'Group' && 'w-28',
+                            col === 'Side' && 'w-20',
+                            col === 'Phone' && 'w-32',
+                            col === 'Notes' && 'w-44',
+                          )}
+                        >
+                          {col}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -313,6 +327,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                         key={log.id}
                         log={log}
                         eventId={eventId}
+                        fontSize={fontSize}
                         onOutcomeChange={handleOutcomeChange}
                       />
                     ))}
