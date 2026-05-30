@@ -1,4 +1,4 @@
-export type CallOutcome = 'no_answer' | 'confirmed' | 'declined' | 'call_back' | 'wrong_number';
+export type CallOutcome = 'no_answer' | 'confirmed' | 'declined';
 
 export type CallRoundSummary = {
   id: string;
@@ -9,8 +9,6 @@ export type CallRoundSummary = {
   confirmed: number;
   declined: number;
   noAnswer: number;
-  callBack: number;
-  wrongNumber: number;
 };
 
 export type CallLogWithGuest = {

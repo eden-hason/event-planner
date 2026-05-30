@@ -23,7 +23,7 @@ import { getCallRounds, getRoundCallLogs } from '../queries/calls';
 import { RoundGuestRow } from './round-guest-row';
 import type { CallRoundSummary, CallLogWithGuest, CallOutcome } from '../types';
 
-type SummaryFilterKey = 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'callBack' | 'wrongNumber';
+type SummaryFilterKey = 'awaiting' | 'confirmed' | 'declined' | 'noAnswer';
 
 const SUMMARY_STATS: {
   key: keyof CallRoundSummary;
@@ -34,8 +34,6 @@ const SUMMARY_STATS: {
   { key: 'confirmed', label: 'confirmed', color: 'text-emerald-600' },
   { key: 'declined', label: 'declined', color: 'text-red-500' },
   { key: 'noAnswer', label: 'no answer', color: 'text-slate-400' },
-  { key: 'callBack', label: 'call back', color: 'text-blue-500' },
-  { key: 'wrongNumber', label: 'wrong #', color: 'text-amber-500' },
 ];
 
 interface PhoneCallsViewProps {
@@ -57,7 +55,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const { pageSize } = useDynamicPageSize({ containerRef: tableContainerRef, rowHeight: 57 });
+  const { pageSize } = useDynamicPageSize({ containerRef: tableContainerRef, rowHeight: 51 });
 
   useEffect(() => {
     if (!selectedRoundId) return;
@@ -136,8 +134,6 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
     confirmed: (log) => log.outcome === 'confirmed',
     declined: (log) => log.outcome === 'declined',
     noAnswer: (log) => log.outcome === 'no_answer',
-    callBack: (log) => log.outcome === 'call_back',
-    wrongNumber: (log) => log.outcome === 'wrong_number',
   };
 
   const searchQuery = search.trim().toLowerCase();
@@ -287,64 +283,71 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                 {search || activeFilter ? 'No guests match' : 'No guests in this round'}
               </div>
             ) : (
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/30">
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Guest
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-32">
-                      Phone
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Outcome
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-44">
-                      Notes
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {displayedLogs.map((log) => (
-                    <RoundGuestRow
-                      key={log.id}
-                      log={log}
-                      eventId={eventId}
-                      onOutcomeChange={handleOutcomeChange}
-                    />
-                  ))}
-                </tbody>
-              </table>
+              <>
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30">
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Guest
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-28">
+                        Group
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-20">
+                        Side
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-32">
+                        Phone
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Outcome
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground w-44">
+                        Notes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {displayedLogs.map((log) => (
+                      <RoundGuestRow
+                        key={log.id}
+                        log={log}
+                        eventId={eventId}
+                        onOutcomeChange={handleOutcomeChange}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+                {pageCount > 1 && (
+                  <div className="flex items-center justify-between border-t px-4 py-2">
+                    <p className="text-xs text-muted-foreground">
+                      {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, filteredLogs.length)} of {filteredLogs.length}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => setPageIndex((p) => p - 1)}
+                        disabled={pageIndex === 0}
+                      >
+                        <IconChevronLeft className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => setPageIndex((p) => p + 1)}
+                        disabled={pageIndex >= pageCount - 1}
+                      >
+                        <IconChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
-
-          {pageCount > 1 && (
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs text-muted-foreground">
-                {pageIndex * pageSize + 1}-{Math.min((pageIndex + 1) * pageSize, filteredLogs.length)} of {filteredLogs.length}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-7"
-                  onClick={() => setPageIndex((p) => p - 1)}
-                  disabled={pageIndex === 0}
-                >
-                  <IconChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-7"
-                  onClick={() => setPageIndex((p) => p + 1)}
-                  disabled={pageIndex >= pageCount - 1}
-                >
-                  <IconChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
         </>
       )}
 
