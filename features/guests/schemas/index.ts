@@ -113,7 +113,7 @@ export const GuestDbSchema = z.object({
   rsvp_changed_by: z.uuid().nullable().optional(),
   rsvp_changed_by_name: z.string().max(255).nullable().optional(),
   rsvp_changed_at: z.string().nullable().optional(),
-  rsvp_change_source: z.enum(['manual', 'guest']).nullable().optional(),
+  rsvp_change_source: z.enum(['manual', 'guest', 'admin_call']).nullable().optional(),
   is_offline_rsvp: z.boolean().default(false),
 });
 

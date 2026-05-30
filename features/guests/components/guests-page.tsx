@@ -21,14 +21,13 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { IconClock, IconPlus, IconProgressHelp, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
+import { IconClock, IconPlus, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   GroupsDirectory,
   CreateGroupDialog,
-  GroupIcon,
 } from '@/features/guests/components/groups';
 import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
 import { deleteGuest } from '@/features/guests/actions';
@@ -326,44 +325,6 @@ export function GuestsPage({
 
                 {/* Labeled data badges */}
                 <div className="flex flex-col gap-1.5 items-start">
-                  {/* Status */}
-                  <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
-                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
-                      <IconProgressHelp size={12} className="shrink-0" />
-                      {t('form.rsvpStatus')}
-                    </span>
-                    <span className="w-px bg-border" />
-                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-foreground">
-                      <span className={`size-1.5 rounded-full shrink-0 ${RSVP_DOT_STYLES[rsvpStatus]}`} />
-                      {t(`rsvp.${rsvpStatus}` as 'rsvp.pending' | 'rsvp.confirmed' | 'rsvp.declined')}
-                    </span>
-                  </span>
-
-                  {/* Guests */}
-                  <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
-                    <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
-                      <IconUsers size={12} className="shrink-0" />
-                      {t('sheet.people')}
-                    </span>
-                    <span className="w-px bg-border" />
-                    <span className="px-2.5 py-1 text-foreground">
-                      {selectedGuest.amount}{' '}
-                      {selectedGuest.amount === 1 ? t('form.person') : t('form.people')}
-                    </span>
-                  </span>
-
-                  {/* Group */}
-                  {guestGroup && (
-                    <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
-                      <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
-                        <GroupIcon iconName={guestGroup.icon} size="sm" className="shrink-0" />
-                        {t('form.group')}
-                      </span>
-                      <span className="w-px bg-border" />
-                      <span className="px-2.5 py-1 text-foreground">{guestGroup.name}</span>
-                    </span>
-                  )}
-
                   {/* RSVP Updated */}
                   {selectedGuest.rsvpChangedAt && (
                     <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
@@ -375,7 +336,9 @@ export function GuestsPage({
                       <span className="px-2.5 py-1 text-muted-foreground">
                         {selectedGuest.rsvpChangeSource === 'guest'
                           ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`
-                          : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`}
+                          : selectedGuest.rsvpChangeSource === 'admin_call'
+                            ? `${t('sheet.viaAdmin')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`
+                            : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`}
                       </span>
                     </span>
                   )}

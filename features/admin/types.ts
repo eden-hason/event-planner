@@ -1,3 +1,32 @@
+export type CallOutcome = 'no_answer' | 'confirmed' | 'declined' | 'call_back' | 'wrong_number';
+
+export type CallRoundSummary = {
+  id: string;
+  roundNumber: number;
+  createdAt: string;
+  total: number;
+  awaiting: number;
+  confirmed: number;
+  declined: number;
+  noAnswer: number;
+  callBack: number;
+  wrongNumber: number;
+};
+
+export type CallLogWithGuest = {
+  id: string;
+  guestId: string;
+  name: string;
+  phone: string | null;
+  amount: number;
+  side: 'bride' | 'groom' | null;
+  groupName: string | null;
+  currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
+  outcome: CallOutcome | null;
+  notes: string | null;
+  calledAt: string | null;
+};
+
 export type AdminUser = {
   id: string;
   email: string;
