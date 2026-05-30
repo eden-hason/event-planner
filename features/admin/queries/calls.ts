@@ -37,8 +37,6 @@ export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]
     const confirmed = roundLogs.filter((l) => l.outcome === 'confirmed').length;
     const declined = roundLogs.filter((l) => l.outcome === 'declined').length;
     const noAnswer = roundLogs.filter((l) => l.outcome === 'no_answer').length;
-    const callBack = roundLogs.filter((l) => l.outcome === 'call_back').length;
-    const wrongNumber = roundLogs.filter((l) => l.outcome === 'wrong_number').length;
 
     return {
       id: round.id,
@@ -49,8 +47,6 @@ export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]
       confirmed,
       declined,
       noAnswer,
-      callBack,
-      wrongNumber,
     };
   });
 }

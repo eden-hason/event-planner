@@ -27,19 +27,9 @@ const OUTCOME_CONFIG: Record<
     buttonClass: 'hover:bg-red-50 hover:text-red-600 hover:border-red-300',
     badgeClass: 'bg-red-100 text-red-600',
   },
-  call_back: {
-    label: 'Call back',
-    buttonClass: 'hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300',
-    badgeClass: 'bg-blue-100 text-blue-700',
-  },
-  wrong_number: {
-    label: 'Wrong #',
-    buttonClass: 'hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300',
-    badgeClass: 'bg-amber-100 text-amber-700',
-  },
 };
 
-const OUTCOMES: CallOutcome[] = ['no_answer', 'confirmed', 'declined', 'call_back', 'wrong_number'];
+const OUTCOMES: CallOutcome[] = ['no_answer', 'confirmed', 'declined'];
 
 interface RoundGuestRowProps {
   log: CallLogWithGuest;
@@ -120,14 +110,25 @@ export function RoundGuestRow({ log, eventId, onOutcomeChange }: RoundGuestRowPr
           >
             {log.name}
           </span>
-          {sideLabel && (
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-              {sideLabel}
-            </span>
+          {amount > 1 && (
+            <span className="text-xs text-muted-foreground tabular-nums">×{amount}</span>
           )}
         </div>
-        {log.groupName && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{log.groupName}</p>
+      </td>
+
+      {/* Group */}
+      <td className="px-4 py-3 align-middle w-28">
+        <span className="text-xs text-muted-foreground">{log.groupName ?? '—'}</span>
+      </td>
+
+      {/* Side */}
+      <td className="px-4 py-3 align-middle w-20">
+        {sideLabel ? (
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            {sideLabel}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground/40">—</span>
         )}
       </td>
 
