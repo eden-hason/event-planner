@@ -27,21 +27,16 @@ export async function listAllEvents(userId?: string): Promise<AdminEvent[]> {
   const eventIds = events.map((e) => e.id);
   const ownerIds = [...new Set(events.map((e) => e.user_id))];
 
-  // Fetch owner emails from profiles
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, email')
-    .in('id', ownerIds);
+  // These two lookups are independent, so run them in parallel:
+  // owner emails from profiles, and guest counts grouped by event/rsvp_status.
+  const [{ data: profiles }, { data: guestRows }] = await Promise.all([
+    supabase.from('profiles').select('id, email').in('id', ownerIds),
+    supabase.from('guests').select('event_id, rsvp_status').in('event_id', eventIds),
+  ]);
 
   const emailMap = new Map<string, string>(
     (profiles ?? []).map((p) => [p.id, p.email ?? '']),
   );
-
-  // Fetch guest counts grouped by event_id and rsvp_status in one query
-  const { data: guestRows } = await supabase
-    .from('guests')
-    .select('event_id, rsvp_status')
-    .in('event_id', eventIds);
 
   const guestMap = new Map<string, { total: number; confirmed: number }>();
   for (const row of guestRows ?? []) {

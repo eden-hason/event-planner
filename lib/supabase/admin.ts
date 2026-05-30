@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -5,8 +6,9 @@ import { createServiceClient } from '@/lib/supabase/service';
 
 type ImpersonationContext = { userId: string } | null;
 
-// TODO: wrap with React cache() to deduplicate DB calls within a single render
-export async function getImpersonation(): Promise<ImpersonationContext> {
+// Wrapped with React cache() so the auth + profile calls are deduplicated
+// across the layout and page queries within a single render.
+export const getImpersonation = cache(async function getImpersonation(): Promise<ImpersonationContext> {
   const cookieStore = await cookies();
   const impersonateId = cookieStore.get('impersonate_user_id')?.value;
   if (!impersonateId) return null;
@@ -24,7 +26,7 @@ export async function getImpersonation(): Promise<ImpersonationContext> {
     .single();
 
   return profile?.is_admin ? { userId: impersonateId } : null;
-}
+});
 
 export async function getEffectiveClient() {
   const impersonation = await getImpersonation();
@@ -32,7 +34,7 @@ export async function getEffectiveClient() {
   return { supabase, impersonation };
 }
 
-export async function assertAdmin(): Promise<string> {
+export const assertAdmin = cache(async function assertAdmin(): Promise<string> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,7 +51,7 @@ export async function assertAdmin(): Promise<string> {
   if (!profile?.is_admin) redirect('/app');
 
   return user.id;
-}
+});
 
 export async function assertNotImpersonating(): Promise<string | null> {
   const impersonation = await getImpersonation();
