@@ -42,7 +42,7 @@ export const WEDDING_DEFAULT_SCHEDULES: DefaultScheduleConfig[] = [
     targetStatus: 'pending',
   },
   {
-    templateKey: 'event_reminder_v1_he',
+    templateKey: 'event_reminder_casual',
     actionType: 'event_reminder',
     daysOffset: 0,
     defaultTime: '10:00',

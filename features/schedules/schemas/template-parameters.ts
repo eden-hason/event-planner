@@ -9,6 +9,7 @@ export const TransformerTypeSchema = z.enum([
   'rsvpLabel', // Convert RSVP status to readable label
   'currency', // Format as currency
   'phoneNumber', // Format phone number
+  'wazeNavQuery', // URL-encode venue name and append &navigate=yes for Waze deep link
 ]);
 
 export type TransformerType = z.infer<typeof TransformerTypeSchema>;

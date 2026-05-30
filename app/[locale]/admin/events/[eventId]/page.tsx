@@ -63,7 +63,7 @@ export default async function AdminEventDetailPage({
         <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <ManualSendCard eventId={eventId} schedules={schedules} />
-          <TriggerScheduleCard schedules={schedules} />
+          <TriggerScheduleCard eventId={eventId} schedules={schedules} />
         </div>
       </div>
     </div>
