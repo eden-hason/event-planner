@@ -118,12 +118,12 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     sms: undefined,
   },
 
-  event_reminder_v1_he: {
+  event_reminder_casual: {
     whatsapp: {
-      templateKey: 'event_reminder_v1_he',
-      templateName: 'event_reminder_v1_he',
+      templateKey: 'event_reminder_casual',
+      templateName: 'event_reminder_casual',
       bodyText:
-        'היום זה קורה! 🎊\nהחתונה של {{1}} ו{{2}}\n🕒 שעה: {{3}} \n📍 מיקום:{{4}}\nלנוחיותכם - קישור לניווט לארוע',
+        'היי אורחים יקרים\nתזכורת לחתונה של {{1}} ו{{2}} שמתקיימת היום\n\n📍 {{3}}\n🕒 {{4}}\n\nמחכים לראותכם 🎉',
       languageCode: 'he',
       headerType: null,
       headerText: null,
@@ -139,19 +139,35 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
             source: 'event.hostDetails.groom.name',
             transformer: 'none',
           },
-          'event.eventDate': {
-            source: 'event.eventDate',
-            transformer: 'formatDate',
-            transformerOptions: { format: 'long', locale: 'he-IL' },
-          },
           'event.venueName': {
             source: 'event.location.name',
             transformer: 'none',
           },
+          'event.receptionTime': {
+            source: 'event.receptionTime',
+            transformer: 'none',
+          },
         },
-        buttonPlaceholders: [],
+        buttonPlaceholders: [
+          {
+            index: 0,
+            subType: 'url',
+            text: 'ניווט לאירוע',
+            placeholders: [
+              { source: 'event.location.name', transformer: 'wazeNavQuery' },
+            ],
+          },
+          {
+            index: 1,
+            subType: 'url',
+            text: 'מתנה בביט',
+            placeholders: [
+              { source: 'event.eventSettings.bitConfig.phoneNumber', transformer: 'none' },
+            ],
+          },
+        ],
       },
-      description: 'Day-of wedding reminder sent to confirmed guests with event time and venue',
+      description: 'Day-of wedding reminder with Waze navigation and Bit gift buttons',
     },
     sms: undefined,
   },

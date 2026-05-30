@@ -117,6 +117,12 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     }).format(numValue);
   },
 
+  wazeNavQuery: (value: unknown) => {
+    const str = String(value ?? '').trim();
+    if (!str) return '';
+    return `${encodeURIComponent(str)}&navigate=yes`;
+  },
+
   phoneNumber: (value: unknown) => {
     if (!value) return '';
     const phone = String(value);

@@ -37,6 +37,8 @@ const VALID_CONTEXT_PATHS = [
   'event.title',
   'event.eventDate',
   'event.location',
+  'event.location.name',
+  'event.eventSettings.bitConfig.phoneNumber',
   'event.description',
   'group.id',
   'group.name',
@@ -92,6 +94,7 @@ function validateTransformerOptions(
     case 'none':
     case 'rsvpLabel':
     case 'phoneNumber':
+    case 'wazeNavQuery':
       // These transformers don't have options
       if (Object.keys(options).length > 0) {
         return { type: 'warning', message: `${transformer} transformer does not use options` };
