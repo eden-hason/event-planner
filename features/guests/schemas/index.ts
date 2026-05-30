@@ -60,7 +60,7 @@ export const GuestAppSchema = z.object({
   rsvpChangedBy: z.uuid().nullable().optional(),
   rsvpChangedByName: z.string().nullable().optional(),
   rsvpChangedAt: z.string().nullable().optional(),
-  rsvpChangeSource: z.enum(['manual', 'guest']).nullable().optional(),
+  rsvpChangeSource: z.enum(['manual', 'guest', 'admin_call']).nullable().optional(),
   isOfflineRsvp: z.boolean().default(false),
 });
 
