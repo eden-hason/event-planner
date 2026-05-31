@@ -89,6 +89,56 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     },
     sms: undefined,
   },
+
+  follow_up_confirmation_casual: {
+    whatsapp: {
+      templateKey: 'follow_up_confirmation_casual',
+      templateName: 'follow_up_confirmation_casual',
+      bodyText:
+        'היי אורחים יקרים \nאם עדיין לא הספקתם לאשר הגעה לחתונה של {{1}} ו{{2}}, נשמח לעדכון קצר דרך הכפתור המצורף.\n\n📅 {{3}} \n📍 {{4}}\n\nתודה, זה ממש עוזר לנו להיערך כמו שצריך 🙏🏼',
+      languageCode: 'he',
+      headerType: null,
+      headerText: null,
+      footerText: null,
+      parameters: {
+        headerPlaceholders: [],
+        // Order matters: positional {{n}} = insertion order.
+        // {{1}} bride, {{2}} groom, {{3}} date, {{4}} venue.
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+          'event.eventDate': {
+            source: 'event.eventDate',
+            transformer: 'formatDate',
+            transformerOptions: { format: 'long', locale: 'he-IL' },
+          },
+          'event.venueName': {
+            source: 'event.location.name',
+            transformer: 'none',
+          },
+        },
+        buttonPlaceholders: [
+          {
+            index: 0,
+            subType: 'url',
+            text: 'אישור הגעה',
+            placeholders: [
+              { source: 'confirmationToken', transformer: 'none' },
+            ],
+          },
+        ],
+      },
+      description:
+        'Follow-up RSVP reminder for guests who have not yet confirmed (no header image)',
+    },
+    sms: undefined,
+  },
   thank_you_v1_he: {
     whatsapp: {
       templateKey: 'thank_you_v1_he',
