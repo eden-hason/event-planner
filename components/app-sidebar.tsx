@@ -35,10 +35,15 @@ import { Badge } from '@/components/ui/badge';
 
 const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
-// Helper function to extract eventId from pathname
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Extract eventId from pathname, only when it is a real (UUID) event id.
+// Guards against non-event routes like /app/new-event being mistaken for an event.
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
-  return match ? match[1] : null;
+  const segment = match?.[1];
+  return segment && UUID_RE.test(segment) ? segment : null;
 }
 
 // Helper function to build navigation URLs with eventId
