@@ -17,7 +17,7 @@ export function FeatureLayoutHeader() {
   }
 
   return (
-    <CardHeader className="px-0 pb-4">
+    <CardHeader className="px-0 pb-2">
       <div className={cn('flex w-full items-start justify-between gap-4', containerClass)}>
         <div className="grid gap-1.5">
           <CardTitle className="text-2xl font-bold">{title}</CardTitle>

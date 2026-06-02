@@ -121,6 +121,7 @@ export function GuestDirectory({
             <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setImportDialogOpen(true)}
               className="gap-2"
             >
@@ -148,6 +149,7 @@ export function GuestDirectory({
             />
             <Button
               variant="outline"
+              size="sm"
               onClick={toggleNoPhoneOnly}
               className={cn('gap-2', noPhoneOnly && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary')}
             >

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, RefObject } from 'react';
 
-const TABLE_ROW_HEIGHT = 49; // Height of each table row in pixels (py-2 padding + content)
-const TABLE_HEADER_HEIGHT = 48; // Height of table header
+const TABLE_ROW_HEIGHT = 41; // Height of each table row in pixels (py-1 padding + content)
+const TABLE_HEADER_HEIGHT = 40; // Height of table header (h-10)
 const PAGINATION_HEIGHT = 40; // Height of pagination controls
 const BUFFER = 48; // Extra buffer space for margins, borders, and layout shifts
 
