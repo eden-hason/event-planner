@@ -44,28 +44,27 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
               }
             }}
             className={cn(
-              'flex flex-col gap-3 rounded-xl border p-4 shadow-sm transition-colors',
+              'flex flex-col gap-2 rounded-xl border p-3 shadow-sm transition-colors',
               isActive ? activeRing : 'bg-card',
               isClickable && 'cursor-pointer',
             )}
           >
-            {/* Header: title + icon */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">{label}</span>
-              <div className="[&>svg]:size-5">{icon}</div>
-            </div>
-
-            {/* Large number */}
-            <p className="text-3xl font-bold leading-none tracking-tight">
-              {value.toLocaleString()}
-              {breakdown && secondaryText && (
-                <span className="ml-2 text-base font-normal text-muted-foreground">{secondaryText}</span>
-              )}
-            </p>
-
-            {/* Progress bar + stats row */}
             {breakdown ? (
               <>
+                {/* Header: title + icon */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">{label}</span>
+                  <div className="[&>svg]:size-5">{icon}</div>
+                </div>
+
+                {/* Large number */}
+                <p className="text-3xl font-bold leading-none tracking-tight">
+                  {value.toLocaleString()}
+                  {secondaryText && (
+                    <span className="ml-2 text-base font-normal text-muted-foreground">{secondaryText}</span>
+                  )}
+                </p>
+
                 <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-gray-100">
                   {breakdown.map((item) => {
                     const width = breakdownTotal > 0 ? (item.value / breakdownTotal) * 100 : 0;
@@ -89,18 +88,37 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
                 </div>
               </>
             ) : (
-              <div className="space-y-1.5">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                  <div
-                    className={cn('h-full rounded-full transition-all duration-700', barColor)}
-                    style={{ width: `${pct}%` }}
-                  />
+              /* Compact horizontal layout */
+              <>
+                <div className="flex items-center gap-3">
+                  {/* Icon chip */}
+                  <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 [&>svg]:size-4', isActive && 'bg-white/60')}>
+                    {icon}
+                  </div>
+                  {/* Label + value */}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-muted-foreground leading-none mb-1">{label}</p>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-bold leading-none tracking-tight">
+                        {value.toLocaleString()}
+                      </span>
+                      {secondaryText && (
+                        <span className="text-xs text-muted-foreground">{secondaryText}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-muted-foreground flex items-center justify-between text-xs">
-                  {secondaryText && <span>{secondaryText}</span>}
-                  <span>{pct}%</span>
+                {/* Progress bar + percentage */}
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className={cn('h-full rounded-full transition-all duration-700', barColor)}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-8 text-right shrink-0">{pct}%</span>
                 </div>
-              </div>
+              </>
             )}
           </div>
         );

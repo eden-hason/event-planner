@@ -245,7 +245,7 @@ export function GuestsPage({
   return (
     <>
       <Tabs defaultValue="guests" onValueChange={handleTabsChange} dir={locale === 'he' ? 'rtl' : 'ltr'}>
-        <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
           <TabsTrigger
             value="guests"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
@@ -266,7 +266,7 @@ export function GuestsPage({
           selectedStatuses={selectedStatuses}
           onStatClick={handleStatCardClick}
         />
-        <TabsContent value="guests" className="mt-6">
+        <TabsContent value="guests" className="mt-0">
           <GuestDirectory
             guests={guests}
             groups={groups}

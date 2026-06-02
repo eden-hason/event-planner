@@ -171,7 +171,7 @@ export function GuestsTable({
                       <TableCell
                         key={cell.id}
                         className={
-                          isNameColumn ? 'px-4 py-2 font-medium' : 'py-2'
+                          isNameColumn ? 'px-4 py-1 font-medium' : 'py-1'
                         }
                       >
                         {flexRender(
