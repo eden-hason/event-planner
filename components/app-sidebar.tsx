@@ -35,15 +35,13 @@ import { Badge } from '@/components/ui/badge';
 
 const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NON_EVENT_PATHS = new Set(['new-event']);
 
-// Extract eventId from pathname, only when it is a real (UUID) event id.
-// Guards against non-event routes like /app/new-event being mistaken for an event.
+// Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
-  const segment = match?.[1];
-  return segment && UUID_RE.test(segment) ? segment : null;
+  const id = match ? match[1] : null;
+  return id && !NON_EVENT_PATHS.has(id) ? id : null;
 }
 
 // Helper function to build navigation URLs with eventId
@@ -73,6 +71,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
+  const isOnboarding = pathname === '/app/new-event';
   const { isOwner } = useCollaboration();
   const tNav = useTranslations('navigation');
   const locale = useLocale();
@@ -208,8 +207,8 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} disabled={!eventId} />
-        <NavSecondary items={navSecondary} disabled={!eventId} className="mt-auto" />
+        <NavMain items={navMain} disabled={!eventId || isOnboarding} />
+        <NavSecondary items={navSecondary} disabled={!eventId || isOnboarding} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
@@ -218,7 +217,7 @@ export function AppSidebar({
           </div>
         )}
 
-        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} user={user} />
+        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId && !isOnboarding} user={user} />
       </SidebarFooter>
     </Sidebar>
   );
