@@ -36,6 +36,7 @@ import { GuestActionsSection } from './guest-actions-section';
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
   eventId: string;
+  eventName?: string;
   groups: GroupWithGuestsApp[];
   existingPhones: Map<string, string>;
   showDietary?: boolean;
@@ -73,6 +74,7 @@ function getAvatarColor(name: string): string {
 export function GuestsPage({
   guests,
   eventId,
+  eventName,
   groups,
   existingPhones,
   showDietary = false,
@@ -271,6 +273,7 @@ export function GuestsPage({
             guests={guests}
             groups={groups}
             eventId={eventId}
+            eventName={eventName}
             existingPhones={existingPhones}
             onSelectGuest={handleSelectGuest}
             showDietary={showDietary}
