@@ -30,6 +30,7 @@ export default async function GuestsPage({
     <GuestsPageComponent
       guests={guests}
       eventId={eventId}
+      eventName={event?.title}
       groups={groups}
       existingPhones={existingPhones}
       showDietary={showDietary}

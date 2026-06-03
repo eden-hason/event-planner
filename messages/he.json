@@ -473,6 +473,16 @@
     },
     "directory": {
       "importCsv": "ייבוא קובץ",
+      "exportIplan": "ייצוא ל-iPlan",
+      "exportConfirmed": "אורחים שאישרו",
+      "exportConfirmedDesc": "אורחים שאישרו הגעה בלבד",
+      "exportConfirmedPending": "אישרו + ממתינים",
+      "exportConfirmedPendingDesc": "אורחים שאישרו ומחכים לתשובה",
+      "exportAll": "כל האורחים",
+      "exportAllDesc": "רשימת כל האורחים המלאה",
+      "exportingIplan": "מכין קובץ iPlan",
+      "exportIplanSuccess": "קובץ iPlan הורד",
+      "exportFailed": "הייצוא נכשל - נסה שנית",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה",
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית"

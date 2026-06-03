@@ -472,6 +472,16 @@
     },
     "directory": {
       "importCsv": "Import File",
+      "exportIplan": "Export to iPlan",
+      "exportConfirmed": "Confirmed guests",
+      "exportConfirmedDesc": "Only guests who confirmed attendance",
+      "exportConfirmedPending": "Confirmed + pending",
+      "exportConfirmedPendingDesc": "Confirmed and awaiting response",
+      "exportAll": "All guests",
+      "exportAllDesc": "Complete guest list",
+      "exportingIplan": "Preparing iPlan file",
+      "exportIplanSuccess": "iPlan file downloaded",
+      "exportFailed": "Export failed - please try again",
       "deletingGuest": "Deleting {name}...",
       "guestDeleted": "Guest deleted successfully",
       "guestDeleteFailed": "Failed to delete guest. Please try again"
