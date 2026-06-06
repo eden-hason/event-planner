@@ -34,30 +34,18 @@ export function buildSmsConfirmationBody(
   return `${body}\n${rsvpLink}`;
 }
 
-// Mirrors the WhatsApp event_reminder_casual body text.
-// {{1}} bride name, {{2}} groom name, {{3}} venue name, {{4}} reception time.
-const SMS_REMINDER_BODY =
-  'היי אורחים יקרים\nתזכורת לחתונה של {{1}} ו{{2}} שמתקיימת היום\n\n📍 {{3}}\n🕒 {{4}}\n\nמחכים לראותכם 🎉';
-
 export function buildSmsReminderBody(context: ParameterResolutionContext): string {
-  const siteUrl = resolveSiteUrl();
-  const shortCode = context.event.shortCode as string | undefined;
-
-  const placeholders = getTemplateByKey('event_reminder_casual')?.whatsapp.parameters?.placeholders;
-  if (!placeholders) {
-    console.error('[SMS] Failed to resolve placeholders for event_reminder_casual');
+  const smsConfig = getTemplateByKey('event_reminder_casual')?.sms;
+  if (!smsConfig?.parameters?.placeholders) {
+    console.error('[SMS] Failed to resolve SMS config for event_reminder_casual');
     throw new Error('SMS reminder template resolution failed');
   }
 
-  const params = buildDynamicTemplateParameters(placeholders, context);
-  let body = SMS_REMINDER_BODY;
+  const params = buildDynamicTemplateParameters(smsConfig.parameters.placeholders, context);
+  let body = smsConfig.bodyText;
   params.forEach((param, i) => {
     body = body.replace(`{{${i + 1}}}`, param.text);
   });
-
-  if (shortCode) {
-    body = `${body}\n${siteUrl}/nav/${shortCode}`;
-  }
 
   return body;
 }

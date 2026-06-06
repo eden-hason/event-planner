@@ -10,6 +10,7 @@ export const TransformerTypeSchema = z.enum([
   'currency', // Format as currency
   'phoneNumber', // Format phone number
   'wazeNavQuery', // URL-encode venue name and append &navigate=yes for Waze deep link
+  'navShortUrl', // Build short nav redirect URL from event.shortCode
 ]);
 
 export type TransformerType = z.infer<typeof TransformerTypeSchema>;

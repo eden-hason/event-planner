@@ -95,6 +95,7 @@ function validateTransformerOptions(
     case 'rsvpLabel':
     case 'phoneNumber':
     case 'wazeNavQuery':
+    case 'navShortUrl':
       // These transformers don't have options
       if (Object.keys(options).length > 0) {
         return { type: 'warning', message: `${transformer} transformer does not use options` };
