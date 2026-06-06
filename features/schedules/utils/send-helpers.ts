@@ -4,7 +4,7 @@ import type { DeliveryMethod } from '../schemas';
 import type { WhatsAppTemplateApp } from '../schemas/whatsapp-templates';
 import { sendWhatsAppTemplateMessage } from '../actions/whatsapp';
 import { sendSmsMessage, buildSmsFallbackBody } from '../actions/sms';
-import { buildSmsConfirmationBody } from '../config/sms-bodies';
+import { buildSmsConfirmationBody, buildSmsReminderBody } from '../config/sms-bodies';
 import {
   buildDynamicTemplateParameters,
   buildDynamicButtonParameters,
@@ -143,7 +143,9 @@ export async function sendSmsToGuest(params: {
 }): Promise<GuestSendResult> {
   const { guest, context, confirmationToken } = params;
   const phoneE164 = formatPhoneE164(guest.phone!);
-  const body = buildSmsConfirmationBody(context, confirmationToken);
+  const body = context.schedule?.actionType === 'event_reminder'
+    ? buildSmsReminderBody(context)
+    : buildSmsConfirmationBody(context, confirmationToken);
   const result = await sendSmsMessage({ to: phoneE164, body });
 
   return {
