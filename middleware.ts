@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude api, static assets, and Supabase auth route handlers from locale routing
-    '/((?!api|auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude api, nav redirects, static assets, and Supabase auth route handlers from locale routing
+    '/((?!api|nav|auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
