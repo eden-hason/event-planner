@@ -41,7 +41,7 @@ export async function sendManualMessages(
     // Fetch schedule + event via service client (bypasses RLS)
     const { data: scheduleRow, error: scheduleError } = await supabase
       .from('schedules')
-      .select(`*, events (id, user_id, title, event_date, location, host_details, invitations)`)
+      .select(`*, events (id, user_id, title, event_date, location, host_details, invitations, reception_time, short_code)`)
       .eq('id', scheduleId)
       .single();
 
@@ -62,6 +62,8 @@ export async function sendManualMessages(
       location: eventRow.location ?? undefined,
       hostDetails: eventRow.host_details ?? undefined,
       invitations: eventRow.invitations ? { imageUrl: eventRow.invitations.image_url } : undefined,
+      receptionTime: eventRow.reception_time ?? undefined,
+      shortCode: eventRow.short_code ?? undefined,
     };
 
     const schedule = ScheduleDbToAppSchema.parse(scheduleRow);

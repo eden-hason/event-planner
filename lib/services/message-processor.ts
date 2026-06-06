@@ -54,7 +54,9 @@ export async function processScheduledMessages(
         event_date,
         location,
         host_details,
-        invitations
+        invitations,
+        reception_time,
+        short_code
       )
     `,
     )
@@ -128,6 +130,8 @@ async function processSingleSchedule(
           imageUrl: (rawEvent.invitations as Record<string, string>).image_url,
         }
       : undefined,
+    receptionTime: (rawEvent.reception_time as string | null) ?? undefined,
+    shortCode: (rawEvent.short_code as string | null) ?? undefined,
   };
 
   // 2. Optimistic lock — claim by setting status to 'sent'.
