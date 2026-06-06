@@ -6,6 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getTemplateByKey } from '@/features/schedules/config/whatsapp-templates';
 import {
   sendInChunks,
+  sendSmsToGuest,
   buildDeliveryRecord,
   generateConfirmationToken,
 } from '@/features/schedules/utils/send-helpers';
@@ -49,18 +50,6 @@ export async function sendManualMessages(
       return { success: false, message: 'Schedule not found' };
     }
 
-    if (!scheduleRow.template_key) {
-      console.warn(`${tag} no template_key on schedule`);
-      return { success: false, message: 'No template assigned to this schedule' };
-    }
-
-    const templateConfig = getTemplateByKey(scheduleRow.template_key);
-    if (!templateConfig?.whatsapp?.parameters) {
-      console.warn(`${tag} template not found: ${scheduleRow.template_key}`);
-      return { success: false, message: 'Template not found or missing parameter config' };
-    }
-
-    const template = templateConfig.whatsapp;
     const eventRow = scheduleRow.events;
 
     console.log(`${tag} event="${eventRow.title}" template=${scheduleRow.template_key} action=${scheduleRow.action_type}`);
@@ -121,6 +110,81 @@ export async function sendManualMessages(
       return { success: false, message: 'None of the selected guests have a valid phone number' };
     }
 
+    // SMS path
+    if (schedule.deliveryMethod === 'sms') {
+      console.log(`${tag} sending via SMS…`);
+      const results = await Promise.allSettled(
+        guests.map((guest) => {
+          const confirmationToken = generateConfirmationToken();
+          const context: ParameterResolutionContext = {
+            guest,
+            event: eventContext,
+            group: null,
+            schedule,
+            confirmationToken,
+          };
+          return sendSmsToGuest({ guest, context, confirmationToken });
+        }),
+      );
+
+      const deliveryRecords: Record<string, unknown>[] = [];
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const settled of results) {
+        if (settled.status === 'fulfilled') {
+          const r = settled.value;
+          deliveryRecords.push(buildDeliveryRecord(scheduleId, r, 'manual'));
+          if (r.success) sentCount++;
+          else {
+            failedCount++;
+            console.warn(`${tag} SMS failed guestId=${r.guest.id} msg=${r.message}`);
+          }
+        } else {
+          failedCount++;
+          console.error(`${tag} SMS send promise rejected`, settled.reason);
+        }
+      }
+
+      if (deliveryRecords.length > 0) {
+        const { error: insertError } = await supabase
+          .from('message_deliveries')
+          .insert(deliveryRecords);
+        if (insertError) {
+          console.error(`${tag} delivery record insert failed`, insertError);
+        }
+      }
+
+      revalidatePath('/app');
+
+      if (sentCount === 0) {
+        return { success: false, message: 'All messages failed to send', sentCount: 0, failedCount };
+      }
+
+      const smsResult = {
+        success: true,
+        message: `Sent ${sentCount} message${sentCount !== 1 ? 's' : ''}${failedCount > 0 ? `, ${failedCount} failed` : ''}`,
+        sentCount,
+        failedCount,
+      };
+      console.log(`${tag} done`, smsResult.message);
+      return smsResult;
+    }
+
+    // WhatsApp path
+    if (!scheduleRow.template_key) {
+      console.warn(`${tag} no template_key on schedule`);
+      return { success: false, message: 'No template assigned to this schedule' };
+    }
+
+    const templateConfig = getTemplateByKey(scheduleRow.template_key);
+    if (!templateConfig?.whatsapp?.parameters) {
+      console.warn(`${tag} template not found: ${scheduleRow.template_key}`);
+      return { success: false, message: 'Template not found or missing parameter config' };
+    }
+
+    const template = templateConfig.whatsapp;
+
     // Batch-fetch groups
     const uniqueGroupIds = [
       ...new Set(guests.map((g) => g.groupId).filter((id): id is string => !!id)),
@@ -146,9 +210,8 @@ export async function sendManualMessages(
       console.log(`${tag} groups fetched=${groupsMap.size}`);
     }
 
-    console.log(`${tag} sending…`);
+    console.log(`${tag} sending via WhatsApp…`);
 
-    // Send in rate-limited chunks
     const sendResults = await sendInChunks(
       guests,
       (guest) => {
@@ -171,7 +234,6 @@ export async function sendManualMessages(
       },
     );
 
-    // Process results and insert delivery records
     const deliveryRecords: Record<string, unknown>[] = [];
     let sentCount = 0;
     let failedCount = 0;
