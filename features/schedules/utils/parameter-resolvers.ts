@@ -123,6 +123,16 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     return `${encodeURIComponent(str)}&navigate=yes`;
   },
 
+  navShortUrl: (value: unknown) => {
+    const code = String(value ?? '').trim();
+    if (!code) return '';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_VERCEL_URL ||
+      'http://localhost:3000';
+    return `${siteUrl}/nav/${code}`;
+  },
+
   phoneNumber: (value: unknown) => {
     if (!value) return '';
     const phone = String(value);

@@ -219,7 +219,36 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
       },
       description: 'Day-of wedding reminder with Waze navigation and Bit gift buttons',
     },
-    sms: undefined,
+    sms: {
+      bodyText:
+        'היי אורחים יקרים\nתזכורת לחתונה של {{1}} ו{{2}} שמתקיימת היום\n\n📍 {{3}}\n🕒 {{4}}\n\nמחכים לראותכם 🎉\nלניווט לאירוע, לחצו על הקישור 👇🏼\n{{5}}',
+      parameters: {
+        headerPlaceholders: [],
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+          'event.venueName': {
+            source: 'event.location.name',
+            transformer: 'none',
+          },
+          'event.receptionTime': {
+            source: 'event.receptionTime',
+            transformer: 'none',
+          },
+          'event.navShortUrl': {
+            source: 'event.shortCode',
+            transformer: 'navShortUrl',
+          },
+        },
+        buttonPlaceholders: [],
+      },
+    },
   },
 };
 

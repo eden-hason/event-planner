@@ -33,3 +33,19 @@ export function buildSmsConfirmationBody(
   });
   return `${body}\n${rsvpLink}`;
 }
+
+export function buildSmsReminderBody(context: ParameterResolutionContext): string {
+  const smsConfig = getTemplateByKey('event_reminder_casual')?.sms;
+  if (!smsConfig?.parameters?.placeholders) {
+    console.error('[SMS] Failed to resolve SMS config for event_reminder_casual');
+    throw new Error('SMS reminder template resolution failed');
+  }
+
+  const params = buildDynamicTemplateParameters(smsConfig.parameters.placeholders, context);
+  let body = smsConfig.bodyText;
+  params.forEach((param, i) => {
+    body = body.replace(`{{${i + 1}}}`, param.text);
+  });
+
+  return body;
+}
