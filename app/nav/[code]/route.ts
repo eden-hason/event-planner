@@ -33,9 +33,32 @@ export async function GET(
     return NextResponse.redirect(SITE_URL, { status: 302 });
   }
 
-  const wazeUrl = location.coords
+  const deepLink = location.coords
+    ? `waze://?ll=${location.coords.lat},${location.coords.lng}&navigate=yes`
+    : `waze://?q=${encodeURIComponent(location.name!)}&navigate=yes`;
+
+  const webFallback = location.coords
     ? `https://waze.com/ul?ll=${location.coords.lat},${location.coords.lng}&navigate=yes`
     : `https://waze.com/ul?q=${encodeURIComponent(location.name!)}&navigate=yes`;
 
-  return NextResponse.redirect(wazeUrl, { status: 302 });
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>פותח ניווט...</title>
+    <script>
+      window.location.href = ${JSON.stringify(deepLink)};
+      setTimeout(function () {
+        window.location.href = ${JSON.stringify(webFallback)};
+      }, 1500);
+    </script>
+  </head>
+  <body></body>
+</html>`;
+
+  return new NextResponse(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html' },
+  });
 }
