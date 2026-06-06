@@ -221,7 +221,7 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     },
     sms: {
       bodyText:
-        'היי אורחים יקרים\nתזכורת לחתונה של {{1}} ו{{2}} שמתקיימת היום\n\n📍 {{3}}\n🕒 {{4}}\n\nמחכים לראותכם 🎉\nלניווט לאירוע, לחצו על הקישור 👇🏼\n{{5}}',
+        'היי אורחים יקרים\nתזכורת לחתונה של {{1}} ו{{2}} שמתקיימת היום\n\n📍 {{3}}\n‏🕒 {{4}}\n\nמחכים לראותכם 🎉\nלניווט לאירוע, לחצו על הקישור 👇🏼\n{{5}}',
       parameters: {
         headerPlaceholders: [],
         placeholders: {
