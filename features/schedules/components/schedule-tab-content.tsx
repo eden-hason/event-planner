@@ -8,6 +8,7 @@ import { TargetAudienceCard } from './target-audience-card';
 interface ScheduleTabContentProps {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
+  smsBody?: string | null;
   eventDate: string;
   event: EventApp | null;
   guestStats: GuestStats;
@@ -16,6 +17,7 @@ interface ScheduleTabContentProps {
 export function ScheduleTabContent({
   schedule,
   template,
+  smsBody,
   eventDate,
   event,
   guestStats,
@@ -30,6 +32,7 @@ export function ScheduleTabContent({
       <div className="h-full">
         <MessageContentCard
           template={template}
+          smsBody={smsBody}
           event={event}
         />
       </div>

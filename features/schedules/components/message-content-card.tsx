@@ -52,11 +52,13 @@ const chatBgStyle: React.CSSProperties = {
 
 interface MessageContentCardProps {
   template: WhatsAppTemplateApp | null;
+  smsBody?: string | null;
   event: EventApp | null;
 }
 
 export function MessageContentCard({
   template,
+  smsBody,
   event,
 }: MessageContentCardProps) {
   const t = useTranslations('schedules.messagePreview');
@@ -92,7 +94,18 @@ export function MessageContentCard({
             className="flex flex-col gap-1 px-3 py-4"
             style={chatBgStyle}
           >
-            {template === null ? (
+            {template === null && smsBody ? (
+              <div className="flex justify-end rtl:justify-start py-2 px-1">
+                <div className="relative max-w-[85%]">
+                  <div className="absolute top-0 -right-[7px] rtl:right-auto rtl:-left-[7px] h-0 w-0 border-b-[8px] border-b-transparent border-l-[8px] border-l-zinc-200 rtl:border-l-0 rtl:border-r-[8px] rtl:border-r-zinc-200" />
+                  <div className="rounded-l-xl rounded-br-xl rtl:rounded-l-none rtl:rounded-br-none rtl:rounded-r-xl rtl:rounded-bl-xl bg-zinc-200 px-3 py-2 shadow-sm">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800" dir="rtl">
+                      {smsBody}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : template === null ? (
               <div className="flex items-center justify-center py-6">
                 <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
                   {t('noMessage')}
