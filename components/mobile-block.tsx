@@ -5,7 +5,7 @@ import { usePathname } from '@/i18n/navigation';
 import { Monitor } from 'lucide-react';
 import { IconDeviceMobile } from '@tabler/icons-react';
 
-const MOBILE_ALLOWED_ROUTES = /^\/app\/[^/]+\/dashboard\/?$/;
+const MOBILE_ALLOWED_ROUTES = /^\/app\/[^/]+\/dashboard\/?$|^\/login\/?$/;
 
 export function MobileBlock({ children }: { children: React.ReactNode }) {
   const t = useTranslations('mobileBlock');
