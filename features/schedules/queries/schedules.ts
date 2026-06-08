@@ -50,6 +50,8 @@ export async function getScheduleById(
       location?: { name: string; coords?: { lat: number; lng: number } } | null;
       hostDetails?: Record<string, unknown> | null;
       invitations?: { imageUrl?: string } | null;
+      receptionTime?: string;
+      shortCode?: string;
     };
   })
   | null
@@ -68,7 +70,9 @@ export async function getScheduleById(
         event_date,
         location,
         host_details,
-        invitations
+        invitations,
+        reception_time,
+        short_code
       )
     `,
     )
@@ -100,6 +104,8 @@ export async function getScheduleById(
         imageUrl: data.events.invitations.image_url,
       }
       : undefined,
+    receptionTime: (data.events.reception_time as string | null) ?? undefined,
+    shortCode: (data.events.short_code as string | null) ?? undefined,
   };
 
   return {
