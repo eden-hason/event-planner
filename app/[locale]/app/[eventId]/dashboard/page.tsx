@@ -61,7 +61,7 @@ export default async function DashboardPage({
       {/* Mobile view - minimal dashboard */}
       <div className="flex flex-col gap-4 md:hidden">
         <RsvpBreakdownCard stats={stats} />
-        <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} pageSize={10} />
+        <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} pageSize={10} hideViewAll />
       </div>
 
       {/* Desktop view - full dashboard */}

@@ -48,10 +48,12 @@ export function RecentRsvpActivityCard({
   activity,
   eventId,
   pageSize,
+  hideViewAll,
 }: {
   activity: RecentRsvpRow[];
   eventId: string;
   pageSize?: number;
+  hideViewAll?: boolean;
 }) {
   const t = useTranslations('dashboard.recentActivity');
   const [visibleCount, setVisibleCount] = useState(pageSize ?? activity.length);
@@ -122,7 +124,7 @@ export function RecentRsvpActivityCard({
           ))
         )}
       </CardContent>
-      {activity.length > 0 && (
+      {activity.length > 0 && (hasMore || !hideViewAll) && (
         <CardFooter className="flex flex-col gap-2 pt-2">
           {hasMore && (
             <Button
@@ -134,9 +136,11 @@ export function RecentRsvpActivityCard({
               {t('showMore')}
             </Button>
           )}
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
-          </Button>
+          {!hideViewAll && (
+            <Button variant="outline" size="sm" className="w-full" asChild>
+              <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
+            </Button>
+          )}
         </CardFooter>
       )}
     </Card>
