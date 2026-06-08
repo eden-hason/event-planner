@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -46,11 +47,16 @@ function StatusIcon({ status }: { status: RecentRsvpRow['rsvpStatus'] }) {
 export function RecentRsvpActivityCard({
   activity,
   eventId,
+  pageSize,
 }: {
   activity: RecentRsvpRow[];
   eventId: string;
+  pageSize?: number;
 }) {
   const t = useTranslations('dashboard.recentActivity');
+  const [visibleCount, setVisibleCount] = useState(pageSize ?? activity.length);
+  const visibleActivity = pageSize ? activity.slice(0, visibleCount) : activity;
+  const hasMore = pageSize ? visibleCount < activity.length : false;
 
   function getActionLabel(status: RecentRsvpRow['rsvpStatus']): string {
     switch (status) {
@@ -89,7 +95,7 @@ export function RecentRsvpActivityCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="max-h-72 flex-1 overflow-y-auto p-0">
+      <CardContent className={pageSize ? 'flex-1 p-0' : 'max-h-72 flex-1 overflow-y-auto p-0'}>
         {activity.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-muted-foreground text-center text-sm">
@@ -97,7 +103,7 @@ export function RecentRsvpActivityCard({
             </p>
           </div>
         ) : (
-          activity.map((row) => (
+          visibleActivity.map((row) => (
             <Item key={row.id} size="sm">
               <ItemMedia>
                 <StatusIcon status={row.rsvpStatus} />
@@ -117,7 +123,17 @@ export function RecentRsvpActivityCard({
         )}
       </CardContent>
       {activity.length > 0 && (
-        <CardFooter className="pt-2">
+        <CardFooter className="flex flex-col gap-2 pt-2">
+          {hasMore && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => setVisibleCount((c) => c + pageSize!)}
+            >
+              {t('showMore')}
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="w-full" asChild>
             <Link href={`/app/${eventId}/guests`}>{t('viewAllGuests')}</Link>
           </Button>

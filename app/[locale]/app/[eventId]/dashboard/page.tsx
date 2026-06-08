@@ -36,7 +36,7 @@ export default async function DashboardPage({
     getEventById(eventId),
     getEventGuests(eventId),
     getEventGroupsWithGuests(eventId),
-    getRecentRsvpActivity(eventId, 5),
+    getRecentRsvpActivity(eventId, 50),
     getCollaboratorCount(eventId),
     getPendingSchedulesCount(eventId),
   ]);
@@ -58,38 +58,47 @@ export default async function DashboardPage({
 
   return (
     <>
-      <DashboardHeader />
-
-      {/* Row 1: Hero banner + stat cards */}
-      {event ? (
-        <div className="grid grid-cols-5 gap-4">
-          <div className="col-span-2 h-full">
-            <EventHeroBanner event={event} />
-          </div>
-          <DaysToEventCard daysRemaining={getDaysRemaining(event.eventDate)} />
-          <GuestsInvitedCard total={stats.total} estimate={event.guestsEstimate} />
-          <ScheduledMessagesCard count={pendingSchedulesCount} />
-        </div>
-      ) : (
-        <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
-          {t('eventNotFound')}
-        </div>
-      )}
-
-      {/* Row 2: RSVP Breakdown + Quick Actions + Group Breakdown */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Mobile view - minimal dashboard */}
+      <div className="flex flex-col gap-4 md:hidden">
         <RsvpBreakdownCard stats={stats} />
-        <RsvpEngagementCard groups={groups} />
-        <GroupBreakdownCard groups={groups} />
+        <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} pageSize={10} />
       </div>
 
-      {/* Row 3: Onboarding Checklist + Recent Activity */}
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-7">
-          <OnboardingChecklistCard eventId={eventId} status={onboardingStatus} />
+      {/* Desktop view - full dashboard */}
+      <div className="hidden md:flex md:flex-col md:gap-6">
+        <DashboardHeader />
+
+        {/* Row 1: Hero banner + stat cards */}
+        {event ? (
+          <div className="grid grid-cols-5 gap-4">
+            <div className="col-span-2 h-full">
+              <EventHeroBanner event={event} />
+            </div>
+            <DaysToEventCard daysRemaining={getDaysRemaining(event.eventDate)} />
+            <GuestsInvitedCard total={stats.total} estimate={event.guestsEstimate} />
+            <ScheduledMessagesCard count={pendingSchedulesCount} />
+          </div>
+        ) : (
+          <div className="flex h-40 items-center justify-center rounded-xl border bg-card text-muted-foreground">
+            {t('eventNotFound')}
+          </div>
+        )}
+
+        {/* Row 2: RSVP Breakdown + Quick Actions + Group Breakdown */}
+        <div className="grid grid-cols-3 gap-4">
+          <RsvpBreakdownCard stats={stats} />
+          <RsvpEngagementCard groups={groups} />
+          <GroupBreakdownCard groups={groups} />
         </div>
-        <div className="col-span-5">
-          <RecentRsvpActivityCard activity={recentActivity} eventId={eventId} />
+
+        {/* Row 3: Onboarding Checklist + Recent Activity */}
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-7">
+            <OnboardingChecklistCard eventId={eventId} status={onboardingStatus} />
+          </div>
+          <div className="col-span-5">
+            <RecentRsvpActivityCard activity={recentActivity.slice(0, 5)} eventId={eventId} />
+          </div>
         </div>
       </div>
     </>

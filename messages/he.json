@@ -764,7 +764,8 @@
       "minutesAgo": "לפני {count} דקות",
       "hoursAgo": "לפני {count} שעות",
       "dayAgo": "לפני {count} יום",
-      "daysAgo": "לפני {count} ימים"
+      "daysAgo": "לפני {count} ימים",
+      "showMore": "הצג עוד"
     },
     "onboarding": {
       "title": "התחל עם Kululu",

@@ -1,9 +1,19 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { usePathname } from '@/i18n/navigation';
 import { Monitor } from 'lucide-react';
 import { IconDeviceMobile } from '@tabler/icons-react';
 
-export async function MobileBlock({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations('mobileBlock');
+const MOBILE_ALLOWED_ROUTES = /^\/app\/[^/]+\/dashboard\/?$/;
+
+export function MobileBlock({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('mobileBlock');
+  const pathname = usePathname();
+
+  if (MOBILE_ALLOWED_ROUTES.test(pathname)) {
+    return <>{children}</>;
+  }
 
   return (
     <>
