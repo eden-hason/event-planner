@@ -763,7 +763,8 @@
       "minutesAgo": "{count} minutes ago",
       "hoursAgo": "{count} hours ago",
       "dayAgo": "{count} day ago",
-      "daysAgo": "{count} days ago"
+      "daysAgo": "{count} days ago",
+      "showMore": "Show more"
     },
     "onboarding": {
       "title": "Get started with Kululu",
