@@ -110,6 +110,13 @@ export async function executeSchedule(
 
     const template = templateConfig.whatsapp;
 
+    if (!template) {
+      return {
+        success: false,
+        message: 'Template does not have a WhatsApp configuration',
+      };
+    }
+
     // 6. Fetch all event guests
     const allGuests = await getEventGuests(schedule.eventId);
 

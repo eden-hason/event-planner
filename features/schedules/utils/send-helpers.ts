@@ -144,7 +144,7 @@ export async function sendSmsToGuest(params: {
   const { guest, context, confirmationToken } = params;
   const phoneE164 = formatPhoneE164(guest.phone!);
   const body = context.schedule?.actionType === 'event_reminder'
-    ? buildSmsReminderBody(context)
+    ? buildSmsReminderBody(context, context.schedule.templateKey ?? undefined)
     : buildSmsConfirmationBody(context, confirmationToken);
   const result = await sendSmsMessage({ to: phoneE164, body });
 
