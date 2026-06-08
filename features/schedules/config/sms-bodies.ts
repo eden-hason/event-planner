@@ -20,7 +20,7 @@ export function buildSmsConfirmationBody(
   const siteUrl = resolveSiteUrl();
   const rsvpLink = `${siteUrl}/confirm/${confirmationToken}`;
 
-  const placeholders = getTemplateByKey('confirmation_casual_v1_he')?.whatsapp.parameters?.placeholders;
+  const placeholders = getTemplateByKey('confirmation_casual_v1_he')?.whatsapp?.parameters?.placeholders;
   if (!placeholders) {
     console.error('[SMS] Failed to resolve placeholders for confirmation_casual_v1_he');
     throw new Error('SMS template resolution failed');
@@ -34,10 +34,13 @@ export function buildSmsConfirmationBody(
   return `${body}\n${rsvpLink}`;
 }
 
-export function buildSmsReminderBody(context: ParameterResolutionContext): string {
-  const smsConfig = getTemplateByKey('event_reminder_casual')?.sms;
+export function buildSmsReminderBody(
+  context: ParameterResolutionContext,
+  templateKey: string = 'event_reminder_casual',
+): string {
+  const smsConfig = getTemplateByKey(templateKey)?.sms;
   if (!smsConfig?.parameters?.placeholders) {
-    console.error('[SMS] Failed to resolve SMS config for event_reminder_casual');
+    console.error(`[SMS] Failed to resolve SMS config for ${templateKey}`);
     throw new Error('SMS reminder template resolution failed');
   }
 

@@ -250,6 +250,40 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
       },
     },
   },
+
+  event_reminder_wartime: {
+    whatsapp: undefined,
+    sms: {
+      bodyText:
+        'היי אורחים יקרים\nלמרות המצב הרגיש - תזכורת לחתונה של {{1}} ו{{2}} המתקיימת הערב\n\n📍{{3}}\n🕒 {{4}}\n\nהאולם פועל בהתאם להנחיות פיקוד העורף וישנו מרחב מוגן תקני במקום\n\nנשמח לראותכם ❤️\nלניווט לאירוע - לחצו על הקישור\n{{5}}',
+      parameters: {
+        headerPlaceholders: [],
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+          'event.venueName': {
+            source: 'event.location.name',
+            transformer: 'none',
+          },
+          'event.receptionTime': {
+            source: 'event.receptionTime',
+            transformer: 'none',
+          },
+          'event.navShortUrl': {
+            source: 'event.shortCode',
+            transformer: 'navShortUrl',
+          },
+        },
+        buttonPlaceholders: [],
+      },
+    },
+  },
 };
 
 export function getTemplateByKey(key: string): TemplateConfig | null {

@@ -20,7 +20,7 @@ export const SmsTemplateConfigSchema = z.object({
 });
 
 export const TemplateConfigSchema = z.object({
-  whatsapp: WhatsAppTemplateAppSchema,
+  whatsapp: WhatsAppTemplateAppSchema.optional(),
   sms: SmsTemplateConfigSchema.optional(),
 });
 

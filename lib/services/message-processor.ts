@@ -168,6 +168,11 @@ async function processSingleSchedule(
 
   const template = templateConfig.whatsapp;
 
+  if (!template) {
+    await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
+    throw new Error('Template does not have a WhatsApp configuration');
+  }
+
   // 5. Fetch all event guests
   const { data: rawGuests, error: guestsError } = await supabase
     .from('guests')
