@@ -352,6 +352,43 @@ export function buildDynamicButtonParameters(
  * no specific guest is selected at preview time. Event placeholders are resolved
  * against the provided event.
  */
+export function resolveSmsBodyForPreview(
+  smsConfig: { bodyText: string; parameters?: { placeholders?: Record<string, { source?: string; transformer: string }> } },
+  event: EventApp | null,
+): { resolvedBody: string; hasMissingFields: boolean } {
+  const placeholders = smsConfig.parameters?.placeholders;
+  if (!placeholders || Object.keys(placeholders).length === 0) {
+    return { resolvedBody: smsConfig.bodyText, hasMissingFields: false };
+  }
+
+  let hasMissingFields = false;
+  const resolvedValues: string[] = [];
+  const mockContext = { event: event ?? {}, guest: {} } as unknown as ParameterResolutionContext;
+
+  for (const [name, config] of Object.entries(placeholders)) {
+    const source = config.source ?? name;
+    if (source.startsWith('guest.') || source.startsWith('group.')) {
+      const fieldName = source.split('.').pop() ?? source;
+      resolvedValues.push(`[${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}]`);
+    } else {
+      const rawValue = event ? getValueByPath({ event }, source) : undefined;
+      if (!rawValue) {
+        hasMissingFields = true;
+        resolvedValues.push('…');
+      } else {
+        resolvedValues.push(resolvePlaceholder(name, config as Parameters<typeof resolvePlaceholder>[1], mockContext) || '…');
+      }
+    }
+  }
+
+  let resolvedBody = smsConfig.bodyText;
+  resolvedValues.forEach((value, index) => {
+    resolvedBody = resolvedBody.replaceAll(`{{${index + 1}}}`, value);
+  });
+
+  return { resolvedBody, hasMissingFields };
+}
+
 export function resolveTemplateBodyForPreview(
   template: WhatsAppTemplateApp,
   event: EventApp | null,

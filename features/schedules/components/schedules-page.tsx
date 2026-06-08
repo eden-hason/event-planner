@@ -12,6 +12,7 @@ import {
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
+import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
@@ -29,6 +30,7 @@ interface SchedulesPageProps {
 type ScheduleWithTemplate = {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
+  smsBody: string | null;
 };
 
 export type ScheduleTabItem = {
@@ -78,6 +80,12 @@ export async function SchedulesPage({
     schedulesByActionType[schedule.actionType]!.push({
       schedule,
       template: schedule.templateKey ? (templateMap.get(schedule.templateKey)?.whatsapp ?? null) : null,
+      smsBody: schedule.deliveryMethod === 'sms' && schedule.templateKey
+        ? (() => {
+            const smsConfig = templateMap.get(schedule.templateKey!)?.sms;
+            return smsConfig ? resolveSmsBodyForPreview(smsConfig, event).resolvedBody : null;
+          })()
+        : null,
     });
   }
 
@@ -116,7 +124,7 @@ export async function SchedulesPage({
     const baseLabel = t(`actionTypes.${type}`);
     const multiple = items.length > 1;
 
-    contentByType[type] = items.map(({ schedule, template }, index) => {
+    contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
       const guestCount = filterGuestsByTarget(guests, schedule.targetStatus).length;
       return {
         label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
@@ -148,6 +156,7 @@ export async function SchedulesPage({
               <ScheduleTabContent
                 schedule={schedule}
                 template={template}
+                smsBody={smsBody}
                 eventDate={eventDate}
                 event={event}
                 guestStats={guestStats}
