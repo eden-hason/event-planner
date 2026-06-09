@@ -110,13 +110,6 @@ export async function executeSchedule(
 
     const template = templateConfig.whatsapp;
 
-    if (!template) {
-      return {
-        success: false,
-        message: 'Template does not have a WhatsApp configuration',
-      };
-    }
-
     // 6. Fetch all event guests
     const allGuests = await getEventGuests(schedule.eventId);
 
@@ -173,7 +166,15 @@ export async function executeSchedule(
         }),
       );
     } else {
-      // 9. Validate template has parameters configuration
+      // 9. Validate WhatsApp template is available
+      if (!template) {
+        return {
+          success: false,
+          message: 'Template does not have a WhatsApp configuration',
+        };
+      }
+
+      // 11. Validate template has parameters configuration
       if (!template.parameters) {
         return {
           success: false,
@@ -181,7 +182,7 @@ export async function executeSchedule(
         };
       }
 
-      // 10. Batch fetch all needed groups for performance
+      // 12. Batch fetch all needed groups for performance
       const uniqueGroupIds = [
         ...new Set(
           guestsWithPhones
@@ -200,7 +201,7 @@ export async function executeSchedule(
         }),
       );
 
-      // 11. Send messages in rate-limited chunks
+      // 13. Send messages in rate-limited chunks
       sendResults = await sendInChunks(guestsWithPhones, (guest) => {
         const confirmationToken = generateConfirmationToken();
         const context: ParameterResolutionContext = {
