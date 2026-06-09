@@ -251,6 +251,29 @@ export const WHATSAPP_TEMPLATES: Record<string, TemplateConfig> = {
     },
   },
 
+  thank_you_sms_v1_he: {
+    whatsapp: undefined,
+    sms: {
+      bodyText:
+        'היי אורחים יקרים\nתודה שהגעתם לשמוח איתנו ביום המרגש שלנו \n\nאוהבים ומעריכים {{1}} ו{{2}} ❤️',
+      parameters: {
+        headerPlaceholders: [],
+        // Order = positional {{n}}: {{1}} bride, {{2}} groom.
+        placeholders: {
+          'host.bride.name': {
+            source: 'event.hostDetails.bride.name',
+            transformer: 'none',
+          },
+          'host.groom.name': {
+            source: 'event.hostDetails.groom.name',
+            transformer: 'none',
+          },
+        },
+        buttonPlaceholders: [],
+      },
+    },
+  },
+
   event_reminder_wartime: {
     whatsapp: undefined,
     sms: {

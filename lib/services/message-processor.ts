@@ -168,11 +168,6 @@ async function processSingleSchedule(
 
   const template = templateConfig.whatsapp;
 
-  if (!template) {
-    await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
-    throw new Error('Template does not have a WhatsApp configuration');
-  }
-
   // 5. Fetch all event guests
   const { data: rawGuests, error: guestsError } = await supabase
     .from('guests')
@@ -281,13 +276,19 @@ async function processSingleSchedule(
     return { sentCount, failedCount };
   }
 
-  // 7. Validate template has parameters configuration
+  // 7. Validate WhatsApp template is available (SMS was handled above)
+  if (!template) {
+    await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
+    throw new Error('Template does not have a WhatsApp configuration');
+  }
+
+  // 8. Validate template has parameters configuration
   if (!template.parameters) {
     await revertOrCancel(supabase, schedule.id, rawScheduleWithEvent.scheduled_date);
     throw new Error('Template missing parameter configuration');
   }
 
-  // 8. Batch fetch groups
+  // 9. Batch fetch groups
   const uniqueGroupIds = [
     ...new Set(
       pendingGuests
@@ -311,7 +312,7 @@ async function processSingleSchedule(
     }
   }
 
-  // 9. Send messages in rate-limited chunks, persisting delivery records after each chunk
+  // 10. Send messages in rate-limited chunks, persisting delivery records after each chunk
   let sentCount = 0;
   let failedCount = 0;
   const totalGuests = pendingGuests.length;
