@@ -8,7 +8,7 @@ import { getEffectiveUser } from '@/features/auth/queries';
 import { AiChatButton } from '@/features/ai-chat/components/ai-chat-button';
 import { LayoutContentWrapper } from '@/components/layout-content-wrapper';
 import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
-import { MobileBlock } from '@/components/mobile-block';
+import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 
 export default async function Layout({
   children,
@@ -40,20 +40,19 @@ export default async function Layout({
   const events = await getAllUserEvents();
 
   return (
-    <MobileBlock>
-      <SidebarProvider className="!bg-[#F4F4F6]">
-        <AppSidebar
-          variant="floating"
-          events={events}
-          currentUserId={effectiveUser?.id ?? data.user.id}
-          user={user}
-        />
-        <SidebarInset className="!bg-[#F4F4F6]">
-          <ImpersonationBanner />
-          <LayoutContentWrapper>{children}</LayoutContentWrapper>
-          {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
-        </SidebarInset>
-      </SidebarProvider>
-    </MobileBlock>
+    <SidebarProvider className="!bg-[#F4F4F6]">
+      <AppSidebar
+        variant="floating"
+        events={events}
+        currentUserId={effectiveUser?.id ?? data.user.id}
+        user={user}
+      />
+      <SidebarInset className="!bg-[#F4F4F6]">
+        <ImpersonationBanner />
+        <LayoutContentWrapper>{children}</LayoutContentWrapper>
+        <MobileBottomNav />
+        {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
