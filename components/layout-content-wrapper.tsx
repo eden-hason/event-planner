@@ -12,7 +12,7 @@ export function LayoutContentWrapper({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex-1 px-4 py-4">
-      <div className="container mx-auto h-full">{children}</div>
+      <div className="lg:container mx-auto h-full">{children}</div>
     </div>
   );
 }

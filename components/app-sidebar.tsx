@@ -18,7 +18,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavEvents } from '@/components/nav-events';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { PartyPopper } from 'lucide-react';
+import { PartyPopper, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -78,7 +78,7 @@ export function AppSidebar({
   const isRTL = locale === 'he';
   const isMobile = useIsMobile();
   const isSeatingPage = pathname.includes('/seating');
-  const { setOpen, state } = useSidebar();
+  const { setOpen, state, toggleSidebar } = useSidebar();
 
   // Track what the open state was before entering seating so we can restore it on exit
   const prevOpenRef = React.useRef<boolean | null>(null);
@@ -176,7 +176,7 @@ export function AppSidebar({
   return (
     <Sidebar
       side={isRTL ? 'right' : 'left'}
-      collapsible={isSeatingPage ? 'icon' : 'offcanvas'}
+      collapsible="icon"
       {...props}
       variant={isSeatingPage ? 'sidebar' : props.variant}
     >
@@ -184,24 +184,42 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             {state === 'collapsed' ? (
-              <SidebarMenuButton asChild>
-                <a href="#" className="justify-center">
-                  <PartyPopper className="!size-5" />
-                </a>
-              </SidebarMenuButton>
+              <div className="flex flex-col items-center gap-1">
+                <SidebarMenuButton asChild>
+                  <a href="#" className="justify-center">
+                    <PartyPopper className="!size-5" />
+                  </a>
+                </SidebarMenuButton>
+                <button
+                  onClick={toggleSidebar}
+                  className="flex size-7 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                >
+                  {isRTL ? <PanelRightOpen className="size-4" /> : <PanelLeftOpen className="size-4" />}
+                  <span className="sr-only">Expand sidebar</span>
+                </button>
+              </div>
             ) : (
-              <SidebarMenuButton
-                asChild
-                className="data-[slot=sidebar-menu-button]:!p-1.5"
-              >
-                <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
-                  <PartyPopper className="!size-5" />
-                  <span className="text-base font-semibold">Kululu</span>
-                  <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
-                    Beta
-                  </Badge>
-                </a>
-              </SidebarMenuButton>
+              <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <SidebarMenuButton
+                  asChild
+                  className="data-[slot=sidebar-menu-button]:!p-1.5 flex-1"
+                >
+                  <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
+                    <PartyPopper className="!size-5" />
+                    <span className="text-base font-semibold">Kululu</span>
+                    <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
+                      Beta
+                    </Badge>
+                  </a>
+                </SidebarMenuButton>
+                <button
+                  onClick={toggleSidebar}
+                  className="flex size-7 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground shrink-0 transition-colors"
+                >
+                  {isRTL ? <PanelRightClose className="size-4" /> : <PanelLeftClose className="size-4" />}
+                  <span className="sr-only">Minimize sidebar</span>
+                </button>
+              </div>
             )}
           </SidebarMenuItem>
         </SidebarMenu>

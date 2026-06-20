@@ -145,64 +145,68 @@ export function GuestDirectory({
   return (
     <Card>
       {!isEmpty && (
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportDialogOpen(true)}
-              className="gap-2"
-            >
-              <IconUpload size={16} />
-              {t('directory.importCsv')}
-            </Button>
-            <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <IconFileSpreadsheet size={16} />
-                  {t('directory.exportIplan')}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                <DropdownMenuItem onClick={() => handleExport('confirmed')}>
-                  <Item size="sm" className="p-0 gap-3">
-                    <ItemMedia>
-                      <span className="size-2.5 rounded-full bg-green-500" />
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>{t('directory.exportConfirmed')}</ItemTitle>
-                      <ItemDescription>{t('directory.exportConfirmedDesc')}</ItemDescription>
-                    </ItemContent>
-                  </Item>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('confirmedPending')}>
-                  <Item size="sm" className="p-0 gap-3">
-                    <ItemMedia>
-                      <span
-                        className="size-2.5 rounded-full shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #22c55e 50%, #fb923c 50%)' }}
-                      />
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>{t('directory.exportConfirmedPending')}</ItemTitle>
-                      <ItemDescription>{t('directory.exportConfirmedPendingDesc')}</ItemDescription>
-                    </ItemContent>
-                  </Item>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('all')}>
-                  <Item size="sm" className="p-0 gap-3">
-                    <ItemMedia>
-                      <span className="size-2.5 rounded-full bg-blue-500" />
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>{t('directory.exportAll')}</ItemTitle>
-                      <ItemDescription>{t('directory.exportAllDesc')}</ItemDescription>
-                    </ItemContent>
-                  </Item>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <CardHeader className="flex flex-col items-stretch gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex w-full items-center gap-2 xl:w-auto">
+            <div className="flex-1 xl:flex-none">
+              <GuestSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+            </div>
+            <div className="flex items-center gap-2 ml-auto xl:ml-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+                className="gap-2"
+              >
+                <IconUpload size={16} />
+                {t('directory.importCsv')}
+              </Button>
+              <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <IconFileSpreadsheet size={16} />
+                    {t('directory.exportIplan')}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-64">
+                  <DropdownMenuItem onClick={() => handleExport('confirmed')}>
+                    <Item size="sm" className="p-0 gap-3">
+                      <ItemMedia>
+                        <span className="size-2.5 rounded-full bg-green-500" />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{t('directory.exportConfirmed')}</ItemTitle>
+                        <ItemDescription>{t('directory.exportConfirmedDesc')}</ItemDescription>
+                      </ItemContent>
+                    </Item>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('confirmedPending')}>
+                    <Item size="sm" className="p-0 gap-3">
+                      <ItemMedia>
+                        <span
+                          className="size-2.5 rounded-full shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #22c55e 50%, #fb923c 50%)' }}
+                        />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{t('directory.exportConfirmedPending')}</ItemTitle>
+                        <ItemDescription>{t('directory.exportConfirmedPendingDesc')}</ItemDescription>
+                      </ItemContent>
+                    </Item>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('all')}>
+                    <Item size="sm" className="p-0 gap-3">
+                      <ItemMedia>
+                        <span className="size-2.5 rounded-full bg-blue-500" />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{t('directory.exportAll')}</ItemTitle>
+                        <ItemDescription>{t('directory.exportAllDesc')}</ItemDescription>
+                      </ItemContent>
+                    </Item>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <RsvpStatusFilter
