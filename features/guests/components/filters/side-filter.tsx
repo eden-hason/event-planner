@@ -44,7 +44,7 @@ export function SideFilter({
           variant="outline"
           size="sm"
           className={cn(
-            'w-[180px] justify-between',
+            'justify-between',
             isActive && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary',
           )}
         >
