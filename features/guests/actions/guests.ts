@@ -113,7 +113,7 @@ export async function upsertGuest(
       };
     }
 
-    revalidatePath('/app/guests');
+    revalidatePath(`/app/${eventId}/guests`);
     return {
       success: true,
       message: validatedData.id
@@ -143,6 +143,12 @@ export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
 
     const supabase = await createClient();
 
+    const { data: guestRow } = await supabase
+      .from('guests')
+      .select('event_id')
+      .eq('id', guestId)
+      .maybeSingle();
+
     const { error } = await supabase.from('guests').delete().eq('id', guestId);
 
     if (error) {
@@ -153,7 +159,11 @@ export async function deleteGuest(guestId: string): Promise<DeleteGuestState> {
       };
     }
 
-    revalidatePath('/app/guests');
+    if (guestRow?.event_id) {
+      revalidatePath(`/app/${guestRow.event_id}/guests`);
+    } else {
+      revalidatePath('/app');
+    }
     return {
       success: true,
       message: 'Guest deleted successfully.',

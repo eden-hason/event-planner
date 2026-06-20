@@ -207,9 +207,6 @@ export function AppSidebar({
                   <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
                     <PartyPopper className="!size-5" />
                     <span className="text-base font-semibold">Kululu</span>
-                    <Badge className="rounded-sm border-none bg-gray-500 text-gray-300">
-                      Beta
-                    </Badge>
                   </a>
                 </SidebarMenuButton>
                 <button
