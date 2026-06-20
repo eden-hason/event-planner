@@ -12,7 +12,8 @@ export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
     const { data: guests, error } = await supabase
       .from('guests')
       .select('*')
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
     if (error) {
       console.error('Error fetching guests for event:', error);
       return [];
@@ -122,7 +123,8 @@ export const getEventGuestsWithGroups = async (
         )
       `,
       )
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error('Error fetching guests with groups:', error);
