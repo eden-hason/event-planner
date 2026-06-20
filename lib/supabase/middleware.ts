@@ -1,21 +1,16 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function updateSession(request: NextRequest) {
-  // Check if environment variables are available
+export async function updateSession(request: NextRequest, effectivePath?: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Missing Supabase environment variables');
-    return NextResponse.next({
-      request,
-    });
+    return NextResponse.next({ request });
   }
 
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -23,22 +18,14 @@ export async function updateSession(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          request.cookies.set(name, value),
-        );
-        supabaseResponse = NextResponse.next({
-          request,
-        });
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        supabaseResponse = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         );
       },
     },
   });
-
-  // Do not run code between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
 
   // IMPORTANT: DO NOT REMOVE auth.getUser()
 
@@ -50,11 +37,11 @@ export async function updateSession(request: NextRequest) {
     user = userData;
   } catch (error) {
     console.error('Error getting user from Supabase:', error);
-    // Continue without user authentication
   }
 
-  // Strip /en prefix for path matching (he has no prefix by default)
-  const rawPath = request.nextUrl.pathname;
+  // effectivePath is passed by middleware for subdomain rewrites so path-based
+  // guards see the rewritten path (e.g. /admin/users) rather than the original (e.g. /users)
+  const rawPath = effectivePath ?? request.nextUrl.pathname;
   const strippedPath = rawPath.replace(/^\/en/, '') || '/';
 
   if (
@@ -68,7 +55,6 @@ export async function updateSession(request: NextRequest) {
     !strippedPath.startsWith('/privacy') &&
     !strippedPath.startsWith('/nav')
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', rawPath);
@@ -90,18 +76,8 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // IMPORTANT: You *must* return the supabaseResponse object as it is. See
+  // https://supabase.com/docs/guides/auth/server-side/nextjs for details.
 
   return supabaseResponse;
 }
