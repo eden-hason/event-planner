@@ -1,0 +1,95 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { Link, usePathname } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
+import { type Icon } from '@tabler/icons-react';
+
+export type BottomNavItem = {
+  title: string;
+  url: string;
+  icon: Icon;
+};
+
+type BottomNavBarProps = {
+  items: BottomNavItem[];
+  disabled?: boolean;
+  className?: string;
+};
+
+function isActiveRoute(pathname: string, routeUrl: string): boolean {
+  if (pathname === routeUrl) return true;
+  const routeMatch = routeUrl.match(/^\/app\/(?:[^/]+\/)?(.+)$/);
+  if (!routeMatch) return false;
+  const routePath = routeMatch[1];
+  const pathnameMatch = pathname.match(/^\/app\/(?:[^/]+\/)?(.+)$/);
+  if (pathnameMatch) {
+    return pathnameMatch[1] === routePath;
+  }
+  return false;
+}
+
+const LABEL_WIDTH = 72;
+
+export function BottomNavBar({ items, disabled, className }: BottomNavBarProps) {
+  const pathname = usePathname();
+
+  return (
+    <motion.nav
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+      role="navigation"
+      aria-label="Bottom Navigation"
+      className={cn(
+        'bg-card border border-border rounded-full flex items-center p-2 shadow-xl space-x-1 h-[52px]',
+        className,
+      )}
+    >
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = !disabled && isActiveRoute(pathname, item.url);
+
+        return (
+          <motion.div key={item.title} whileTap={{ scale: 0.97 }}>
+            <Link
+              href={disabled ? ('/app' as '/app') : (item.url as '/app')}
+              aria-label={item.title}
+              aria-current={isActive ? 'page' : undefined}
+              className={cn(
+                'flex items-center px-3 py-2 rounded-full transition-colors duration-200 h-10 min-w-[44px] min-h-[40px] max-h-[44px] focus:outline-none focus-visible:ring-0',
+                isActive
+                  ? 'bg-primary/10 text-primary gap-2'
+                  : 'bg-transparent text-muted-foreground hover:bg-muted',
+                disabled && 'pointer-events-none opacity-50',
+              )}
+            >
+              <Icon size={22} strokeWidth={2} aria-hidden className="transition-colors duration-200 shrink-0" />
+              <motion.div
+                initial={false}
+                animate={{
+                  width: isActive ? `${LABEL_WIDTH}px` : '0px',
+                  opacity: isActive ? 1 : 0,
+                }}
+                transition={{
+                  width: { type: 'spring', stiffness: 350, damping: 32 },
+                  opacity: { duration: 0.19 },
+                }}
+                className="overflow-hidden flex items-center"
+              >
+                <span
+                  className="font-medium text-xs whitespace-nowrap select-none text-primary leading-[1.9]"
+                  title={item.title}
+                >
+                  {item.title}
+                </span>
+              </motion.div>
+            </Link>
+          </motion.div>
+        );
+      })}
+    </motion.nav>
+  );
+}
+
+export default BottomNavBar;
