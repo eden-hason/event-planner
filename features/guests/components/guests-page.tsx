@@ -98,6 +98,7 @@ export function GuestsPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [formIsOfflineRsvp, setFormIsOfflineRsvp] = useState(false);
+  const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
 
   const handleStatCardClick = (status: string | null) => {
     if (status === null) {
@@ -279,6 +280,7 @@ export function GuestsPage({
             showDietary={showDietary}
             selectedStatuses={selectedStatuses}
             onStatusToggle={handleStatusToggle}
+            recentlyUpdatedGuestId={recentlyUpdatedGuestId}
           />
         </TabsContent>
         <TabsContent value="groups">
@@ -362,7 +364,13 @@ export function GuestsPage({
               eventId={eventId}
               guest={selectedGuest}
               groups={groups}
-              onSuccess={() => handleDrawerClose(false)}
+              onSuccess={() => {
+                if (selectedGuest) {
+                  setRecentlyUpdatedGuestId(selectedGuest.id);
+                  setTimeout(() => setRecentlyUpdatedGuestId(null), 3400);
+                }
+                handleDrawerClose(false);
+              }}
               onCancel={() => handleDrawerClose(false)}
               hideActions
               onPendingChange={setIsSubmitting}

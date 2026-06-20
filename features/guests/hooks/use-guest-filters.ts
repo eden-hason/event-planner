@@ -3,12 +3,15 @@
 import { useState } from 'react';
 import { GroupInfo, GroupSide, GROUP_SIDES } from '@/features/guests/schemas';
 
+export type GuestSortKey = 'name_asc' | 'name_desc' | 'created_asc' | 'created_desc' | 'rsvp' | 'amount_desc';
+
 export function useGuestFilters(groups: GroupInfo[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedSides, setSelectedSides] = useState<GroupSide[]>([]);
   const [noPhoneOnly, setNoPhoneOnly] = useState(false);
+  const [sortKey, setSortKey] = useState<GuestSortKey>('created_asc');
 
   const handleStatusToggle = (status: string) => {
     setSelectedStatuses((prev) =>
@@ -68,5 +71,7 @@ export function useGuestFilters(groups: GroupInfo[]) {
     isAllSidesSelected,
     noPhoneOnly,
     toggleNoPhoneOnly,
+    sortKey,
+    setSortKey,
   };
 }

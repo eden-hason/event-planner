@@ -258,6 +258,44 @@
   animation: fade-in 0.8s ease-out;
 }
 
+@keyframes row-updated {
+  0% {
+    background-color: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+  18% {
+    background-color: color-mix(in oklch, var(--primary) 9%, transparent);
+    box-shadow: inset 3px 0 0 color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+[dir="rtl"] .row-updated {
+  animation-name: row-updated-rtl;
+}
+
+@keyframes row-updated-rtl {
+  0% {
+    background-color: transparent;
+    box-shadow: inset -3px 0 0 transparent;
+  }
+  18% {
+    background-color: color-mix(in oklch, var(--primary) 9%, transparent);
+    box-shadow: inset -3px 0 0 color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset -3px 0 0 transparent;
+  }
+}
+
+.row-updated {
+  animation: row-updated 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;

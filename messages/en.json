@@ -667,6 +667,15 @@
         "successMessageSingular": "{count} guest has been added to your event.",
         "failedHeading": "Import Failed"
       }
+    },
+    "sort": {
+      "label": "Sort",
+      "name_asc": "Name A-Z",
+      "name_desc": "Name Z-A",
+      "created_asc": "Date added - oldest",
+      "created_desc": "Date added - newest",
+      "rsvp": "RSVP status",
+      "amount_desc": "Largest party first"
     }
   },
   "dashboard": {
