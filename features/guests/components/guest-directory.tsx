@@ -12,10 +12,10 @@ import {
 } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
-import { useGuestFilters, useDynamicPageSize } from '@/features/guests/hooks';
+import { useGuestFilters, useDynamicPageSize, GuestSortKey } from '@/features/guests/hooks';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
 import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
-import { IconUpload, IconPhoneOff, IconFileSpreadsheet } from '@tabler/icons-react';
+import { IconUpload, IconPhoneOff, IconFileSpreadsheet, IconArrowsSort, IconCheck } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +43,7 @@ interface GuestDirectoryProps {
   showDietary?: boolean;
   selectedStatuses?: string[];
   onStatusToggle?: (status: string) => void;
+  recentlyUpdatedGuestId?: string | null;
 }
 
 export function GuestDirectory({
@@ -55,6 +56,7 @@ export function GuestDirectory({
   showDietary = false,
   selectedStatuses: externalStatuses,
   onStatusToggle: externalStatusToggle,
+  recentlyUpdatedGuestId,
 }: GuestDirectoryProps) {
   const t = useTranslations('guests');
   const isRTL = useLocale() === 'he';
@@ -78,6 +80,8 @@ export function GuestDirectory({
     isAllSidesSelected,
     noPhoneOnly,
     toggleNoPhoneOnly,
+    sortKey,
+    setSortKey,
   } = useGuestFilters(groups);
 
   const selectedStatuses = externalStatuses ?? internalStatuses;
@@ -209,6 +213,26 @@ export function GuestDirectory({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn('gap-2', sortKey !== 'created_asc' && 'border-primary/50 bg-primary/8 text-primary font-medium hover:bg-primary/15 hover:text-primary')}
+                >
+                  <IconArrowsSort size={16} />
+                  {t(`sort.${sortKey}`)}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {(['name_asc', 'name_desc', 'created_asc', 'created_desc', 'rsvp', 'amount_desc'] as GuestSortKey[]).map((key) => (
+                  <DropdownMenuItem key={key} onClick={() => setSortKey(key)} className="gap-2">
+                    <IconCheck size={14} className={cn('shrink-0', sortKey === key ? 'opacity-100' : 'opacity-0')} />
+                    {t(`sort.${key}`)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <RsvpStatusFilter
               selectedStatuses={selectedStatuses}
               onStatusToggle={handleStatusToggle}
@@ -247,12 +271,14 @@ export function GuestDirectory({
             statusFilter={selectedStatuses}
             sideFilter={selectedSides}
             noPhoneOnly={noPhoneOnly}
+            sortKey={sortKey}
             onSelectGuest={handleSelectGuest}
             onDeleteGuest={handleDeleteGuest}
             onAddGuest={handleAddGuestClick}
             onUploadFile={() => setImportDialogOpen(true)}
             pageSize={pageSize}
             showDietary={showDietary}
+            recentlyUpdatedGuestId={recentlyUpdatedGuestId}
           />
         ) : null}
       </CardContent>

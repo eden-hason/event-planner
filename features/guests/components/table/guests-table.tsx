@@ -29,7 +29,8 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
-import { useGuestsTable } from '@/features/guests/hooks';
+import { useGuestsTable, GuestSortKey } from '@/features/guests/hooks';
+import { cn } from '@/lib/utils';
 
 interface GuestsTableProps {
   guests: GuestWithGroupApp[];
@@ -38,12 +39,14 @@ interface GuestsTableProps {
   statusFilter: string[];
   sideFilter: GroupSide[];
   noPhoneOnly: boolean;
+  sortKey?: GuestSortKey;
   onSelectGuest: (id: string) => void;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   onAddGuest?: () => void;
   onUploadFile?: () => void;
   pageSize?: number;
   showDietary?: boolean;
+  recentlyUpdatedGuestId?: string | null;
 }
 
 export function GuestsTable({
@@ -53,12 +56,14 @@ export function GuestsTable({
   statusFilter,
   sideFilter,
   noPhoneOnly,
+  sortKey,
   onSelectGuest,
   onDeleteGuest,
   onAddGuest,
   onUploadFile,
   pageSize,
   showDietary = false,
+  recentlyUpdatedGuestId,
 }: GuestsTableProps) {
   const t = useTranslations('guests');
   const isRTL = useLocale() === 'he';
@@ -70,6 +75,7 @@ export function GuestsTable({
     statusFilter,
     sideFilter,
     noPhoneOnly,
+    sortKey,
     onDeleteGuest,
     pageSize,
     showDietary,
@@ -162,7 +168,10 @@ export function GuestsTable({
               paginatedRows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="group cursor-pointer transition-colors hover:bg-gray-50"
+                  className={cn(
+                    'group cursor-pointer transition-colors hover:bg-gray-50',
+                    row.original.id === recentlyUpdatedGuestId && 'row-updated',
+                  )}
                   onClick={() => handleRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {

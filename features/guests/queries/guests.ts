@@ -13,7 +13,8 @@ export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
       .from('guests')
       .select('*')
       .eq('event_id', eventId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true });
     if (error) {
       console.error('Error fetching guests for event:', error);
       return [];
@@ -124,7 +125,8 @@ export const getEventGuestsWithGroups = async (
       `,
       )
       .eq('event_id', eventId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true });
 
     if (error) {
       console.error('Error fetching guests with groups:', error);

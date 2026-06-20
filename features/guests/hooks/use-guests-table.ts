@@ -13,6 +13,13 @@ import {
 } from '@tanstack/react-table';
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
+import { GuestSortKey } from './use-guest-filters';
+
+const RSVP_ORDER: Record<string, number> = {
+  confirmed: 0,
+  pending: 1,
+  declined: 2,
+};
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -23,6 +30,7 @@ interface UseGuestsTableProps {
   statusFilter: string[];
   sideFilter: GroupSide[];
   noPhoneOnly: boolean;
+  sortKey?: GuestSortKey;
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
   showDietary?: boolean;
@@ -35,6 +43,7 @@ export function useGuestsTable({
   statusFilter,
   sideFilter,
   noPhoneOnly,
+  sortKey = 'created_asc',
   onDeleteGuest,
   pageSize = DEFAULT_PAGE_SIZE,
   showDietary = false,
@@ -98,7 +107,7 @@ export function useGuestsTable({
   }, [sideFilter, noPhoneOnly]);
 
   const filteredGuests = useMemo(() => {
-    return guests.filter((guest) => {
+    const filtered = guests.filter((guest) => {
       if (
         sideFilter.length > 0 &&
         (!guest.side || !sideFilter.includes(guest.side))
@@ -110,7 +119,32 @@ export function useGuestsTable({
       }
       return true;
     });
-  }, [guests, sideFilter, noPhoneOnly]);
+
+    return [...filtered].sort((a, b) => {
+      let primary = 0;
+      switch (sortKey) {
+        case 'name_asc':
+          primary = a.name.localeCompare(b.name);
+          break;
+        case 'name_desc':
+          primary = b.name.localeCompare(a.name);
+          break;
+        case 'created_asc':
+          primary = 0; // DB already returns in created_at ASC, id ASC order
+          break;
+        case 'created_desc':
+          primary = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          break;
+        case 'rsvp':
+          primary = (RSVP_ORDER[a.rsvpStatus] ?? 99) - (RSVP_ORDER[b.rsvpStatus] ?? 99);
+          break;
+        case 'amount_desc':
+          primary = (b.amount ?? 0) - (a.amount ?? 0);
+          break;
+      }
+      return primary !== 0 ? primary : a.id.localeCompare(b.id);
+    });
+  }, [guests, sideFilter, noPhoneOnly, sortKey]);
 
   const globalFilterFn = (
     row: Row<GuestWithGroupApp>,
@@ -142,6 +176,7 @@ export function useGuestsTable({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn,
+    autoResetPageIndex: false,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     state: {

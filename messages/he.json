@@ -668,6 +668,15 @@
         "successMessageSingular": "אורח {count} נוסף לאירוע שלך.",
         "failedHeading": "הייבוא נכשל"
       }
+    },
+    "sort": {
+      "label": "מיון",
+      "name_asc": "שם א-ת",
+      "name_desc": "שם ת-א",
+      "created_asc": "תאריך הוספה - ישן",
+      "created_desc": "תאריך הוספה - חדש",
+      "rsvp": "סטטוס אישור הגעה",
+      "amount_desc": "הכי הרבה מוזמנים"
     }
   },
   "dashboard": {
