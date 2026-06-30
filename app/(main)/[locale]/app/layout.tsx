@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
+import { AppTopBar } from '@/components/app-top-bar';
 import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
@@ -40,19 +41,23 @@ export default async function Layout({
   const events = await getAllUserEvents();
 
   return (
-    <SidebarProvider className="!bg-[#F4F4F6]">
-      <AppSidebar
-        variant="floating"
-        events={events}
-        currentUserId={effectiveUser?.id ?? data.user.id}
-        user={user}
-      />
-      <SidebarInset className="!bg-[#F4F4F6]">
-        <ImpersonationBanner />
-        <LayoutContentWrapper>{children}</LayoutContentWrapper>
-        <MobileBottomNav />
-        {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
-      </SidebarInset>
+    <SidebarProvider className="!min-h-svh flex-col !bg-[#F4F4F6]">
+      <AppTopBar />
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar
+          variant="floating"
+          events={events}
+          currentUserId={effectiveUser?.id ?? data.user.id}
+          user={user}
+          className="!top-14 !h-[calc(100svh-3.5rem)]"
+        />
+        <SidebarInset className="!bg-[#F4F4F6]">
+          <ImpersonationBanner />
+          <LayoutContentWrapper>{children}</LayoutContentWrapper>
+          <MobileBottomNav />
+          {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

@@ -18,15 +18,11 @@ import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavEvents } from '@/components/nav-events';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { PartyPopper, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
@@ -79,6 +75,7 @@ export function AppSidebar({
   const isMobile = useIsMobile();
   const isSeatingPage = pathname.includes('/seating');
   const { setOpen, state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   // Track what the open state was before entering seating so we can restore it on exit
   const prevOpenRef = React.useRef<boolean | null>(null);
@@ -180,57 +177,39 @@ export function AppSidebar({
       {...props}
       variant={isSeatingPage ? 'sidebar' : props.variant}
     >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {state === 'collapsed' ? (
-              <div className="flex flex-col items-center gap-1">
-                <SidebarMenuButton asChild>
-                  <a href="#" className="justify-center">
-                    <PartyPopper className="!size-5" />
-                  </a>
-                </SidebarMenuButton>
-                <button
-                  onClick={toggleSidebar}
-                  className="flex size-7 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-                >
-                  {isRTL ? <PanelRightOpen className="size-4" /> : <PanelLeftOpen className="size-4" />}
-                  <span className="sr-only">Expand sidebar</span>
-                </button>
-              </div>
-            ) : (
-              <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <SidebarMenuButton
-                  asChild
-                  className="data-[slot=sidebar-menu-button]:!p-1.5 flex-1"
-                >
-                  <a href="#" dir="ltr" className={isRTL ? 'justify-end' : undefined}>
-                    <PartyPopper className="!size-5" />
-                    <span className="text-base font-semibold">Kululu</span>
-                  </a>
-                </SidebarMenuButton>
-                <button
-                  onClick={toggleSidebar}
-                  className="flex size-7 items-center justify-center rounded-md text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground shrink-0 transition-colors"
-                >
-                  {isRTL ? <PanelRightClose className="size-4" /> : <PanelLeftClose className="size-4" />}
-                  <span className="sr-only">Minimize sidebar</span>
-                </button>
-              </div>
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} disabled={!eventId || isOnboarding} />
         <NavSecondary items={navSecondary} disabled={!eventId || isOnboarding} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
-          <div className="px-2 pb-1">
-            <LanguageSwitcher />
-          </div>
-        )}
+        <div
+          className={`flex items-center gap-1 px-2 pb-1 ${
+            isCollapsed ? 'justify-center' : ''
+          } ${isRTL ? 'flex-row-reverse' : ''}`}
+        >
+          {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
+            <div className="flex-1">
+              <LanguageSwitcher />
+            </div>
+          )}
+          <button
+            onClick={toggleSidebar}
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            {isCollapsed ? (
+              isRTL ? (
+                <PanelRightOpen className="size-4" />
+              ) : (
+                <PanelLeftOpen className="size-4" />
+              )
+            ) : isRTL ? (
+              <PanelRightClose className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
+            <span className="sr-only">Toggle sidebar</span>
+          </button>
+        </div>
 
         <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId && !isOnboarding} user={user} />
       </SidebarFooter>
