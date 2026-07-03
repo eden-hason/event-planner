@@ -6,7 +6,6 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
-import { AiChatButton } from '@/features/ai-chat';
 import { LayoutContentWrapper } from '@/components/layout/layout-content-wrapper';
 import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
@@ -55,7 +54,6 @@ export default async function Layout({
           <ImpersonationBanner />
           <LayoutContentWrapper>{children}</LayoutContentWrapper>
           <MobileBottomNav />
-          {process.env.ENABLE_AI_CHAT === 'true' && <AiChatButton />}
         </SidebarInset>
       </div>
     </SidebarProvider>
