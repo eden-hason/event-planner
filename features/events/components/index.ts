@@ -8,3 +8,5 @@ export {
 } from './event-details';
 
 export { NewEventDialog } from './new-event-dialog';
+
+export { Onboarding, type OnboardingStep } from './onboarding';

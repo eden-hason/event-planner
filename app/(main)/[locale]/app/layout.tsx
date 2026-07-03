@@ -1,15 +1,15 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/app-sidebar';
-import { AppTopBar } from '@/components/app-top-bar';
+import { AppSidebar } from '@/components/layout/app-sidebar';
+import { AppTopBar } from '@/components/layout/app-top-bar';
 import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
 import { AiChatButton } from '@/features/ai-chat';
-import { LayoutContentWrapper } from '@/components/layout-content-wrapper';
+import { LayoutContentWrapper } from '@/components/layout/layout-content-wrapper';
 import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
-import { MobileBottomNav } from '@/components/mobile-bottom-nav';
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 
 export default async function Layout({
   children,

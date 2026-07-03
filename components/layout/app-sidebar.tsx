@@ -14,9 +14,9 @@ import {
   IconPalette,
 } from '@tabler/icons-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavEvents } from '@/components/nav-events';
+import { NavMain } from '@/components/layout/nav-main';
+import { NavSecondary } from '@/components/layout/nav-secondary';
+import { NavEvents } from '@/components/layout/nav-events';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Onboarding } from '@/components/onboarding';
+import { Onboarding } from '@/features/events/components/onboarding';
 import type { OnboardingStatus } from '@/features/dashboard/types';
 
 export function OnboardingChecklistCard({
