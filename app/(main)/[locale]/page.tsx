@@ -1,5 +1,5 @@
 import { setRequestLocale } from 'next-intl/server';
-import { HomepageClient } from '@/components/homepage-client';
+import { HomepageClient } from './_components/homepage-client';
 
 export default async function Home({
   params,

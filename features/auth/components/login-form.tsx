@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GoogleLoginButton } from '@/components/google-login-button';
+import { GoogleLoginButton } from '@/features/auth/components/google-login-button';
 import { sendOtp, verifyOtp } from '@/features/auth';
 
 function normalizePhone(local: string): string {
