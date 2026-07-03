@@ -11,7 +11,7 @@ function getSubapp(host: string): string | null {
   return null;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') ?? '';
   const subapp = getSubapp(host);
   const pathname = request.nextUrl.pathname;
