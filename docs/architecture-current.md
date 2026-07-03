@@ -180,8 +180,8 @@ i18n/              routing · request · navigation
    are imported via deep paths (`@/features/x/components`, `@/features/x/queries`).
 5. **`types.ts` vs `schemas/` applied unevenly** — some features have one, some both,
    some neither, despite `CLAUDE.md` defining a clear split.
-6. **Docs scattered:** `docs/` holds one file while `features/schedules/` carries inline
-   `TESTING.md` and `USAGE_EXAMPLES.md`.
+6. ~~**Docs scattered:** `docs/` holds one file while `features/schedules/` carries inline
+   `TESTING.md` and `USAGE_EXAMPLES.md`.~~ **Resolved (Phase 5):** both moved to `docs/schedules/`.
 7. **Ad-hoc feature subfolders** (`config/`, `constants/`, `data/`, `designs/`, `hooks/`)
    appear in some features with no shared convention.
 8. **No `src/` root** — source and config share the repo root.

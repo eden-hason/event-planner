@@ -52,16 +52,23 @@ Move each domain-coupled component to its owner; update imports:
 After this, `components/` should hold only: `ui/` (shadcn primitives), `icons/`,
 `layout/`, and truly-generic shared bits (`card-container`, `language-switcher`).
 
-### Phase 4 — Normalize each feature's internal shape
-- Enforce the `CLAUDE.md` contract per feature: Zod → `schemas/`, TS-only types → `types.ts`.
-  Split any file that mixes both.
-- Fold ad-hoc folders into the convention: `schedules/config` + `schedules/constants` →
-  a single `schedules/config/` (or `constants/`); `templates/data` + `templates/designs`
-  may stay (they are genuine domain content) but document why in a short feature-level README.
+### Phase 4 — Normalize each feature's internal shape — SKIPPED (investigated, no-op)
+Original intent: enforce Zod → `schemas/`, TS-only types → `types.ts`; split mixed files;
+fold ad-hoc folders. **On inspection the premise did not hold, so this phase was skipped:**
+- All 5 `types.ts` files are already Zod-free — zero violations.
+- The non-`z.infer` types found in `schemas/` are overwhelmingly schema-adjacent derived
+  types (`(typeof X)[number]`, `EventApp['status']`) that correctly live beside their Zod
+  source; moving them would introduce `types ↔ schemas` cross-imports and make things worse.
+  Only a handful are genuinely pure (`auth` User/ProfileData, form `*State` types, `schedules`
+  GuestStats) and their payoff is marginal.
+- `schedules/config` (message body content) and `schedules/constants` (default schedule
+  configs) are different concerns; folding them is not an improvement.
+Conclusion: the repo already honors the `types`/`schemas` contract. Forcing moves = churn
+without benefit, so Phase 4 was intentionally not executed.
 
-### Phase 5 — Consolidate docs
-- Move `features/schedules/TESTING.md` and `features/schedules/USAGE_EXAMPLES.md` into
-  `docs/schedules/`. Keep code-adjacent only what is truly code-adjacent.
+### Phase 5 — Consolidate docs — DONE
+- Moved `features/schedules/TESTING.md` and `features/schedules/USAGE_EXAMPLES.md` into
+  `docs/schedules/`. No code referenced them; code examples inside use `@/` aliases (move-safe).
 
 ### Phase 6 (optional, higher-risk) — Adopt `src/`
 - Move `app/`, `features/`, `components/`, `hooks/`, `lib/`, `i18n/` under `src/`.
