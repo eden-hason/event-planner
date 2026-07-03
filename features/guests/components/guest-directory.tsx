@@ -12,7 +12,8 @@ import {
 } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
-import { useGuestFilters, useDynamicPageSize, GuestSortKey } from '@/features/guests/hooks';
+import { useGuestFilters, GuestSortKey } from '@/features/guests/hooks';
+import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
 import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
 import { IconUpload, IconPhoneOff, IconFileSpreadsheet, IconArrowsSort, IconCheck } from '@tabler/icons-react';
