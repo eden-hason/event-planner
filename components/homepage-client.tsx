@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { IconBrandWhatsapp } from '@tabler/icons-react';
 
 const WHATSAPP_NUMBER = '972556839696';
@@ -449,9 +450,9 @@ export function HomepageClient() {
       {/* NAV */}
       <header className="hp-nav" ref={navRef} id="nav" dir="rtl">
         <div className="wrap nav-inner">
-          <a href="/login" className="btn btn-primary heb" id="navCta">
+          <Link href="/login" className="btn btn-primary heb" id="navCta">
             כניסה / הרשמה
-          </a>
+          </Link>
 
           <button
             className="hp-nav-hamburger"
@@ -490,9 +491,9 @@ export function HomepageClient() {
           <a href="#how" className={activeSection === 'how' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>יצירת אירוע</a>
           <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>חבילות</a>
         </nav>
-        <a href="/login" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>
+        <Link href="/login" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>
           כניסה / הרשמה
-        </a>
+        </Link>
       </div>
 
       {/* HERO */}

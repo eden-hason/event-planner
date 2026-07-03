@@ -53,7 +53,7 @@ export function BottomNavBar({ items, disabled, className }: BottomNavBarProps) 
         return (
           <motion.div key={item.title} whileTap={{ scale: 0.97 }}>
             <Link
-              href={disabled ? ('/app' as '/app') : (item.url as '/app')}
+              href={disabled ? ('/app' as const) : (item.url as '/app')}
               aria-label={item.title}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
