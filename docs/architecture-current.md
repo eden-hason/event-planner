@@ -16,7 +16,7 @@
 | AI | `ai` SDK + `@ai-sdk/anthropic` |
 | Messaging | Twilio (SMS), WhatsApp webhooks, Resend (email) |
 
-No test framework is configured. Path alias: `@/*` → repo root (no `src/`).
+No test framework is configured. Path alias: `@/*` → `./src/*` (since Phase 6).
 
 ## 2. Top-Level Layout
 
@@ -184,7 +184,9 @@ i18n/              routing · request · navigation
    `TESTING.md` and `USAGE_EXAMPLES.md`.~~ **Resolved (Phase 5):** both moved to `docs/schedules/`.
 7. **Ad-hoc feature subfolders** (`config/`, `constants/`, `data/`, `designs/`, `hooks/`)
    appear in some features with no shared convention.
-8. **No `src/` root** — source and config share the repo root.
+8. ~~**No `src/` root** — source and config share the repo root.~~ **Resolved (Phase 6):**
+   `app/`, `features/`, `components/`, `hooks/`, `lib/`, `i18n/`, and `middleware.ts` moved
+   under `src/`; `@/*` now maps to `./src/*`.
 9. **Very large files** (`file-upload` 1437, `stepper` 1312, `homepage-client` 1105) that
    mix concerns and are hard for agents to navigate.
 
