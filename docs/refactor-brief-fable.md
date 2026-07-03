@@ -70,12 +70,15 @@ without benefit, so Phase 4 was intentionally not executed.
 - Moved `features/schedules/TESTING.md` and `features/schedules/USAGE_EXAMPLES.md` into
   `docs/schedules/`. No code referenced them; code examples inside use `@/` aliases (move-safe).
 
-### Phase 6 (optional, higher-risk) — Adopt `src/`
-- Move `app/`, `features/`, `components/`, `hooks/`, `lib/`, `i18n/` under `src/`.
-- Update `tsconfig.json` paths (`@/*` → `./src/*`), `components.json` aliases, and the
-  next-intl plugin path in `next.config.ts`. Verify `middleware.ts` still resolves.
-- Do this **last and alone** — it touches every import indirectly via the alias, so the
-  build is the safety net.
+### Phase 6 (higher-risk) — Adopt `src/` — DONE
+- Moved `app/`, `features/`, `components/`, `hooks/`, `lib/`, `i18n/` and `middleware.ts`
+  under `src/` (via `git mv`, history preserved). `messages/`, `public/`, `supabase/`, `docs/`
+  and all config files stayed at root.
+- Config edits: `tsconfig.json` alias (`@/*` → `./src/*`), `next.config.ts` next-intl plugin
+  path (`./src/i18n/request.ts`), `components.json` css (`src/app/globals.css`), and the one
+  boundary-crossing relative import in `src/i18n/request.ts` (`../messages` → `../../messages`,
+  since `messages/` stayed at root). `@/` aliases elsewhere resolve unchanged via tsconfig.
+- Verified by `npm run build` (middleware/proxy picked up under `src/`) and `npm run lint`.
 
 ## Definition of done
 

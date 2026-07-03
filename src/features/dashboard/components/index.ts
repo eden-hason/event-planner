@@ -7,4 +7,3 @@ export { OnboardingChecklistCard } from './onboarding-checklist-card';
 export { RsvpEngagementCard } from './rsvp-engagement-card';
 export { DaysToEventCard, GuestsInvitedCard, ScheduledMessagesCard } from './hero-stat-cards';
 export { GroupBreakdownCard } from './group-breakdown-card';
-export { default as PieChartComponent } from './pie-chart';
