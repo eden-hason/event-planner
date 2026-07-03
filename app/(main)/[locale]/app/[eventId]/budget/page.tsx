@@ -1,7 +1,7 @@
 import { getEventExpenses } from '@/features/budget/queries/expenses';
 import { getEventGifts } from '@/features/budget/queries/gifts';
 import { getEventById } from '@/features/events/queries';
-import { BudgetPage } from '@/features/budget/components';
+import { BudgetPage } from '@/features/budget';
 
 export default async function BudgetPageRoute({
   params,

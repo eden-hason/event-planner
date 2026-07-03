@@ -6,7 +6,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
-import { AiChatButton } from '@/features/ai-chat/components/ai-chat-button';
+import { AiChatButton } from '@/features/ai-chat';
 import { LayoutContentWrapper } from '@/components/layout-content-wrapper';
 import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';

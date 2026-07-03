@@ -4,7 +4,7 @@ import {
   getGuestsWithInitialInvitation,
 } from '@/features/guests/queries';
 import { getEventGroupsWithGuests } from '@/features/guests/queries/groups';
-import { GuestsPage as GuestsPageComponent } from '@/features/guests/components';
+import { GuestsPage as GuestsPageComponent } from '@/features/guests';
 import { getEventById } from '@/features/events/queries';
 import { getCurrentUser } from '@/features/auth/queries';
 
