@@ -1312,17 +1312,6 @@
       "bitHelper": "Enter the mobile phone number connected to your Bit account"
     }
   },
-  "aiChat": {
-    "openAssistant": "Open AI assistant",
-    "title": "שמחה",
-    "placeholder": "Ask me anything…",
-    "suggestedPrompts": {
-      "timeline": "Build an event timeline",
-      "seating": "Seating arrangement tips",
-      "vendors": "Vendor checklist",
-      "gifts": "Gift total so far"
-    }
-  },
   "personalInfo": {
     "title": "Let's get to know you",
     "description": "Help us personalize your experience",

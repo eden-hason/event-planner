@@ -21,29 +21,42 @@ No test framework is currently configured.
 
 ### Feature-Based Organization
 
-Code is organized by domain under `/features/`:
-- `auth/` - Authentication (email/password + Google OAuth)
-- `events/` - Event CRUD operations
-- `guests/` - Guest management with CSV import
-- `schedules/` - Event schedule management
-- `dashboard/` - Dashboard views
+All application source lives under `src/`. Code is organized by domain under
+`src/features/` (auth, events, guests, schedules, dashboard, budget, collaborate,
+confirmation, seating, templates, ai-chat, admin).
 
-Each feature contains:
-- `queries/` - Server-side Supabase queries
-- `actions/` - Server Actions for mutations
+Each feature is a self-contained slice and should keep this internal shape:
+- `queries/` - Server-side Supabase queries (server-only)
+- `actions/` - Server Actions for mutations (`'use server'`)
 - `schemas/` - Zod schemas for DB↔app transformations and form validation only
 - `types.ts` - TypeScript-only types: view models, query result shapes, derived types (no Zod)
 - `components/` - Feature-specific UI
 - `utils/` - Data transformation and helpers
+- `index.ts` - Public API barrel (see below)
+
+**Public API barrels.** Every feature exposes a root `index.ts` that explicitly
+re-exports its public surface (components, types, schemas, Server Actions, pure utils).
+Import from the feature root (`@/features/guests`), not deep paths. Do NOT re-export
+`queries/` - or any server-only module that pulls `next/headers` or
+`@/lib/supabase/server` - through the barrel; import those directly from
+`@/features/<name>/queries` so server-only code never leaks into client bundles.
+`src/features/auth/index.ts` is the reference pattern.
 
 ### Key Directories
 
-- `/app/` - Next.js App Router pages
-- `/app/app/` - Protected routes (requires auth)
-- `/app/app/[eventId]/` - Dynamic event routes (dashboard, details, guests, schedules)
-- `/components/ui/` - shadcn/ui components
-- `/lib/supabase/` - Supabase client configuration (client.ts for browser, server.ts for server)
-- `/hooks/` - Custom React hooks
+- `src/app/` - Next.js App Router. `(main)/[locale]/` is the localized public + authed app
+  (`.../app/` = protected routes, `.../app/[eventId]/` = per-event routes); `(admin)/` is the
+  subdomain-routed back office; `api/` holds route handlers.
+- `src/proxy.ts` - Routing middleware (Next 16 `proxy` convention): subdomain rewrites + intl +
+  Supabase session refresh.
+- `src/components/ui/` - shadcn/ui primitives (generic, shared).
+- `src/components/layout/` - App-shell components (sidebar, top bar, nav, mobile nav).
+- `src/components/` (root) - Only truly-generic shared components. Domain components belong in
+  their feature, never here.
+- `src/lib/supabase/` - Supabase client config (`client.ts` browser, `server.ts` server).
+- `src/hooks/` - Global custom hooks. `src/i18n/` - next-intl config.
+- Repo root (NOT under `src/`): `messages/` (i18n catalogs), `public/`, `supabase/`, `docs/`,
+  and config files.
 
 ### Database Schema
 
@@ -51,7 +64,21 @@ The Supabase MCP is connected and provides live schema context. Use `mcp__supaba
 
 ### Path Aliases
 
-`@/*` maps to the project root.
+`@/*` maps to `src/*` (e.g. `@/features/...`, `@/components/...`, `@/lib/...`, `@/hooks/...`).
+
+### Keeping to the Structure
+
+When adding code, preserve the pattern above:
+- New domain area → new `src/features/<name>/` with the standard subfolders and a root
+  `index.ts` barrel. Consume features from their root barrel, not deep paths.
+- Feature UI → `src/features/<name>/components/`, exported via the feature barrel. Put a
+  component in `src/components/` only if it is genuinely generic and shared (`ui/` for
+  primitives, `layout/` for app-shell). Never place domain-specific components at the
+  `src/components/` root.
+- Zod lives in `schemas/`; TypeScript-only types live in `types.ts`. Do not mix Zod into
+  `types.ts`, and keep server-only code (queries, server Supabase client) out of any barrel a
+  client component can import.
+- One icon location: `src/components/icons/`.
 
 ## Patterns
 
