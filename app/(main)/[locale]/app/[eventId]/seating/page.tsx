@@ -1,5 +1,5 @@
 import { getSeatingPageData } from '@/features/seating/queries';
-import { SeatingPage } from '@/features/seating/components';
+import { SeatingPage } from '@/features/seating';
 import { getEventGroups } from '@/features/guests/queries/groups';
 
 export default async function Page({

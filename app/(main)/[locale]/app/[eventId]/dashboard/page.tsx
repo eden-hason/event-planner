@@ -13,8 +13,9 @@ import {
   GuestsInvitedCard,
   ScheduledMessagesCard,
   GroupBreakdownCard,
-} from '@/features/dashboard/components';
-import type { GuestStats, OnboardingStatus } from '@/features/dashboard/types';
+  type GuestStats,
+  type OnboardingStatus,
+} from '@/features/dashboard';
 
 function getDaysRemaining(eventDate: string): number {
   const today = new Date();

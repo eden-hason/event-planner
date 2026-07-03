@@ -3,10 +3,10 @@ import {
   getConfirmationDataByGuestToken,
   isGuestInvitationToken,
 } from '@/features/confirmation/queries';
-import { ConfirmationExperience } from '@/features/confirmation/components/confirmation-experience';
+import { ConfirmationExperience } from '@/features/confirmation';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { DEFAULT_TEMPLATE_ID } from '@/features/templates/data/template-library';
+import { DEFAULT_TEMPLATE_ID } from '@/features/templates';
 
 import { setRequestLocale } from 'next-intl/server';
 

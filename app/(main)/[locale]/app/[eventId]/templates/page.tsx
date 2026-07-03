@@ -1,12 +1,13 @@
-import { TemplatesPage } from '@/features/templates/components';
-import { TEMPLATE_LIBRARY, DEFAULT_TEMPLATE_ID } from '@/features/templates/data/template-library';
-import { getEventById } from '@/features/events/queries';
 import {
+  TemplatesPage,
+  TEMPLATE_LIBRARY,
+  DEFAULT_TEMPLATE_ID,
   buildCoupleName,
   buildFormattedDate,
   buildTime,
   buildDishOptions,
-} from '@/features/templates/utils';
+} from '@/features/templates';
+import { getEventById } from '@/features/events/queries';
 import type { LivePreviewEventData } from '@/features/templates/components/live-template-preview';
 
 export default async function TemplatesServerPage({
