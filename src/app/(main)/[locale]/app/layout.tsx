@@ -40,16 +40,15 @@ export default async function Layout({
   const events = await getAllUserEvents();
 
   return (
-    <SidebarProvider className="!min-h-svh flex-col !bg-[#F4F4F6]">
-      <AppTopBar />
-      <div className="flex min-h-0 w-full flex-1">
-        <AppSidebar
-          variant="floating"
-          events={events}
-          currentUserId={effectiveUser?.id ?? data.user.id}
-          user={user}
-          className="!top-14 !h-[calc(100svh-3.5rem)]"
-        />
+    <SidebarProvider className="!min-h-svh !bg-[#F4F4F6]">
+      <AppSidebar
+        variant="floating"
+        events={events}
+        currentUserId={effectiveUser?.id ?? data.user.id}
+        user={user}
+      />
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <AppTopBar />
         <SidebarInset className="!bg-[#F4F4F6]">
           <ImpersonationBanner />
           <LayoutContentWrapper>{children}</LayoutContentWrapper>
