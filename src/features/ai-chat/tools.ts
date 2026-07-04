@@ -2,6 +2,11 @@
 // per-request Supabase client. `eventId` is captured in the tool closures so
 // the model can never target another event. Do NOT re-export this module
 // through the feature barrel.
+//
+// Prompt-injection note: guest-entered text (names, notes) flows back into the
+// model context via the read tools. The write tools below deliberately have no
+// `execute`, so an injected instruction can at most PROPOSE a change - nothing
+// is written until the user clicks Approve in the confirmation card.
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
