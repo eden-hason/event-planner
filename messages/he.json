@@ -1315,6 +1315,47 @@
       "bitSubtitle": "העברה מיידית דרך Bit"
     }
   },
+  "aiChat": {
+    "openAssistant": "פתח עוזר AI",
+    "title": "שמחה",
+    "placeholder": "שאל אותי כל דבר…",
+    "checking": "בודק נתוני אירוע…",
+    "suggestedPrompts": {
+      "confirmed": "כמה אורחים אישרו הגעה?",
+      "addGuest": "הוסף אורחת בשם דנה מצד הכלה",
+      "markDeclined": "סמן את יוסי כלא מגיע",
+      "summary": "תן לי סיכום של האירוע"
+    },
+    "confirm": {
+      "addTitle": "הוספת אורח",
+      "updateTitle": "עדכון אורח",
+      "deleteTitle": "מחיקת אורח",
+      "approve": "אשר",
+      "decline": "דחה",
+      "added": "נוסף ✓",
+      "updated": "עודכן ✓",
+      "deleted": "נמחק ✓",
+      "declinedState": "נדחה",
+      "failed": "משהו השתבש",
+      "fields": {
+        "name": "שם",
+        "phone": "טלפון",
+        "side": "צד",
+        "amount": "כמות",
+        "status": "סטטוס",
+        "notes": "הערות"
+      },
+      "sideValues": {
+        "bride": "צד הכלה",
+        "groom": "צד החתן"
+      },
+      "statusValues": {
+        "pending": "ממתין",
+        "confirmed": "אישר הגעה",
+        "declined": "לא מגיע"
+      }
+    }
+  },
   "personalInfo": {
     "title": "בואו נכיר",
     "description": "עזרו לנו להתאים אישית את החוויה שלכם",

@@ -1312,6 +1312,47 @@
       "bitHelper": "Enter the mobile phone number connected to your Bit account"
     }
   },
+  "aiChat": {
+    "openAssistant": "Open AI assistant",
+    "title": "שמחה",
+    "placeholder": "Ask me anything…",
+    "checking": "Checking event data…",
+    "suggestedPrompts": {
+      "confirmed": "How many guests are confirmed?",
+      "addGuest": "Add a guest named Dana on the bride's side",
+      "markDeclined": "Mark Yossi as declined",
+      "summary": "Give me an event summary"
+    },
+    "confirm": {
+      "addTitle": "Add guest",
+      "updateTitle": "Update guest",
+      "deleteTitle": "Delete guest",
+      "approve": "Approve",
+      "decline": "Decline",
+      "added": "Added ✓",
+      "updated": "Updated ✓",
+      "deleted": "Deleted ✓",
+      "declinedState": "Declined",
+      "failed": "Something went wrong",
+      "fields": {
+        "name": "Name",
+        "phone": "Phone",
+        "side": "Side",
+        "amount": "Amount",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "sideValues": {
+        "bride": "Bride's side",
+        "groom": "Groom's side"
+      },
+      "statusValues": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "declined": "Declined"
+      }
+    }
+  },
   "personalInfo": {
     "title": "Let's get to know you",
     "description": "Help us personalize your experience",
