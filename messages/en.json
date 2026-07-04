@@ -388,7 +388,10 @@
       "groupNameTaken": "A group with this name already exists for this side",
       "deletingGuest": "Deleting {name}...",
       "guestDeleted": "Guest deleted successfully",
-      "guestDeleteFailed": "Failed to delete guest"
+      "guestDeleteFailed": "Failed to delete guest",
+      "markingConfirmed": "Marking {name} as confirmed...",
+      "markedConfirmed": "{name} marked as confirmed",
+      "markConfirmedFailed": "Failed to mark as confirmed"
     },
     "form": {
       "contactInfo": "Contact Information",
@@ -444,7 +447,9 @@
       "confirmed": "Confirmed",
       "pending": "Pending",
       "declined": "Declined",
-      "people": "{count} people"
+      "people": "{count} people",
+      "all": "All",
+      "guestsLabel": "Guests"
     },
     "table": {
       "name": "Name",
@@ -458,6 +463,8 @@
       "notes": "Notes",
       "openMenu": "Open menu",
       "deleteGuest": "Delete guest",
+      "editGuest": "Edit",
+      "markConfirmed": "Mark as confirmed",
       "emptyTitle": "No Guests Yet",
       "emptyDescription": "Get started by uploading a guest list or adding guests manually.",
       "uploadFile": "Upload File",
@@ -493,7 +500,11 @@
       "groupsSelected": "{count} groups selected",
       "sidesSelected": "{count} sides selected",
       "noPhone": "No phone",
-      "selectAll": "Select All"
+      "selectAll": "Select All",
+      "title": "Filters",
+      "sortBy": "Sort by",
+      "apply": "Apply",
+      "clearAll": "Clear all"
     },
     "search": {
       "placeholder": "Search guests..."

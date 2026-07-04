@@ -198,11 +198,11 @@ export function GuestsTable({
       </div>
 
       {totalFilteredRows > 0 && (
-        <div className="flex items-center justify-between px-2">
-          <p className="text-muted-foreground text-sm">
+        <div className="flex flex-col gap-2 px-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-center text-sm sm:text-start">
             {t('table.showing', { start: startRow, end: endRow, total: totalFilteredRows })}
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-1 sm:justify-start">
             <Button
               variant="outline"
               size="icon"
