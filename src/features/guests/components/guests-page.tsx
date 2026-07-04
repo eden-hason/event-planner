@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
   useState,
   useActionState,
@@ -21,17 +22,39 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { IconClock, IconPlus, IconTrash, IconUserPlus, IconUsers, IconUsersGroup } from '@tabler/icons-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  IconClock,
+  IconDotsVertical,
+  IconFileSpreadsheet,
+  IconPlus,
+  IconTrash,
+  IconUpload,
+  IconUserPlus,
+  IconUsers,
+  IconUsersGroup,
+} from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   GroupsDirectory,
   CreateGroupDialog,
+  ImportGuestsDialog,
 } from '@/features/guests/components/groups';
 import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
-import { deleteGuest } from '@/features/guests/actions';
+import { deleteGuest, upsertGuest } from '@/features/guests/actions';
+import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
 import { GuestActionsSection } from './guest-actions-section';
+import { GuestsMobile } from './mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
@@ -85,6 +108,12 @@ export function GuestsPage({
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const locale = useLocale();
+  const isMobile = useIsMobile();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const nonOfflineCount = guests
     .filter((g) => !g.isOfflineRsvp)
@@ -99,6 +128,7 @@ export function GuestsPage({
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [formIsOfflineRsvp, setFormIsOfflineRsvp] = useState(false);
   const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const handleStatCardClick = (status: string | null) => {
     if (status === null) {
@@ -205,14 +235,98 @@ export function GuestsPage({
     });
   };
 
+  const handleDeleteGuestById = (guest: GuestWithGroupApp) => {
+    const promise = deleteGuest(guest.id).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || t('toast.guestDeleteFailed'));
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: t('toast.deletingGuest', { name: guest.name }),
+      success: (data) => data.message || t('toast.guestDeleted'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
+    });
+  };
+
+  const handleMarkConfirmed = (guest: GuestWithGroupApp) => {
+    if (guest.rsvpStatus === 'confirmed') return;
+
+    const formData = new FormData();
+    formData.append('id', guest.id);
+    formData.append('rsvpStatus', 'confirmed');
+
+    const promise = upsertGuest(eventId, formData).then((result) => {
+      if (!result.success) {
+        throw new Error(result.message || t('toast.markConfirmedFailed'));
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: t('toast.markingConfirmed', { name: guest.name }),
+      success: () => t('toast.markedConfirmed', { name: guest.name }),
+      error: (err) =>
+        err instanceof Error ? err.message : t('toast.markConfirmedFailed'),
+    });
+  };
+
+  const handleExport = (scope: IplanScope) => {
+    const fileName = eventName ? `${eventName}-iplan.xls` : 'iplan-guests.xls';
+    const promise = exportGuestsToIplan(guests, { scope, fileName });
+    toast.promise(promise, {
+      loading: t('directory.exportingIplan'),
+      success: () => t('directory.exportIplanSuccess'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('directory.exportFailed'),
+    });
+  };
+
   const guestsHeaderAction = useMemo(
     () => (
-      <Button onClick={handleAddGuest}>
-        <IconUserPlus size={16} />
-        {t('addGuest')}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button onClick={handleAddGuest}>
+          <IconUserPlus size={16} />
+          {t('addGuest')}
+        </Button>
+        {isMobile && (
+          <DropdownMenu dir={locale === 'he' ? 'rtl' : 'ltr'}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <span className="sr-only">{t('table.openMenu')}</span>
+                <IconDotsVertical size={18} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <IconUpload size={20} />
+                {t('directory.importCsv')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={() => handleExport('confirmed')}
+              >
+                <IconFileSpreadsheet size={20} />
+                {t('directory.exportConfirmed')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={() => handleExport('all')}
+              >
+                <IconFileSpreadsheet size={20} />
+                {t('directory.exportAll')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     ),
-    [handleAddGuest],
+    [handleAddGuest, isMobile, locale],
   );
 
   const groupHeaderAction = useMemo(
@@ -225,9 +339,11 @@ export function GuestsPage({
     [],
   );
 
+  const headerDescription = isMobile ? undefined : t('description');
+
   const { setHeader } = useFeatureHeader({
     title: t('title'),
-    description: t('description'),
+    description: headerDescription,
     action: guestsHeaderAction,
   });
 
@@ -235,53 +351,91 @@ export function GuestsPage({
     (value: string) => {
       setHeader({
         title: t('title'),
-        description: t('description'),
+        description: headerDescription,
         action: value === 'guests' ? guestsHeaderAction : groupHeaderAction,
       });
     },
-    [setHeader, guestsHeaderAction, groupHeaderAction],
+    [setHeader, guestsHeaderAction, groupHeaderAction, headerDescription],
   );
 
   const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
   const guestGroup = selectedGuest?.group;
 
+  if (!hasMounted) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </div>
+    );
+  }
+
   return (
     <>
       <Tabs defaultValue="guests" onValueChange={handleTabsChange} dir={locale === 'he' ? 'rtl' : 'ltr'}>
-        <TabsList className="border-border mb-4 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+        <TabsList
+          className={cn(
+            'border-border mb-4 h-10 w-full rounded-none border-b bg-transparent p-0',
+            isMobile ? 'justify-stretch gap-0' : 'justify-start gap-4',
+          )}
+        >
           <TabsTrigger
             value="guests"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className={cn(
+              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+              isMobile ? 'flex-1' : 'flex-none',
+            )}
           >
             <IconUsers size={18} />
             {t('tabGuests')}
           </TabsTrigger>
           <TabsTrigger
             value="groups"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className={cn(
+              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+              isMobile ? 'flex-1' : 'flex-none',
+            )}
           >
             <IconUsersGroup size={18} />
             {t('tabGroups')}
           </TabsTrigger>
         </TabsList>
-        <GuestStats
-          guests={guests}
-          selectedStatuses={selectedStatuses}
-          onStatClick={handleStatCardClick}
-        />
-        <TabsContent value="guests" className="mt-0">
-          <GuestDirectory
+        {!isMobile && (
+          <GuestStats
             guests={guests}
-            groups={groups}
-            eventId={eventId}
-            eventName={eventName}
-            existingPhones={existingPhones}
-            onSelectGuest={handleSelectGuest}
-            showDietary={showDietary}
             selectedStatuses={selectedStatuses}
-            onStatusToggle={handleStatusToggle}
-            recentlyUpdatedGuestId={recentlyUpdatedGuestId}
+            onStatClick={handleStatCardClick}
           />
+        )}
+        <TabsContent value="guests" className="mt-0">
+          {isMobile ? (
+            <GuestsMobile
+              guests={guests}
+              groups={groups}
+              onSelectGuest={handleSelectGuest}
+              onDeleteGuest={handleDeleteGuestById}
+              onMarkConfirmed={handleMarkConfirmed}
+              onUploadFile={() => setIsImportDialogOpen(true)}
+              selectedStatuses={selectedStatuses}
+              onStatusClick={handleStatCardClick}
+            />
+          ) : (
+            <GuestDirectory
+              guests={guests}
+              groups={groups}
+              eventId={eventId}
+              eventName={eventName}
+              existingPhones={existingPhones}
+              onSelectGuest={handleSelectGuest}
+              showDietary={showDietary}
+              selectedStatuses={selectedStatuses}
+              onStatusToggle={handleStatusToggle}
+              recentlyUpdatedGuestId={recentlyUpdatedGuestId}
+            />
+          )}
         </TabsContent>
         <TabsContent value="groups">
           <GroupsDirectory
@@ -299,9 +453,24 @@ export function GuestsPage({
         onCreateGroup={handleCreateGroup}
       />
 
+      {isMobile && (
+        <ImportGuestsDialog
+          open={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
+          eventId={eventId}
+          existingPhones={existingPhones}
+        />
+      )}
+
       <Sheet open={isDrawerOpen} onOpenChange={handleDrawerClose}>
         <SheetContent
-          className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[520px]"
+          side={isMobile ? 'bottom' : 'right'}
+          className={cn(
+            'flex flex-col gap-0 overflow-clip border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200',
+            isMobile
+              ? 'h-[92dvh] rounded-t-xl'
+              : 'm-3 h-[calc(100dvh-1.5rem)] rounded-xl data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[520px]',
+          )}
           onOpenAutoFocus={(e) => {
             if (selectedGuest) e.preventDefault();
           }}

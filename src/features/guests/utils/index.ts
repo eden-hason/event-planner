@@ -17,3 +17,5 @@ export {
   exportGuestsToIplan,
   type IplanScope,
 } from './export-iplan';
+
+export { filterAndSortGuests, type GuestFilterParams } from './filter-guests';

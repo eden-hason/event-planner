@@ -3,13 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { IconSearch } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
 
 interface GuestSearchProps {
   searchTerm: string;
   onSearchChange: (searchTerm: string) => void;
+  className?: string;
 }
 
-export function GuestSearch({ searchTerm, onSearchChange }: GuestSearchProps) {
+export function GuestSearch({ searchTerm, onSearchChange, className }: GuestSearchProps) {
   const t = useTranslations('guests');
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,7 +25,7 @@ export function GuestSearch({ searchTerm, onSearchChange }: GuestSearchProps) {
         placeholder={t('search.placeholder')}
         value={searchTerm}
         onChange={handleSearchChange}
-        className="pl-10"
+        className={cn('pl-10', className)}
       />
     </div>
   );

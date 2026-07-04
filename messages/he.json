@@ -389,7 +389,10 @@
       "groupNameTaken": "קבוצה עם שם זה כבר קיימת עבור הצד הזה",
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה",
-      "guestDeleteFailed": "מחיקת האורח נכשלה"
+      "guestDeleteFailed": "מחיקת האורח נכשלה",
+      "markingConfirmed": "מסמן את {name} כאישר...",
+      "markedConfirmed": "{name} סומן כאישר",
+      "markConfirmedFailed": "סימון האישור נכשל"
     },
     "form": {
       "contactInfo": "פרטי קשר",
@@ -445,7 +448,9 @@
       "confirmed": "אישרו",
       "pending": "ממתינים",
       "declined": "סירבו",
-      "people": "{count} אורחים"
+      "people": "{count} אורחים",
+      "all": "הכל",
+      "guestsLabel": "אורחים"
     },
     "table": {
       "name": "שם",
@@ -459,6 +464,8 @@
       "notes": "הערות",
       "openMenu": "פתח תפריט",
       "deleteGuest": "מחק אורח",
+      "editGuest": "עריכה",
+      "markConfirmed": "סמן כאישר",
       "emptyTitle": "אין אורחים עדיין",
       "emptyDescription": "התחל בהעלאת רשימת אורחים או הוספה ידנית.",
       "uploadFile": "העלה קובץ",
@@ -494,7 +501,11 @@
       "groupsSelected": "{count} קבוצות נבחרו",
       "sidesSelected": "{count} צדדים נבחרו",
       "noPhone": "ללא טלפון",
-      "selectAll": "בחר הכל"
+      "selectAll": "בחר הכל",
+      "title": "מסננים",
+      "sortBy": "מיון",
+      "apply": "החל",
+      "clearAll": "נקה הכל"
     },
     "search": {
       "placeholder": "חפש אורחים..."
