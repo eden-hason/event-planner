@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export function AppTopBar() {
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-2 bg-[#F4F4F6] px-3">
+    <header className="relative hidden h-14 shrink-0 items-center gap-2 bg-[#F4F4F6] px-3 md:flex">
       {/* Brand: pinned to the physical left edge regardless of text direction */}
       <a
         href="#"
