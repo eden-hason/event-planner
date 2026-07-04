@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useChat } from '@ai-sdk/react';
 import {
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ChatMessages } from './chat-messages';
 import type { AiChatMessage } from '../types';
 
@@ -27,6 +28,8 @@ interface AiAssistantProps {
 export function AiAssistant({ eventId }: AiAssistantProps) {
   const t = useTranslations('aiChat');
   const [input, setInput] = useState('');
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const transport = useMemo(
     () =>
@@ -70,10 +73,19 @@ export function AiAssistant({ eventId }: AiAssistantProps) {
     sendMessage({ text });
   }
 
+  useEffect(() => {
+    function handleOpenAssistant() {
+      setOpen(true);
+    }
+
+    window.addEventListener('kululu:open-ai-assistant', handleOpenAssistant);
+    return () => window.removeEventListener('kululu:open-ai-assistant', handleOpenAssistant);
+  }, []);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button className="fixed bottom-6 left-6 z-40 cursor-pointer rounded-full bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 p-[2px] shadow-[0_0_24px_4px_rgba(139,92,246,0.45)] transition-shadow duration-300 hover:shadow-[0_0_32px_8px_rgba(139,92,246,0.6)]">
+        <button className="fixed bottom-6 left-6 z-40 hidden cursor-pointer rounded-full bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 p-[2px] shadow-[0_0_24px_4px_rgba(139,92,246,0.45)] transition-shadow duration-300 hover:shadow-[0_0_32px_8px_rgba(139,92,246,0.6)] md:block">
           <span className="flex size-12 items-center justify-center rounded-full bg-zinc-950 transition-colors duration-200 hover:bg-zinc-900">
             <Bot className="size-6 text-white" />
             <span className="sr-only">{t('openAssistant')}</span>
@@ -81,8 +93,12 @@ export function AiAssistant({ eventId }: AiAssistantProps) {
         </button>
       </SheetTrigger>
       <SheetContent
-        side="left"
-        className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 sm:max-w-[420px] [&>button]:hidden"
+        side={isMobile ? 'bottom' : 'left'}
+        className={
+          isMobile
+            ? 'flex h-[85dvh] w-full flex-col gap-0 overflow-clip rounded-t-xl border-0 p-0 [&>button]:hidden'
+            : 'm-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-clip rounded-xl border-0 p-0 sm:max-w-[420px] [&>button]:hidden'
+        }
       >
         <SheetTitle className="sr-only">{t('title')}</SheetTitle>
 
