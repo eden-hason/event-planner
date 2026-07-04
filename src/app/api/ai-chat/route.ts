@@ -7,7 +7,7 @@ import { buildSystemPrompt } from '@/features/ai-chat/utils/build-system-prompt'
 
 export const maxDuration = 60;
 
-const MODEL = 'claude-sonnet-5';
+const MODEL = 'claude-haiku-4-5-20251001';
 
 export async function POST(req: Request) {
   const { messages, eventId } = (await req.json()) as {
