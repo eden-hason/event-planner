@@ -9,6 +9,7 @@ import {
   FeatureLayoutHeader,
   CollaborationProvider,
 } from '@/components/feature-layout';
+import { AiAssistant } from '@/features/ai-chat';
 
 export default async function EventLayout({
   children,
@@ -36,6 +37,7 @@ export default async function EventLayout({
           <FeatureLayoutHeader />
           <CardContent className="space-y-6 p-0">{children}</CardContent>
         </Card>
+        <AiAssistant eventId={eventId} />
       </FeatureLayoutProvider>
     </CollaborationProvider>
   );

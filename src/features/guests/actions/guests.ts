@@ -95,15 +95,22 @@ export async function upsertGuest(
       }
     }
 
-    const { error } = await supabase.from('guests').upsert(
-      {
-        ...dbData,
-        event_id: eventId,
-      },
-      {
-        onConflict: 'id',
-      },
-    );
+    // Partial updates (e.g. from the AI chat's propose tools) may omit
+    // NOT NULL columns like `name`. `upsert()` runs as an INSERT ... ON
+    // CONFLICT DO UPDATE, and Postgres validates NOT NULL against the
+    // INSERT's column list before it even checks for a conflict - so a
+    // partial payload would fail even though the row already exists and
+    // only needs an UPDATE. Branch explicitly instead.
+    const { error } = validatedData.id
+      ? await supabase
+          .from('guests')
+          .update(dbData)
+          .eq('id', validatedData.id)
+          .eq('event_id', eventId)
+      : await supabase.from('guests').insert({
+          ...dbData,
+          event_id: eventId,
+        });
 
     if (error) {
       console.error(error);
