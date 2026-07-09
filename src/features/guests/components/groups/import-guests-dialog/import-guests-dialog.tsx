@@ -36,6 +36,7 @@ import { KULULU_FIELDS, type ColumnMapping } from './map-step';
 import { ValidateStep } from './validate-step';
 import { SummaryStep } from './summary-step';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
+import { logParsedCsv } from '@/features/guests/actions/log-parsed-csv';
 import { validateCsvRows, validateGuestData, normalizePhone } from '@/features/guests/utils';
 import { type ImportGuestData } from '@/features/guests/schemas';
 
@@ -145,6 +146,8 @@ export function ImportGuestsDialog({
     if (newFiles.length > 0) {
       try {
         const parsed = await parseCSVFile(newFiles[0]);
+        // TEMPORARY audit logging - remove with log-parsed-csv.ts
+        void logParsedCsv(parsed);
         setParsedData(parsed);
         setColumnMapping({});
       } catch (error) {

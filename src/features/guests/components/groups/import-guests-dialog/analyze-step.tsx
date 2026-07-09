@@ -23,14 +23,19 @@ const AI_FIELD_TO_KULULU: Record<string, KululuFieldValue> = {
 };
 
 function convertAiMappingToColumnMapping(
-  aiMapping: Record<string, string>,
+  aiMapping: Record<number, string>,
   headers: string[],
 ): ColumnMapping {
   const result: ColumnMapping = {};
-  for (const [header, aiField] of Object.entries(aiMapping)) {
-    const colIndex = headers.findIndex((h) => h === header);
+  for (const [indexStr, aiField] of Object.entries(aiMapping)) {
+    const colIndex = Number(indexStr);
     const kuluField = AI_FIELD_TO_KULULU[aiField];
-    if (colIndex !== -1 && kuluField) {
+    if (
+      Number.isInteger(colIndex) &&
+      colIndex >= 0 &&
+      colIndex < headers.length &&
+      kuluField
+    ) {
       result[colIndex] = kuluField;
     }
   }
@@ -137,11 +142,10 @@ export function AnalyzeStep({
     setErrorMessage(null);
     setCurrentLine(0);
 
-    const csvText = [
-      parsedData.headers.join(','),
-      ...parsedData.rows.slice(0, 20).map((row) => row.join(',')),
-    ].join('\n');
-    const state = await analyzeCsv(csvText.slice(0, 3000));
+    const state = await analyzeCsv({
+      headers: parsedData.headers,
+      sampleRows: parsedData.rows.slice(0, 20),
+    });
 
     if (state.success && state.result) {
       setResult(state.result);
