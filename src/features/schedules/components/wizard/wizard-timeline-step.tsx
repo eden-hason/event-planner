@@ -15,12 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { type ActionType } from '../../schemas';
-
 export type TimelineRow = {
   key: string;
-  templateKey: string;
-  actionType: ActionType;
+  scheduleTypeId: string;
+  scheduleTypeKey: string;
+  templateId: string;
   targetStatus: 'pending' | 'confirmed' | null;
   enabled: boolean;
   date: Date;
@@ -84,20 +83,20 @@ export function WizardTimelineStep({
     onRowsChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   };
 
-  const actionTypeTotals = rows.reduce<Partial<Record<ActionType, number>>>(
-    (acc, r) => ({ ...acc, [r.actionType]: (acc[r.actionType] ?? 0) + 1 }),
+  const typeTotals = rows.reduce<Partial<Record<string, number>>>(
+    (acc, r) => ({ ...acc, [r.scheduleTypeKey]: (acc[r.scheduleTypeKey] ?? 0) + 1 }),
     {},
   );
-  const actionTypeCounters: Partial<Record<ActionType, number>> = {};
+  const typeCounters: Partial<Record<string, number>> = {};
 
   const timelineItems = rows.map((row) => {
-    actionTypeCounters[row.actionType] = (actionTypeCounters[row.actionType] ?? 0) + 1;
-    const total = actionTypeTotals[row.actionType] ?? 1;
-    const index = actionTypeCounters[row.actionType]!;
+    typeCounters[row.scheduleTypeKey] = (typeCounters[row.scheduleTypeKey] ?? 0) + 1;
+    const total = typeTotals[row.scheduleTypeKey] ?? 1;
+    const index = typeCounters[row.scheduleTypeKey]!;
     const label =
       total > 1
-        ? `${t(`actionTypes.${row.actionType}`)} ${index}/${total}`
-        : t(`actionTypes.${row.actionType}`);
+        ? `${t(`actionTypes.${row.scheduleTypeKey}`)} ${index}/${total}`
+        : t(`actionTypes.${row.scheduleTypeKey}`);
     const audienceKind = row.targetStatus ?? 'all';
 
     return (

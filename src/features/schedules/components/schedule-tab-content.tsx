@@ -27,7 +27,11 @@ export function ScheduleTabContent({
       <div className="flex flex-col gap-4">
         <ScheduleStatusCard schedule={schedule} />
         <ScheduleDetailsCard key={schedule.id} schedule={schedule} eventDate={eventDate} />
-        <TargetAudienceCard targetStatus={schedule.targetStatus} guestStats={guestStats} />
+        <TargetAudienceCard
+          targetStatus={schedule.targetStatus}
+          guestStats={guestStats}
+          disabled={schedule.status === 'cancelled'}
+        />
       </div>
       <div className="h-full">
         <MessageContentCard

@@ -887,6 +887,7 @@
     "audience": {
       "cardTitle": "Target Audience",
       "guestsWillReceive": "guests will receive this message",
+      "disabledNote": "This schedule is disabled - no guests will receive this message",
       "outOfTotal": "out of {total} total guests",
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed Guests",
@@ -934,7 +935,7 @@
         "trackDesc": "Day-of reminders and thank-you messages"
       },
       "step1Title": "Initial invitation",
-      "step1Description": "Send a save-the-date to your pending guests",
+      "step1Description": "Choose whether to send a ‘Save the Date’ as the first scheduled message",
       "step2Title": "Review your timeline",
       "step2Description": "Approve the schedules you want to send",
       "invitationPreviewLabel": "Invitation preview",
@@ -946,7 +947,7 @@
       "decisionSendDesc": "The invitation goes out on the date you pick",
       "decisionSkip": "Skip for now",
       "decisionSkipDesc": "It stays on your timeline as disabled - turn it on whenever you're ready",
-      "timelineHelper": "Toggle off anything you're not ready for - it stays on your timeline, just disabled",
+      "timelineHelper": "Toggle off any of the schedules shown—they’ll remain on the timeline but will be disabled",
       "recipientsCount": "{count} guests",
       "continue": "Continue",
       "back": "Back",

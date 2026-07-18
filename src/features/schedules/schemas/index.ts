@@ -1,5 +1,12 @@
 import { z } from 'zod';
+import {
+  MessageTemplateDbToAppSchema,
+  type MessageTemplateApp,
+} from './message-templates';
+
 export { EVENT_TYPES, type EventType } from '@/features/events/utils/event-types';
+export * from './catalog';
+export * from './message-templates';
 
 // =====================================================
 // SHARED TYPES
@@ -15,34 +22,6 @@ export type GuestStats = {
 // =====================================================
 // ENUM TYPES
 // =====================================================
-
-// Action types for schedules (stored in DB)
-export const ACTION_TYPES = [
-  'initial_invitation',
-  'confirmation',
-  'event_reminder',
-  'post_event',
-] as const;
-export type ActionType = (typeof ACTION_TYPES)[number];
-export const ACTION_TYPE_LABELS: Record<ActionType, string> = {
-  initial_invitation: 'Initial Invitation',
-  confirmation: 'Confirmation',
-  event_reminder: 'Event Reminder',
-  post_event: 'Thank You',
-};
-
-// CTA (Call to Action) types
-export const CTA_TYPES = [
-  'none',
-  'confirm_rsvp',
-  'directions',
-  'gift_registry',
-  'custom',
-  'view_photos',
-  'view_directions',
-  'view_invitation',
-] as const;
-export type CtaType = (typeof CTA_TYPES)[number];
 
 // Schedule completion status (set after execution)
 export const SCHEDULE_STATUSES = ['sent', 'cancelled'] as const;
@@ -78,25 +57,13 @@ export const CustomContentSchema = z.object({
 
 export type CustomContent = z.infer<typeof CustomContentSchema>;
 
-// --- App-Level Schema (camelCase) ---
-export const ScheduleAppSchema = z.object({
-  id: z.uuid(),
-  eventId: z.uuid(),
-  scheduledDate: z.string(),
-  scheduledTime: z.string().nullable().optional(),
-  status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
-  sentAt: z.string().nullable().optional(),
-  targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
-  templateKey: z.string().nullable().optional(),
-  deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
-  actionType: z.enum(ACTION_TYPES),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
+// The canonical select for schedule queries: every read joins the schedule
+// type key and the full template row so channel/content always come from the
+// catalog (schedules no longer store delivery_method or template_key).
+export const SCHEDULE_SELECT =
+  '*, schedule_types (key), message_templates (*)';
 
-export type ScheduleApp = z.infer<typeof ScheduleAppSchema>;
-
-// --- DB-Level Schema (snake_case) ---
+// --- DB-Level Schema (snake_case, with catalog joins) ---
 export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
@@ -105,11 +72,12 @@ export const ScheduleDbSchema = z.object({
   status: z.enum(SCHEDULE_STATUSES).nullable(),
   sent_at: z.string().nullable(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
-  template_key: z.string().nullable(),
-  delivery_method: z.enum(DELIVERY_METHODS).default('whatsapp'),
-  action_type: z.enum(ACTION_TYPES),
+  schedule_type_id: z.uuid(),
+  template_id: z.uuid().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+  schedule_types: z.object({ key: z.string() }),
+  message_templates: MessageTemplateDbToAppSchema.nullable(),
 });
 
 export type ScheduleDb = z.infer<typeof ScheduleDbSchema>;
@@ -123,63 +91,33 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   status: db.status,
   sentAt: db.sent_at ?? undefined,
   targetStatus: db.target_status ?? null,
-  templateKey: db.template_key ?? undefined,
-  deliveryMethod: db.delivery_method,
-  actionType: db.action_type,
+  scheduleTypeId: db.schedule_type_id,
+  scheduleTypeKey: db.schedule_types.key,
+  templateId: db.template_id,
+  template: db.message_templates as MessageTemplateApp | null,
+  // Derived from the template row - the single source of truth for channel
+  deliveryMethod: db.message_templates?.channel ?? null,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));
 
-// --- Upsert Schema ---
-export const ScheduleUpsertSchema = z.object({
-  id: z.uuid().optional(),
-  eventId: z.uuid(),
-  scheduledDate: z.string(),
-  scheduledTime: z.string().nullable().optional(),
-  status: z.enum(SCHEDULE_STATUSES).nullable().optional(),
-  targetStatus: z.enum(['pending', 'confirmed']).nullable().optional(),
-  templateKey: z.string().nullable().optional(),
-  deliveryMethod: z.enum(DELIVERY_METHODS).optional(),
-  actionType: z.enum(ACTION_TYPES),
-});
-
-export type ScheduleUpsert = z.infer<typeof ScheduleUpsertSchema>;
+export type ScheduleApp = z.infer<typeof ScheduleDbToAppSchema>;
 
 // --- Setup Wizard Selection Schema ---
 // One user-customized schedule chosen in the schedule setup wizard.
 export const ScheduleSelectionItemSchema = z.object({
-  templateKey: z.string().min(1),
-  actionType: z.enum(ACTION_TYPES),
+  scheduleTypeId: z.uuid(),
+  templateId: z.uuid(),
   scheduledDate: z.string(),
   scheduledTime: z.string(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable(),
   // null = active; 'cancelled' = created but disabled (user opted out in the wizard)
   status: z.enum(SCHEDULE_STATUSES).nullable(),
-  deliveryMethod: z.enum(DELIVERY_METHODS).default('whatsapp'),
 });
 
 export type ScheduleSelectionItem = z.infer<typeof ScheduleSelectionItemSchema>;
 
 export const ScheduleSelectionSchema = z.array(ScheduleSelectionItemSchema);
-
-// --- App to DB Transformer ---
-export const ScheduleAppToDbSchema = ScheduleUpsertSchema.transform((app) => {
-  const dbData: Record<string, unknown> = {};
-
-  if (app.id !== undefined) dbData.id = app.id;
-  dbData.event_id = app.eventId;
-  dbData.scheduled_date = app.scheduledDate;
-  if (app.scheduledTime !== undefined) dbData.scheduled_time = app.scheduledTime ?? null;
-  if (app.status !== undefined) dbData.status = app.status;
-  if (app.targetStatus !== undefined) dbData.target_status = app.targetStatus;
-  if (app.templateKey !== undefined)
-    dbData.template_key = app.templateKey ?? null;
-  if (app.deliveryMethod !== undefined)
-    dbData.delivery_method = app.deliveryMethod;
-  dbData.action_type = app.actionType;
-
-  return dbData;
-});
 
 // =====================================================
 // MESSAGE DELIVERIES
@@ -311,7 +249,3 @@ export const GuestInteractionDbToAppSchema = GuestInteractionDbSchema.transform(
     : null,
 }));
 
-// =====================================================
-// WHATSAPP TEMPLATES
-// =====================================================
-export * from './whatsapp-templates';

@@ -4,9 +4,6 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
-import { DEFAULT_SCHEDULES_BY_EVENT_TYPE } from '../constants';
-import { getTemplatesByKeys } from '../config/whatsapp-templates';
-import { calculateScheduledDate } from '../utils';
 import { ScheduleSelectionSchema, type ScheduleSelectionItem } from '../schemas';
 
 export type UpdateScheduledDateState = {
@@ -121,140 +118,6 @@ export async function updateScheduleStatus(
   }
 }
 
-export type CreateDefaultSchedulesState = {
-  success: boolean;
-  message?: string | null;
-  schedulesCreated?: number;
-};
-
-/**
- * Creates default schedules for a new event based on its type.
- * This function is idempotent - it skips creating schedules that already exist.
- *
- * @deprecated Schedules are now configured proactively via the setup wizard
- * (`createSchedulesFromSelection`). Kept for reference / potential reuse.
- *
- * @param eventId - The event ID to create schedules for
- * @param eventDate - The event date in ISO format (YYYY-MM-DD)
- * @param eventType - The type of event (wedding, birthday, etc.)
- * @returns Result state with success status and number of schedules created
- */
-export async function createDefaultSchedules(
-  eventId: string,
-  eventDate: string,
-  eventType: string = 'wedding',
-): Promise<CreateDefaultSchedulesState> {
-  const blocked = await assertNotImpersonating();
-  if (blocked) return { success: false, message: blocked };
-  try {
-    const supabase = await createClient();
-
-    // 1. Get default schedule configurations for this event type
-    const defaultSchedules = DEFAULT_SCHEDULES_BY_EVENT_TYPE[eventType] || [];
-
-    if (defaultSchedules.length === 0) {
-      return {
-        success: true,
-        message: 'No default schedules configured for this event type.',
-        schedulesCreated: 0,
-      };
-    }
-
-    // 2. Get existing schedules for this event (to avoid duplicates)
-    const { data: existingSchedules, error: fetchError } = await supabase
-      .from('schedules')
-      .select('template_key, scheduled_date')
-      .eq('event_id', eventId);
-
-    if (fetchError) {
-      console.error('Error fetching existing schedules:', fetchError);
-      return {
-        success: false,
-        message: 'Failed to check existing schedules.',
-      };
-    }
-
-    // 3. Create a set of existing composite keys (template_key|scheduled_date)
-    const existingKeys = new Set(
-      existingSchedules?.map((s) => `${s.template_key}|${s.scheduled_date}`) ?? [],
-    );
-
-    // 4. Filter to only create schedules that don't already exist
-    const schedulesToCreate = defaultSchedules.filter((schedule) => {
-      const scheduledDate = calculateScheduledDate(eventDate, schedule.daysOffset, schedule.defaultTime);
-      return !existingKeys.has(`${schedule.templateKey}|${scheduledDate}`);
-    });
-
-    if (schedulesToCreate.length === 0) {
-      return {
-        success: true,
-        message: 'Default schedules already exist.',
-        schedulesCreated: 0,
-      };
-    }
-
-    // 5. Validate that all templates exist in local config
-    const templateKeys = schedulesToCreate.map((s) => s.templateKey);
-    const templateMap = getTemplatesByKeys(templateKeys);
-
-    const missingTemplates = templateKeys.filter(
-      (key) => !templateMap.has(key),
-    );
-
-    if (missingTemplates.length > 0) {
-      console.error('Missing WhatsApp templates:', missingTemplates);
-      return {
-        success: false,
-        message: `Missing templates with keys: ${missingTemplates.join(', ')}`,
-      };
-    }
-
-    // 6. Create schedule records
-    const records = schedulesToCreate.map((schedule) => {
-      const scheduled_date = calculateScheduledDate(
-        eventDate,
-        schedule.daysOffset,
-        schedule.defaultTime,
-      );
-      const d = new Date(scheduled_date);
-      const scheduled_time = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
-      return {
-        event_id: eventId,
-        template_key: schedule.templateKey,
-        scheduled_date,
-        scheduled_time,
-        delivery_method: (schedule.deliveryMethod ?? 'whatsapp') as 'whatsapp' | 'sms',
-        target_status: schedule.targetStatus ?? null,
-        action_type: schedule.actionType,
-      };
-    });
-
-    const { error: insertError } = await supabase
-      .from('schedules')
-      .insert(records);
-
-    if (insertError) {
-      console.error('Error creating schedules:', insertError);
-      return {
-        success: false,
-        message: 'Failed to create default schedules.',
-      };
-    }
-
-    return {
-      success: true,
-      message: `Created ${schedulesToCreate.length} default schedule(s).`,
-      schedulesCreated: schedulesToCreate.length,
-    };
-  } catch (error) {
-    console.error('Unexpected error in createDefaultSchedules:', error);
-    return {
-      success: false,
-      message: 'An unexpected error occurred.',
-    };
-  }
-}
-
 export type CreateSchedulesFromSelectionState = {
   success: boolean;
   message?: string | null;
@@ -264,7 +127,8 @@ export type CreateSchedulesFromSelectionState = {
 /**
  * Creates schedules from a user-customized selection made in the setup wizard.
  * Each selection carries a fully-resolved date/time decided by the user.
- * Idempotent - skips selections whose template_key|scheduled_date already exists.
+ * Idempotent - skips selections whose template_id|scheduled_date already exists.
+ * Referential integrity of schedule_type_id/template_id is enforced by FKs.
  *
  * @param eventId - The event ID to create schedules for
  * @param selections - The schedules the user chose to create, with custom dates/times
@@ -291,7 +155,7 @@ export async function createSchedulesFromSelection(
     // Skip selections that already exist (guards against double-submit)
     const { data: existingSchedules, error: fetchError } = await supabase
       .from('schedules')
-      .select('template_key, scheduled_date')
+      .select('template_id, scheduled_date')
       .eq('event_id', eventId);
 
     if (fetchError) {
@@ -300,39 +164,24 @@ export async function createSchedulesFromSelection(
     }
 
     const existingKeys = new Set(
-      existingSchedules?.map((s) => `${s.template_key}|${s.scheduled_date}`) ?? [],
+      existingSchedules?.map((s) => `${s.template_id}|${s.scheduled_date}`) ?? [],
     );
 
     const toCreate = parsed.data.filter(
-      (s) => !existingKeys.has(`${s.templateKey}|${s.scheduledDate}`),
+      (s) => !existingKeys.has(`${s.templateId}|${s.scheduledDate}`),
     );
 
     if (toCreate.length === 0) {
       return { success: true, message: 'Schedules already exist.', schedulesCreated: 0 };
     }
 
-    // Validate every template key exists in local config
-    const templateMap = getTemplatesByKeys(toCreate.map((s) => s.templateKey));
-    const missingTemplates = toCreate
-      .map((s) => s.templateKey)
-      .filter((key) => !templateMap.has(key));
-
-    if (missingTemplates.length > 0) {
-      console.error('Missing WhatsApp templates:', missingTemplates);
-      return {
-        success: false,
-        message: `Missing templates with keys: ${missingTemplates.join(', ')}`,
-      };
-    }
-
     const records = toCreate.map((s) => ({
       event_id: eventId,
-      template_key: s.templateKey,
+      schedule_type_id: s.scheduleTypeId,
+      template_id: s.templateId,
       scheduled_date: s.scheduledDate,
       scheduled_time: s.scheduledTime,
-      delivery_method: (s.deliveryMethod ?? 'whatsapp') as 'whatsapp' | 'sms',
       target_status: s.targetStatus,
-      action_type: s.actionType,
       status: s.status,
     }));
 

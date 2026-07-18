@@ -1,8 +1,13 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { ScheduleDbToAppSchema, type ScheduleApp } from '../schemas';
+import {
+  SCHEDULE_SELECT,
+  ScheduleDbToAppSchema,
+  type ScheduleApp,
+} from '../schemas';
 
 /**
- * Fetches all schedules for a given event.
+ * Fetches all schedules for a given event, with schedule type and message
+ * template joined in.
  *
  * @param eventId - The event ID to fetch schedules for
  * @returns Array of schedules in app format
@@ -14,7 +19,7 @@ export async function getSchedulesByEventId(
 
   const { data, error } = await supabase
     .from('schedules')
-    .select('*')
+    .select(SCHEDULE_SELECT)
     .eq('event_id', eventId)
     .order('scheduled_date', { ascending: true });
 
@@ -62,7 +67,7 @@ export async function getScheduleById(
     .from('schedules')
     .select(
       `
-      *,
+      ${SCHEDULE_SELECT},
       events (
         id,
         user_id,
@@ -113,6 +118,3 @@ export async function getScheduleById(
     event,
   };
 }
-
-// Removed getExistingMessageTypes - no longer needed since message_type field doesn't exist in schedules table
-// Use template_id instead for deduplication in createDefaultSchedules action

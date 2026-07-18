@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBrandWhatsapp, IconMessage, IconCalendarPlus } from '@tabler/icons-react';
-import { type ActionType, type ScheduleApp } from '@/features/schedules/schemas';
+import { type ScheduleTypeKey, type ScheduleApp } from '@/features/schedules/schemas';
 
 function formatScheduleDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -57,7 +57,7 @@ export function UpcomingSchedulesCard({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                    {t(`actionTypes.${schedule.actionType}` as `actionTypes.${ActionType}`)}
+                    {t(`actionTypes.${schedule.scheduleTypeKey}` as `actionTypes.${ScheduleTypeKey}`)}
                   </Badge>
                   {schedule.targetStatus && (
                     <span className="text-xs text-muted-foreground capitalize">→ {schedule.targetStatus}</span>

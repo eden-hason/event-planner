@@ -16,20 +16,13 @@ export {
   categoriseWhatsAppError,
   sendToGuest,
   sendSmsToGuest,
+  buildSmsBody,
   sendInChunks,
   buildDeliveryRecord,
   generateConfirmationToken,
   type WhatsAppErrorCategory,
   type GuestSendResult,
 } from './send-helpers';
-
-// Re-export template validation utilities
-export {
-  validateTemplateConfig,
-  formatValidationIssues,
-  type ValidationResult,
-  type ValidationIssue,
-} from './template-validation';
 
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 
@@ -97,11 +90,11 @@ export function calculateScheduledDate(
 export function filterGuestsByTarget(
   guests: GuestApp[],
   targetStatus?: 'pending' | 'confirmed' | null,
-  actionType?: string,
+  scheduleTypeKey?: string,
 ): GuestApp[] {
   if (!targetStatus) return guests;
 
-  if (actionType === 'initial_invitation') {
+  if (scheduleTypeKey === 'initial_invitation') {
     // Offline RSVP guests receive the initial invitation even though they're not pending
     return guests.filter(
       (guest) => guest.rsvpStatus === targetStatus || guest.isOfflineRsvp,

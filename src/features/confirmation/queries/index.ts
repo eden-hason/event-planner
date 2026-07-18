@@ -31,7 +31,7 @@ export async function getConfirmationDataByToken(
         id,
         events!inner (
           id, title, event_date, ceremony_time, reception_time,
-          location, host_details, guests_experience, event_type, landing_template_id
+          location, host_details, guests_experience, event_types (key), landing_template_id
         )
       )
     `,
@@ -76,7 +76,7 @@ export async function getConfirmationDataByToken(
         dietary_types?: string[];
         lock_guest_count?: boolean;
       } | null;
-      event_type: string | null;
+      event_types: { key: string } | null;
       landing_template_id: string | null;
     };
   };
@@ -131,7 +131,7 @@ export async function getConfirmationDataByToken(
             lockGuestCount: event.guests_experience.lock_guest_count,
           }
         : undefined,
-      eventType: event.event_type ?? undefined,
+      eventType: event.event_types?.key ?? undefined,
       landingTemplateId: event.landing_template_id ?? undefined,
     },
     scheduleId: schedule.id,
@@ -154,7 +154,7 @@ export async function getConfirmationDataByGuestToken(
       id, name, amount, rsvp_status, meal_choice, notes,
       events!inner (
         id, title, event_date, ceremony_time, reception_time,
-        location, host_details, guests_experience, event_type, landing_template_id
+        location, host_details, guests_experience, event_types (key), landing_template_id
       )
     `,
     )
@@ -178,7 +178,7 @@ export async function getConfirmationDataByGuestToken(
       dietary_types?: string[];
       lock_guest_count?: boolean;
     } | null;
-    event_type: string | null;
+    event_types: { key: string } | null;
     landing_template_id: string | null;
   };
 
@@ -209,7 +209,7 @@ export async function getConfirmationDataByGuestToken(
             lockGuestCount: event.guests_experience.lock_guest_count,
           }
         : undefined,
-      eventType: event.event_type ?? undefined,
+      eventType: event.event_types?.key ?? undefined,
       landingTemplateId: event.landing_template_id ?? undefined,
     },
     scheduleId: null,

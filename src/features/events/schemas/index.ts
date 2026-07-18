@@ -164,7 +164,9 @@ export const EventDbSchema = z.object({
   title: z.string(),
   description: z.string().optional().nullable(),
   event_date: z.string(),
-  event_type: z.string().optional().nullable(),
+  event_type_id: z.uuid().optional().nullable(),
+  // Joined from event_types when the query selects it
+  event_types: z.object({ key: z.string() }).optional().nullable(),
   reception_time: z.string().optional().nullable(),
   ceremony_time: z.string().optional().nullable(),
   location: LocationSchema.optional().nullable(),
@@ -197,7 +199,8 @@ export function dbToAppTransformer(dbData: {
   title: string;
   description?: string | null;
   event_date: string;
-  event_type?: string | null;
+  event_type_id?: string | null;
+  event_types?: { key: string } | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
   location?: Location | null;
@@ -248,7 +251,7 @@ export function dbToAppTransformer(dbData: {
     title: dbData.title,
     description: dbData.description ?? undefined,
     eventDate: dbData.event_date,
-    eventType: dbData.event_type ?? undefined,
+    eventType: dbData.event_types?.key ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
     location: dbData.location ?? undefined,
@@ -281,7 +284,6 @@ export const DbToAppTransformerSchema = EventDbSchema.transform(dbToAppTransform
 export const EventDetailsUpdateSchema = z.object({
   id: z.uuid(),
   eventDate: z.string().optional(),
-  eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
   location: LocationSchema.optional(),

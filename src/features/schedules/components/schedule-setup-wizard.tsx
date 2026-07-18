@@ -61,18 +61,19 @@ export function ScheduleSetupWizard({
   const router = useRouter();
 
   const invitationSuggestion = React.useMemo(
-    () => suggestedSchedules.find((s) => s.actionType === 'initial_invitation'),
+    () => suggestedSchedules.find((s) => s.scheduleTypeKey === 'initial_invitation'),
     [suggestedSchedules],
   );
 
   const buildRows = React.useCallback(
     (): TimelineRow[] =>
       suggestedSchedules
-        .filter((s) => s.actionType !== 'initial_invitation')
+        .filter((s) => s.scheduleTypeKey !== 'initial_invitation')
         .map((s, index) => ({
           key: `${s.templateKey}-${index}`,
-          templateKey: s.templateKey,
-          actionType: s.actionType,
+          scheduleTypeId: s.scheduleTypeId,
+          scheduleTypeKey: s.scheduleTypeKey,
+          templateId: s.templateId,
           targetStatus: s.targetStatus,
           enabled: true,
           date: new Date(s.scheduledDate),
@@ -82,6 +83,7 @@ export function ScheduleSetupWizard({
     [suggestedSchedules],
   );
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
   const [step, setStep] = React.useState<Step>('invitation');
   const [isPending, setIsPending] = React.useState(false);
   const [invitationDecision, setInvitationDecision] =
@@ -100,7 +102,14 @@ export function ScheduleSetupWizard({
         : undefined,
     );
     setRows(buildRows());
+    scrollRef.current?.scrollTo({ top: 0 });
   };
+
+  // Smoothly scroll the content back to the top whenever the step changes,
+  // so switching screens never leaves the user mid-scroll on the new step.
+  React.useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   const handleOpenChange = (next: boolean) => {
     if (!next) resetState();
@@ -114,8 +123,8 @@ export function ScheduleSetupWizard({
     // so they remain visible on the schedules page and can be enabled later.
     if (invitationSuggestion && invitationDate) {
       selections.push({
-        templateKey: invitationSuggestion.templateKey,
-        actionType: invitationSuggestion.actionType,
+        scheduleTypeId: invitationSuggestion.scheduleTypeId,
+        templateId: invitationSuggestion.templateId,
         scheduledDate: combineDateTime(
           invitationDate,
           invitationSuggestion.defaultTime,
@@ -123,19 +132,17 @@ export function ScheduleSetupWizard({
         scheduledTime: invitationSuggestion.defaultTime,
         targetStatus: invitationSuggestion.targetStatus,
         status: invitationDecision === 'send' ? null : 'cancelled',
-        deliveryMethod: invitationSuggestion.deliveryMethod,
       });
     }
 
     for (const row of rows) {
       selections.push({
-        templateKey: row.templateKey,
-        actionType: row.actionType,
+        scheduleTypeId: row.scheduleTypeId,
+        templateId: row.templateId,
         scheduledDate: combineDateTime(row.date, row.time),
         scheduledTime: row.time,
         targetStatus: row.targetStatus,
         status: row.enabled ? null : 'cancelled',
-        deliveryMethod: row.deliveryMethod,
       });
     }
 
@@ -169,7 +176,7 @@ export function ScheduleSetupWizard({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="flex max-h-[85dvh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {step === 'invitation' ? t('step1Title') : t('step2Title')}
@@ -195,25 +202,39 @@ export function ScheduleSetupWizard({
           ))}
         </div>
 
-        {step === 'invitation' ? (
-          <WizardInvitationStep
-            template={invitationTemplate}
-            event={event}
-            decision={invitationDecision}
-            onDecisionChange={setInvitationDecision}
-            sendDate={invitationDate}
-            onSendDateChange={setInvitationDate}
+        <div ref={scrollRef} className="-mx-6 min-h-0 flex-1 overflow-y-auto px-6">
+          {/* Scroll fade: header dissolves into the scrolling content below;
+              sits over the pt-4 when scrolled to the very top */}
+          <div
+            aria-hidden
+            className="from-background pointer-events-none sticky top-0 z-10 -mx-6 -mb-4 h-4 bg-gradient-to-b to-transparent"
           />
-        ) : (
-          <WizardTimelineStep
-            rows={rows}
-            onRowsChange={setRows}
-            targetCounts={targetCounts}
-            eventDate={event?.eventDate}
+          <div className="pt-4 pb-8">
+            {step === 'invitation' ? (
+              <WizardInvitationStep
+                template={invitationTemplate}
+                event={event}
+                decision={invitationDecision}
+                onDecisionChange={setInvitationDecision}
+                sendDate={invitationDate}
+                onSendDateChange={setInvitationDate}
+              />
+            ) : (
+              <WizardTimelineStep
+                rows={rows}
+                onRowsChange={setRows}
+                targetCounts={targetCounts}
+                eventDate={event?.eventDate}
+              />
+            )}
+          </div>
+          {/* Scroll fade: content dissolves into the background above the
+              pinned footer; sits over the pb-8 when fully scrolled */}
+          <div
+            aria-hidden
+            className="from-background pointer-events-none sticky bottom-0 z-10 -mx-6 -mt-8 h-8 bg-gradient-to-t to-transparent"
           />
-        )}
-
-        <div className="border-border -mx-6 border-t" />
+        </div>
 
         <DialogFooter>
           {step === 'invitation' ? (

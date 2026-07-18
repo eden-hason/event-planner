@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { IconUsers } from '@tabler/icons-react';
 
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -14,9 +15,10 @@ import { type GuestStats } from '../schemas';
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
   guestStats: GuestStats;
+  disabled?: boolean;
 }
 
-export async function TargetAudienceCard({ targetStatus, guestStats }: TargetAudienceCardProps) {
+export async function TargetAudienceCard({ targetStatus, guestStats, disabled }: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
 
   const audienceLabel =
@@ -60,18 +62,27 @@ export async function TargetAudienceCard({ targetStatus, guestStats }: TargetAud
       <CardContent>
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold tabular-nums leading-none">
-              {targetCount}
+            <span
+              className={cn(
+                'text-4xl font-bold tabular-nums leading-none',
+                disabled && 'text-muted-foreground',
+              )}
+            >
+              {disabled ? 0 : targetCount}
             </span>
             <span className="text-sm text-muted-foreground">
               {t('guestsWillReceive')}
             </span>
           </div>
 
-          {isFiltered && (
-            <p className="text-xs text-muted-foreground">
-              {t('outOfTotal', { total: guestStats.total })}
-            </p>
+          {disabled ? (
+            <p className="text-xs text-muted-foreground">{t('disabledNote')}</p>
+          ) : (
+            isFiltered && (
+              <p className="text-xs text-muted-foreground">
+                {t('outOfTotal', { total: guestStats.total })}
+              </p>
+            )
           )}
         </div>
       </CardContent>

@@ -11,6 +11,7 @@ export const TransformerTypeSchema = z.enum([
   'phoneNumber', // Format phone number
   'wazeNavQuery', // URL-encode venue name and append &navigate=yes for Waze deep link
   'navShortUrl', // Build short nav redirect URL from event.shortCode
+  'rsvpUrl', // Build RSVP confirmation URL from the confirmation token
 ]);
 
 export type TransformerType = z.infer<typeof TransformerTypeSchema>;
@@ -49,9 +50,7 @@ export type TransformerOptions = z.infer<typeof TransformerOptionsSchema>;
 /**
  * Configuration for a single placeholder in a template
  *
- * The placeholder name in the template (e.g., "guest.name" from "{{guest.name}}")
- * is used as the key in the placeholders record. If source is omitted, the placeholder
- * name itself is used as the source path.
+ * If source is omitted, the placeholder name itself is used as the source path.
  */
 export const PlaceholderConfigSchema = z.object({
   source: z.string().optional().describe('Dot-notation path to value (e.g., "guest.name", "event.eventDate"). Defaults to placeholder name if omitted.'),
@@ -60,6 +59,17 @@ export const PlaceholderConfigSchema = z.object({
 });
 
 export type PlaceholderConfig = z.infer<typeof PlaceholderConfigSchema>;
+
+/**
+ * A body placeholder with its semantic name. Body placeholders live in an
+ * ordered array: position N resolves the template's {{N+1}}. Never store them
+ * as an object - jsonb does not preserve key order.
+ */
+export const NamedPlaceholderConfigSchema = PlaceholderConfigSchema.extend({
+  name: z.string().describe('Semantic name of the placeholder (e.g., "host.bride.name")'),
+});
+
+export type NamedPlaceholderConfig = z.infer<typeof NamedPlaceholderConfigSchema>;
 
 /**
  * Header parameter type enum
@@ -94,16 +104,16 @@ export type ButtonPlaceholderConfig = z.infer<typeof ButtonPlaceholderConfigSche
 /**
  * Complete parameter configuration for a template
  *
- * Uses named placeholders where the key is the placeholder name from the template
- * (e.g., "guest.name" for "{{guest.name}}"). This eliminates positional matching errors
- * and makes templates self-documenting.
+ * Body placeholders are an ordered array: the entry at index N resolves the
+ * body's positional {{N+1}}. Each entry carries a semantic name so templates
+ * stay self-documenting.
  */
 export const TemplateParametersConfigSchema = z.object({
   headerPlaceholders: z.array(HeaderPlaceholderConfigSchema)
     .max(1)
     .default([])
     .describe('Header media parameters (WhatsApp supports max 1)'),
-  placeholders: z.record(z.string(), PlaceholderConfigSchema).describe('Body text placeholder configurations mapped by placeholder name'),
+  placeholders: z.array(NamedPlaceholderConfigSchema).describe('Ordered body placeholder configurations; index N fills {{N+1}}'),
   buttonPlaceholders: z.array(ButtonPlaceholderConfigSchema).default([]).describe('Button parameter configurations for dynamic URL or quick-reply buttons'),
 });
 

@@ -13,9 +13,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
-import { type ActionType } from '../schemas';
+import { type ScheduleTypeKey } from '../schemas';
 
-const ACTION_TYPE_ICONS: Record<ActionType, React.ComponentType<{ size?: number | string; className?: string }>> = {
+const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, React.ComponentType<{ size?: number | string; className?: string }>> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   event_reminder: IconBell,
@@ -25,8 +25,8 @@ import { formatRelativeTime } from '../utils';
 import { type ScheduleTabItem } from './schedules-page';
 
 interface SchedulesLayoutProps {
-  visibleTypes: ActionType[];
-  contentByType: Record<ActionType, ScheduleTabItem[]>;
+  visibleTypes: ScheduleTypeKey[];
+  contentByType: Record<ScheduleTypeKey, ScheduleTabItem[]>;
 }
 
 export function SchedulesLayout({
@@ -34,11 +34,11 @@ export function SchedulesLayout({
   contentByType,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
-  const [selectedType, setSelectedType] = useState<ActionType>(visibleTypes[0]);
+  const [selectedType, setSelectedType] = useState<ScheduleTypeKey>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
-  const handleTypeChange = (type: ActionType) => {
+  const handleTypeChange = (type: ScheduleTypeKey) => {
     setSelectedType(type);
     setSelectedSubIndex(0);
   };

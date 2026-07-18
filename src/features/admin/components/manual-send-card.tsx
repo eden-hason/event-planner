@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
+import { SCHEDULE_TYPE_LABELS } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 import { getGuestsForManualSend } from '../queries/event-detail';
 import { sendManualMessages } from '../actions/send-manual';
@@ -36,7 +36,7 @@ function formatDate(dateStr: string) {
 }
 
 function ScheduleLabel({ schedule }: { schedule: ScheduleApp }) {
-  const label = schedule.actionType ? ACTION_TYPE_LABELS[schedule.actionType] : 'Schedule';
+  const label = SCHEDULE_TYPE_LABELS[schedule.scheduleTypeKey] ?? 'Schedule';
   return (
     <span>
       {label}

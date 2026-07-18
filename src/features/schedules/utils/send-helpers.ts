@@ -1,10 +1,9 @@
 import { randomBytes } from 'crypto';
 import type { GuestApp } from '@/features/guests/schemas';
 import type { DeliveryMethod } from '../schemas';
-import type { WhatsAppTemplateApp } from '../schemas/whatsapp-templates';
+import type { SmsPayload, WhatsAppTemplateApp } from '../schemas/message-templates';
 import { sendWhatsAppTemplateMessage } from '../actions/whatsapp';
 import { sendSmsMessage, buildSmsFallbackBody } from '../actions/sms';
-import { buildSmsConfirmationBody, buildSmsTemplateBody } from '../config/sms-bodies';
 import {
   buildDynamicTemplateParameters,
   buildDynamicButtonParameters,
@@ -136,19 +135,34 @@ export async function sendToGuest(params: {
 
 // ─── SMS primary send ─────────────────────────────────────────────────────────
 
+/**
+ * Interpolates an SMS template payload body: each placeholder config resolves
+ * positionally into {{1}}, {{2}}, ... (insertion order defines position).
+ */
+export function buildSmsBody(
+  payload: SmsPayload,
+  context: ParameterResolutionContext,
+): string {
+  const params = buildDynamicTemplateParameters(
+    payload.parameters.placeholders,
+    context,
+  );
+  let body = payload.bodyText;
+  params.forEach((param, i) => {
+    body = body.replace(`{{${i + 1}}}`, param.text);
+  });
+  return body;
+}
+
 export async function sendSmsToGuest(params: {
   guest: GuestApp;
   context: ParameterResolutionContext;
+  smsPayload: SmsPayload;
   confirmationToken: string;
 }): Promise<GuestSendResult> {
-  const { guest, context, confirmationToken } = params;
+  const { guest, context, smsPayload, confirmationToken } = params;
   const phoneE164 = formatPhoneE164(guest.phone!);
-  const actionType = context.schedule?.actionType;
-  const templateKey = context.schedule?.templateKey ?? undefined;
-  const body =
-    actionType === 'event_reminder' || actionType === 'post_event'
-      ? buildSmsTemplateBody(context, templateKey!)
-      : buildSmsConfirmationBody(context, confirmationToken);
+  const body = buildSmsBody(smsPayload, context);
   const result = await sendSmsMessage({ to: phoneE164, body });
 
   return {

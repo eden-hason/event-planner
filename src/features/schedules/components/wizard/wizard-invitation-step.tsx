@@ -59,7 +59,7 @@ export function WizardInvitationStep({
     <div className="space-y-5">
       <MessageContentCard template={template} event={event} />
 
-      <div className="flex items-start gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-3 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+      <div className="border-primary/20 bg-primary/5 text-primary flex items-start gap-2.5 rounded-lg border px-3.5 py-3">
         <IconInfoCircle className="mt-px size-4 shrink-0" />
         <p className="text-xs leading-relaxed">{t('invitationPrivacyNote')}</p>
       </div>

@@ -7,7 +7,7 @@ export async function getEventById(eventId: string): Promise<EventApp | null> {
   const { supabase } = await getEffectiveClient();
   const { data: event, error } = await supabase
     .from('events')
-    .select('*')
+    .select('*, event_types (key)')
     .eq('id', eventId)
     .single();
 
@@ -34,7 +34,7 @@ export async function getLastUserEvent(): Promise<EventApp | null> {
 
     let query = supabase
       .from('events')
-      .select('*')
+      .select('*, event_types (key)')
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -65,7 +65,7 @@ export async function getLastUserEvent(): Promise<EventApp | null> {
 export async function getAllUserEvents(): Promise<EventApp[]> {
   const { supabase, impersonation } = await getEffectiveClient();
 
-  let query = supabase.from('events').select('*').order('created_at', { ascending: false });
+  let query = supabase.from('events').select('*, event_types (key)').order('created_at', { ascending: false });
 
   if (impersonation) {
     query = query.eq('user_id', impersonation.userId);
