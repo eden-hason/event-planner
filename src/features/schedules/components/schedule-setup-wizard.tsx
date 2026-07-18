@@ -70,7 +70,7 @@ export function ScheduleSetupWizard({
       suggestedSchedules
         .filter((s) => s.scheduleTypeKey !== 'initial_invitation')
         .map((s, index) => ({
-          key: `${s.templateKey}-${index}`,
+          key: `${s.templateId}-${index}`,
           scheduleTypeId: s.scheduleTypeId,
           scheduleTypeKey: s.scheduleTypeKey,
           templateId: s.templateId,
@@ -78,7 +78,6 @@ export function ScheduleSetupWizard({
           enabled: true,
           date: new Date(s.scheduledDate),
           time: s.defaultTime,
-          deliveryMethod: s.deliveryMethod,
         })),
     [suggestedSchedules],
   );

@@ -24,7 +24,6 @@ export type TimelineRow = {
   enabled: boolean;
   date: Date;
   time: string;
-  deliveryMethod: 'whatsapp' | 'sms';
 };
 
 interface WizardTimelineStepProps {

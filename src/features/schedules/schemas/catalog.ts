@@ -23,26 +23,6 @@ export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   post_event: 'Thank You',
 };
 
-// --- schedule_types ---
-
-export const ScheduleTypeDbSchema = z.object({
-  id: z.uuid(),
-  key: z.string(),
-  name: z.string(),
-  sort_order: z.number().int(),
-});
-
-export const ScheduleTypeDbToAppSchema = ScheduleTypeDbSchema.transform(
-  (db) => ({
-    id: db.id,
-    key: db.key,
-    name: db.name,
-    sortOrder: db.sort_order,
-  }),
-);
-
-export type ScheduleTypeApp = z.infer<typeof ScheduleTypeDbToAppSchema>;
-
 // --- event_type_default_schedules (joined with schedule_types + message_templates) ---
 
 export const DefaultScheduleDbSchema = z.object({

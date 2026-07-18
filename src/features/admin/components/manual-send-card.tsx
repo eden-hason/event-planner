@@ -21,8 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { SCHEDULE_TYPE_LABELS } from '@/features/schedules/schemas';
-import type { ScheduleApp } from '@/features/schedules/schemas';
+import { SCHEDULE_TYPE_LABELS, type ScheduleApp } from '@/features/schedules';
 import { getGuestsForManualSend } from '../queries/event-detail';
 import { sendManualMessages } from '../actions/send-manual';
 import type { GuestWithDeliveryStatus } from '../queries/event-detail';

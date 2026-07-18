@@ -54,5 +54,9 @@ emulator-data/
 # cursor
 .cursorrules
 
+# codex
+.codex
+AGENTS.md
+
 # mcp config (contains secrets)
 .mcp.json

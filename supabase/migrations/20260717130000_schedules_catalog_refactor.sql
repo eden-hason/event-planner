@@ -614,6 +614,28 @@ from public.message_templates mt
 where mt.key = s.template_key
   and mt.channel = s.delivery_method;
 
+-- Guard: template_key is free text with no FK, so a stale/renamed key
+-- (e.g. a template retired in code without a companion data migration -
+-- see the 2026-05-30 event_reminder_v1_he -> event_reminder_casual rename)
+-- would otherwise backfill to a silent null right before template_key
+-- itself is dropped below, permanently losing the ability to diagnose it.
+-- Rows with a null template_key are legitimately templateless and are not
+-- flagged here.
+do $$
+declare
+  v_unmatched int;
+begin
+  select count(*) into v_unmatched
+  from public.schedules
+  where template_key is not null and template_id is null;
+
+  if v_unmatched > 0 then
+    raise exception
+      'schedules_catalog_refactor: % schedule(s) have a template_key with no matching (key, channel) in message_templates. Add a legacy alias to the backfill join above before re-running.',
+      v_unmatched;
+  end if;
+end $$;
+
 alter table public.schedules alter column schedule_type_id set not null;
 
 create index schedules_schedule_type_id_idx on public.schedules (schedule_type_id);
@@ -634,3 +656,13 @@ drop type if exists public.trigger_strategy_enum;
 drop type if exists public.schedule_status_enum;
 drop type if exists public.message_type;
 drop type if exists public.cta_type;
+
+-- =====================================================
+-- 9. DROP seed_sandbox_data
+--    Wrote to columns this migration removes (events.event_type,
+--    schedules.action_type/template_key/delivery_method) using legacy
+--    template keys that predate the catalog. Demo/QA seeding, not used by
+--    app code; retiring rather than porting it forward.
+-- =====================================================
+
+drop function if exists public.seed_sandbox_data(uuid);

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBrandWhatsapp, IconMessage, IconCalendarPlus } from '@tabler/icons-react';
-import { type ScheduleTypeKey, type ScheduleApp } from '@/features/schedules/schemas';
+import { type ScheduleTypeKey, type ScheduleApp } from '@/features/schedules';
 
 function formatScheduleDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {

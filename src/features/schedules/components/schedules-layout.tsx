@@ -128,7 +128,8 @@ export function SchedulesLayout({
 function StatusRow({ item }: { item: ScheduleTabItem }) {
   const t = useTranslations('schedules');
   const isSent = item.scheduleStatus === 'sent';
-  const dateStr = isSent ? item.sentAt : item.scheduledDate;
+  const isCancelled = item.scheduleStatus === 'cancelled';
+  const dateStr = isSent ? item.sentAt : isCancelled ? undefined : item.scheduledDate;
 
   function formatTime(str: string): string {
     const result = formatRelativeTime(str);
@@ -143,10 +144,14 @@ function StatusRow({ item }: { item: ScheduleTabItem }) {
       <span
         className={cn(
           'inline-block size-1.5 rounded-full',
-          isSent ? 'bg-green-500' : 'bg-amber-500',
+          isSent ? 'bg-green-500' : isCancelled ? 'bg-muted-foreground/40' : 'bg-amber-500',
         )}
       />
-      {isSent ? t('status.label.sent') : t('status.label.pending')}
+      {isSent
+        ? t('status.label.sent')
+        : isCancelled
+          ? t('status.label.cancelled')
+          : t('status.label.pending')}
       {dateStr && (
         <>
           <span>·</span>

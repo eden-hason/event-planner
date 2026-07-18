@@ -5,8 +5,6 @@ export type SuggestedSchedule = {
   scheduleTypeId: string;
   scheduleTypeKey: string;
   templateId: string;
-  templateKey: string;
-  deliveryMethod: 'whatsapp' | 'sms';
   daysOffset: number;
   defaultTime: string;
   targetStatus: 'pending' | 'confirmed' | null;
@@ -29,8 +27,6 @@ export function buildSuggestedSchedules(
     scheduleTypeId: config.scheduleTypeId,
     scheduleTypeKey: config.scheduleTypeKey,
     templateId: config.templateId,
-    templateKey: config.template.key,
-    deliveryMethod: config.template.channel,
     daysOffset: config.daysOffset,
     defaultTime: config.defaultTime,
     targetStatus: config.targetStatus,
