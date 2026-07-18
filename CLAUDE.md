@@ -32,6 +32,13 @@ Each feature is a self-contained slice and should keep this internal shape:
 - `types.ts` - TypeScript-only types: view models, query result shapes, derived types (no Zod)
 - `components/` - Feature-specific UI
 - `utils/` - Data transformation and helpers
+- `services/` (optional) - Server-only business logic shared by multiple `'use server'`
+  entry points across features (e.g. a send/execution engine invoked by a Server Action, a
+  cron route, and an admin action). Takes its dependencies (like a Supabase client) as
+  parameters rather than constructing them, so it stays framework-agnostic and callable from
+  any entry point. Not a Server Action itself and not a pure data-transform helper, so it
+  doesn't belong in `actions/` or `utils/`. See `src/features/schedules/services/` for the
+  reference pattern.
 - `index.ts` - Public API barrel (see below)
 
 **Public API barrels.** Every feature exposes a root `index.ts` that explicitly

@@ -1,6 +1,4 @@
 export {
-  createDefaultSchedules,
-  type CreateDefaultSchedulesState,
   createSchedulesFromSelection,
   type CreateSchedulesFromSelectionState,
   updateScheduledDate,

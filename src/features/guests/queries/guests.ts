@@ -61,9 +61,9 @@ export const getGuestsWithInitialInvitation = async (
     const { supabase } = await getEffectiveClient();
     const { data } = await supabase
       .from('message_deliveries')
-      .select('guest_id, schedules!inner(action_type, event_id)')
+      .select('guest_id, schedules!inner(event_id, schedule_types!inner(key))')
       .eq('schedules.event_id', eventId)
-      .eq('schedules.action_type', 'initial_invitation')
+      .eq('schedules.schedule_types.key', 'initial_invitation')
       .in('status', ['sent', 'delivered', 'read']);
     return new Set(data?.map((d) => d.guest_id) ?? []);
   } catch (error) {

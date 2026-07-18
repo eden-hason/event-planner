@@ -888,6 +888,7 @@
     "audience": {
       "cardTitle": "קהל יעד",
       "guestsWillReceive": "אורחים יקבלו הודעה זו",
+      "disabledNote": "התזמון כבוי - אף אורח לא יקבל הודעה זו",
       "outOfTotal": "מתוך {total} אורחים סה\"כ",
       "allGuests": "כל האורחים",
       "confirmedGuests": "אורחים שאישרו",
@@ -935,7 +936,7 @@
         "trackDesc": "תזכורות ביום האירוע והודעות תודה"
       },
       "step1Title": "הזמנה ראשונית",
-      "step1Description": "שלחו שמירת תאריך לאורחים שטרם אישרו",
+      "step1Description": "בחרו אם לשלוח הודעת Save the Date כהודעה הראשונה בלוח הזמנים.",
       "step2Title": "סקירת ציר הזמן",
       "step2Description": "אשרו את התזמונים שתרצו לשלוח",
       "invitationPreviewLabel": "תצוגה מקדימה של ההזמנה",
@@ -947,7 +948,7 @@
       "decisionSendDesc": "ההזמנה תישלח בתאריך שתבחרו",
       "decisionSkip": "לדלג בינתיים",
       "decisionSkipDesc": "תוכלו להפעיל אותו בכל עת",
-      "timelineHelper": "כבו כל מה שאינכם מוכנים אליו - זה יישאר בציר הזמן, רק מושבת",
+      "timelineHelper": "ניתן לכבות כל אחד מלוחות הזמנים המוצגים — הוא יישאר בציר הזמן, אך יהיה מושבת",
       "recipientsCount": "{count} אורחים",
       "continue": "המשך",
       "back": "חזרה",

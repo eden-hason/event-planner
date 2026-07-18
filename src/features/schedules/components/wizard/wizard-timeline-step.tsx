@@ -15,17 +15,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { type ActionType } from '../../schemas';
+import { SCHEDULE_TYPE_KEYS } from '../../schemas';
+
+const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
 
 export type TimelineRow = {
   key: string;
-  templateKey: string;
-  actionType: ActionType;
+  scheduleTypeId: string;
+  scheduleTypeKey: string;
+  scheduleTypeName: string;
+  templateId: string;
   targetStatus: 'pending' | 'confirmed' | null;
   enabled: boolean;
   date: Date;
   time: string;
-  deliveryMethod: 'whatsapp' | 'sms';
 };
 
 interface WizardTimelineStepProps {
@@ -84,20 +87,23 @@ export function WizardTimelineStep({
     onRowsChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   };
 
-  const actionTypeTotals = rows.reduce<Partial<Record<ActionType, number>>>(
-    (acc, r) => ({ ...acc, [r.actionType]: (acc[r.actionType] ?? 0) + 1 }),
+  const typeTotals = rows.reduce<Partial<Record<string, number>>>(
+    (acc, r) => ({ ...acc, [r.scheduleTypeKey]: (acc[r.scheduleTypeKey] ?? 0) + 1 }),
     {},
   );
-  const actionTypeCounters: Partial<Record<ActionType, number>> = {};
+  const typeCounters: Partial<Record<string, number>> = {};
 
   const timelineItems = rows.map((row) => {
-    actionTypeCounters[row.actionType] = (actionTypeCounters[row.actionType] ?? 0) + 1;
-    const total = actionTypeTotals[row.actionType] ?? 1;
-    const index = actionTypeCounters[row.actionType]!;
-    const label =
-      total > 1
-        ? `${t(`actionTypes.${row.actionType}`)} ${index}/${total}`
-        : t(`actionTypes.${row.actionType}`);
+    typeCounters[row.scheduleTypeKey] = (typeCounters[row.scheduleTypeKey] ?? 0) + 1;
+    const total = typeTotals[row.scheduleTypeKey] ?? 1;
+    const index = typeCounters[row.scheduleTypeKey]!;
+    // Known types use the translated i18n label; anything else (a schedule
+    // type added to the catalog outside this build's known set) falls back
+    // to its own DB name.
+    const baseLabel = KNOWN_SCHEDULE_TYPE_KEYS.includes(row.scheduleTypeKey)
+      ? t(`actionTypes.${row.scheduleTypeKey}`)
+      : row.scheduleTypeName;
+    const label = total > 1 ? `${baseLabel} ${index}/${total}` : baseLabel;
     const audienceKind = row.targetStatus ?? 'all';
 
     return (

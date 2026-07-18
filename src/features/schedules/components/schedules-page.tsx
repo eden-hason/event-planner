@@ -4,10 +4,11 @@ import { IconChartBar, IconLayoutGrid } from '@tabler/icons-react';
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getTemplatesByKeys } from '../config/whatsapp-templates';
+import { getDefaultSchedulesForEventType } from '../queries/catalog';
 import {
-  ACTION_TYPES,
-  type ActionType,
+  SCHEDULE_TYPE_KEYS,
+  toWhatsAppTemplate,
+  type ScheduleTypeKey,
   type GuestStats,
   type ScheduleApp,
   type WhatsAppTemplateApp,
@@ -33,6 +34,8 @@ type ScheduleWithTemplate = {
   smsBody: string | null;
 };
 
+const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
+
 export type ScheduleTabItem = {
   label: string;
   scheduleId: string;
@@ -41,6 +44,7 @@ export type ScheduleTabItem = {
   scheduledDate: string;
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
+  scheduleTypeName: string;
   details: React.ReactNode;
 };
 
@@ -53,13 +57,6 @@ export async function SchedulesPage({
   const t = await getTranslations('schedules');
   const locale = await getLocale();
 
-  // Resolve all templates for schedules from local config
-  const templateKeys = schedules
-    .map((s) => s.templateKey)
-    .filter((key): key is string => key !== null && key !== undefined);
-
-  const uniqueTemplateKeys = Array.from(new Set(templateKeys));
-  const templateMap = getTemplatesByKeys(uniqueTemplateKeys);
   const guests = await getEventGuests(eventId);
   const canCreateSchedules = event?.canCreateSchedules ?? false;
 
@@ -70,34 +67,46 @@ export async function SchedulesPage({
     declined: guests.filter((g) => g.rsvpStatus === 'declined').length,
   };
 
-  // Group schedules by actionType (multiple allowed for 'confirmation')
-  const schedulesByActionType: Partial<Record<ActionType, ScheduleWithTemplate[]>> = {};
+  // Group schedules by schedule type key (multiple allowed for 'confirmation').
+  // Each schedule carries its template row from the catalog join. Keyed by
+  // plain string, not the closed ScheduleTypeKey union - schedule_types is a
+  // DB table and can grow past the four keys known at build time.
+  const schedulesByType: Partial<Record<string, ScheduleWithTemplate[]>> = {};
 
   for (const schedule of schedules) {
-    if (!schedulesByActionType[schedule.actionType]) {
-      schedulesByActionType[schedule.actionType] = [];
+    const typeKey = schedule.scheduleTypeKey;
+    if (!schedulesByType[typeKey]) {
+      schedulesByType[typeKey] = [];
     }
-    schedulesByActionType[schedule.actionType]!.push({
+    schedulesByType[typeKey]!.push({
       schedule,
-      template: schedule.templateKey ? (templateMap.get(schedule.templateKey)?.whatsapp ?? null) : null,
-      smsBody: schedule.deliveryMethod === 'sms' && schedule.templateKey
-        ? (() => {
-            const smsConfig = templateMap.get(schedule.templateKey!)?.sms;
-            return smsConfig ? resolveSmsBodyForPreview(smsConfig, event).resolvedBody : null;
-          })()
-        : null,
+      template: schedule.template ? toWhatsAppTemplate(schedule.template) : null,
+      smsBody:
+        schedule.template?.channel === 'sms'
+          ? resolveSmsBodyForPreview(schedule.template.payload, event).resolvedBody
+          : null,
     });
   }
 
-  // Only show types that have actual schedules, in canonical order
-  const visibleTypes = ACTION_TYPES.filter((type) => schedulesByActionType[type]);
+  // Show every type that has actual schedules, not just the four known at
+  // build time: known keys first in their canonical order, then any other
+  // catalog type (e.g. one added directly to schedule_types) appended after.
+  const presentTypes = Object.keys(schedulesByType);
+  const visibleTypes = [
+    ...SCHEDULE_TYPE_KEYS.filter((type) => schedulesByType[type]),
+    ...presentTypes.filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type)).sort(),
+  ];
 
   if (visibleTypes.length === 0) {
     const eventType = event?.eventType ?? 'wedding';
-    const suggestedSchedules = buildSuggestedSchedules(eventType, eventDate);
-    const invitationTemplate =
-      getTemplatesByKeys(['invitation_casual']).get('invitation_casual')
-        ?.whatsapp ?? null;
+    const defaults = await getDefaultSchedulesForEventType(eventType);
+    const suggestedSchedules = buildSuggestedSchedules(defaults, eventDate);
+    const invitationDefault = defaults.find(
+      (d) => d.scheduleTypeKey === 'initial_invitation',
+    );
+    const invitationTemplate = invitationDefault
+      ? toWhatsAppTemplate(invitationDefault.template)
+      : null;
     const targetCounts = {
       all: guests.length,
       pending: filterGuestsByTarget(guests, 'pending').length,
@@ -117,11 +126,16 @@ export async function SchedulesPage({
   }
 
   // Pre-render content for all types on the server
-  const contentByType: Partial<Record<ActionType, ScheduleTabItem[]>> = {};
+  const contentByType: Partial<Record<string, ScheduleTabItem[]>> = {};
 
   for (const type of visibleTypes) {
-    const items = schedulesByActionType[type]!;
-    const baseLabel = t(`actionTypes.${type}`);
+    const items = schedulesByType[type]!;
+    // Known types use the translated i18n label; anything else (a schedule
+    // type added to the catalog outside this build's known set) falls back
+    // to its own DB name so it still renders with a sensible label.
+    const baseLabel = KNOWN_SCHEDULE_TYPE_KEYS.includes(type)
+      ? t(`actionTypes.${type}` as `actionTypes.${ScheduleTypeKey}`)
+      : items[0].schedule.scheduleTypeName;
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
@@ -134,7 +148,8 @@ export async function SchedulesPage({
         scheduledDate: schedule.scheduledDate,
         guestCount,
         targetStatus: schedule.targetStatus,
-        details: schedule.actionType === 'confirmation' ? (
+        scheduleTypeName: schedule.scheduleTypeName,
+        details: schedule.scheduleTypeKey === 'confirmation' ? (
           <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
             <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
               <TabsTrigger
@@ -170,6 +185,7 @@ export async function SchedulesPage({
           <ScheduleTabContent
             schedule={schedule}
             template={template}
+            smsBody={smsBody}
             eventDate={eventDate}
             event={event}
             guestStats={guestStats}
@@ -182,7 +198,7 @@ export async function SchedulesPage({
   return (
     <SchedulesLayout
       visibleTypes={visibleTypes}
-      contentByType={contentByType as Record<ActionType, ScheduleTabItem[]>}
+      contentByType={contentByType as Record<string, ScheduleTabItem[]>}
     />
   );
 }

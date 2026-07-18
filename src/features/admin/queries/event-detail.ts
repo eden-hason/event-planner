@@ -2,7 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { ScheduleDbToAppSchema } from '@/features/schedules/schemas';
+import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '@/features/schedules/schemas';
 import type { ScheduleApp } from '@/features/schedules/schemas';
 
 export type AdminEventDetail = {
@@ -57,7 +57,7 @@ export async function getAdminEventSchedules(eventId: string): Promise<ScheduleA
 
   const { data, error } = await supabase
     .from('schedules')
-    .select('*')
+    .select(SCHEDULE_SELECT)
     .eq('event_id', eventId)
     .order('scheduled_date', { ascending: true });
 

@@ -18,8 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ACTION_TYPE_LABELS } from '@/features/schedules/schemas';
-import type { ScheduleApp } from '@/features/schedules/schemas';
+import { SCHEDULE_TYPE_LABELS, type ScheduleApp } from '@/features/schedules';
 import { getGuestsForManualSend } from '../queries/event-detail';
 import type { GuestWithDeliveryStatus } from '../queries/event-detail';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
@@ -132,7 +131,7 @@ export function TriggerScheduleCard({
                   {unsentSchedules.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       <span>
-                        {s.actionType ? ACTION_TYPE_LABELS[s.actionType] : 'Schedule'}
+                        {SCHEDULE_TYPE_LABELS[s.scheduleTypeKey] ?? s.scheduleTypeName}
                         <span className="ml-2 text-muted-foreground">
                           · {formatDate(s.scheduledDate)}
                         </span>

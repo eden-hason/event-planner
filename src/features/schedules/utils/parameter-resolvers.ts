@@ -7,6 +7,7 @@ import type {
 } from '@/features/schedules/schemas';
 import type {
   PlaceholderConfig,
+  NamedPlaceholderConfig,
   HeaderPlaceholderConfig,
   ButtonPlaceholderConfig,
   TransformerType,
@@ -133,6 +134,16 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     return `${siteUrl}/nav/${code}`;
   },
 
+  rsvpUrl: (value: unknown) => {
+    const token = String(value ?? '').trim();
+    if (!token) return '';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_VERCEL_URL ||
+      'http://localhost:3000';
+    return `${siteUrl}/confirm/${token}`;
+  },
+
   phoneNumber: (value: unknown) => {
     if (!value) return '';
     const phone = String(value);
@@ -208,19 +219,19 @@ export function extractPlaceholders(templateBody: string): string[] {
  * Build WhatsApp template parameters array from configurations
  *
  * WhatsApp templates use numeric placeholders ({{1}}, {{2}}, etc.).
- * Each config entry maps positionally to a numeric placeholder — the first
- * entry resolves {{1}}, the second {{2}}, and so on.
+ * Each config entry maps positionally to a numeric placeholder — the entry
+ * at index 0 resolves {{1}}, index 1 resolves {{2}}, and so on.
  *
- * @param configs - Record mapping placeholder names to their configurations (insertion order defines position)
+ * @param configs - Ordered placeholder configurations (array position defines position)
  * @param context - The resolution context with guest, event, group, schedule data
  * @returns Array of text parameters for WhatsApp API
  */
 export function buildDynamicTemplateParameters(
-  configs: Record<string, PlaceholderConfig>,
+  configs: NamedPlaceholderConfig[],
   context: ParameterResolutionContext,
 ): Array<{ type: 'text'; text: string }> {
-  return Object.entries(configs).map(([placeholderName, config]) => {
-    const resolvedValue = resolvePlaceholder(placeholderName, config, context);
+  return configs.map((config) => {
+    const resolvedValue = resolvePlaceholder(config.name, config, context);
     return { type: 'text' as const, text: resolvedValue };
   });
 }
@@ -353,11 +364,11 @@ export function buildDynamicButtonParameters(
  * against the provided event.
  */
 export function resolveSmsBodyForPreview(
-  smsConfig: { bodyText: string; parameters?: { placeholders?: Record<string, { source?: string; transformer: string }> } },
+  smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
 ): { resolvedBody: string; hasMissingFields: boolean } {
   const placeholders = smsConfig.parameters?.placeholders;
-  if (!placeholders || Object.keys(placeholders).length === 0) {
+  if (!placeholders || placeholders.length === 0) {
     return { resolvedBody: smsConfig.bodyText, hasMissingFields: false };
   }
 
@@ -365,8 +376,8 @@ export function resolveSmsBodyForPreview(
   const resolvedValues: string[] = [];
   const mockContext = { event: event ?? {}, guest: {} } as unknown as ParameterResolutionContext;
 
-  for (const [name, config] of Object.entries(placeholders)) {
-    const source = config.source ?? name;
+  for (const config of placeholders) {
+    const source = config.source ?? config.name;
     if (source.startsWith('guest.') || source.startsWith('group.')) {
       const fieldName = source.split('.').pop() ?? source;
       resolvedValues.push(`[${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}]`);
@@ -376,7 +387,7 @@ export function resolveSmsBodyForPreview(
         hasMissingFields = true;
         resolvedValues.push('…');
       } else {
-        resolvedValues.push(resolvePlaceholder(name, config as Parameters<typeof resolvePlaceholder>[1], mockContext) || '…');
+        resolvedValues.push(resolvePlaceholder(config.name, config, mockContext) || '…');
       }
     }
   }
@@ -395,7 +406,7 @@ export function resolveTemplateBodyForPreview(
 ): { resolvedBody: string; hasMissingFields: boolean } {
   const placeholders = template.parameters?.placeholders;
 
-  if (!placeholders || Object.keys(placeholders).length === 0) {
+  if (!placeholders || placeholders.length === 0) {
     return { resolvedBody: template.bodyText, hasMissingFields: false };
   }
 
@@ -406,8 +417,8 @@ export function resolveTemplateBodyForPreview(
     guest: {},
   } as unknown as ParameterResolutionContext;
 
-  for (const [name, config] of Object.entries(placeholders)) {
-    const source = config.source ?? name;
+  for (const config of placeholders) {
+    const source = config.source ?? config.name;
 
     if (source.startsWith('guest.') || source.startsWith('group.')) {
       const fieldName = source.split('.').pop() ?? source;
@@ -420,7 +431,7 @@ export function resolveTemplateBodyForPreview(
         hasMissingFields = true;
         resolvedValues.push('…');
       } else {
-        const resolved = resolvePlaceholder(name, config, mockContext);
+        const resolved = resolvePlaceholder(config.name, config, mockContext);
         resolvedValues.push(resolved || '…');
       }
     }

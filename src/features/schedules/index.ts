@@ -1,29 +1,20 @@
 // Components
-export { SchedulesHeader } from './components';
+// Imported directly from its own file, not the ./components barrel - that
+// barrel also exports SchedulesPage (a Server Component with a server-only
+// queries/catalog.ts -> next/headers dependency chain), which would leak
+// into any client bundle that imports anything from this root barrel.
+export { SchedulesHeader } from './components/schedules-header';
 
 // Actions
 export {
-  createDefaultSchedules,
-  type CreateDefaultSchedulesState,
+  createSchedulesFromSelection,
+  type CreateSchedulesFromSelectionState,
   executeSchedule,
   type ExecuteScheduleResult,
   type ExecuteScheduleSummary,
   sendWhatsAppTemplateMessage,
   type SendWhatsAppTemplateResult,
 } from './actions';
-
-// Queries
-export {
-  getSchedulesByEventId,
-  getScheduleById,
-} from './queries';
-
-// Constants
-export {
-  WEDDING_DEFAULT_SCHEDULES,
-  DEFAULT_SCHEDULES_BY_EVENT_TYPE,
-  type DefaultScheduleConfig,
-} from './constants';
 
 // Utils
 export {
@@ -37,7 +28,13 @@ export {
 export {
   type ScheduleApp,
   type ScheduleDb,
+  type ScheduleTypeKey,
+  type MessageTemplateApp,
+  type WhatsAppTemplateApp,
   type MessageDeliveryApp,
+  type DefaultScheduleApp,
+  SCHEDULE_TYPE_KEYS,
+  SCHEDULE_TYPE_LABELS,
   SCHEDULE_STATUSES,
   DELIVERY_METHODS,
   DELIVERY_STATUSES,

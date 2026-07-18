@@ -17,7 +17,6 @@ type GuestsExperienceDb = {
 type EventDetailsDbUpdate = {
   id: string;
   event_date?: string;
-  event_type?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
   location?: Location | null;
@@ -37,9 +36,6 @@ export function eventDetailsUpdateToDb(
 
   if (data.eventDate !== undefined) {
     dbData.event_date = data.eventDate;
-  }
-  if (data.eventType !== undefined) {
-    dbData.event_type = data.eventType || null;
   }
   if (data.receptionTime !== undefined) {
     dbData.reception_time = data.receptionTime || null;

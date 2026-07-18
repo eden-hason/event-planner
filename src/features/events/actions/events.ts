@@ -35,6 +35,26 @@ export type SetDefaultEventState = {
  * @param formData - Form data containing title, eventDate, and eventType
  * @returns Result state with success status and new event ID
  */
+/**
+ * Resolves an event type key (e.g. 'wedding') to its event_types row id.
+ */
+async function resolveEventTypeId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventTypeKey: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('event_types')
+    .select('id')
+    .eq('key', eventTypeKey)
+    .single();
+
+  if (error || !data) {
+    console.error('Error resolving event type:', eventTypeKey, error);
+    return null;
+  }
+  return data.id;
+}
+
 export async function createEvent(formData: FormData): Promise<CreateEventState> {
   const blocked = await assertNotImpersonating();
   if (blocked) return { success: false, message: blocked };
@@ -61,6 +81,11 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
     const { title, eventDate, eventType } = validationResult.data;
     const supabase = await createClient();
 
+    const eventTypeId = await resolveEventTypeId(supabase, eventType);
+    if (!eventTypeId) {
+      return { success: false, message: 'Unknown event type' };
+    }
+
     // Insert the new event
     const { data: newEvent, error } = await supabase
       .from('events')
@@ -68,7 +93,7 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
         user_id: currentUser.id,
         title,
         event_date: eventDate,
-        event_type: eventType,
+        event_type_id: eventTypeId,
         status: 'draft',
         is_default: true,
       })
@@ -186,13 +211,18 @@ export async function createOnboardingEvent(
 
     const supabase = await createClient();
 
+    const eventTypeId = await resolveEventTypeId(supabase, eventType);
+    if (!eventTypeId) {
+      return { success: false, message: 'Unknown event type' };
+    }
+
     const { data: newEvent, error } = await supabase
       .from('events')
       .insert({
         user_id: currentUser.id,
         title,
         event_date: eventDate,
-        event_type: eventType,
+        event_type_id: eventTypeId,
         status: 'draft',
         is_default: true,
         host_details: hostDetails,
