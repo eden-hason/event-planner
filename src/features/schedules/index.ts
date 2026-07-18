@@ -1,5 +1,9 @@
 // Components
-export { SchedulesHeader } from './components';
+// Imported directly from its own file, not the ./components barrel - that
+// barrel also exports SchedulesPage (a Server Component with a server-only
+// queries/catalog.ts -> next/headers dependency chain), which would leak
+// into any client bundle that imports anything from this root barrel.
+export { SchedulesHeader } from './components/schedules-header';
 
 // Actions
 export {
