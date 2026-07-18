@@ -73,6 +73,7 @@ export function ScheduleSetupWizard({
           key: `${s.templateId}-${index}`,
           scheduleTypeId: s.scheduleTypeId,
           scheduleTypeKey: s.scheduleTypeKey,
+          scheduleTypeName: s.scheduleTypeName,
           templateId: s.templateId,
           targetStatus: s.targetStatus,
           enabled: true,

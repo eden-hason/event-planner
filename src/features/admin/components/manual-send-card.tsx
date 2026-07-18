@@ -35,7 +35,7 @@ function formatDate(dateStr: string) {
 }
 
 function ScheduleLabel({ schedule }: { schedule: ScheduleApp }) {
-  const label = SCHEDULE_TYPE_LABELS[schedule.scheduleTypeKey] ?? 'Schedule';
+  const label = SCHEDULE_TYPE_LABELS[schedule.scheduleTypeKey] ?? schedule.scheduleTypeName;
   return (
     <span>
       {label}

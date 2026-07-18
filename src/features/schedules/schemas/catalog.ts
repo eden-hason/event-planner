@@ -34,7 +34,7 @@ export const DefaultScheduleDbSchema = z.object({
   default_time: z.string(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   sort_order: z.number().int(),
-  schedule_types: z.object({ key: z.string() }),
+  schedule_types: z.object({ key: z.string(), name: z.string() }),
   message_templates: MessageTemplateDbToAppSchema,
 });
 
@@ -44,6 +44,7 @@ export const DefaultScheduleDbToAppSchema = DefaultScheduleDbSchema.transform(
     eventTypeId: db.event_type_id,
     scheduleTypeId: db.schedule_type_id,
     scheduleTypeKey: db.schedule_types.key,
+    scheduleTypeName: db.schedule_types.name,
     templateId: db.template_id,
     template: db.message_templates as MessageTemplateApp,
     daysOffset: db.days_offset,

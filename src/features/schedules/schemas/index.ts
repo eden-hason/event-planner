@@ -58,10 +58,13 @@ export const CustomContentSchema = z.object({
 export type CustomContent = z.infer<typeof CustomContentSchema>;
 
 // The canonical select for schedule queries: every read joins the schedule
-// type key and the full template row so channel/content always come from the
-// catalog (schedules no longer store delivery_method or template_key).
+// type key/name and the full template row so channel/content always come
+// from the catalog (schedules no longer store delivery_method or
+// template_key). The schedule type's own name is included so the UI can
+// render a schedule type it has no curated i18n label/icon for yet - the
+// catalog is meant to grow past the four types known at build time.
 export const SCHEDULE_SELECT =
-  '*, schedule_types (key), message_templates (*)';
+  '*, schedule_types (key, name), message_templates (*)';
 
 // --- DB-Level Schema (snake_case, with catalog joins) ---
 export const ScheduleDbSchema = z.object({
@@ -76,7 +79,7 @@ export const ScheduleDbSchema = z.object({
   template_id: z.uuid().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  schedule_types: z.object({ key: z.string() }),
+  schedule_types: z.object({ key: z.string(), name: z.string() }),
   message_templates: MessageTemplateDbToAppSchema.nullable(),
 });
 
@@ -93,6 +96,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   targetStatus: db.target_status ?? null,
   scheduleTypeId: db.schedule_type_id,
   scheduleTypeKey: db.schedule_types.key,
+  scheduleTypeName: db.schedule_types.name,
   templateId: db.template_id,
   template: db.message_templates as MessageTemplateApp | null,
   // Derived from the template row - the single source of truth for channel

@@ -15,10 +15,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { SCHEDULE_TYPE_KEYS } from '../../schemas';
+
+const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
+
 export type TimelineRow = {
   key: string;
   scheduleTypeId: string;
   scheduleTypeKey: string;
+  scheduleTypeName: string;
   templateId: string;
   targetStatus: 'pending' | 'confirmed' | null;
   enabled: boolean;
@@ -92,10 +97,13 @@ export function WizardTimelineStep({
     typeCounters[row.scheduleTypeKey] = (typeCounters[row.scheduleTypeKey] ?? 0) + 1;
     const total = typeTotals[row.scheduleTypeKey] ?? 1;
     const index = typeCounters[row.scheduleTypeKey]!;
-    const label =
-      total > 1
-        ? `${t(`actionTypes.${row.scheduleTypeKey}`)} ${index}/${total}`
-        : t(`actionTypes.${row.scheduleTypeKey}`);
+    // Known types use the translated i18n label; anything else (a schedule
+    // type added to the catalog outside this build's known set) falls back
+    // to its own DB name.
+    const baseLabel = KNOWN_SCHEDULE_TYPE_KEYS.includes(row.scheduleTypeKey)
+      ? t(`actionTypes.${row.scheduleTypeKey}`)
+      : row.scheduleTypeName;
+    const label = total > 1 ? `${baseLabel} ${index}/${total}` : baseLabel;
     const audienceKind = row.targetStatus ?? 'all';
 
     return (

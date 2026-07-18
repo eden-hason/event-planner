@@ -17,7 +17,7 @@ export async function getDefaultSchedulesForEventType(
   const { data, error } = await supabase
     .from('event_type_default_schedules')
     .select(
-      '*, event_types!inner (key), schedule_types (key), message_templates (*)',
+      '*, event_types!inner (key), schedule_types (key, name), message_templates (*)',
     )
     .eq('event_types.key', eventTypeKey)
     .order('sort_order', { ascending: true });

@@ -34,6 +34,8 @@ type ScheduleWithTemplate = {
   smsBody: string | null;
 };
 
+const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
+
 export type ScheduleTabItem = {
   label: string;
   scheduleId: string;
@@ -42,6 +44,7 @@ export type ScheduleTabItem = {
   scheduledDate: string;
   guestCount: number;
   targetStatus: ScheduleApp['targetStatus'];
+  scheduleTypeName: string;
   details: React.ReactNode;
 };
 
@@ -65,11 +68,13 @@ export async function SchedulesPage({
   };
 
   // Group schedules by schedule type key (multiple allowed for 'confirmation').
-  // Each schedule carries its template row from the catalog join.
-  const schedulesByType: Partial<Record<ScheduleTypeKey, ScheduleWithTemplate[]>> = {};
+  // Each schedule carries its template row from the catalog join. Keyed by
+  // plain string, not the closed ScheduleTypeKey union - schedule_types is a
+  // DB table and can grow past the four keys known at build time.
+  const schedulesByType: Partial<Record<string, ScheduleWithTemplate[]>> = {};
 
   for (const schedule of schedules) {
-    const typeKey = schedule.scheduleTypeKey as ScheduleTypeKey;
+    const typeKey = schedule.scheduleTypeKey;
     if (!schedulesByType[typeKey]) {
       schedulesByType[typeKey] = [];
     }
@@ -83,8 +88,14 @@ export async function SchedulesPage({
     });
   }
 
-  // Only show types that have actual schedules, in canonical order
-  const visibleTypes = SCHEDULE_TYPE_KEYS.filter((type) => schedulesByType[type]);
+  // Show every type that has actual schedules, not just the four known at
+  // build time: known keys first in their canonical order, then any other
+  // catalog type (e.g. one added directly to schedule_types) appended after.
+  const presentTypes = Object.keys(schedulesByType);
+  const visibleTypes = [
+    ...SCHEDULE_TYPE_KEYS.filter((type) => schedulesByType[type]),
+    ...presentTypes.filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type)).sort(),
+  ];
 
   if (visibleTypes.length === 0) {
     const eventType = event?.eventType ?? 'wedding';
@@ -115,11 +126,16 @@ export async function SchedulesPage({
   }
 
   // Pre-render content for all types on the server
-  const contentByType: Partial<Record<ScheduleTypeKey, ScheduleTabItem[]>> = {};
+  const contentByType: Partial<Record<string, ScheduleTabItem[]>> = {};
 
   for (const type of visibleTypes) {
     const items = schedulesByType[type]!;
-    const baseLabel = t(`actionTypes.${type}`);
+    // Known types use the translated i18n label; anything else (a schedule
+    // type added to the catalog outside this build's known set) falls back
+    // to its own DB name so it still renders with a sensible label.
+    const baseLabel = KNOWN_SCHEDULE_TYPE_KEYS.includes(type)
+      ? t(`actionTypes.${type}` as `actionTypes.${ScheduleTypeKey}`)
+      : items[0].schedule.scheduleTypeName;
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
@@ -132,6 +148,7 @@ export async function SchedulesPage({
         scheduledDate: schedule.scheduledDate,
         guestCount,
         targetStatus: schedule.targetStatus,
+        scheduleTypeName: schedule.scheduleTypeName,
         details: schedule.scheduleTypeKey === 'confirmation' ? (
           <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
             <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
@@ -181,7 +198,7 @@ export async function SchedulesPage({
   return (
     <SchedulesLayout
       visibleTypes={visibleTypes}
-      contentByType={contentByType as Record<ScheduleTypeKey, ScheduleTabItem[]>}
+      contentByType={contentByType as Record<string, ScheduleTabItem[]>}
     />
   );
 }

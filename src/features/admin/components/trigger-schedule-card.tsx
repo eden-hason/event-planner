@@ -131,7 +131,7 @@ export function TriggerScheduleCard({
                   {unsentSchedules.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       <span>
-                        {SCHEDULE_TYPE_LABELS[s.scheduleTypeKey] ?? 'Schedule'}
+                        {SCHEDULE_TYPE_LABELS[s.scheduleTypeKey] ?? s.scheduleTypeName}
                         <span className="ml-2 text-muted-foreground">
                           · {formatDate(s.scheduledDate)}
                         </span>

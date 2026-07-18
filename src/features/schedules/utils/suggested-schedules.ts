@@ -4,6 +4,7 @@ import { calculateScheduledDate } from './index';
 export type SuggestedSchedule = {
   scheduleTypeId: string;
   scheduleTypeKey: string;
+  scheduleTypeName: string;
   templateId: string;
   daysOffset: number;
   defaultTime: string;
@@ -26,6 +27,7 @@ export function buildSuggestedSchedules(
   return defaults.map((config) => ({
     scheduleTypeId: config.scheduleTypeId,
     scheduleTypeKey: config.scheduleTypeKey,
+    scheduleTypeName: config.scheduleTypeName,
     templateId: config.templateId,
     daysOffset: config.daysOffset,
     defaultTime: config.defaultTime,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   IconBell,
+  IconCalendarEvent,
   IconHeart,
   IconMail,
   IconUserCheck,
@@ -14,19 +15,27 @@ import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { type ScheduleTypeKey } from '../schemas';
+import { formatRelativeTime } from '../utils';
+import { type ScheduleTabItem } from './schedules-page';
 
-const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, React.ComponentType<{ size?: number | string; className?: string }>> = {
+type ScheduleTypeIcon = React.ComponentType<{ size?: number | string; className?: string }>;
+
+const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   event_reminder: IconBell,
   post_event: IconHeart,
 };
-import { formatRelativeTime } from '../utils';
-import { type ScheduleTabItem } from './schedules-page';
+
+// Any schedule type outside the four known here (e.g. one added directly to
+// the schedule_types table) falls back to a generic icon rather than crashing.
+function getTypeIcon(type: string): ScheduleTypeIcon {
+  return (ACTION_TYPE_ICONS as Partial<Record<string, ScheduleTypeIcon>>)[type] ?? IconCalendarEvent;
+}
 
 interface SchedulesLayoutProps {
-  visibleTypes: ScheduleTypeKey[];
-  contentByType: Record<ScheduleTypeKey, ScheduleTabItem[]>;
+  visibleTypes: string[];
+  contentByType: Record<string, ScheduleTabItem[]>;
 }
 
 export function SchedulesLayout({
@@ -34,11 +43,11 @@ export function SchedulesLayout({
   contentByType,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
-  const [selectedType, setSelectedType] = useState<ScheduleTypeKey>(visibleTypes[0]);
+  const [selectedType, setSelectedType] = useState<string>(visibleTypes[0]);
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
-  const handleTypeChange = (type: ScheduleTypeKey) => {
+  const handleTypeChange = (type: string) => {
     setSelectedType(type);
     setSelectedSubIndex(0);
   };
@@ -65,7 +74,7 @@ export function SchedulesLayout({
           const isActive = selectedType === type;
 
           if (hasMultiple) {
-            const Icon = ACTION_TYPE_ICONS[type];
+            const Icon = getTypeIcon(type);
             return typeItems.map((item, index) => (
               <Button
                 key={`${type}-${index}`}
@@ -92,7 +101,7 @@ export function SchedulesLayout({
             ));
           }
 
-          const Icon = ACTION_TYPE_ICONS[type];
+          const Icon = getTypeIcon(type);
           return [
             <Button
               key={type}
@@ -108,7 +117,10 @@ export function SchedulesLayout({
               <div className="flex flex-1 items-start gap-2">
                 <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex flex-1 flex-col items-start gap-0.5">
-                  <span>{t(`actionTypes.${type}`)}</span>
+                  {/* Reuse the label already computed server-side (with the
+                      known/unknown-type fallback baked in) instead of
+                      recomputing it against the i18n catalog here. */}
+                  <span>{typeItems[0]?.label ?? type}</span>
                   {typeItems[0] && <StatusRow item={typeItems[0]} />}
                 </div>
               </div>
