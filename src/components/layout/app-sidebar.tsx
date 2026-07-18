@@ -113,16 +113,6 @@ export function AppSidebar({
       url: '/app/guests',
       icon: IconUsers,
     },
-    ...(!isMobile && process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
-      ? [
-          {
-            id: 'seating',
-            title: tNav('seating'),
-            url: '/app/seating',
-            icon: IconArmchair,
-          },
-        ]
-      : []),
     {
       id: 'schedules',
       title: tNav('schedules'),
@@ -152,6 +142,19 @@ export function AppSidebar({
             title: tNav('budget'),
             url: '/app/budget',
             icon: IconCoins,
+          },
+        ]
+      : []),
+    ...(!isMobile &&
+    (process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true' ||
+      process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true')
+      ? [
+          {
+            id: 'seating',
+            title: tNav('seating'),
+            url: '/app/seating',
+            icon: IconArmchair,
+            comingSoon: process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true',
           },
         ]
       : []),
