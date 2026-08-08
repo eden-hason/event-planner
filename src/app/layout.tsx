@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Plus_Jakarta_Sans, Heebo, Rubik, Assistant } from 'n
 import { getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
+import dashboardShot from '@/assets/dashboard.png';
 import './globals.css';
 
 const geistSans = Geist({
@@ -54,7 +55,13 @@ export const metadata: Metadata = {
     title: 'Kululu Events',
     description:
       'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
-    images: [{ url: '/landing_page_hero.png', width: 1296, height: 816 }],
+    images: [
+      {
+        url: dashboardShot.src,
+        width: dashboardShot.width,
+        height: dashboardShot.height,
+      },
+    ],
   },
 };
 
