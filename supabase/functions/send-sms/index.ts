@@ -1,25 +1,57 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0';
 
 const ACTIVE_TRAIL_URL =
   'https://webapi.mymarketing.co.il/api/smscampaign/OperationalMessage';
 
-interface HookPayload {
+/** Payload delivered by the Supabase `send_sms` auth hook. */
+interface SendSmsHookPayload {
   user: { phone: string };
   sms: { otp: string };
 }
 
-serve(async (req) => {
-  const body = await req.text();
-  const payload: HookPayload = JSON.parse(body);
-  const { phone } = payload.user;
-  const { otp } = payload.sms;
+/** Auth hooks expect failures as `{ error: { http_code, message } }`. */
+function hookError(httpCode: number, message: string) {
+  return new Response(
+    JSON.stringify({ error: { http_code: httpCode, message } }),
+    { status: httpCode, headers: { 'Content-Type': 'application/json' } },
+  );
+}
 
+Deno.serve(async (req) => {
   const apiKey = Deno.env.get('ACTIVE_TRAIL_API_KEY');
+  const hookSecret = Deno.env.get('SEND_SMS_HOOK_SECRETS');
+
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Missing ACTIVE_TRAIL_API_KEY' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
+    console.error('Missing ACTIVE_TRAIL_API_KEY');
+    return hookError(500, 'SMS provider is not configured');
+  }
+  if (!hookSecret) {
+    console.error('Missing SEND_SMS_HOOK_SECRETS');
+    return hookError(500, 'SMS hook is not configured');
+  }
+
+  // This endpoint runs with verify_jwt disabled so Supabase Auth can reach it,
+  // so the Standard Webhooks signature is the only thing proving the caller is
+  // really Auth and not someone burning our SMS credits.
+  const body = await req.text();
+
+  let payload: SendSmsHookPayload;
+  try {
+    const wh = new Webhook(hookSecret.replace('v1,whsec_', ''));
+    payload = wh.verify(
+      body,
+      Object.fromEntries(req.headers),
+    ) as SendSmsHookPayload;
+  } catch (error) {
+    console.error('Invalid send_sms hook signature:', error);
+    return hookError(401, 'Invalid webhook signature');
+  }
+
+  const phone = payload.user?.phone;
+  const otp = payload.sms?.otp;
+
+  if (!phone || !otp) {
+    return hookError(400, 'Missing phone or otp in hook payload');
   }
 
   const response = await fetch(ACTIVE_TRAIL_URL, {
@@ -48,13 +80,10 @@ serve(async (req) => {
       error: errorData,
       phone,
     });
-    return new Response(
-      JSON.stringify({ success: false, error: 'Failed to send SMS' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    );
+    return hookError(500, 'Failed to send SMS');
   }
 
-  return new Response(JSON.stringify({ success: true }), {
+  return new Response(JSON.stringify({}), {
     headers: { 'Content-Type': 'application/json' },
   });
 });

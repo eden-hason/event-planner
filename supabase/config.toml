@@ -246,9 +246,9 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
-enable_confirmations = false
+enable_confirmations = true
 # Template for sending OTP to users
 template = "Your code is {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
@@ -274,6 +274,20 @@ max_frequency = "5s"
 # [auth.hook.custom_access_token]
 # enabled = true
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
+
+# Routes auth OTP messages through ActiveTrail instead of a built-in SMS
+# provider. Enabling this hook disables the SMS provider settings entirely, so
+# no Twilio credentials are needed.
+#
+# The uri below is the LOCAL edge runtime. The hosted project is configured in
+# the dashboard to hit https://<project-ref>.supabase.co/functions/v1/send-sms.
+# Do NOT run `supabase config push` against a hosted project: it would
+# overwrite the hook uri with this localhost address and break phone login
+# (along with clobbering site_url and the other remote-only settings below).
+[auth.hook.send_sms]
+enabled = true
+uri = "http://host.docker.internal:54321/functions/v1/send-sms"
+secrets = "env(SEND_SMS_HOOK_SECRETS)"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
@@ -374,6 +388,11 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# Supabase Auth calls this hook with a Standard Webhooks signature, not a JWT,
+# so JWT verification must stay off. The function verifies the signature itself.
+[functions.send-sms]
+verify_jwt = false
 
 [analytics]
 enabled = true
