@@ -245,5 +245,8 @@ export function buildDeliveryRecord(
 // ─── Token generator ──────────────────────────────────────────────────────────
 
 export function generateConfirmationToken(): string {
-  return randomBytes(32).toString('hex');
+  // 16 bytes (128 bits) is comfortably unguessable for an RSVP link - same
+  // order of entropy as a v4 UUID - while keeping the SMS-embedded link
+  // shorter than the original 32-byte token.
+  return randomBytes(16).toString('hex');
 }

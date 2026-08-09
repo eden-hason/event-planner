@@ -12,7 +12,9 @@ import { setRequestLocale } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
-const TOKEN_REGEX = /^[a-f0-9]{64}$/;
+// Accepts both the current 32-hex-char token (16 random bytes) and the
+// original 64-char length, so links already issued keep working.
+const TOKEN_REGEX = /^[a-f0-9]{32,64}$/;
 
 export default async function ConfirmationPage({
   params,
