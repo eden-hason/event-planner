@@ -9,7 +9,6 @@ import {
   SCHEDULE_TYPE_KEYS,
   toWhatsAppTemplate,
   type ScheduleTypeKey,
-  type GuestStats,
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
@@ -59,13 +58,6 @@ export async function SchedulesPage({
 
   const guests = await getEventGuests(eventId);
   const canCreateSchedules = event?.canCreateSchedules ?? false;
-
-  const guestStats: GuestStats = {
-    total: guests.length,
-    confirmed: guests.filter((g) => g.rsvpStatus === 'confirmed').length,
-    pending: guests.filter((g) => g.rsvpStatus === 'pending').length,
-    declined: guests.filter((g) => g.rsvpStatus === 'declined').length,
-  };
 
   // Group schedules by schedule type key (multiple allowed for 'confirmation').
   // Each schedule carries its template row from the catalog join. Keyed by
@@ -174,7 +166,6 @@ export async function SchedulesPage({
                 smsBody={smsBody}
                 eventDate={eventDate}
                 event={event}
-                guestStats={guestStats}
               />
             </TabsContent>
             <TabsContent value="results">
@@ -188,7 +179,6 @@ export async function SchedulesPage({
             smsBody={smsBody}
             eventDate={eventDate}
             event={event}
-            guestStats={guestStats}
           />
         ),
       };
