@@ -886,9 +886,7 @@
     },
     "audience": {
       "cardTitle": "Target Audience",
-      "guestsWillReceive": "guests will receive this message",
       "disabledNote": "This schedule is disabled - no guests will receive this message",
-      "outOfTotal": "out of {total} total guests",
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed Guests",
       "pendingGuests": "Pending Guests",

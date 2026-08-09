@@ -887,9 +887,7 @@
     },
     "audience": {
       "cardTitle": "קהל יעד",
-      "guestsWillReceive": "אורחים יקבלו הודעה זו",
       "disabledNote": "התזמון כבוי - אף אורח לא יקבל הודעה זו",
-      "outOfTotal": "מתוך {total} אורחים סה\"כ",
       "allGuests": "כל האורחים",
       "confirmedGuests": "אורחים שאישרו",
       "pendingGuests": "אורחים ממתינים",

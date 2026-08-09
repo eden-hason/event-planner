@@ -1,5 +1,5 @@
 import { type EventApp } from '@/features/events/schemas';
-import { type GuestStats, type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
+import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import { MessageContentCard } from './message-content-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { ScheduleStatusCard } from './schedule-status-card';
@@ -11,7 +11,6 @@ interface ScheduleTabContentProps {
   smsBody?: string | null;
   eventDate: string;
   event: EventApp | null;
-  guestStats: GuestStats;
 }
 
 export function ScheduleTabContent({
@@ -20,7 +19,6 @@ export function ScheduleTabContent({
   smsBody,
   eventDate,
   event,
-  guestStats,
 }: ScheduleTabContentProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -29,7 +27,6 @@ export function ScheduleTabContent({
         <ScheduleDetailsCard key={schedule.id} schedule={schedule} eventDate={eventDate} />
         <TargetAudienceCard
           targetStatus={schedule.targetStatus}
-          guestStats={guestStats}
           disabled={schedule.status === 'cancelled'}
         />
       </div>

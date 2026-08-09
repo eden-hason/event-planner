@@ -1,24 +1,20 @@
 import { getTranslations } from 'next-intl/server';
-import { IconUsers } from '@tabler/icons-react';
+import { IconUsers, IconUserCheck, IconClock } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import {
   Card,
-  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { type GuestStats } from '../schemas';
 
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
-  guestStats: GuestStats;
   disabled?: boolean;
 }
 
-export async function TargetAudienceCard({ targetStatus, guestStats, disabled }: TargetAudienceCardProps) {
+export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
 
   const audienceLabel =
@@ -28,21 +24,15 @@ export async function TargetAudienceCard({ targetStatus, guestStats, disabled }:
         ? t('pendingGuests')
         : t('allGuests');
 
-  const badgeClass =
-    targetStatus === 'confirmed'
-      ? 'bg-green-100 text-green-800 border-green-200'
-      : targetStatus === 'pending'
-        ? 'bg-amber-100 text-amber-800 border-amber-200'
-        : '';
+  const AudienceIcon =
+    targetStatus === 'confirmed' ? IconUserCheck : targetStatus === 'pending' ? IconClock : IconUsers;
 
-  const targetCount =
+  const statusClass =
     targetStatus === 'confirmed'
-      ? guestStats.confirmed
+      ? 'bg-green-100 text-green-800'
       : targetStatus === 'pending'
-        ? guestStats.pending
-        : guestStats.total;
-
-  const isFiltered = targetStatus != null;
+        ? 'bg-amber-100 text-amber-800'
+        : 'bg-primary/10 text-primary';
 
   return (
     <Card>
@@ -53,38 +43,21 @@ export async function TargetAudienceCard({ targetStatus, guestStats, disabled }:
           </div>
           {t('cardTitle')}
         </CardTitle>
-        <CardAction>
-          <Badge variant="secondary" className={badgeClass}>
-            {audienceLabel}
-          </Badge>
-        </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                'text-4xl font-bold tabular-nums leading-none',
-                disabled && 'text-muted-foreground',
-              )}
-            >
-              {disabled ? 0 : targetCount}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {t('guestsWillReceive')}
-            </span>
+        {disabled ? (
+          <p className="text-xs text-muted-foreground">{t('disabledNote')}</p>
+        ) : (
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-fit',
+              statusClass,
+            )}
+          >
+            <AudienceIcon size={16} />
+            {audienceLabel}
           </div>
-
-          {disabled ? (
-            <p className="text-xs text-muted-foreground">{t('disabledNote')}</p>
-          ) : (
-            isFiltered && (
-              <p className="text-xs text-muted-foreground">
-                {t('outOfTotal', { total: guestStats.total })}
-              </p>
-            )
-          )}
-        </div>
+        )}
       </CardContent>
     </Card>
   );
