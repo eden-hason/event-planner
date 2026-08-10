@@ -33,9 +33,14 @@ export function ConfirmationExperience({ token, data, templateId }: Confirmation
     [event.eventDate],
   );
 
-  const mapsLink = event.location?.coords
-    ? `https://www.google.com/maps/search/?api=1&query=${event.location.coords.lat},${event.location.coords.lng}`
-    : undefined;
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL ||
+    'http://localhost:3000';
+  const mapsLink =
+    event.shortCode && (event.location?.name || event.location?.coords)
+      ? `${siteUrl}/nav/${event.shortCode}`
+      : undefined;
 
   const hostDetails = event.hostDetails as HostDetails;
   const coupleName = buildCoupleName(hostDetails, event.title, event.eventType);
@@ -45,7 +50,7 @@ export function ConfirmationExperience({ token, data, templateId }: Confirmation
     [event.guestExperience],
   );
 
-  const time = buildTime(event.receptionTime, event.ceremonyTime);
+  const time = buildTime(event.receptionTime, event.ceremonyTime, event.eventType);
 
   const handleSubmit = async (values: {
     rsvpStatus: 'confirmed' | 'declined';
@@ -70,6 +75,7 @@ export function ConfirmationExperience({ token, data, templateId }: Confirmation
     coupleName,
     formattedDate,
     time,
+    eventType: event.eventType,
     venue: event.location?.name,
     mapsLink,
     dishOptions,

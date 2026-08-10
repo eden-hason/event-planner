@@ -43,6 +43,7 @@ export type ConfirmationPageData = {
     | 'guestExperience'
     | 'eventType'
     | 'landingTemplateId'
+    | 'shortCode'
   >;
   scheduleId: string | null;
 };

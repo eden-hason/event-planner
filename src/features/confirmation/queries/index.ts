@@ -31,7 +31,7 @@ export async function getConfirmationDataByToken(
         id,
         events!inner (
           id, title, event_date, ceremony_time, reception_time,
-          location, host_details, guests_experience, event_types (key), landing_template_id
+          location, host_details, guests_experience, event_types (key), landing_template_id, short_code
         )
       )
     `,
@@ -78,6 +78,7 @@ export async function getConfirmationDataByToken(
       } | null;
       event_types: { key: string } | null;
       landing_template_id: string | null;
+      short_code: string;
     };
   };
 
@@ -133,6 +134,7 @@ export async function getConfirmationDataByToken(
         : undefined,
       eventType: event.event_types?.key ?? undefined,
       landingTemplateId: event.landing_template_id ?? undefined,
+      shortCode: event.short_code,
     },
     scheduleId: schedule.id,
   };
@@ -154,7 +156,7 @@ export async function getConfirmationDataByGuestToken(
       id, name, amount, rsvp_status, meal_choice, notes,
       events!inner (
         id, title, event_date, ceremony_time, reception_time,
-        location, host_details, guests_experience, event_types (key), landing_template_id
+        location, host_details, guests_experience, event_types (key), landing_template_id, short_code
       )
     `,
     )
@@ -180,6 +182,7 @@ export async function getConfirmationDataByGuestToken(
     } | null;
     event_types: { key: string } | null;
     landing_template_id: string | null;
+    short_code: string;
   };
 
   return {
@@ -211,6 +214,7 @@ export async function getConfirmationDataByGuestToken(
         : undefined,
       eventType: event.event_types?.key ?? undefined,
       landingTemplateId: event.landing_template_id ?? undefined,
+      shortCode: event.short_code,
     },
     scheduleId: null,
   };

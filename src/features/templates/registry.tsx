@@ -25,6 +25,7 @@ export interface DesignProps {
   coupleName?: string;
   formattedDate?: string;
   time?: string;
+  eventType?: string;
   venue?: string;
   mapsLink?: string;
   dishOptions?: DishOption[];

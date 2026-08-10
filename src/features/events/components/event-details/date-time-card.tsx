@@ -105,6 +105,10 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
     ? (eventTypeLabels[event.eventType as EventType] ?? event.eventType)
     : null;
 
+  const isBarMitzva = event.eventType === 'bar_mitzva';
+  const receptionTimeLabel = t('receptionTime');
+  const ceremonyTimeLabel = isBarMitzva ? t('ceremonyTimeBarMitzva') : t('ceremonyTime');
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -145,7 +149,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
                   <FormItem>
                     <div className="space-y-2 rounded-lg bg-muted/50 p-3">
                       <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('receptionTime')}
+                        {receptionTimeLabel}
                       </FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -179,7 +183,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
                   <FormItem>
                     <div className="space-y-2 rounded-lg bg-muted/50 p-3">
                       <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('ceremonyTime')}
+                        {ceremonyTimeLabel}
                       </FormLabel>
                       <div className="relative">
                         <FormControl>

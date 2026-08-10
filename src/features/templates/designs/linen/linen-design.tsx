@@ -19,6 +19,7 @@ export interface LinenDesignProps {
   coupleName?: string;
   formattedDate?: string;
   time?: string;
+  eventType?: string;
   venue?: string;
   mapsLink?: string;
   dishOptions?: DishOption[];
@@ -46,6 +47,7 @@ function Header({
   coupleName,
   formattedDate,
   time,
+  eventType,
   venue,
   mapsLink,
   primary,
@@ -53,6 +55,7 @@ function Header({
   coupleName?: string;
   formattedDate?: string;
   time?: string;
+  eventType?: string;
   venue?: string;
   mapsLink?: string;
   primary: string;
@@ -127,7 +130,11 @@ function Header({
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, animation: 'linenFadeUp 0.5s ease 0.35s both' }}>
         {formattedDate && <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>🗓️ {formattedDate}</span>}
-        {time && <span style={{ fontSize: 14, color: C.muted }}>{time}</span>}
+        {time && (
+          <span style={{ fontSize: 14, color: eventType === 'bar_mitzva' ? C.text : C.muted }}>
+            {time}
+          </span>
+        )}
         {venue && (
           mapsLink ? (
             <a
@@ -476,6 +483,7 @@ export function LinenDesign({
   coupleName,
   formattedDate,
   time,
+  eventType,
   venue,
   mapsLink,
   dishOptions = [],
@@ -525,6 +533,7 @@ export function LinenDesign({
         coupleName={coupleName}
         formattedDate={formattedDate}
         time={time}
+        eventType={eventType}
         venue={venue}
         mapsLink={mapsLink}
         primary={primary}
