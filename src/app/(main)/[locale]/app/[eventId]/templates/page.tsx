@@ -26,9 +26,10 @@ export default async function TemplatesServerPage({
     livePreviewData = {
       coupleName: buildCoupleName(hostDetails, event.title, event.eventType),
       formattedDate: buildFormattedDate(event.eventDate),
-      time: buildTime(event.receptionTime, event.ceremonyTime),
+      time: buildTime(event.receptionTime, event.ceremonyTime, event.eventType),
       venue: event.location?.name,
       dishOptions: buildDishOptions(event.guestExperience),
+      eventType: event.eventType,
     };
   }
 

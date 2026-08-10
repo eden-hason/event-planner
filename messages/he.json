@@ -1237,6 +1237,7 @@
       "eventType": "סוג האירוע",
       "receptionTime": "שעת קבלת פנים",
       "ceremonyTime": "שעת חופה",
+      "ceremonyTimeBarMitzva": "שעת מסיבה וריקודים",
       "types": {
         "wedding": "חתונה",
         "henna": "חינה",

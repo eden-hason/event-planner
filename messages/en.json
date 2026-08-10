@@ -1236,6 +1236,7 @@
       "eventType": "Event Type",
       "receptionTime": "Reception Time",
       "ceremonyTime": "Canopy Time",
+      "ceremonyTimeBarMitzva": "Party & Dancing Time",
       "types": {
         "wedding": "Wedding",
         "henna": "Henna",

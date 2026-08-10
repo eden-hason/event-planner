@@ -56,7 +56,14 @@ export function buildFormattedDate(eventDate: string): string {
 export function buildTime(
   receptionTime?: string | null,
   ceremonyTime?: string | null,
+  eventType?: string,
 ): string | undefined {
+  if (eventType === 'bar_mitzva') {
+    const parts: string[] = [];
+    if (receptionTime) parts.push(`עלייה לתורה - ${receptionTime}`);
+    if (ceremonyTime) parts.push(`מסיבה וריקודים - ${ceremonyTime}`);
+    return parts.length ? parts.join(' · ') : undefined;
+  }
   if (receptionTime) return `קבלת פנים: ${receptionTime}`;
   if (ceremonyTime) return `חופה: ${ceremonyTime}`;
   return undefined;

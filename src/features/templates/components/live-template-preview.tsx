@@ -13,6 +13,7 @@ export interface LivePreviewEventData {
   time?: string;
   venue?: string;
   dishOptions?: DishOption[];
+  eventType?: string;
 }
 
 interface LiveTemplatePreviewProps {
@@ -58,6 +59,7 @@ export function LiveTemplatePreview({
         time: data.time,
         venue: data.venue,
         dishOptions: data.dishOptions ?? [],
+        eventType: data.eventType,
         palette,
         interactive,
         showConfetti: interactive,
