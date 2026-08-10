@@ -6,6 +6,7 @@ import {
   buildFormattedDate,
   buildTime,
   buildDishOptions,
+  type HostDetails,
 } from '@/features/templates';
 import { getEventById } from '@/features/events/queries';
 import type { LivePreviewEventData } from '@/features/templates/components/live-template-preview';
@@ -20,12 +21,10 @@ export default async function TemplatesServerPage({
 
   let livePreviewData: LivePreviewEventData | undefined;
   if (event) {
-    const hostDetails = event.hostDetails as
-      | { bride?: { name?: string }; groom?: { name?: string } }
-      | undefined;
+    const hostDetails = event.hostDetails as HostDetails;
 
     livePreviewData = {
-      coupleName: buildCoupleName(hostDetails, event.title),
+      coupleName: buildCoupleName(hostDetails, event.title, event.eventType),
       formattedDate: buildFormattedDate(event.eventDate),
       time: buildTime(event.receptionTime, event.ceremonyTime),
       venue: event.location?.name,

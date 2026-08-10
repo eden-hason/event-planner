@@ -23,6 +23,7 @@ export {
   DIETARY_EMOJI,
   DIETARY_LABEL,
   type DishOption,
+  type HostDetails,
 } from './utils';
 
 // Types
