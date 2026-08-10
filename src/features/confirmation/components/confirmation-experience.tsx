@@ -7,6 +7,7 @@ import {
   buildFormattedDate,
   buildTime,
   buildDishOptions,
+  type HostDetails,
 } from '@/features/templates/utils';
 import { submitConfirmation, recordViewInteraction } from '../actions';
 import type { ConfirmationPageData } from '../schemas';
@@ -36,10 +37,8 @@ export function ConfirmationExperience({ token, data, templateId }: Confirmation
     ? `https://www.google.com/maps/search/?api=1&query=${event.location.coords.lat},${event.location.coords.lng}`
     : undefined;
 
-  const hostDetails = event.hostDetails as
-    | { bride?: { name?: string }; groom?: { name?: string } }
-    | undefined;
-  const coupleName = buildCoupleName(hostDetails, event.title);
+  const hostDetails = event.hostDetails as HostDetails;
+  const coupleName = buildCoupleName(hostDetails, event.title, event.eventType);
 
   const dishOptions = useMemo(
     () => buildDishOptions(event.guestExperience),

@@ -18,8 +18,12 @@ export const DIETARY_LABEL: Record<string, string> = {
   strictly_kosher: 'כשר למהדרין',
 };
 
-type HostDetails =
-  | { bride?: { name?: string }; groom?: { name?: string } }
+export type HostDetails =
+  | {
+      bride?: { name?: string };
+      groom?: { name?: string };
+      child?: { name?: string };
+    }
   | undefined;
 
 type GuestExperience =
@@ -27,12 +31,20 @@ type GuestExperience =
   | null
   | undefined;
 
-export function buildCoupleName(hostDetails: HostDetails, eventTitle: string): string {
+export function buildCoupleName(
+  hostDetails: HostDetails,
+  eventTitle: string,
+  eventType?: string,
+): string {
   const brideName = hostDetails?.bride?.name;
   const groomName = hostDetails?.groom?.name;
-  return brideName && groomName
-    ? `${brideName} & ${groomName}`
-    : (brideName ?? groomName ?? eventTitle);
+  if (brideName && groomName) return `${brideName} & ${groomName}`;
+
+  // Non-couple events (Bar/Bat Mitzva) carry a single celebrant under `child`.
+  const childName = hostDetails?.child?.name;
+  if (eventType === 'bar_mitzva' && childName) return `בר המצווה של ${childName}`;
+
+  return brideName ?? groomName ?? childName ?? eventTitle;
 }
 
 export function buildFormattedDate(eventDate: string): string {
