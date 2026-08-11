@@ -48,14 +48,12 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'Kululu Events',
-  description:
-    'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
+  title: 'Kululu אישורי הגעה',
+  description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
   openGraph: {
-    title: 'Kululu Events',
-    description:
-      'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
-    siteName: 'Kululu Events',
+    title: 'Kululu אישורי הגעה',
+    description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
+    siteName: 'Kululu אישורי הגעה',
     type: 'website',
     images: [
       {
@@ -69,9 +67,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kululu Events',
-    description:
-      'Plan, organize, and manage your events effortlessly with our collaborative event planner app.',
+    title: 'Kululu אישורי הגעה',
+    description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
     images: [ogPreview.src],
   },
 };
