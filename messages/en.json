@@ -378,6 +378,7 @@
       "actionsSection": "Actions",
       "copyInvitationLink": "Copy Invitation Link",
       "copyInvitationLinkDescription": "Share a personal RSVP link with this guest",
+      "copyInvitationLinkPrefix": "We would be delighted if you could kindly confirm your attendance for our upcoming event via the link below:",
       "copied": "Copied!",
       "linkCopied": "Link copied to clipboard"
     },

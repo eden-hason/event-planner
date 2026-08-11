@@ -313,7 +313,7 @@ export function HomepageClient() {
         .footer-links{display:flex;gap:28px}
         .footer-links a{font-size:14.5px;color:var(--ink-2);font-weight:500;transition:color .15s ease}
         .footer-links a:hover{color:var(--primary)}
-        .footer-bottom{margin-top:32px;padding-top:24px;border-top:1px solid var(--line-2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink-3)}
+        .footer-bottom{margin-top:32px;padding-top:24px;border-top:1px solid var(--line-2);display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px;font-size:12.5px;font-weight:400;color:var(--ink-3)}
         .footer-bottom .made{display:inline-flex;align-items:center;gap:6px}
         .reveal{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
         .reveal.in{opacity:1;transform:none}
@@ -697,6 +697,9 @@ export function HomepageClient() {
             <a href="#" className="logo" aria-label="Kululu home">
               <img src="/logo-navbar.png" alt="Kululu" />
             </a>
+          </div>
+          <div className="footer-bottom">
+            <span>חסון אור-אל · Kululu © 2026</span>
           </div>
         </div>
       </footer>
