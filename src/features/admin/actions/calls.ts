@@ -70,6 +70,66 @@ export async function startCallRound(eventId: string): Promise<StartCallRoundRes
   }
 }
 
+export type FinishCallRoundResult = {
+  success: boolean;
+  message: string;
+};
+
+/**
+ * Declares a round over. Explicit rather than derived from the logs: a round
+ * that ends with guests still on no_answer is genuinely finished - the team
+ * stopped calling - and deriving completion would leave it showing "in
+ * progress" on the Owner's schedules page forever.
+ */
+export async function finishCallRound(
+  roundId: string,
+  eventId: string,
+): Promise<FinishCallRoundResult> {
+  try {
+    await assertAdmin();
+    const supabase = createServiceClient();
+
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('call_rounds')
+      .update({ completed_at: now, updated_at: now })
+      .eq('id', roundId);
+
+    if (error) {
+      return { success: false, message: 'Failed to finish round' };
+    }
+
+    revalidatePath(`/admin/events/${eventId}/calls`);
+    return { success: true, message: 'Round finished' };
+  } catch {
+    return { success: false, message: 'Failed to finish round' };
+  }
+}
+
+export async function reopenCallRound(
+  roundId: string,
+  eventId: string,
+): Promise<FinishCallRoundResult> {
+  try {
+    await assertAdmin();
+    const supabase = createServiceClient();
+
+    const { error } = await supabase
+      .from('call_rounds')
+      .update({ completed_at: null, updated_at: new Date().toISOString() })
+      .eq('id', roundId);
+
+    if (error) {
+      return { success: false, message: 'Failed to reopen round' };
+    }
+
+    revalidatePath(`/admin/events/${eventId}/calls`);
+    return { success: true, message: 'Round reopened' };
+  } catch {
+    return { success: false, message: 'Failed to reopen round' };
+  }
+}
+
 export type DeleteCallRoundResult = {
   success: boolean;
   message: string;
@@ -79,6 +139,26 @@ export async function deleteCallRound(roundId: string, eventId: string): Promise
   try {
     await assertAdmin();
     const supabase = createServiceClient();
+
+    // Deletion exists to undo a misclick, not to rewrite history. Once an
+    // outcome is recorded the Owner may already have seen the round on their
+    // schedules page, and making it vanish is the opposite of observability.
+    const { count, error: countError } = await supabase
+      .from('call_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('round_id', roundId)
+      .not('outcome', 'is', null);
+
+    if (countError) {
+      return { success: false, message: 'Failed to delete round' };
+    }
+
+    if ((count ?? 0) > 0) {
+      return {
+        success: false,
+        message: 'This round has recorded outcomes - finish it instead of deleting it',
+      };
+    }
 
     const { error } = await supabase.from('call_rounds').delete().eq('id', roundId);
 

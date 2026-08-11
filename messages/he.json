@@ -786,7 +786,8 @@
       "hoursAgo": "לפני {count} שעות",
       "dayAgo": "לפני {count} יום",
       "daysAgo": "לפני {count} ימים",
-      "showMore": "הצג עוד"
+      "showMore": "הצג עוד",
+      "byPhone": "בטלפון"
     },
     "onboarding": {
       "title": "התחל עם Kululu",
@@ -841,14 +842,18 @@
       "responseConfirmed": "אישר",
       "responseDeclined": "סירב",
       "responsePending": "לא הגיב",
-      "refresh": "רענן"
+      "refresh": "רענן",
+      "confirmedGuests": "{count, plural, one {אורח אחד} two {# אורחים} other {# אורחים}}",
+      "columnAmount": "כמות"
     },
     "status": {
       "cardTitle": "סטטוס",
       "label": {
         "sent": "נשלח",
         "pending": "ממתין",
-        "cancelled": "בוטל"
+        "cancelled": "בוטל",
+        "inProgress": "בתהליך",
+        "completed": "הושלם"
       },
       "description": {
         "sent": "ההודעות נשלחו לאורחים הזכאים.",
@@ -1424,6 +1429,35 @@
       "saving": "שומר עיצוב...",
       "saved": "עיצוב נשמר",
       "saveFailed": "שמירת העיצוב נכשלה"
+    }
+  },
+  "calls": {
+    "round": "סבב {number}",
+    "refresh": "רענן",
+    "startedOn": "התחיל ב-{date}",
+    "completedOn": "הסתיים ב-{date}",
+    "stats": {
+      "confirmed": "אישרו",
+      "declined": "סירבו",
+      "noAnswer": "לא ענו",
+      "confirmedGuests": "{count, plural, one {אורח אחד} two {# אורחים} other {# אורחים}}"
+    },
+    "table": {
+      "guest": "אורח",
+      "outcome": "שיחה",
+      "rsvp": "סטטוס נוכחי",
+      "amount": "כמות"
+    },
+    "outcome": {
+      "confirmed": "אישר",
+      "declined": "סירב",
+      "noAnswer": "לא ענה",
+      "notCalled": "טרם התקשרנו"
+    },
+    "rsvp": {
+      "confirmed": "אישר",
+      "declined": "סירב",
+      "pending": "ממתין"
     }
   }
 }

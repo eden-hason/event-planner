@@ -10,7 +10,7 @@ export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]
 
   const { data: rounds, error } = await supabase
     .from('call_rounds')
-    .select('id, round_number, created_at')
+    .select('id, round_number, created_at, completed_at')
     .eq('event_id', eventId)
     .order('round_number', { ascending: false });
 
@@ -42,6 +42,8 @@ export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]
       id: round.id,
       roundNumber: round.round_number,
       createdAt: round.created_at,
+      completedAt: round.completed_at ?? null,
+      status: round.completed_at ? ('completed' as const) : ('in_progress' as const),
       total,
       awaiting,
       confirmed,

@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server';
 import { ConfettiBackground } from '@/components/ui/confetti';
 import { IconCalendar, IconMapPin } from '@tabler/icons-react';
 import type { EventApp } from '@/features/events/schemas';
@@ -12,8 +13,8 @@ const LIGHT_CONFETTI_COLORS = [
   'rgba(248, 113, 113, 0.3)',
 ];
 
-function formatEventDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+function formatEventDate(dateStr: string, locale: string): string {
+  return new Date(dateStr).toLocaleDateString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -21,7 +22,11 @@ function formatEventDate(dateStr: string): string {
   });
 }
 
-export function EventHeroBanner({ event }: { event: EventApp }) {
+export async function EventHeroBanner({ event }: { event: EventApp }) {
+  // Formatted against the active locale rather than a fixed one, so the
+  // headline date reads in the language the rest of the page is in.
+  const locale = await getLocale();
+
   return (
     <ConfettiBackground
       className="bg-card relative h-full overflow-hidden rounded-xl border p-6 shadow-sm"
@@ -37,7 +42,7 @@ export function EventHeroBanner({ event }: { event: EventApp }) {
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
               <IconCalendar className="h-3.5 w-3.5 shrink-0 text-pink-400" />
-              <span>{formatEventDate(event.eventDate)}</span>
+              <span>{formatEventDate(event.eventDate, locale)}</span>
             </div>
             {event.location?.name && (
               <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">

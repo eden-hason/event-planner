@@ -1,16 +1,11 @@
-export type CallOutcome = 'no_answer' | 'confirmed' | 'declined';
+// The call domain lives in features/calls - admin is a UI surface, not a
+// domain owner, and the Owner-facing schedules page depends on these too.
+export type { CallOutcome, CallRoundSummary } from '@/features/calls';
 
-export type CallRoundSummary = {
-  id: string;
-  roundNumber: number;
-  createdAt: string;
-  total: number;
-  awaiting: number;
-  confirmed: number;
-  declined: number;
-  noAnswer: number;
-};
+import type { CallOutcome } from '@/features/calls';
 
+// Admin-only: carries the operator's working data (phone, notes, seating
+// context) that the Owner is never shown.
 export type CallLogWithGuest = {
   id: string;
   guestId: string;

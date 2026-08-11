@@ -60,12 +60,17 @@ export function RecentRsvpActivityCard({
   const visibleActivity = pageSize ? activity.slice(0, visibleCount) : activity;
   const hasMore = pageSize ? visibleCount < activity.length : false;
 
-  function getActionLabel(status: RecentRsvpRow['rsvpStatus']): string {
-    switch (status) {
-      case 'confirmed': return t('confirmedAttendance');
-      case 'declined': return t('declinedInvitation');
-      case 'pending': return t('updatedRsvp');
-    }
+  function getActionLabel(row: RecentRsvpRow): string {
+    const action =
+      row.rsvpStatus === 'confirmed'
+        ? t('confirmedAttendance')
+        : row.rsvpStatus === 'declined'
+          ? t('declinedInvitation')
+          : t('updatedRsvp');
+
+    // Distinguishes work the call team did from a guest acting on their own -
+    // otherwise the calling service is invisible on the dashboard.
+    return row.rsvpChangeSource === 'admin_call' ? `${action} · ${t('byPhone')}` : action;
   }
 
   function formatRelativeTime(dateStr: string): string {
@@ -113,7 +118,7 @@ export function RecentRsvpActivityCard({
               <ItemContent>
                 <ItemTitle>{row.name}</ItemTitle>
                 <ItemDescription>
-                  {getActionLabel(row.rsvpStatus)}
+                  {getActionLabel(row)}
                 </ItemDescription>
               </ItemContent>
               <ItemActions className="text-muted-foreground self-start text-xs">

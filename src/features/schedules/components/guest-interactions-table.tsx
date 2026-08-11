@@ -60,6 +60,7 @@ interface GuestInteractionsTableProps {
     columnGuest: string;
     columnViewed: string;
     columnResponse: string;
+    columnAmount: string;
     columnDate: string;
     responseConfirmed: string;
     responseDeclined: string;
@@ -80,6 +81,7 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
           <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnGuest}</TableHead>
           <TableHead className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide">{labels.columnViewed}</TableHead>
           <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnResponse}</TableHead>
+          <TableHead className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide">{labels.columnAmount}</TableHead>
           <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnDate}</TableHead>
         </TableRow>
       </TableHeader>
@@ -100,6 +102,15 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
                 labels={{ confirmed: labels.responseConfirmed, declined: labels.responseDeclined, pending: labels.responsePending }}
               />
             </TableCell>
+            {/* Headcount only reads as a number of attendees once they have
+                said yes - showing it beside a decline is noise. */}
+            <TableCell className="text-center text-xs tabular-nums">
+              {row.response === 'rsvp_confirm' ? (
+                row.amount
+              ) : (
+                <span className="text-muted-foreground/40">-</span>
+              )}
+            </TableCell>
             <TableCell className="text-muted-foreground text-xs">
               {row.respondedAt
                 ? formatDate(row.respondedAt)
@@ -113,7 +124,7 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
       {totalPages > 1 && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={4}>
+            <TableCell colSpan={5}>
               <div className="flex items-center justify-end gap-2 rtl:justify-start">
                 <span className="text-muted-foreground text-xs">{page + 1} / {totalPages}</span>
                 <Button

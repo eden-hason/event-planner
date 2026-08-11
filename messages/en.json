@@ -785,7 +785,8 @@
       "hoursAgo": "{count} hours ago",
       "dayAgo": "{count} day ago",
       "daysAgo": "{count} days ago",
-      "showMore": "Show more"
+      "showMore": "Show more",
+      "byPhone": "by phone"
     },
     "onboarding": {
       "title": "Get started with Kululu",
@@ -840,14 +841,18 @@
       "responseConfirmed": "Confirmed",
       "responseDeclined": "Declined",
       "responsePending": "No response",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "confirmedGuests": "{count, plural, one {# guest} other {# guests}}",
+      "columnAmount": "Guests"
     },
     "status": {
       "cardTitle": "Status",
       "label": {
         "sent": "Sent",
         "pending": "Pending",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "inProgress": "In progress",
+        "completed": "Completed"
       },
       "description": {
         "sent": "Messages have been sent to eligible guests.",
@@ -1421,6 +1426,35 @@
       "saving": "Saving design...",
       "saved": "Design saved",
       "saveFailed": "Failed to save design"
+    }
+  },
+  "calls": {
+    "round": "Round {number}",
+    "refresh": "Refresh",
+    "startedOn": "Started {date}",
+    "completedOn": "Finished {date}",
+    "stats": {
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "noAnswer": "No answer",
+      "confirmedGuests": "{count, plural, one {# guest} other {# guests}}"
+    },
+    "table": {
+      "guest": "Guest",
+      "outcome": "Call",
+      "rsvp": "RSVP now",
+      "amount": "Guests"
+    },
+    "outcome": {
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "noAnswer": "No answer",
+      "notCalled": "Not called yet"
+    },
+    "rsvp": {
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "pending": "Pending"
     }
   }
 }
