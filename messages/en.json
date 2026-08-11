@@ -1441,7 +1441,6 @@
       "guest": "Guest",
       "outcome": "Call",
       "rsvp": "RSVP now",
-      "calledAt": "Called",
       "amount": "Guests"
     },
     "outcome": {

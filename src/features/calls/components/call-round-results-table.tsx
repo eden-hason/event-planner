@@ -30,7 +30,6 @@ export type CallRoundResultsLabels = {
   columnOutcome: string;
   columnRsvp: string;
   columnAmount: string;
-  columnCalledAt: string;
   outcomeConfirmed: string;
   outcomeDeclined: string;
   outcomeNoAnswer: string;
@@ -39,15 +38,6 @@ export type CallRoundResultsLabels = {
   rsvpDeclined: string;
   rsvpPending: string;
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function OutcomeBadge({
   outcome,
@@ -123,9 +113,6 @@ export function CallRoundResultsTable({
           <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
             {labels.columnAmount}
           </TableHead>
-          <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {labels.columnCalledAt}
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -149,16 +136,13 @@ export function CallRoundResultsTable({
                 <span className="text-muted-foreground/40">-</span>
               )}
             </TableCell>
-            <TableCell className="text-muted-foreground text-xs">
-              {row.calledAt ? formatDate(row.calledAt) : '-'}
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
       {totalPages > 1 && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={5}>
+            <TableCell colSpan={4}>
               <div className="flex items-center justify-end gap-2 rtl:justify-start">
                 <span className="text-muted-foreground text-xs">
                   {page + 1} / {totalPages}

@@ -88,7 +88,7 @@ export async function getCallRoundResults(
 
   const { data, error } = await supabase
     .from('call_logs')
-    .select('guest_id, outcome, called_at, guests!inner(name, rsvp_status, amount)')
+    .select('guest_id, outcome, guests!inner(name, rsvp_status, amount)')
     .eq('round_id', roundId);
 
   const empty: CallRoundResults = {
@@ -119,7 +119,6 @@ export async function getCallRoundResults(
       guestId: log.guest_id as string,
       guestName: guest?.name ?? '',
       outcome: (log.outcome ?? null) as CallOutcome | null,
-      calledAt: (log.called_at as string | null) ?? null,
       currentRsvpStatus: (guest?.rsvp_status ??
         'pending') as CallRoundGuestRow['currentRsvpStatus'],
       amount: guest?.amount ?? 1,

@@ -36,7 +36,6 @@ export type CallRoundGuestRow = {
   guestId: string;
   guestName: string;
   outcome: CallOutcome | null;
-  calledAt: string | null;
   currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
   /** Headcount on the guest record - one record can cover a whole family */
   amount: number;

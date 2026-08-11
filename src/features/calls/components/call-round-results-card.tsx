@@ -98,7 +98,6 @@ export async function CallRoundResultsCard({ round }: { round: CallRoundSummary 
             columnOutcome: t('table.outcome'),
             columnRsvp: t('table.rsvp'),
             columnAmount: t('table.amount'),
-            columnCalledAt: t('table.calledAt'),
             outcomeConfirmed: t('outcome.confirmed'),
             outcomeDeclined: t('outcome.declined'),
             outcomeNoAnswer: t('outcome.noAnswer'),
