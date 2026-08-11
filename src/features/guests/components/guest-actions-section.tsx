@@ -15,7 +15,8 @@ export function GuestActionsSection({ invitationToken }: GuestActionsSectionProp
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/confirm/${invitationToken}`;
-    navigator.clipboard.writeText(url).catch(() => {});
+    const text = `${t('copyInvitationLinkPrefix')}\n${url}`;
+    navigator.clipboard.writeText(text).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
