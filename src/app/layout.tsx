@@ -49,10 +49,10 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'Kululu אישורי הגעה',
-  description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
+  description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',
   openGraph: {
     title: 'Kululu אישורי הגעה',
-    description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
+    description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',
     siteName: 'Kululu אישורי הגעה',
     type: 'website',
     images: [
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Kululu אישורי הגעה',
-    description: 'תכננו, ארגנו ונהלו את האירוע שלכם בקלות עם אפליקציית ניהול האירועים המשותפת שלנו',
+    description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',
     images: [ogPreview.src],
   },
 };
