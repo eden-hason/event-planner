@@ -6,6 +6,7 @@ import {
   IconCalendarEvent,
   IconHeart,
   IconMail,
+  IconPhone,
   IconUserCheck,
 } from '@tabler/icons-react';
 import { useTranslations, useLocale } from 'next-intl';
@@ -15,16 +16,17 @@ import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { type ScheduleTypeKey } from '../schemas';
+import { CALL_ROUNDS_NAV_KEY, type OutreachItem } from '../types';
 import { formatRelativeTime } from '../utils';
-import { type ScheduleTabItem } from './schedules-page';
 
 type ScheduleTypeIcon = React.ComponentType<{ size?: number | string; className?: string }>;
 
-const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
+const ACTION_TYPE_ICONS: Record<ScheduleTypeKey | typeof CALL_ROUNDS_NAV_KEY, ScheduleTypeIcon> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   event_reminder: IconBell,
   post_event: IconHeart,
+  [CALL_ROUNDS_NAV_KEY]: IconPhone,
 };
 
 // Any schedule type outside the four known here (e.g. one added directly to
@@ -35,7 +37,7 @@ function getTypeIcon(type: string): ScheduleTypeIcon {
 
 interface SchedulesLayoutProps {
   visibleTypes: string[];
-  contentByType: Record<string, ScheduleTabItem[]>;
+  contentByType: Record<string, OutreachItem[]>;
 }
 
 export function SchedulesLayout({
@@ -137,11 +139,27 @@ export function SchedulesLayout({
   );
 }
 
-function StatusRow({ item }: { item: ScheduleTabItem }) {
+// A message schedule is done when it is 'sent'; a call round when it is
+// 'completed'. Both read as a green dot - the distinction that matters in the
+// nav is done / in flight / abandoned, not which kind produced it.
+const STATUS_DOT: Record<OutreachItem['status'], string> = {
+  sent: 'bg-green-500',
+  completed: 'bg-green-500',
+  pending: 'bg-amber-500',
+  in_progress: 'bg-amber-500',
+  cancelled: 'bg-muted-foreground/40',
+};
+
+const STATUS_LABEL_KEY: Record<OutreachItem['status'], string> = {
+  sent: 'status.label.sent',
+  completed: 'status.label.completed',
+  pending: 'status.label.pending',
+  in_progress: 'status.label.inProgress',
+  cancelled: 'status.label.cancelled',
+};
+
+function StatusRow({ item }: { item: OutreachItem }) {
   const t = useTranslations('schedules');
-  const isSent = item.scheduleStatus === 'sent';
-  const isCancelled = item.scheduleStatus === 'cancelled';
-  const dateStr = isSent ? item.sentAt : isCancelled ? undefined : item.scheduledDate;
 
   function formatTime(str: string): string {
     const result = formatRelativeTime(str);
@@ -153,21 +171,12 @@ function StatusRow({ item }: { item: ScheduleTabItem }) {
 
   return (
     <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-      <span
-        className={cn(
-          'inline-block size-1.5 rounded-full',
-          isSent ? 'bg-green-500' : isCancelled ? 'bg-muted-foreground/40' : 'bg-amber-500',
-        )}
-      />
-      {isSent
-        ? t('status.label.sent')
-        : isCancelled
-          ? t('status.label.cancelled')
-          : t('status.label.pending')}
-      {dateStr && (
+      <span className={cn('inline-block size-1.5 rounded-full', STATUS_DOT[item.status])} />
+      {t(STATUS_LABEL_KEY[item.status] as 'status.label.sent')}
+      {item.timestamp && (
         <>
           <span>·</span>
-          {formatTime(dateStr)}
+          {formatTime(item.timestamp)}
         </>
       )}
     </span>

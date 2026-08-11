@@ -22,11 +22,14 @@ function StatChip({
   icon,
   label,
   value,
+  hint,
   colorClass,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
+  /** Secondary line - e.g. the headcount behind a count of guest records */
+  hint?: string;
   colorClass: string;
 }) {
   return (
@@ -36,6 +39,7 @@ function StatChip({
         <span>{label}</span>
       </div>
       <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
+      {hint && <span className="text-muted-foreground text-[11px] tabular-nums">{hint}</span>}
     </div>
   );
 }
@@ -80,6 +84,7 @@ export async function ScheduleInteractionsCard({ scheduleId }: ScheduleInteracti
                 icon={<IconCheck size={13} strokeWidth={2.5} />}
                 label={t('confirmed')}
                 value={data.summary.confirmed}
+                hint={t('confirmedGuests', { count: data.summary.confirmedGuests })}
                 colorClass="text-green-600"
               />
               <StatChip
@@ -95,6 +100,7 @@ export async function ScheduleInteractionsCard({ scheduleId }: ScheduleInteracti
                 columnGuest: t('columnGuest'),
                 columnViewed: t('columnViewed'),
                 columnResponse: t('columnResponse'),
+                columnAmount: t('columnAmount'),
                 columnDate: t('columnDate'),
                 responseConfirmed: t('responseConfirmed'),
                 responseDeclined: t('responseDeclined'),

@@ -45,10 +45,22 @@ attached to a purchased plan.
 A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; the act of
 collecting it is a **Confirmation** round (see Schedule Type).
 
+## Outreach Item
+
+A deliberate attempt to reach Guests about the Event. There are exactly two kinds: a
+**Schedule** and a **Call Round**. This is the unit the schedules page lists, and the
+only term that covers both.
+
+Use it only where both kinds are genuinely in play. A Schedule is not "an outreach item"
+in ordinary conversation - it is a Schedule.
+
 ## Schedule
 
 A planned outbound message send for an Event - who it goes to, over which channel, and
 when. Schedules are the mechanism behind every message a Guest receives.
+
+A Schedule always carries a template and a channel; a Call Round carries neither. Where
+the two must be spoken of together, the word is **Outreach Item**.
 
 ## Schedule Type
 
@@ -72,6 +84,23 @@ call's outcome is recorded against the Guest.
 
 Two Call Rounds are included in a paid plan. Call Rounds are a service Kululu performs,
 not a feature the Couple operates - this distinction matters in all customer-facing copy.
+The Owner watches a Call Round; they never run one.
+
+## Call Outcome
+
+How one Guest's call ended: no answer, confirmed, or declined. Confirmed and declined
+carry straight through to the Guest's RSVP.
+
+Distinct from the RSVP itself: a Guest can be confirmed without any Call Outcome, having
+answered on their own after the round began.
+
+## Round Completion
+
+The moment a Call Round is declared over by the Kululu operator running it. A deliberate
+act, not a consequence of every Guest having been reached - a round can legitimately end
+with Guests who never answered.
+
+"Complete" describes the round, never the Guest. A Guest is confirmed or declined.
 
 ## Owner
 

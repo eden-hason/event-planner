@@ -11,7 +11,10 @@ export async function getRecentRsvpActivity(
     .from('guests')
     .select('id, name, rsvp_status, rsvp_changed_at, rsvp_changed_by_name, rsvp_change_source')
     .eq('event_id', eventId)
-    .eq('rsvp_change_source', 'guest')
+    // Anything the guest did, however they did it: self-serve on the landing
+    // page, or over the phone with the call team. 'manual' is excluded - that
+    // is the host's own edit, and echoing it back as activity is noise.
+    .in('rsvp_change_source', ['guest', 'admin_call'])
     .not('rsvp_changed_at', 'is', null)
     .order('rsvp_changed_at', { ascending: false })
     .limit(limit);
@@ -29,6 +32,6 @@ export async function getRecentRsvpActivity(
     rsvpStatus: row.rsvp_status as 'pending' | 'confirmed' | 'declined',
     rsvpChangedAt: row.rsvp_changed_at as string,
     rsvpChangedByName: row.rsvp_changed_by_name ?? null,
-    rsvpChangeSource: row.rsvp_change_source as 'manual' | 'guest' | null,
+    rsvpChangeSource: row.rsvp_change_source as RecentRsvpRow['rsvpChangeSource'],
   }));
 }

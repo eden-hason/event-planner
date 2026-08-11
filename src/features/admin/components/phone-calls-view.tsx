@@ -19,7 +19,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { startCallRound, deleteCallRound } from '../actions/calls';
+import {
+  startCallRound,
+  deleteCallRound,
+  finishCallRound,
+  reopenCallRound,
+} from '../actions/calls';
 import { getCallRounds, getRoundCallLogs } from '../queries/calls';
 import { RoundGuestRow } from './round-guest-row';
 import type { CallRoundSummary, CallLogWithGuest, CallOutcome } from '../types';
@@ -51,6 +56,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [isStarting, startTransition] = useTransition();
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
+  const [togglingRoundId, setTogglingRoundId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<SummaryFilterKey | null>(null);
   const [search, setSearch] = useState('');
@@ -91,6 +97,36 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
 
       await promise.catch(() => {});
     });
+  }
+
+  // Finishing is what the Owner sees as a green dot on their schedules page,
+  // so it is a deliberate click - not something derived from the log counts.
+  async function handleToggleRoundCompletion(round: CallRoundSummary) {
+    const isCompleted = round.status === 'completed';
+    setTogglingRoundId(round.id);
+
+    const promise = (
+      isCompleted ? reopenCallRound(round.id, eventId) : finishCallRound(round.id, eventId)
+    ).then((result) => {
+      if (!result.success) throw new Error(result.message);
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: isCompleted ? 'Reopening round…' : 'Finishing round…',
+      success: async (data) => {
+        setRounds(await getCallRounds(eventId));
+        return data.message;
+      },
+      error: (err) => (err instanceof Error ? err.message : 'Failed to update round'),
+    });
+
+    try {
+      await promise;
+    } catch {
+      // toast already surfaced it
+    }
+    setTogglingRoundId(null);
   }
 
   async function handleDeleteRound(roundId: string) {
@@ -173,7 +209,10 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
           {rounds.map((round) => {
             const isSelected = selectedRoundId === round.id;
             const isDeleting = deletingRoundId === round.id;
-            const isComplete = round.awaiting === 0 && round.total > 0;
+            const isComplete = round.status === 'completed';
+            // Once an outcome is recorded the round is history the Owner can
+            // already see - it can be finished, but not made to disappear.
+            const hasOutcomes = round.total - round.awaiting > 0;
             return (
               <div key={round.id} className="group relative">
                 <button
@@ -203,6 +242,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                     />
                   )}
                 </button>
+                {!hasOutcomes && (
                 <button
                   onClick={() => setConfirmDeleteId(round.id)}
                   disabled={isDeleting}
@@ -215,18 +255,36 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                     <IconTrash className="h-2.5 w-2.5" />
                   )}
                 </button>
+                )}
               </div>
             );
           })}
         </div>
-        <Button size="sm" variant="outline" onClick={handleStartRound} disabled={isStarting}>
-          {isStarting ? (
-            <IconLoader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <IconPhone className="mr-1.5 h-3.5 w-3.5" />
+        <div className="flex items-center gap-2">
+          {selectedRound && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => handleToggleRoundCompletion(selectedRound)}
+              disabled={togglingRoundId === selectedRound.id}
+            >
+              {togglingRoundId === selectedRound.id ? (
+                <IconLoader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <IconCheck className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              {selectedRound.status === 'completed' ? 'Reopen round' : 'Finish round'}
+            </Button>
           )}
-          New round
-        </Button>
+          <Button size="sm" variant="outline" onClick={handleStartRound} disabled={isStarting}>
+            {isStarting ? (
+              <IconLoader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <IconPhone className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            New round
+          </Button>
+        </div>
       </div>
 
       {rounds.length === 0 ? (

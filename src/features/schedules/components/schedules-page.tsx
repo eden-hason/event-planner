@@ -3,6 +3,8 @@ import { IconChartBar, IconLayoutGrid } from '@tabler/icons-react';
 
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
+import { CallRoundResultsCard } from '@/features/calls/components';
+import { getCallRoundsForEvent } from '@/features/calls/queries';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDefaultSchedulesForEventType } from '../queries/catalog';
 import {
@@ -12,6 +14,7 @@ import {
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
+import { CALL_ROUNDS_NAV_KEY, type OutreachItem } from '../types';
 import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
@@ -35,18 +38,6 @@ type ScheduleWithTemplate = {
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
 
-export type ScheduleTabItem = {
-  label: string;
-  scheduleId: string;
-  scheduleStatus: ScheduleApp['status'];
-  sentAt?: string;
-  scheduledDate: string;
-  guestCount: number;
-  targetStatus: ScheduleApp['targetStatus'];
-  scheduleTypeName: string;
-  details: React.ReactNode;
-};
-
 export async function SchedulesPage({
   eventId,
   eventDate,
@@ -54,9 +45,15 @@ export async function SchedulesPage({
   event,
 }: SchedulesPageProps) {
   const t = await getTranslations('schedules');
+  const tCalls = await getTranslations('calls');
   const locale = await getLocale();
 
-  const guests = await getEventGuests(eventId);
+  const [guests, callRounds] = await Promise.all([
+    getEventGuests(eventId),
+    // RLS-bound: a viewer without Owner access gets an empty list, so call
+    // rounds simply do not appear in their nav.
+    getCallRoundsForEvent(eventId),
+  ]);
   const canCreateSchedules = event?.canCreateSchedules ?? false;
 
   // Group schedules by schedule type key (multiple allowed for 'confirmation').
@@ -89,7 +86,11 @@ export async function SchedulesPage({
     ...presentTypes.filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type)).sort(),
   ];
 
-  if (visibleTypes.length === 0) {
+  // The wizard shows only when there is no outreach at all. An event can have
+  // call rounds and no message schedules (can_create_schedules defaults to
+  // false), and hiding real work behind an onboarding prompt is exactly the
+  // blind spot this page exists to remove.
+  if (visibleTypes.length === 0 && callRounds.length === 0) {
     const eventType = event?.eventType ?? 'wedding';
     const defaults = await getDefaultSchedulesForEventType(eventType);
     const suggestedSchedules = buildSuggestedSchedules(defaults, eventDate);
@@ -118,7 +119,7 @@ export async function SchedulesPage({
   }
 
   // Pre-render content for all types on the server
-  const contentByType: Partial<Record<string, ScheduleTabItem[]>> = {};
+  const contentByType: Partial<Record<string, OutreachItem[]>> = {};
 
   for (const type of visibleTypes) {
     const items = schedulesByType[type]!;
@@ -131,16 +132,18 @@ export async function SchedulesPage({
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
-      const guestCount = filterGuestsByTarget(guests, schedule.targetStatus).length;
       return {
+        kind: 'message' as const,
         label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
-        scheduleId: schedule.id,
-        scheduleStatus: schedule.status,
-        sentAt: schedule.sentAt ?? undefined,
-        scheduledDate: schedule.scheduledDate,
-        guestCount,
-        targetStatus: schedule.targetStatus,
-        scheduleTypeName: schedule.scheduleTypeName,
+        status: schedule.status ?? ('pending' as const),
+        // A sent schedule is dated by when it went out; a still-pending one by
+        // when it is due. A cancelled one has no meaningful date.
+        timestamp:
+          schedule.status === 'sent'
+            ? (schedule.sentAt ?? undefined)
+            : schedule.status === 'cancelled'
+              ? undefined
+              : schedule.scheduledDate,
         details: schedule.scheduleTypeKey === 'confirmation' ? (
           <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
             <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
@@ -185,10 +188,24 @@ export async function SchedulesPage({
     });
   }
 
+  // Call rounds join the same type-keyed nav as one group after the message
+  // types. Each round keeps its own number rather than a positional index -
+  // deleting round 1 must not renumber round 2 under the Owner's feet.
+  if (callRounds.length > 0) {
+    visibleTypes.push(CALL_ROUNDS_NAV_KEY);
+    contentByType[CALL_ROUNDS_NAV_KEY] = callRounds.map((round) => ({
+      kind: 'call_round' as const,
+      label: tCalls('round', { number: round.roundNumber }),
+      status: round.status,
+      timestamp: round.completedAt ?? round.createdAt,
+      details: <CallRoundResultsCard round={round} />,
+    }));
+  }
+
   return (
     <SchedulesLayout
       visibleTypes={visibleTypes}
-      contentByType={contentByType as Record<string, ScheduleTabItem[]>}
+      contentByType={contentByType as Record<string, OutreachItem[]>}
     />
   );
 }
