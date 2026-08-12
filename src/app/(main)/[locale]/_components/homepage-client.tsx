@@ -617,9 +617,9 @@ export function HomepageClient() {
               <span className="wo-badge">🎊 מבצע חתונות - לזמן מוגבל</span>
               <div className="wo-price">
                 <span className="amt"><span dir="ltr">1.5</span> ₪</span>
-                <span className="per">לרשומת מוזמן</span>
+                <span className="per">לרשומה</span>
               </div>
-              <p className="wo-note">תשלום חד פעמי לפי כמות רשומות המוזמנים באירוע, ללא מנויים וללא הפתעות</p>
+              <p className="wo-note">תשלום חד פעמי לפי כמות המוזמנים – רק בעת שליחת ההזמנות. עד אז, הכל בחינם.</p>
               <div className="wo-cta-row">
                 <Link href="/app/new-event" className="btn btn-primary heb" onClick={handleCtaClick}>
                   שריינו את המבצע
