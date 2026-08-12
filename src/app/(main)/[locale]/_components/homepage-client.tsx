@@ -36,6 +36,21 @@ const FEATURES: Array<{
   { scene:'sharing', image:sharingShot, imageAlt:'שיתוף האירוע וניהול הרשאות לשותפים', color:'sun', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>, title:'שיתוף', body:'תכנון אירוע טוב יותר מתחיל בשיתוף פעולה', bullets:['מצרפים שותף לניהול האירוע בכמה קליקים','מגדירים הרשאות צפייה או עריכה לכל שותף','עובדים יחד בצורה מסודרת ומסונכרנת','שקיפות מלאה ושיתוף פעולה נוח בתהליך תכנון האירוע'] },
 ];
 
+const OFFER_DEADLINE = '2026-09-15T23:59:59';
+
+const OFFER_FEATURES: Array<{
+  title: string;
+  desc: string;
+  bg: string;
+  color: string;
+  icon: React.ReactNode;
+}> = [
+  { title:'אישורי הגעה בוואטסאפ', desc:'הודעות אוטומטיות למוזמנים והמערכת מרכזת את התשובות בזמן אמת', bg:'rgba(37,211,102,0.12)', color:'#16a34a', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> },
+  { title:'2 סבבי שיחות טלפון', desc:'נציג אנושי מתקשר למוזמנים שלא ענו - שני סבבים מלאים, בלי כאב ראש', bg:'rgba(59,130,246,0.12)', color:'#2563eb', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> },
+  { title:'סידורי הושבה דיגיטליים', desc:'בונים את מפת השולחנות בגרירה פשוטה, וה-AI מציע שיבוצים חכמים', bg:'rgba(139,92,246,0.12)', color:'#7c3aed', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg> },
+  { title:'ניהול הוצאות ומתנות', desc:'עוקבים אחרי כל הוצאה ומתנה ויודעים בדיוק לאן הולך כל שקל', bg:'rgba(251,113,133,0.14)', color:'#e11d48', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+];
+
 export function HomepageClient() {
   const navRef = useRef<HTMLElement>(null);
   const [activeSection, setActiveSection] = useState('');
@@ -115,14 +130,29 @@ export function HomepageClient() {
     burst(r.left + r.width / 2, r.top + r.height / 2);
   }
 
-  function handlePlanCtaClick(records: number) {
-    const message = `היי, אשמח לשמוע עוד על החבילה של ${records} רשומות`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
-  }
-
   const [activeScene, setActiveScene] = useState<string>('guests');
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0]));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // null until mounted so server and first client render match (no countdown hydration mismatch)
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const remainingSeconds = Math.max(
+    0,
+    Math.floor(((new Date(OFFER_DEADLINE).getTime()) - (now ?? new Date(OFFER_DEADLINE).getTime())) / 1000)
+  );
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const countdownUnits = [
+    { value: pad(Math.floor(remainingSeconds / 86400)), label: 'ימים' },
+    { value: pad(Math.floor(remainingSeconds / 3600) % 24), label: 'שעות' },
+    { value: pad(Math.floor(remainingSeconds / 60) % 60), label: 'דקות' },
+    { value: pad(remainingSeconds % 60), label: 'שניות' },
+  ];
 
   function toggleFaq(i: number) {
     setOpenFaqs((prev) => {
@@ -303,6 +333,24 @@ export function HomepageClient() {
         .pricing-foot{text-align:center;margin-top:28px;font-size:14px;color:var(--ink-3)}
         .pricing-foot a{color:var(--primary);font-weight:600}
         .pricing-foot a:hover{text-decoration:underline}
+
+        .wo-card{width:100%;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));overflow:hidden}
+        .wo-pricing{padding:44px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06));border-inline-end:1px solid var(--line)}
+        .wo-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:linear-gradient(90deg,var(--primary),#8b3ff0);color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
+        .wo-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+        .wo-price .amt{font-size:clamp(52px,6vw,76px);font-weight:800;letter-spacing:-0.03em;color:var(--ink);line-height:1;white-space:nowrap}
+        .wo-price .per{font-size:19px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+        .wo-note{margin:0;font-size:14px;color:var(--ink-2);line-height:1.6}
+        .wo-cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+        .wo-features{padding:44px;display:flex;flex-direction:column;gap:8px}
+        .wo-features-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:10px}
+        .wo-feature{display:flex;align-items:flex-start;gap:14px;padding:13px 14px;border-radius:14px;transition:background .15s ease}
+        .wo-feature:hover{background:rgba(26,11,46,0.03)}
+        .wo-feature-ic{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+        .wo-feature-text{display:flex;flex-direction:column;gap:2px}
+        .wo-feature-text .ft{font-size:15px;font-weight:700;color:var(--ink)}
+        .wo-feature-text .fd{font-size:13.5px;color:var(--ink-2);line-height:1.55}
+        @media(max-width:900px){.wo-pricing{border-inline-end:none;border-bottom:1px solid var(--line)}.wo-pricing,.wo-features{padding:32px}}
         .cta-banner{margin:24px 0 0;border-radius:var(--r-xl);background:var(--grad-banner);padding:80px 64px;color:#fff;text-align:center;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(210,60,194,0.25)}
         .cta-banner h2{font-size:clamp(34px,4vw,52px);font-weight:800;letter-spacing:-0.025em;line-height:1.05;margin:0 0 16px;text-wrap:balance}
         .cta-banner p{font-size:18px;opacity:.92;margin:0 auto 32px;max-width:560px;line-height:1.5}
@@ -555,83 +603,55 @@ export function HomepageClient() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="section" id="pricing" style={{paddingTop:64}} dir="rtl">
+      {/* WEDDING PRICING OFFER */}
+      <section className="section wo" id="pricing" style={{paddingTop:64}} dir="rtl">
         <div className="wrap">
           <div className="section-head reveal">
-            <div className="eyebrow">חבילות</div>
-            <h2 className="section-title">תשלום לפי אירוע. ללא הפתעות.</h2>
-            <p className="section-sub">בוחרים את החבילה שמתאימה בדיוק לאירוע שלכם</p>
+            <div className="eyebrow">מבצע לזמן מוגבל</div>
+            <h2 className="section-title">מסלול חתונות מיוחד</h2>
+            <p className="section-sub">כל מה שצריך כדי לנהל את המוזמנים לחתונה שלכם - במחיר אחד פשוט, לזמן מוגבל בלבד</p>
           </div>
-          <div className="pricing-grid">
-            {/* Plan 1 */}
-            <div className="plan reveal">
-              <div className="plan-price"><span className="amt">190</span><span className="cur">₪</span></div>
-              <div className="plan-per">חד פעמי · לאירוע</div>
-              <div className="plan-meta">
-                <div className="row">
-                  <span className="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
-                  <span><b>100</b> רשומות אורחים</span>
-                </div>
-                <div className="row">
-                  <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+10</b> רזרבה · חינם</span>
-                </div>
+
+          <div className="wo-card reveal">
+            <div className="wo-pricing">
+              <span className="wo-badge">🎊 מבצע חתונות - לזמן מוגבל</span>
+              <div className="wo-price">
+                <span className="amt"><span dir="ltr">1.5</span> ₪</span>
+                <span className="per">לרשומת מוזמן</span>
               </div>
-              <button className="plan-cta" onClick={() => handlePlanCtaClick(100)}>בחרו תוכנית</button>
+              <p className="wo-note">תשלום חד פעמי לפי כמות רשומות המוזמנים באירוע, ללא מנויים וללא הפתעות</p>
+              <div className="wo-cta-row">
+                <Link href="/app/new-event" className="btn btn-primary heb" onClick={handleCtaClick}>
+                  שריינו את המבצע
+                </Link>
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost heb"
+                >
+                  <IconBrandWhatsapp size={17} stroke={1.75} />
+                  דברו איתנו
+                </a>
+              </div>
             </div>
-            {/* Plan 2 Featured */}
-            <div className="plan featured reveal">
-<div className="plan-price"><span className="amt">360</span><span className="cur">₪</span></div>
-              <div className="plan-per">חד פעמי · לאירוע</div>
-              <div className="plan-meta">
-                <div className="row">
-                  <span className="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
-                  <span><b>200</b> רשומות אורחים</span>
+
+            <div className="wo-features">
+              <span className="wo-features-title">מה כלול במסלול החתונות?</span>
+              {OFFER_FEATURES.map(({ title, desc, bg, color, icon }) => (
+                <div key={title} className="wo-feature">
+                  <span className="wo-feature-ic" style={{ background: bg, color }}>{icon}</span>
+                  <span className="wo-feature-text">
+                    <span className="ft">{title}</span>
+                    <span className="fd">{desc}</span>
+                  </span>
                 </div>
-                <div className="row">
-                  <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+20</b> רזרבה · חינם</span>
-                </div>
-              </div>
-              <button className="plan-cta" onClick={() => handlePlanCtaClick(200)}>בחרו תוכנית</button>
-            </div>
-            {/* Plan 3 */}
-            <div className="plan reveal">
-              <div className="plan-price"><span className="amt">510</span><span className="cur">₪</span></div>
-              <div className="plan-per">חד פעמי · לאירוע</div>
-              <div className="plan-meta">
-                <div className="row">
-                  <span className="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
-                  <span><b>300</b> רשומות אורחים</span>
-                </div>
-                <div className="row">
-                  <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+30</b> רזרבה · חינם</span>
-                </div>
-              </div>
-              <button className="plan-cta" onClick={() => handlePlanCtaClick(300)}>בחרו תוכנית</button>
-            </div>
-            {/* Plan 4 */}
-            <div className="plan reveal">
-              <div className="plan-price"><span className="amt">640</span><span className="cur">₪</span></div>
-              <div className="plan-per">חד פעמי · לאירוע</div>
-              <div className="plan-meta">
-                <div className="row">
-                  <span className="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
-                  <span><b>400</b> רשומות אורחים</span>
-                </div>
-                <div className="row">
-                  <span className="ic reserve-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg></span>
-                  <span><b>+40</b> רזרבה · חינם</span>
-                </div>
-              </div>
-              <button className="plan-cta" onClick={() => handlePlanCtaClick(400)}>בחרו תוכנית</button>
+              ))}
             </div>
           </div>
 
           <p className="pricing-foot reveal">
-            צריכים יותר מ-400 אורחים? <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener noreferrer">דברו איתנו</a> — נתאים תוכנית במיוחד בשבילכם
+            מתכננים בר/בת מצווה, ברית או אירוע עסקי? יש לנו מסלולים גמישים לכל סוגי האירועים - <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener noreferrer">דברו איתנו</a>
           </p>
         </div>
       </section>
