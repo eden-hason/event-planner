@@ -989,11 +989,11 @@
       "past": "{time} ago",
       "future": "in {time}",
       "units": {
-        "minutes": "{count}m",
-        "hours": "{count}h",
-        "days": "{count}d",
-        "weeks": "{count}w",
-        "months": "{count}mo"
+        "minutes": "{count, plural, one {# minute} other {# minutes}}",
+        "hours": "{count, plural, one {# hour} other {# hours}}",
+        "days": "{count, plural, one {# day} other {# days}}",
+        "weeks": "{count, plural, one {# week} other {# weeks}}",
+        "months": "{count, plural, one {# month} other {# months}}"
       }
     },
     "sendResults": {

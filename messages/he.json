@@ -990,11 +990,11 @@
       "past": "לפני {time}",
       "future": "בעוד {time}",
       "units": {
-        "minutes": "{count} דק'",
-        "hours": "{count} ש'",
-        "days": "{count} ימים",
-        "weeks": "{count} שב'",
-        "months": "{count} חודשים"
+        "minutes": "{count, plural, one {דקה} two {שתי דקות} other {# דקות}}",
+        "hours": "{count, plural, one {שעה} two {שעתיים} other {# שעות}}",
+        "days": "{count, plural, one {יום} two {יומיים} other {# ימים}}",
+        "weeks": "{count, plural, one {שבוע} two {שבועיים} other {# שבועות}}",
+        "months": "{count, plural, one {חודש} two {חודשיים} other {# חודשים}}"
       }
     },
     "sendResults": {

@@ -1,43 +1,60 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Plus_Jakarta_Sans, Heebo, Rubik, Assistant } from 'next/font/google';
+import localFont from 'next/font/local';
 import { getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 import ogPreview from '@/assets/og-preview.png';
 import './globals.css';
 
-const geistSans = Geist({
+// Self-hosted rather than next/font/google: that loader downloads every family
+// from fonts.gstatic.com during the build, which made deploys fail whenever a
+// fetch flaked. These are the upstream variable fonts, subset to the scripts we
+// actually render - see src/assets/fonts/OFL.txt for provenance and licensing.
+//
+// Each file carries its whole weight axis, so a single woff2 replaces what used
+// to be one download per weight. The `weight` range below must stay within the
+// font's real axis or the browser will synthesise the extremes.
+
+const geistSans = localFont({
+  src: '../assets/fonts/geist-variable.woff2',
   variable: '--font-geist-sans',
-  subsets: ['latin'],
+  weight: '100 900',
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: '../assets/fonts/geist-mono-variable.woff2',
   variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: '100 900',
+  display: 'swap',
 });
 
-const plusJakarta = Plus_Jakarta_Sans({
+const plusJakarta = localFont({
+  src: '../assets/fonts/plus-jakarta-sans-variable.woff2',
   variable: '--font-plus-jakarta',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: '200 800',
+  display: 'swap',
 });
 
-const heebo = Heebo({
+const heebo = localFont({
+  src: '../assets/fonts/heebo-variable.woff2',
   variable: '--font-heebo',
-  subsets: ['latin', 'hebrew'],
-  weight: ['500', '700'],
+  weight: '100 900',
+  display: 'swap',
 });
 
-const rubik = Rubik({
+const rubik = localFont({
+  src: '../assets/fonts/rubik-variable.woff2',
   variable: '--font-rubik',
-  subsets: ['latin', 'hebrew'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: '300 900',
+  display: 'swap',
 });
 
-const assistant = Assistant({
+const assistant = localFont({
+  src: '../assets/fonts/assistant-variable.woff2',
   variable: '--font-assistant',
-  subsets: ['latin', 'hebrew'],
-  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  weight: '200 800',
+  display: 'swap',
 });
 
 const siteUrl =
