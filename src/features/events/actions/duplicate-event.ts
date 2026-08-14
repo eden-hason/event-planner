@@ -120,7 +120,7 @@ export async function duplicateEvent(
       }
     }
 
-    // Copy schedules and reset status to draft
+    // Copy schedules and reset each one to outstanding
     const { data: originalSchedules } = await supabase
       .from('schedules')
       .select('*')
@@ -135,7 +135,11 @@ export async function duplicateEvent(
         return {
           ...scheduleFields,
           event_id: newEvent.id,
-          status: 'draft' as const,
+          // Null, not 'draft': schedule_completion_status only allows
+          // 'sent'/'cancelled', and null is how this schema spells "not done
+          // yet". 'draft' failed the check constraint on every row, so no
+          // schedule was ever copied - the error was only logged.
+          status: null,
           sent_at: null,
         };
       });

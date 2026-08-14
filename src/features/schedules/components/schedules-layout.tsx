@@ -33,17 +33,17 @@ import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { type ScheduleTypeKey } from '../schemas';
-import { CALL_ROUNDS_NAV_KEY, type OutreachItem, type OutreachNavGroup } from '../types';
+import { type OutreachItem, type OutreachNavGroup } from '../types';
 import { formatRelativeTime } from '../utils';
 
 type ScheduleTypeIcon = React.ComponentType<{ size?: number | string; className?: string }>;
 
-const ACTION_TYPE_ICONS: Record<ScheduleTypeKey | typeof CALL_ROUNDS_NAV_KEY, ScheduleTypeIcon> = {
+const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   event_reminder: IconBell,
   post_event: IconHeart,
-  [CALL_ROUNDS_NAV_KEY]: IconPhone,
+  phone_call: IconPhone,
 };
 
 // Any schedule type outside the four known here (e.g. one added directly to

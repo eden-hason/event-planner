@@ -5,7 +5,9 @@ export type SuggestedSchedule = {
   scheduleTypeId: string;
   scheduleTypeKey: string;
   scheduleTypeName: string;
-  templateId: string;
+  executionKind: string;
+  /** Null for non-message types - a call round is planned without a template */
+  templateId: string | null;
   daysOffset: number;
   defaultTime: string;
   targetStatus: 'pending' | 'confirmed' | null;
@@ -28,6 +30,7 @@ export function buildSuggestedSchedules(
     scheduleTypeId: config.scheduleTypeId,
     scheduleTypeKey: config.scheduleTypeKey,
     scheduleTypeName: config.scheduleTypeName,
+    executionKind: config.executionKind,
     templateId: config.templateId,
     daysOffset: config.daysOffset,
     defaultTime: config.defaultTime,

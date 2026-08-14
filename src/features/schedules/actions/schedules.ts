@@ -6,6 +6,21 @@ import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { ScheduleSelectionSchema, type ScheduleSelectionItem } from '../schemas';
 
+/**
+ * Reads execution_kind off a raw `schedule_types` embed. PostgREST returns a
+ * to-one embed as an object, but the generated types allow an array, so both
+ * shapes are handled. Defaults to treating the row as a message: the safe
+ * direction is to keep applying the existing guards, never to skip them.
+ */
+function isMessageScheduleRow(row: {
+  schedule_types: { execution_kind: string } | { execution_kind: string }[] | null;
+}): boolean {
+  const types = Array.isArray(row.schedule_types)
+    ? row.schedule_types[0]
+    : row.schedule_types;
+  return (types?.execution_kind ?? 'message') === 'message';
+}
+
 export type UpdateScheduledDateState = {
   success: boolean;
   message?: string | null;
@@ -31,7 +46,7 @@ export async function updateScheduledDate(
 
     const { data: existing, error: fetchError } = await supabase
       .from('schedules')
-      .select('status')
+      .select('status, schedule_types (execution_kind)')
       .eq('id', scheduleId)
       .single();
 
@@ -41,6 +56,16 @@ export async function updateScheduledDate(
 
     if (existing.status === 'sent') {
       return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
+    }
+
+    // A restrictive RLS policy already blocks this, but an UPDATE that matches
+    // no rows returns no error - without this the caller would be told it
+    // succeeded. Rescheduling a call plan is a back-office action.
+    if (!isMessageScheduleRow(existing)) {
+      return {
+        success: false,
+        message: 'A call round can only be rescheduled from the back office.',
+      };
     }
 
     const { error } = await supabase
@@ -87,7 +112,7 @@ export async function updateScheduleStatus(
 
     const { data: existing, error: fetchError } = await supabase
       .from('schedules')
-      .select('status')
+      .select('status, schedule_types (execution_kind)')
       .eq('id', scheduleId)
       .single();
 
@@ -97,6 +122,14 @@ export async function updateScheduleStatus(
 
     if (existing.status === 'sent') {
       return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
+    }
+
+    // See updateScheduledDate: RLS blocks the write, but silently.
+    if (!isMessageScheduleRow(existing)) {
+      return {
+        success: false,
+        message: 'A call round can only be changed from the back office.',
+      };
     }
 
     const { error } = await supabase
@@ -127,7 +160,7 @@ export type CreateSchedulesFromSelectionState = {
 /**
  * Creates schedules from a user-customized selection made in the setup wizard.
  * Each selection carries a fully-resolved date/time decided by the user.
- * Idempotent - skips selections whose template_id|scheduled_date already exists.
+ * Idempotent - skips selections whose type|template|date already exists.
  * Referential integrity of schedule_type_id/template_id is enforced by FKs.
  *
  * @param eventId - The event ID to create schedules for
@@ -152,10 +185,13 @@ export async function createSchedulesFromSelection(
 
     const supabase = await createClient();
 
-    // Skip selections that already exist (guards against double-submit)
+    // Skip selections that already exist (guards against double-submit).
+    // Keyed on the schedule type as well as the template: a call round has no
+    // template, so a template-only key would collapse every call plan to
+    // 'null|<date>' and silently drop all but the first.
     const { data: existingSchedules, error: fetchError } = await supabase
       .from('schedules')
-      .select('template_id, scheduled_date')
+      .select('schedule_type_id, template_id, scheduled_date')
       .eq('event_id', eventId);
 
     if (fetchError) {
@@ -164,11 +200,16 @@ export async function createSchedulesFromSelection(
     }
 
     const existingKeys = new Set(
-      existingSchedules?.map((s) => `${s.template_id}|${s.scheduled_date}`) ?? [],
+      existingSchedules?.map(
+        (s) => `${s.schedule_type_id}|${s.template_id ?? ''}|${s.scheduled_date}`,
+      ) ?? [],
     );
 
     const toCreate = parsed.data.filter(
-      (s) => !existingKeys.has(`${s.templateId}|${s.scheduledDate}`),
+      (s) =>
+        !existingKeys.has(
+          `${s.scheduleTypeId}|${s.templateId ?? ''}|${s.scheduledDate}`,
+        ),
     );
 
     if (toCreate.length === 0) {

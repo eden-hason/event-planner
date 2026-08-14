@@ -1,1 +1,5 @@
-export { getCallRoundsForEvent, getCallRoundResults } from './call-rounds';
+export {
+  getCallRoundsForEvent,
+  getCallRoundsByScheduleId,
+  getCallRoundResults,
+} from './call-rounds';

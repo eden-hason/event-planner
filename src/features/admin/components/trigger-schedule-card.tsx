@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SCHEDULE_TYPE_LABELS, type ScheduleApp } from '@/features/schedules';
+import { SCHEDULE_TYPE_LABELS, isMessageSchedule, type ScheduleApp } from '@/features/schedules';
 import { getGuestsForManualSend } from '../queries/event-detail';
 import type { GuestWithDeliveryStatus } from '../queries/event-detail';
 import { triggerScheduleAdmin } from '../actions/trigger-schedule';
@@ -49,8 +49,10 @@ export function TriggerScheduleCard({
   eventId: string;
   schedules: ScheduleApp[];
 }) {
+  // Call rounds are schedules but not sends - they are executed from the calls
+  // tab, and the send engine refuses them outright.
   const unsentSchedules = schedules.filter(
-    (s) => s.status !== 'sent' && s.status !== 'cancelled',
+    (s) => isMessageSchedule(s) && s.status !== 'sent' && s.status !== 'cancelled',
   );
 
   const [open, setOpen] = useState(false);

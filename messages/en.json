@@ -757,7 +757,8 @@
         "initial_invitation": "Initial Invitation",
         "confirmation": "RSVP Confirmation",
         "event_reminder": "Event Reminder",
-        "post_event": "Thank You"
+        "post_event": "Thank You",
+        "phone_call": "Call Round"
       }
     },
     "quickActions": {
@@ -900,7 +901,8 @@
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed Guests",
       "pendingGuests": "Pending Guests",
-      "sentTo": "Sent to"
+      "sentTo": "Sent to",
+      "calling": "Calling"
     },
     "messagePreview": {
       "cardTitle": "Message Preview",
@@ -948,6 +950,7 @@
       "step2Description": "Approve the schedules you want to send",
       "invitationPreviewLabel": "Invitation preview",
       "sendDateLabel": "Send date",
+      "callDateLabel": "Call date",
       "timeLabel": "Time",
       "sendDateHelper": "When the invitation goes out to guests",
       "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately - totally up to you. You can always adjust this later.",
@@ -978,7 +981,8 @@
       "initial_invitation": "Initial Invitation",
       "confirmation": "RSVP Confirmation",
       "event_reminder": "Event Reminder",
-      "post_event": "Thank You"
+      "post_event": "Thank You",
+      "phone_call": "Call Round"
     },
     "relativeTime": {
       "justNow": "just now",
@@ -1437,6 +1441,11 @@
     "refresh": "Refresh",
     "startedOn": "Started {date}",
     "completedOn": "Finished {date}",
+    "plan": {
+      "title": "Planned call round",
+      "description": "Our team will phone these guests on this date",
+      "cancelledDescription": "This call round is switched off and will not run"
+    },
     "stats": {
       "confirmed": "Confirmed",
       "declined": "Declined",

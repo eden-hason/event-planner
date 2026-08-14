@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { SCHEDULE_TYPE_LABELS, type ScheduleApp } from '@/features/schedules';
+import { SCHEDULE_TYPE_LABELS, isMessageSchedule, type ScheduleApp } from '@/features/schedules';
 import { getGuestsForManualSend } from '../queries/event-detail';
 import { sendManualMessages } from '../actions/send-manual';
 import type { GuestWithDeliveryStatus } from '../queries/event-detail';
@@ -56,6 +56,10 @@ export function ManualSendCard({
   eventId: string;
   schedules: ScheduleApp[];
 }) {
+  // Call rounds are schedules but not sends - they are executed from the calls
+  // tab, and the send engine refuses them outright.
+  const sendableSchedules = schedules.filter(isMessageSchedule);
+
   const [open, setOpen] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('');
   const [guests, setGuests] = useState<GuestWithDeliveryStatus[]>([]);
@@ -149,7 +153,7 @@ export function ManualSendCard({
                 <SelectValue placeholder="Select a schedule…" />
               </SelectTrigger>
               <SelectContent>
-                {schedules.map((s) => (
+                {sendableSchedules.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     <ScheduleLabel schedule={s} />
                   </SelectItem>

@@ -24,7 +24,9 @@ export type TimelineRow = {
   scheduleTypeId: string;
   scheduleTypeKey: string;
   scheduleTypeName: string;
-  templateId: string;
+  executionKind: string;
+  /** Null for non-message types - a call round is planned without a template */
+  templateId: string | null;
   targetStatus: 'pending' | 'confirmed' | null;
   enabled: boolean;
   date: Date;
@@ -105,6 +107,10 @@ export function WizardTimelineStep({
       : row.scheduleTypeName;
     const label = total > 1 ? `${baseLabel} ${index}/${total}` : baseLabel;
     const audienceKind = row.targetStatus ?? 'all';
+    // A call round is worked through by a person, so the audience reads as who
+    // gets phoned rather than who gets messaged, and the date is when the
+    // calling starts rather than when something is dispatched.
+    const isCall = row.executionKind === 'phone_call';
 
     return (
       <div
@@ -118,7 +124,7 @@ export function WizardTimelineStep({
           <div className="min-w-0">
             <p className="text-sm font-semibold">{label}</p>
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              {t('audience.sentTo')}
+              {isCall ? t('audience.calling') : t('audience.sentTo')}
               <Badge variant="secondary" className="gap-1.5 rounded-sm text-xs">
                 <span className={cn('size-1.5 rounded-full', AUDIENCE_DOT_CLASS[audienceKind])} />
                 {t(AUDIENCE_KEY[audienceKind])}
@@ -134,7 +140,9 @@ export function WizardTimelineStep({
         {row.enabled && (
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <p className="text-muted-foreground text-xs">{t('setupWizard.sendDateLabel')}</p>
+              <p className="text-muted-foreground text-xs">
+                {isCall ? t('setupWizard.callDateLabel') : t('setupWizard.sendDateLabel')}
+              </p>
               <DatePicker
                 date={row.date}
                 onDateChange={(date) => date && updateRow(row.key, { date })}

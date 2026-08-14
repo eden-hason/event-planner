@@ -758,7 +758,8 @@
         "initial_invitation": "הזמנה ראשונית",
         "confirmation": "אישור הגעה",
         "event_reminder": "תזכורת אירוע",
-        "post_event": "תודה"
+        "post_event": "תודה",
+        "phone_call": "סבב שיחות"
       }
     },
     "quickActions": {
@@ -901,7 +902,8 @@
       "allGuests": "כל האורחים",
       "confirmedGuests": "אורחים שאישרו",
       "pendingGuests": "אורחים ממתינים",
-      "sentTo": "נשלח ל"
+      "sentTo": "נשלח ל",
+      "calling": "מתקשרים אל"
     },
     "messagePreview": {
       "cardTitle": "תצוגה מקדימה",
@@ -949,6 +951,7 @@
       "step2Description": "אשרו את התזמונים שתרצו לשלוח",
       "invitationPreviewLabel": "תצוגה מקדימה של ההזמנה",
       "sendDateLabel": "תאריך שליחה",
+      "callDateLabel": "תאריך השיחות",
       "timeLabel": "שעה",
       "sendDateHelper": "מתי ההזמנה תישלח לאורחים",
       "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית - לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
@@ -979,7 +982,8 @@
       "initial_invitation": "הזמנה ראשונית",
       "confirmation": "אישור הגעה",
       "event_reminder": "תזכורת אירוע",
-      "post_event": "תודה"
+      "post_event": "תודה",
+      "phone_call": "סבב שיחות"
     },
     "relativeTime": {
       "justNow": "זה עתה",
@@ -1440,6 +1444,11 @@
     "refresh": "רענן",
     "startedOn": "התחיל ב-{date}",
     "completedOn": "הסתיים ב-{date}",
+    "plan": {
+      "title": "סבב שיחות מתוכנן",
+      "description": "הצוות שלנו יתקשר לאורחים האלה בתאריך הזה",
+      "cancelledDescription": "סבב השיחות הזה כבוי ולא יתבצע"
+    },
     "stats": {
       "confirmed": "אישרו",
       "declined": "סירבו",

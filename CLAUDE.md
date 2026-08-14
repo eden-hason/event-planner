@@ -87,6 +87,48 @@ When adding code, preserve the pattern above:
   client component can import.
 - One icon location: `src/components/icons/`.
 
+## Database Migrations
+
+**There is no sandbox project.** The rollout is **local → production**, with nothing in
+between, so local is the only gate. Verify against a fresh local database
+(`npx supabase db reset`, which replays every migration from scratch) before anything
+reaches production. `.env.local` points at the local stack (`127.0.0.1:54321`); the linked
+remote project is `kululu-prod`.
+
+**Apply migrations with `npx supabase db push`, not the Supabase MCP.**
+`mcp__supabase__apply_migration` mints its own version number instead of using the
+migration file's timestamp, so the same migration ends up recorded in production under a
+version that matches no local file. The CLI then treats the local file as unapplied and
+tries to re-run it, which fails on the second pass. Three migrations already drifted this
+way (`add_message_deliveries_update_policy`, `add_message_deliveries_error_code`,
+`call_rounds_owner_visibility`). Use the MCP to *inspect* the database freely; use the CLI
+to *change* it.
+
+Check for drift before pushing - any row with an empty `local` or empty `remote` is drift:
+
+```
+npx supabase migration list --linked
+```
+
+To reconcile a migration that is really applied but recorded under the wrong version, fix
+the bookkeeping rather than re-running the SQL. Confirm the schema actually matches the
+file first, or the repair records something untrue:
+
+```
+npx supabase migration repair --status applied  <local-version...>   # file exists, not recorded
+npx supabase migration repair --status reverted <remote-version...>  # recorded, no file
+```
+
+Both accept several versions in one call, which is the form to use - `migration repair` does
+not reliably exit 0 on success, so chaining calls with `&&` silently drops everything after
+the first one.
+
+Conventions: `YYYYMMDDHHMMSS_snake_case.sql` in `supabase/migrations/`. Hand-written
+migrations use `000000` plus a sequence for same-day ordering, lowercase SQL, and a leading
+`--` comment block explaining *why* the change exists. Destructive or backfilling
+migrations should end with a guard that raises if the data did not land as intended - see
+`20260814000001_link_call_rounds_to_schedules.sql`.
+
 ## Patterns
 
 ### Data Flow

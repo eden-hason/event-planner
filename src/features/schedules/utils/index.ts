@@ -101,7 +101,23 @@ export function filterGuestsByTarget(
     );
   }
 
+  // Every other type, including phone_call, matches on status alone. That is
+  // deliberate for calls: an offline-RSVP guest has already answered a person,
+  // so phoning them again is exactly the thing the target is meant to prevent.
   return guests.filter((guest) => guest.rsvpStatus === targetStatus);
+}
+
+/**
+ * Whether a schedule is executed by the message send engine, as opposed to by a
+ * human (a phone call round) or a future non-message process.
+ *
+ * Deliberately a positive test on the catalog's `execution_kind` rather than a
+ * list of keys to exclude: a kind this build has never heard of is treated as
+ * not-a-message, so it is never sent by accident. See
+ * docs/adr/0004-call-schedules-are-plans-call-rounds-are-executions.md.
+ */
+export function isMessageSchedule(schedule: { executionKind: string }): boolean {
+  return schedule.executionKind === 'message';
 }
 
 /**

@@ -4,7 +4,12 @@ Date: 2026-08-11
 
 ## Status
 
-Accepted
+Superseded by [ADR-0004](0004-call-schedules-are-plans-call-rounds-are-executions.md).
+
+The reasoning below holds for the question it answered: whether an *ad hoc*
+round can be a schedule. ADR-0004 changes that premise - rounds are now planned
+up front - which dissolves objection 3 and solves 1 and 2 rather than avoiding
+them.
 
 ## Context
 

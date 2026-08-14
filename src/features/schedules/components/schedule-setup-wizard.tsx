@@ -70,10 +70,13 @@ export function ScheduleSetupWizard({
       suggestedSchedules
         .filter((s) => s.scheduleTypeKey !== 'initial_invitation')
         .map((s, index) => ({
-          key: `${s.templateId}-${index}`,
+          // Keyed on the schedule type, not the template: a call round row has
+          // no template, so a templateId-based key would collide across them.
+          key: `${s.scheduleTypeId}-${index}`,
           scheduleTypeId: s.scheduleTypeId,
           scheduleTypeKey: s.scheduleTypeKey,
           scheduleTypeName: s.scheduleTypeName,
+          executionKind: s.executionKind,
           templateId: s.templateId,
           targetStatus: s.targetStatus,
           enabled: true,

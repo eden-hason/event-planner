@@ -10,7 +10,17 @@ export type CallRoundStatus = 'in_progress' | 'completed';
 
 export type CallRoundSummary = {
   id: string;
-  roundNumber: number;
+  /**
+   * The phone_call schedule this round executes. Every round has one - the
+   * migration backfilled the legacy ones - but the column stays nullable as an
+   * escape hatch, so readers must handle its absence.
+   */
+  scheduleId: string | null;
+  /**
+   * Deprecated. Ordering and labelling come from the linked plan; null on
+   * anything created after 2026-08-14.
+   */
+  roundNumber: number | null;
   createdAt: string;
   completedAt: string | null;
   status: CallRoundStatus;
