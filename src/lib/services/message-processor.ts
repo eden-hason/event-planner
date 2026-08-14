@@ -26,9 +26,17 @@ export async function processScheduledMessages(
     errors: [],
   };
 
+  // Only message schedules. A phone_call schedule is a plan for a person to
+  // work through, and handing one to the send engine would attempt it as a
+  // WhatsApp/SMS blast. The filter is positive rather than excluding known
+  // non-message kinds, so a kind added to the catalog that this build has never
+  // heard of is inert until code opts it in - see docs/adr/0004. `!inner` is
+  // required: a plain embed would return the row with a null join instead of
+  // filtering it out.
   const { data: dueSchedules, error } = await supabase
     .from('schedules')
-    .select('id')
+    .select('id, schedule_types!inner(execution_kind)')
+    .eq('schedule_types.execution_kind', 'message')
     .is('status', null)
     .lte('scheduled_date', new Date().toISOString())
     .order('scheduled_date', { ascending: true })

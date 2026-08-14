@@ -3,8 +3,8 @@ import { IconChartBar, IconLayoutGrid } from '@tabler/icons-react';
 
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
-import { CallRoundResultsCard } from '@/features/calls/components';
-import { getCallRoundsForEvent } from '@/features/calls/queries';
+import { CallPlanCard, CallRoundResultsCard } from '@/features/calls/components';
+import { getCallRoundsByScheduleId } from '@/features/calls/queries';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDefaultSchedulesForEventType } from '../queries/catalog';
 import {
@@ -14,9 +14,9 @@ import {
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
-import { CALL_ROUNDS_NAV_KEY, type OutreachItem, type OutreachNavGroup } from '../types';
+import { type OutreachItem, type OutreachNavGroup } from '../types';
 import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
-import { filterGuestsByTarget } from '../utils';
+import { filterGuestsByTarget, isMessageSchedule } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleTabContent } from './schedule-tab-content';
@@ -45,14 +45,13 @@ export async function SchedulesPage({
   event,
 }: SchedulesPageProps) {
   const t = await getTranslations('schedules');
-  const tCalls = await getTranslations('calls');
   const locale = await getLocale();
 
-  const [guests, callRounds] = await Promise.all([
+  const [guests, roundsBySchedule] = await Promise.all([
     getEventGuests(eventId),
-    // RLS-bound: a viewer without Owner access gets an empty list, so call
-    // rounds simply do not appear in their nav.
-    getCallRoundsForEvent(eventId),
+    // RLS-bound: a viewer without Owner access gets an empty map, so a call
+    // plan renders as planned rather than exposing its results.
+    getCallRoundsByScheduleId(eventId),
   ]);
   const canCreateSchedules = event?.canCreateSchedules ?? false;
 
@@ -86,18 +85,20 @@ export async function SchedulesPage({
     ...presentTypes.filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type)).sort(),
   ];
 
-  // The wizard shows only when there is no outreach at all. An event can have
-  // call rounds and no message schedules (can_create_schedules defaults to
-  // false), and hiding real work behind an onboarding prompt is exactly the
-  // blind spot this page exists to remove.
-  if (visibleTypes.length === 0 && callRounds.length === 0) {
+  // The wizard shows only when there is no outreach at all. Call rounds are
+  // schedules now, so an event that has only call plans is caught by this same
+  // check - hiding real work behind an onboarding prompt is exactly the blind
+  // spot this page exists to remove.
+  if (visibleTypes.length === 0) {
     const eventType = event?.eventType ?? 'wedding';
     const defaults = await getDefaultSchedulesForEventType(eventType);
     const suggestedSchedules = buildSuggestedSchedules(defaults, eventDate);
     const invitationDefault = defaults.find(
       (d) => d.scheduleTypeKey === 'initial_invitation',
     );
-    const invitationTemplate = invitationDefault
+    // A default can now be templateless (a call round), so the template is
+    // guarded as well as the default itself.
+    const invitationTemplate = invitationDefault?.template
       ? toWhatsAppTemplate(invitationDefault.template)
       : null;
     const targetCounts = {
@@ -132,9 +133,39 @@ export async function SchedulesPage({
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
+      const label = multiple ? `${baseLabel} ${index + 1}` : baseLabel;
+
+      // A call round is planned like a message but executed by a person, so it
+      // reports the state of its round rather than of a send. A plan with no
+      // round yet is simply pending - the same amber the nav already uses.
+      if (!isMessageSchedule(schedule)) {
+        const round = roundsBySchedule.get(schedule.id);
+        const cancelled = schedule.status === 'cancelled';
+
+        return {
+          label,
+          status: cancelled ? ('cancelled' as const) : (round?.status ?? ('pending' as const)),
+          timestamp: cancelled
+            ? undefined
+            : round
+              ? (round.completedAt ?? round.createdAt)
+              : schedule.scheduledDate,
+          details: round ? (
+            <CallRoundResultsCard round={round} label={label} />
+          ) : (
+            <CallPlanCard
+              scheduledDate={schedule.scheduledDate}
+              scheduledTime={schedule.scheduledTime}
+              targetStatus={schedule.targetStatus}
+              eventDate={eventDate}
+              cancelled={cancelled}
+            />
+          ),
+        };
+      }
+
       return {
-        kind: 'message' as const,
-        label: multiple ? `${baseLabel} ${index + 1}` : baseLabel,
+        label,
         status: schedule.status ?? ('pending' as const),
         // A sent schedule is dated by when it went out; a still-pending one by
         // when it is due. A cancelled one has no meaningful date.
@@ -188,36 +219,32 @@ export async function SchedulesPage({
     });
   }
 
-  // Call rounds are their own kind of outreach, so they get their own list in
-  // the nav rather than trailing the message types in one flat menu. Each round
-  // keeps its own number rather than a positional index - deleting round 1 must
-  // not renumber round 2 under the Owner's feet.
-  if (callRounds.length > 0) {
-    contentByType[CALL_ROUNDS_NAV_KEY] = callRounds.map((round) => ({
-      kind: 'call_round' as const,
-      label: tCalls('round', { number: round.roundNumber }),
-      status: round.status,
-      timestamp: round.completedAt ?? round.createdAt,
-      details: <CallRoundResultsCard round={round} />,
-    }));
-  }
+  // Messages and call rounds are two different kinds of outreach, so they get
+  // their own lists rather than sharing one flat menu. The split is derived
+  // from each type's execution_kind, so a future non-message kind lands in the
+  // right section without this code knowing its name. Only groups with
+  // something in them reach the nav, so a heading never sits above an empty
+  // list.
+  const messageTypes = visibleTypes.filter((type) =>
+    isMessageSchedule(schedulesByType[type]![0].schedule),
+  );
+  const callTypes = visibleTypes.filter(
+    (type) => !isMessageSchedule(schedulesByType[type]![0].schedule),
+  );
 
-  // An event can have message schedules, call rounds, or both. Only groups with
-  // something in them reach the nav, so a section heading never sits above an
-  // empty list.
   const navGroups: OutreachNavGroup[] = [];
-  if (visibleTypes.length > 0) {
+  if (messageTypes.length > 0) {
     navGroups.push({
       key: 'messages',
       label: t('nav.messages'),
-      types: visibleTypes,
+      types: messageTypes,
     });
   }
-  if (callRounds.length > 0) {
+  if (callTypes.length > 0) {
     navGroups.push({
       key: 'calls',
       label: t('nav.calls'),
-      types: [CALL_ROUNDS_NAV_KEY],
+      types: callTypes,
     });
   }
 

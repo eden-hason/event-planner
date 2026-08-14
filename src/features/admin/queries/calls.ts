@@ -2,26 +2,41 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import type { CallRoundSummary, CallLogWithGuest, CallOutcome } from '../types';
+import type { CallPlanWithRound, CallLogWithGuest, CallOutcome } from '../types';
 
-export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]> {
+/**
+ * The event's planned call rounds, each with the round executing it if one has
+ * been started.
+ *
+ * Driven by `schedules` rather than `call_rounds`: a plan exists before anyone
+ * picks up a phone, and the back office needs to see the ones nobody has
+ * started yet. Ordered by the planned date, which is also what numbers them -
+ * `round_number` is deprecated and null on anything created after 2026-08-14.
+ */
+export async function getCallPlans(eventId: string): Promise<CallPlanWithRound[]> {
   await assertAdmin();
   const supabase = createServiceClient();
 
-  const { data: rounds, error } = await supabase
-    .from('call_rounds')
-    .select('id, round_number, created_at, completed_at')
+  const { data: plans, error } = await supabase
+    .from('schedules')
+    .select(
+      `id, scheduled_date, scheduled_time, target_status, status,
+       schedule_types!inner (key, execution_kind),
+       call_rounds (id, round_number, created_at, completed_at)`,
+    )
     .eq('event_id', eventId)
-    .order('round_number', { ascending: false });
+    .eq('schedule_types.execution_kind', 'phone_call')
+    .order('scheduled_date', { ascending: true });
 
-  if (error || !rounds || rounds.length === 0) return [];
+  if (error || !plans || plans.length === 0) return [];
 
-  const roundIds = rounds.map((r) => r.id);
+  const roundIds = plans
+    .flatMap((p) => (p.call_rounds ?? []) as { id: string }[])
+    .map((r) => r.id);
 
-  const { data: logs } = await supabase
-    .from('call_logs')
-    .select('round_id, outcome')
-    .in('round_id', roundIds);
+  const { data: logs } = roundIds.length
+    ? await supabase.from('call_logs').select('round_id, outcome').in('round_id', roundIds)
+    : { data: [] };
 
   const logsByRound = new Map<string, { outcome: string | null }[]>();
   for (const log of logs ?? []) {
@@ -30,25 +45,33 @@ export async function getCallRounds(eventId: string): Promise<CallRoundSummary[]
     logsByRound.set(log.round_id, arr);
   }
 
-  return rounds.map((round) => {
-    const roundLogs = logsByRound.get(round.id) ?? [];
-    const total = roundLogs.length;
-    const awaiting = roundLogs.filter((l) => !l.outcome).length;
-    const confirmed = roundLogs.filter((l) => l.outcome === 'confirmed').length;
-    const declined = roundLogs.filter((l) => l.outcome === 'declined').length;
-    const noAnswer = roundLogs.filter((l) => l.outcome === 'no_answer').length;
+  return plans.map((plan, index) => {
+    // A unique index on call_rounds.schedule_id caps this at one.
+    const rawRound = ((plan.call_rounds ?? []) as Record<string, unknown>[])[0];
+    const roundLogs = rawRound ? (logsByRound.get(rawRound.id as string) ?? []) : [];
 
     return {
-      id: round.id,
-      roundNumber: round.round_number,
-      createdAt: round.created_at,
-      completedAt: round.completed_at ?? null,
-      status: round.completed_at ? ('completed' as const) : ('in_progress' as const),
-      total,
-      awaiting,
-      confirmed,
-      declined,
-      noAnswer,
+      scheduleId: plan.id,
+      planNumber: index + 1,
+      scheduledDate: plan.scheduled_date,
+      scheduledTime: plan.scheduled_time ?? null,
+      targetStatus: (plan.target_status ?? null) as 'pending' | 'confirmed' | null,
+      cancelled: plan.status === 'cancelled',
+      round: rawRound
+        ? {
+            id: rawRound.id as string,
+            scheduleId: plan.id,
+            roundNumber: (rawRound.round_number ?? null) as number | null,
+            createdAt: rawRound.created_at as string,
+            completedAt: (rawRound.completed_at ?? null) as string | null,
+            status: rawRound.completed_at ? ('completed' as const) : ('in_progress' as const),
+            total: roundLogs.length,
+            awaiting: roundLogs.filter((l) => !l.outcome).length,
+            confirmed: roundLogs.filter((l) => l.outcome === 'confirmed').length,
+            declined: roundLogs.filter((l) => l.outcome === 'declined').length,
+            noAnswer: roundLogs.filter((l) => l.outcome === 'no_answer').length,
+          }
+        : null,
     };
   });
 }

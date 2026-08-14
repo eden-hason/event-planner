@@ -12,6 +12,7 @@ export const SCHEDULE_TYPE_KEYS = [
   'confirmation',
   'event_reminder',
   'post_event',
+  'phone_call',
 ] as const;
 export type ScheduleTypeKey = (typeof SCHEDULE_TYPE_KEYS)[number];
 
@@ -21,7 +22,16 @@ export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   confirmation: 'Confirmation',
   event_reminder: 'Event Reminder',
   post_event: 'Thank You',
+  phone_call: 'Call Round',
 };
+
+// Which engine executes a schedule type. Everything outside 'message' is run by
+// a human or another process and must never reach the send engine - see
+// docs/adr/0004-call-schedules-are-plans-call-rounds-are-executions.md.
+// Consumers filter positively on 'message', so a kind added to the catalog that
+// this build has never heard of is inert rather than sent.
+export const EXECUTION_KINDS = ['message', 'phone_call'] as const;
+export type ExecutionKind = (typeof EXECUTION_KINDS)[number];
 
 // --- event_type_default_schedules (joined with schedule_types + message_templates) ---
 
@@ -29,13 +39,21 @@ export const DefaultScheduleDbSchema = z.object({
   id: z.uuid(),
   event_type_id: z.uuid(),
   schedule_type_id: z.uuid(),
-  template_id: z.uuid(),
+  // Null for non-message types - a call round has no template to send.
+  template_id: z.uuid().nullable(),
   days_offset: z.number().int(),
   default_time: z.string(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   sort_order: z.number().int(),
-  schedule_types: z.object({ key: z.string(), name: z.string() }),
-  message_templates: MessageTemplateDbToAppSchema,
+  // execution_kind is z.string(), not z.enum(EXECUTION_KINDS): the catalog is a
+  // table and can grow past the kinds known at build time, and an unknown kind
+  // must still parse so the row renders rather than crashing the page.
+  schedule_types: z.object({
+    key: z.string(),
+    name: z.string(),
+    execution_kind: z.string(),
+  }),
+  message_templates: MessageTemplateDbToAppSchema.nullable(),
 });
 
 export const DefaultScheduleDbToAppSchema = DefaultScheduleDbSchema.transform(
@@ -45,8 +63,9 @@ export const DefaultScheduleDbToAppSchema = DefaultScheduleDbSchema.transform(
     scheduleTypeId: db.schedule_type_id,
     scheduleTypeKey: db.schedule_types.key,
     scheduleTypeName: db.schedule_types.name,
+    executionKind: db.schedule_types.execution_kind,
     templateId: db.template_id,
-    template: db.message_templates as MessageTemplateApp,
+    template: db.message_templates as MessageTemplateApp | null,
     daysOffset: db.days_offset,
     // Postgres time comes back as HH:MM:SS; the UI works in HH:MM
     defaultTime: db.default_time.slice(0, 5),

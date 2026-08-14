@@ -64,7 +64,7 @@ export type CustomContent = z.infer<typeof CustomContentSchema>;
 // render a schedule type it has no curated i18n label/icon for yet - the
 // catalog is meant to grow past the four types known at build time.
 export const SCHEDULE_SELECT =
-  '*, schedule_types (key, name), message_templates (*)';
+  '*, schedule_types (key, name, execution_kind), message_templates (*)';
 
 // --- DB-Level Schema (snake_case, with catalog joins) ---
 export const ScheduleDbSchema = z.object({
@@ -79,7 +79,11 @@ export const ScheduleDbSchema = z.object({
   template_id: z.uuid().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  schedule_types: z.object({ key: z.string(), name: z.string() }),
+  schedule_types: z.object({
+    key: z.string(),
+    name: z.string(),
+    execution_kind: z.string(),
+  }),
   message_templates: MessageTemplateDbToAppSchema.nullable(),
 });
 
@@ -97,6 +101,8 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   scheduleTypeId: db.schedule_type_id,
   scheduleTypeKey: db.schedule_types.key,
   scheduleTypeName: db.schedule_types.name,
+  // Which engine owns this row. Only 'message' may reach sendSchedule.
+  executionKind: db.schedule_types.execution_kind,
   templateId: db.template_id,
   template: db.message_templates as MessageTemplateApp | null,
   // Derived from the template row - the single source of truth for channel
@@ -111,7 +117,8 @@ export type ScheduleApp = z.infer<typeof ScheduleDbToAppSchema>;
 // One user-customized schedule chosen in the schedule setup wizard.
 export const ScheduleSelectionItemSchema = z.object({
   scheduleTypeId: z.uuid(),
-  templateId: z.uuid(),
+  // Null for non-message types - a call round is planned without a template.
+  templateId: z.uuid().nullable(),
   scheduledDate: z.string(),
   scheduledTime: z.string(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable(),

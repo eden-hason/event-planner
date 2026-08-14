@@ -23,7 +23,12 @@ function summarise(logs: { outcome: CallOutcome | null }[]) {
  * Call rounds for an event, as the Owner sees them.
  *
  * Goes through the RLS-bound client, so a user without Owner access simply
- * gets an empty list and the schedules page renders no call items at all.
+ * gets an empty list and the schedules page renders no call results at all.
+ *
+ * Deliberately unordered: a round is now attached to its planned schedule by
+ * `scheduleId`, and the page orders by the plan's date. `round_number` is
+ * deprecated and null on anything created after 2026-08-14, so sorting on it
+ * would put every new round first.
  */
 export async function getCallRoundsForEvent(
   eventId: string,
@@ -32,9 +37,8 @@ export async function getCallRoundsForEvent(
 
   const { data: rounds, error } = await supabase
     .from('call_rounds')
-    .select('id, round_number, created_at, completed_at')
-    .eq('event_id', eventId)
-    .order('round_number', { ascending: true });
+    .select('id, schedule_id, round_number, created_at, completed_at')
+    .eq('event_id', eventId);
 
   if (error) {
     console.error('Error fetching call rounds:', error);
@@ -67,12 +71,38 @@ export async function getCallRoundsForEvent(
 
   return rounds.map((round) => ({
     id: round.id,
-    roundNumber: round.round_number,
+    scheduleId: round.schedule_id ?? null,
+    roundNumber: round.round_number ?? null,
     createdAt: round.created_at,
     completedAt: round.completed_at ?? null,
     status: round.completed_at ? ('completed' as const) : ('in_progress' as const),
     ...summarise(logsByRound.get(round.id) ?? []),
   }));
+}
+
+/**
+ * The same rounds, keyed by the phone_call schedule each one executes, so the
+ * schedules page can pair a plan with its round in one lookup.
+ *
+ * The migration backfilled a plan for every pre-existing round, so a round with
+ * no `scheduleId` should not exist. One is skipped rather than dropped on the
+ * floor silently - if it ever happens, the plan is the thing that went missing.
+ */
+export async function getCallRoundsByScheduleId(
+  eventId: string,
+): Promise<Map<string, CallRoundSummary>> {
+  const rounds = await getCallRoundsForEvent(eventId);
+  const byScheduleId = new Map<string, CallRoundSummary>();
+
+  for (const round of rounds) {
+    if (!round.scheduleId) {
+      console.error(`Call round ${round.id} has no linked schedule - skipping`);
+      continue;
+    }
+    byScheduleId.set(round.scheduleId, round);
+  }
+
+  return byScheduleId;
 }
 
 /**

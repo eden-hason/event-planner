@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { IconChevronLeft, IconChevronRight, IconLoader2, IconPhone, IconSearch, IconTrash, IconCheck } from '@tabler/icons-react';
+import { IconCalendarEvent, IconChevronLeft, IconChevronRight, IconLoader2, IconPhone, IconPlus, IconSearch, IconTrash, IconCheck } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
@@ -24,12 +24,28 @@ import {
   deleteCallRound,
   finishCallRound,
   reopenCallRound,
+  createCallPlan,
+  rescheduleCallPlan,
 } from '../actions/calls';
-import { getCallRounds, getRoundCallLogs } from '../queries/calls';
+import { getCallPlans, getRoundCallLogs } from '../queries/calls';
 import { RoundGuestRow } from './round-guest-row';
-import type { CallRoundSummary, CallLogWithGuest, CallOutcome } from '../types';
+import { CallPlanDialog } from './call-plan-dialog';
+import type {
+  CallPlanWithRound,
+  CallRoundSummary,
+  CallLogWithGuest,
+  CallOutcome,
+} from '../types';
 
 type SummaryFilterKey = 'awaiting' | 'confirmed' | 'declined' | 'noAnswer';
+
+/** yyyy-mm-dd for a date input, in local time */
+function toDateInput(iso: string): string {
+  const d = new Date(iso);
+  const month = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
 
 const SUMMARY_STATS: {
   key: keyof CallRoundSummary;
@@ -44,13 +60,21 @@ const SUMMARY_STATS: {
 
 interface PhoneCallsViewProps {
   eventId: string;
-  initialRounds: CallRoundSummary[];
+  initialPlans: CallPlanWithRound[];
 }
 
-export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) {
-  const [rounds, setRounds] = useState<CallRoundSummary[]>(initialRounds);
-  const [selectedRoundId, setSelectedRoundId] = useState<string | null>(
-    initialRounds[0]?.id ?? null,
+/**
+ * The back office's calling console.
+ *
+ * Works in *plans* rather than rounds: the Owner schedules call rounds like any
+ * other outreach, and this executes them. A plan with no round yet is the
+ * normal starting state, so the selector shows planned work as well as work in
+ * progress. See docs/adr/0004.
+ */
+export function PhoneCallsView({ eventId, initialPlans }: PhoneCallsViewProps) {
+  const [plans, setPlans] = useState<CallPlanWithRound[]>(initialPlans);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    initialPlans[0]?.scheduleId ?? null,
   );
   const [logs, setLogs] = useState<CallLogWithGuest[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -58,6 +82,9 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
   const [togglingRoundId, setTogglingRoundId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [planDialog, setPlanDialog] = useState<
+    { mode: 'create' } | { mode: 'reschedule'; plan: CallPlanWithRound } | null
+  >(null);
   const [activeFilter, setActiveFilter] = useState<SummaryFilterKey | null>(null);
   const [search, setSearch] = useState('');
   const [pageIndex, setPageIndex] = useState(0);
@@ -66,20 +93,29 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
   const ROW_HEIGHT = { sm: 51, md: 59, lg: 67 } as const;
   const { pageSize } = useDynamicPageSize({ containerRef: tableContainerRef, rowHeight: ROW_HEIGHT[fontSize] });
 
+  const selectedPlan = plans.find((p) => p.scheduleId === selectedScheduleId);
+  const selectedRound = selectedPlan?.round ?? null;
+  const selectedRoundId = selectedRound?.id ?? null;
+
   useEffect(() => {
-    if (!selectedRoundId) return;
     setActiveFilter(null);
     setSearch('');
     setPageIndex(0);
+    // A plan with no round has nothing to load - the guests are snapshotted at
+    // Start, so before that there is no roster to show.
+    if (!selectedRoundId) {
+      setLogs([]);
+      return;
+    }
     setLoadingLogs(true);
     getRoundCallLogs(selectedRoundId)
       .then(setLogs)
       .finally(() => setLoadingLogs(false));
   }, [selectedRoundId]);
 
-  async function handleStartRound() {
+  async function handleStartRound(plan: CallPlanWithRound) {
     startTransition(async () => {
-      const promise = startCallRound(eventId).then((result) => {
+      const promise = startCallRound(plan.scheduleId, eventId).then((result) => {
         if (!result.success) throw new Error(result.message);
         return result;
       });
@@ -87,9 +123,8 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
       toast.promise(promise, {
         loading: 'Starting round…',
         success: async (data) => {
-          const updated = await getCallRounds(eventId);
-          setRounds(updated);
-          if (data.roundId) setSelectedRoundId(data.roundId);
+          setPlans(await getCallPlans(eventId));
+          setSelectedScheduleId(plan.scheduleId);
           return data.message;
         },
         error: (err) => (err instanceof Error ? err.message : 'Failed to start round'),
@@ -97,6 +132,39 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
 
       await promise.catch(() => {});
     });
+  }
+
+  async function handleSavePlan(values: {
+    scheduledDate: string;
+    scheduledTime: string;
+    targetStatus: 'pending' | 'confirmed';
+  }) {
+    const editing = planDialog?.mode === 'reschedule' ? planDialog.plan : null;
+
+    const promise = (
+      editing
+        ? rescheduleCallPlan(editing.scheduleId, eventId, {
+            scheduledDate: values.scheduledDate,
+            scheduledTime: values.scheduledTime,
+          })
+        : createCallPlan(eventId, values)
+    ).then((result) => {
+      if (!result.success) throw new Error(result.message);
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: editing ? 'Rescheduling…' : 'Planning round…',
+      success: async (data) => {
+        setPlans(await getCallPlans(eventId));
+        if (data.scheduleId) setSelectedScheduleId(data.scheduleId);
+        return data.message;
+      },
+      error: (err) => (err instanceof Error ? err.message : 'Failed to save call round'),
+    });
+
+    await promise.catch(() => {});
+    setPlanDialog(null);
   }
 
   // Finishing is what the Owner sees as a green dot on their schedules page,
@@ -115,7 +183,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
     toast.promise(promise, {
       loading: isCompleted ? 'Reopening round…' : 'Finishing round…',
       success: async (data) => {
-        setRounds(await getCallRounds(eventId));
+        setPlans(await getCallPlans(eventId));
         return data.message;
       },
       error: (err) => (err instanceof Error ? err.message : 'Failed to update round'),
@@ -139,12 +207,10 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
     toast.promise(promise, {
       loading: 'Deleting round…',
       success: async () => {
-        const updated = await getCallRounds(eventId);
-        setRounds(updated);
-        if (selectedRoundId === roundId) {
-          setSelectedRoundId(updated[0]?.id ?? null);
-          setLogs([]);
-        }
+        // The plan survives the round and goes back to planned, so selection
+        // stays where it is rather than jumping to another round.
+        setPlans(await getCallPlans(eventId));
+        setLogs([]);
         return 'Round deleted';
       },
       error: (err) => (err instanceof Error ? err.message : 'Failed to delete round'),
@@ -156,11 +222,8 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
 
   async function handleOutcomeChange(logId: string, outcome: CallOutcome) {
     setLogs((prev) => prev.map((l) => (l.id === logId ? { ...l, outcome } : l)));
-    const updated = await getCallRounds(eventId);
-    setRounds(updated);
+    setPlans(await getCallPlans(eventId));
   }
-
-  const selectedRound = rounds.find((r) => r.id === selectedRoundId);
 
   const sortedLogs = [...logs].sort((a, b) => {
     if (!a.outcome && b.outcome) return -1;
@@ -203,35 +266,39 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
 
   return (
     <div className="space-y-4">
-      {/* Round selector */}
+      {/* Plan selector */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1 flex-1">
-          {rounds.map((round) => {
-            const isSelected = selectedRoundId === round.id;
-            const isDeleting = deletingRoundId === round.id;
-            const isComplete = round.status === 'completed';
+          {plans.map((plan) => {
+            const isSelected = selectedScheduleId === plan.scheduleId;
+            const round = plan.round;
+            const isDeleting = round ? deletingRoundId === round.id : false;
+            const isComplete = round?.status === 'completed';
             // Once an outcome is recorded the round is history the Owner can
             // already see - it can be finished, but not made to disappear.
-            const hasOutcomes = round.total - round.awaiting > 0;
+            const hasOutcomes = round ? round.total - round.awaiting > 0 : false;
             return (
-              <div key={round.id} className="group relative">
+              <div key={plan.scheduleId} className="group relative">
                 <button
-                  onClick={() => setSelectedRoundId(round.id)}
+                  onClick={() => setSelectedScheduleId(plan.scheduleId)}
                   className={cn(
                     'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
                     isSelected
                       ? 'bg-foreground text-background font-medium'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    plan.cancelled && 'line-through opacity-60',
                   )}
                 >
-                  <span>Round {round.roundNumber}</span>
+                  <span>Round {plan.planNumber}</span>
                   <span
                     className={cn(
                       'text-xs tabular-nums',
                       isSelected ? 'text-background/50' : 'text-muted-foreground/50',
                     )}
                   >
-                    {round.awaiting}/{round.total}
+                    {round
+                      ? `${round.awaiting}/${round.total}`
+                      : new Date(plan.scheduledDate).toLocaleDateString()}
                   </span>
                   {isComplete && (
                     <IconCheck
@@ -242,7 +309,7 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
                     />
                   )}
                 </button>
-                {!hasOutcomes && (
+                {round && !hasOutcomes && (
                 <button
                   onClick={() => setConfirmDeleteId(round.id)}
                   disabled={isDeleting}
@@ -276,23 +343,55 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
               {selectedRound.status === 'completed' ? 'Reopen round' : 'Finish round'}
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={handleStartRound} disabled={isStarting}>
-            {isStarting ? (
-              <IconLoader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <IconPhone className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            New round
+          {selectedPlan && !selectedRound && !selectedPlan.cancelled && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setPlanDialog({ mode: 'reschedule', plan: selectedPlan })}
+              >
+                <IconCalendarEvent className="mr-1.5 h-3.5 w-3.5" />
+                Reschedule
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleStartRound(selectedPlan)}
+                disabled={isStarting}
+              >
+                {isStarting ? (
+                  <IconLoader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <IconPhone className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Start round
+              </Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setPlanDialog({ mode: 'create' })}>
+            <IconPlus className="mr-1.5 h-3.5 w-3.5" />
+            Add call round
           </Button>
         </div>
       </div>
 
-      {rounds.length === 0 ? (
+      {plans.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
           <IconPhone className="mb-3 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium">No call rounds yet</p>
+          <p className="text-sm font-medium">No call rounds planned</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Start a round to load pending guests and begin tracking calls
+            Add a call round to schedule one, then start it to load the guests
+          </p>
+        </div>
+      ) : !selectedRound ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+          <IconPhone className="mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">
+            {selectedPlan?.cancelled ? 'This round was cancelled' : 'Not started yet'}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {selectedPlan?.cancelled
+              ? 'The owner switched this round off in their schedule'
+              : `Planned for ${selectedPlan ? new Date(selectedPlan.scheduledDate).toLocaleDateString() : ''} - starting it loads the ${selectedPlan?.targetStatus ?? 'matching'} guests`}
           </p>
         </div>
       ) : (
@@ -454,6 +553,30 @@ export function PhoneCallsView({ eventId, initialRounds }: PhoneCallsViewProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CallPlanDialog
+        open={!!planDialog}
+        mode={planDialog?.mode ?? 'create'}
+        initialDate={
+          planDialog?.mode === 'reschedule'
+            ? toDateInput(planDialog.plan.scheduledDate)
+            : undefined
+        }
+        initialTime={
+          planDialog?.mode === 'reschedule'
+            ? (planDialog.plan.scheduledTime?.slice(0, 5) ?? '10:00')
+            : undefined
+        }
+        initialTarget={
+          planDialog?.mode === 'reschedule'
+            ? (planDialog.plan.targetStatus ?? 'pending')
+            : undefined
+        }
+        onOpenChange={(open) => {
+          if (!open) setPlanDialog(null);
+        }}
+        onSave={handleSavePlan}
+      />
     </div>
   );
 }

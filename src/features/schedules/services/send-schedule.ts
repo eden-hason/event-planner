@@ -12,6 +12,7 @@ import {
 } from '@/features/guests/schemas';
 import {
   filterGuestsByTarget,
+  isMessageSchedule,
   validatePhoneNumber,
   sendInChunks,
   sendSmsToGuest,
@@ -155,7 +156,21 @@ export async function sendSchedule(
   const schedule: ScheduleApp = ScheduleDbToAppSchema.parse(rawSchedule);
   const event = mapEventRow(rawSchedule.events);
 
-  // 2. Validate template assignment (channel and content both come from it)
+  // 2. Refuse anything this engine does not execute. A phone_call schedule is a
+  // plan for a person to work through, not a message - it has no template and
+  // no channel. Every send entry point (cron, owner send-now, admin trigger,
+  // admin manual resend) funnels through here, so this one guard covers them
+  // all. Placed before the claim so a non-message row is never marked sent on
+  // its way to failing. See docs/adr/0004.
+  if (!isMessageSchedule(schedule)) {
+    return outcomeError(
+      scheduleId,
+      `Schedule type ${schedule.scheduleTypeKey} is not executed by the message send engine`,
+      schedule.eventId,
+    );
+  }
+
+  // 3. Validate template assignment (channel and content both come from it)
   if (!schedule.template) {
     return outcomeError(
       scheduleId,
@@ -165,7 +180,7 @@ export async function sendSchedule(
   }
   const template = schedule.template;
 
-  // 3. Claim ('none' skips any guard - admin resend)
+  // 4. Claim ('none' skips any guard - admin resend)
   if (claim === 'precheck') {
     if (schedule.status === 'sent' || schedule.status === 'cancelled') {
       return outcomeError(
@@ -204,7 +219,7 @@ export async function sendSchedule(
     return outcomeError(scheduleId, message, schedule.eventId);
   };
 
-  // 4. Fetch and target guests
+  // 5. Fetch and target guests
   let guestsQuery = supabase
     .from('guests')
     .select('*')
@@ -245,7 +260,7 @@ export async function sendSchedule(
 
   const skippedCount = targetedGuests.length - guestsWithPhones.length;
 
-  // 5. Optionally skip guests already delivered (safe cron resume)
+  // 6. Optionally skip guests already delivered (safe cron resume)
   let pendingGuests = guestsWithPhones;
   if (skipAlreadyDelivered) {
     const { data: existingDeliveries } = await supabase
@@ -275,7 +290,7 @@ export async function sendSchedule(
     }
   }
 
-  // 6. Send per channel, persisting delivery records per chunk
+  // 7. Send per channel, persisting delivery records per chunk
   let sentCount = 0;
   let failedCount = 0;
 
@@ -376,7 +391,7 @@ export async function sendSchedule(
     );
   }
 
-  // 7. Final status
+  // 8. Final status
   if (sentCount > 0) {
     if (claim !== 'optimistic-lock' && markSentOnSuccess) {
       const { error: updateError } = await supabase

@@ -20,6 +20,7 @@ export {
 export {
   calculateScheduledDate,
   filterGuestsByTarget,
+  isMessageSchedule,
   validatePhoneNumber,
   formatPhoneE164,
 } from './utils';
@@ -33,9 +34,11 @@ export {
   type WhatsAppTemplateApp,
   type MessageDeliveryApp,
   type DefaultScheduleApp,
+  type ExecutionKind,
   SCHEDULE_TYPE_KEYS,
   SCHEDULE_TYPE_LABELS,
   SCHEDULE_STATUSES,
+  EXECUTION_KINDS,
   DELIVERY_METHODS,
   DELIVERY_STATUSES,
 } from './schemas';

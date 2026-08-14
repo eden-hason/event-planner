@@ -4,7 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { IconBrandWhatsapp, IconMessage, IconCalendarPlus } from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconMessage, IconCalendarPlus, IconPhone } from '@tabler/icons-react';
 import { SCHEDULE_TYPE_KEYS, type ScheduleTypeKey, type ScheduleApp } from '@/features/schedules';
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -50,7 +50,12 @@ export function UpcomingSchedulesCard({
           upcoming.map((schedule) => (
             <div key={schedule.id} className="flex items-start gap-3 text-sm">
               <div className="mt-0.5 shrink-0 text-muted-foreground">
-                {schedule.deliveryMethod === 'whatsapp' ? (
+                {/* A call round has no delivery method - it is worked through
+                    by a person, so it gets the phone rather than falling
+                    through to the SMS icon. */}
+                {schedule.scheduleTypeKey === 'phone_call' ? (
+                  <IconPhone className="h-4 w-4" />
+                ) : schedule.deliveryMethod === 'whatsapp' ? (
                   <IconBrandWhatsapp className="h-4 w-4" />
                 ) : (
                   <IconMessage className="h-4 w-4" />

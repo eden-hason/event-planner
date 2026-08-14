@@ -49,7 +49,19 @@ function StatChip({
   );
 }
 
-export async function CallRoundResultsCard({ round }: { round: CallRoundSummary }) {
+export async function CallRoundResultsCard({
+  round,
+  label,
+}: {
+  round: CallRoundSummary;
+  /**
+   * The round's name, resolved from its plan's position in the timeline. Passed
+   * in rather than derived from `round_number`, which is deprecated and null on
+   * anything created after 2026-08-14 - and so that the card and the nav entry
+   * beside it can never disagree about what this round is called.
+   */
+  label: string;
+}) {
   const t = await getTranslations('calls');
   const results = await getCallRoundResults(round.id);
 
@@ -60,7 +72,7 @@ export async function CallRoundResultsCard({ round }: { round: CallRoundSummary 
           <div className="bg-primary/10 rounded-md p-1.5">
             <IconPhone size={16} className="text-primary" />
           </div>
-          {t('round', { number: round.roundNumber })}
+          {label}
         </CardTitle>
         <CardDescription>
           {round.status === 'completed' && round.completedAt

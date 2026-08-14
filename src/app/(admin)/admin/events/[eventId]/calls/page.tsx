@@ -1,4 +1,4 @@
-import { getCallRounds } from '@/features/admin/queries/calls';
+import { getCallPlans } from '@/features/admin/queries/calls';
 import { PhoneCallsView } from '@/features/admin/components/phone-calls-view';
 
 export default async function AdminEventCallsPage({
@@ -7,7 +7,7 @@ export default async function AdminEventCallsPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const rounds = await getCallRounds(eventId);
+  const plans = await getCallPlans(eventId);
 
-  return <PhoneCallsView eventId={eventId} initialRounds={rounds} />;
+  return <PhoneCallsView eventId={eventId} initialPlans={plans} />;
 }
