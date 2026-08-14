@@ -12,10 +12,17 @@ import {
 
 import { Button } from '@/components/ui/button';
 import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -98,78 +105,103 @@ export function CallRoundResultsTable({
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {labels.columnGuest}
-          </TableHead>
-          <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {labels.columnOutcome}
-          </TableHead>
-          <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            {labels.columnRsvp}
-          </TableHead>
-          <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
-            {labels.columnAmount}
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <div className="flex flex-col gap-3">
+      {/* Below sm the four columns cannot fit, so each guest becomes a row of
+          its own with the same facts stacked instead of side by side. */}
+      <ItemGroup className="gap-2 sm:hidden">
         {slice.map((row) => (
-          <TableRow key={row.guestId}>
-            <TableCell className="font-medium">{row.guestName}</TableCell>
-            <TableCell>
-              <OutcomeBadge outcome={row.outcome} labels={labels} />
-            </TableCell>
-            <TableCell className="text-muted-foreground text-xs">
-              {rsvpLabels[row.currentRsvpStatus]}
-            </TableCell>
-            {/* Keyed to the call outcome, not the current RSVP, so the column
-                sums to the headcount in the confirmed chip. A guest who
-                confirmed by WhatsApp instead belongs to that schedule's
-                numbers, not this round's. */}
-            <TableCell className="text-center text-xs tabular-nums">
-              {row.outcome === 'confirmed' ? (
-                row.amount
-              ) : (
-                <span className="text-muted-foreground/40">-</span>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-      {totalPages > 1 && (
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={4}>
-              <div className="flex items-center justify-end gap-2 rtl:justify-start">
-                <span className="text-muted-foreground text-xs">
-                  {page + 1} / {totalPages}
+          <Item key={row.guestId} variant="outline" size="sm">
+            <ItemContent className="min-w-0 gap-1">
+              <ItemTitle className="w-full min-w-0">
+                <span className="truncate">{row.guestName}</span>
+              </ItemTitle>
+              <ItemDescription className="text-xs">
+                {rsvpLabels[row.currentRsvpStatus]}
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              {row.outcome === 'confirmed' && (
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {labels.columnAmount} {row.amount}
                 </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setPage((p) => p - 1)}
-                  disabled={page === 0}
-                >
-                  {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page === totalPages - 1}
-                >
-                  {isRTL ? <IconChevronLeft size={14} /> : <IconChevronRight size={14} />}
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        </TableFooter>
+              )}
+              <OutcomeBadge outcome={row.outcome} labels={labels} />
+            </ItemActions>
+          </Item>
+        ))}
+      </ItemGroup>
+
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnGuest}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnOutcome}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnRsvp}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                {labels.columnAmount}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {slice.map((row) => (
+              <TableRow key={row.guestId}>
+                <TableCell className="font-medium">{row.guestName}</TableCell>
+                <TableCell>
+                  <OutcomeBadge outcome={row.outcome} labels={labels} />
+                </TableCell>
+                <TableCell className="text-muted-foreground text-xs">
+                  {rsvpLabels[row.currentRsvpStatus]}
+                </TableCell>
+                {/* Keyed to the call outcome, not the current RSVP, so the column
+                    sums to the headcount in the confirmed chip. A guest who
+                    confirmed by WhatsApp instead belongs to that schedule's
+                    numbers, not this round's. */}
+                <TableCell className="text-center text-xs tabular-nums">
+                  {row.outcome === 'confirmed' ? (
+                    row.amount
+                  ) : (
+                    <span className="text-muted-foreground/40">-</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Sits outside the table so the card list is paged by the same control */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end gap-2 rtl:justify-start">
+          <span className="text-muted-foreground text-xs">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-7"
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0}
+          >
+            {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-7"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages - 1}
+          >
+            {isRTL ? <IconChevronLeft size={14} /> : <IconChevronRight size={14} />}
+          </Button>
+        </div>
       )}
-    </Table>
+    </div>
   );
 }

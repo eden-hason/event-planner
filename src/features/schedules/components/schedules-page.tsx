@@ -14,7 +14,7 @@ import {
   type ScheduleApp,
   type WhatsAppTemplateApp,
 } from '../schemas';
-import { CALL_ROUNDS_NAV_KEY, type OutreachItem } from '../types';
+import { CALL_ROUNDS_NAV_KEY, type OutreachItem, type OutreachNavGroup } from '../types';
 import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
 import { filterGuestsByTarget } from '../utils';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
@@ -188,11 +188,11 @@ export async function SchedulesPage({
     });
   }
 
-  // Call rounds join the same type-keyed nav as one group after the message
-  // types. Each round keeps its own number rather than a positional index -
-  // deleting round 1 must not renumber round 2 under the Owner's feet.
+  // Call rounds are their own kind of outreach, so they get their own list in
+  // the nav rather than trailing the message types in one flat menu. Each round
+  // keeps its own number rather than a positional index - deleting round 1 must
+  // not renumber round 2 under the Owner's feet.
   if (callRounds.length > 0) {
-    visibleTypes.push(CALL_ROUNDS_NAV_KEY);
     contentByType[CALL_ROUNDS_NAV_KEY] = callRounds.map((round) => ({
       kind: 'call_round' as const,
       label: tCalls('round', { number: round.roundNumber }),
@@ -202,9 +202,28 @@ export async function SchedulesPage({
     }));
   }
 
+  // An event can have message schedules, call rounds, or both. Only groups with
+  // something in them reach the nav, so a section heading never sits above an
+  // empty list.
+  const navGroups: OutreachNavGroup[] = [];
+  if (visibleTypes.length > 0) {
+    navGroups.push({
+      key: 'messages',
+      label: t('nav.messages'),
+      types: visibleTypes,
+    });
+  }
+  if (callRounds.length > 0) {
+    navGroups.push({
+      key: 'calls',
+      label: t('nav.calls'),
+      types: [CALL_ROUNDS_NAV_KEY],
+    });
+  }
+
   return (
     <SchedulesLayout
-      visibleTypes={visibleTypes}
+      navGroups={navGroups}
       contentByType={contentByType as Record<string, OutreachItem[]>}
     />
   );

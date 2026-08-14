@@ -9,14 +9,31 @@ import {
   IconPhone,
   IconUserCheck,
 } from '@tabler/icons-react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Item,
+  ItemContent,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
 
 import { type ScheduleTypeKey } from '../schemas';
-import { CALL_ROUNDS_NAV_KEY, type OutreachItem } from '../types';
+import { CALL_ROUNDS_NAV_KEY, type OutreachItem, type OutreachNavGroup } from '../types';
 import { formatRelativeTime } from '../utils';
 
 type ScheduleTypeIcon = React.ComponentType<{ size?: number | string; className?: string }>;
@@ -36,23 +53,17 @@ function getTypeIcon(type: string): ScheduleTypeIcon {
 }
 
 interface SchedulesLayoutProps {
-  visibleTypes: string[];
+  navGroups: OutreachNavGroup[];
   contentByType: Record<string, OutreachItem[]>;
 }
 
-export function SchedulesLayout({
-  visibleTypes,
-  contentByType,
-}: SchedulesLayoutProps) {
+export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
-  const [selectedType, setSelectedType] = useState<string>(visibleTypes[0]);
+  const [selectedType, setSelectedType] = useState<string>(
+    () => navGroups[0]?.types[0] ?? '',
+  );
   const [selectedSubIndex, setSelectedSubIndex] = useState(0);
   const { setHeader, clearHeader } = useFeatureLayoutContext();
-
-  const handleTypeChange = (type: string) => {
-    setSelectedType(type);
-    setSelectedSubIndex(0);
-  };
 
   const activeItem =
     (contentByType[selectedType] ?? [])[selectedSubIndex] ??
@@ -66,75 +77,141 @@ export function SchedulesLayout({
     return () => clearHeader();
   }, [setHeader, clearHeader]);
 
+  // Flattened once and shared by both navs: the sidebar and the mobile picker
+  // are two renderings of the same list, so they must not drift apart.
+  const groups = navGroups.map((group) => ({
+    ...group,
+    items: group.types.flatMap((type) =>
+      (contentByType[type] ?? []).map((item, index) => ({ type, index, item })),
+    ),
+  }));
+
+  // The picker needs a single scalar value, but an entry is identified by the
+  // (type, index) pair - 'confirmation' can hold several schedules.
+  const toValue = (type: string, index: number) => `${type}::${index}`;
+  const selectValue = toValue(selectedType, selectedSubIndex);
+
+  const handleSelect = (value: string) => {
+    const separator = value.lastIndexOf('::');
+    setSelectedType(value.slice(0, separator));
+    setSelectedSubIndex(Number(value.slice(separator + 2)));
+  };
+
+  const ActiveIcon = getTypeIcon(selectedType);
+
   return (
-    <div className="flex gap-6">
-      {/* Left vertical menu */}
-      <nav className="flex w-52 shrink-0 flex-col gap-1">
-        {visibleTypes.flatMap((type) => {
-          const typeItems = contentByType[type] ?? [];
-          const hasMultiple = typeItems.length > 1;
-          const isActive = selectedType === type;
+    // Below md the sidebar would leave the content pane too narrow to read, so
+    // the nav collapses into a picker above the content and the two panes stack.
+    <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+      {/* Mobile nav - the same entries as the sidebar, in a picker */}
+      <Select value={selectValue} onValueChange={handleSelect}>
+        <SelectTrigger className="w-full md:hidden" aria-label={t('header.title')}>
+          {/* One line only - the trigger clamps its value, so the status shows
+              as a bare dot here and spells itself out in the open list. */}
+          <SelectValue>
+            <span className="flex w-full min-w-0 items-center gap-2">
+              <ActiveIcon size={18} className="text-muted-foreground shrink-0" />
+              <span className="truncate font-medium">{activeItem?.label}</span>
+              {activeItem && <StatusDot status={activeItem.status} />}
+            </span>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {groups.map((group) => (
+            <SelectGroup key={group.key}>
+              <SelectLabel>{group.label}</SelectLabel>
+              {group.items.map(({ type, index, item }) => {
+                const Icon = getTypeIcon(type);
 
-          if (hasMultiple) {
-            const Icon = getTypeIcon(type);
-            return typeItems.map((item, index) => (
-              <Button
-                key={`${type}-${index}`}
-                variant="ghost"
-                className={cn(
-                  'h-auto justify-start py-2',
-                  isActive && selectedSubIndex === index
-                    ? 'bg-background hover:bg-background'
-                    : 'hover:bg-background/60',
-                )}
-                onClick={() => {
-                  setSelectedType(type);
-                  setSelectedSubIndex(index);
-                }}
-              >
-                <div className="flex flex-1 items-start gap-2">
-                  <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="flex flex-1 flex-col items-start gap-0.5">
-                    <span>{item.label}</span>
-                    <StatusRow item={item} />
-                  </div>
-                </div>
-              </Button>
-            ));
-          }
+                return (
+                  <SelectItem
+                    key={`${type}-${index}`}
+                    value={toValue(type, index)}
+                    textValue={item.label}
+                  >
+                    <Icon size={18} className="text-muted-foreground shrink-0" />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="truncate">{item.label}</span>
+                      <StatusRow item={item} />
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
 
-          const Icon = getTypeIcon(type);
-          return [
-            <Button
-              key={type}
-              variant="ghost"
-              className={cn(
-                'h-auto justify-start py-2',
-                isActive
-                  ? 'bg-background hover:bg-background'
-                  : 'hover:bg-background/60',
-              )}
-              onClick={() => handleTypeChange(type)}
-            >
-              <div className="flex flex-1 items-start gap-2">
-                <Icon size={18} className="text-muted-foreground mt-0.5 shrink-0" />
-                <div className="flex flex-1 flex-col items-start gap-0.5">
-                  {/* Reuse the label already computed server-side (with the
-                      known/unknown-type fallback baked in) instead of
-                      recomputing it against the i18n catalog here. */}
-                  <span>{typeItems[0]?.label ?? type}</span>
-                  {typeItems[0] && <StatusRow item={typeItems[0]} />}
-                </div>
-              </div>
-            </Button>,
-          ];
-        })}
+      {/* Left vertical menu - one list per kind of outreach */}
+      <nav
+        aria-label={t('header.title')}
+        className="hidden shrink-0 flex-col gap-6 md:flex md:w-52 lg:w-56"
+      >
+        {groups.map((group) => (
+          <div key={group.key} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 px-2">
+              <h2 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                {group.label}
+              </h2>
+              <Badge variant="secondary" className="px-1.5 font-normal tabular-nums">
+                {group.items.length}
+              </Badge>
+            </div>
+
+            <ItemGroup className="gap-1">
+              {group.items.map(({ type, index, item }) => {
+                const Icon = getTypeIcon(type);
+                const isActive = selectedType === type && selectedSubIndex === index;
+
+                return (
+                  <Item
+                    key={`${type}-${index}`}
+                    asChild
+                    size="sm"
+                    className={cn(
+                      'w-full cursor-pointer text-start',
+                      isActive
+                        ? 'bg-background border-border shadow-xs'
+                        : 'hover:bg-background/60',
+                    )}
+                  >
+                    <button
+                      type="button"
+                      aria-current={isActive ? 'true' : undefined}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setSelectedSubIndex(index);
+                      }}
+                    >
+                      <ItemMedia>
+                        <Icon
+                          size={18}
+                          className={cn(
+                            'shrink-0',
+                            isActive ? 'text-foreground' : 'text-muted-foreground',
+                          )}
+                        />
+                      </ItemMedia>
+                      <ItemContent className="gap-0.5">
+                        {/* Reuse the label already computed server-side (with the
+                            known/unknown-type fallback baked in) instead of
+                            recomputing it against the i18n catalog here. */}
+                        <ItemTitle className="w-full truncate">{item.label}</ItemTitle>
+                        <StatusRow item={item} />
+                      </ItemContent>
+                    </button>
+                  </Item>
+                );
+              })}
+            </ItemGroup>
+          </div>
+        ))}
       </nav>
 
+      <Separator orientation="vertical" className="hidden h-auto self-stretch md:block" />
+
       {/* Right content */}
-      <div className="min-w-0 flex-1">
-        {activeItem?.details}
-      </div>
+      <div className="min-w-0 flex-1">{activeItem?.details}</div>
     </div>
   );
 }
@@ -158,6 +235,14 @@ const STATUS_LABEL_KEY: Record<OutreachItem['status'], string> = {
   cancelled: 'status.label.cancelled',
 };
 
+function StatusDot({ status }: { status: OutreachItem['status'] }) {
+  return (
+    <span
+      className={cn('inline-block size-1.5 shrink-0 rounded-full', STATUS_DOT[status])}
+    />
+  );
+}
+
 function StatusRow({ item }: { item: OutreachItem }) {
   const t = useTranslations('schedules');
 
@@ -170,8 +255,13 @@ function StatusRow({ item }: { item: OutreachItem }) {
   }
 
   return (
-    <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-      <span className={cn('inline-block size-1.5 rounded-full', STATUS_DOT[item.status])} />
+    // Carries the item-description slot so Item top-aligns the icon beside the
+    // two-line label, the same way a real ItemDescription would.
+    <span
+      data-slot="item-description"
+      className="text-muted-foreground flex items-center gap-1.5 text-xs"
+    >
+      <StatusDot status={item.status} />
       {t(STATUS_LABEL_KEY[item.status] as 'status.label.sent')}
       {item.timestamp && (
         <>

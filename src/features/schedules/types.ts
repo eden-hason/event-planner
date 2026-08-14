@@ -33,3 +33,17 @@ export type OutreachItem = {
   timestamp?: string;
   details: ReactNode;
 };
+
+/**
+ * One labelled section of the schedules nav. Message schedules and call rounds
+ * are two different kinds of outreach, so they get their own lists rather than
+ * sharing one flat menu - the grouping is explicit in the read model instead of
+ * being inferred from the position of {@link CALL_ROUNDS_NAV_KEY}.
+ */
+export type OutreachNavGroup = {
+  key: 'messages' | 'calls';
+  /** Section heading, already localized server-side */
+  label: string;
+  /** Type keys into `contentByType`, in display order */
+  types: string[];
+};
