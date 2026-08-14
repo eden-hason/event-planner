@@ -12,6 +12,16 @@ corporate event. Everything else in the system hangs off exactly one Event.
 
 A wedding is the archetype and the core market, but the model is not wedding-specific.
 
+## Draft Event
+
+An Event whose Owner has started creating it but has not finished. It exists, and holds
+whatever has been answered so far, but it is not yet a workspace: it does not appear in
+the event switcher and it cannot be opened.
+
+The Owner is always returned to where they left off, never to a half-empty workspace.
+A Draft Event becomes an Event proper the moment creation is completed - there is no
+other way out of the state, and no partial access along the way.
+
 ## Couple
 
 The people planning the wedding. The buyer and the primary user. Used in
@@ -28,17 +38,8 @@ may represent several Guests.
 **The unit of billing.** One row in the guest list, which may cover more than one Guest -
 a family of five arriving as one entry is one Guest Record with an amount of five.
 
-Plans are priced per Guest Record, not per Guest. Say "guest record" whenever the
+Kululu is priced per Guest Record, not per Guest. Say "guest record" whenever the
 quantity being counted is billable; say "guest" when talking about human beings attending.
-
-## Reserve Records
-
-Free Guest Records granted on top of a paid plan, at 10% of the plan's size, to absorb
-last-minute additions without forcing an upgrade. A 100-record plan carries 10 reserve
-records.
-
-Reserve Records are not a separate plan tier and are never sold; they only ever come
-attached to a purchased plan.
 
 ## RSVP
 
@@ -82,7 +83,7 @@ A pass of **human phone calls** made by the Kululu team to Guests who have not r
 after the WhatsApp rounds. Operated from the admin back office, not by the Couple. Each
 call's outcome is recorded against the Guest.
 
-Two Call Rounds are included in a paid plan. Call Rounds are a service Kululu performs,
+Two Call Rounds are included with every paid Event. Call Rounds are a service Kululu performs,
 not a feature the Couple operates - this distinction matters in all customer-facing copy.
 The Owner watches a Call Round; they never run one.
 

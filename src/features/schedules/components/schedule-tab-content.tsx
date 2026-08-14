@@ -21,7 +21,9 @@ export function ScheduleTabContent({
   event,
 }: ScheduleTabContentProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    // Single column until there is room for the message preview to sit beside
+    // the settings without squeezing either.
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
         <ScheduleStatusCard schedule={schedule} />
         <ScheduleDetailsCard key={schedule.id} schedule={schedule} eventDate={eventDate} />

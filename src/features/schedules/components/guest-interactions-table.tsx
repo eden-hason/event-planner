@@ -6,10 +6,17 @@ import { IconCheck, IconChevronLeft, IconChevronRight, IconEye, IconX } from '@t
 
 import { Button } from '@/components/ui/button';
 import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -74,82 +81,132 @@ export function GuestInteractionsTable({ guests, labels }: GuestInteractionsTabl
   const totalPages = Math.ceil(guests.length / PAGE_SIZE);
   const slice = guests.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
+  const formatRowDate = (row: GuestInteractionRow) =>
+    row.respondedAt
+      ? formatDate(row.respondedAt)
+      : row.viewedAt
+        ? formatDate(row.viewedAt)
+        : '-';
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnGuest}</TableHead>
-          <TableHead className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide">{labels.columnViewed}</TableHead>
-          <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnResponse}</TableHead>
-          <TableHead className="text-muted-foreground text-center text-xs font-medium uppercase tracking-wide">{labels.columnAmount}</TableHead>
-          <TableHead className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{labels.columnDate}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <div className="flex flex-col gap-3">
+      {/* Below sm the five columns cannot fit, so each guest becomes a row of
+          its own with the same facts stacked instead of side by side. */}
+      <ItemGroup className="gap-2 sm:hidden">
         {slice.map((row) => (
-          <TableRow key={row.guestId}>
-            <TableCell className="font-medium">{row.guestName}</TableCell>
-            <TableCell className="text-center">
-              {row.viewed ? (
-                <IconEye size={15} className="text-blue-500 inline" />
-              ) : (
-                <span className="text-muted-foreground/40 text-xs">-</span>
+          <Item key={row.guestId} variant="outline" size="sm">
+            <ItemContent className="min-w-0 gap-1">
+              <ItemTitle className="w-full min-w-0">
+                <span className="truncate">{row.guestName}</span>
+                {row.viewed && <IconEye size={14} className="shrink-0 text-blue-500" />}
+              </ItemTitle>
+              <ItemDescription className="text-xs">{formatRowDate(row)}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              {row.response === 'rsvp_confirm' && (
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {labels.columnAmount} {row.amount}
+                </span>
               )}
-            </TableCell>
-            <TableCell>
               <ResponseBadge
                 row={row}
-                labels={{ confirmed: labels.responseConfirmed, declined: labels.responseDeclined, pending: labels.responsePending }}
+                labels={{
+                  confirmed: labels.responseConfirmed,
+                  declined: labels.responseDeclined,
+                  pending: labels.responsePending,
+                }}
               />
-            </TableCell>
-            {/* Headcount only reads as a number of attendees once they have
-                said yes - showing it beside a decline is noise. */}
-            <TableCell className="text-center text-xs tabular-nums">
-              {row.response === 'rsvp_confirm' ? (
-                row.amount
-              ) : (
-                <span className="text-muted-foreground/40">-</span>
-              )}
-            </TableCell>
-            <TableCell className="text-muted-foreground text-xs">
-              {row.respondedAt
-                ? formatDate(row.respondedAt)
-                : row.viewedAt
-                  ? formatDate(row.viewedAt)
-                  : '-'}
-            </TableCell>
-          </TableRow>
+            </ItemActions>
+          </Item>
         ))}
-      </TableBody>
+      </ItemGroup>
+
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnGuest}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                {labels.columnViewed}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnResponse}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                {labels.columnAmount}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {labels.columnDate}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {slice.map((row) => (
+              <TableRow key={row.guestId}>
+                <TableCell className="font-medium">{row.guestName}</TableCell>
+                <TableCell className="text-center">
+                  {row.viewed ? (
+                    <IconEye size={15} className="inline text-blue-500" />
+                  ) : (
+                    <span className="text-muted-foreground/40 text-xs">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <ResponseBadge
+                    row={row}
+                    labels={{
+                      confirmed: labels.responseConfirmed,
+                      declined: labels.responseDeclined,
+                      pending: labels.responsePending,
+                    }}
+                  />
+                </TableCell>
+                {/* Headcount only reads as a number of attendees once they have
+                    said yes - showing it beside a decline is noise. */}
+                <TableCell className="text-center text-xs tabular-nums">
+                  {row.response === 'rsvp_confirm' ? (
+                    row.amount
+                  ) : (
+                    <span className="text-muted-foreground/40">-</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-xs">
+                  {formatRowDate(row)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Sits outside the table so the card list is paged by the same control */}
       {totalPages > 1 && (
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={5}>
-              <div className="flex items-center justify-end gap-2 rtl:justify-start">
-                <span className="text-muted-foreground text-xs">{page + 1} / {totalPages}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setPage((p) => p - 1)}
-                  disabled={page === 0}
-                >
-                  {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page === totalPages - 1}
-                >
-                  {isRTL ? <IconChevronLeft size={14} /> : <IconChevronRight size={14} />}
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        </TableFooter>
+        <div className="flex items-center justify-end gap-2 rtl:justify-start">
+          <span className="text-muted-foreground text-xs">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-7"
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0}
+          >
+            {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-7"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages - 1}
+          >
+            {isRTL ? <IconChevronLeft size={14} /> : <IconChevronRight size={14} />}
+          </Button>
+        </div>
       )}
-    </Table>
+    </div>
   );
 }

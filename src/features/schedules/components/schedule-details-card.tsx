@@ -149,7 +149,7 @@ export function ScheduleDetailsCard({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <Label className="text-xs text-muted-foreground tracking-wide">
                 {t('daysBeforeEvent')}
@@ -173,9 +173,9 @@ export function ScheduleDetailsCard({
               <Label className="text-xs text-muted-foreground tracking-wide">
                 {t('scheduledDate')}
               </Label>
-              <div className="flex items-center gap-2 mt-1 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+              <div className="bg-muted/50 mt-1 flex min-w-0 items-center gap-2 rounded-md border px-3 py-2 text-sm">
                 <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
-                <span>{resolvedDateDisplay}</span>
+                <span className="truncate">{resolvedDateDisplay}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">{t('scheduledDateHelper')}</p>
             </div>

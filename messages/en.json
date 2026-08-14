@@ -824,6 +824,10 @@
       "title": "Schedules",
       "description": "Manage your event schedule and timeline"
     },
+    "nav": {
+      "messages": "Messages",
+      "calls": "Phone Calls"
+    },
     "tabs": {
       "overview": "Overview",
       "results": "Schedule Results"

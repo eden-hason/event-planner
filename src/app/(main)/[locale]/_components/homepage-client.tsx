@@ -334,7 +334,7 @@ export function HomepageClient() {
         .pricing-foot a{color:var(--primary);font-weight:600}
         .pricing-foot a:hover{text-decoration:underline}
 
-        .wo-card{width:100%;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));overflow:hidden}
+        .wo-card{width:100%;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));overflow:hidden}
         .wo-pricing{padding:44px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06));border-inline-end:1px solid var(--line)}
         .wo-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:linear-gradient(90deg,var(--primary),#8b3ff0);color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
         .wo-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -390,6 +390,8 @@ export function HomepageClient() {
         }
         @media(max-width:560px){
           .pricing-grid{grid-template-columns:1fr}
+          .wo-pricing,.wo-features{padding:24px 20px}
+          .wo-feature{padding:12px 6px}
         }
         .hp-nav-hamburger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:background .15s ease;flex-shrink:0}
         .hp-nav-hamburger:hover{background:rgba(26,11,46,0.06)}
