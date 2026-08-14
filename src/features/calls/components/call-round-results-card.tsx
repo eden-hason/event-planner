@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import {
   IconCheck,
   IconPhone,
@@ -64,6 +64,14 @@ export async function CallRoundResultsCard({
 }) {
   const t = await getTranslations('calls');
   const results = await getCallRoundResults(round.id);
+  // Server-rendered, so the locale has to be passed explicitly - see CallPlanCard.
+  const locale = await getLocale();
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
 
   return (
     <Card>
@@ -76,8 +84,8 @@ export async function CallRoundResultsCard({
         </CardTitle>
         <CardDescription>
           {round.status === 'completed' && round.completedAt
-            ? t('completedOn', { date: new Date(round.completedAt).toLocaleDateString() })
-            : t('startedOn', { date: new Date(round.createdAt).toLocaleDateString() })}
+            ? t('completedOn', { date: formatDate(round.completedAt) })
+            : t('startedOn', { date: formatDate(round.createdAt) })}
         </CardDescription>
         <CardAction>
           <RefreshButton label={t('refresh')} />

@@ -47,6 +47,16 @@ function toDateInput(iso: string): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
+/**
+ * dd/mm/yyyy, the format the rest of the back office uses.
+ *
+ * Pinned to en-GB rather than left to the bare locale default, which resolves
+ * to the *browser's* locale and rendered these dates as m/d/yyyy.
+ */
+function formatPlanDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB');
+}
+
 const SUMMARY_STATS: {
   key: keyof CallRoundSummary;
   label: string;
@@ -298,7 +308,7 @@ export function PhoneCallsView({ eventId, initialPlans }: PhoneCallsViewProps) {
                   >
                     {round
                       ? `${round.awaiting}/${round.total}`
-                      : new Date(plan.scheduledDate).toLocaleDateString()}
+                      : formatPlanDate(plan.scheduledDate)}
                   </span>
                   {isComplete && (
                     <IconCheck
@@ -391,7 +401,7 @@ export function PhoneCallsView({ eventId, initialPlans }: PhoneCallsViewProps) {
           <p className="mt-1 text-xs text-muted-foreground">
             {selectedPlan?.cancelled
               ? 'The owner switched this round off in their schedule'
-              : `Planned for ${selectedPlan ? new Date(selectedPlan.scheduledDate).toLocaleDateString() : ''} - starting it loads the ${selectedPlan?.targetStatus ?? 'matching'} guests`}
+              : `Planned for ${selectedPlan ? formatPlanDate(selectedPlan.scheduledDate) : ''} - starting it loads the ${selectedPlan?.targetStatus ?? 'matching'} guests`}
           </p>
         </div>
       ) : (

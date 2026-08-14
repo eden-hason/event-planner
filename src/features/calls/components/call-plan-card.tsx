@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { IconCalendarEvent, IconClock, IconPhone } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
@@ -51,6 +51,9 @@ export async function CallPlanCard({
 }: CallPlanCardProps) {
   const t = await getTranslations('calls.plan');
   const tSchedules = await getTranslations('schedules');
+  // This renders on the server, so a bare toLocaleDateString() would format in
+  // the *server's* locale - m/d/yyyy - whatever the Owner is reading the app in.
+  const locale = await getLocale();
 
   const offset = dayOffset(scheduledDate, eventDate);
   const offsetLabel =
@@ -79,7 +82,11 @@ export async function CallPlanCard({
             <div className="flex items-center gap-2 text-sm">
               <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
               <span className="font-medium">
-                {new Date(scheduledDate).toLocaleDateString()}
+                {new Date(scheduledDate).toLocaleDateString(locale, {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </span>
               <Badge variant="secondary" className="gap-1 rounded-sm text-xs">
                 {Math.abs(offset)}

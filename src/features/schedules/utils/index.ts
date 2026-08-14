@@ -31,30 +31,52 @@ export type RelativeTimeResult =
   | { type: 'past'; unit: TimeUnit; count: number }
   | { type: 'future'; unit: TimeUnit; count: number };
 
+const MINUTE_MS = 1000 * 60;
+const HOUR_MS = MINUTE_MS * 60;
+const DAY_MS = HOUR_MS * 24;
+
+/**
+ * Whole calendar days from one instant to another, in the viewer's local zone.
+ *
+ * Counts midnight boundaries rather than elapsed time, which is what a person
+ * means by "in 4 days" - the time of day on either end does not change the
+ * answer.
+ */
+function calendarDaysBetween(from: Date, to: Date): number {
+  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((midnight(to) - midnight(from)) / DAY_MS);
+}
+
+/**
+ * How far away an instant is, as a unit and a count for the i18n catalog to
+ * phrase.
+ *
+ * Anything a day or more out is counted in *calendar* days. Flooring elapsed
+ * milliseconds instead made a round planned for the 18th read "in 3d" on the
+ * 14th, because the gap was 3.8 days - always short by up to a day, and always
+ * in the direction that makes work look further away than it is. Sub-day gaps
+ * round rather than floor, for the same reason.
+ */
 export function formatRelativeTime(dateStr: string): RelativeTimeResult {
   const now = new Date();
   const date = new Date(dateStr);
   const diffMs = date.getTime() - now.getTime();
   const absDiffMs = Math.abs(diffMs);
-  const isPast = diffMs < 0;
+  const type = diffMs < 0 ? ('past' as const) : ('future' as const);
 
-  const minutes = Math.floor(absDiffMs / (1000 * 60));
-  const hours = Math.floor(absDiffMs / (1000 * 60 * 60));
-  const days = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
-  const weeks = Math.floor(days / 7);
-  const months = Math.floor(days / 30);
-
+  const minutes = Math.round(absDiffMs / MINUTE_MS);
   if (minutes < 1) return { type: 'justNow' };
+  if (absDiffMs < HOUR_MS) return { type, unit: 'minutes', count: minutes };
 
-  let unit: TimeUnit;
-  let count: number;
-  if (minutes < 60) { unit = 'minutes'; count = minutes; }
-  else if (hours < 24) { unit = 'hours'; count = hours; }
-  else if (days < 7) { unit = 'days'; count = days; }
-  else if (weeks < 5) { unit = 'weeks'; count = weeks; }
-  else { unit = 'months'; count = months; }
+  const hours = Math.round(absDiffMs / HOUR_MS);
+  if (hours < 24) return { type, unit: 'hours', count: hours };
 
-  return { type: isPast ? 'past' : 'future', unit, count };
+  // Floored at 1: reaching here means the instants are at least ~24h apart, but
+  // a 25-hour local day (DST) can still leave them on adjacent midnights.
+  const days = Math.max(1, Math.abs(calendarDaysBetween(now, date)));
+  if (days < 7) return { type, unit: 'days', count: days };
+  if (days < 35) return { type, unit: 'weeks', count: Math.round(days / 7) };
+  return { type, unit: 'months', count: Math.round(days / 30) };
 }
 
 /**
