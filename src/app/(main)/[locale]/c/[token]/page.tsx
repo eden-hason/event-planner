@@ -2,10 +2,10 @@ import { ConfirmationPage } from '@/features/confirmation/components/confirmatio
 
 export const dynamic = 'force-dynamic';
 
-// Original RSVP path, superseded by /c/[token]. Links already sent out carry
-// this path and never expire, so it renders the same page rather than
-// redirecting - a redirect would cost a round trip on a guest's first tap.
-export default async function LegacyConfirmationRoute({
+// Short RSVP path. Kept terse because the full URL is embedded in SMS bodies,
+// where every character counts against the segment limit. /confirm/[token]
+// renders the same page for links sent before this path existed.
+export default async function ShortConfirmationRoute({
   params,
 }: {
   params: Promise<{ locale: string; token: string }>;

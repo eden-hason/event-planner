@@ -51,6 +51,10 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     !strippedPath.startsWith('/auth') &&
     !strippedPath.startsWith('/error') &&
     !strippedPath.startsWith('/confirm') &&
+    // Exact segment match - a bare startsWith('/c') would open up every route
+    // beginning with c, /collaborate among them
+    strippedPath !== '/c' &&
+    !strippedPath.startsWith('/c/') &&
     !strippedPath.startsWith('/invitations') &&
     !strippedPath.startsWith('/privacy') &&
     !strippedPath.startsWith('/nav')
