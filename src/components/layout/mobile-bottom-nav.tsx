@@ -13,13 +13,11 @@ import { Bot } from 'lucide-react';
 import { BottomNavBar } from '@/components/ui/bottom-nav-bar';
 import { useCollaboration } from '@/components/feature-layout';
 
-const NON_EVENT_PATHS = new Set(['new-event']);
 const SEATING_MANAGER_ALLOWED = new Set(['dashboard', 'guests', 'aiAssistant']);
 
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
-  const id = match ? match[1] : null;
-  return id && !NON_EVENT_PATHS.has(id) ? id : null;
+  return match ? match[1] : null;
 }
 
 function buildNavUrl(basePath: string, eventId: string | null): string {
@@ -30,7 +28,6 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
-  const isOnboarding = pathname === '/app/new-event';
   const tNav = useTranslations('navigation');
   const tChat = useTranslations('aiChat');
   const { isOwner } = useCollaboration();
@@ -56,7 +53,7 @@ export function MobileBottomNav() {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-3 md:hidden">
-      <BottomNavBar items={items} disabled={!eventId || isOnboarding} />
+      <BottomNavBar items={items} disabled={!eventId} />
     </div>
   );
 }

@@ -2,6 +2,11 @@ import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { getDraftEvent, getLastUserEvent } from '@/features/events/queries';
 
+// Both lookups read the session cookie, so this route can never be static.
+// Declaring it keeps the prerender probe from attempting it and logging a
+// dynamic-server-usage error on every build.
+export const dynamic = 'force-dynamic';
+
 export default async function AppPage({
   params,
 }: {
@@ -17,7 +22,7 @@ export default async function AppPage({
   const draft = await getDraftEvent();
 
   if (draft) {
-    redirect({ href: '/app/new-event', locale });
+    redirect({ href: '/start', locale });
   }
 
   const event = await getLastUserEvent();
@@ -26,5 +31,5 @@ export default async function AppPage({
     redirect({ href: `/app/${event.id}/dashboard`, locale });
   }
 
-  redirect({ href: '/app/new-event', locale });
+  redirect({ href: '/start', locale });
 }

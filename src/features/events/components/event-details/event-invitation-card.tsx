@@ -13,6 +13,7 @@ import {
   IconUpload,
   IconX,
   IconDeviceFloppy,
+  IconArrowsMaximize,
 } from '@tabler/icons-react';
 import { CheckCircle2, AlertTriangle, Mail } from 'lucide-react';
 import {
@@ -31,6 +32,12 @@ import {
   FileUploadItemDelete,
 } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { uploadInvitationImage } from '@/lib/storage';
@@ -199,6 +206,29 @@ export function EventInvitationCard({
                         </div>
                       </div>
                     )}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute top-2 left-2 z-20 size-8 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          type="button"
+                          disabled={isUploading}
+                        >
+                          <IconArrowsMaximize size={16} />
+                          <span className="sr-only">{t('enlargeImage')}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="w-auto max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+                        <DialogTitle className="sr-only">{t('title')}</DialogTitle>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={previewUrl}
+                          alt="Invitation"
+                          className="max-h-[85vh] w-full rounded-lg object-contain"
+                        />
+                      </DialogContent>
+                    </Dialog>
                     {files.length > 0 ? (
                       <FileUploadItem
                         value={files[0]}

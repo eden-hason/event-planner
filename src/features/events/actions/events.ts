@@ -9,15 +9,11 @@ import {
   CreateEventState,
   Invitations,
   InvitationsDb,
-  EventOnboardingSchema,
-  CreateOnboardingEventState,
 } from '../schemas';
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
-import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { deleteInvitationImage } from '@/lib/storage.server';
-import { PLAN_CAPACITY } from '@/features/events/constants';
 
 export type DeleteEventState = {
   success: boolean;
@@ -133,132 +129,6 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
       success: false,
       message: 'Failed to create event. Please try again.',
     };
-  }
-}
-
-/**
- * Creates a new wedding event from the onboarding wizard.
- */
-export async function createOnboardingEvent(
-  formData: FormData,
-): Promise<CreateOnboardingEventState> {
-  const blocked = await assertNotImpersonating();
-  if (blocked) return { success: false, message: blocked };
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to create events' };
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawData: Record<string, any> = Object.fromEntries(formData);
-
-    if (rawData.location && typeof rawData.location === 'string') {
-      try {
-        rawData.location = JSON.parse(rawData.location);
-      } catch {
-        rawData.location = undefined;
-      }
-    }
-
-    const validationResult = EventOnboardingSchema.safeParse(rawData);
-    if (!validationResult.success) {
-      const firstError = validationResult.error.issues[0];
-      return { success: false, message: firstError.message };
-    }
-
-    const { eventType, brideName, groomName, childName, eventDate, location, guestsEstimate, pricingPlan } =
-      validationResult.data;
-
-    const guestsCapacity = pricingPlan ? PLAN_CAPACITY[pricingPlan] : null;
-    const isCoupleEvent = eventType === 'wedding' || eventType === 'henna';
-
-    // Auto-generate title
-    const locale = await getLocale();
-    let title: string;
-    if (locale === 'he') {
-      if (isCoupleEvent) {
-        const prefix = eventType === 'henna' ? 'החינה של' : 'החתונה של';
-        if (brideName && groomName) {
-          title = `${prefix} ${brideName} ו${groomName}`;
-        } else if (brideName || groomName) {
-          title = `${prefix} ${brideName ?? groomName}`;
-        } else {
-          title = eventType === 'henna' ? 'החינה שלי' : 'החתונה שלי';
-        }
-      } else {
-        const eventLabel = eventType === 'bar_mitzva' ? 'בר מצווה' : 'בת מצווה';
-        title = childName ? `${eventLabel} של ${childName}` : eventLabel;
-      }
-    } else {
-      if (isCoupleEvent) {
-        const prefix = eventType === 'henna' ? 'The Henna of' : 'The Wedding of';
-        if (brideName && groomName) {
-          title = `${prefix} ${brideName} and ${groomName}`;
-        } else if (brideName || groomName) {
-          title = `${prefix} ${brideName ?? groomName}`;
-        } else {
-          title = eventType === 'henna' ? 'My Henna' : 'My Wedding';
-        }
-      } else {
-        const eventLabel = eventType === 'bar_mitzva' ? 'Bar Mitzva' : 'Bat Mitzva';
-        title = childName ? `${childName}'s ${eventLabel}` : `My ${eventLabel}`;
-      }
-    }
-
-    const hostDetails = isCoupleEvent
-      ? {
-          bride: brideName ? { name: brideName } : undefined,
-          groom: groomName ? { name: groomName } : undefined,
-        }
-      : { child: childName ? { name: childName } : undefined };
-
-    const supabase = await createClient();
-
-    const eventTypeId = await resolveEventTypeId(supabase, eventType);
-    if (!eventTypeId) {
-      return { success: false, message: 'Unknown event type' };
-    }
-
-    const { data: newEvent, error } = await supabase
-      .from('events')
-      .insert({
-        user_id: currentUser.id,
-        title,
-        event_date: eventDate,
-        event_type_id: eventTypeId,
-        // See createEvent: this wizard writes once, at the end, so what it
-        // creates is a finished event rather than a Draft Event.
-        status: 'published',
-        onboarding_step: 'estimate',
-        is_default: true,
-        host_details: hostDetails,
-        location: location ?? null,
-        guests_estimate: guestsEstimate ?? null,
-        guests_capacity: guestsCapacity,
-      })
-      .select('id')
-      .single();
-
-    if (error || !newEvent) {
-      console.error('Error creating onboarding event:', error);
-      return { success: false, message: 'Failed to create event' };
-    }
-
-    // Unset is_default on other events for this user
-    await supabase
-      .from('events')
-      .update({ is_default: false })
-      .eq('user_id', currentUser.id)
-      .neq('id', newEvent.id);
-
-    revalidatePath('/app');
-    revalidatePath('/app/dashboard');
-
-    return { success: true, message: 'Event created successfully', eventId: newEvent.id };
-  } catch (error) {
-    console.error('Create onboarding event error:', error);
-    return { success: false, message: 'Failed to create event. Please try again.' };
   }
 }
 

@@ -9,4 +9,7 @@ export {
 
 export { NewEventDialog } from './new-event-dialog';
 
-export { Onboarding, type OnboardingStep } from './onboarding';
+export { Onboarding, type OnboardingChecklistStep } from './onboarding-checklist';
+
+export { OnboardingTakeover } from './onboarding/onboarding-takeover';
+export { EventCard, type EventCardData, type EventCardSize } from './onboarding/event-card';
