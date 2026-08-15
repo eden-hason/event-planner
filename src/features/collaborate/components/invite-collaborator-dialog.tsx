@@ -28,6 +28,7 @@ import { ScopePicker } from './scope-picker';
 import { cn } from '@/lib/utils';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
 import type { CollaboratorRole } from '../schemas';
+import posthog from 'posthog-js';
 
 interface InviteCollaboratorDialogProps {
   eventId: string;
@@ -225,6 +226,17 @@ export function InviteCollaboratorDialog({
         return;
       }
 
+      if (
+        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ) {
+        posthog.capture('collaborator_invited', {
+          event_id: eventId,
+          role,
+          has_scope: selectedGroups.length > 0 || selectedGuests.length > 0,
+          email_sent: result.emailSent ?? false,
+        });
+      }
       setInvitationLink(result.invitationLink || '');
       setEmailSent(result.emailSent ?? false);
       setStep('success');

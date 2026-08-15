@@ -58,6 +58,7 @@ export function EventInvitationCard({
 }: EventInvitationCardProps) {
   const t = useTranslations('eventDetails.invitation');
   const tHeader = useTranslations('eventDetails.header');
+  const tToast = useTranslations('eventDetails.toast');
 
   const form = useForm<InvitationCardValues>({
     resolver: zodResolver(InvitationCardSchema),
@@ -90,14 +91,14 @@ export function EventInvitationCard({
       try {
         const result = await updateEventDetails(formData);
         if (result.success) {
-          toast.success(result.message);
+          toast.success(tToast('saved'));
           form.reset(form.getValues());
         } else {
           toast.error(result.message);
         }
         return result;
       } catch {
-        toast.error('Something went wrong');
+        toast.error(tToast('error'));
         return null;
       }
     },

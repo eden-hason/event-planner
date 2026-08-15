@@ -42,6 +42,7 @@ import {
   type CreateEventState,
 } from '../schemas';
 import { createEvent } from '../actions';
+import posthog from 'posthog-js';
 
 interface NewEventDialogProps {
   children?: React.ReactNode;
@@ -89,10 +90,19 @@ export function NewEventDialog({
     toast.promise(promise, {
       loading: t('toast.creating', { title: eventTitle }),
       success: (data) => {
+        if (
+          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          process.env.NEXT_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.capture('event_created', {
+            event_id: data.eventId,
+            event_type: formData.get('eventType'),
+          });
+        }
         setOpen(false);
         form.reset();
         router.push(`/app/${data.eventId}/dashboard`);
-        return data.message || t('toast.created');
+        return t('toast.created');
       },
       error: (err) =>
         err instanceof Error ? err.message : t('toast.failed'),

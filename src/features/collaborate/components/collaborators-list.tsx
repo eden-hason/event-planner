@@ -50,7 +50,7 @@ export function CollaboratorsList({
 
     toast.promise(promise, {
       loading: t('toast.removing'),
-      success: (data) => data.message || t('toast.removed'),
+      success: () => t('toast.removed'),
       error: (err) =>
         err instanceof Error ? err.message : t('toast.failed'),
     });

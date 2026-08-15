@@ -303,9 +303,9 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
 
     toast.promise(promise, {
       loading: t('toast.savingBudget'),
-      success: (data) => {
+      success: () => {
         setBudgetDialogOpen(false);
-        return data.message || t('toast.budgetSaved');
+        return t('toast.budgetSaved');
       },
       error: (err) => (err instanceof Error ? err.message : t('toast.error')),
     });
@@ -330,9 +330,9 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
 
     toast.promise(promise, {
       loading: t('toast.removingBudget'),
-      success: (data) => {
+      success: () => {
         setBudgetDialogOpen(false);
-        return data.message || t('toast.budgetRemoved');
+        return t('toast.budgetRemoved');
       },
       error: (err) => (err instanceof Error ? err.message : t('toast.error')),
     });

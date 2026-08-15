@@ -10,6 +10,7 @@ import { TemplatePreviewDialog } from './template-preview-dialog';
 import { type LandingTemplate } from '../types';
 import { type LivePreviewEventData } from './live-template-preview';
 import { updateEventLandingTemplate } from '@/features/events/actions';
+import posthog from 'posthog-js';
 
 interface TemplatesPageProps {
   templates: LandingTemplate[];
@@ -39,6 +40,15 @@ export function TemplatesPage({
         if (!result.success) {
           setSelectedId(prev);
           throw new Error(result.message);
+        }
+        if (
+          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          process.env.NEXT_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.capture('landing_template_selected', {
+            event_id: eventId,
+            template_id: id,
+          });
         }
         return result;
       });

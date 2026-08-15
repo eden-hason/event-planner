@@ -32,7 +32,7 @@ export function InvitationResponsePage({
     try {
       const result = await acceptInvitation(token);
       if (result.success) {
-        toast.success(result.message);
+        toast.success(t('toast.accepted'));
         router.push(`/app/${invitation.eventId}/dashboard`);
       } else {
         toast.error(result.message || t('toast.acceptFailed'));
@@ -49,7 +49,7 @@ export function InvitationResponsePage({
     try {
       const result = await declineInvitation(token);
       if (result.success) {
-        toast.success(result.message);
+        toast.success(t('toast.declined'));
         router.push('/app');
       } else {
         toast.error(result.message || t('toast.declineFailed'));

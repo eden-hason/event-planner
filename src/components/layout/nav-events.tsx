@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 import { ChevronsUpDown, Copy, LogOutIcon, Plus, Trash2 } from 'lucide-react';
@@ -36,12 +36,14 @@ import { logout } from '@/features/auth';
 import { IconUser } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
+import posthog from 'posthog-js';
 
 interface NavEventsProps {
   events: EventApp[];
   currentUserId?: string;
   disabled?: boolean;
   user: {
+    id: string;
     name: string;
     email?: string;
     phone?: string;
@@ -60,6 +62,25 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
 
+  useEffect(() => {
+    if (
+      !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN ||
+      !process.env.NEXT_PUBLIC_POSTHOG_HOST
+    ) {
+      return;
+    }
+
+    const identifiedUserId = posthog.get_property('$user_id');
+    if (identifiedUserId && identifiedUserId !== user.id) {
+      posthog.reset();
+    }
+
+    posthog.identify(user.id, {
+      email: user.email,
+      name: user.name,
+    });
+  }, [user.email, user.id, user.name]);
+
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
 
@@ -68,6 +89,14 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
 
   const handleLogout = async () => {
     setDropdownOpen(false);
+
+    if (
+      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+      process.env.NEXT_PUBLIC_POSTHOG_HOST
+    ) {
+      posthog.reset();
+    }
+
     await logout();
   };
 
@@ -94,7 +123,7 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
         if (data.eventId) {
           router.push(`/app/${data.eventId}/dashboard`);
         }
-        return data.message || t('toast.duplicated');
+        return t('toast.duplicated');
       },
       error: (err) =>
         err instanceof Error ? err.message : t('toast.duplicateFailed'),
@@ -116,7 +145,7 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
 
     toast.promise(promise, {
       loading: t('toast.deleting', { title: eventTitle }),
-      success: (data) => {
+      success: () => {
         setDeleteDialogOpen(false);
         setEventToDelete(null);
 
@@ -127,7 +156,7 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
           router.push(`/app/${remainingEvents[0].id}/dashboard`);
         }
 
-        return data.message || t('toast.deleted');
+        return t('toast.deleted');
       },
       error: (err) =>
         err instanceof Error ? err.message : t('toast.deleteFailed'),

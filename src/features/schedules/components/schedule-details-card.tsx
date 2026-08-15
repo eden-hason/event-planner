@@ -119,7 +119,7 @@ export function ScheduleDetailsCard({
 
       toast.promise(promise, {
         loading: t('toast.updating'),
-        success: (data) => data.message ?? t('toast.updated'),
+        success: () => t('toast.updated'),
         error: (err) => (err instanceof Error ? err.message : t('toast.error')),
       });
 

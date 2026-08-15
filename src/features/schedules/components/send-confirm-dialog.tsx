@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 
 import { executeSchedule } from '../actions/execute-schedule';
 import { type ScheduleApp } from '../schemas';
+import posthog from 'posthog-js';
 
 interface SendConfirmDialogProps {
   scheduleId: string;
@@ -53,12 +54,23 @@ export function SendConfirmDialog({
     startSendTransition(async () => {
       const promise = executeSchedule(scheduleId).then((result) => {
         if (!result.success) throw new Error(result.message);
+        if (
+          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          process.env.NEXT_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.capture('schedule_sent', {
+            schedule_id: scheduleId,
+            target_status: targetStatus,
+            recipient_count: result.summary?.sentCount ?? 0,
+          });
+        }
         return result;
       });
 
       toast.promise(promise, {
         loading: t('sendDialog.toast.sending'),
-        success: (data) => data.message,
+        success: (data) =>
+          t('sendDialog.toast.sent', { count: data.summary?.sentCount ?? 0 }),
         error: (err) => (err instanceof Error ? err.message : t('sendDialog.toast.failed')),
       });
 

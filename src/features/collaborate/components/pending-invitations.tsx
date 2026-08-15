@@ -34,7 +34,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
 
     toast.promise(promise, {
       loading: t('toast.revoking'),
-      success: (data) => data.message || t('toast.revoked'),
+      success: () => t('toast.revoked'),
       error: (err) =>
         err instanceof Error ? err.message : t('toast.failed'),
     });

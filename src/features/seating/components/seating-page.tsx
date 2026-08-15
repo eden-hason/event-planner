@@ -32,6 +32,7 @@ import type { CanvasTool } from './canvas-shape-toolbar';
 import type { SeatingPageProps, TableWithGuestsApp } from '../types';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import type { TableApp, TableShape } from '../schemas';
+import posthog from 'posthog-js';
 
 const POSITION_DEBOUNCE_MS = 300;
 
@@ -228,6 +229,16 @@ export function SeatingPage({
           ),
         );
         toast.error(result.message ?? t('errors.assignFailed'));
+        return;
+      }
+      if (
+        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ) {
+        posthog.capture('guest_seating_updated', {
+          event_id: eventId,
+          assigned_to_table: targetTableId !== null,
+        });
       }
     });
   };
@@ -239,6 +250,16 @@ export function SeatingPage({
           throw new Error(result.message ?? t('errors.createFailed'));
         }
         setTables((prev) => [...prev, result.table!]);
+        if (
+          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          process.env.NEXT_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.capture('table_created', {
+            event_id: eventId,
+            table_shape: result.table.shape,
+            capacity: result.table.capacity,
+          });
+        }
         return result;
       });
       toast.promise(promise, {
@@ -328,6 +349,16 @@ export function SeatingPage({
           ),
         );
         toast.error(result.message ?? t('errors.assignFailed'));
+        return;
+      }
+      if (
+        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ) {
+        posthog.capture('guest_seating_updated', {
+          event_id: eventId,
+          assigned_to_table: false,
+        });
       }
     });
   };

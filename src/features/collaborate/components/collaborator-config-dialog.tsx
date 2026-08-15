@@ -108,7 +108,7 @@ export function CollaboratorConfigDialog({
           setIsPending(false);
           return;
         }
-        toast.success(result.message || t('toast.roleUpdated'));
+        toast.success(t('toast.roleUpdated'));
       } else if (selectedRole === 'seating_manager') {
         // Role didn't change, but scope may have
         if (selectedGroups.length === 0 && selectedGuests.length === 0) {
@@ -126,7 +126,7 @@ export function CollaboratorConfigDialog({
           setIsPending(false);
           return;
         }
-        toast.success(result.message || t('toast.scopeUpdated'));
+        toast.success(t('toast.scopeUpdated'));
       } else {
         // Nothing changed
         onOpenChange(false);

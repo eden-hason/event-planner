@@ -353,6 +353,7 @@
       "giftAdded": "מתנה נוספה",
       "deletingGift": "מוחק מתנה...",
       "giftDeleted": "מתנה נמחקה",
+      "giftSaveFailed": "שמירת המתנה נכשלה",
       "savingBudget": "שומר תקציב...",
       "budgetSaved": "התקציב נשמר",
       "removingBudget": "מסיר תקציב...",
@@ -586,6 +587,8 @@
       "done": "סיים",
       "close": "סגור",
       "importSuccess": "האורחים יובאו בהצלחה",
+      "parseFailed": "פענוח קובץ ה-CSV נכשל",
+      "parseFailedUnknown": "אירעה שגיאה לא ידועה",
       "upload": {
         "heading": "העלה את רשימת האורחים",
         "instruction": "גרור ושחרר את קובץ ה-.csv או ה-.xlsx לכאן, או לחץ לבחירה",
@@ -939,6 +942,7 @@
       "confirm": "שלח עכשיו ←",
       "toast": {
         "sending": "שולח הודעות...",
+        "sent": "{count, plural, one {הודעה אחת נשלחה} two {# הודעות נשלחו} other {# הודעות נשלחו}} בהצלחה",
         "failed": "השליחה נכשלה"
       }
     },
@@ -1157,6 +1161,8 @@
       "processing": "מעבד...",
       "accept": "קבל",
       "toast": {
+        "accepted": "ההזמנה התקבלה",
+        "declined": "ההזמנה נדחתה",
         "acceptFailed": "קבלת ההזמנה נכשלה",
         "declineFailed": "דחיית ההזמנה נכשלה",
         "error": "משהו השתבש"
@@ -1175,6 +1181,10 @@
   },
   "eventDetails": {
     "notFound": "האירוע לא נמצא",
+    "toast": {
+      "saved": "השינויים נשמרו",
+      "error": "משהו השתבש"
+    },
     "statusAlert": {
       "success": {
         "title": "האירוע שלך מוכן לחלוטין",
