@@ -47,7 +47,10 @@ export async function duplicateEvent(
       .insert({
         ...eventFields,
         title: `Copy of ${originalEvent.title}`,
-        status: 'draft',
+        // A copy of a finished event is itself finished - it inherits every
+        // answer. 'draft' would strip the copy of its workspace and hide it
+        // from the event switcher.
+        status: 'published',
         is_default: false,
       })
       .select('id')

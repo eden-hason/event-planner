@@ -30,7 +30,7 @@ export interface ParameterResolutionContext {
     id: string;
     userId: string;
     title: string;
-    eventDate: string;
+    eventDate: string | null;
     [key: string]: unknown; // Allow additional fields
   };
   group?: GroupApp | null;

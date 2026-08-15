@@ -17,7 +17,7 @@ export default async function SchedulesPage({
     <SchedulesPageComponent
       schedules={schedules}
       eventId={eventId}
-      eventDate={event?.eventDate ?? ''}
+      eventDate={event?.eventDate ?? null}
       event={event ?? null}
     />
   );

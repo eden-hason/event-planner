@@ -4,19 +4,6 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { GuestsEstimate } from '@/features/events/schemas';
 
-const ESTIMATE_UPPER: Record<GuestsEstimate, number> = {
-  up_to_100: 100,
-  '100_200': 200,
-  '200_350': 350,
-  '350_plus': 500,
-};
-
-const ESTIMATE_LABEL: Record<GuestsEstimate, string> = {
-  up_to_100: 'up to 100',
-  '100_200': '100–200',
-  '200_350': '200–350',
-  '350_plus': '350+',
-};
 
 function StatCard({
   label,
@@ -46,9 +33,17 @@ function StatCard({
 export function DaysToEventCard({
   daysRemaining,
 }: {
-  daysRemaining: number;
+  /** Null when the event has no date - there is nothing to count down to. */
+  daysRemaining: number | null;
 }) {
   const t = useTranslations('dashboard.stats');
+
+  // An em-dash-free placeholder rather than a zero: zero would read as "the
+  // event is today", which is the one thing we know it is not.
+  if (daysRemaining === null) {
+    return <StatCard label={t('daysToEvent')} value="-" sub={t('noDateYet')} />;
+  }
+
   const isToday = daysRemaining === 0;
   const isPast = daysRemaining < 0;
 
@@ -66,14 +61,19 @@ export function GuestsInvitedCard({
   estimate?: GuestsEstimate;
 }) {
   const t = useTranslations('dashboard.stats');
-  const upper = estimate ? ESTIMATE_UPPER[estimate] : null;
-  const pct = upper ? Math.min(100, Math.round((total / upper) * 100)) : null;
+  // The estimate is now the number the owner chose on the slider, so it is both
+  // the bar's ceiling and the figure shown - no bucket to widen into a range.
+  const pct = estimate ? Math.min(100, Math.round((total / estimate) * 100)) : null;
 
   return (
     <StatCard
       label={t('guestsInvited')}
       value={total}
-      sub={estimate ? t('ofEstimated', { estimate: ESTIMATE_LABEL[estimate] }) : undefined}
+      sub={
+        estimate
+          ? t('ofEstimated', { estimate: estimate.toLocaleString() })
+          : undefined
+      }
     >
       {pct !== null && (
         <div className="mt-3">

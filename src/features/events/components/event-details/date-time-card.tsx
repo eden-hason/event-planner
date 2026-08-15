@@ -35,7 +35,10 @@ const DateTimeCardSchema = EventDetailsUpdateSchema.pick({
 });
 type DateTimeCardValues = z.infer<typeof DateTimeCardSchema>;
 
-function formatEventDate(dateStr: string | undefined, locale: string): string {
+function formatEventDate(
+  dateStr: string | null | undefined,
+  locale: string,
+): string {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString(locale, {
     weekday: 'long',

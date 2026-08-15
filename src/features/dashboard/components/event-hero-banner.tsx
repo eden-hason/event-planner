@@ -1,6 +1,6 @@
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { ConfettiBackground } from '@/components/ui/confetti';
-import { IconCalendar, IconMapPin } from '@tabler/icons-react';
+import { IconCalendar, IconMapPin, IconSparkles } from '@tabler/icons-react';
 import type { EventApp } from '@/features/events/schemas';
 
 const LIGHT_CONFETTI_COLORS = [
@@ -26,6 +26,7 @@ export async function EventHeroBanner({ event }: { event: EventApp }) {
   // Formatted against the active locale rather than a fixed one, so the
   // headline date reads in the language the rest of the page is in.
   const locale = await getLocale();
+  const t = await getTranslations('dashboard.countdown');
 
   return (
     <ConfettiBackground
@@ -40,10 +41,20 @@ export async function EventHeroBanner({ event }: { event: EventApp }) {
             {event.title}
           </h2>
           <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
-              <IconCalendar className="h-3.5 w-3.5 shrink-0 text-pink-400" />
-              <span>{formatEventDate(event.eventDate, locale)}</span>
-            </div>
+            {event.eventDate ? (
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
+                <IconCalendar className="h-3.5 w-3.5 shrink-0 text-pink-400" />
+                <span>{formatEventDate(event.eventDate, locale)}</span>
+              </div>
+            ) : (
+              // Dashed rather than solid, so a date the owner has not picked
+              // reads as deliberately open rather than as a chip that failed to
+              // load.
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-violet-400/50 bg-violet-100/50 px-3 py-1.5 text-sm font-medium text-violet-700 backdrop-blur-sm">
+                <IconSparkles className="h-3.5 w-3.5 shrink-0" />
+                <span>{t('noDateChip')}</span>
+              </div>
+            )}
             {event.location?.name && (
               <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
                 <IconMapPin className="h-3.5 w-3.5 shrink-0 text-violet-400" />

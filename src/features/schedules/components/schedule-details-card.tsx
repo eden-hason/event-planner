@@ -28,7 +28,7 @@ import type { ScheduleApp } from '../schemas';
 
 interface ScheduleDetailsCardProps {
   schedule: ScheduleApp | undefined;
-  eventDate: string;
+  eventDate: string | null;
 }
 
 /**
@@ -99,7 +99,9 @@ export function ScheduleDetailsCard({
 
   const handleTimeChange = (value: string) => {
     const [hours, minutes] = value.split(':').map(Number);
-    const newDate = new Date(scheduledDate || eventDate);
+    // The card returns null without an event date, so the last fallback is
+    // unreachable; it is here because this runs before that guard.
+    const newDate = new Date(scheduledDate || eventDate || Date.now());
     newDate.setUTCHours(hours, minutes, 0, 0);
     setScheduledDate(newDate.toISOString());
     setScheduledTime(value);

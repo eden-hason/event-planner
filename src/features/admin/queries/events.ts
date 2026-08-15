@@ -11,7 +11,10 @@ export async function listAllEvents(userId?: string): Promise<AdminEvent[]> {
   let eventsQuery = supabase
     .from('events')
     .select('id, title, user_id, event_date, status')
-    .order('event_date', { ascending: false });
+    // Nulls last: a descending sort puts them first by default, which would
+    // float every dateless event and every abandoned draft above the dated
+    // ones an admin actually came to look at.
+    .order('event_date', { ascending: false, nullsFirst: false });
 
   if (userId) {
     eventsQuery = eventsQuery.eq('user_id', userId);

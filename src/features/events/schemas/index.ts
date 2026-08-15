@@ -98,8 +98,17 @@ export const GuestExperienceDbSchema = z.object({
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
 
 // --- Guests Estimate Schema ---
-export const GuestsEstimateSchema = z.enum(['up_to_100', '100_200', '200_350', '350_plus']);
+// Roughly how many guest records the owner expects, from the onboarding slider.
+// A guess, not a limit - nothing enforces it.
+export const GuestsEstimateSchema = z.number().int().positive();
 export type GuestsEstimate = z.infer<typeof GuestsEstimateSchema>;
+
+// Bounds of the onboarding slider. Exported so the estimate screen and anything
+// clamping a stored value read the same numbers.
+export const GUESTS_ESTIMATE_MIN = 50;
+export const GUESTS_ESTIMATE_MAX = 800;
+export const GUESTS_ESTIMATE_STEP = 10;
+export const GUESTS_ESTIMATE_DEFAULT = 300;
 
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what an "Event" object
@@ -109,12 +118,14 @@ export type GuestsEstimate = z.infer<typeof GuestsEstimateSchema>;
 export const EventAppSchema = z.object({
   id: z.uuid(),
   userId: z.uuid(),
-  title: z
-    .string()
-    .min(2, 'Title must be at least 2 characters')
-    .max(200, 'Title is too long'),
+  // No minimum: a Draft Event exists before the names are known, and the row
+  // defaults to an empty title until the names screen generates one.
+  title: z.string().max(200, 'Title is too long'),
   description: z.string().optional(),
-  eventDate: z.string(),
+  // Null until the date question is answered, and permanently null for events
+  // whose owner said they do not have a date yet. Anything derived from it -
+  // countdowns, schedule offsets - is undefined for those events.
+  eventDate: z.string().nullable(),
   eventType: z.string().optional(),
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
@@ -163,7 +174,7 @@ export const EventDbSchema = z.object({
   user_id: z.uuid(),
   title: z.string(),
   description: z.string().optional().nullable(),
-  event_date: z.string(),
+  event_date: z.string().nullable(),
   event_type_id: z.uuid().optional().nullable(),
   // Joined from event_types when the query selects it
   event_types: z.object({ key: z.string() }).optional().nullable(),
@@ -198,7 +209,7 @@ export function dbToAppTransformer(dbData: {
   user_id: string;
   title: string;
   description?: string | null;
-  event_date: string;
+  event_date: string | null;
   event_type_id?: string | null;
   event_types?: { key: string } | null;
   reception_time?: string | null;
@@ -250,7 +261,7 @@ export function dbToAppTransformer(dbData: {
     userId: dbData.user_id,
     title: dbData.title,
     description: dbData.description ?? undefined,
-    eventDate: dbData.event_date,
+    eventDate: dbData.event_date ?? null,
     eventType: dbData.event_types?.key ?? undefined,
     receptionTime: dbData.reception_time ?? undefined,
     ceremonyTime: dbData.ceremony_time ?? undefined,
@@ -336,13 +347,28 @@ export type CreateEventState = {
   eventId?: string | null;
 };
 
-// --- 6. Event Onboarding Schema ---
+// --- 6. Event Onboarding Schemas ---
+
+export const EventTypeKeySchema = z.enum([
+  'wedding',
+  'henna',
+  'bar_mitzva',
+  'bat_mitzva',
+]);
+
+export type EventTypeKey = z.infer<typeof EventTypeKeySchema>;
+
+/** Wedding and henna are hosted by two people; the mitzvas by one. */
+export function isCoupleEvent(eventType: EventTypeKey): boolean {
+  return eventType === 'wedding' || eventType === 'henna';
+}
+
 export const EventOnboardingSchema = z.object({
-  eventType: z.enum(['wedding', 'henna', 'bar_mitzva', 'bat_mitzva']),
+  eventType: EventTypeKeySchema,
   brideName: z.string().optional(),
   groomName: z.string().optional(),
   childName: z.string().optional(),
-  eventDate: z.string().min(1, 'Event date is required'),
+  eventDate: z.string().optional(),
   location: LocationSchema.optional(),
   guestsEstimate: GuestsEstimateSchema.optional(),
   pricingPlan: z.enum(['tier_100', 'tier_200', 'tier_300', 'tier_400']).optional(),
@@ -351,6 +377,56 @@ export const EventOnboardingSchema = z.object({
 export type EventOnboarding = z.infer<typeof EventOnboardingSchema>;
 
 export type CreateOnboardingEventState = {
+  success: boolean;
+  message?: string | null;
+  eventId?: string | null;
+};
+
+// --- 7. Draft Event step schemas ---
+// One schema per onboarding question. Each patches the Draft Event created at
+// the type screen, so every field beyond the id is what that one screen asked
+// for. See docs/adr/0003-events-exist-before-they-are-complete.md.
+
+export const DraftNamesSchema = z
+  .object({
+    eventId: z.uuid(),
+    brideName: z.string().trim().max(100).optional(),
+    groomName: z.string().trim().max(100).optional(),
+    childName: z.string().trim().max(100).optional(),
+  })
+  .refine((v) => !!(v.brideName || v.groomName || v.childName), {
+    message: 'At least one name is required',
+    path: ['brideName'],
+  });
+
+export const DraftDateSchema = z.object({
+  eventId: z.uuid(),
+  // Empty string is the explicit "we don't have a date yet" answer, which is a
+  // real answer and stores null - not the same as never having reached this
+  // screen, which the resume logic tells apart via answeredSteps.
+  eventDate: z.string(),
+});
+
+export const DraftLocationSchema = z.object({
+  eventId: z.uuid(),
+  location: LocationSchema.optional(),
+});
+
+export const DraftEstimateSchema = z.object({
+  eventId: z.uuid(),
+  guestsEstimate: z
+    .number()
+    .int()
+    .min(GUESTS_ESTIMATE_MIN)
+    .max(GUESTS_ESTIMATE_MAX),
+});
+
+export type DraftStepState = {
+  success: boolean;
+  message?: string | null;
+};
+
+export type CreateDraftEventState = {
   success: boolean;
   message?: string | null;
   eventId?: string | null;

@@ -37,7 +37,11 @@ interface WizardTimelineStepProps {
   rows: TimelineRow[];
   onRowsChange: (rows: TimelineRow[]) => void;
   targetCounts: { all: number; pending: number; confirmed: number };
-  eventDate?: string;
+  /**
+   * Null for an event with no date. Offsets are all relative to it, so the
+   * "N days before" label is simply not shown rather than computed from zero.
+   */
+  eventDate?: string | null;
 }
 
 const AUDIENCE_KEY: Record<'pending' | 'confirmed' | 'all', string> = {

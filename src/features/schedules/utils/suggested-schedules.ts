@@ -22,7 +22,7 @@ export type SuggestedSchedule = {
  */
 export function buildSuggestedSchedules(
   defaults: DefaultScheduleApp[],
-  eventDate: string,
+  eventDate: string | null,
 ): SuggestedSchedule[] {
   if (!eventDate) return [];
 

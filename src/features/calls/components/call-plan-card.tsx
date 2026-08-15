@@ -19,7 +19,7 @@ interface CallPlanCardProps {
   scheduledTime: string | null;
   targetStatus?: 'pending' | 'confirmed' | null;
   /** The event date, used to show how far ahead the calling sits */
-  eventDate: string;
+  eventDate: string | null;
   cancelled: boolean;
 }
 
@@ -55,13 +55,17 @@ export async function CallPlanCard({
   // the *server's* locale - m/d/yyyy - whatever the Owner is reading the app in.
   const locale = await getLocale();
 
-  const offset = dayOffset(scheduledDate, eventDate);
+  // Offsets are relative to the event date, so an event without one has no
+  // offset to state - the card shows the scheduled date on its own.
+  const offset = eventDate ? dayOffset(scheduledDate, eventDate) : null;
   const offsetLabel =
-    offset === 0
-      ? tSchedules('dayOffset.onEventDay')
-      : offset < 0
-        ? tSchedules('dayOffset.daysBefore')
-        : tSchedules('dayOffset.daysAfter');
+    offset === null
+      ? null
+      : offset === 0
+        ? tSchedules('dayOffset.onEventDay')
+        : offset < 0
+          ? tSchedules('dayOffset.daysBefore')
+          : tSchedules('dayOffset.daysAfter');
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -88,10 +92,14 @@ export async function CallPlanCard({
                   year: 'numeric',
                 })}
               </span>
-              <Badge variant="secondary" className="gap-1 rounded-sm text-xs">
-                {Math.abs(offset)}
-              </Badge>
-              <span className="text-muted-foreground text-xs">{offsetLabel}</span>
+              {offset !== null && (
+                <>
+                  <Badge variant="secondary" className="gap-1 rounded-sm text-xs">
+                    {Math.abs(offset)}
+                  </Badge>
+                  <span className="text-muted-foreground text-xs">{offsetLabel}</span>
+                </>
+              )}
             </div>
             {scheduledTime && (
               <div className="flex items-center gap-2 text-sm">

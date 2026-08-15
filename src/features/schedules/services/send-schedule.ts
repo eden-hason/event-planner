@@ -88,7 +88,10 @@ function mapEventRow(rawEvent: Record<string, unknown>) {
     id: rawEvent.id as string,
     userId: rawEvent.user_id as string,
     title: rawEvent.title as string,
-    eventDate: rawEvent.event_date as string,
+    // Null for an event with no date. Such an event cannot have schedules -
+    // every offset is relative to the date - so this engine should never see
+    // one, but the column is nullable and the type says so.
+    eventDate: rawEvent.event_date as string | null,
     location:
       (rawEvent.location as {
         name: string;

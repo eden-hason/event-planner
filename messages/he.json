@@ -707,7 +707,8 @@
       "pctOfEstimate": "{pct}% מהאומדן",
       "scheduledMessages": "הודעות מתוזמנות",
       "pendingMessageSingular": "הודעה ממתינה",
-      "pendingMessages": "הודעות ממתינות"
+      "pendingMessages": "הודעות ממתינות",
+      "noDateYet": "עוד אין תאריך"
     },
     "guestStats": {
       "totalGuests": "סה\"כ אורחים",
@@ -747,7 +748,10 @@
     "countdown": {
       "today": "היום זה היום!",
       "daysSince": "ימים מאז האירוע",
-      "daysTo": "ימים נותרו"
+      "daysTo": "ימים נותרו",
+      "noDateTitle": "מחכים לתאריך המושלם",
+      "noDateDescription": "ברגע שתקבעו, הכל כאן יתעדכן לבד",
+      "noDateChip": "התאריך עוד לפניכם"
     },
     "upcomingSchedules": {
       "title": "תזמונים קרובים",
