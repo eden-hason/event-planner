@@ -51,14 +51,22 @@ export function buildCoupleName(
  * Undefined for an event with no date yet. Every template treats the date as
  * optional and simply omits the pill, which is the honest rendering - an
  * invitation for an undated event cannot state a date.
+ *
+ * Pinned to UTC for the same reason the formatDate transformer is: event_date
+ * is a calendar date held in a timestamptz column, always written at 00:00:00
+ * UTC, so reading it back in UTC returns the day the organiser picked. This
+ * one matters most on the confirmation page, which is a client component - it
+ * formats in the *guest's* browser, so an unpinned render showed guests west
+ * of UTC a different day than the SMS that sent them there.
  */
 export function buildFormattedDate(
   eventDate: string | null | undefined,
 ): string | undefined {
   if (!eventDate) return undefined;
-  return new Intl.DateTimeFormat('he-IL', { dateStyle: 'full' }).format(
-    new Date(eventDate),
-  );
+  return new Intl.DateTimeFormat('he-IL', {
+    dateStyle: 'full',
+    timeZone: 'UTC',
+  }).format(new Date(eventDate));
 }
 
 export function buildTime(
