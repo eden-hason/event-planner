@@ -46,6 +46,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DIETARY_PRESETS } from '@/features/guests/utils';
 import { OfflineRsvpDialog } from './offline-rsvp-dialog';
+import posthog from 'posthog-js';
 
 interface GuestFormProps {
   eventId: string;
@@ -150,11 +151,22 @@ export function GuestForm({
 
       toast.promise(promise, {
         loading: isEditMode ? t('form.updatingGuest') : t('form.addingGuest'),
-        success: (data) => {
+        success: () => {
+          if (
+            process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+            process.env.NEXT_PUBLIC_POSTHOG_HOST
+          ) {
+            posthog.capture(isEditMode ? 'guest_updated' : 'guest_created', {
+              event_id: eventId,
+              party_size: Number(formData.get('amount')),
+              rsvp_status: formData.get('rsvpStatus'),
+              has_group: formData.get('groupId') !== 'null',
+            });
+          }
           if (!isEditMode) {
             form.reset();
           }
-          return data.message || (isEditMode ? t('form.guestUpdated') : t('form.guestAdded'));
+          return isEditMode ? t('form.guestUpdated') : t('form.guestAdded');
         },
         error: (err) =>
           err instanceof Error ? err.message : t('form.somethingWentWrong'),

@@ -26,6 +26,7 @@ import {
 import { type ExpenseApp } from '../schemas/expenses';
 import { upsertExpense, deleteExpense } from '../actions/expenses';
 import { EXPENSE_PRESETS } from '../types';
+import posthog from 'posthog-js';
 
 interface ExpenseSheetProps {
   open: boolean;
@@ -120,6 +121,17 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
     startTransition(() => {
       const promise = upsertExpense(eventId, fd).then((res) => {
         if (!res.success) throw new Error(res.message ?? t('toast.error'));
+        if (
+          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+          process.env.NEXT_PUBLIC_POSTHOG_HOST
+        ) {
+          posthog.capture(isEdit ? 'expense_updated' : 'expense_created', {
+            event_id: eventId,
+            estimate: Number(form.estimate),
+            has_advance: form.hasAdvance,
+            fully_paid: form.fullyPaid,
+          });
+        }
         return res;
       });
 
@@ -144,6 +156,12 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
 
     const promise = deleteExpense(id, eventId).then((res) => {
       if (!res.success) throw new Error(res.message);
+      if (
+        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+        process.env.NEXT_PUBLIC_POSTHOG_HOST
+      ) {
+        posthog.capture('expense_deleted', { event_id: eventId });
+      }
       return res;
     });
 

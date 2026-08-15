@@ -55,6 +55,7 @@ interface DateTimeCardProps {
 export function DateTimeCard({ event }: DateTimeCardProps) {
   const t = useTranslations('eventDetails.dateTime');
   const tHeader = useTranslations('eventDetails.header');
+  const tToast = useTranslations('eventDetails.toast');
   const locale = useLocale();
 
   const form = useForm<DateTimeCardValues>({
@@ -73,14 +74,14 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
       try {
         const result = await updateEventDetails(formData);
         if (result.success) {
-          toast.success(result.message);
+          toast.success(tToast('saved'));
           form.reset(form.getValues());
         } else {
           toast.error(result.message);
         }
         return result;
       } catch {
-        toast.error('Something went wrong');
+        toast.error(tToast('error'));
         return null;
       }
     },

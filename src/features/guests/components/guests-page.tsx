@@ -229,7 +229,7 @@ export function GuestsPage({
 
     toast.promise(promise, {
       loading: t('toast.deletingGuest', { name: guestName }),
-      success: (data) => data.message || t('toast.guestDeleted'),
+      success: () => t('toast.guestDeleted'),
       error: (err) =>
         err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
     });
@@ -245,7 +245,7 @@ export function GuestsPage({
 
     toast.promise(promise, {
       loading: t('toast.deletingGuest', { name: guest.name }),
-      success: (data) => data.message || t('toast.guestDeleted'),
+      success: () => t('toast.guestDeleted'),
       error: (err) =>
         err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
     });

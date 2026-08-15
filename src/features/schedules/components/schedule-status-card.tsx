@@ -38,7 +38,7 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
 
       toast.promise(promise, {
         loading: t('toast.updating'),
-        success: (data) => data.message ?? t(enabled ? 'toast.enabled' : 'toast.disabled'),
+        success: () => t(enabled ? 'toast.enabled' : 'toast.disabled'),
         error: (err) => (err instanceof Error ? err.message : t('toast.error')),
       });
 

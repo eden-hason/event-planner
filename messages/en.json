@@ -346,12 +346,14 @@
       "expenseUpdated": "Expense updated",
       "expenseAdded": "Expense added",
       "deletingExpense": "Deleting expense...",
+      "expenseDeleted": "Expense deleted",
       "addingGift": "Adding gift...",
       "giftUpdated": "Gift updated",
       "giftAdded": "Gift added",
       "deletingGift": "Deleting gift...",
       "giftDeleted": "Gift deleted",
       "savingGift": "Saving gift...",
+      "giftSaveFailed": "Failed to save gift",
       "savingBudget": "Saving budget...",
       "budgetSaved": "Budget saved",
       "removingBudget": "Removing budget...",
@@ -585,6 +587,8 @@
       "done": "Done",
       "close": "Close",
       "importSuccess": "Guests imported successfully",
+      "parseFailed": "Failed to parse CSV file",
+      "parseFailedUnknown": "Unknown error occurred",
       "upload": {
         "heading": "Upload your guests list",
         "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse",
@@ -938,6 +942,7 @@
       "confirm": "Send Now →",
       "toast": {
         "sending": "Sending messages...",
+        "sent": "Successfully sent {count, plural, one {# message} other {# messages}}",
         "failed": "Failed to send"
       }
     },
@@ -1156,6 +1161,8 @@
       "processing": "Processing...",
       "accept": "Accept",
       "toast": {
+        "accepted": "Invitation accepted",
+        "declined": "Invitation declined",
         "acceptFailed": "Failed to accept invitation",
         "declineFailed": "Failed to decline invitation",
         "error": "Something went wrong"
@@ -1174,6 +1181,10 @@
   },
   "eventDetails": {
     "notFound": "Event not found",
+    "toast": {
+      "saved": "Changes saved",
+      "error": "Something went wrong"
+    },
     "statusAlert": {
       "success": {
         "title": "Your event is ready to go",
@@ -1283,9 +1294,11 @@
       "payboxLabel": "PayBox Group Invite Link",
       "payboxPlaceholder": "Paste your PayBox group invite link",
       "payboxHelper": "How to: Open the PayBox app, create a new Group for your event, click Invite Friends, copy the link, and paste it here.",
+      "payboxSubtitle": "Let guests send you a gift through PayBox",
       "bitLabel": "Bit Phone Number",
       "bitPlaceholder": "Enter phone number",
-      "bitHelper": "Enter the mobile phone number connected to your Bit account"
+      "bitHelper": "Enter the mobile phone number connected to your Bit account",
+      "bitSubtitle": "Instant transfer via Bit"
     }
   },
   "aiChat": {

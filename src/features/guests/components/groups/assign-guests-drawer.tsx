@@ -95,7 +95,7 @@ export function AssignGuestsDrawer({
 
     toast.promise(promise, {
       loading: t('groups.assign.updatingMembers', { name: group.name }),
-      success: (data) => data.message || t('groups.assign.membersUpdated'),
+      success: () => t('groups.assign.membersUpdated'),
       error: (err) =>
         err instanceof Error ? err.message : t('groups.assign.membersFailed'),
     });

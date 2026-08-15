@@ -40,6 +40,7 @@ interface LocationCardProps {
 export function LocationCard({ event }: LocationCardProps) {
   const t = useTranslations('eventDetails.location');
   const tHeader = useTranslations('eventDetails.header');
+  const tToast = useTranslations('eventDetails.toast');
 
   const form = useForm<LocationCardValues>({
     resolver: zodResolver(LocationCardSchema),
@@ -57,14 +58,14 @@ export function LocationCard({ event }: LocationCardProps) {
       try {
         const result = await updateEventDetails(formData);
         if (result.success) {
-          toast.success(result.message);
+          toast.success(tToast('saved'));
           form.reset(form.getValues());
         } else {
           toast.error(result.message);
         }
         return result;
       } catch {
-        toast.error('Something went wrong');
+        toast.error(tToast('error'));
         return null;
       }
     },

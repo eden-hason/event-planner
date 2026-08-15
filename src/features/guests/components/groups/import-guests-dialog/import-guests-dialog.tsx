@@ -151,9 +151,11 @@ export function ImportGuestsDialog({
         setParsedData(parsed);
         setColumnMapping({});
       } catch (error) {
-        toast.error('Failed to parse CSV file', {
+        toast.error(t('import.parseFailed'), {
           description:
-            error instanceof Error ? error.message : 'Unknown error occurred',
+            error instanceof Error
+              ? error.message
+              : t('import.parseFailedUnknown'),
         });
       }
     }

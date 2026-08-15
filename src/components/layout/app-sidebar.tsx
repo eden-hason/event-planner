@@ -50,8 +50,10 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   events: EventApp[];
   currentUserId?: string;
   user: {
+    id: string;
     name: string;
     email?: string;
+    phone?: string;
     avatar?: string;
   };
 }

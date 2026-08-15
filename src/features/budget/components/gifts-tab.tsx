@@ -224,7 +224,7 @@ export function GiftsTab({
         });
         if (!result.success) {
           setGifts((prev) => prev.map((g) => (g.rowId === rowId ? current : g)));
-          toast.error(result.message ?? 'Failed to save gift.');
+          toast.error(result.message ?? t('toast.giftSaveFailed'));
           return;
         }
         if (result.giftId && !entry.giftId) {
@@ -236,7 +236,7 @@ export function GiftsTab({
         }
       });
     },
-    [eventId],
+    [eventId, t],
   );
 
   const handleDeleteGift = useCallback((rowId: string) => {

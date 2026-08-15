@@ -89,7 +89,7 @@ export function GroupsDirectory({
 
     toast.promise(promise, {
       loading: t('groups.toast.deletingGroups', { count }),
-      success: (data) => data.message || t('groups.toast.groupsDeleted'),
+      success: () => t('groups.toast.groupsDeleted'),
       error: (err) =>
         err instanceof Error ? err.message : t('groups.toast.groupsDeleteFailed'),
     });
@@ -108,7 +108,7 @@ export function GroupsDirectory({
 
     toast.promise(promise, {
       loading: t('groups.toast.deletingGroup', { name: params.groupName }),
-      success: (data) => data.message || t('groups.toast.groupDeleted'),
+      success: () => t('groups.toast.groupDeleted'),
       error: (err) =>
         err instanceof Error ? err.message : t('groups.toast.groupDeleteFailed'),
     });

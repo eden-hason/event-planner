@@ -101,7 +101,7 @@ export function GuestDirectory({
 
     toast.promise(promise, {
       loading: t('directory.deletingGuest', { name: params.guestName }),
-      success: (data) => data.message || t('directory.guestDeleted'),
+      success: () => t('directory.guestDeleted'),
       error: (err) =>
         err instanceof Error ? err.message : t('directory.guestDeleteFailed'),
     });

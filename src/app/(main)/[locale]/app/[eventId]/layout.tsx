@@ -67,6 +67,7 @@ export default async function EventLayout({
   const isCreator = collaboratorRole?.isCreator ?? true;
 
   const user = {
+    id: effectiveUser?.id ?? auth.user.id,
     name: effectiveUser?.displayName || '',
     email: effectiveUser?.email,
     phone: effectiveUser?.phone,
