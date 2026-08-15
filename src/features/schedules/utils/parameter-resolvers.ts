@@ -74,6 +74,9 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     const dateOptions = options as DateFormatOptions | undefined;
     const locale = dateOptions?.locale ?? 'en-US';
     const format = dateOptions?.format ?? 'long';
+    // See DateFormatOptionsSchema: UTC keeps the rendered day stable across
+    // runtimes rather than following whatever zone the code happens to run in.
+    const timeZone = dateOptions?.timeZone ?? 'UTC';
 
     const date = new Date(value as string);
     if (isNaN(date.getTime())) return String(value);
@@ -87,7 +90,9 @@ const transformers: Record<TransformerType, TransformerFunction> = {
 
     const formatOptions = formatOptionsMap[format] ?? formatOptionsMap.long;
 
-    return new Intl.DateTimeFormat(locale, formatOptions).format(date);
+    return new Intl.DateTimeFormat(locale, { ...formatOptions, timeZone }).format(
+      date,
+    );
   },
 
   rsvpLabel: (value: unknown) => {

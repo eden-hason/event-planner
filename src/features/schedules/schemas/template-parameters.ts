@@ -22,6 +22,14 @@ export type TransformerType = z.infer<typeof TransformerTypeSchema>;
 export const DateFormatOptionsSchema = z.object({
   locale: z.string().default('en-US'),
   format: z.enum(['short', 'medium', 'long', 'full']).default('long'),
+  // Defaults to UTC because event.eventDate is a calendar date stored in a
+  // timestamptz column, always written at 00:00:00 UTC. Reading it back in UTC
+  // is the exact inverse of the write, so the rendered day matches the day the
+  // organiser picked no matter where the formatting runs - the send path (UTC
+  // on Vercel) and the preview path (the organiser's browser, which is
+  // 'use client' in message-content-card) would otherwise disagree for anyone
+  // west of UTC.
+  timeZone: z.string().default('UTC'),
 });
 
 export type DateFormatOptions = z.infer<typeof DateFormatOptionsSchema>;
