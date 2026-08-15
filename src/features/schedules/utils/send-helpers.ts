@@ -244,9 +244,30 @@ export function buildDeliveryRecord(
 
 // ─── Token generator ──────────────────────────────────────────────────────────
 
+const BASE62_ALPHABET =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const TOKEN_LENGTH = 12;
+
+// Largest multiple of 62 that fits in a byte. Bytes at or above it are
+// discarded rather than folded, since 256 is not a multiple of 62 and plain
+// modulo would over-represent the first 8 characters of the alphabet.
+const BASE62_REJECTION_THRESHOLD = 248;
+
 export function generateConfirmationToken(): string {
-  // 16 bytes (128 bits) is comfortably unguessable for an RSVP link - same
-  // order of entropy as a v4 UUID - while keeping the SMS-embedded link
-  // shorter than the original 32-byte token.
-  return randomBytes(16).toString('hex');
+  // 12 base62 characters is ~71 bits - unreachable by online guessing even
+  // with millions of live tokens - while keeping the SMS-embedded link short.
+  // Alphanumeric only (no - or _), which SMS clients autolink most reliably.
+  // Tokens already sent out were 32 hex characters, and originally 64; both
+  // still resolve, since lookup is an exact match on the stored value.
+  let token = '';
+
+  while (token.length < TOKEN_LENGTH) {
+    for (const byte of randomBytes(TOKEN_LENGTH)) {
+      if (byte >= BASE62_REJECTION_THRESHOLD) continue;
+      token += BASE62_ALPHABET[byte % 62];
+      if (token.length === TOKEN_LENGTH) break;
+    }
+  }
+
+  return token;
 }

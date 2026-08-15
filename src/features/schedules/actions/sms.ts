@@ -93,7 +93,7 @@ export function buildSmsFallbackBody(
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_VERCEL_URL ||
     'http://localhost:3000';
-  const rsvpLink = `${siteUrl}/confirm/${confirmationToken}`;
+  const rsvpLink = `${siteUrl}/c/${confirmationToken}`;
 
   const body = DEFAULT_SMS_BODY.replace(
     '{{event_name}}',
