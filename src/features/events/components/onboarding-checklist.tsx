@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 
-export interface OnboardingStep {
+export interface OnboardingChecklistStep {
   id: string;
   title: string;
   description: string;
@@ -87,7 +87,7 @@ export function Onboarding({
   outOf = ' out of ',
   stepsLeft = ' steps left',
 }: {
-  steps: OnboardingStep[];
+  steps: OnboardingChecklistStep[];
   title?: string;
   outOf?: string;
   stepsLeft?: string;

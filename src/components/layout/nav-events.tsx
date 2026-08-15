@@ -73,7 +73,9 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
 
   const handleNewEventClick = () => {
     setDropdownOpen(false);
-    router.push('/app/new-event');
+    // `?new` overrides the takeover's guard against opening for someone who
+    // already has an event - here, a second event is exactly what was asked for.
+    router.push('/start?new=1');
   };
 
   const handleDuplicate = async (event: EventApp) => {

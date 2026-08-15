@@ -31,13 +31,10 @@ import { Badge } from '@/components/ui/badge';
 
 const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
-const NON_EVENT_PATHS = new Set(['new-event']);
-
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
-  const id = match ? match[1] : null;
-  return id && !NON_EVENT_PATHS.has(id) ? id : null;
+  return match ? match[1] : null;
 }
 
 // Helper function to build navigation URLs with eventId
@@ -67,7 +64,6 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
-  const isOnboarding = pathname === '/app/new-event';
   const { isOwner } = useCollaboration();
   const tNav = useTranslations('navigation');
   const locale = useLocale();
@@ -181,8 +177,8 @@ export function AppSidebar({
       variant={isSeatingPage ? 'sidebar' : props.variant}
     >
       <SidebarContent>
-        <NavMain items={navMain} disabled={!eventId || isOnboarding} />
-        <NavSecondary items={navSecondary} disabled={!eventId || isOnboarding} className="mt-auto" />
+        <NavMain items={navMain} disabled={!eventId} />
+        <NavSecondary items={navSecondary} disabled={!eventId} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <div
@@ -214,7 +210,7 @@ export function AppSidebar({
           </button>
         </div>
 
-        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId && !isOnboarding} user={user} />
+        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} user={user} />
       </SidebarFooter>
     </Sidebar>
   );

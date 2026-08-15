@@ -363,25 +363,6 @@ export function isCoupleEvent(eventType: EventTypeKey): boolean {
   return eventType === 'wedding' || eventType === 'henna';
 }
 
-export const EventOnboardingSchema = z.object({
-  eventType: EventTypeKeySchema,
-  brideName: z.string().optional(),
-  groomName: z.string().optional(),
-  childName: z.string().optional(),
-  eventDate: z.string().optional(),
-  location: LocationSchema.optional(),
-  guestsEstimate: GuestsEstimateSchema.optional(),
-  pricingPlan: z.enum(['tier_100', 'tier_200', 'tier_300', 'tier_400']).optional(),
-});
-
-export type EventOnboarding = z.infer<typeof EventOnboardingSchema>;
-
-export type CreateOnboardingEventState = {
-  success: boolean;
-  message?: string | null;
-  eventId?: string | null;
-};
-
 // --- 7. Draft Event step schemas ---
 // One schema per onboarding question. Each patches the Draft Event created at
 // the type screen, so every field beyond the id is what that one screen asked

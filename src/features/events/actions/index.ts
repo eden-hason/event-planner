@@ -6,12 +6,9 @@ export {
   updateEventDetails,
   deleteEvent,
   setDefaultEvent,
-  createOnboardingEvent,
   type DeleteEventState,
   type SetDefaultEventState,
 } from './events';
-
-export type { CreateOnboardingEventState } from '../schemas';
 
 export {
   createDraftEvent,

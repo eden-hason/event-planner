@@ -27,7 +27,13 @@
     "verifying": "Verifying...",
     "resendCode": "Resend code",
     "resendIn": "Resend code in {seconds}s",
-    "googleLoginFailed": "Failed to login with Google. Please try again."
+    "googleLoginFailed": "Failed to login with Google. Please try again.",
+    "or": "or",
+    "notReceived": "Didn't get it?",
+    "takeoverTitle": "Your event starts here",
+    "takeoverSubtitle": "Guests, RSVPs and budget - all in one place",
+    "heroTitle": "Event and guest management, made easy",
+    "heroSubtitle": "WhatsApp RSVPs, seating charts and a budget that keeps up"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -1012,66 +1018,6 @@
       "cancelledDescription": "This schedule was cancelled and no messages were sent"
     }
   },
-  "newEvent": {
-    "back": "Back",
-    "stepOf": "Step {step} of {total}",
-    "step1": {
-      "title": "What kind of event?",
-      "description": "Choose your event type to get started",
-      "wedding": "Wedding",
-      "henna": "Henna",
-      "barMitzva": "Bar Mitzva",
-      "batMitzva": "Bat Mitzva",
-      "continue": "Continue"
-    },
-    "step2": {
-      "title": "Who's celebrating?",
-      "description": "Tell us about the happy couple",
-      "descriptionChild": "Tell us about the celebrant",
-      "brideLabel": "Bride's name",
-      "bridePlaceholder": "Enter bride's name",
-      "groomLabel": "Groom's name",
-      "groomPlaceholder": "Enter groom's name",
-      "childLabel": "Child's name",
-      "childPlaceholder": "Enter child's name",
-      "continue": "Continue",
-      "goBack": "Go Back"
-    },
-    "step3": {
-      "title": "When and where?",
-      "description": "Set your date and venue",
-      "dateLabel": "Event date",
-      "datePlaceholder": "Pick the event date",
-      "venueLabel": "Venue",
-      "venuePlaceholder": "Search for your venue...",
-      "venueHelper": "You can fill this in later",
-      "continue": "Continue",
-      "goBack": "Go Back"
-    },
-    "step4": {
-      "title": "Choose your plan",
-      "description": "Select the guest capacity that fits your event",
-      "popular": "Most Popular",
-      "recordsLabel": "records",
-      "reservedLabel": " \"reserved\" records ",
-      "reservedBonus": "Bonus gift for last-minute guests",
-      "currency": "₪",
-      "continue": "Create my event! 🎉",
-      "goBack": "Go Back"
-    },
-    "toast": {
-      "creating": "Creating your event...",
-      "created": "Event created",
-      "failed": "Failed to create event",
-      "error": "Something went wrong"
-    },
-    "success": {
-      "title": "Your event is ready!",
-      "description": "Time to start planning the big day!",
-      "goToDashboard": "Go to Dashboard",
-      "viewDetails": "View event details"
-    }
-  },
   "newEventDialog": {
     "title": "Create New Event",
     "description": "Enter the details for your new event. You can add more details later.",
@@ -1300,6 +1246,7 @@
       "upload": "Upload",
       "uploading": "Uploading...",
       "removeImage": "Remove image",
+      "enlargeImage": "Enlarge image",
       "failedUpload": "Failed to upload image",
       "status": {
         "set": {
@@ -1472,6 +1419,111 @@
       "confirmed": "Confirmed",
       "declined": "Declined",
       "pending": "Pending"
+    }
+  },
+  "onboarding": {
+    "back": "Back",
+    "step": "Step {current} of {total}",
+    "cardBuilding": "Your event, taking shape",
+    "cardPlaceholderTitle": "Your event",
+    "cardPlaceholderSubtitle": "It'll appear here the moment you pick what you're celebrating",
+    "card": {
+      "typeFallback": "Event",
+      "untitled": "Your event",
+      "typeLabel": {
+        "wedding": "Wedding",
+        "henna": "Henna",
+        "bar_mitzva": "Bar Mitzva",
+        "bat_mitzva": "Bat Mitzva"
+      },
+      "daysToGo": "{days} days to go",
+      "daysToEvent": "days to go",
+      "noDateChip": "The date is still ahead of you",
+      "noDateTitle": "Waiting on the perfect date",
+      "noDateDescription": "The moment you pick one, everything here updates itself"
+    },
+    "profile": {
+      "title": "Nice to meet you",
+      "subtitle": "A few details and we'll start planning",
+      "nameLabel": "Your full name",
+      "namePlaceholder": "e.g. Dana Levi",
+      "phoneLabel": "Your phone number",
+      "optional": "(optional)",
+      "phoneHelp": "We'll only use it to update you on how your event is coming along",
+      "continue": "Continue"
+    },
+    "welcomeBack": {
+      "title": "Let's finish up",
+      "titleNamed": "{names} - let's finish up",
+      "subtitle": "We saved everything exactly where you left it",
+      "resume": "Pick up where we left off"
+    },
+    "type": {
+      "title": "What are we celebrating?",
+      "subtitle": "We'll tailor the rest to your event",
+      "options": {
+        "wedding": "Wedding",
+        "henna": "Henna",
+        "bar_mitzva": "Bar Mitzva",
+        "bat_mitzva": "Bat Mitzva"
+      }
+    },
+    "names": {
+      "titleCouple": "Who's the happy couple?",
+      "titleSingleMale": "Who's celebrating?",
+      "titleSingleFemale": "Who's celebrating?",
+      "subtitle": "This is how it'll appear on the invitation",
+      "brideLabel": "Bride's name",
+      "groomLabel": "Groom's name",
+      "celebrantLabelMale": "Name",
+      "celebrantLabelFemale": "Name",
+      "error": "We just need a name - there's no one to celebrate without it",
+      "continue": "Continue"
+    },
+    "date": {
+      "title": "When's the big day?",
+      "subtitle": "You can always change this",
+      "pastError": "That date has already passed, pick a future one",
+      "continue": "Continue",
+      "skip": "We don't have a date yet"
+    },
+    "venue": {
+      "title": "Where's it happening?",
+      "subtitle": "We'll send your guests directions",
+      "placeholder": "Search for a venue, garden or address",
+      "continue": "Continue",
+      "skip": "Haven't booked a venue yet"
+    },
+    "estimate": {
+      "title": "What will this cost you?",
+      "subtitle": "You pay before the first message goes out - everything until then is free",
+      "sliderLabel": "Roughly how many guest records?",
+      "sliderHelp": "A record = a family / couple / single guest listed under one phone number",
+      "rate": "{rate} ₪",
+      "perRecord": "per record",
+      "channelTitle": "How should we message your guests?",
+      "channel": {
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      },
+      "includedTitle": "What the package includes",
+      "included": {
+        "invitation": "Sending the invitation",
+        "confirmations": "2 confirmation rounds",
+        "callRounds": "2 rounds of phone calls from our team",
+        "reminder": "An event-day reminder with directions, table number and gifting via Bit/Paybox",
+        "thankYou": "A thank-you message after the event"
+      },
+      "more": {
+        "title": "And that is not all",
+        "description": "Guest list, seating, budget and gifts - every planning tool is included"
+      },
+      "finish": "Let's go"
+    },
+    "payoff": {
+      "subtitle": "Your event exists. From here, everything starts falling into place",
+      "cta": "Let's start planning",
+      "entering": "One moment..."
     }
   }
 }

@@ -490,7 +490,7 @@ export function HomepageClient() {
               <div className="hero-cta">
                 <div className="hero-cta-row">
                   <Link
-                    href="/app/new-event"
+                    href="/start"
                     className="btn btn-primary btn-lg heb"
                     onClick={handleCtaClick}
                   >
@@ -623,7 +623,7 @@ export function HomepageClient() {
               </div>
               <p className="wo-note">תשלום חד פעמי לפי כמות המוזמנים – רק בעת שליחת ההזמנות. עד אז, הכל בחינם.</p>
               <div className="wo-cta-row">
-                <Link href="/app/new-event" className="btn btn-primary heb" onClick={handleCtaClick}>
+                <Link href="/start" className="btn btn-primary heb" onClick={handleCtaClick}>
                   שריינו את המבצע
                 </Link>
                 <a

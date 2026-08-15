@@ -386,3 +386,75 @@ a:focus-visible {
     display: none;
   }
 }
+/* ── Onboarding takeover ──────────────────────────────────────────────────
+   Motion for the onboarding takeover. It is doing real work here rather than
+   decorating: the question transitions are directional so going back feels
+   like going back, and the card visibly grows as each answer lands, which is
+   the payoff of every screen and the reason the flow feels alive. */
+
+@keyframes kt-enter-fwd {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes kt-enter-back {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes kt-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The card gaining a line. Reads as the card becoming more itself, not as a
+   list item appearing - hence the scale and the max-height, not just a fade. */
+@keyframes kt-line-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); max-height: 0; }
+  to { opacity: 1; transform: none; max-height: 60px; }
+}
+
+@keyframes kt-card-bloom {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes kt-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(210, 60, 194, 0.35); }
+  70% { box-shadow: 0 0 0 14px rgba(210, 60, 194, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(210, 60, 194, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-takeover] *,
+  [data-takeover] {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Range thumb for the estimate slider. The track is painted by an inline
+   gradient so the filled portion tracks the value; only the thumb needs CSS. */
+.kt-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--kt-brand);
+  box-shadow: 0 4px 12px rgba(210, 60, 194, 0.35);
+  cursor: pointer;
+}
+
+.kt-range::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--kt-brand);
+  box-shadow: 0 4px 12px rgba(210, 60, 194, 0.35);
+  cursor: pointer;
+}

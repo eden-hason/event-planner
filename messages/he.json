@@ -27,7 +27,13 @@
     "verifying": "מאמת...",
     "resendCode": "שלח שוב",
     "resendIn": "שלח שוב בעוד {seconds} שניות",
-    "googleLoginFailed": "ההתחברות עם Google נכשלה. נסה שנית."
+    "googleLoginFailed": "ההתחברות עם Google נכשלה. נסה שנית.",
+    "or": "או",
+    "notReceived": "לא הגיע?",
+    "takeoverTitle": "האירוע שלכם מתחיל כאן",
+    "takeoverSubtitle": "מוזמנים, אישורי הגעה ותקציב - הכל במקום אחד",
+    "heroTitle": "ניהול אירוע ומוזמנים בקלות",
+    "heroSubtitle": "אישורי הגעה בוואטסאפ, סידורי הושבה ותקציב חכם"
   },
   "navigation": {
     "dashboard": "לוח בקרה",
@@ -1013,66 +1019,6 @@
       "cancelledDescription": "לוח הזמנים הזה בוטל ולא נשלחו הודעות"
     }
   },
-  "newEvent": {
-    "back": "חזור",
-    "stepOf": "שלב {step} מתוך {total}",
-    "step1": {
-      "title": "איזה סוג אירוע?",
-      "description": "בחרו את סוג האירוע כדי להתחיל",
-      "wedding": "חתונה",
-      "henna": "חינה",
-      "barMitzva": "בר מצווה",
-      "batMitzva": "בת מצווה",
-      "continue": "המשך"
-    },
-    "step2": {
-      "title": "מי חוגג?",
-      "description": "ספרו לנו על הזוג המאושר",
-      "descriptionChild": "ספרו לנו על החוגג/ת",
-      "brideLabel": "שם הכלה",
-      "bridePlaceholder": "הזן שם כלה",
-      "groomLabel": "שם החתן",
-      "groomPlaceholder": "הזן שם חתן",
-      "childLabel": "שם הילד/ה",
-      "childPlaceholder": "הזן שם הילד/ה",
-      "continue": "המשך",
-      "goBack": "חזור"
-    },
-    "step3": {
-      "title": "מתי ואיפה?",
-      "description": "קבע תאריך ומקום",
-      "dateLabel": "תאריך האירוע",
-      "datePlaceholder": "בחר תאריך אירוע",
-      "venueLabel": "אולם",
-      "venuePlaceholder": "חפש את האולם שלך...",
-      "venueHelper": "אפשר למלא זאת מאוחר יותר",
-      "continue": "המשך",
-      "goBack": "חזור"
-    },
-    "step4": {
-      "title": "בחר את התוכנית שלך",
-      "description": "בחר את קיבולת האורחים המתאימה לאירוע שלך",
-      "popular": "הפופולרי ביותר",
-      "recordsLabel": "רשומות",
-      "reservedLabel": " רשומות \"רזרבה\" ",
-      "reservedBonus": "בונוס במתנה לאורחי הרגע האחרון",
-      "currency": "₪",
-      "continue": "צור את האירוע שלי! 🎉",
-      "goBack": "חזור"
-    },
-    "toast": {
-      "creating": "יוצר את האירוע שלך...",
-      "created": "האירוע נוצר",
-      "failed": "יצירת האירוע נכשלה",
-      "error": "משהו השתבש"
-    },
-    "success": {
-      "title": "האירוע שלך מוכן!",
-      "description": "הגיע הזמן להתחיל לתכנן את היום הגדול!",
-      "goToDashboard": "עבור ללוח הבקרה",
-      "viewDetails": "צפה בפרטי האירוע"
-    }
-  },
   "newEventDialog": {
     "title": "יצירת אירוע חדש",
     "description": "הזן את פרטי האירוע החדש שלך. תוכל להוסיף פרטים נוספים מאוחר יותר.",
@@ -1301,6 +1247,7 @@
       "upload": "העלה",
       "uploading": "מעלה...",
       "removeImage": "הסר תמונה",
+      "enlargeImage": "הגדל תמונה",
       "failedUpload": "העלאת התמונה נכשלה",
       "status": {
         "set": {
@@ -1475,6 +1422,111 @@
       "confirmed": "אישר",
       "declined": "סירב",
       "pending": "ממתין"
+    }
+  },
+  "onboarding": {
+    "back": "חזרה",
+    "step": "שלב {current} מתוך {total}",
+    "cardBuilding": "האירוע שלכם נבנה תוך כדי",
+    "cardPlaceholderTitle": "האירוע שלכם",
+    "cardPlaceholderSubtitle": "יופיע כאן ברגע שתבחרו מה חוגגים",
+    "card": {
+      "typeFallback": "אירוע",
+      "untitled": "האירוע שלכם",
+      "typeLabel": {
+        "wedding": "חתונה",
+        "henna": "חינה",
+        "bar_mitzva": "בר מצווה",
+        "bat_mitzva": "בת מצווה"
+      },
+      "daysToGo": "עוד {days} ימים",
+      "daysToEvent": "ימים לאירוע",
+      "noDateChip": "התאריך עוד לפניכם",
+      "noDateTitle": "מחכים לתאריך המושלם",
+      "noDateDescription": "ברגע שתקבעו, הכל כאן יתעדכן לבד"
+    },
+    "profile": {
+      "title": "נעים להכיר",
+      "subtitle": "רק כמה פרטים ומתחילים לתכנן",
+      "nameLabel": "השם המלא שלכם",
+      "namePlaceholder": "למשל: דנה לוי",
+      "phoneLabel": "מספר הטלפון שלכם",
+      "optional": "(לא חובה)",
+      "phoneHelp": "נשתמש במספר רק לעדכונים על ההתקדמות של האירוע שלכם",
+      "continue": "ממשיכים"
+    },
+    "welcomeBack": {
+      "title": "בואו נסיים",
+      "titleNamed": "{names}, בואו נסיים",
+      "subtitle": "שמרנו הכל בדיוק איפה שעצרתם",
+      "resume": "ממשיכים מאיפה שעצרנו"
+    },
+    "type": {
+      "title": "מה חוגגים?",
+      "subtitle": "נתאים לכם את השאר לפי סוג האירוע",
+      "options": {
+        "wedding": "חתונה",
+        "henna": "חינה",
+        "bar_mitzva": "בר מצווה",
+        "bat_mitzva": "בת מצווה"
+      }
+    },
+    "names": {
+      "titleCouple": "מי הזוג המאושר?",
+      "titleSingleMale": "מי חוגג?",
+      "titleSingleFemale": "מי חוגגת?",
+      "subtitle": "כך יופיע על ההזמנה",
+      "brideLabel": "שם הכלה",
+      "groomLabel": "שם החתן",
+      "celebrantLabelMale": "שם החוגג",
+      "celebrantLabelFemale": "שם החוגגת",
+      "error": "רק צריך שם, בלי זה אין למי לחגוג",
+      "continue": "ממשיכים"
+    },
+    "date": {
+      "title": "מתי זה קורה?",
+      "subtitle": "תמיד אפשר לשנות",
+      "pastError": "התאריך הזה כבר עבר, בחרו תאריך עתידי",
+      "continue": "ממשיכים",
+      "skip": "עדיין אין לנו תאריך"
+    },
+    "venue": {
+      "title": "איפה חוגגים?",
+      "subtitle": "נשלח למוזמנים ניווט למקום",
+      "placeholder": "חפשו אולם, גן אירועים או כתובת",
+      "continue": "ממשיכים",
+      "skip": "עוד לא סגרנו מקום"
+    },
+    "estimate": {
+      "title": "כמה זה יעלה לכם?",
+      "subtitle": "משלמים לפני מועד שליחת ההודעה הראשונה - עד אז הכל בחינם",
+      "sliderLabel": "כמה רשומות מוזמנים, בערך?",
+      "sliderHelp": "רשומה = משפחה/זוג/מוזמן יחיד הרשומים תחת מספר טלפון אחד",
+      "rate": "{rate} ₪",
+      "perRecord": "לרשומה",
+      "channelTitle": "איך נשלח למוזמנים?",
+      "channel": {
+        "whatsapp": "וואטסאפ",
+        "sms": "SMS"
+      },
+      "includedTitle": "מה כוללת החבילה",
+      "included": {
+        "invitation": "שליחת ההזמנה",
+        "confirmations": "2 סבבי אישור הגעה",
+        "callRounds": "2 סבבי שיחות טלפון מהצוות שלנו",
+        "reminder": "תזכורת ביום האירוע עם ניווט, מספר שולחן ושליחת מתנה באמצעות Bit/Paybox",
+        "thankYou": "הודעת תודה אחרי האירוע"
+      },
+      "more": {
+        "title": "וזה עוד לא הכל",
+        "description": "רשימת מוזמנים, הושבה, תקציב ומתנות - כל הכלים לניהול האירוע כלולים"
+      },
+      "finish": "יאללה, מתחילים"
+    },
+    "payoff": {
+      "subtitle": "האירוע שלכם קיים, מעכשיו הכל מתחיל להסתדר",
+      "cta": "בואו נתחיל לתכנן",
+      "entering": "רגע אחד..."
     }
   }
 }

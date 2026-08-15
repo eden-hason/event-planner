@@ -13,11 +13,19 @@ export type EventHostNames = {
   childName?: string;
 };
 
+/**
+ * One frame per type, always ending in "של".
+ *
+ * There is no separate nameless phrasing: before the names are given the title
+ * is just the frame, left open for the name that is about to land in it, which
+ * is what makes the card read as filling in rather than being replaced. The ה
+ * of the mitzvas sits on מצווה rather than at the front.
+ */
 const HE = {
-  wedding: { prefix: 'החתונה של', fallback: 'החתונה שלי' },
-  henna: { prefix: 'החינה של', fallback: 'החינה שלי' },
-  bar_mitzva: { label: 'בר מצווה' },
-  bat_mitzva: { label: 'בת מצווה' },
+  wedding: { prefix: 'החתונה של' },
+  henna: { prefix: 'החינה של' },
+  bar_mitzva: { prefix: 'בר המצווה של' },
+  bat_mitzva: { prefix: 'בת המצווה של' },
 } as const;
 
 const EN = {
@@ -34,37 +42,39 @@ const EN = {
  * names are captured, and the couple never sees an editable title field. It is
  * regenerated on every names edit, so it always agrees with `host_details`.
  *
- * Returns an empty string only when there is nothing to build from, which is
- * what a Draft Event carries until the names screen is answered.
+ * Always returns something: with no names yet - the state a Draft Event is in
+ * until the names screen is answered - Hebrew gives back the open "X של" frame
+ * and English its own nameless phrasing.
  */
 export function buildEventTitle(
   eventType: EventTypeKey,
   names: EventHostNames,
   locale: string,
 ): string {
-  const t = locale === 'he' ? HE : EN;
   const trim = (v?: string) => v?.trim() || undefined;
 
-  if (isCoupleEvent(eventType)) {
-    const copy = t[eventType as 'wedding' | 'henna'];
-    const first = trim(names.brideName);
-    const second = trim(names.groomName);
+  const hosts = isCoupleEvent(eventType)
+    ? [trim(names.brideName), trim(names.groomName)].filter(
+        (name): name is string => !!name,
+      )
+    : [trim(names.childName)].filter((name): name is string => !!name);
 
-    if (first && second) {
-      const joined =
-        locale === 'he' ? `${first} ו${second}` : `${first} and ${second}`;
-      return `${copy.prefix} ${joined}`;
-    }
-    if (first || second) return `${copy.prefix} ${first ?? second}`;
-    return copy.fallback;
+  if (locale === 'he') {
+    const { prefix } = HE[eventType];
+    // No names yet leaves the bare frame - "החתונה של" - rather than a
+    // different sentence, so the name simply arrives at the end of it.
+    return hosts.length ? `${prefix} ${hosts.join(' ו')}` : prefix;
   }
 
-  const copy = t[eventType as 'bar_mitzva' | 'bat_mitzva'];
-  const child = trim(names.childName);
-  if (!child) return copy.label;
-  return locale === 'he'
-    ? `${copy.label} של ${child}`
-    : `${child}'s ${copy.label}`;
+  if (isCoupleEvent(eventType)) {
+    const copy = EN[eventType as 'wedding' | 'henna'];
+    return hosts.length
+      ? `${copy.prefix} ${hosts.join(' and ')}`
+      : copy.fallback;
+  }
+
+  const copy = EN[eventType as 'bar_mitzva' | 'bat_mitzva'];
+  return hosts.length ? `${hosts[0]}'s ${copy.label}` : copy.label;
 }
 
 /**

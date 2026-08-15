@@ -35,6 +35,11 @@ interface LocationInputProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Styles the field itself rather than the wrapper `className` targets.
+   * The onboarding takeover runs its own field sizing, so it needs a way in.
+   */
+  inputClassName?: string;
 }
 
 export function LocationInput({
@@ -43,6 +48,7 @@ export function LocationInput({
   placeholder = 'Search for a location...',
   disabled = false,
   className,
+  inputClassName,
 }: LocationInputProps) {
   const [inputValue, setInputValue] = React.useState(value || '');
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -213,6 +219,9 @@ export function LocationInput({
           <InputGroup
             className={cn(
               '!border-input !bg-popover !ring-0',
+              inputClassName,
+              // Last, so a caller restyling the radius cannot round the corner
+              // the open suggestion list is meant to sit flush against.
               showCommandList && 'rounded-b-none',
             )}
           >
