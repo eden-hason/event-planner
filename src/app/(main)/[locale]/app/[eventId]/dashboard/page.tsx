@@ -17,7 +17,9 @@ import {
   type OnboardingStatus,
 } from '@/features/dashboard';
 
-function getDaysRemaining(eventDate: string): number {
+/** Null for an event with no date - there is no countdown to run. */
+function getDaysRemaining(eventDate: string | null): number | null {
+  if (!eventDate) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const event = new Date(eventDate);

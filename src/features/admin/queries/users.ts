@@ -20,26 +20,35 @@ export async function listUsers(): Promise<AdminUser[]> {
 
   const ids = profiles.map((p) => p.id);
 
-  // Count events per user in one query
+  // Count events per user in one query. Drafts are counted separately: an
+  // abandoned draft is a record of interest, not an event the user has, and
+  // folding the two together overstates how many events exist.
   const { data: eventCounts } = await supabase
     .from('events')
-    .select('user_id')
+    .select('user_id, status')
     .in('user_id', ids);
 
-  const countMap = new Map<string, number>();
+  const countMap = new Map<string, { published: number; draft: number }>();
   for (const row of eventCounts ?? []) {
-    countMap.set(row.user_id, (countMap.get(row.user_id) ?? 0) + 1);
+    const entry = countMap.get(row.user_id) ?? { published: 0, draft: 0 };
+    if (row.status === 'draft') entry.draft++;
+    else entry.published++;
+    countMap.set(row.user_id, entry);
   }
 
-  return profiles.map((p) => ({
-    id: p.id,
-    email: p.email ?? '',
-    fullName: p.full_name ?? '',
-    plan: p.pricing_plan ?? 'basic',
-    signupDate: p.created_at,
-    eventCount: countMap.get(p.id) ?? 0,
-    isAdmin: p.is_admin ?? false,
-  }));
+  return profiles.map((p) => {
+    const counts = countMap.get(p.id) ?? { published: 0, draft: 0 };
+    return {
+      id: p.id,
+      email: p.email ?? '',
+      fullName: p.full_name ?? '',
+      plan: p.pricing_plan ?? 'basic',
+      signupDate: p.created_at,
+      eventCount: counts.published,
+      draftCount: counts.draft,
+      isAdmin: p.is_admin ?? false,
+    };
+  });
 }
 
 export async function getUserById(userId: string): Promise<AdminUser | null> {
@@ -54,10 +63,18 @@ export async function getUserById(userId: string): Promise<AdminUser | null> {
 
   if (error || !profile) return null;
 
-  const { count } = await supabase
-    .from('events')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
+  const [{ count: publishedCount }, { count: draftCount }] = await Promise.all([
+    supabase
+      .from('events')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .neq('status', 'draft'),
+    supabase
+      .from('events')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'draft'),
+  ]);
 
   return {
     id: profile.id,
@@ -65,7 +82,8 @@ export async function getUserById(userId: string): Promise<AdminUser | null> {
     fullName: profile.full_name ?? '',
     plan: profile.pricing_plan ?? 'basic',
     signupDate: profile.created_at,
-    eventCount: count ?? 0,
+    eventCount: publishedCount ?? 0,
+    draftCount: draftCount ?? 0,
     isAdmin: profile.is_admin ?? false,
   };
 }

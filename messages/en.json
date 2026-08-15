@@ -706,7 +706,8 @@
       "pctOfEstimate": "{pct}% of estimate",
       "scheduledMessages": "Scheduled Messages",
       "pendingMessageSingular": "pending message",
-      "pendingMessages": "pending messages"
+      "pendingMessages": "pending messages",
+      "noDateYet": "No date yet"
     },
     "guestStats": {
       "totalGuests": "Total Guests",
@@ -746,7 +747,10 @@
     "countdown": {
       "today": "Today is the day!",
       "daysSince": "days since the event",
-      "daysTo": "days to go"
+      "daysTo": "days to go",
+      "noDateTitle": "Waiting on the perfect date",
+      "noDateDescription": "The moment you pick one, everything here updates itself",
+      "noDateChip": "The date is still ahead of you"
     },
     "upcomingSchedules": {
       "title": "Upcoming Schedules",

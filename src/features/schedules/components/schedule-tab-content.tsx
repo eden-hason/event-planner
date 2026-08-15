@@ -9,7 +9,7 @@ interface ScheduleTabContentProps {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
-  eventDate: string;
+  eventDate: string | null;
   event: EventApp | null;
 }
 

@@ -45,7 +45,10 @@ export type AdminUser = {
   fullName: string;
   plan: string;
   signupDate: string;
+  /** Published events only. An abandoned draft is interest, not an event. */
   eventCount: number;
+  /** Draft Events: onboarding started and not finished. */
+  draftCount: number;
   isAdmin: boolean;
 };
 

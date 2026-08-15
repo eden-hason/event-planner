@@ -25,7 +25,8 @@ import { SchedulesLayout } from './schedules-layout';
 
 interface SchedulesPageProps {
   eventId: string;
-  eventDate: string;
+  /** Null for an event with no date; every offset below is relative to it. */
+  eventDate: string | null;
   schedules: ScheduleApp[];
   event: EventApp | null;
 }

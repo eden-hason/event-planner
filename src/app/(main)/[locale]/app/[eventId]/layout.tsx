@@ -22,7 +22,10 @@ export default async function EventLayout({
   setRequestLocale(locale);
   const event = await getEventById(eventId);
 
-  if (!event) {
+  // A Draft Event is not a workspace: it may have no date, and every page below
+  // this layout assumes the answers exist. Reaching one by URL sends the user
+  // back into onboarding to finish it, which is the only way out of the state.
+  if (!event || event.status === 'draft') {
     redirect({ href: '/app/new-event', locale });
   }
 

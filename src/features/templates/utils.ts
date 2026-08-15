@@ -47,7 +47,15 @@ export function buildCoupleName(
   return brideName ?? groomName ?? childName ?? eventTitle;
 }
 
-export function buildFormattedDate(eventDate: string): string {
+/**
+ * Undefined for an event with no date yet. Every template treats the date as
+ * optional and simply omits the pill, which is the honest rendering - an
+ * invitation for an undated event cannot state a date.
+ */
+export function buildFormattedDate(
+  eventDate: string | null | undefined,
+): string | undefined {
+  if (!eventDate) return undefined;
   return new Intl.DateTimeFormat('he-IL', { dateStyle: 'full' }).format(
     new Date(eventDate),
   );

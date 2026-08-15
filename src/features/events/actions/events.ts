@@ -94,7 +94,11 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
         title,
         event_date: eventDate,
         event_type_id: eventTypeId,
-        status: 'draft',
+        // Published, not draft: this path creates a complete event in one
+        // insert. 'draft' now means onboarding is unfinished, and such an event
+        // has no workspace and is hidden from the event switcher.
+        status: 'published',
+        onboarding_step: 'estimate',
         is_default: true,
       })
       .select('id')
@@ -223,7 +227,10 @@ export async function createOnboardingEvent(
         title,
         event_date: eventDate,
         event_type_id: eventTypeId,
-        status: 'draft',
+        // See createEvent: this wizard writes once, at the end, so what it
+        // creates is a finished event rather than a Draft Event.
+        status: 'published',
+        onboarding_step: 'estimate',
         is_default: true,
         host_details: hostDetails,
         location: location ?? null,

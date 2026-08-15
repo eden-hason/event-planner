@@ -13,6 +13,18 @@ export {
 
 export type { CreateOnboardingEventState } from '../schemas';
 
+export {
+  createDraftEvent,
+  setDraftNames,
+  setDraftDate,
+  setDraftLocation,
+  setDraftEstimate,
+  publishDraftEvent,
+  discardDraftEvent,
+} from './draft-event';
+
+export type { CreateDraftEventState, DraftStepState } from '../schemas';
+
 export { duplicateEvent, type DuplicateEventState } from './duplicate-event';
 
 export { updateEventLandingTemplate, type UpdateLandingTemplateState } from './landing-template';
