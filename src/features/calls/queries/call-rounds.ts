@@ -108,8 +108,8 @@ export async function getCallRoundsByScheduleId(
 /**
  * Per-guest results for one round, as the Owner sees them.
  *
- * Selects columns explicitly - `notes` and `called_by` are revoked from the
- * authenticated role, so a `select('*')` here would fail outright.
+ * Selects columns explicitly - `called_by` is revoked from the authenticated
+ * role, so a `select('*')` here would fail outright.
  */
 export async function getCallRoundResults(
   roundId: string,
@@ -118,7 +118,7 @@ export async function getCallRoundResults(
 
   const { data, error } = await supabase
     .from('call_logs')
-    .select('guest_id, outcome, guests!inner(name, rsvp_status, amount)')
+    .select('guest_id, outcome, notes, guests!inner(name, rsvp_status, amount)')
     .eq('round_id', roundId);
 
   const empty: CallRoundResults = {
@@ -152,6 +152,9 @@ export async function getCallRoundResults(
       currentRsvpStatus: (guest?.rsvp_status ??
         'pending') as CallRoundGuestRow['currentRsvpStatus'],
       amount: guest?.amount ?? 1,
+      // Empty string and null both mean "nothing to show", so they collapse
+      // here rather than in every cell that renders it.
+      notes: ((log.notes as string | null) ?? '').trim() || null,
     };
   });
 

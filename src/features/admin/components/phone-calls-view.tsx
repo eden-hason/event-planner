@@ -471,7 +471,10 @@ export function PhoneCallsView({ eventId, initialPlans }: PhoneCallsViewProps) {
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">
-                      {(['Guest', 'Phone', 'Group', 'Side', 'Outcome', 'Notes'] as const).map((col) => (
+                      {/* "Note to host" rather than "Notes": the column is
+                          host-facing as of 2026-08-17, and the operator writing
+                          it has to know that before they type. */}
+                      {(['Guest', 'Phone', 'Group', 'Side', 'Outcome', 'Note to host'] as const).map((col) => (
                         <th
                           key={col}
                           className={cn(
@@ -480,7 +483,7 @@ export function PhoneCallsView({ eventId, initialPlans }: PhoneCallsViewProps) {
                             col === 'Group' && 'w-28',
                             col === 'Side' && 'w-20',
                             col === 'Phone' && 'w-32',
-                            col === 'Notes' && 'w-44',
+                            col === 'Note to host' && 'w-44',
                           )}
                         >
                           {col}

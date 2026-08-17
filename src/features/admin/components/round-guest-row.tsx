@@ -247,7 +247,8 @@ export function RoundGuestRow({ log, eventId, fontSize = 'sm', onOutcomeChange }
         )}
       </td>
 
-      {/* Notes */}
+      {/* Note to host - shown to the event owner on their call round results
+          card, so the copy here says so plainly. Nothing private goes in it. */}
       <td className="px-4 py-3 align-middle w-44">
         {isResolved && !isEditing ? (
           <span className={cn(CELL_TEXT[fontSize], 'text-muted-foreground italic')}>
@@ -257,16 +258,18 @@ export function RoundGuestRow({ log, eventId, fontSize = 'sm', onOutcomeChange }
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes…"
+            placeholder="The host will read this…"
+            title="Visible to the host on their call round results"
             rows={2}
             className={cn(CELL_TEXT[fontSize], 'w-full rounded border px-2 py-1 resize-none bg-background')}
           />
         ) : (
           <button
             onClick={() => setShowNotes(true)}
+            title="Visible to the host on their call round results"
             className={cn(CELL_TEXT[fontSize], 'text-muted-foreground/40 hover:text-muted-foreground transition-colors')}
           >
-            + Add note
+            + Note for host
           </button>
         )}
       </td>
