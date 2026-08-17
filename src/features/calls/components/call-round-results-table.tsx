@@ -124,11 +124,15 @@ export function CallRoundResultsTable({
               <ItemDescription className="text-xs">
                 {rsvpLabels[row.currentRsvpStatus]}
               </ItemDescription>
-              {/* line-clamp-none: ItemDescription clips to two lines by
-                  default, and a call note is the one thing here the host cannot
-                  reconstruct from the other columns. */}
+              {/* Carries the column label inline: the desktop header is what
+                  says whose words these are, and without it a bare italic line
+                  under the RSVP status reads as the caller's own remark.
+                  line-clamp-none because ItemDescription clips to two lines by
+                  default, and this is the one thing here the host cannot
+                  reconstruct from the other fields. */}
               {row.notes && (
                 <ItemDescription className="text-xs italic break-words whitespace-pre-line line-clamp-none">
+                  <span className="font-medium not-italic">{labels.columnNote}: </span>
                   {row.notes}
                 </ItemDescription>
               )}

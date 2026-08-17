@@ -1424,7 +1424,7 @@
       "outcome": "Call",
       "rsvp": "RSVP now",
       "amount": "Guests",
-      "note": "Note from the call"
+      "note": "Guest remarks"
     },
     "outcome": {
       "confirmed": "Confirmed",
