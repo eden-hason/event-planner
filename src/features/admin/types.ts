@@ -23,8 +23,8 @@ export type CallPlanWithRound = {
   round: CallRoundSummary | null;
 };
 
-// Admin-only: carries the operator's working data (phone, notes, seating
-// context) that the Owner is never shown.
+// The operator's working view of a call: phone number and seating context the
+// Owner is never shown, alongside `notes`, which the Owner does read.
 export type CallLogWithGuest = {
   id: string;
   guestId: string;
@@ -35,6 +35,7 @@ export type CallLogWithGuest = {
   groupName: string | null;
   currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
   outcome: CallOutcome | null;
+  /** Host-facing - surfaced on the Owner's call round results card */
   notes: string | null;
   calledAt: string | null;
 };

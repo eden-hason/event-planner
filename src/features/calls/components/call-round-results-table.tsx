@@ -37,6 +37,7 @@ export type CallRoundResultsLabels = {
   columnOutcome: string;
   columnRsvp: string;
   columnAmount: string;
+  columnNote: string;
   outcomeConfirmed: string;
   outcomeDeclined: string;
   outcomeNoAnswer: string;
@@ -98,6 +99,11 @@ export function CallRoundResultsTable({
   const totalPages = Math.ceil(guests.length / PAGE_SIZE);
   const slice = guests.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
+  // Most rounds produce no notes at all, and an empty fifth column squeezes the
+  // other four for nothing. Keyed to the whole round rather than the current
+  // page so the column does not appear and vanish as the host pages through.
+  const hasNotes = guests.some((g) => g.notes);
+
   const rsvpLabels: Record<CallRoundGuestRow['currentRsvpStatus'], string> = {
     confirmed: labels.rsvpConfirmed,
     declined: labels.rsvpDeclined,
@@ -106,8 +112,8 @@ export function CallRoundResultsTable({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Below sm the four columns cannot fit, so each guest becomes a row of
-          its own with the same facts stacked instead of side by side. */}
+      {/* Below sm the columns cannot fit side by side, so each guest becomes a
+          row of its own with the same facts stacked. */}
       <ItemGroup className="gap-2 sm:hidden">
         {slice.map((row) => (
           <Item key={row.guestId} variant="outline" size="sm">
@@ -118,6 +124,18 @@ export function CallRoundResultsTable({
               <ItemDescription className="text-xs">
                 {rsvpLabels[row.currentRsvpStatus]}
               </ItemDescription>
+              {/* Carries the column label inline: the desktop header is what
+                  says whose words these are, and without it a bare italic line
+                  under the RSVP status reads as the caller's own remark.
+                  line-clamp-none because ItemDescription clips to two lines by
+                  default, and this is the one thing here the host cannot
+                  reconstruct from the other fields. */}
+              {row.notes && (
+                <ItemDescription className="text-xs italic break-words whitespace-pre-line line-clamp-none">
+                  <span className="font-medium not-italic">{labels.columnNote}: </span>
+                  {row.notes}
+                </ItemDescription>
+              )}
             </ItemContent>
             <ItemActions>
               {row.outcome === 'confirmed' && (
@@ -147,6 +165,11 @@ export function CallRoundResultsTable({
               <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
                 {labels.columnAmount}
               </TableHead>
+              {hasNotes && (
+                <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  {labels.columnNote}
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -170,6 +193,11 @@ export function CallRoundResultsTable({
                     <span className="text-muted-foreground/40">-</span>
                   )}
                 </TableCell>
+                {hasNotes && (
+                  <TableCell className="text-muted-foreground max-w-56 text-xs break-words whitespace-pre-line">
+                    {row.notes ?? <span className="text-muted-foreground/40">-</span>}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

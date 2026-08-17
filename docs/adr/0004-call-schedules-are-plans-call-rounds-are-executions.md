@@ -136,6 +136,12 @@ data, and the results - `call_rounds`, `call_logs`, and the column-level revoke
 on `notes` and `called_by` - remain under ADR-0001's narrower policies. If that
 ever stops being acceptable, the fix is a third restrictive policy `for select`.
 
+> Amended 2026-08-17: `notes` is no longer part of that revoke.
+> `20260817000001_call_log_notes_visible_to_owner.sql` grants it back to
+> `authenticated`, because what the caller learned on the phone is a result the
+> host wants, not operator scratch space. `called_by` stays revoked, and the
+> row-level narrowing described above is unchanged.
+
 **If we change our mind.** Going back means dropping `schedule_id`, restoring the
 unconditional trigger and cron, and deleting the `phone_call` plans while keeping
 their rounds. The rounds and their logs are untouched by this change, so the

@@ -39,8 +39,9 @@ export type CallRoundSummary = {
  * be correctly skipped, leaving `outcome` null forever. Showing the outcome
  * alone would read as "your planner never called 12 people".
  *
- * Deliberately without `notes` and `calledBy` - see the column grants in
- * 20260811000000_call_rounds_owner_visibility.sql.
+ * Deliberately without `calledBy` - which operator placed the call is internal.
+ * See the column grants in 20260811000000_call_rounds_owner_visibility.sql and
+ * 20260817000001_call_log_notes_visible_to_owner.sql.
  */
 export type CallRoundGuestRow = {
   guestId: string;
@@ -49,6 +50,12 @@ export type CallRoundGuestRow = {
   currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
   /** Headcount on the guest record - one record can cover a whole family */
   amount: number;
+  /**
+   * What the caller learned on the phone, written by the operator running the
+   * round. Host-facing since 2026-08-17; null on most rows, since a note is
+   * only worth writing when the call turned up something.
+   */
+  notes: string | null;
 };
 
 export type CallRoundResults = {
