@@ -44,13 +44,14 @@ export function filterAndSortGuests(
     if (statuses.length > 0 && !statuses.includes(guest.rsvpStatus)) {
       return false;
     }
-    // Search across name / phone / group name / notes
+    // Search across name / phone / group name / host note / guest note
     if (search) {
       const matches =
         guest.name.toLowerCase().includes(search) ||
         (guest.phone?.toLowerCase().includes(search) ?? false) ||
         (guest.group?.name.toLowerCase().includes(search) ?? false) ||
-        (guest.notes?.toLowerCase().includes(search) ?? false);
+        (guest.notes?.toLowerCase().includes(search) ?? false) ||
+        (guest.guestNotes?.toLowerCase().includes(search) ?? false);
       if (!matches) return false;
     }
     return true;

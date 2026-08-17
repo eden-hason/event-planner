@@ -74,8 +74,9 @@ export async function submitConfirmation(
   if (rsvpStatus === 'confirmed' && mealChoice) {
     guestUpdate.meal_choice = mealChoice;
   }
+  // Guest-authored text lands in guest_notes - notes belongs to the host
   if (notes !== undefined) {
-    guestUpdate.notes = notes;
+    guestUpdate.guest_notes = notes;
   }
 
   const { error: guestError } = await supabase

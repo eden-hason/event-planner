@@ -29,7 +29,7 @@ export type ConfirmationPageData = {
   } | null;
   guest: Pick<
     GuestApp,
-    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice' | 'notes'
+    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice' | 'guestNotes'
   >;
   event: Pick<
     EventApp,

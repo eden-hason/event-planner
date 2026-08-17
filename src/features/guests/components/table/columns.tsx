@@ -186,6 +186,27 @@ export const createGuestColumns = (
       },
     },
     {
+      accessorKey: 'guestNotes',
+      header: () => <div>{t('table.guestNotes')}</div>,
+      cell: ({ row }) => {
+        const guestNotes = row.getValue('guestNotes') as string | undefined;
+        return guestNotes ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block max-w-xs truncate text-sm text-gray-600">
+                {guestNotes}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-64 whitespace-pre-wrap">
+              {guestNotes}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
+      },
+    },
+    {
       id: 'actions',
       enableHiding: false,
       cell: ({ row }) => {
