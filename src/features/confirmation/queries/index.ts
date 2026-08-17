@@ -25,7 +25,7 @@ export async function getConfirmationDataByToken(
       clicked_at,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, meal_choice, notes
+        id, name, amount, rsvp_status, meal_choice, guest_notes
       ),
       schedules!inner (
         id,
@@ -58,7 +58,7 @@ export async function getConfirmationDataByToken(
     amount: number;
     rsvp_status: string;
     meal_choice: string | null;
-    notes: string | null;
+    guest_notes: string | null;
   };
 
   const schedule = data.schedules as unknown as {
@@ -115,7 +115,7 @@ export async function getConfirmationDataByToken(
       amount: guest.amount,
       rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
       mealChoice: guest.meal_choice ?? undefined,
-      notes: guest.notes ?? undefined,
+      guestNotes: guest.guest_notes ?? undefined,
     },
     event: {
       id: event.id,
@@ -153,7 +153,7 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, meal_choice, notes,
+      id, name, amount, rsvp_status, meal_choice, guest_notes,
       events!inner (
         id, title, event_date, ceremony_time, reception_time,
         location, host_details, guests_experience, event_types (key), landing_template_id, short_code
@@ -195,7 +195,7 @@ export async function getConfirmationDataByGuestToken(
       amount: data.amount,
       rsvpStatus: data.rsvp_status as 'pending' | 'confirmed' | 'declined',
       mealChoice: data.meal_choice ?? undefined,
-      notes: data.notes ?? undefined,
+      guestNotes: data.guest_notes ?? undefined,
     },
     event: {
       id: event.id,

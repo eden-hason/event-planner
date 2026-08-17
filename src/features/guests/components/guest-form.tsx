@@ -38,6 +38,7 @@ import {
   IconAddressBook,
   IconCheck,
   IconLayoutList,
+  IconMessage,
   IconMinus,
   IconNote,
   IconPlus,
@@ -523,6 +524,22 @@ export function GuestForm({
             )}
           />
         </div>
+
+        {/* Guest note - written by the guest on the RSVP page, read-only here */}
+        {guest?.guestNotes && (
+          <div className="rounded-lg border bg-card p-5 space-y-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <IconMessage size={16} className="text-muted-foreground" />
+              {t('form.guestNotes')}
+            </h3>
+            <blockquote className="border-s-2 ps-3 text-sm whitespace-pre-wrap text-muted-foreground">
+              {guest.guestNotes}
+            </blockquote>
+            <p className="text-xs text-muted-foreground">
+              {t('form.guestNotesHint')}
+            </p>
+          </div>
+        )}
 
         {!hideActions && (
           <div className="flex gap-2">

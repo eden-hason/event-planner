@@ -120,7 +120,12 @@ export function buildTools(supabase: SupabaseClient, eventId: string) {
           .default(1)
           .describe('Number of people included in this invitation'),
         rsvpStatus: rsvpStatusSchema.default('pending'),
-        notes: z.string().optional(),
+        notes: z
+          .string()
+          .optional()
+          .describe(
+            "The host's own note about the guest. Never write the guest's own RSVP comment here.",
+          ),
       }),
     }),
 
@@ -134,7 +139,12 @@ export function buildTools(supabase: SupabaseClient, eventId: string) {
         side: sideSchema.optional(),
         amount: z.number().int().min(1).optional(),
         rsvpStatus: rsvpStatusSchema.optional(),
-        notes: z.string().optional(),
+        notes: z
+          .string()
+          .optional()
+          .describe(
+            "The host's own note about the guest. Never write the guest's own RSVP comment here.",
+          ),
       }),
     }),
 

@@ -84,7 +84,7 @@ export function ConfirmationExperience({ token, data, templateId }: Confirmation
     initialRsvpStatus: guest.rsvpStatus,
     initialAmount: guest.amount,
     initialMealChoice: guest.mealChoice ?? '',
-    initialNotes: guest.notes ?? '',
+    initialNotes: guest.guestNotes ?? '',
     interactive: true,
     showConfetti: true,
     onSubmit: handleSubmit,

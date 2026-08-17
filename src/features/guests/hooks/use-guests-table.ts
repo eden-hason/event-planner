@@ -158,7 +158,8 @@ export function useGuestsTable({
       guest.name.toLowerCase().includes(searchLower) ||
       (guest.phone?.toLowerCase().includes(searchLower) ?? false) ||
       (guest.group?.name.toLowerCase().includes(searchLower) ?? false) ||
-      (guest.notes?.toLowerCase().includes(searchLower) ?? false)
+      (guest.notes?.toLowerCase().includes(searchLower) ?? false) ||
+      (guest.guestNotes?.toLowerCase().includes(searchLower) ?? false)
     );
   };
 
