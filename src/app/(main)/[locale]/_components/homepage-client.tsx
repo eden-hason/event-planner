@@ -14,7 +14,7 @@ import seatingShot from '@/assets/seating.png';
 import sharingShot from '@/assets/sharing.png';
 import whatsappShot from '@/assets/whatsapp.png';
 
-const WHATSAPP_NUMBER = '972556839696';
+const WHATSAPP_NUMBER = '972552639234';
 const WHATSAPP_OPENING_MESSAGE = 'היי, אשמח לקבל פרטים נוספים על Kululu';
 
 const FEATURES: Array<{
