@@ -27,14 +27,22 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     },
   });
 
-  // IMPORTANT: DO NOT REMOVE auth.getUser()
+  // IMPORTANT: DO NOT REMOVE auth.getClaims(). It is what refreshes the session
+  // cookie; without it users get randomly logged out under server-side rendering.
+  //
+  // getClaims rather than getUser: this runs on every request the matcher
+  // catches, RSC prefetches included, so a single navigation used to fire ~18
+  // calls to /auth/v1/user - 88% of the project's auth traffic - each one a
+  // blocking round trip before the page could render. The project signs JWTs
+  // with an asymmetric key (ES256), so getClaims verifies the token locally via
+  // WebCrypto against a cached JWKS and only reaches the network to refresh.
+  // It still verifies cryptographically, so the guards below are as safe as
+  // they were with getUser.
 
-  let user = null;
+  let userId: string | null = null;
   try {
-    const {
-      data: { user: userData },
-    } = await supabase.auth.getUser();
-    user = userData;
+    const { data } = await supabase.auth.getClaims();
+    userId = data?.claims.sub ?? null;
   } catch (error) {
     console.error('Error getting user from Supabase:', error);
   }
@@ -45,7 +53,7 @@ export async function updateSession(request: NextRequest, effectivePath?: string
   const strippedPath = rawPath.replace(/^\/en/, '') || '/';
 
   if (
-    !user &&
+    !userId &&
     strippedPath !== '/' &&
     !strippedPath.startsWith('/login') &&
     !strippedPath.startsWith('/auth') &&
@@ -66,11 +74,11 @@ export async function updateSession(request: NextRequest, effectivePath?: string
   }
 
   // Guard /admin routes: require is_admin = true on the user's profile
-  if (user && strippedPath.startsWith('/admin')) {
+  if (userId && strippedPath.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (!profile?.is_admin) {

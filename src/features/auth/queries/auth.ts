@@ -1,9 +1,13 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { getImpersonation } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { User, ProfileData } from '../schemas';
 
-export async function getUserProfile(): Promise<ProfileData | null> {
+// Wrapped with React cache() so a single render resolves the auth call once,
+// however many server components ask for it - the same reason getImpersonation
+// and assertAdmin are cached in @/lib/supabase/admin.
+export const getUserProfile = cache(async function getUserProfile(): Promise<ProfileData | null> {
   try {
     const supabase = await createClient();
 
@@ -38,7 +42,7 @@ export async function getUserProfile(): Promise<ProfileData | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function getEffectiveUser(): Promise<User | null> {
   try {
@@ -79,7 +83,7 @@ export async function getEffectiveUser(): Promise<User | null> {
   }
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<User | null> {
   try {
     const supabase = await createClient();
 
@@ -109,4 +113,4 @@ export async function getCurrentUser(): Promise<User | null> {
     console.error('Get current user error:', error);
     return null;
   }
-}
+});
