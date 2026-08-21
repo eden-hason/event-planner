@@ -433,7 +433,17 @@
       "adding": "Adding...",
       "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)",
       "side": "Side",
-      "noSide": "No side"
+      "noSide": "No side",
+      "table": {
+        "label": "Table",
+        "placeholder": "No table",
+        "searchPlaceholder": "Search or type a table number",
+        "empty": "No tables found",
+        "none": "No table",
+        "tableNumber": "Table {number}",
+        "create": "Create table {number}",
+        "createError": "Could not create the table"
+      }
     },
     "rsvp": {
       "pending": "Pending",
@@ -467,6 +477,8 @@
       "phone": "Phone",
       "group": "Group",
       "side": "Side",
+      "tableColumn": "Table",
+      "tableNumber": "Table {number}",
       "rsvpStatus": "RSVP Status",
       "dietaryRestrictions": "Dietary Restrictions",
       "dietaryNone": "None",
@@ -1277,6 +1289,8 @@
       "title": "Guest Experience",
       "lockGuestCount": "Lock Attendance Count",
       "lockGuestCountDescription": "Guests won't be able to change the number of seats assigned to their invitation",
+      "sendTableNumbers": "Send table numbers",
+      "sendTableNumbersDescription": "Guests will receive their table number in the event reminder",
       "specialMealSelection": "Special Meal Selection",
       "specialMealSelectionDescription": "Ask guests to choose a meal option",
       "specialMealsLabel": "Special Meal Options",

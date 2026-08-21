@@ -63,6 +63,7 @@ export function GuestExperienceCard({ event }: GuestExperienceCardProps) {
         dietaryOptions: event.guestExperience?.dietaryOptions ?? false,
         dietaryTypes: event.guestExperience?.dietaryTypes ?? ['vegetarian', 'vegan', 'gluten_free', 'strictly_kosher'],
         lockGuestCount: event.guestExperience?.lockGuestCount ?? false,
+        sendTableNumbers: event.guestExperience?.sendTableNumbers ?? false,
       },
     },
   });
@@ -222,6 +223,27 @@ export function GuestExperienceCard({ event }: GuestExperienceCardProps) {
                     <ItemContent>
                       <ItemTitle>{t('lockGuestCount')}</ItemTitle>
                       <ItemDescription>{t('lockGuestCountDescription')}</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <FormControl>
+                        <Switch
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </ItemActions>
+                  </Item>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="guestExperience.sendTableNumbers"
+                render={({ field }) => (
+                  <Item>
+                    <ItemContent>
+                      <ItemTitle>{t('sendTableNumbers')}</ItemTitle>
+                      <ItemDescription>{t('sendTableNumbersDescription')}</ItemDescription>
                     </ItemContent>
                     <ItemActions>
                       <FormControl>

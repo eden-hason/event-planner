@@ -433,7 +433,17 @@
       "adding": "מוסיף...",
       "phoneInvalid": "יש להזין מספר נייד ישראלי תקין (למשל 054-1234567)",
       "side": "צד",
-      "noSide": "ללא צד"
+      "noSide": "ללא צד",
+      "table": {
+        "label": "שולחן",
+        "placeholder": "ללא שולחן",
+        "searchPlaceholder": "חפש או הקלד מספר שולחן",
+        "empty": "לא נמצאו שולחנות",
+        "none": "ללא שולחן",
+        "tableNumber": "שולחן {number}",
+        "create": "צור שולחן {number}",
+        "createError": "יצירת השולחן נכשלה"
+      }
     },
     "rsvp": {
       "pending": "ממתין",
@@ -467,6 +477,8 @@
       "phone": "טלפון",
       "group": "קבוצה",
       "side": "צד",
+      "tableColumn": "שולחן",
+      "tableNumber": "שולחן {number}",
       "rsvpStatus": "סטטוס אישור",
       "dietaryRestrictions": "הגבלות תזונה",
       "dietaryNone": "ללא",
@@ -1277,6 +1289,8 @@
       "title": "חוויית האורח",
       "lockGuestCount": "נעל מספר מוזמנים",
       "lockGuestCountDescription": "האורחים לא יוכלו לשנות את מספר המקומות שנקבע להם בהזמנה",
+      "sendTableNumbers": "שליחת מספר שולחן",
+      "sendTableNumbersDescription": "המוזמנים יקבלו את מספר השולחן שלהם בתזכורת לאירוע",
       "specialMealSelection": "בחירת מנה מיוחדת",
       "specialMealSelectionDescription": "בקש מהאורחים לבחור מנה",
       "specialMealsLabel": "מנות מיוחדות לבחירה",

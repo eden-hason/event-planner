@@ -11,6 +11,7 @@ type GuestsExperienceDb = {
   dietary_options?: boolean;
   dietary_types?: string[];
   lock_guest_count?: boolean;
+  send_table_numbers?: boolean;
 };
 
 // Type for event details update to DB
@@ -87,6 +88,7 @@ export function eventDetailsUpdateToDb(
       dietary_options: data.guestExperience.dietaryOptions,
       dietary_types: data.guestExperience.dietaryTypes,
       lock_guest_count: data.guestExperience.lockGuestCount,
+      send_table_numbers: data.guestExperience.sendTableNumbers,
     };
   }
 

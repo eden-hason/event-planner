@@ -85,6 +85,15 @@ export const TableUpsertSchema = z.object({
     .min(1, 'Capacity must be at least 1')
     .max(100, 'Capacity must be 100 or less')
     .optional(),
+  // Explicit table number, for callers that let the host name the table rather
+  // than taking the next one in sequence (the guest form's table picker).
+  // Omitted by the seating canvas, which always appends max+1.
+  tableNumber: z
+    .number()
+    .int()
+    .min(1, 'Table number must be at least 1')
+    .max(999, 'Table number must be 999 or less')
+    .optional(),
   positionX: z.number().optional(),
   positionY: z.number().optional(),
   rotation: z.number().optional(),

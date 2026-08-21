@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table';
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
+import type { TableOption } from '@/features/seating';
 import { GuestSortKey } from './use-guest-filters';
 
 const RSVP_ORDER: Record<string, number> = {
@@ -34,6 +35,7 @@ interface UseGuestsTableProps {
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   pageSize?: number;
   showDietary?: boolean;
+  tables?: TableOption[];
 }
 
 export function useGuestsTable({
@@ -47,6 +49,7 @@ export function useGuestsTable({
   onDeleteGuest,
   pageSize = DEFAULT_PAGE_SIZE,
   showDietary = false,
+  tables = [],
 }: UseGuestsTableProps) {
   const t = useTranslations('guests');
 
@@ -163,11 +166,17 @@ export function useGuestsTable({
     );
   };
 
+  const tableNumberById = useMemo(
+    () => new Map(tables.map((table) => [table.id, table.tableNumber])),
+    [tables],
+  );
+
   const columns = createGuestColumns({
     onDelete: onDeleteGuest,
     showDietary,
     t,
     dietaryLabelMap,
+    tableNumberById,
   });
 
   const table = useReactTable({

@@ -22,6 +22,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
+import type { TableOption } from '@/features/seating';
 import { useGuestFilters } from '@/features/guests/hooks';
 import { filterAndSortGuests } from '@/features/guests/utils';
 import { GuestSearch } from '@/features/guests/components/guest-search';
@@ -41,6 +42,7 @@ interface GuestsMobileProps {
   onUploadFile: () => void;
   selectedStatuses: string[];
   onStatusClick: (status: string | null) => void;
+  tables?: TableOption[];
 }
 
 export function GuestsMobile({
@@ -52,9 +54,15 @@ export function GuestsMobile({
   onUploadFile,
   selectedStatuses,
   onStatusClick,
+  tables = [],
 }: GuestsMobileProps) {
   const t = useTranslations('guests');
   const isRTL = useLocale() === 'he';
+
+  const tableNumberById = useMemo(
+    () => new Map(tables.map((table) => [table.id, table.tableNumber])),
+    [tables],
+  );
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
@@ -193,6 +201,9 @@ export function GuestsMobile({
               onSelect={onSelectGuest}
               onDelete={onDeleteGuest}
               onMarkConfirmed={onMarkConfirmed}
+              tableNumber={
+                guest.tableId ? tableNumberById.get(guest.tableId) : undefined
+              }
               t={t}
             />
           ))}

@@ -20,6 +20,17 @@ export interface SeatingPageData {
   stats: SeatingStatsView;
 }
 
+// A table reduced to what a picker needs: its identity, its number, and how
+// full it is. Carries head counts rather than guest rows so the guests page can
+// load every table without pulling the seating chart.
+export interface TableOption {
+  id: string;
+  tableNumber: number;
+  label: string | null;
+  capacity: number;
+  seatedHeadCount: number;
+}
+
 export interface TableOccupancy {
   seatedHeadCount: number;
   capacity: number;

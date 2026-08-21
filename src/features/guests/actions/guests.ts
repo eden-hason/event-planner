@@ -53,6 +53,10 @@ export async function upsertGuest(
     if (parsedData.side === 'null') {
       parsedData.side = null;
     }
+    // Explicit null for tableId unseats the guest
+    if (parsedData.tableId === 'null') {
+      parsedData.tableId = null;
+    }
     // Coerce boolean string from FormData
     if (parsedData.isOfflineRsvp !== undefined) {
       parsedData.isOfflineRsvp = parsedData.isOfflineRsvp === 'true';

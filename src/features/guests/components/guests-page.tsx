@@ -40,6 +40,7 @@ import {
   IconUsersGroup,
 } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
+import type { TableOption } from '@/features/seating';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -63,6 +64,7 @@ interface GuestsPageProps {
   groups: GroupWithGuestsApp[];
   existingPhones: Map<string, string>;
   showDietary?: boolean;
+  tables?: TableOption[];
   currentUserId?: string | null;
   initialInvitedGuestIds?: string[];
   capacity?: number | null;
@@ -101,6 +103,7 @@ export function GuestsPage({
   groups,
   existingPhones,
   showDietary = false,
+  tables = [],
   currentUserId = null,
   initialInvitedGuestIds = [],
   capacity = null,
@@ -421,6 +424,7 @@ export function GuestsPage({
               onUploadFile={() => setIsImportDialogOpen(true)}
               selectedStatuses={selectedStatuses}
               onStatusClick={handleStatCardClick}
+              tables={tables}
             />
           ) : (
             <GuestDirectory
@@ -431,6 +435,7 @@ export function GuestsPage({
               existingPhones={existingPhones}
               onSelectGuest={handleSelectGuest}
               showDietary={showDietary}
+              tables={tables}
               selectedStatuses={selectedStatuses}
               onStatusToggle={handleStatusToggle}
               recentlyUpdatedGuestId={recentlyUpdatedGuestId}
@@ -544,6 +549,7 @@ export function GuestsPage({
               hideActions
               onPendingChange={setIsSubmitting}
               showDietary={showDietary}
+              tables={tables}
               hasReceivedInitialInvitation={
                 selectedGuest
                   ? initialInvitedGuestIds.includes(selectedGuest.id)

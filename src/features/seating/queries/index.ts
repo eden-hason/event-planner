@@ -1,1 +1,5 @@
-export { getEventTables, getSeatingPageData } from './tables';
+export {
+  getEventTables,
+  getEventTableOptions,
+  getSeatingPageData,
+} from './tables';
