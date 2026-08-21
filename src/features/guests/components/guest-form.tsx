@@ -34,6 +34,8 @@ import {
   GROUP_SIDES,
 } from '@/features/guests/schemas';
 import { GroupIcon } from './groups';
+import { GuestTableCombobox } from './guest-table-combobox';
+import type { TableOption } from '@/features/seating';
 import {
   IconAddressBook,
   IconCheck,
@@ -59,6 +61,7 @@ interface GuestFormProps {
   hideActions?: boolean;
   onPendingChange?: (pending: boolean) => void;
   showDietary?: boolean;
+  tables?: TableOption[];
   hasReceivedInitialInvitation?: boolean;
   nonOfflineCount?: number;
   capacity?: number | null;
@@ -75,6 +78,7 @@ export function GuestForm({
   hideActions = false,
   onPendingChange,
   showDietary = false,
+  tables = [],
   hasReceivedInitialInvitation = false,
   nonOfflineCount,
   capacity,
@@ -111,6 +115,7 @@ export function GuestForm({
       amount: guest?.amount || 1,
       notes: guest?.notes || '',
       side: guest?.side ?? null,
+      tableId: guest?.tableId ?? null,
       isOfflineRsvp: guest?.isOfflineRsvp ?? false,
     },
   });
@@ -133,6 +138,7 @@ export function GuestForm({
         amount: guest.amount || 1,
         notes: guest.notes || '',
         side: guest.side ?? null,
+        tableId: guest.tableId ?? null,
         isOfflineRsvp: guest.isOfflineRsvp ?? false,
       });
     }
@@ -194,7 +200,7 @@ export function GuestForm({
     }
 
     Object.entries(values).forEach(([key, value]) => {
-      if (key === 'groupId' || key === 'side') {
+      if (key === 'groupId' || key === 'side' || key === 'tableId') {
         formData.append(key, value ? String(value) : 'null');
         return;
       }
@@ -362,6 +368,22 @@ export function GuestForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tableId"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>{t('form.table.label')}</FormLabel>
+                  <GuestTableCombobox
+                    eventId={eventId}
+                    tables={tables}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

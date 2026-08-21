@@ -30,6 +30,7 @@ import {
 } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { useGuestsTable, GuestSortKey } from '@/features/guests/hooks';
+import type { TableOption } from '@/features/seating';
 import { cn } from '@/lib/utils';
 
 interface GuestsTableProps {
@@ -46,6 +47,7 @@ interface GuestsTableProps {
   onUploadFile?: () => void;
   pageSize?: number;
   showDietary?: boolean;
+  tables?: TableOption[];
   recentlyUpdatedGuestId?: string | null;
 }
 
@@ -63,6 +65,7 @@ export function GuestsTable({
   onUploadFile,
   pageSize,
   showDietary = false,
+  tables = [],
   recentlyUpdatedGuestId,
 }: GuestsTableProps) {
   const t = useTranslations('guests');
@@ -79,6 +82,7 @@ export function GuestsTable({
     onDeleteGuest,
     pageSize,
     showDietary,
+    tables,
   });
 
   const handleRowClick = (guest: GuestWithGroupApp) => {

@@ -84,6 +84,10 @@ export const GuestExperienceSchema = z.object({
   dietaryOptions: z.boolean().optional(),
   dietaryTypes: z.array(z.string()).optional(),
   lockGuestCount: z.boolean().optional(),
+  // Whether the event reminder carries each guest's table number. Controls
+  // message content only - the seating page and the guest form's table picker
+  // are available regardless.
+  sendTableNumbers: z.boolean().optional(),
 });
 
 export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
@@ -93,6 +97,7 @@ export const GuestExperienceDbSchema = z.object({
   dietary_options: z.boolean().optional(),
   dietary_types: z.array(z.string()).optional(),
   lock_guest_count: z.boolean().optional(),
+  send_table_numbers: z.boolean().optional(),
 });
 
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
@@ -253,6 +258,7 @@ export function dbToAppTransformer(dbData: {
       dietaryOptions: dbData.guests_experience.dietary_options,
       dietaryTypes: dbData.guests_experience.dietary_types,
       lockGuestCount: dbData.guests_experience.lock_guest_count,
+      sendTableNumbers: dbData.guests_experience.send_table_numbers,
     }
     : undefined;
 

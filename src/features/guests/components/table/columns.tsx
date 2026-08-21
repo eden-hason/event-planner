@@ -12,7 +12,7 @@ import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
 import { IconMailOff } from '@tabler/icons-react';
 
-type TFn = (key: string) => string;
+type TFn = (key: string, values?: Record<string, string | number>) => string;
 
 const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus'], t: TFn) => {
   const statusConfig = {
@@ -31,12 +31,15 @@ interface GuestColumnsOptions {
   showDietary?: boolean;
   t: TFn;
   dietaryLabelMap: Record<string, string>;
+  /** Guests carry table_id; the number lives on the table row */
+  tableNumberById?: Map<string, number>;
 }
 
 export const createGuestColumns = (
   options: GuestColumnsOptions,
 ): ColumnDef<GuestWithGroupApp>[] => {
-  const { t, dietaryLabelMap } = options;
+  const { t, dietaryLabelMap, tableNumberById = new Map<string, number>() } =
+    options;
 
   const cols: ColumnDef<GuestWithGroupApp>[] = [
     {
@@ -98,6 +101,19 @@ export const createGuestColumns = (
       },
       filterFn: (row, _id, value: string[]) => {
         return value.length === 0 || value.includes(row.original.side ?? '');
+      },
+    },
+    {
+      accessorKey: 'tableId',
+      header: () => <div>{t('table.tableColumn')}</div>,
+      cell: ({ row }) => {
+        const tableId = row.original.tableId;
+        const tableNumber = tableId ? tableNumberById.get(tableId) : undefined;
+        return tableNumber !== undefined ? (
+          <span className="text-sm">{t('table.tableNumber', { number: tableNumber })}</span>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        );
       },
     },
     {

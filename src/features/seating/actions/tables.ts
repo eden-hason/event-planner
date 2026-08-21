@@ -47,6 +47,9 @@ function parseFormDataAsUpsert(
   if (parsed.rotation && typeof parsed.rotation === 'string') {
     parsed.rotation = Number(parsed.rotation);
   }
+  if (parsed.tableNumber && typeof parsed.tableNumber === 'string') {
+    parsed.tableNumber = Number(parsed.tableNumber);
+  }
   // Empty label → null (use auto number as display fallback)
   if (typeof parsed.label === 'string' && parsed.label.trim() === '') {
     parsed.label = null;
@@ -118,8 +121,12 @@ export async function createTable(
       return max + 1;
     };
 
+    // An explicit number is the host's choice, so a collision is a real
+    // conflict rather than a race to retry past.
+    const hasExplicitNumber = validated.tableNumber !== undefined;
+
     let insertAttempts = 0;
-    let nextNumber = computeNextNumber();
+    let nextNumber = validated.tableNumber ?? computeNextNumber();
     while (insertAttempts < 2) {
       const { data, error } = await supabase
         .from('tables')
@@ -130,7 +137,16 @@ export async function createTable(
       if (!error) {
         const table = TableDbToAppTransformerSchema.parse(data);
         revalidatePath(`/app/${eventId}/seating`);
+        // The guests page renders the same tables in its table picker
+        revalidatePath(`/app/${eventId}/guests`);
         return { success: true, message: 'Table created', table };
+      }
+
+      if (error.code === '23505' && hasExplicitNumber) {
+        return {
+          success: false,
+          message: `Table ${nextNumber} already exists`,
+        };
       }
 
       // 23505 = unique violation on (event_id, table_number) — race; refetch and retry once

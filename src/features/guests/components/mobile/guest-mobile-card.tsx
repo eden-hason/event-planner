@@ -20,13 +20,15 @@ import {
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { GroupIcon } from '@/features/guests/components/groups';
 
-type TFn = (key: string) => string;
+type TFn = (key: string, values?: Record<string, string | number>) => string;
 
 interface GuestMobileCardProps {
   guest: GuestWithGroupApp;
   onSelect: (guest: GuestWithGroupApp) => void;
   onDelete: (guest: GuestWithGroupApp) => void;
   onMarkConfirmed: (guest: GuestWithGroupApp) => void;
+  /** Resolved from guest.tableId by the list - the number lives on the table row */
+  tableNumber?: number;
   t: TFn;
 }
 
@@ -48,6 +50,7 @@ export function GuestMobileCard({
   onSelect,
   onDelete,
   onMarkConfirmed,
+  tableNumber,
   t,
 }: GuestMobileCardProps) {
   const isRTL = useLocale() === 'he';
@@ -102,6 +105,11 @@ export function GuestMobileCard({
             <Badge variant="outline" className="gap-1.5">
               <GroupIcon iconName={guest.group.icon} size="sm" />
               {guest.group.name}
+            </Badge>
+          )}
+          {tableNumber !== undefined && (
+            <Badge variant="outline">
+              {t('table.tableNumber', { number: tableNumber })}
             </Badge>
           )}
         </div>

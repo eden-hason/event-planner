@@ -35,6 +35,7 @@ export {
 export type {
   SeatingStatsView,
   SeatingPageData,
+  TableOption,
   TableOccupancy,
   DraggableGuestData,
   DraggableTableData,
@@ -51,6 +52,6 @@ export { tableOccupancy, rsvpSortKey } from './utils/occupancy';
 export { groupColor, type SeatColor } from './utils/group-color';
 export { nextFreePosition } from './utils/auto-place';
 
-// Note: getEventTables and getSeatingPageData are exported from
-// '@/features/seating/queries' to avoid importing server-only code into
-// client components
+// Note: getEventTables, getEventTableOptions and getSeatingPageData are
+// exported from '@/features/seating/queries' to avoid importing server-only
+// code into client components

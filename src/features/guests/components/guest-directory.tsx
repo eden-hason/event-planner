@@ -12,6 +12,7 @@ import {
 } from '@/features/guests/components/filters';
 import { ImportGuestsDialog } from '@/features/guests/components/groups';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
+import type { TableOption } from '@/features/seating';
 import { useGuestFilters, GuestSortKey } from '@/features/guests/hooks';
 import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
@@ -42,6 +43,7 @@ interface GuestDirectoryProps {
   existingPhones: Map<string, string>;
   onSelectGuest: (guest: GuestWithGroupApp | null) => void;
   showDietary?: boolean;
+  tables?: TableOption[];
   selectedStatuses?: string[];
   onStatusToggle?: (status: string) => void;
   recentlyUpdatedGuestId?: string | null;
@@ -55,6 +57,7 @@ export function GuestDirectory({
   existingPhones,
   onSelectGuest,
   showDietary = false,
+  tables = [],
   selectedStatuses: externalStatuses,
   onStatusToggle: externalStatusToggle,
   recentlyUpdatedGuestId,
@@ -279,6 +282,7 @@ export function GuestDirectory({
             onUploadFile={() => setImportDialogOpen(true)}
             pageSize={pageSize}
             showDietary={showDietary}
+            tables={tables}
             recentlyUpdatedGuestId={recentlyUpdatedGuestId}
           />
         ) : null}

@@ -1,7 +1,12 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { TableDbToAppTransformerSchema, type TableApp } from '../schemas';
 import { getEventGuestsWithGroups } from '@/features/guests/queries';
-import type { SeatingPageData, SeatingStatsView, TableWithGuestsApp } from '../types';
+import type {
+  SeatingPageData,
+  SeatingStatsView,
+  TableOption,
+  TableWithGuestsApp,
+} from '../types';
 
 export const getEventTables = async (eventId: string): Promise<TableApp[]> => {
   try {
@@ -30,6 +35,60 @@ export const getEventTables = async (eventId: string): Promise<TableApp[]> => {
     return tables;
   } catch (error) {
     console.error('Error fetching tables for event:', error);
+    return [];
+  }
+};
+
+/**
+ * Every table on an event with its seated head count, ordered by table number.
+ *
+ * Feeds the table picker on the guests page. Deliberately lighter than
+ * getSeatingPageData: it aggregates guests.amount instead of returning guest
+ * rows, because the picker only ever renders "seated / capacity".
+ */
+export const getEventTableOptions = async (
+  eventId: string,
+): Promise<TableOption[]> => {
+  try {
+    const { supabase } = await getEffectiveClient();
+    const [tablesResult, guestsResult] = await Promise.all([
+      supabase
+        .from('tables')
+        .select('id, table_number, label, capacity')
+        .eq('event_id', eventId)
+        .order('table_number', { ascending: true }),
+      supabase
+        .from('guests')
+        .select('table_id, amount')
+        .eq('event_id', eventId)
+        .not('table_id', 'is', null),
+    ]);
+
+    if (tablesResult.error) {
+      console.error('Error fetching table options:', tablesResult.error);
+      return [];
+    }
+    if (guestsResult.error) {
+      console.error('Error fetching seated head counts:', guestsResult.error);
+    }
+
+    const headCountByTable = new Map<string, number>();
+    for (const row of guestsResult.data ?? []) {
+      const tableId = row.table_id as string | null;
+      if (!tableId) continue;
+      const amount = (row.amount as number | null) ?? 1;
+      headCountByTable.set(tableId, (headCountByTable.get(tableId) ?? 0) + amount);
+    }
+
+    return (tablesResult.data ?? []).map((row) => ({
+      id: row.id as string,
+      tableNumber: row.table_number as number,
+      label: (row.label as string | null) ?? null,
+      capacity: row.capacity as number,
+      seatedHeadCount: headCountByTable.get(row.id as string) ?? 0,
+    }));
+  } catch (error) {
+    console.error('Error fetching table options:', error);
     return [];
   }
 };
