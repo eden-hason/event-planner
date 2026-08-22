@@ -36,6 +36,43 @@ const EN = {
 } as const;
 
 /**
+ * The hosts a type is named after, in the order they are read out.
+ *
+ * Empty until the names screen is answered, which is what leaves a Draft
+ * Event's title as the bare frame rather than a half-filled sentence.
+ */
+function resolveHosts(
+  eventType: EventTypeKey,
+  names: EventHostNames,
+): string[] {
+  const trim = (v?: string) => v?.trim() || undefined;
+
+  return (
+    isCoupleEvent(eventType)
+      ? [trim(names.brideName), trim(names.groomName)]
+      : [trim(names.childName)]
+  ).filter((name): name is string => !!name);
+}
+
+/**
+ * The Hebrew title split into the frame and the names that fill it.
+ *
+ * `buildEventTitle` joins the two into one sentence; a surface that sets the
+ * frame apart typographically - the reminder page prints it as an eyebrow
+ * above the names - needs the halves on their own. Hebrew only, because the
+ * English phrasings do not all put the frame first.
+ */
+export function buildEventTitleParts(
+  eventType: EventTypeKey,
+  names: EventHostNames,
+): { prefix: string; hosts: string[] } {
+  return {
+    prefix: HE[eventType].prefix,
+    hosts: resolveHosts(eventType, names),
+  };
+}
+
+/**
  * Builds the event title from the host names.
  *
  * The title is generated, never typed: the names screen is the only place these
@@ -51,13 +88,7 @@ export function buildEventTitle(
   names: EventHostNames,
   locale: string,
 ): string {
-  const trim = (v?: string) => v?.trim() || undefined;
-
-  const hosts = isCoupleEvent(eventType)
-    ? [trim(names.brideName), trim(names.groomName)].filter(
-        (name): name is string => !!name,
-      )
-    : [trim(names.childName)].filter((name): name is string => !!name);
+  const hosts = resolveHosts(eventType, names);
 
   if (locale === 'he') {
     const { prefix } = HE[eventType];

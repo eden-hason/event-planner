@@ -9,6 +9,7 @@ export * from './types';
 // are imported from '@/features/events/queries' directly.
 export {
   buildEventTitle,
+  buildEventTitleParts,
   buildHostDetails,
   readEventTypeKey,
   readHostNames,
