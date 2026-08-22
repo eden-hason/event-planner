@@ -29,17 +29,34 @@ export async function GET(
     coords?: { lat: number; lng: number };
   } | null;
 
-  if (!location?.name && !location?.coords) {
+  const name = location?.name?.trim();
+
+  if (!name && !location?.coords) {
     return NextResponse.redirect(SITE_URL, { status: 302 });
   }
 
-  const deepLink = location.coords
-    ? `waze://?ll=${location.coords.lat},${location.coords.lng}&navigate=yes`
-    : `waze://?q=${encodeURIComponent(location.name!)}&navigate=yes`;
+  // Waze reads `q` and `ll` together as "search this name near these
+  // coordinates", and we send both whenever we have both.
+  //
+  // The name alone is not enough to navigate by: it is only the Places
+  // `main_text`, with the locality half dropped (see location-input), and free
+  // typing stores whatever was typed with no place at all - so searching it
+  // near the guest's own position can resolve to a same-named hall in another
+  // town. The coordinates alone are exact but nameless, leaving the guest
+  // looking at a reverse-geocoded street address rather than their venue. The
+  // pair gives the name on screen and the coordinates as the tie-breaker.
+  const wazeParams: string[] = [];
+  if (name) wazeParams.push(`q=${encodeURIComponent(name)}`);
+  if (location?.coords) {
+    wazeParams.push(`ll=${location.coords.lat},${location.coords.lng}`);
+  }
+  wazeParams.push('navigate=yes');
 
-  const webFallback = location.coords
-    ? `https://waze.com/ul?ll=${location.coords.lat},${location.coords.lng}&navigate=yes`
-    : `https://waze.com/ul?q=${encodeURIComponent(location.name!)}&navigate=yes`;
+  // Both URLs carry the same query, so the app and the web fallback can never
+  // send a guest to two different places.
+  const query = wazeParams.join('&');
+  const deepLink = `waze://?${query}`;
+  const webFallback = `https://waze.com/ul?${query}`;
 
   const html = `<!DOCTYPE html>
 <html>
