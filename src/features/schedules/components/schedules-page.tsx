@@ -3,7 +3,10 @@ import { IconChartBar, IconLayoutGrid } from '@tabler/icons-react';
 
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
-import { CallPlanCard, CallRoundResultsCard } from '@/features/calls/components';
+import {
+  CallPlanCard,
+  CallRoundResultsCard,
+} from '@/features/calls/components';
 import { getCallRoundsByScheduleId } from '@/features/calls/queries';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDefaultSchedulesForEventType } from '../queries/catalog';
@@ -16,7 +19,13 @@ import {
 } from '../schemas';
 import { type OutreachItem, type OutreachNavGroup } from '../types';
 import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
-import { filterGuestsByTarget, isMessageSchedule } from '../utils';
+import {
+  filterGuestsByTarget,
+  isGiftingEnabled,
+  isMessageSchedule,
+  shouldSendTableNumbers,
+} from '../utils';
+import { resolveTemplatesForPreview } from '../queries/resolve-templates';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleTabContent } from './schedule-tab-content';
@@ -35,6 +44,12 @@ type ScheduleWithTemplate = {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
   smsBody: string | null;
+  /**
+   * How many targeted guests will get the variant *without* a table number
+   * because they have no seating assignment yet. Null when this schedule has
+   * no table variant in play, so there is nothing to warn about.
+   */
+  seatingGap: { withoutTable: number; total: number } | null;
 };
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -62,19 +77,71 @@ export async function SchedulesPage({
   // DB table and can grow past the four keys known at build time.
   const schedulesByType: Partial<Record<string, ScheduleWithTemplate[]>> = {};
 
-  for (const schedule of schedules) {
-    const typeKey = schedule.scheduleTypeKey;
+  // schedule.template is only the family anchor. Resolve what would actually be
+  // sent, using the same resolver the send engine runs, so the preview the
+  // organiser approves is the message their guests receive.
+  const gifting = isGiftingEnabled(event?.eventSettings);
+  const tableNumbers = shouldSendTableNumbers(event?.guestExperience);
+
+  const resolved = await Promise.all(
+    schedules.map(async (schedule): Promise<ScheduleWithTemplate> => {
+      if (!schedule.template) {
+        return { schedule, template: null, smsBody: null, seatingGap: null };
+      }
+
+      const resolution = await resolveTemplatesForPreview({
+        anchor: schedule.template,
+        gifting,
+        tableNumbers,
+      });
+
+      // A failed resolution is a seeding bug that will also fail the send.
+      // Fall back to the anchor so the page still renders something rather
+      // than blanking the card.
+      const previewTemplate = resolution.success
+        ? (resolution.templates.withTable ?? resolution.templates.withoutTable)
+        : schedule.template;
+
+      // Preview the table variant when there is one, and let the gap line
+      // account for the guests who will get the other.
+      const hasTableVariant =
+        resolution.success && resolution.templates.withTable !== null;
+
+      let seatingGap: ScheduleWithTemplate['seatingGap'] = null;
+      if (hasTableVariant) {
+        const targeted = filterGuestsByTarget(
+          guests,
+          schedule.targetStatus,
+          schedule.scheduleTypeKey,
+        );
+        const withoutTable = targeted.filter((guest) => !guest.tableId).length;
+        if (withoutTable > 0) {
+          seatingGap = { withoutTable, total: targeted.length };
+        }
+      }
+
+      return {
+        schedule,
+        template:
+          previewTemplate.channel === 'whatsapp'
+            ? toWhatsAppTemplate(previewTemplate)
+            : null,
+        smsBody:
+          previewTemplate.channel === 'sms'
+            ? resolveSmsBodyForPreview(previewTemplate.payload, event)
+                .resolvedBody
+            : null,
+        seatingGap,
+      };
+    }),
+  );
+
+  for (const item of resolved) {
+    const typeKey = item.schedule.scheduleTypeKey;
     if (!schedulesByType[typeKey]) {
       schedulesByType[typeKey] = [];
     }
-    schedulesByType[typeKey]!.push({
-      schedule,
-      template: schedule.template ? toWhatsAppTemplate(schedule.template) : null,
-      smsBody:
-        schedule.template?.channel === 'sms'
-          ? resolveSmsBodyForPreview(schedule.template.payload, event).resolvedBody
-          : null,
-    });
+    schedulesByType[typeKey]!.push(item);
   }
 
   // Show every type that has actual schedules, not just the four known at
@@ -83,7 +150,9 @@ export async function SchedulesPage({
   const presentTypes = Object.keys(schedulesByType);
   const visibleTypes = [
     ...SCHEDULE_TYPE_KEYS.filter((type) => schedulesByType[type]),
-    ...presentTypes.filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type)).sort(),
+    ...presentTypes
+      .filter((type) => !KNOWN_SCHEDULE_TYPE_KEYS.includes(type))
+      .sort(),
   ];
 
   // The wizard shows only when there is no outreach at all. Call rounds are
@@ -133,91 +202,101 @@ export async function SchedulesPage({
       : items[0].schedule.scheduleTypeName;
     const multiple = items.length > 1;
 
-    contentByType[type] = items.map(({ schedule, template, smsBody }, index) => {
-      const label = multiple ? `${baseLabel} ${index + 1}` : baseLabel;
+    contentByType[type] = items.map(
+      ({ schedule, template, smsBody, seatingGap }, index) => {
+        const label = multiple ? `${baseLabel} ${index + 1}` : baseLabel;
 
-      // A call round is planned like a message but executed by a person, so it
-      // reports the state of its round rather than of a send. A plan with no
-      // round yet is simply pending - the same amber the nav already uses.
-      if (!isMessageSchedule(schedule)) {
-        const round = roundsBySchedule.get(schedule.id);
-        const cancelled = schedule.status === 'cancelled';
+        // A call round is planned like a message but executed by a person, so it
+        // reports the state of its round rather than of a send. A plan with no
+        // round yet is simply pending - the same amber the nav already uses.
+        if (!isMessageSchedule(schedule)) {
+          const round = roundsBySchedule.get(schedule.id);
+          const cancelled = schedule.status === 'cancelled';
+
+          return {
+            label,
+            status: cancelled
+              ? ('cancelled' as const)
+              : (round?.status ?? ('pending' as const)),
+            timestamp: cancelled
+              ? undefined
+              : round
+                ? (round.completedAt ?? round.createdAt)
+                : schedule.scheduledDate,
+            details: round ? (
+              <CallRoundResultsCard round={round} label={label} />
+            ) : (
+              <CallPlanCard
+                scheduledDate={schedule.scheduledDate}
+                scheduledTime={schedule.scheduledTime}
+                targetStatus={schedule.targetStatus}
+                eventDate={eventDate}
+                cancelled={cancelled}
+              />
+            ),
+          };
+        }
 
         return {
           label,
-          status: cancelled ? ('cancelled' as const) : (round?.status ?? ('pending' as const)),
-          timestamp: cancelled
-            ? undefined
-            : round
-              ? (round.completedAt ?? round.createdAt)
-              : schedule.scheduledDate,
-          details: round ? (
-            <CallRoundResultsCard round={round} label={label} />
-          ) : (
-            <CallPlanCard
-              scheduledDate={schedule.scheduledDate}
-              scheduledTime={schedule.scheduledTime}
-              targetStatus={schedule.targetStatus}
-              eventDate={eventDate}
-              cancelled={cancelled}
-            />
-          ),
-        };
-      }
-
-      return {
-        label,
-        status: schedule.status ?? ('pending' as const),
-        // A sent schedule is dated by when it went out; a still-pending one by
-        // when it is due. A cancelled one has no meaningful date.
-        timestamp:
-          schedule.status === 'sent'
-            ? (schedule.sentAt ?? undefined)
-            : schedule.status === 'cancelled'
-              ? undefined
-              : schedule.scheduledDate,
-        details: schedule.scheduleTypeKey === 'confirmation' ? (
-          <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-            <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
-              <TabsTrigger
-                value="overview"
-                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          status: schedule.status ?? ('pending' as const),
+          // A sent schedule is dated by when it went out; a still-pending one by
+          // when it is due. A cancelled one has no meaningful date.
+          timestamp:
+            schedule.status === 'sent'
+              ? (schedule.sentAt ?? undefined)
+              : schedule.status === 'cancelled'
+                ? undefined
+                : schedule.scheduledDate,
+          details:
+            schedule.scheduleTypeKey === 'confirmation' ? (
+              <Tabs
+                defaultValue="overview"
+                dir={locale === 'he' ? 'rtl' : 'ltr'}
               >
-                <IconLayoutGrid size={18} />
-                {t('tabs.overview')}
-              </TabsTrigger>
-              <TabsTrigger
-                value="results"
-                className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                <IconChartBar size={18} />
-                {t('tabs.results')}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview">
+                <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
+                  <TabsTrigger
+                    value="overview"
+                    className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  >
+                    <IconLayoutGrid size={18} />
+                    {t('tabs.overview')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="results"
+                    className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-none rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  >
+                    <IconChartBar size={18} />
+                    {t('tabs.results')}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview">
+                  <ScheduleTabContent
+                    schedule={schedule}
+                    template={template}
+                    smsBody={smsBody}
+                    seatingGap={seatingGap}
+                    eventDate={eventDate}
+                    event={event}
+                  />
+                </TabsContent>
+                <TabsContent value="results">
+                  <ScheduleInteractionsCard scheduleId={schedule.id} />
+                </TabsContent>
+              </Tabs>
+            ) : (
               <ScheduleTabContent
                 schedule={schedule}
                 template={template}
                 smsBody={smsBody}
+                seatingGap={seatingGap}
                 eventDate={eventDate}
                 event={event}
               />
-            </TabsContent>
-            <TabsContent value="results">
-              <ScheduleInteractionsCard scheduleId={schedule.id} />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <ScheduleTabContent
-            schedule={schedule}
-            template={template}
-            smsBody={smsBody}
-            eventDate={eventDate}
-            event={event}
-          />
-        ),
-      };
-    });
+            ),
+        };
+      },
+    );
   }
 
   // Messages and call rounds are two different kinds of outreach, so they get

@@ -34,6 +34,13 @@ export interface ParameterResolutionContext {
     [key: string]: unknown; // Allow additional fields
   };
   group?: GroupApp | null;
+  /**
+   * The guest's seating assignment, or null when they have none. Only the
+   * reminder templates whose requires_table_numbers is true read this - and a
+   * guest with no table is resolved onto the template that doesn't, so a null
+   * here should never reach a {{n}} that needs it.
+   */
+  table?: { tableNumber: number; label: string | null } | null;
   schedule?: ScheduleApp;
   confirmationToken?: string;
 }
@@ -137,6 +144,16 @@ const transformers: Record<TransformerType, TransformerFunction> = {
       process.env.NEXT_PUBLIC_VERCEL_URL ||
       'http://localhost:3000';
     return `${siteUrl}/nav/${code}`;
+  },
+
+  reminderUrl: (value: unknown) => {
+    const code = String(value ?? '').trim();
+    if (!code) return '';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_VERCEL_URL ||
+      'http://localhost:3000';
+    return `${siteUrl}/r/${code}`;
   },
 
   rsvpUrl: (value: unknown) => {
@@ -368,6 +385,20 @@ export function buildDynamicButtonParameters(
  * no specific guest is selected at preview time. Event placeholders are resolved
  * against the provided event.
  */
+/**
+ * Sources that vary per recipient and so have no value to show in a preview -
+ * they render as a bracketed label instead. `table.` is here because a guest's
+ * seating assignment is per-guest data like their name, not an event field; the
+ * preview would otherwise report the reminder as missing event details.
+ */
+function isPerGuestSource(source: string): boolean {
+  return (
+    source.startsWith('guest.') ||
+    source.startsWith('group.') ||
+    source.startsWith('table.')
+  );
+}
+
 export function resolveSmsBodyForPreview(
   smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
@@ -383,7 +414,7 @@ export function resolveSmsBodyForPreview(
 
   for (const config of placeholders) {
     const source = config.source ?? config.name;
-    if (source.startsWith('guest.') || source.startsWith('group.')) {
+    if (isPerGuestSource(source)) {
       const fieldName = source.split('.').pop() ?? source;
       resolvedValues.push(`[${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}]`);
     } else {
@@ -425,7 +456,7 @@ export function resolveTemplateBodyForPreview(
   for (const config of placeholders) {
     const source = config.source ?? config.name;
 
-    if (source.startsWith('guest.') || source.startsWith('group.')) {
+    if (isPerGuestSource(source)) {
       const fieldName = source.split('.').pop() ?? source;
       const label = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
       resolvedValues.push(`[${label}]`);

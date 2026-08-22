@@ -9,6 +9,7 @@ interface ScheduleTabContentProps {
   schedule: ScheduleApp;
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
+  seatingGap?: { withoutTable: number; total: number } | null;
   eventDate: string | null;
   event: EventApp | null;
 }
@@ -17,6 +18,7 @@ export function ScheduleTabContent({
   schedule,
   template,
   smsBody,
+  seatingGap,
   eventDate,
   event,
 }: ScheduleTabContentProps) {
@@ -36,6 +38,7 @@ export function ScheduleTabContent({
         <MessageContentCard
           template={template}
           smsBody={smsBody}
+          seatingGap={seatingGap}
           event={event}
         />
       </div>

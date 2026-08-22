@@ -11,6 +11,14 @@ export {
   type ButtonComponent,
 } from './parameter-resolvers';
 
+// Re-export event-configuration predicates
+export {
+  isGiftingEnabled,
+  shouldSendTableNumbers,
+  type GiftingSettings,
+  type TableNumberSettings,
+} from './event-config';
+
 // Re-export send helpers
 export {
   categoriseWhatsAppError,
