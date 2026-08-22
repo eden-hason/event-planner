@@ -943,6 +943,11 @@
         "title": "Missing event details",
         "description": "Some required fields aren't filled in yet. Complete them to see the full message preview.",
         "link": "Event Details"
+      },
+      "seatingGap": {
+        "title": "Some guests are not seated yet",
+        "description": "{withoutTable} of {total} guests have no table yet. They will get the version of the message without a table number.",
+        "link": "Seating"
       }
     },
     "sendDialog": {

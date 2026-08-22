@@ -60,6 +60,12 @@ export type GuestSendResult = {
   channel: DeliveryMethod;
   errorCode?: number;
   confirmationToken: string;
+  /**
+   * The template this guest was sent, recorded per delivery because one send
+   * can use two of them - a guest with no seating assignment gets the variant
+   * without a table number while everyone else gets the one with it.
+   */
+  templateId: string;
 };
 
 // ─── Single-guest send ────────────────────────────────────────────────────────
@@ -68,9 +74,10 @@ export async function sendToGuest(params: {
   guest: GuestApp;
   context: ParameterResolutionContext;
   template: WhatsAppTemplateApp;
+  templateId: string;
   confirmationToken: string;
 }): Promise<GuestSendResult> {
-  const { guest, context, template, confirmationToken } = params;
+  const { guest, context, template, templateId, confirmationToken } = params;
   const phoneE164 = formatPhoneE164(guest.phone!);
 
   const parameters = buildDynamicTemplateParameters(
@@ -103,6 +110,7 @@ export async function sendToGuest(params: {
       message: waResult.message,
       channel: 'whatsapp',
       confirmationToken,
+      templateId,
     };
   }
 
@@ -119,6 +127,7 @@ export async function sendToGuest(params: {
         message: smsResult.message,
         channel: 'sms',
         confirmationToken,
+        templateId,
       };
     }
   }
@@ -130,6 +139,7 @@ export async function sendToGuest(params: {
     channel: 'whatsapp',
     errorCode: waResult.errorCode,
     confirmationToken,
+    templateId,
   };
 }
 
@@ -158,9 +168,10 @@ export async function sendSmsToGuest(params: {
   guest: GuestApp;
   context: ParameterResolutionContext;
   smsPayload: SmsPayload;
+  templateId: string;
   confirmationToken: string;
 }): Promise<GuestSendResult> {
-  const { guest, context, smsPayload, confirmationToken } = params;
+  const { guest, context, smsPayload, templateId, confirmationToken } = params;
   const phoneE164 = formatPhoneE164(guest.phone!);
   const body = buildSmsBody(smsPayload, context);
   const result = await sendSmsMessage({ to: phoneE164, body });
@@ -172,6 +183,7 @@ export async function sendSmsToGuest(params: {
     message: result.message,
     channel: 'sms',
     confirmationToken,
+    templateId,
   };
 }
 
@@ -232,6 +244,7 @@ export function buildDeliveryRecord(
     schedule_id: scheduleId,
     guest_id: result.guest.id,
     delivery_method: result.channel,
+    template_id: result.templateId,
     status: result.success ? 'sent' : 'failed',
     sent_at: result.success ? new Date().toISOString() : null,
     external_message_id: result.messageId ?? null,

@@ -10,7 +10,12 @@ import {
   GroupDbToAppTransformerSchema,
   type GroupApp,
 } from '@/features/guests/schemas';
+import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import type { MessageTemplateApp } from '../schemas/message-templates';
+import type { GuestApp } from '@/features/guests/schemas';
 import {
+  isGiftingEnabled,
+  shouldSendTableNumbers,
   filterGuestsByTarget,
   isMessageSchedule,
   validatePhoneNumber,
@@ -84,6 +89,13 @@ function outcomeError(
 /** Maps a joined events row (snake_case) to the parameter-resolution shape. */
 function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
+  const settings = rawEvent.event_settings as {
+    paybox_config?: { enabled: boolean; link: string };
+    bit_config?: { enabled: boolean; phoneNumber: string };
+  } | null;
+  const guestExperience = rawEvent.guests_experience as {
+    send_table_numbers?: boolean;
+  } | null;
   return {
     id: rawEvent.id as string,
     userId: rawEvent.user_id as string,
@@ -104,6 +116,13 @@ function mapEventRow(rawEvent: Record<string, unknown>) {
       : undefined,
     receptionTime: (rawEvent.reception_time as string | null) ?? undefined,
     shortCode: (rawEvent.short_code as string | null) ?? undefined,
+    // Read by the template resolver, not by any placeholder.
+    eventSettings: settings
+      ? { payboxConfig: settings.paybox_config, bitConfig: settings.bit_config }
+      : undefined,
+    guestExperience: guestExperience
+      ? { sendTableNumbers: guestExperience.send_table_numbers }
+      : undefined,
   };
 }
 
@@ -147,7 +166,8 @@ export async function sendSchedule(
     .select(
       `${SCHEDULE_SELECT},
        events (id, user_id, title, event_date, location, host_details,
-               invitations, reception_time, short_code)`,
+               invitations, reception_time, short_code, event_settings,
+               guests_experience)`,
     )
     .eq('id', scheduleId)
     .single();
@@ -222,7 +242,33 @@ export async function sendSchedule(
     return outcomeError(scheduleId, message, schedule.eventId);
   };
 
-  // 5. Fetch and target guests
+  // 5. Resolve what actually gets sent. schedule.template is the family anchor
+  // bound when the schedule was created - typically weeks ago, before seating
+  // was done or a gift provider was added - so the body is resolved here from
+  // the event's current configuration instead. No fallback if a row is missing:
+  // that is a seeding bug, and sending a near-miss would hide it.
+  const resolution = await resolveTemplatesForEvent({
+    supabase,
+    anchor: template,
+    gifting: isGiftingEnabled(event.eventSettings),
+    tableNumbers: shouldSendTableNumbers(event.guestExperience),
+  });
+
+  if (!resolution.success) {
+    return fail(resolution.message);
+  }
+
+  const { withTable, withoutTable } = resolution.templates;
+
+  /**
+   * Table numbers are per-guest: seating is routinely incomplete on the day, so
+   * a guest with no assignment gets the variant that does not mention a table
+   * rather than a message with a blank where the number should be.
+   */
+  const templateForGuest = (guest: GuestApp): MessageTemplateApp =>
+    withTable && guest.tableId ? withTable : withoutTable;
+
+  // 6. Fetch and target guests
   let guestsQuery = supabase
     .from('guests')
     .select('*')
@@ -263,7 +309,7 @@ export async function sendSchedule(
 
   const skippedCount = targetedGuests.length - guestsWithPhones.length;
 
-  // 6. Optionally skip guests already delivered (safe cron resume)
+  // 7. Optionally skip guests already delivered (safe cron resume)
   let pendingGuests = guestsWithPhones;
   if (skipAlreadyDelivered) {
     const { data: existingDeliveries } = await supabase
@@ -293,7 +339,7 @@ export async function sendSchedule(
     }
   }
 
-  // 7. Send per channel, persisting delivery records per chunk
+  // 8. Send per channel, persisting delivery records per chunk
   let sentCount = 0;
   let failedCount = 0;
 
@@ -333,29 +379,74 @@ export async function sendSchedule(
     }
   };
 
+  // Batch fetch the seating assignments referenced by the targeted guests,
+  // mirroring how groups are fetched below. Only the table-number templates
+  // read this, but the lookup is needed on both channels, so it sits outside
+  // the branch. Skipped entirely when no table variant is in play.
+  const tablesMap = new Map<
+    string,
+    { tableNumber: number; label: string | null }
+  >();
+  if (withTable) {
+    const uniqueTableIds = [
+      ...new Set(
+        pendingGuests
+          .map((guest) => guest.tableId)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+
+    if (uniqueTableIds.length > 0) {
+      const { data: rawTables, error: tablesError } = await supabase
+        .from('tables')
+        .select('id, table_number, label')
+        .in('id', uniqueTableIds);
+
+      if (tablesError) {
+        return fail('Could not load seating assignments');
+      }
+
+      for (const row of rawTables ?? []) {
+        tablesMap.set(row.id, {
+          tableNumber: row.table_number,
+          label: row.label,
+        });
+      }
+    }
+  }
+
+  const tableForGuest = (guest: GuestApp) =>
+    (guest.tableId ? tablesMap.get(guest.tableId) : null) ?? null;
+
   if (template.channel === 'sms') {
     const results = await Promise.allSettled(
       pendingGuests.map((guest) => {
         const confirmationToken = generateConfirmationToken();
+        // Same channel as the anchor by construction - the resolver filters on
+        // it - so the payload shape is the SMS one.
+        const guestTemplate = templateForGuest(guest) as Extract<
+          MessageTemplateApp,
+          { channel: 'sms' }
+        >;
         const context: ParameterResolutionContext = {
           guest,
           event,
           group: null,
+          table: tableForGuest(guest),
           schedule,
           confirmationToken,
         };
         return sendSmsToGuest({
           guest,
           context,
-          smsPayload: template.payload,
+          smsPayload: guestTemplate.payload,
+          templateId: guestTemplate.id,
           confirmationToken,
         });
       }),
     );
     await persistChunk(results);
   } else {
-    const whatsappTemplate = toWhatsAppTemplate(template)!;
-
     // Batch fetch groups referenced by the targeted guests
     const uniqueGroupIds = [
       ...new Set(
@@ -381,20 +472,29 @@ export async function sendSchedule(
       pendingGuests,
       (guest) => {
         const confirmationToken = generateConfirmationToken();
+        const guestTemplate = templateForGuest(guest);
         const context: ParameterResolutionContext = {
           guest,
           event,
           group: guest.groupId ? groupsMap.get(guest.groupId) : null,
+          table: tableForGuest(guest),
           schedule,
           confirmationToken,
         };
-        return { context, template: whatsappTemplate, confirmationToken };
+        return {
+          context,
+          // Non-null by construction: the resolver filters on the anchor's
+          // channel, which this branch has narrowed to whatsapp.
+          template: toWhatsAppTemplate(guestTemplate)!,
+          templateId: guestTemplate.id,
+          confirmationToken,
+        };
       },
       async (chunkResults) => persistChunk(chunkResults),
     );
   }
 
-  // 8. Final status
+  // 9. Final status
   if (sentCount > 0) {
     if (claim !== 'optimistic-lock' && markSentOnSuccess) {
       const { error: updateError } = await supabase

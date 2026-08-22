@@ -36,6 +36,12 @@ export const MessageTemplateDbSchema = z.object({
   description: z.string().nullable(),
   language_code: z.string(),
   whatsapp_template_name: z.string().nullable(),
+  // Which event configuration this row is written for. Orthogonal to `variant`,
+  // which is editorial (casual/wartime/bar_mitzva) - a wartime reminder can
+  // equally need table numbers. See the resolver in
+  // services/resolve-reminder-templates.ts.
+  requires_table_numbers: z.boolean(),
+  requires_gifting: z.boolean(),
   payload: z.unknown(),
 });
 
@@ -51,6 +57,8 @@ type MessageTemplateBase = {
   name: string;
   description: string | null;
   languageCode: string;
+  requiresTableNumbers: boolean;
+  requiresGifting: boolean;
 };
 
 export type MessageTemplateApp =
@@ -77,6 +85,8 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       name: db.name,
       description: db.description,
       languageCode: db.language_code,
+      requiresTableNumbers: db.requires_table_numbers,
+      requiresGifting: db.requires_gifting,
     };
 
     if (db.channel === 'whatsapp') {

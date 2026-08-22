@@ -53,12 +53,20 @@ const chatBgStyle: React.CSSProperties = {
 interface MessageContentCardProps {
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
+  /**
+   * Set only when this schedule has a table-number variant and some targeted
+   * guests have no seating assignment. The preview shows the table version, so
+   * without this the organiser would have no way to know a second version is
+   * also going out.
+   */
+  seatingGap?: { withoutTable: number; total: number } | null;
   event: EventApp | null;
 }
 
 export function MessageContentCard({
   template,
   smsBody,
+  seatingGap,
   event,
 }: MessageContentCardProps) {
   const t = useTranslations('schedules.messagePreview');
@@ -187,6 +195,26 @@ export function MessageContentCard({
             )}
           </div>
         </div>
+        {seatingGap && event && (
+          <Alert className="mt-3">
+            <IconInfoCircle />
+            <AlertTitle>{t('seatingGap.title')}</AlertTitle>
+            <AlertDescription>
+              <p>
+                {t('seatingGap.description', {
+                  withoutTable: seatingGap.withoutTable,
+                  total: seatingGap.total,
+                })}
+              </p>
+              <Button size="xs" variant="link" className="mt-1 px-0" asChild>
+                <Link href={`/app/${event.id}/seating`}>
+                  {t('seatingGap.link')}
+                  <IconExternalLink />
+                </Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         {hasMissingFields && event && (
           <Alert className="mt-3">
             <IconInfoCircle />
