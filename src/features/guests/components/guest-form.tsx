@@ -48,6 +48,7 @@ import {
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { DIETARY_PRESETS } from '@/features/guests/utils';
+import type { MealChoice } from '@/lib/meal-choices';
 import { OfflineRsvpDialog } from './offline-rsvp-dialog';
 import posthog from 'posthog-js';
 
@@ -91,11 +92,13 @@ export function GuestForm({
   const [pendingRsvpStatus, setPendingRsvpStatus] = React.useState<'confirmed' | 'declined' | null>(null);
   const [offlineRsvpDialogOpen, setOfflineRsvpDialogOpen] = React.useState(false);
 
-  const dietaryLabels: Record<string, string> = {
+  // Typed against the shared vocabulary so a new meal option cannot ship
+  // without a label here.
+  const dietaryLabels: Record<MealChoice, string> = {
     vegan: t('dietary.vegan'),
     vegetarian: t('dietary.vegetarian'),
-    glatt: t('dietary.glatt'),
-    'gluten-free': t('dietary.glutenFree'),
+    strictly_kosher: t('dietary.strictlyKosher'),
+    gluten_free: t('dietary.glutenFree'),
   };
 
   const formSchema = GuestUpsertSchema.extend({

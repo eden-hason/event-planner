@@ -1,9 +1,11 @@
 // Components (client)
 export { ConfirmationExperience } from './components/confirmation-experience';
-export { ConfirmationSuccess } from './components/confirmation-success';
 
 // Actions (server-only)
 export { submitConfirmation, recordViewInteraction } from './actions';
+
+// Utils (pure)
+export { buildMealOptions, mealLabel, type MealOption } from './utils/meal-options';
 
 // Schemas/Types
 export {

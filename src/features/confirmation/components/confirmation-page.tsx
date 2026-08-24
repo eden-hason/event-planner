@@ -6,7 +6,6 @@ import {
 import { ConfirmationExperience } from '@/features/confirmation';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { DEFAULT_TEMPLATE_ID } from '@/features/templates';
 
 import { setRequestLocale } from 'next-intl/server';
 
@@ -42,8 +41,7 @@ export async function ConfirmationPage({
     return <InvalidTokenView />;
   }
 
-  const templateId = data.event.landingTemplateId ?? DEFAULT_TEMPLATE_ID;
-  return <ConfirmationExperience token={token} data={data} templateId={templateId} />;
+  return <ConfirmationExperience token={token} data={data} />;
 }
 
 function InvalidTokenView() {

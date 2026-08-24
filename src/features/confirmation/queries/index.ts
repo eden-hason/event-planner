@@ -1,4 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import {
+  buildEventTitleParts,
+  readEventTypeKey,
+  readHostNames,
+  EventTypeKeySchema,
+} from '@/features/events';
 import type { ConfirmationPageData } from '../schemas';
 
 const UUID_REGEX =
@@ -6,6 +12,92 @@ const UUID_REGEX =
 
 export function isGuestInvitationToken(token: string): boolean {
   return UUID_REGEX.test(token);
+}
+
+/**
+ * Every column the RSVP page reads off the event.
+ *
+ * Never `select('*')`: this is a service-role query behind a public link, so
+ * the column list is what keeps user_id, budget and the rest of the row off a
+ * page anyone holding a token can open.
+ */
+const EVENT_COLUMNS = `
+  id, title, event_date, ceremony_time, reception_time,
+  location, host_details, guests_experience, event_types (key)
+`;
+
+type EventRow = {
+  id: string;
+  title: string;
+  event_date: string;
+  ceremony_time: string | null;
+  reception_time: string | null;
+  location: { name: string; coords?: { lat: number; lng: number } } | null;
+  host_details: Record<string, unknown> | null;
+  guests_experience: {
+    dietary_options?: boolean;
+    dietary_types?: string[];
+    lock_guest_count?: boolean;
+  } | null;
+  event_types: { key: string } | null;
+};
+
+type GuestRow = {
+  id: string;
+  name: string;
+  amount: number;
+  rsvp_status: string;
+  meal_choice: string | null;
+  guest_notes: string | null;
+};
+
+/**
+ * Shapes an event row for the RSVP page.
+ *
+ * The stored title already reads "החתונה של דניאל ונועה"; the page prints the
+ * frame as an eyebrow above the names, so it wants the halves apart. Splitting
+ * them back out of `host_details` rather than parsing the string keeps the two
+ * from drifting - the same thing the reminder page does.
+ */
+function toEventView(event: EventRow): ConfirmationPageData['event'] {
+  const eventType = EventTypeKeySchema.safeParse(
+    readEventTypeKey(event.event_types),
+  );
+  const parts = eventType.success
+    ? buildEventTitleParts(eventType.data, readHostNames(event.host_details ?? undefined))
+    : null;
+
+  return {
+    id: event.id,
+    title: event.title,
+    // An event whose type never resolved has no frame to set apart, so the
+    // stored title carries the whole sentence on its own.
+    titlePrefix: parts?.hosts.length ? parts.prefix : null,
+    hosts: parts?.hosts.length ? parts.hosts : [event.title],
+    eventDate: event.event_date,
+    ceremonyTime: event.ceremony_time ?? undefined,
+    receptionTime: event.reception_time ?? undefined,
+    location: event.location ?? undefined,
+    guestExperience: event.guests_experience
+      ? {
+          dietaryOptions: event.guests_experience.dietary_options,
+          dietaryTypes: event.guests_experience.dietary_types,
+          lockGuestCount: event.guests_experience.lock_guest_count,
+        }
+      : undefined,
+    eventType: eventType.success ? eventType.data : undefined,
+  };
+}
+
+function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
+  return {
+    id: guest.id,
+    name: guest.name,
+    amount: guest.amount,
+    rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
+    mealChoice: guest.meal_choice ?? undefined,
+    guestNotes: guest.guest_notes ?? undefined,
+  };
 }
 
 /**
@@ -29,10 +121,7 @@ export async function getConfirmationDataByToken(
       ),
       schedules!inner (
         id,
-        events!inner (
-          id, title, event_date, ceremony_time, reception_time,
-          location, host_details, guests_experience, event_types (key), landing_template_id, short_code
-        )
+        events!inner (${EVENT_COLUMNS})
       )
     `,
     )
@@ -52,37 +141,8 @@ export async function getConfirmationDataByToken(
   }
 
   // Extract nested data — Supabase returns !inner joins as objects
-  const guest = data.guests as unknown as {
-    id: string;
-    name: string;
-    amount: number;
-    rsvp_status: string;
-    meal_choice: string | null;
-    guest_notes: string | null;
-  };
-
-  const schedule = data.schedules as unknown as {
-    id: string;
-    events: {
-      id: string;
-      title: string;
-      event_date: string;
-      ceremony_time: string | null;
-      reception_time: string | null;
-      location: { name: string; coords?: { lat: number; lng: number } } | null;
-      host_details: Record<string, unknown> | null;
-      guests_experience: {
-        dietary_options?: boolean;
-        dietary_types?: string[];
-        lock_guest_count?: boolean;
-      } | null;
-      event_types: { key: string } | null;
-      landing_template_id: string | null;
-      short_code: string;
-    };
-  };
-
-  const event = schedule.events;
+  const guest = data.guests as unknown as GuestRow;
+  const schedule = data.schedules as unknown as { id: string; events: EventRow };
 
   // Fetch latest RSVP interaction from guest_interactions
   const { data: interaction } = await supabase
@@ -109,33 +169,8 @@ export async function getConfirmationDataByToken(
           mealChoice: interactionMetadata.mealChoice,
         }
       : null,
-    guest: {
-      id: guest.id,
-      name: guest.name,
-      amount: guest.amount,
-      rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
-      mealChoice: guest.meal_choice ?? undefined,
-      guestNotes: guest.guest_notes ?? undefined,
-    },
-    event: {
-      id: event.id,
-      title: event.title,
-      eventDate: event.event_date,
-      ceremonyTime: event.ceremony_time ?? undefined,
-      receptionTime: event.reception_time ?? undefined,
-      location: event.location ?? undefined,
-      hostDetails: event.host_details ?? undefined,
-      guestExperience: event.guests_experience
-        ? {
-            dietaryOptions: event.guests_experience.dietary_options,
-            dietaryTypes: event.guests_experience.dietary_types,
-            lockGuestCount: event.guests_experience.lock_guest_count,
-          }
-        : undefined,
-      eventType: event.event_types?.key ?? undefined,
-      landingTemplateId: event.landing_template_id ?? undefined,
-      shortCode: event.short_code,
-    },
+    guest: toGuestView(guest),
+    event: toEventView(schedule.events),
     scheduleId: schedule.id,
   };
 }
@@ -154,10 +189,7 @@ export async function getConfirmationDataByGuestToken(
     .select(
       `
       id, name, amount, rsvp_status, meal_choice, guest_notes,
-      events!inner (
-        id, title, event_date, ceremony_time, reception_time,
-        location, host_details, guests_experience, event_types (key), landing_template_id, short_code
-      )
+      events!inner (${EVENT_COLUMNS})
     `,
     )
     .eq('invitation_token', token)
@@ -167,55 +199,12 @@ export async function getConfirmationDataByGuestToken(
     return null;
   }
 
-  const event = data.events as unknown as {
-    id: string;
-    title: string;
-    event_date: string;
-    ceremony_time: string | null;
-    reception_time: string | null;
-    location: { name: string; coords?: { lat: number; lng: number } } | null;
-    host_details: Record<string, unknown> | null;
-    guests_experience: {
-      dietary_options?: boolean;
-      dietary_types?: string[];
-      lock_guest_count?: boolean;
-    } | null;
-    event_types: { key: string } | null;
-    landing_template_id: string | null;
-    short_code: string;
-  };
-
   return {
     deliveryId: null,
     respondedAt: null,
     responseData: null,
-    guest: {
-      id: data.id,
-      name: data.name,
-      amount: data.amount,
-      rsvpStatus: data.rsvp_status as 'pending' | 'confirmed' | 'declined',
-      mealChoice: data.meal_choice ?? undefined,
-      guestNotes: data.guest_notes ?? undefined,
-    },
-    event: {
-      id: event.id,
-      title: event.title,
-      eventDate: event.event_date,
-      ceremonyTime: event.ceremony_time ?? undefined,
-      receptionTime: event.reception_time ?? undefined,
-      location: event.location ?? undefined,
-      hostDetails: event.host_details ?? undefined,
-      guestExperience: event.guests_experience
-        ? {
-            dietaryOptions: event.guests_experience.dietary_options,
-            dietaryTypes: event.guests_experience.dietary_types,
-            lockGuestCount: event.guests_experience.lock_guest_count,
-          }
-        : undefined,
-      eventType: event.event_types?.key ?? undefined,
-      landingTemplateId: event.landing_template_id ?? undefined,
-      shortCode: event.short_code,
-    },
+    guest: toGuestView(data as unknown as GuestRow),
+    event: toEventView(data.events as unknown as EventRow),
     scheduleId: null,
   };
 }
