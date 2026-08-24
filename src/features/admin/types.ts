@@ -1,66 +1,47 @@
-// The call domain lives in features/calls - admin is a UI surface, not a
-// domain owner, and the Owner-facing schedules page depends on these too.
-export type { CallOutcome, CallRoundSummary } from '@/features/calls';
+/**
+ * Back Office view models. Vocabulary is defined in CONTEXT.md - in particular
+ * Signal, Operator and the Guest Record / Guest distinction.
+ */
 
-import type { CallOutcome, CallRoundSummary } from '@/features/calls';
+export type OverviewCounts = {
+  users: number;
+  /** Published events only. Draft Events are interest, not events. */
+  events: number;
+  /** Guest Records: one row per guest list entry, the billable unit. */
+  guestRecords: number;
+};
+
+export type SignalKind = 'overdue_schedule' | 'failed_delivery' | 'stale_call_round';
 
 /**
- * A planned phone_call schedule together with the round executing it, if one
- * has been started. This is the unit the back office works in: the plan is what
- * the Owner scheduled, the round is what the calling team has done about it.
+ * A condition derived at read time that an Operator should look at. Never
+ * stored: there is no signals table and nothing to dismiss. A Signal exists
+ * exactly as long as the condition producing it is true.
  */
-export type CallPlanWithRound = {
-  /** The phone_call schedules row - the plan */
-  scheduleId: string;
-  /** Positional label within the event's call plans, 1-based */
-  planNumber: number;
-  scheduledDate: string;
-  scheduledTime: string | null;
-  targetStatus: 'pending' | 'confirmed' | null;
-  /** True when the plan was switched off rather than started */
-  cancelled: boolean;
-  /** Null until an admin starts the round */
-  round: CallRoundSummary | null;
-};
-
-// The operator's working view of a call: phone number and seating context the
-// Owner is never shown, alongside `notes`, which the Owner does read.
-export type CallLogWithGuest = {
+export type Signal = {
+  /** `${kind}:${sourceRowId}`. A React key only - never persist it or route on it. */
   id: string;
-  guestId: string;
-  name: string;
-  phone: string | null;
-  amount: number;
-  side: 'bride' | 'groom' | null;
-  groupName: string | null;
-  currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
-  outcome: CallOutcome | null;
-  /** Host-facing - surfaced on the Owner's call round results card */
-  notes: string | null;
-  calledAt: string | null;
+  kind: SignalKind;
+  eventId: string;
+  eventTitle: string;
+  /** What is wrong, in one line */
+  headline: string;
+  /** The supporting fact */
+  detail: string;
+  /** When the condition began. Drives sort order and the age label. */
+  occurredAt: string;
+  /** Where the Operator goes to act on it */
+  href: string;
 };
 
-export type AdminUser = {
-  id: string;
-  email: string;
-  fullName: string;
-  plan: string;
-  signupDate: string;
-  /** Published events only. An abandoned draft is interest, not an event. */
-  eventCount: number;
-  /** Draft Events: onboarding started and not finished. */
-  draftCount: number;
-  isAdmin: boolean;
-};
-
-export type AdminEvent = {
+export type UpcomingEvent = {
   id: string;
   title: string;
-  ownerEmail: string;
-  ownerId: string;
-  eventDate: string | null;
-  status: string;
-  guestCount: number;
-  confirmedCount: number;
-  rsvpPercent: number;
+  eventDate: string;
+  eventTypeName: string;
+  ownerName: string;
+  guestRecords: number;
+  confirmed: number;
+  /** 0-1, or null when there is no guest list yet. Never render null as 0%. */
+  confirmationRate: number | null;
 };

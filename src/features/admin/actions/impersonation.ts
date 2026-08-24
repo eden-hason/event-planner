@@ -16,9 +16,9 @@ export async function startImpersonation(userId: string) {
   redirect('/app');
 }
 
-export async function stopImpersonation(returnUserId?: string) {
+export async function stopImpersonation() {
   await assertAdmin();
   const cookieStore = await cookies();
   cookieStore.delete('impersonate_user_id');
-  redirect(returnUserId ? `/admin/users/${returnUserId}` : '/admin/users');
+  redirect('/admin');
 }

@@ -116,6 +116,44 @@ assigned to them. Intended for a planner or venue contact, not for a partner.
 Owner and Seating Manager are the **only** two collaborator roles. There is no
 "viewer" or "editor" role - avoid that vocabulary, in the product and in marketing copy.
 
+## Back Office
+
+The internal application Kululu staff use to run the business, served under `/admin` on its
+own subdomain. It is not part of the product the Couple sees and is never spoken of as if it
+were.
+
+The Back Office does three jobs: **Overview** (the state of the business right now),
+**Operations** (acting on a single Event - Call Rounds, manual sends), and **Configuration**
+(the catalogs that decide what the product generates).
+
+"Dashboard" is loose conversational shorthand for the Back Office. It is not a defined term
+and should not appear in routes, code, or copy.
+
+## Operator
+
+A member of Kululu staff working in the Back Office. The Operator runs Call Rounds, sends
+messages by hand, and watches for things going wrong.
+
+Distinct from an **Owner**: an Owner plans their own Event, an Operator works across every
+Event. An Operator may impersonate an Owner to see exactly what they see, but the two roles
+never merge - impersonation is a lens, not a change of identity.
+
+## Signal
+
+A condition, derived at read time, that an Operator should look at. There are exactly three:
+an **Overdue Schedule**, a **Failed Delivery**, and a **Stale Call Round**.
+
+A Signal is never stored. There is no signals table and no row to mark as read: a Signal
+exists exactly as long as the condition producing it is true, and vanishes when the
+underlying situation resolves. Nothing is pushed, nothing is emailed, and nothing records
+whether an Operator saw it. A Signal is therefore not a notification, and not an alert.
+
+## Overview
+
+The Back Office home page. It answers one question - what needs an Operator's attention right
+now - and carries business counts only as context for that answer, never as the point of the
+page.
+
 ## Free to Plan, Pay to Send
 
 The commercial boundary. Planning the Event costs nothing: creating it, building or

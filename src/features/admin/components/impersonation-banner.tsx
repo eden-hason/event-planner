@@ -24,7 +24,7 @@ export async function ImpersonationBanner() {
           <span className="ml-2 text-amber-600">· Read-only</span>
         </span>
       </div>
-      <form action={stopImpersonation.bind(null, impersonation.userId)}>
+      <form action={stopImpersonation}>
         <button
           type="submit"
           className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 shadow-sm transition-colors hover:bg-amber-100"
