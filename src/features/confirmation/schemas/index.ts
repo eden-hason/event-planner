@@ -39,11 +39,14 @@ export type ConfirmationPageData = {
     | 'ceremonyTime'
     | 'receptionTime'
     | 'location'
-    | 'hostDetails'
     | 'guestExperience'
     | 'eventType'
-    | 'landingTemplateId'
-    | 'shortCode'
-  >;
+  > & {
+    /** The "החתונה של" frame, printed above the names, or null on an event
+     *  whose type never resolved - there `title` carries the whole sentence. */
+    titlePrefix: string | null;
+    /** The host names on their own, so the page can set them apart. */
+    hosts: string[];
+  };
   scheduleId: string | null;
 };
