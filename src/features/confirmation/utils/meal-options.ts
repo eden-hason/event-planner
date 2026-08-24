@@ -1,11 +1,10 @@
+import { MEAL_CHOICES, type MealChoice } from '@/lib/meal-choices';
+
 /**
- * The dietary options an event can offer, labelled the way a guest reads them.
- *
- * The keys are the values the event-details card writes into
- * `guests_experience.dietary_types`, and what `guests.meal_choice` stores, so a
- * choice made here is legible on the guest list without a lookup table.
+ * The shared meal vocabulary, labelled the way a guest reads it - feminine, to
+ * agree with מנה, where the host-facing chips agree with the guest instead.
  */
-const MEAL_LABELS: Record<string, string> = {
+const MEAL_LABELS: Record<MealChoice, string> = {
   vegetarian: 'צמחונית',
   vegan: 'טבעונית',
   gluten_free: 'ללא גלוטן',
@@ -32,11 +31,11 @@ type GuestExperience =
  */
 export function buildMealOptions(guestExperience: GuestExperience): MealOption[] {
   if (!guestExperience?.dietaryOptions) return [];
-  const types = guestExperience.dietaryTypes ?? Object.keys(MEAL_LABELS);
-  return types.map((id) => ({ id, label: MEAL_LABELS[id] ?? id }));
+  const types = guestExperience.dietaryTypes ?? MEAL_CHOICES;
+  return types.map((id) => ({ id, label: mealLabel(id) }));
 }
 
 /** The label for a stored `meal_choice`, falling back to the raw value. */
 export function mealLabel(id: string): string {
-  return MEAL_LABELS[id] ?? id;
+  return MEAL_LABELS[id as MealChoice] ?? id;
 }

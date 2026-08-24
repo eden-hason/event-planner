@@ -536,7 +536,7 @@
     "dietary": {
       "vegan": "Vegan",
       "vegetarian": "Vegetarian",
-      "glatt": "Glatt",
+      "strictlyKosher": "Strictly Kosher",
       "glutenFree": "Gluten Free"
     },
     "sides": {

@@ -46,7 +46,6 @@ export {
   getSampleData,
   exportGuestsToIplan,
   DIETARY_PRESETS,
-  DIETARY_LABEL_MAP,
   type ValidatedRow,
   type FieldErrors,
   type ParsedCSV,

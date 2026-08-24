@@ -14,6 +14,7 @@ import {
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import { createGuestColumns } from '@/features/guests/components/table';
 import type { TableOption } from '@/features/seating';
+import type { MealChoice } from '@/lib/meal-choices';
 import { GuestSortKey } from './use-guest-filters';
 
 const RSVP_ORDER: Record<string, number> = {
@@ -53,11 +54,11 @@ export function useGuestsTable({
 }: UseGuestsTableProps) {
   const t = useTranslations('guests');
 
-  const dietaryLabelMap: Record<string, string> = {
+  const dietaryLabelMap: Record<MealChoice, string> = {
     vegan: t('dietary.vegan'),
     vegetarian: t('dietary.vegetarian'),
-    glatt: t('dietary.glatt'),
-    'gluten-free': t('dietary.glutenFree'),
+    strictly_kosher: t('dietary.strictlyKosher'),
+    gluten_free: t('dietary.glutenFree'),
   };
 
   const [globalFilter, setGlobalFilter] = useState('');

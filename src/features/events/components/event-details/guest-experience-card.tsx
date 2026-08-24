@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/popover';
 import { Form, FormControl, FormField } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
+import type { MealChoice } from '@/lib/meal-choices';
 import {
   EventApp,
   EventDetailsUpdateSchema,
@@ -37,12 +38,12 @@ import { updateEventDetails } from '../../actions';
 const GuestExperienceCardSchema = EventDetailsUpdateSchema.pick({ id: true, guestExperience: true });
 type GuestExperienceCardValues = z.infer<typeof GuestExperienceCardSchema>;
 
-const MEAL_OPTIONS = [
+const MEAL_OPTIONS: readonly { value: MealChoice; labelKey: string }[] = [
   { value: 'vegetarian', labelKey: 'meal.vegetarian' },
   { value: 'vegan', labelKey: 'meal.vegan' },
   { value: 'gluten_free', labelKey: 'meal.glutenFree' },
   { value: 'strictly_kosher', labelKey: 'meal.strictlyKosher' },
-] as const;
+];
 
 const ALL_VALUES = MEAL_OPTIONS.map((m) => m.value);
 

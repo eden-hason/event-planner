@@ -536,7 +536,7 @@
     "dietary": {
       "vegan": "טבעוני",
       "vegetarian": "צמחוני",
-      "glatt": "גלאט",
+      "strictlyKosher": "כשר למהדרין",
       "glutenFree": "ללא גלוטן"
     },
     "sides": {
