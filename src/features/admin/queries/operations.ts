@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
+import { excludeIds, getTestScope } from './test-accounts';
 
 const DAY_MS = 86_400_000;
 
@@ -83,21 +84,27 @@ type ScheduleRow = {
  * keeps an unbounded list scannable. See the brief, section 3.1.
  *
  * Draft Events are excluded: a Draft Event cannot have schedules, and it is
- * interest rather than an event.
+ * interest rather than an event. So are test accounts - rehearsal work in a
+ * queue of real work is worse than useless. See test-accounts.ts.
  */
 export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   await assertAdmin();
   const supabase = createServiceClient();
+  const test = await getTestScope();
 
   const open = unwrap(
-    await supabase
-      .from('schedules')
-      .select(
-        'id, event_id, scheduled_date, scheduled_time, target_status, schedule_type_id, events!inner(title, status), schedule_types(name, execution_kind), message_templates(channel)',
-      )
-      .is('status', null)
-      .eq('events.status', 'published')
-      .order('scheduled_date', { ascending: true }),
+    await excludeIds(
+      supabase
+        .from('schedules')
+        .select(
+          'id, event_id, scheduled_date, scheduled_time, target_status, schedule_type_id, events!inner(title, status), schedule_types(name, execution_kind), message_templates(channel)',
+        )
+        .is('status', null)
+        .eq('events.status', 'published')
+        .order('scheduled_date', { ascending: true }),
+      'event_id',
+      test.eventIds,
+    ),
   ) as unknown as ScheduleRow[];
 
   if (!open.length) return { groups: [], callRounds: 0, messages: 0 };
@@ -227,13 +234,18 @@ export async function listEventsForPlanning(): Promise<
 > {
   await assertAdmin();
   const supabase = createServiceClient();
+  const test = await getTestScope();
 
   const events = unwrap(
-    await supabase
-      .from('events')
-      .select('id, title')
-      .eq('status', 'published')
-      .order('event_date', { ascending: true }),
+    await excludeIds(
+      supabase
+        .from('events')
+        .select('id, title')
+        .eq('status', 'published')
+        .order('event_date', { ascending: true }),
+      'user_id',
+      test.userIds,
+    ),
   );
 
   if (!events.length) return [];

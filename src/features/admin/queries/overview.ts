@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { OverviewCounts, Signal, UpcomingEvent } from '../types';
+import { excludeIds, getTestScope } from './test-accounts';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -61,15 +62,32 @@ export async function getOverviewCounts(): Promise<OverviewCounts> {
   // Draft Events are interest, not events the user has, so they are excluded
   // from every business count. Guest Records are counted per row: `amount` is
   // how many humans a record covers and would be a different, larger number.
+  // Test accounts are excluded for the same reason - see test-accounts.ts.
+  const test = await getTestScope();
+
   const [users, events, publishedEvents] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('events')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'published'),
-    supabase.from('events').select('id').eq('status', 'published'),
+    excludeIds(
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      'id',
+      test.userIds,
+    ),
+    excludeIds(
+      supabase
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published'),
+      'user_id',
+      test.userIds,
+    ),
+    excludeIds(
+      supabase.from('events').select('id').eq('status', 'published'),
+      'user_id',
+      test.userIds,
+    ),
   ]);
 
+  // Guest Records need no filter of their own: publishedIds no longer contains
+  // any test account's event.
   const publishedIds = unwrap(publishedEvents).map((e) => e.id);
 
   const guestRecords = publishedIds.length
@@ -93,30 +111,43 @@ export async function getSignals(): Promise<Signal[]> {
   const supabase = createServiceClient();
 
   const nowIso = new Date().toISOString();
+  const test = await getTestScope();
+  const testEventIds = new Set(test.eventIds);
 
   const [overdue, failed, stale] = await Promise.all([
     // Overdue Schedule: `schedules.status` only ever holds 'sent' or
     // 'cancelled', so NULL is the only representation of "not completed".
     // Overdue is therefore derived, never stored.
-    supabase
-      .from('schedules')
-      .select(
-        'id, scheduled_date, scheduled_time, event_id, events(title), schedule_types(name)',
-      )
-      .is('status', null)
-      .lt('scheduled_date', nowIso),
+    excludeIds(
+      supabase
+        .from('schedules')
+        .select(
+          'id, scheduled_date, scheduled_time, event_id, events(title), schedule_types(name)',
+        )
+        .is('status', null)
+        .lt('scheduled_date', nowIso),
+      'event_id',
+      test.eventIds,
+    ),
 
+    // The only read here with no event_id of its own - it reaches one through
+    // schedules - so its test accounts are dropped in the grouping loop below
+    // rather than by a filter.
     supabase
       .from('message_deliveries')
       .select('id, error_code, created_at, schedules!inner(event_id, events(title))')
       .eq('status', 'failed')
       .gte('created_at', daysAgo(FAILED_DELIVERY_LOOKBACK_DAYS)),
 
-    supabase
-      .from('call_rounds')
-      .select('id, round_number, created_at, event_id, events(title)')
-      .is('completed_at', null)
-      .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS)),
+    excludeIds(
+      supabase
+        .from('call_rounds')
+        .select('id, round_number, created_at, event_id, events(title)')
+        .is('completed_at', null)
+        .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS)),
+      'event_id',
+      test.eventIds,
+    ),
   ]);
 
   const signals: Signal[] = [];
@@ -148,7 +179,7 @@ export async function getSignals(): Promise<Signal[]> {
       event_id: string;
       events: { title: string | null } | null;
     } | null;
-    if (!schedule?.event_id) continue;
+    if (!schedule?.event_id || testEventIds.has(schedule.event_id)) continue;
 
     const entry = byEvent.get(schedule.event_id) ?? {
       title: schedule.events?.title ?? 'Untitled event',
@@ -239,14 +270,20 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   await assertAdmin();
   const supabase = createServiceClient();
 
+  const test = await getTestScope();
+
   const events = unwrap(
-    await supabase
-      .from('events')
-      .select('id, title, event_date, user_id, event_types(name)')
-      .eq('status', 'published')
-      .gte('event_date', new Date().toISOString())
-      .lte('event_date', daysAhead(UPCOMING_WINDOW_DAYS))
-      .order('event_date', { ascending: true }),
+    await excludeIds(
+      supabase
+        .from('events')
+        .select('id, title, event_date, user_id, event_types(name)')
+        .eq('status', 'published')
+        .gte('event_date', new Date().toISOString())
+        .lte('event_date', daysAhead(UPCOMING_WINDOW_DAYS))
+        .order('event_date', { ascending: true }),
+      'user_id',
+      test.userIds,
+    ),
   );
 
   if (!events.length) return [];
