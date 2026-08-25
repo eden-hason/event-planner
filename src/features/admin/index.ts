@@ -24,3 +24,4 @@ export { SignalRow } from './components/signal-row';
 export { UpcomingEvents } from './components/upcoming-events';
 export { ImpersonationBanner } from './components/impersonation-banner';
 export { OperatorSearch } from './components/operator-search';
+export { resolveAdminTopBar, type AdminTopBarMode } from './utils/topbar';
