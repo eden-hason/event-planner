@@ -49,19 +49,11 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   events: EventApp[];
   currentUserId?: string;
-  user: {
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    avatar?: string;
-  };
 }
 
 export function AppSidebar({
   events,
   currentUserId,
-  user,
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -91,6 +83,46 @@ export function AppSidebar({
       prevOpenRef.current = null;
     }
   }, [isSeatingPage, setOpen]);
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const header = document.querySelector<HTMLElement>('[data-app-header]');
+
+    if (!header) return;
+
+    let frameId: number | null = null;
+
+    const updateHeaderOffset = () => {
+      frameId = null;
+      const visibleHeaderHeight = Math.max(
+        0,
+        Math.min(header.offsetHeight, header.getBoundingClientRect().bottom),
+      );
+
+      root.style.setProperty(
+        '--app-header-offset',
+        `${visibleHeaderHeight}px`,
+      );
+    };
+
+    const scheduleHeaderOffsetUpdate = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(updateHeaderOffset);
+    };
+
+    updateHeaderOffset();
+    window.addEventListener('scroll', scheduleHeaderOffsetUpdate, {
+      passive: true,
+    });
+    window.addEventListener('resize', scheduleHeaderOffsetUpdate);
+
+    return () => {
+      window.removeEventListener('scroll', scheduleHeaderOffsetUpdate);
+      window.removeEventListener('resize', scheduleHeaderOffsetUpdate);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      root.style.removeProperty('--app-header-offset');
+    };
+  }, []);
 
   const navMainBase = [
     {
@@ -212,7 +244,7 @@ export function AppSidebar({
           </button>
         </div>
 
-        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} user={user} />
+        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,28 +1,31 @@
 'use client';
 
 import Image from 'next/image';
+import { type AppShellUser, UserMenu } from '@/components/layout/user-menu';
 
-export function AppTopBar() {
+export function AppTopBar({ user }: { user: AppShellUser }) {
   return (
-    <header className="relative hidden h-14 shrink-0 items-center gap-2 bg-[#F4F4F6] px-3 md:flex">
-      {/* Brand: pinned to the physical left edge regardless of text direction */}
+    <header
+      data-app-header
+      className="relative z-20 flex h-(--header-height) shrink-0 items-center border-b border-app-header-border bg-app-header px-4 text-app-header-foreground"
+    >
       <a
-        href="#"
+        href="/app"
         dir="ltr"
-        className="absolute inset-y-0 left-3 flex items-center gap-2.5"
+        aria-label="Kululu home"
+        className="absolute inset-y-0 left-4 flex items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-app-header"
       >
         <Image
-          src="/kululu-logo-gray.svg"
+          src="/kululu-logo-label.svg"
           alt="Kululu"
-          width={32}
-          height={32}
-          className="size-8"
+          width={120}
+          height={36}
+          className="h-9 w-auto"
         />
-        <span className="text-xl font-semibold">Kululu</span>
       </a>
-
-      {/* Remaining space for future app-level buttons and elements, offset past the logo */}
-      <div className="flex flex-1 items-center justify-end gap-2 pl-36" />
+      <div className="absolute inset-y-0 right-4 flex items-center">
+        <UserMenu user={user} />
+      </div>
     </header>
   );
 }

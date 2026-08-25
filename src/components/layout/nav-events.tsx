@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import Image from 'next/image';
-import { ChevronsUpDown, Copy, LogOutIcon, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, ChevronsUpDown, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -18,8 +20,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,28 +30,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { type EventApp } from '@/features/events/schemas';
-import { deleteEvent, duplicateEvent } from '@/features/events/actions';
-import { logout } from '@/features/auth';
-import { IconUser } from '@tabler/icons-react';
+import {
+  deleteEvent,
+  readHostNames,
+  type EventApp,
+} from '@/features/events';
 import { cn } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
-import posthog from 'posthog-js';
 
 interface NavEventsProps {
   events: EventApp[];
   currentUserId?: string;
   disabled?: boolean;
-  user: {
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    avatar?: string;
-  };
 }
 
-export function NavEvents({ events, currentUserId, disabled, user }: NavEventsProps) {
+export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventApp | null>(null);
@@ -59,46 +52,44 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
   const router = useRouter();
   const t = useTranslations('sidebar');
   const tCommon = useTranslations('common');
+  const tEventTypes = useTranslations('eventDetails.dateTime.types');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
+  const eventTypeLabels: Record<string, string> = {
+    wedding: tEventTypes('wedding'),
+    henna: tEventTypes('henna'),
+    bar_mitzva: tEventTypes('bar_mitzva'),
+    bat_mitzva: tEventTypes('bat_mitzva'),
+  };
 
-  useEffect(() => {
-    if (
-      !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN ||
-      !process.env.NEXT_PUBLIC_POSTHOG_HOST
-    ) {
-      return;
-    }
+  const getEventTypeLabel = (eventType?: string) =>
+    eventType ? (eventTypeLabels[eventType] ?? eventType) : t('noEventSelected');
 
-    const identifiedUserId = posthog.get_property('$user_id');
-    if (identifiedUserId && identifiedUserId !== user.id) {
-      posthog.reset();
-    }
+  const getEventHostLabel = (event: EventApp) => {
+    const { brideName, groomName, childName } = readHostNames(event.hostDetails);
+    const hostNames =
+      event.eventType === 'wedding' || event.eventType === 'henna'
+        ? [brideName, groomName]
+        : event.eventType === 'bar_mitzva' || event.eventType === 'bat_mitzva'
+          ? [childName]
+          : [brideName, groomName, childName];
+    const availableHostNames = hostNames.filter(
+      (name): name is string => Boolean(name),
+    );
 
-    posthog.identify(user.id, {
-      email: user.email,
-      name: user.name,
-    });
-  }, [user.email, user.id, user.name]);
+    return availableHostNames.length
+      ? new Intl.ListFormat(locale, {
+          style: 'short',
+          type: 'conjunction',
+        }).format(availableHostNames)
+      : event.title;
+  };
 
   // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
 
   // Find the current event
   const currentEvent = events.find((event) => event.id === currentEventId);
-
-  const handleLogout = async () => {
-    setDropdownOpen(false);
-
-    if (
-      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-      process.env.NEXT_PUBLIC_POSTHOG_HOST
-    ) {
-      posthog.reset();
-    }
-
-    await logout();
-  };
 
   const handleNewEventClick = () => {
     setDropdownOpen(false);
@@ -107,28 +98,16 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
     router.push('/start?new=1');
   };
 
-  const handleDuplicate = async (event: EventApp) => {
+  const handleEventSelect = (eventId: string) => {
     setDropdownOpen(false);
-
-    const promise = duplicateEvent(event.id).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('toast.duplicateFailed'));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.duplicating', { title: event.title }),
-      success: (data) => {
-        if (data.eventId) {
-          router.push(`/app/${data.eventId}/dashboard`);
-        }
-        return t('toast.duplicated');
-      },
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.duplicateFailed'),
-    });
+    router.push(`/app/${eventId}/dashboard`);
   };
+
+  const currentEventIsShared = currentEvent
+    ? currentUserId
+      ? currentEvent.userId !== currentUserId
+      : false
+    : false;
 
   const handleConfirmDelete = async () => {
     if (!eventToDelete) return;
@@ -182,25 +161,13 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
                 disabled && 'cursor-default opacity-50 pointer-events-none',
               )}
             >
-              <Avatar className="size-8 rounded-lg">
-                {user.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-                    width={32}
-                    height={32}
-                    className="aspect-square size-full object-cover"
-                  />
-                ) : (
-                  <AvatarFallback className="rounded-lg">
-                    <IconUser className="size-4" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
+              <CalendarDays />
               <div className="grid flex-1 text-start text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate font-semibold">
+                  {currentEvent ? getEventHostLabel(currentEvent) : t('events')}
+                </span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {currentEvent ? currentEvent.title : t('noEventSelected')}
+                  {getEventTypeLabel(currentEvent?.eventType)}
                 </span>
               </div>
               <ChevronsUpDown className="ms-auto" />
@@ -212,65 +179,36 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
             side="top"
             sideOffset={4}
           >
-            {/* Section 1: User header */}
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                <Avatar className="size-8 rounded-lg">
-                  {user.avatar ? (
-                    <Image
-                      src={user.avatar}
-                      alt={user.name}
-                      width={32}
-                      height={32}
-                      className="aspect-square size-full object-cover"
-                    />
-                  ) : (
-                    <AvatarFallback className="rounded-lg">
-                      <IconUser className="size-4" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="grid flex-1 text-start text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="text-muted-foreground truncate text-xs">
-                    {user.email || user.phone}
-                  </span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-
-            <DropdownMenuSeparator />
-
-            {/* Section 2: Events */}
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               {t('events')}
             </DropdownMenuLabel>
-            <div className="flex flex-col gap-1">
-              {events.length === 0 ? (
+            {events.length === 0 ? (
+              <DropdownMenuGroup>
                 <DropdownMenuItem disabled>
                   <span className="text-muted-foreground">{t('noEventsYet')}</span>
                 </DropdownMenuItem>
-              ) : (
-                events.map((event) => {
-                  const isActive = currentEventId === event.id;
+              </DropdownMenuGroup>
+            ) : (
+              <DropdownMenuRadioGroup
+                value={currentEventId ?? ''}
+                onValueChange={handleEventSelect}
+              >
+                {events.map((event) => {
                   const isShared = currentUserId
                     ? event.userId !== currentUserId
                     : false;
 
                   return (
-                    <DropdownMenuItem
+                    <DropdownMenuRadioItem
                       key={event.id}
-                      className={cn('gap-2 p-2 group', isActive && 'bg-accent')}
+                      value={event.id}
                     >
-                      <div
-                        className="flex-1 cursor-pointer grid text-start text-sm leading-tight"
-                        onClick={() => router.push(`/app/${event.id}/dashboard`)}
-                      >
+                      <div className="grid flex-1 text-start text-sm leading-tight">
                         <span className="truncate font-medium">
-                          {event.title}
+                          {getEventHostLabel(event)}
                         </span>
                         <span className="text-muted-foreground truncate text-xs">
-                          {event.eventType}
+                          {getEventTypeLabel(event.eventType)}
                           {isShared && (
                             <span className="text-primary ms-1.5 font-medium">
                               · {t('shared')}
@@ -278,69 +216,32 @@ export function NavEvents({ events, currentUserId, disabled, user }: NavEventsPr
                           )}
                         </span>
                       </div>
-                      <div
-                        className={cn(
-                          'flex opacity-0 group-hover:opacity-100 transition-opacity',
-                          isShared && 'hidden',
-                        )}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicate(event);
-                          }}
-                          aria-label={t('duplicateEvent')}
-                        >
-                          <Copy className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEventToDelete(event);
-                            setDeleteDialogOpen(true);
-                            setDropdownOpen(false);
-                          }}
-                          aria-label={t('deleteEvent')}
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    </DropdownMenuItem>
+                    </DropdownMenuRadioItem>
                   );
-                })
-              )}
-            </div>
-            <DropdownMenuItem asChild className="p-0">
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 p-2"
-                onClick={handleNewEventClick}
-              >
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  {t('newEvent')}
-                </div>
-              </button>
-            </DropdownMenuItem>
+                })}
+              </DropdownMenuRadioGroup>
+            )}
 
             <DropdownMenuSeparator />
-
-            {/* Section 3: Log out */}
-            <DropdownMenuItem
-              className="cursor-pointer text-red-600"
-              onClick={handleLogout}
-            >
-              <LogOutIcon className="text-red-600 rtl:scale-x-[-1]" />
-              {t('logOut')}
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem onSelect={handleNewEventClick}>
+                <Plus />
+                {t('newEvent')}
+              </DropdownMenuItem>
+              {currentEvent && !currentEventIsShared && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    setEventToDelete(currentEvent);
+                    setDeleteDialogOpen(true);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  <Trash2 />
+                  {t('deleteEvent')}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
 
