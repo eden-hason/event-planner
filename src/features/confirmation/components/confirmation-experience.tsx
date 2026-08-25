@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Calendar, Check, Clock, MapPin, X } from 'lucide-react';
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  Clock,
+  MapPin,
+  Minus,
+  Plus,
+  Send,
+  X,
+} from 'lucide-react';
 
 import { recordViewInteraction, submitConfirmation } from '../actions';
 import { buildMealOptions, mealLabel } from '../utils/meal-options';
@@ -27,7 +37,7 @@ function DetailRow({
   return (
     <div className="border-border flex items-center gap-3.5 border-b px-1 py-[18px]">
       {icon}
-      <span className="text-[15px] text-[oklch(0.442_0.014_285.9)]">
+      <span className="shrink-0 text-[15px] text-[oklch(0.442_0.014_285.9)]">
         {label}
       </span>
       <span className="ms-auto text-end text-base font-medium tabular-nums">
@@ -108,6 +118,9 @@ export function ConfirmationExperience({
   const [count, setCount] = useState(() => clampCount(guest.amount));
   const [meal, setMeal] = useState(guest.mealChoice ?? '');
   const [note, setNote] = useState(guest.guestNotes ?? '');
+  // The meal list is optional and long enough to bury the submit button, so it
+  // opens only for guests who care - or who already picked something.
+  const [mealOpen, setMealOpen] = useState(Boolean(guest.mealChoice));
   // A guest who already answered lands on their answer, not on a form asking
   // again - the reason they reopened the link is usually to check or change it.
   const [done, setDone] = useState(guest.rsvpStatus !== 'pending');
@@ -266,7 +279,9 @@ export function ConfirmationExperience({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 className={
-                  choice === 'declined' ? 'text-muted-foreground' : 'text-primary'
+                  choice === 'declined'
+                    ? 'text-muted-foreground'
+                    : 'text-primary'
                 }
                 aria-hidden
               >
@@ -287,26 +302,29 @@ export function ConfirmationExperience({
             >
               {choice === 'declined' ? 'קיבלנו - תודה שעדכנתם' : 'ההגעה אושרה'}
             </h2>
-            <p
-              className="text-muted-foreground rsvp-reveal mt-3 max-w-[380px] text-center text-base leading-[1.6] text-pretty"
-              style={{ animationDelay: '0.22s' }}
+            {/* The answer itself heads the summary, so a guest who reopens the
+                link reads it off the same list as the rest of their details. */}
+            <div
+              className="border-border rsvp-reveal mt-7 w-full border-t"
+              style={{ animationDelay: '0.3s' }}
             >
-              {choice === 'declined'
-                ? 'חבל שלא תוכלו להגיע. נשמח לחגוג יחד בהזדמנות אחרת.'
-                : 'שמרנו לכם מקום. נשלח תזכורת עם כל הפרטים יום לפני האירוע.'}
-            </p>
-
-            {choice === 'confirmed' ? (
-              <div
-                className="border-border rsvp-reveal mt-7 w-full border-t"
-                style={{ animationDelay: '0.3s' }}
-              >
-                <DetailRow label="מספר אורחים">{count}</DetailRow>
-                {mealVisible && meal ? (
-                  <DetailRow label="העדפת מנה">{mealLabel(meal)}</DetailRow>
-                ) : null}
-              </div>
-            ) : null}
+              <DetailRow label="סטטוס">
+                {choice === 'declined' ? 'לא מגיעים' : 'מגיעים'}
+              </DetailRow>
+              {choice === 'confirmed' ? (
+                <>
+                  <DetailRow label="מספר אורחים">{count}</DetailRow>
+                  {mealVisible && meal ? (
+                    <DetailRow label="העדפת מנה">{mealLabel(meal)}</DetailRow>
+                  ) : null}
+                </>
+              ) : null}
+              {note.trim() ? (
+                <DetailRow label={isCouple ? 'הערה לזוג' : 'הערה למארחים'}>
+                  <span className="text-pretty">{note.trim()}</span>
+                </DetailRow>
+              ) : null}
+            </div>
 
             <button
               type="button"
@@ -322,17 +340,8 @@ export function ConfirmationExperience({
             className="rsvp-rise mt-10 w-full"
             style={{ animationDelay: '0.44s' }}
           >
-            <div className="flex items-center gap-3.5">
-              <span className="bg-border h-px flex-1" />
-              <span className="text-muted-foreground flex items-center gap-2 text-[13px] font-medium tracking-[0.14em] whitespace-nowrap">
-                <Check className="text-primary size-4 shrink-0" />
-                <span>אישור הגעה</span>
-              </span>
-              <span className="bg-border h-px flex-1" />
-            </div>
-
-            <p className="text-muted-foreground mt-[18px] text-center text-[15px] leading-[1.6]">
-              נשמח לדעת אם תגיעו - כדי לשמור לכם מקום
+            <p className="text-center text-[18px] leading-[1.6] font-medium text-[oklch(0.37_0.012_285.9)]">
+              נשמח לדעת אם תגיעו
             </p>
 
             <div className="mt-[18px] flex gap-3">
@@ -354,7 +363,7 @@ export function ConfirmationExperience({
                     }}
                     className={`box-border flex min-h-[62px] flex-1 cursor-pointer items-center justify-center gap-2.5 rounded-xl border px-3.5 text-base font-semibold tracking-[-0.01em] transition-all duration-200 ${
                       active
-                        ? 'border-primary bg-primary text-primary-foreground'
+                        ? 'border-primary text-primary bg-[#FDF0F7]'
                         : 'border-border bg-white'
                     }`}
                   >
@@ -377,8 +386,8 @@ export function ConfirmationExperience({
                   detailsOpen ? 'opacity-100' : 'opacity-0'
                 }`}
               >
-                <div className="flex items-center gap-3.5 px-1 pt-5">
-                  <span className="flex-1 text-[15px] font-medium">
+                <div className="flex items-center gap-3.5 px-1 pt-6">
+                  <span className="flex-1 text-[17px] font-semibold tracking-[-0.01em]">
                     כמה אורחים תגיעו?
                   </span>
                   {lockGuestCount ? (
@@ -389,27 +398,32 @@ export function ConfirmationExperience({
                       {count}
                     </span>
                   ) : (
-                    <div className="border-border flex items-center gap-1 rounded-xl border bg-white p-1">
+                    // Ruled into three cells so each control reads as its own
+                    // target - a flat row of glyphs was easy to miss as a
+                    // thing you could press.
+                    <div className="border-border flex items-stretch overflow-hidden rounded-xl border bg-white">
                       <button
                         type="button"
                         aria-label="פחות"
+                        disabled={count <= 1}
                         onClick={() => setCount((c) => Math.max(1, c - 1))}
-                        className="hover:bg-muted flex size-11 cursor-pointer items-center justify-center rounded-[9px] text-[22px] leading-none text-[oklch(0.442_0.014_285.9)] transition-colors"
+                        className="hover:bg-muted active:bg-muted flex size-12 shrink-0 cursor-pointer items-center justify-center text-[oklch(0.21_0.006_285.9)] transition-colors disabled:cursor-not-allowed disabled:text-[oklch(0.75_0.01_285.9)] disabled:hover:bg-transparent"
                       >
-                        −
+                        <Minus className="size-5" strokeWidth={2.4} />
                       </button>
-                      <span className="min-w-[34px] text-center text-[19px] font-semibold tabular-nums">
+                      <span className="border-border flex w-14 items-center justify-center border-x text-[19px] font-semibold tabular-nums">
                         {count}
                       </span>
                       <button
                         type="button"
                         aria-label="עוד"
+                        disabled={count >= MAX_GUESTS}
                         onClick={() =>
                           setCount((c) => Math.min(MAX_GUESTS, c + 1))
                         }
-                        className="hover:bg-muted flex size-11 cursor-pointer items-center justify-center rounded-[9px] text-[22px] leading-none text-[oklch(0.442_0.014_285.9)] transition-colors"
+                        className="hover:bg-muted active:bg-muted flex size-12 shrink-0 cursor-pointer items-center justify-center text-[oklch(0.21_0.006_285.9)] transition-colors disabled:cursor-not-allowed disabled:text-[oklch(0.75_0.01_285.9)] disabled:hover:bg-transparent"
                       >
-                        +
+                        <Plus className="size-5" strokeWidth={2.4} />
                       </button>
                     </div>
                   )}
@@ -417,33 +431,56 @@ export function ConfirmationExperience({
 
                 {mealVisible ? (
                   <div className="px-1 pt-[22px]">
-                    <div className="flex items-baseline gap-2">
+                    <button
+                      type="button"
+                      aria-expanded={mealOpen}
+                      onClick={() => setMealOpen((open) => !open)}
+                      className="flex w-full cursor-pointer items-center gap-2 text-start"
+                    >
                       <span className="text-[15px] font-medium">העדפת מנה</span>
                       <span className="text-muted-foreground text-[13px]">
-                        אופציונלי
+                        {meal ? mealLabel(meal) : 'אופציונלי'}
                       </span>
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2.5">
-                      {mealOptions.map((option) => {
-                        const active = meal === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            aria-pressed={active}
-                            onClick={() =>
-                              setMeal(active ? '' : option.id)
-                            }
-                            className={`box-border flex min-h-[54px] cursor-pointer items-center justify-center rounded-xl border px-3 text-base font-medium transition-all duration-200 ${
-                              active
-                                ? 'border-primary text-primary bg-[#FDF0F7]'
-                                : 'border-border bg-white'
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
+                      <ChevronDown
+                        className={`text-muted-foreground ms-auto size-5 shrink-0 transition-transform duration-300 ${
+                          mealOpen ? 'rotate-180' : ''
+                        }`}
+                        aria-hidden
+                      />
+                    </button>
+
+                    <div
+                      className="grid transition-[grid-template-rows] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      style={{ gridTemplateRows: mealOpen ? '1fr' : '0fr' }}
+                      aria-hidden={!mealOpen}
+                    >
+                      <div
+                        className={`overflow-hidden transition-opacity duration-300 ${
+                          mealOpen ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        <div className="mt-3 grid grid-cols-2 gap-2.5">
+                          {mealOptions.map((option) => {
+                            const active = meal === option.id;
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                aria-pressed={active}
+                                tabIndex={mealOpen ? undefined : -1}
+                                onClick={() => setMeal(active ? '' : option.id)}
+                                className={`box-border flex min-h-[54px] cursor-pointer items-center justify-center rounded-xl border px-3 text-base font-medium transition-all duration-200 ${
+                                  active
+                                    ? 'border-primary text-primary bg-[#FDF0F7]'
+                                    : 'border-border bg-white'
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -482,17 +519,14 @@ export function ConfirmationExperience({
               type="button"
               onClick={handleSubmit}
               disabled={!choice || pending}
-              className={`mt-6 box-border min-h-[62px] w-full rounded-xl border border-transparent text-lg font-semibold tracking-[-0.01em] transition-all duration-200 ${
+              className={`mt-7 box-border flex min-h-[62px] w-full items-center justify-center gap-2.5 rounded-xl border border-transparent text-lg font-semibold tracking-[-0.01em] transition-all duration-200 ${
                 choice
-                  ? 'bg-primary text-primary-foreground cursor-pointer shadow-sm'
+                  ? 'bg-primary text-primary-foreground cursor-pointer shadow-[0_6px_18px_-8px_var(--primary)]'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               } ${pending ? 'opacity-70' : ''}`}
             >
-              {pending
-                ? 'שולח...'
-                : choice === 'declined'
-                  ? 'שליחת התשובה'
-                  : 'אישור הגעה'}
+              <Send className="size-[18px] shrink-0" aria-hidden />
+              <span>{pending ? 'שולח...' : 'שליחה'}</span>
             </button>
           </section>
         )}
