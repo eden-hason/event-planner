@@ -16,6 +16,11 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-app-shell-start: var(--app-shell-start);
+  --color-app-shell-end: var(--app-shell-end);
+  --color-app-header: var(--app-header);
+  --color-app-header-foreground: var(--app-header-foreground);
+  --color-app-header-border: var(--app-header-border);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -81,7 +86,13 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.592 0.249 333);
+  --app-shell-start: #f7e9f5;
+  --app-shell-end: #ebedee;
+  --app-header: var(--sidebar);
+  --app-header-foreground: oklch(0.25 0.045 318);
+  --app-header-border: oklch(0.91 0.025 326);
   --header-height: 3.5rem;
+  --app-header-offset: var(--header-height);
 }
 
 .dark {
@@ -118,6 +129,20 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.74 0.238 333);
+  --app-shell-start: #f7e9f5;
+  --app-shell-end: #ebedee;
+  --app-header: var(--sidebar);
+  --app-header-foreground: oklch(0.96 0.02 338);
+  --app-header-border: oklch(0.32 0.04 326);
+}
+
+.app-shell-gradient {
+  background-color: var(--app-shell-start);
+  background-image: linear-gradient(
+    120deg,
+    var(--app-shell-start) 0%,
+    var(--app-shell-end) 100%
+  );
 }
 
 /* Flat design: zero out Tailwind's shadow composition variables.

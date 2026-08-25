@@ -75,16 +75,16 @@ export default async function EventLayout({
   };
 
   return (
-    <SidebarProvider className="!min-h-svh !bg-[#F4F4F6]">
-      <AppSidebar
-        variant="floating"
-        events={events}
-        currentUserId={effectiveUser?.id ?? auth.user.id}
-        user={user}
-      />
-      <div className="flex min-h-0 w-full flex-1 flex-col">
-        <AppTopBar />
-        <SidebarInset className="!bg-[#F4F4F6]">
+    <SidebarProvider className="app-shell-gradient min-h-svh flex-col">
+      <AppTopBar user={user} />
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar
+          variant="floating"
+          className="top-(--app-header-offset) h-[calc(100svh-var(--app-header-offset))]"
+          events={events}
+          currentUserId={effectiveUser?.id ?? auth.user.id}
+        />
+        <SidebarInset className="bg-transparent">
           <ImpersonationBanner />
           <LayoutContentWrapper>
             <CollaborationProvider role={role} isCreator={isCreator}>
