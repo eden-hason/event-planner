@@ -11,14 +11,19 @@ export function eventDaysFromToday(eventDate: string | null, now = new Date()): 
   return Math.round((utcCalendarStart(eventDate) - utcCalendarStart(now)) / DAY_MS);
 }
 
-export function formatEventDate(eventDate: string | null, options?: { year?: boolean }): string {
+export function formatEventDate(
+  eventDate: string | null,
+  options?: { year?: boolean; weekday?: boolean },
+): string {
   if (!eventDate) return 'No date';
-  return new Intl.DateTimeFormat('en-GB', {
+  const formatted = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'UTC',
+    ...(options?.weekday ? { weekday: 'short' } : {}),
     day: 'numeric',
     month: 'short',
     ...(options?.year === false ? {} : { year: 'numeric' }),
   }).format(new Date(eventDate));
+  return options?.weekday ? formatted.replace(',', '') : formatted;
 }
 
 export function formatScheduleDateTime(iso: string, time?: string | null): string {
@@ -38,12 +43,18 @@ export function formatScheduleDateTime(iso: string, time?: string | null): strin
   return `${date}, ${formattedTime}`;
 }
 
-export function relativeEventDate(days: number | null): string | null {
+export function relativeEventDate(
+  days: number | null,
+  options?: { futureStyle?: 'away' | 'in' },
+): string | null {
   if (days === null) return null;
   if (days === 0) return 'Today';
   if (days === 1) return 'Tomorrow';
   if (days === -1) return 'Yesterday';
-  return days > 0 ? `${days} days away` : `${Math.abs(days)} days ago`;
+  if (days > 0) {
+    return options?.futureStyle === 'in' ? `in ${days} days` : `${days} days away`;
+  }
+  return `${Math.abs(days)} days ago`;
 }
 
 /** Converts an Operator-entered Israel wall clock to an instant, including DST. */

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ChevronDown, Copy, ExternalLink, PhoneOff, TriangleAlert } from '@/components/icons';
+import { ChevronDown, Link2, MessageSquare, Phone, PhoneOff, TriangleAlert } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,10 +30,14 @@ export function PublicEventActions({ shortCode }: { shortCode: string }) {
     toast.success('Guest page link copied');
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <code className="bg-muted rounded px-2 py-1 text-[12px]">{path}</code>
-      <Button type="button" variant="outline" size="xs" onClick={copy}><Copy data-icon="inline-start" />Copy</Button>
-      <Button asChild variant="outline" size="xs"><Link href={path} target="_blank"><ExternalLink data-icon="inline-start" />Open guest page</Link></Button>
+    <div className="bg-muted flex max-w-full items-center gap-2 self-start rounded-md border px-2.5 py-[7px]">
+      <Link2 aria-hidden className="text-muted-foreground size-4 shrink-0" />
+      <code className="text-foreground/80 min-w-0 truncate text-[12.5px]">kululu.app{path}</code>
+      <Button type="button" variant="link" size="xs" className="h-auto p-0" onClick={copy}>Copy</Button>
+      <span aria-hidden className="text-muted-foreground">·</span>
+      <Button asChild variant="link" size="xs" className="h-auto p-0">
+        <Link href={path} target="_blank">Open as a guest</Link>
+      </Button>
     </div>
   );
 }
@@ -42,12 +46,12 @@ export function PhoneQualityDisclosure({ summary }: { summary: EventGuestSummary
   if (!summary.unusablePhones.length) return null;
   return (
     <Collapsible>
-      <Alert className="mt-4">
+      <Alert>
         <PhoneOff />
-        <AlertTitle>{summary.unusablePhones.length} records have no usable phone number</AlertTitle>
-        <AlertDescription>They cannot receive messages or be reached in a call round</AlertDescription>
+        <AlertTitle>{summary.unusablePhones.length} of {summary.guestRecords} records have no phone number</AlertTitle>
+        <AlertDescription>Every send skips them silently, so the reach numbers below can never reach 100%. They can only be answered by a call or by the owner typing the answer in</AlertDescription>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="xs" className="absolute top-2 right-2">List them<ChevronDown data-icon="inline-end" /></Button>
+          <Button variant="outline" size="xs" className="absolute top-2 right-2">List them</Button>
         </CollapsibleTrigger>
       </Alert>
       <CollapsibleContent className="mt-2 overflow-hidden rounded-lg border">
@@ -84,7 +88,7 @@ export function WorkspaceSignals({ signals }: { signals: EventWorkspaceSignal[] 
   return (
     <section className={cn('overflow-hidden rounded-xl border shadow-xs', destructive ? 'border-destructive/30 bg-destructive/5' : 'bg-card')}>
       <h2 className={cn('px-4 pt-3.5 pb-2.5 text-[11.5px] font-semibold tracking-[0.07em] uppercase', destructive ? 'text-destructive' : 'text-muted-foreground')}>
-        {destructive ? 'Signals requiring attention' : 'Open work'}
+        {destructive ? 'Needs attention on this event' : 'Open work'}
       </h2>
       {groups ? groups.map((group) => (
         <div key={group.kind}>
@@ -104,7 +108,7 @@ export function WorkspaceSignals({ signals }: { signals: EventWorkspaceSignal[] 
 export function EventTimeline({ rows }: { rows: EventTimelineRow[] }) {
   if (!rows.length) return null;
   return (
-    <div className="divide-y border-t">
+    <div className="flex flex-col gap-2">
       {rows.map((row) => <TimelineRow key={row.id} row={row} />)}
     </div>
   );
@@ -124,22 +128,35 @@ function TimelineRow({ row }: { row: EventTimelineRow }) {
     audienceLabel,
     channel: row.channel === 'whatsapp' ? 'WhatsApp' : row.channel === 'sms' ? 'SMS' : null,
   };
+  const rail = failed.length
+    ? 'border-l-destructive'
+    : row.status === 'in_progress'
+      ? 'border-l-primary'
+      : row.status === 'sent' || row.status === 'completed'
+        ? 'border-l-success'
+        : 'border-l-border';
+  const dateLabel = row.status === 'cancelled'
+    ? null
+    : formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0];
   return (
-    <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[130px_minmax(0,1fr)] gap-5 px-4 py-4">
-      <div className="text-muted-foreground text-[12px] tabular-nums">
-        <span className="text-foreground block font-medium">{formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0]}</span>
-        <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>
+    <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[76px_minmax(0,1fr)] gap-3.5">
+      <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-[11.5px] tabular-nums">
+        {dateLabel && <span className="text-foreground text-[12.5px] font-medium">{dateLabel}</span>}
+        {dateLabel && <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>}
       </div>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-[13.5px] font-semibold">{row.title}</h3>
+      <div className={cn('bg-card min-w-0 overflow-hidden rounded-lg border border-l-[3px] shadow-xs', rail)}>
+        <div className="flex flex-wrap items-center gap-3 px-3.5 py-3">
+          <span className="text-muted-foreground shrink-0 [&_svg]:size-[18px]">
+            {row.kind === 'call' ? <Phone /> : <MessageSquare />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <h3 className="truncate text-sm font-medium">{row.title}</h3>
               <span className={cn('rounded-full border px-2 py-px text-[10px] font-semibold uppercase', failed.length ? 'border-destructive/40 text-destructive' : 'text-muted-foreground')}>
                 {row.status.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-muted-foreground mt-0.5 text-[12.5px]">
+            <p className="text-muted-foreground mt-0.5 truncate text-[12.5px]">
               {row.kind === 'call'
                 ? row.roundId ? `${row.calledCount} of ${row.roundGuestCount} guest records called` : audienceLabel
                 : row.status === 'cancelled' ? 'Cancelled by owner'
@@ -154,16 +171,13 @@ function TimelineRow({ row }: { row: EventTimelineRow }) {
             </Button>
           ) : null}
         </div>
-
-        {failed.length > 0 && (
-          <DeliveryPanel scheduleId={row.id} failed={failed} successful={successful} attempted={attempted} />
-        )}
+        {failed.length > 0 && <DeliveryPanel scheduleId={row.id} failed={failed} successful={successful} attempted={attempted} embedded />}
         {failed.length === 0 && successful.length > 0 && (
-          <Collapsible className="mt-3">
-            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[12px] font-medium">
+          <Collapsible className="border-t">
+            <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 px-3.5 py-2.5 text-[12px] font-medium">
               Successful deliveries ({successful.length}) <ChevronDown />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 space-y-1 text-[12px]">
+            <CollapsibleContent className="flex flex-col gap-1 border-t px-3.5 py-2.5 text-[12px]">
               {successful.map((delivery) => <p key={delivery.id}>{delivery.guestName} · {delivery.status}</p>)}
             </CollapsibleContent>
           </Collapsible>
@@ -173,11 +187,12 @@ function TimelineRow({ row }: { row: EventTimelineRow }) {
   );
 }
 
-function DeliveryPanel({ scheduleId, failed, successful, attempted }: {
+function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = false }: {
   scheduleId: string;
   failed: EventTimelineRow['deliveries'];
   successful: EventTimelineRow['deliveries'];
   attempted: number;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -213,7 +228,7 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted }: {
     });
   }
   return (
-    <Collapsible defaultOpen id={`schedule-${scheduleId}-failures`} className="mt-3 scroll-mt-20 rounded-lg border border-destructive/25 bg-destructive/5">
+    <Collapsible defaultOpen id={`schedule-${scheduleId}-failures`} className={cn('scroll-mt-20 border-destructive/25 bg-destructive/5', embedded ? 'border-t' : 'mt-3 rounded-lg border')}>
       <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-left text-[12.5px] font-medium text-destructive">
         {failed.length} of {attempted} attempted deliveries failed <ChevronDown />
       </CollapsibleTrigger>

@@ -1,7 +1,9 @@
-import { CalendarDays, MapPin, Users } from '@/components/icons';
+import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddCallRoundDialog } from './add-call-round-dialog';
@@ -19,63 +21,121 @@ import {
   getEventSignals,
   getEventTimeline,
 } from '../queries/events';
-import type { EventIdentity } from '../types';
+import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, relativeEventDate } from '@/lib/date-time';
+import { cn } from '@/lib/utils';
 
 export function EventIdentityBand({ event }: { event: EventIdentity }) {
-  const hosts = event.hostNames.length ? event.hostNames.join(' & ') : null;
+  const hosts = event.hostNames.length ? event.hostNames.join(' and ') : null;
+  const eventDate = formatEventDate(event.eventDate, { weekday: true });
+  const relativeDate = relativeEventDate(event.daysFromToday, { futureStyle: 'in' });
+
   if (event.status === 'draft') {
     return (
-      <Band title="Event">
-        <BandRow className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight">{event.title}</h1>
-              <Badge variant="outline" className="text-muted-foreground text-[10px] uppercase">Draft</Badge>
-            </div>
-            <p className="text-muted-foreground mt-1 text-[13px]">{event.eventTypeName}{hosts ? ` · ${hosts}` : ''}</p>
-            <p className="text-muted-foreground mt-3 text-[12.5px]">{formatEventDate(event.eventDate)} · {event.locationName ?? 'No venue set'}</p>
+      <Card className="gap-0 py-0">
+        <CardContent className="flex flex-col gap-3 px-5 py-[18px]">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h1 className="text-muted-foreground min-w-0 truncate text-xl font-semibold tracking-[-0.015em]">{event.title}</h1>
+            <Badge variant="secondary" className="text-primary bg-primary/10 text-[11px] tracking-[0.04em] uppercase">Draft</Badge>
+            <Badge variant="outline" className="text-muted-foreground text-[11px] tracking-[0.04em] uppercase">{event.eventTypeName}</Badge>
           </div>
-          <div className="text-right text-[12.5px]">
-            <p className="font-medium">{event.owner.name}</p>
-            <p className="text-muted-foreground">{event.owner.email ?? 'No email'}</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <EventMeta icon={<CalendarDays />}>
+              <span className="font-medium tabular-nums">{eventDate}</span>
+              {relativeDate && <span className="text-muted-foreground tabular-nums">{relativeDate}</span>}
+            </EventMeta>
+            <EventMeta icon={<MapPin />} muted={!event.locationName}>
+              <span className="truncate">{event.locationName ?? 'No venue yet'}</span>
+            </EventMeta>
           </div>
-        </BandRow>
-      </Band>
+          <Separator />
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Owner</p>
+            <p className="mt-1 truncate text-[13.5px]">{event.owner.email ?? event.owner.name}</p>
+            <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ?? 'No phone number'}</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
+
   return (
-    <Band title="Event">
-      <BandRow className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(240px,.65fr)]">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight">{event.title}</h1>
-            <Badge variant="outline" className="text-muted-foreground text-[10px] uppercase">Published</Badge>
+    <Card className="grid gap-0 overflow-hidden py-0 lg:grid-cols-[minmax(0,1fr)_268px]">
+      <CardContent className="flex min-w-0 flex-col gap-3 px-5 py-[18px]">
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="min-w-0 truncate text-xl font-semibold tracking-[-0.015em]">{event.title}</h1>
+            <Badge variant="outline" className="text-muted-foreground shrink-0 text-[11px] tracking-[0.04em] uppercase">{event.eventTypeName}</Badge>
           </div>
-          <p className="text-muted-foreground mt-1 text-[13px]">{event.eventTypeName}{hosts ? ` · ${hosts}` : ''}</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Detail icon={<CalendarDays />} label="Date" value={formatEventDate(event.eventDate)} supporting={relativeEventDate(event.daysFromToday)} />
-            <Detail icon={<MapPin />} label="Venue" value={event.locationName ?? 'No venue set'} />
-            <Detail label="Ceremony" value={event.ceremonyTime?.slice(0, 5) ?? 'Not set'} />
-            <Detail label="Reception" value={event.receptionTime?.slice(0, 5) ?? 'Not set'} />
-          </div>
-          {event.status === 'published' && event.shortCode && <div className="mt-4"><PublicEventActions shortCode={event.shortCode} /></div>}
+          {hosts && <p className="text-foreground/80 truncate text-[13.5px]">{hosts}</p>}
         </div>
-        <div className="rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.06em] uppercase">Owner</p>
-          <p className="mt-2 text-[13.5px] font-medium">{event.owner.name}</p>
-          <p className="text-muted-foreground text-[12px]">{event.owner.email ?? 'No email'}</p>
-          <p className="text-muted-foreground text-[12px]">{event.owner.phone ?? 'No phone number'}</p>
-          {event.collaborators.length > 0 && (
-            <div className="mt-3 border-t pt-3">
-              <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.06em] uppercase">Collaborators</p>
-              {event.collaborators.map((person) => <p key={person.id} className="mt-1 text-[12px]">{person.name} · {person.role}</p>)}
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <EventMeta icon={<CalendarDays />}>
+            <span className="font-medium tabular-nums">{eventDate}</span>
+            {relativeDate && <span className="text-muted-foreground tabular-nums">{relativeDate}</span>}
+          </EventMeta>
+          <EventMeta icon={<MapPin />} muted={!event.locationName}>
+            <span className="truncate">{event.locationName ?? 'No venue yet'}</span>
+          </EventMeta>
+          <EventMeta icon={<Clock3 />}>
+            <span className="tabular-nums">
+              Ceremony {event.ceremonyTime?.slice(0, 5) ?? 'not set'} · Reception {event.receptionTime?.slice(0, 5) ?? 'not set'}
+            </span>
+          </EventMeta>
+        </div>
+
+        {event.shortCode && <PublicEventActions shortCode={event.shortCode} />}
+      </CardContent>
+
+      <CardContent className="flex min-w-0 flex-col gap-3 border-t px-5 py-[18px] lg:border-t-0 lg:border-l">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Owner</p>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="truncate text-sm font-medium">{event.owner.name}</p>
+          <p className="text-muted-foreground truncate text-[12.5px]">{event.owner.email ?? 'No email'}</p>
+          <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ?? 'No phone number'}</p>
+        </div>
+        {event.collaborators.length > 0 && (
+          <>
+            <Separator />
+            <div className="flex flex-col gap-1.5">
+              <p className="text-muted-foreground text-xs">Also on this event</p>
+              {event.collaborators.map((person) => (
+                <div key={person.id} className="flex min-w-0 flex-wrap items-baseline gap-2">
+                  <span className="truncate text-[13px]">{person.name}</span>
+                  <Badge variant="outline" className="text-muted-foreground px-2 py-0 text-[11.5px] font-normal normal-case">
+                    {formatCollaboratorRole(person.role)}
+                  </Badge>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </BandRow>
-    </Band>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
+}
+
+function EventMeta({
+  icon,
+  children,
+  muted = false,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className={muted ? 'text-muted-foreground flex min-w-0 items-center gap-2' : 'flex min-w-0 items-center gap-2'}>
+      <span className="text-muted-foreground shrink-0 [&_svg]:size-[18px]">{icon}</span>
+      <span className="flex min-w-0 items-baseline gap-2 text-[13.5px]">{children}</span>
+    </div>
+  );
+}
+
+function formatCollaboratorRole(role: string) {
+  const words = role.replaceAll('_', ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 export async function EventIdentityQueryBand({ eventId }: { eventId: string }) {
@@ -99,17 +159,14 @@ function Detail({ icon, label, value, supporting }: { icon?: React.ReactNode; la
 
 export function DraftEventBand({ event }: { event: EventIdentity }) {
   return (
-    <Band title="Draft event">
-      <BandRow>
-        <Alert>
-          <Users />
-          <AlertTitle>Onboarding is incomplete</AlertTitle>
-          <AlertDescription>
-            Onboarding stopped after {event.onboardingStep ?? 'an unknown step'}. Outreach and guest-list operations are unavailable until the owner publishes the event
-          </AlertDescription>
-        </Alert>
-      </BandRow>
-    </Band>
+    <Alert className="p-5">
+      <Info />
+      <AlertTitle>Onboarding was never finished, so there is nothing to work yet</AlertTitle>
+      <AlertDescription className="flex flex-col gap-1">
+        <span>A draft has no guest list, no schedules and no workspace in the owner app. The owner is reachable above if this one is worth a call</span>
+        <span className="text-muted-foreground/70 text-xs tabular-nums">Created {formatEventDate(event.createdAt)}, onboarding stopped after {event.onboardingStep ?? 'an unknown step'}</span>
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -137,7 +194,7 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
   try {
     const summary = await getEventGuestSummary(eventId);
     return (
-      <Band title="Guest list">
+      <Band title="Guest list" description="everything the couple asks about on the phone">
         {summary.guestRecords === 0 ? (
           <BandRow>
             <Empty className="min-h-48 border-0 p-4">
@@ -146,20 +203,31 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
           </BandRow>
         ) : (
           <>
-            <BandRow>
-              <div className="grid gap-4 sm:grid-cols-4">
-                <Metric value={summary.guestRecords} label="guest records" supporting={`${summary.actualGuests} actual guests`} />
-                <Metric value={summary.groups} label="groups" supporting={`${summary.offlineRecords} offline RSVPs`} />
-                <Metric value={summary.confirmed} label="confirmed" supporting={`${Math.round(summary.confirmed / summary.guestRecords * 100)}% of records`} />
-                <Metric value={summary.pending} label="pending" supporting={`${summary.declined} declined`} />
-              </div>
-              <PhoneQualityDisclosure summary={summary} />
+            <BandRow className="flex flex-wrap items-baseline gap-x-9 gap-y-5">
+              <Metric value={summary.guestRecords} label="guest records" supporting="the billable unit" />
+              <Metric value={summary.actualGuests} label="guests" supporting="actual humans invited" />
+              <Metric value={summary.groups} label="groups" supporting={`${summary.offlineRecords} answers taken offline`} />
             </BandRow>
-            {summary.provenance.length > 0 && (
-              <BandRow className="p-0">
+            <BandRow className="flex flex-col gap-3">
+              <RsvpBar summary={summary} />
+              <div className="flex flex-wrap items-baseline gap-x-7 gap-y-2">
+                <RsvpLegend color="bg-rsvp-confirmed" value={summary.confirmed} label="confirmed" total={summary.guestRecords} />
+                <RsvpLegend color="bg-rsvp-declined" value={summary.declined} label="declined" total={summary.guestRecords} />
+                <RsvpLegend color="bg-rsvp-pending" value={summary.pending} label="pending" total={summary.guestRecords} />
+              </div>
+            </BandRow>
+            {summary.unusablePhones.length > 0 && <BandRow><PhoneQualityDisclosure summary={summary} /></BandRow>}
+            {summary.confirmed + summary.declined > 0 && (
+              <BandRow className="bg-muted flex flex-col gap-2.5 py-3.5">
+                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                  <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Where the answers came from</p>
+                  <p className="text-foreground/80 text-[12.5px] tabular-nums">
+                    {operatorAnswers(summary)} of {summary.confirmed + summary.declined} answers came from Kululu operators on the phone
+                  </p>
+                </div>
                 <Table>
-                  <TableHeader><TableRow><TableHead className="px-4">RSVP provenance</TableHead><TableHead className="text-right">Confirmed</TableHead><TableHead className="text-right">Declined</TableHead><TableHead className="px-4 text-right">Records</TableHead></TableRow></TableHeader>
-                  <TableBody>{summary.provenance.map((row) => <TableRow key={row.label}><TableCell className="px-4 font-medium">{row.label}</TableCell><TableCell className="text-right tabular-nums">{row.confirmed}</TableCell><TableCell className="text-right tabular-nums">{row.declined}</TableCell><TableCell className="px-4 text-right tabular-nums">{row.total}</TableCell></TableRow>)}</TableBody>
+                  <TableHeader><TableRow><TableHead className="px-0">Source</TableHead><TableHead className="w-24 text-right">Confirmed</TableHead><TableHead className="w-24 px-0 text-right">Declined</TableHead></TableRow></TableHeader>
+                  <TableBody>{summary.provenance.filter((row) => row.confirmed + row.declined > 0).map((row) => <TableRow key={row.label}><TableCell className="px-0 text-[13px]">{provenanceLabel(row.label)}</TableCell><TableCell className="text-right text-[13px] tabular-nums">{row.confirmed}</TableCell><TableCell className="px-0 text-right text-[13px] tabular-nums">{row.declined}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </BandRow>
             )}
@@ -174,7 +242,56 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
 }
 
 function Metric({ value, label, supporting }: { value: number; label: string; supporting: string }) {
-  return <div><p className="text-xl font-semibold tabular-nums">{value.toLocaleString('en-GB')}</p><p className="text-[12.5px] font-medium">{label}</p><p className="text-muted-foreground text-[11.5px]">{supporting}</p></div>;
+  return <div className="flex flex-col gap-0.5"><p className="text-xl font-semibold tracking-[-0.01em] tabular-nums">{value.toLocaleString('en-GB')} {label}</p><p className="text-muted-foreground text-[12.5px]">{supporting}</p></div>;
+}
+
+function RsvpBar({ summary }: { summary: EventGuestSummary }) {
+  const total = summary.confirmed + summary.declined + summary.pending;
+  if (!total) return null;
+  return (
+    <div className="bg-border flex h-2.5 overflow-hidden rounded-full" aria-label="RSVP status distribution">
+      <div className="bg-rsvp-confirmed" style={{ width: `${summary.confirmed / total * 100}%` }} />
+      <div className="bg-rsvp-declined" style={{ width: `${summary.declined / total * 100}%` }} />
+      <div className="bg-rsvp-pending" style={{ width: `${summary.pending / total * 100}%` }} />
+    </div>
+  );
+}
+
+function RsvpLegend({
+  color,
+  value,
+  label,
+  total,
+}: {
+  color: 'bg-rsvp-confirmed' | 'bg-rsvp-declined' | 'bg-rsvp-pending';
+  value: number;
+  label: string;
+  total: number;
+}) {
+  const percent = total ? Math.round(value / total * 100) : 0;
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className={cn('size-2 shrink-0 rounded-full', color)} />
+      <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('en-GB')}</span>
+      <span className="text-muted-foreground text-[13px]">{label}</span>
+      <span className="text-muted-foreground/70 text-[12.5px] tabular-nums">{percent}%</span>
+    </div>
+  );
+}
+
+function operatorAnswers(summary: EventGuestSummary) {
+  const operator = summary.provenance.find((row) => row.label === 'Back Office call');
+  return operator ? operator.confirmed + operator.declined : 0;
+}
+
+function provenanceLabel(label: string) {
+  const labels: Record<string, string> = {
+    'Guest response': 'Guest self-served the link',
+    'Back Office call': 'Operator on the phone',
+    'Owner update': 'Owner typed it in',
+    'Before source tracking': 'Before this was tracked',
+  };
+  return labels[label] ?? label;
 }
 
 export async function EventOutreachBand({ eventId }: { eventId: string }) {
@@ -183,29 +300,30 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     if (!event) return <BandFailure title="Outreach timeline" />;
     if (!event.canCreateSchedules) {
       return (
-        <Band id="outreach-timeline" title="Outreach timeline" className="scroll-mt-20">
-          <BandRow>
-            <Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert>
-          </BandRow>
-        </Band>
+        <section id="outreach-timeline" className="flex scroll-mt-20 flex-col gap-2">
+          <TimelineHeading />
+          <Card className="gap-0 py-0"><CardContent className="p-4"><Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert></CardContent></Card>
+        </section>
       );
     }
     const [rows, guestSummary] = await Promise.all([getEventTimeline(event.id), getEventGuestSummary(event.id)]);
     const canPlanCalls = guestSummary.pending + guestSummary.confirmed > 0;
     return (
-      <Band id="outreach-timeline" title="Outreach timeline" className="scroll-mt-20">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-          <p className="text-muted-foreground text-[12.5px]">Messages and call rounds in planned order</p>
-          {canPlanCalls && <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />}
+      <section id="outreach-timeline" className="flex scroll-mt-20 flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 px-0.5">
+          <TimelineHeading />
+          <div className="ml-auto">
+            {canPlanCalls && <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />}
+          </div>
         </div>
         {rows.length ? (
           <EventTimeline rows={rows} />
         ) : (
-          <BandRow>
+          <Card className="gap-0 py-0"><CardContent className="p-4">
             <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>No outreach planned</EmptyTitle><EmptyDescription>{canPlanCalls ? 'Add a call round or wait for the owner to configure messages' : 'Outreach can be planned as soon as the guest list has an eligible audience'}</EmptyDescription></EmptyHeader></Empty>
-          </BandRow>
+          </CardContent></Card>
         )}
-      </Band>
+      </section>
     );
   } catch (error) {
     console.error('Event outreach failed:', error);
@@ -213,10 +331,19 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
   }
 }
 
+function TimelineHeading() {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+      <h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2>
+      <p className="text-muted-foreground/70 text-xs">schedules and call rounds in one chronology</p>
+    </div>
+  );
+}
+
 export function EventDetailsBand({ event }: { event: EventIdentity }) {
   return (
     <Band title="Event details">
-      <BandRow className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <BandRow className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <Detail label="Created" value={formatEventDate(event.createdAt)} />
         <Detail label="Sending" value={event.canCreateSchedules ? 'Enabled' : 'Not enabled'} />
         <Detail label="Guest page code" value={event.shortCode || 'Not assigned'} />
