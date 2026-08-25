@@ -194,7 +194,7 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
   try {
     const summary = await getEventGuestSummary(eventId);
     return (
-      <Band title="Guest list" description="everything the couple asks about on the phone">
+      <Band title="Guest list">
         {summary.guestRecords === 0 ? (
           <BandRow>
             <Empty className="min-h-48 border-0 p-4">

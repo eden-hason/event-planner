@@ -7,13 +7,11 @@ import { cn } from '@/lib/utils';
  */
 export function Band({
   title,
-  description,
   children,
   className,
   id,
 }: {
   title: string;
-  description?: string;
   children: React.ReactNode;
   className?: string;
   id?: string;
@@ -26,10 +24,7 @@ export function Band({
         className,
       )}
     >
-      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 px-4 pt-3.5 pb-2.5">
-        <h2 className="text-muted-foreground text-[11.5px] font-semibold tracking-[0.07em] uppercase">{title}</h2>
-        {description && <p className="text-muted-foreground/70 text-xs">{description}</p>}
-      </div>
+      <h2 className="text-muted-foreground px-4 pt-3.5 pb-2.5 text-[11.5px] font-semibold tracking-[0.07em] uppercase">{title}</h2>
       {children}
     </section>
   );
