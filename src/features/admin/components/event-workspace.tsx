@@ -340,10 +340,13 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
 
 function TimelineHeader({ action }: { action?: React.ReactNode }) {
   return (
-    <CardHeader className="flex flex-row items-center justify-between gap-3 border-b px-4 pt-3.5 pb-2.5">
-      <CardTitle><h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2></CardTitle>
-      {action && <CardAction className="self-center">{action}</CardAction>}
-    </CardHeader>
+    <>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
+        <CardTitle><h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2></CardTitle>
+        {action && <CardAction className="self-center">{action}</CardAction>}
+      </CardHeader>
+      <Separator />
+    </>
   );
 }
 
