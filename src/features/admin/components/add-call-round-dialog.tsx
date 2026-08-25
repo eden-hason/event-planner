@@ -54,7 +54,9 @@ export function AddCallRoundDialog({
   const [selectedEvent, setSelectedEvent] = useState(eventId ?? events[0]?.id ?? '');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
-  const [target, setTarget] = useState<'pending' | 'confirmed'>('pending');
+  const [target, setTarget] = useState<'pending' | 'confirmed'>(
+    events.find((event) => event.id === (eventId ?? events[0]?.id))?.pending ? 'pending' : 'confirmed',
+  );
 
   const chosen = events.find((event) => event.id === selectedEvent);
   const audience = chosen ? (target === 'pending' ? chosen.pending : chosen.confirmed) : 0;
@@ -103,7 +105,15 @@ export function AddCallRoundDialog({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="call-plan-event">Event</Label>
-            <Select value={selectedEvent} onValueChange={setSelectedEvent} disabled={!!eventId}>
+            <Select
+              value={selectedEvent}
+              onValueChange={(value) => {
+                setSelectedEvent(value);
+                const next = events.find((event) => event.id === value);
+                setTarget(next?.pending ? 'pending' : 'confirmed');
+              }}
+              disabled={!!eventId}
+            >
               <SelectTrigger id="call-plan-event" className="w-full">
                 <SelectValue placeholder="Pick an event" />
               </SelectTrigger>
@@ -145,9 +155,10 @@ export function AddCallRoundDialog({
                 <button
                   key={option.value}
                   type="button"
+                  disabled={(option.value === 'pending' ? chosen?.pending : chosen?.confirmed) === 0}
                   onClick={() => setTarget(option.value)}
                   className={cn(
-                    'flex-1 rounded-md border px-3 py-1.5 text-[13px] font-medium',
+                    'flex-1 rounded-md border px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40',
                     target === option.value
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'bg-card hover:bg-accent',

@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 
 /**
@@ -30,6 +31,7 @@ export type TestScope = {
  * scoped by event id, so those ids are all it takes to filter the rest.
  */
 export const getTestScope = cache(async function getTestScope(): Promise<TestScope> {
+  await assertAdmin();
   const supabase = createServiceClient();
 
   const { data: profiles, error: profilesError } = await supabase

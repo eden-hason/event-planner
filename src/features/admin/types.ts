@@ -54,11 +54,129 @@ export type UpcomingEvent = {
 export type EventSearchResult = {
   id: string;
   title: string;
-  eventDate: string;
+  eventDate: string | null;
   /** Draft Events are reachable by search but never counted. See CONTEXT.md. */
   isDraft: boolean;
   ownerName: string;
   ownerEmail: string | null;
+};
+
+export type EventsIndexStatus = 'all' | 'published' | 'draft';
+
+export type EventsIndexFilters = {
+  q: string;
+  status: EventsIndexStatus;
+  needsSetup: boolean;
+  page: number;
+};
+
+export type EventIndexRow = {
+  id: string;
+  title: string;
+  status: 'published' | 'draft';
+  eventDate: string | null;
+  eventTypeName: string;
+  ownerName: string;
+  ownerEmail: string | null;
+  guestRecords: number;
+  actualGuests: number;
+  confirmedRecords: number;
+  confirmationRate: number | null;
+  setupReason: string | null;
+  onboardingStep: string | null;
+  messageSchedules: number;
+  callPlans: number;
+};
+
+export type EventsIndexPage = {
+  rows: EventIndexRow[];
+  totalRows: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  totals: {
+    publishedEvents: number;
+    draftEvents: number;
+    guestRecords: number;
+    actualGuests: number;
+  };
+};
+
+export type EventIdentity = {
+  id: string;
+  title: string;
+  status: 'published' | 'draft';
+  eventTypeName: string;
+  eventDate: string | null;
+  daysFromToday: number | null;
+  locationName: string | null;
+  ceremonyTime: string | null;
+  receptionTime: string | null;
+  shortCode: string;
+  canCreateSchedules: boolean;
+  onboardingStep: string | null;
+  createdAt: string;
+  owner: { name: string; email: string | null; phone: string | null };
+  collaborators: { id: string; name: string; email: string | null; role: string }[];
+  hostNames: string[];
+};
+
+export type EventRouteState = {
+  status: 'published' | 'draft';
+  canCreateSchedules: boolean;
+};
+
+export type EventGuestSummary = {
+  guestRecords: number;
+  actualGuests: number;
+  groups: number;
+  offlineRecords: number;
+  confirmed: number;
+  declined: number;
+  pending: number;
+  provenance: { label: string; confirmed: number; declined: number; total: number }[];
+  unusablePhones: { id: string; name: string; groupName: string | null; phone: string | null }[];
+};
+
+export type EventWorkspaceSignal = {
+  id: string;
+  kind: SignalKind;
+  headline: string;
+  detail: string;
+  href: string;
+};
+
+export type EventTimelineDelivery = {
+  id: string;
+  guestId: string;
+  guestName: string;
+  guestPhone: string | null;
+  status: string;
+  errorMessage: string | null;
+  errorCode: number | null;
+  createdAt: string;
+  sentAt: string | null;
+  triggeredBy: string | null;
+};
+
+export type EventTimelineRow = {
+  id: string;
+  kind: 'message' | 'call';
+  title: string;
+  status: 'planned' | 'sent' | 'cancelled' | 'in_progress' | 'completed';
+  scheduledDate: string;
+  scheduledTime: string | null;
+  sentAt: string | null;
+  targetStatus: string | null;
+  channel: string | null;
+  audienceCount: number;
+  roundId: string | null;
+  roundStartedAt: string | null;
+  roundCompletedAt: string | null;
+  calledCount: number;
+  roundGuestCount: number;
+  notesCount: number;
+  deliveries: EventTimelineDelivery[];
 };
 
 /**

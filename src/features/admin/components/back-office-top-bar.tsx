@@ -10,6 +10,7 @@ import { OperatorSearch } from './operator-search';
  */
 export function BackOfficeTopBar({ children }: { children?: ReactNode }) {
   const today = new Date().toLocaleDateString('en-GB', {
+    timeZone: 'Asia/Jerusalem',
     weekday: 'long',
     day: 'numeric',
     month: 'long',

@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
+import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 const DAY_MS = 86_400_000;
 
@@ -13,22 +14,20 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
   return result.data;
 }
 
-/** Midnight local, so "today" is a calendar day rather than 24 hours from now. */
-function startOfDay(date: Date): number {
-  const copy = new Date(date);
-  copy.setHours(0, 0, 0, 0);
-  return copy.getTime();
+function calendarParts(date: Date) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+    timeZone: ADMIN_TIME_ZONE,
+    year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short',
+  }).formatToParts(date).map((part) => [part.type, part.value]));
+  return { year: +parts.year, month: +parts.month, day: +parts.day, weekday: parts.weekday };
 }
 
-function groupLabel(scheduledDate: string, todayStart: number): string {
+function groupLabel(scheduledDate: string, today: ReturnType<typeof calendarParts>): string {
   const date = new Date(scheduledDate);
-  const dayStart = startOfDay(date);
-  const offset = Math.round((dayStart - todayStart) / DAY_MS);
-
-  const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
-  const dayMonth = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const sameYear = date.getFullYear() === new Date(todayStart).getFullYear();
-  const stamp = sameYear ? `${weekday} ${dayMonth}` : `${weekday} ${dayMonth} ${date.getFullYear()}`;
+  const scheduled = calendarParts(date);
+  const offset = Math.round((Date.UTC(scheduled.year, scheduled.month - 1, scheduled.day) - Date.UTC(today.year, today.month - 1, today.day)) / DAY_MS);
+  const month = new Intl.DateTimeFormat('en-GB', { timeZone: ADMIN_TIME_ZONE, month: 'short' }).format(date);
+  const stamp = scheduled.year === today.year ? `${scheduled.weekday} ${scheduled.day} ${month}` : `${scheduled.weekday} ${scheduled.day} ${month} ${scheduled.year}`;
 
   if (offset === 0) return `Today, ${stamp}`;
   if (offset === 1) return `Tomorrow, ${stamp}`;
@@ -97,10 +96,11 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       supabase
         .from('schedules')
         .select(
-          'id, event_id, scheduled_date, scheduled_time, target_status, schedule_type_id, events!inner(title, status), schedule_types(name, execution_kind), message_templates(channel)',
+          'id, event_id, scheduled_date, scheduled_time, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(name, execution_kind), message_templates(channel)',
         )
         .is('status', null)
         .eq('events.status', 'published')
+        .eq('events.can_create_schedules', true)
         .order('scheduled_date', { ascending: true }),
       'event_id',
       test.eventIds,
@@ -147,7 +147,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   }
 
   const now = Date.now();
-  const todayStart = startOfDay(new Date(now));
+  const today = calendarParts(new Date(now));
 
   const rows: PlannedWorkRow[] = open.map((row) => {
     const isCall = row.schedule_types?.execution_kind === 'phone_call';
@@ -178,6 +178,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
     } else {
       if (lateBy !== null) {
         const due = new Date(row.scheduled_date).toLocaleDateString('en-GB', {
+          timeZone: ADMIN_TIME_ZONE,
           day: 'numeric',
           month: 'short',
         });
@@ -212,7 +213,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   // Rows arrive date-ordered, so a group breaks whenever the label changes.
   for (const row of rows) {
     if (row.lateBy !== null) continue;
-    const label = groupLabel(row.scheduledDate, todayStart);
+    const label = groupLabel(row.scheduledDate, today);
     const last = groups[groups.length - 1];
     if (last && !last.isOverdue && last.label === label) {
       last.rows.push(row);
@@ -242,6 +243,7 @@ export async function listEventsForPlanning(): Promise<
         .from('events')
         .select('id, title')
         .eq('status', 'published')
+        .eq('can_create_schedules', true)
         .order('event_date', { ascending: true }),
       'user_id',
       test.userIds,
@@ -269,10 +271,12 @@ export async function listEventsForPlanning(): Promise<
     tally.set(guest.event_id, entry);
   }
 
-  return events.map((event) => ({
-    id: event.id,
-    title: event.title ?? 'Untitled event',
-    pending: tally.get(event.id)?.pending ?? 0,
-    confirmed: tally.get(event.id)?.confirmed ?? 0,
-  }));
+  return events
+    .map((event) => ({
+      id: event.id,
+      title: event.title ?? 'Untitled event',
+      pending: tally.get(event.id)?.pending ?? 0,
+      confirmed: tally.get(event.id)?.confirmed ?? 0,
+    }))
+    .filter((event) => event.pending + event.confirmed > 0);
 }

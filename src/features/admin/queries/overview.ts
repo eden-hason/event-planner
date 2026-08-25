@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { OverviewCounts, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
+import { formatScheduleDateTime } from '@/lib/date-time';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -16,10 +17,6 @@ const UPCOMING_WINDOW_DAYS = 30;
 
 function daysAgo(days: number): string {
   return new Date(Date.now() - days * 86_400_000).toISOString();
-}
-
-function daysAhead(days: number): string {
-  return new Date(Date.now() + days * 86_400_000).toISOString();
 }
 
 /** "6 hours" / "2 days" - the age an Operator reads in the headline. */
@@ -135,14 +132,14 @@ export async function getSignals(): Promise<Signal[]> {
     // rather than by a filter.
     supabase
       .from('message_deliveries')
-      .select('id, error_code, created_at, schedules!inner(event_id, events(title))')
+      .select('id, error_code, created_at, schedules!inner(id, event_id, events(title))')
       .eq('status', 'failed')
       .gte('created_at', daysAgo(FAILED_DELIVERY_LOOKBACK_DAYS)),
 
     excludeIds(
       supabase
         .from('call_rounds')
-        .select('id, round_number, created_at, event_id, events(title)')
+        .select('id, created_at, event_id, schedule_id, events(title)')
         .is('completed_at', null)
         .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS)),
       'event_id',
@@ -162,9 +159,9 @@ export async function getSignals(): Promise<Signal[]> {
       eventId: row.event_id,
       eventTitle: event?.title ?? 'Untitled event',
       headline: `${stage} send overdue ${duration(row.scheduled_date)}`,
-      detail: `Scheduled ${formatDateTime(row.scheduled_date, row.scheduled_time)}, never sent`,
+      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date, row.scheduled_time)}, never sent`,
       occurredAt: row.scheduled_date,
-      href: `/admin/events/${row.event_id}`,
+      href: `/admin/events/${row.event_id}#schedule-${row.id}`,
     });
   }
 
@@ -172,10 +169,11 @@ export async function getSignals(): Promise<Signal[]> {
   // 40 rows the Operator has to read past.
   const byEvent = new Map<
     string,
-    { title: string; count: number; codes: Map<number, number>; oldest: string }
+    { title: string; count: number; codes: Map<number, number>; oldest: string; scheduleId: string }
   >();
   for (const row of unwrap(failed)) {
     const schedule = row.schedules as unknown as {
+      id: string;
       event_id: string;
       events: { title: string | null } | null;
     } | null;
@@ -186,6 +184,7 @@ export async function getSignals(): Promise<Signal[]> {
       count: 0,
       codes: new Map<number, number>(),
       oldest: row.created_at,
+      scheduleId: schedule.id,
     };
     entry.count += 1;
     if (row.error_code != null) {
@@ -208,54 +207,64 @@ export async function getSignals(): Promise<Signal[]> {
       headline: `${entry.count} ${entry.count === 1 ? 'delivery' : 'deliveries'} failed`,
       detail: codes || 'No error code recorded',
       occurredAt: entry.oldest,
-      href: `/admin/events/${eventId}`,
+      href: `/admin/events/${eventId}#schedule-${entry.scheduleId}-failures`,
     });
   }
 
   const staleRounds = unwrap(stale);
 
-  // "40 of 120 guests called" - how far the abandoned round actually got.
+  // A round's call_logs are its immutable audience snapshot. Comparing against
+  // today's whole event list invents progress changes after the round started.
   const calledPerRound = new Map<string, number>();
-  const guestsPerEvent = new Map<string, number>();
+  const snapshotPerRound = new Map<string, number>();
+  const labels = new Map<string, string>();
   if (staleRounds.length) {
-    const [logs, guests] = await Promise.all([
+    const [logs, siblings] = await Promise.all([
       supabase
         .from('call_logs')
-        .select('round_id')
+        .select('round_id, outcome')
         .in(
           'round_id',
           staleRounds.map((r) => r.id),
         ),
       supabase
-        .from('guests')
-        .select('event_id')
-        .in(
-          'event_id',
-          staleRounds.map((r) => r.event_id),
-        ),
+        .from('schedules')
+        .select('id, event_id, schedule_type_id, schedule_types(name)')
+        .in('event_id', [...new Set(staleRounds.map((round) => round.event_id))])
+        .order('scheduled_date', { ascending: true }),
     ]);
     for (const log of unwrap(logs)) {
-      calledPerRound.set(log.round_id, (calledPerRound.get(log.round_id) ?? 0) + 1);
+      snapshotPerRound.set(log.round_id, (snapshotPerRound.get(log.round_id) ?? 0) + 1);
+      if (log.outcome !== null) {
+        calledPerRound.set(log.round_id, (calledPerRound.get(log.round_id) ?? 0) + 1);
+      }
     }
-    for (const guest of unwrap(guests)) {
-      if (!guest.event_id) continue;
-      guestsPerEvent.set(guest.event_id, (guestsPerEvent.get(guest.event_id) ?? 0) + 1);
+    const siblingRows = unwrap(siblings);
+    for (const round of staleRounds) {
+      if (!round.schedule_id) continue;
+      const schedule = siblingRows.find((row) => row.id === round.schedule_id);
+      if (!schedule) continue;
+      const sameType = siblingRows.filter((row) => row.event_id === schedule.event_id && row.schedule_type_id === schedule.schedule_type_id);
+      const type = schedule.schedule_types as unknown as { name: string | null } | null;
+      const base = type?.name ?? 'Call Round';
+      labels.set(round.id, sameType.length > 1 ? `${base} ${sameType.findIndex((row) => row.id === schedule.id) + 1}` : base);
     }
   }
 
   for (const row of staleRounds) {
     const event = row.events as unknown as { title: string | null } | null;
     const called = calledPerRound.get(row.id) ?? 0;
-    const total = guestsPerEvent.get(row.event_id) ?? 0;
+    const total = snapshotPerRound.get(row.id) ?? 0;
+    const label = labels.get(row.id) ?? 'Call Round';
     signals.push({
       id: `stale_call_round:${row.id}`,
       kind: 'stale_call_round',
       eventId: row.event_id,
       eventTitle: event?.title ?? 'Untitled event',
-      headline: `Call Round ${row.round_number} open ${duration(row.created_at)}`,
-      detail: `${called} of ${total} guests called`,
+      headline: `${label} open ${duration(row.created_at)}`,
+      detail: `${called} of ${total} guest records called`,
       occurredAt: row.created_at,
-      href: `/admin/events/${row.event_id}`,
+      href: `/admin/events/${row.event_id}#schedule-${row.schedule_id}`,
     });
   }
 
@@ -272,14 +281,17 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
 
   const test = await getTestScope();
 
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const endUtc = new Date(todayUtc.getTime() + UPCOMING_WINDOW_DAYS * 86_400_000);
   const events = unwrap(
     await excludeIds(
       supabase
         .from('events')
         .select('id, title, event_date, user_id, event_types(name)')
         .eq('status', 'published')
-        .gte('event_date', new Date().toISOString())
-        .lte('event_date', daysAhead(UPCOMING_WINDOW_DAYS))
+        .gte('event_date', todayUtc.toISOString())
+        .lt('event_date', endUtc.toISOString())
         .order('event_date', { ascending: true }),
       'user_id',
       test.userIds,
@@ -339,16 +351,4 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
       confirmationRate: counts.total > 0 ? counts.confirmed / counts.total : null,
     };
   });
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  });
-}
-
-function formatDateTime(iso: string, time: string | null): string {
-  const date = formatDate(iso);
-  return time ? `${date} ${time.slice(0, 5)}` : date;
 }

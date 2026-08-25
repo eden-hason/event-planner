@@ -9,13 +9,16 @@ export function Band({
   title,
   children,
   className,
+  id,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <section
+      id={id}
       className={cn(
         'bg-card overflow-hidden rounded-xl border shadow-xs',
         className,

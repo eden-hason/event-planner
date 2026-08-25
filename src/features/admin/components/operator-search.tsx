@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 /** Long enough that typing a couple's name does not fire a query per keystroke. */
 const DEBOUNCE_MS = 200;
 
-function formatEventDate(iso: string): string {
+function formatEventDate(iso: string | null): string {
+  if (!iso) return 'No date';
   return new Date(iso).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',

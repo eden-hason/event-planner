@@ -17,6 +17,11 @@ import { startCallRound } from '@/features/calls/actions/call-rounds';
 import { triggerScheduleAdmin } from '@/features/schedules/actions/trigger-schedule';
 import type { PlannedWorkRow } from '../types';
 
+export type QueueActionRow = Pick<
+  PlannedWorkRow,
+  'id' | 'kind' | 'title' | 'audienceLabel' | 'channel'
+>;
+
 /**
  * Start and Send now both get their own confirmed click, and both dialogs lead
  * with the number of Guest Records affected.
@@ -25,7 +30,7 @@ import type { PlannedWorkRow } from '../types';
  * audience and is undoable by deleting the round, while Send now puts real
  * messages on real phones and cannot be taken back.
  */
-export function QueueRowAction({ row }: { row: PlannedWorkRow }) {
+export function QueueRowAction({ row }: { row: QueueActionRow }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();

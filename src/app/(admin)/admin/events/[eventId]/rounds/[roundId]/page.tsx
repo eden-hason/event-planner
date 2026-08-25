@@ -10,10 +10,10 @@ export default async function CallRoundPage({
 }: {
   params: Promise<{ eventId: string; roundId: string }>;
 }) {
-  const { roundId } = await params;
+  const { eventId, roundId } = await params;
   const round = await getRoundDetail(roundId);
 
-  if (!round) notFound();
+  if (!round || round.eventId !== eventId) notFound();
 
   return <CallingSurface round={round} />;
 }

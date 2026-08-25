@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { CallOutcome } from '@/features/calls/types';
+import { getTestScope } from './test-accounts';
 
 export type RoundGuestRow = {
   guestId: string;
@@ -31,6 +32,7 @@ export type RoundDetail = {
 export async function getRoundDetail(roundId: string): Promise<RoundDetail | null> {
   await assertAdmin();
   const supabase = createServiceClient();
+  const test = await getTestScope();
 
   const { data: round, error } = await supabase
     .from('call_rounds')
@@ -40,6 +42,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
 
   if (error) throw new Error(error.message);
   if (!round) return null;
+  if (test.eventIds.includes(round.event_id)) return null;
 
   const event = round.events as unknown as { title: string | null } | null;
 

@@ -14,6 +14,8 @@ export {
   type ExecuteScheduleSummary,
   sendWhatsAppTemplateMessage,
   type SendWhatsAppTemplateResult,
+  resendScheduleToSelected,
+  type ResendScheduleResult,
 } from './actions';
 
 // Utils

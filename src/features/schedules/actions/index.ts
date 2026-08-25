@@ -15,3 +15,4 @@ export {
   type ExecuteScheduleResult,
   type ExecuteScheduleSummary,
 } from './execute-schedule';
+export { resendScheduleToSelected, type ResendScheduleResult } from './resend-schedule';
