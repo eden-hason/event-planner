@@ -5,7 +5,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -343,7 +342,6 @@ function TimelineHeader({ action }: { action?: React.ReactNode }) {
   return (
     <CardHeader className="border-b px-4 py-3">
       <CardTitle><h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2></CardTitle>
-      <CardDescription className="text-xs">schedules and call rounds in one chronology</CardDescription>
       {action && <CardAction>{action}</CardAction>}
     </CardHeader>
   );
