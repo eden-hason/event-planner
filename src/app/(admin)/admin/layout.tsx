@@ -1,5 +1,6 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { getOperatorIdentity } from '@/features/admin/queries/operator';
+import { areTestAccountsVisible } from '@/features/admin/queries/test-accounts';
 import { BackOfficeNav } from '@/features/admin/components/back-office-nav';
 import { BackOfficeTopBar } from '@/features/admin/components/back-office-top-bar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -18,13 +19,14 @@ export default async function AdminLayout({
 }) {
   await assertAdmin();
   const { email, environment } = await getOperatorIdentity();
+  const testAccountsVisible = await areTestAccountsVisible();
 
   return (
     <div dir="ltr">
       <SidebarProvider style={{ '--sidebar-width': '220px' } as React.CSSProperties}>
         <BackOfficeNav email={email} environment={environment} />
         <SidebarInset className="bg-muted">
-          <BackOfficeTopBar>{topbar}</BackOfficeTopBar>
+          <BackOfficeTopBar testAccountsVisible={testAccountsVisible}>{topbar}</BackOfficeTopBar>
           <div className="w-full px-8 py-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>

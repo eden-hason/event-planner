@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { cookies } from 'next/headers';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 
@@ -12,7 +13,24 @@ import { createServiceClient } from '@/lib/supabase/service';
  * the Back Office reads through createServiceClient(), which bypasses RLS by
  * design, so the exclusion has to be applied by every admin query that reads a
  * table users own. This module is the one place that knows how.
+ *
+ * The exclusion is also the thing an Operator needs to switch off now and then -
+ * to check that a rehearsal event they just made actually landed, or to reach
+ * one from search. A cookie carries that choice: the filter is applied in
+ * server queries, so a browser-only store like localStorage could not reach it,
+ * and a query parameter would have to be threaded through every Back Office
+ * link. See setTestAccountsVisible in ../actions/test-accounts.ts.
  */
+
+/** Present and '1' means "show test accounts" - absent is the default, hidden. */
+export const TEST_ACCOUNTS_COOKIE = 'back_office_test_accounts';
+
+/** Whether the Operator has switched the exclusion off for this browser. */
+export const areTestAccountsVisible = cache(async function areTestAccountsVisible(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get(TEST_ACCOUNTS_COOKIE)?.value === '1';
+});
+
 export type TestScope = {
   /** profiles.id of every flagged account. Also what events.user_id holds. */
   userIds: string[];
@@ -29,9 +47,16 @@ export type TestScope = {
  * has to be resolved to a list of event ids up front. Everything the Back Office
  * reads below an event (guests, schedules, call rounds, deliveries) is already
  * scoped by event id, so those ids are all it takes to filter the rest.
+ *
+ * With the toggle on it returns an empty scope rather than each caller learning
+ * to skip its filter: excludeIds and the `includes` guards on the detail reads
+ * are all no-ops on an empty list, so one check here switches the whole Back
+ * Office without touching a single query.
  */
 export const getTestScope = cache(async function getTestScope(): Promise<TestScope> {
   await assertAdmin();
+  if (await areTestAccountsVisible()) return { userIds: [], eventIds: [] };
+
   const supabase = createServiceClient();
 
   const { data: profiles, error: profilesError } = await supabase
