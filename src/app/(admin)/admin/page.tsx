@@ -24,18 +24,10 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default function OverviewPage() {
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-
+  // The date lives in the shell's top bar now, not here.
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">Overview</h1>
-        <span className="text-muted-foreground text-[13px]">{today}</span>
-      </div>
+      <h1 className="text-lg font-semibold tracking-tight">Overview</h1>
 
       {/* Each band streams and fails on its own - one broken query must not take
           the page down or, worse, render as an all-clear. */}
