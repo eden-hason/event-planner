@@ -45,3 +45,74 @@ export type UpcomingEvent = {
   /** 0-1, or null when there is no guest list yet. Never render null as 0%. */
   confirmationRate: number | null;
 };
+
+/**
+ * One hit in the header search. Carries the owner because an Operator searching
+ * "noa" is looking for a couple, not a title, and needs to see which event is
+ * theirs before clicking.
+ */
+export type EventSearchResult = {
+  id: string;
+  title: string;
+  eventDate: string;
+  /** Draft Events are reachable by search but never counted. See CONTEXT.md. */
+  isDraft: boolean;
+  ownerName: string;
+  ownerEmail: string | null;
+};
+
+/**
+ * One item of planned work in the Operations queue. A call plan and a message
+ * schedule are the same row shape deliberately: they are both `schedules` rows
+ * with `status IS NULL`, and the queue's job is to show them in one chronology.
+ * What differs is weight, which is the component's business, not this type's.
+ */
+export type PlannedWorkRow = {
+  id: string;
+  /** Derived from the schedule type's execution_kind, never from the title. */
+  kind: 'call' | 'message';
+  eventId: string;
+  eventTitle: string;
+  /**
+   * Catalog name plus a positional index when the event has more than one of
+   * that type, matching what the Owner sees in their own app. `schedules` has
+   * no label column - see docs/design/back-office-operations-brief.md 3.10.
+   */
+  title: string;
+  /** The supporting line: who it targets, or how it sends itself */
+  detail: string;
+  scheduledDate: string;
+  /** `HH:MM:SS` from its own column, or null. Never parsed out of scheduledDate. */
+  scheduledTime: string | null;
+  /**
+   * How late, in the Overview's own vocabulary ("7 days late", "3 hours late",
+   * "Overdue" under the hour), or null when the row is not overdue. A row that
+   * passed ten minutes ago must not claim to be a day late.
+   */
+  lateBy: string | null;
+  /** Guest Records this row targets, for the confirm dialogs' recipient counts. */
+  audienceCount: number;
+  /** "92 pending records" - the unit is always named, never a bare number. */
+  audienceLabel: string;
+  /** "WhatsApp" / "SMS" for a message row, null for a call plan. */
+  channel: string | null;
+};
+
+export type PlannedWorkGroup = {
+  key: string;
+  label: string;
+  /** Pinned above the dated groups and the only group that takes colour. */
+  isOverdue: boolean;
+  rows: PlannedWorkRow[];
+};
+
+/**
+ * The Operations queue. Counts are two buckets that partition the rows exactly,
+ * so the strip always sums to what is on screen - overdue is a property of a
+ * row, not a third bucket. See brief 3.9.
+ */
+export type PlannedWorkQueue = {
+  groups: PlannedWorkGroup[];
+  callRounds: number;
+  messages: number;
+};

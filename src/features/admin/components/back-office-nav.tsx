@@ -20,14 +20,16 @@ import {
 } from '@/components/ui/sidebar';
 
 /**
- * Only Overview is built. The rest are honest stubs: reachable and clearly
- * unfinished, rather than disabled or silently broken.
+ * Stubs are reachable and clearly unfinished rather than disabled or silently
+ * broken. The badge describes the index a click would land on, so it is hidden
+ * while the item is active: an Operator on the event workspace reached a real
+ * page, and badging Events there would call a built surface unbuilt.
  */
 const NAV_ITEMS = [
   { label: 'Overview', href: '/admin', icon: LayoutDashboard, stub: false },
   { label: 'Users', href: '/admin/users', icon: Users, stub: true },
   { label: 'Events', href: '/admin/events', icon: CalendarDays, stub: true },
-  { label: 'Operations', href: '/admin/operations', icon: Wrench, stub: true },
+  { label: 'Operations', href: '/admin/operations', icon: Wrench, stub: false },
   {
     label: 'Configuration',
     href: '/admin/configuration',
@@ -72,7 +74,7 @@ export function BackOfficeNav({
                   <Link href={href}>
                     <Icon className={isActive ? '' : 'text-muted-foreground'} />
                     <span className="flex-1">{label}</span>
-                    {stub && (
+                    {stub && !isActive && (
                       <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
                         Stub
                       </span>
