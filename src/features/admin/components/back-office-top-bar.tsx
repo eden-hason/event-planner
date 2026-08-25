@@ -17,9 +17,14 @@ export function BackOfficeTopBar({ children }: { children?: ReactNode }) {
   });
 
   return (
-    <header className="bg-card flex h-14 flex-none items-center gap-3 border-b px-6">
-      {children ?? <OperatorSearch />}
-      <span className="text-muted-foreground ml-auto shrink-0 text-[12.5px]">{today}</span>
+    <header className="bg-card flex h-14 flex-none items-center gap-4 border-b px-6">
+      {/*
+       * The slot owns the whole left region, so a route that carries an action
+       * can push it right with an auto margin instead of the bar having to know
+       * which routes have one.
+       */}
+      <div className="flex min-w-0 flex-1 items-center gap-3">{children ?? <OperatorSearch />}</div>
+      <span className="text-muted-foreground shrink-0 text-[12.5px]">{today}</span>
     </header>
   );
 }

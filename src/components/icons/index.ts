@@ -1,9 +1,11 @@
 export {
   CalendarDays,
   ChevronDown,
+  ChevronRight,
   Clock3,
   Copy,
   ExternalLink,
+  Eye,
   Info,
   Link2,
   MapPin,
