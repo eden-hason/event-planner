@@ -1,13 +1,7 @@
 import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -306,48 +300,37 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     if (!event) return <BandFailure title="Outreach timeline" />;
     if (!event.canCreateSchedules) {
       return (
-        <Card id="outreach-timeline" className="scroll-mt-20 gap-0 py-0">
-          <TimelineHeader />
-          <CardContent className="p-4">
+        <Band id="outreach-timeline" title="Outreach timeline" className="scroll-mt-20">
+          <BandRow>
             <Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert>
-          </CardContent>
-        </Card>
+          </BandRow>
+        </Band>
       );
     }
     const [rows, guestSummary] = await Promise.all([getEventTimeline(event.id), getEventGuestSummary(event.id)]);
     const canPlanCalls = guestSummary.pending + guestSummary.confirmed > 0;
     return (
-      <Card id="outreach-timeline" className="scroll-mt-20 gap-0 py-0">
-        <TimelineHeader
-          action={canPlanCalls
-            ? <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
-            : null}
-        />
-        <CardContent className="p-4">
+      <Band
+        id="outreach-timeline"
+        title="Outreach timeline"
+        className="scroll-mt-20"
+        action={canPlanCalls
+          ? <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
+          : null}
+      >
+        <BandRow>
           {rows.length ? (
             <EventTimeline rows={rows} />
           ) : (
             <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>No outreach planned</EmptyTitle><EmptyDescription>{canPlanCalls ? 'Add a call round or wait for the owner to configure messages' : 'Outreach can be planned as soon as the guest list has an eligible audience'}</EmptyDescription></EmptyHeader></Empty>
           )}
-        </CardContent>
-      </Card>
+        </BandRow>
+      </Band>
     );
   } catch (error) {
     console.error('Event outreach failed:', error);
     return <BandFailure title="Outreach timeline" />;
   }
-}
-
-function TimelineHeader({ action }: { action?: React.ReactNode }) {
-  return (
-    <>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
-        <CardTitle><h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2></CardTitle>
-        {action && <CardAction className="self-center">{action}</CardAction>}
-      </CardHeader>
-      <Separator />
-    </>
-  );
 }
 
 export function EventDetailsBand({ event }: { event: EventIdentity }) {
