@@ -26,4 +26,5 @@ export { UpcomingEvents } from './components/upcoming-events';
 export { ImpersonationBanner } from './components/impersonation-banner';
 export { ImpersonateOwnerButton } from './components/impersonate-owner-button';
 export { OperatorSearch } from './components/operator-search';
+export { TestAccountsToggle } from './components/test-accounts-toggle';
 export { resolveAdminTopBar, type AdminTopBarMode } from './utils/topbar';
