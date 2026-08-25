@@ -11,8 +11,10 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
  */
 export default async function AdminLayout({
   children,
+  topbar,
 }: {
   children: React.ReactNode;
+  topbar?: React.ReactNode;
 }) {
   await assertAdmin();
   const { email, environment } = await getOperatorIdentity();
@@ -22,7 +24,7 @@ export default async function AdminLayout({
       <SidebarProvider style={{ '--sidebar-width': '220px' } as React.CSSProperties}>
         <BackOfficeNav email={email} environment={environment} />
         <SidebarInset className="bg-muted">
-          <BackOfficeTopBar />
+          <BackOfficeTopBar>{topbar}</BackOfficeTopBar>
           <div className="w-full px-8 py-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>

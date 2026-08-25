@@ -1,12 +1,10 @@
 import Link from 'next/link';
 import { Band, BandRow } from './band';
 import type { UpcomingEvent } from '../types';
+import { formatEventDate } from '@/lib/date-time';
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  });
+  return formatEventDate(iso, { year: false });
 }
 
 /**

@@ -32,6 +32,9 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-rsvp-confirmed: var(--rsvp-confirmed);
+  --color-rsvp-declined: var(--rsvp-declined);
+  --color-rsvp-pending: var(--rsvp-pending);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -70,6 +73,9 @@
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.6 0.15 150);
   --success-foreground: oklch(0.98 0.01 150);
+  --rsvp-confirmed: oklch(0.696 0.17 162.48);
+  --rsvp-declined: oklch(0.704 0.191 22.216);
+  --rsvp-pending: oklch(0.828 0.189 84.429);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.592 0.249 333);

@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { Search, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -108,25 +107,13 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         return;
       }
       toast.success(result.message);
-      if (back) router.push('/admin/operations');
+      if (back) router.push(`/admin/events/${round.eventId}`);
       else router.refresh();
     });
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <nav className="text-muted-foreground flex items-center gap-1.5 text-[13px]">
-        <Link href="/admin/operations" className="hover:text-foreground">
-          Operations
-        </Link>
-        <span className="text-muted-foreground/50">/</span>
-        <Link href={`/admin/events/${round.eventId}`} className="hover:text-foreground">
-          {round.eventTitle}
-        </Link>
-        <span className="text-muted-foreground/50">/</span>
-        <span className="text-foreground font-medium">{round.title}</span>
-      </nav>
-
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2.5">
@@ -144,6 +131,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             Snapshot of {total} {round.targetStatus ?? ''} guest {total === 1 ? 'record' : 'records'},
             taken{' '}
             {new Date(round.startedAt).toLocaleString('en-GB', {
+              timeZone: 'Asia/Jerusalem',
               day: 'numeric',
               month: 'short',
               hour: '2-digit',

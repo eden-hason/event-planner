@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
+import { israelWallClockToIso } from '@/lib/date-time';
 
 export type CallPlanResult = { success: boolean; message: string };
 
@@ -42,16 +43,29 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
     // A Draft Event cannot have schedules - it is interest, not an event.
     const { data: event } = await supabase
       .from('events')
-      .select('status')
+      .select('status, can_create_schedules')
       .eq('id', input.eventId)
       .single();
 
     if (event?.status !== 'published') {
       return { success: false, message: 'That event is not published' };
     }
+    if (!event.can_create_schedules) {
+      return { success: false, message: 'Sending is not enabled for that event' };
+    }
 
-    const scheduledDate = new Date(`${input.scheduledDate}T${input.scheduledTime}:00`);
-    if (Number.isNaN(scheduledDate.getTime())) {
+    const { count: audienceCount, error: audienceError } = await supabase
+      .from('guests')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', input.eventId)
+      .eq('rsvp_status', input.targetStatus);
+    if (audienceError) throw audienceError;
+    if (!audienceCount) {
+      return { success: false, message: `That event has no ${input.targetStatus} guest records` };
+    }
+
+    const scheduledDate = israelWallClockToIso(input.scheduledDate, input.scheduledTime);
+    if (!scheduledDate) {
       return { success: false, message: 'That date and time are not valid' };
     }
 
@@ -59,7 +73,7 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
       event_id: input.eventId,
       schedule_type_id: callType.id,
       template_id: null,
-      scheduled_date: scheduledDate.toISOString(),
+      scheduled_date: scheduledDate,
       scheduled_time: `${input.scheduledTime}:00`,
       target_status: input.targetStatus,
       status: null,
