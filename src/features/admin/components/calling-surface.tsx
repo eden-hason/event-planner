@@ -43,6 +43,27 @@ const RSVP_STYLES: Record<RoundGuestRow['currentRsvpStatus'], string> = {
   declined: 'border-red-300 text-red-700',
 };
 
+function Tally({
+  label,
+  value,
+  hint,
+  className,
+}: {
+  label: string;
+  value: number;
+  /** Secondary line - e.g. the headcount behind a count of guest records */
+  hint?: string;
+  className: string;
+}) {
+  return (
+    <div className="bg-muted/50 flex min-w-[104px] flex-1 flex-col gap-0.5 rounded-lg px-3 py-2">
+      <span className={cn('text-[11.5px] font-medium', className)}>{label}</span>
+      <span className="text-foreground text-lg font-semibold tabular-nums">{value}</span>
+      {hint && <span className="text-muted-foreground text-[11px] tabular-nums">{hint}</span>}
+    </div>
+  );
+}
+
 export function CallingSurface({ round }: { round: RoundDetail }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -54,6 +75,14 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
 
   const called = round.guests.filter((guest) => guest.outcome !== null).length;
   const total = round.guests.length;
+  const tally = round.guests.reduce(
+    (counts, guest) => {
+      if (guest.outcome) counts[guest.outcome] += 1;
+      if (guest.outcome === 'confirmed') counts.confirmedGuests += guest.amount;
+      return counts;
+    },
+    { confirmed: 0, declined: 0, no_answer: 0, confirmedGuests: 0 },
+  );
 
   const visible = useMemo(() => {
     const needle = term.trim().toLowerCase();
@@ -141,24 +170,26 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         </div>
 
         <div className="flex shrink-0 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={pending}
-            onClick={() => roundAction(() => deleteCallRound(round.id), true)}
-          >
-            Delete round
-          </Button>
           {inProgress ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={pending}
-              onClick={() => roundAction(() => finishCallRound(round.id))}
-            >
-              Finish round
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                onClick={() => roundAction(() => deleteCallRound(round.id), true)}
+              >
+                Delete round
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={pending}
+                onClick={() => roundAction(() => finishCallRound(round.id))}
+              >
+                Finish round
+              </Button>
+            </>
           ) : (
             <Button
               type="button"
@@ -178,6 +209,25 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         <span className="text-foreground font-semibold tabular-nums">{called}</span> of{' '}
         <span className="tabular-nums">{total}</span> called
       </p>
+
+      {/*
+       * What the round produced, in the Owner app's own three categories, so a
+       * finished round reads as results rather than a frozen worklist. Held
+       * back until the first outcome lands - three zeros say nothing.
+       */}
+      {called > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Tally
+            label="Confirmed"
+            value={tally.confirmed}
+            hint={`${tally.confirmedGuests} ${tally.confirmedGuests === 1 ? 'guest' : 'guests'}`}
+            className="text-emerald-700"
+          />
+          <Tally label="Declined" value={tally.declined} className="text-red-700" />
+          <Tally label="No answer" value={tally.no_answer} className="text-amber-700" />
+          <Tally label="Not called" value={total - called} className="text-muted-foreground" />
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="border-input bg-card flex w-full max-w-[280px] items-center gap-2 rounded-md border px-2.5 py-1.5">

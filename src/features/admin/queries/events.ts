@@ -240,6 +240,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     canCreateSchedules: event.can_create_schedules ?? false,
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
+    ownerId: event.user_id,
     owner: {
       name: owner?.full_name || owner?.email || 'Unknown owner',
       email: owner?.email ?? null,

@@ -116,6 +116,8 @@ export type EventIdentity = {
   canCreateSchedules: boolean;
   onboardingStep: string | null;
   createdAt: string;
+  /** The account the event belongs to - the identity an Operator impersonates. */
+  ownerId: string;
   owner: { name: string; email: string | null; phone: string | null };
   collaborators: { id: string; name: string; email: string | null; role: string }[];
   hostNames: string[];

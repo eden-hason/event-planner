@@ -3,11 +3,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddCallRoundDialog } from './add-call-round-dialog';
 import { Band, BandRow } from './band';
+import { EnableSendingButton } from './enable-sending-button';
 import {
   EventTimeline,
   PhoneQualityDisclosure,
@@ -302,7 +304,13 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
       return (
         <Band id="outreach-timeline" title="Outreach timeline" className="scroll-mt-20">
           <BandRow>
-            <Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert>
+            <Item id="outreach-gate" variant="muted">
+              <ItemContent>
+                <ItemTitle>Sending is not enabled for this event</ItemTitle>
+                <ItemDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</ItemDescription>
+              </ItemContent>
+              <ItemActions><EnableSendingButton eventId={event.id} /></ItemActions>
+            </Item>
           </BandRow>
         </Band>
       );
@@ -320,7 +328,7 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
       >
         <BandRow>
           {rows.length ? (
-            <EventTimeline rows={rows} />
+            <EventTimeline rows={rows} eventId={event.id} />
           ) : (
             <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>No outreach planned</EmptyTitle><EmptyDescription>{canPlanCalls ? 'Add a call round or wait for the owner to configure messages' : 'Outreach can be planned as soon as the guest list has an eligible audience'}</EmptyDescription></EmptyHeader></Empty>
           )}

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { OperatorSearch, resolveAdminTopBar } from '@/features/admin';
+import { ImpersonateOwnerButton, OperatorSearch, resolveAdminTopBar } from '@/features/admin';
 import { getEventIdentity } from '@/features/admin/queries/events';
 import { getRoundDetail } from '@/features/admin/queries/call-round';
 
@@ -16,11 +16,18 @@ export default async function AdminTopBarRoute({
   if (mode.kind === 'event') {
     const event = await getEventIdentity(mode.eventId);
     return (
-      <TopBarBreadcrumb>
-        <Link href="/admin/events" className="hover:text-foreground">Events</Link>
-        <BreadcrumbSeparator />
-        <span className="text-foreground truncate font-medium">{event?.title ?? 'Event'}</span>
-      </TopBarBreadcrumb>
+      <>
+        <TopBarBreadcrumb>
+          <Link href="/admin/events" className="hover:text-foreground">Events</Link>
+          <BreadcrumbSeparator />
+          <span className="text-foreground truncate font-medium">{event?.title ?? 'Event'}</span>
+        </TopBarBreadcrumb>
+        {event && (
+          <div className="ms-auto shrink-0">
+            <ImpersonateOwnerButton ownerId={event.ownerId} ownerName={event.owner.name} />
+          </div>
+        )}
+      </>
     );
   }
 

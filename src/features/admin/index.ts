@@ -17,11 +17,13 @@ export {
   EventSignalsBand,
 } from './components/event-workspace';
 export { Band, BandRow } from './components/band';
+export { EnableSendingButton } from './components/enable-sending-button';
 export { BackOfficeNav } from './components/back-office-nav';
 export { CountStrip } from './components/count-strip';
 export { SignalList } from './components/signal-list';
 export { SignalRow } from './components/signal-row';
 export { UpcomingEvents } from './components/upcoming-events';
 export { ImpersonationBanner } from './components/impersonation-banner';
+export { ImpersonateOwnerButton } from './components/impersonate-owner-button';
 export { OperatorSearch } from './components/operator-search';
 export { resolveAdminTopBar, type AdminTopBarMode } from './utils/topbar';

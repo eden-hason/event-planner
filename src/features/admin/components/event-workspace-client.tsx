@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ChevronDown, Link2, MessageSquare, Phone, PhoneOff, TriangleAlert } from '@/components/icons';
+import { ChevronDown, ChevronRight, Link2, MessageSquare, Phone, PhoneOff, TriangleAlert } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -105,16 +105,16 @@ export function WorkspaceSignals({ signals }: { signals: EventWorkspaceSignal[] 
   );
 }
 
-export function EventTimeline({ rows }: { rows: EventTimelineRow[] }) {
+export function EventTimeline({ rows, eventId }: { rows: EventTimelineRow[]; eventId: string }) {
   if (!rows.length) return null;
   return (
     <div className="flex flex-col gap-2">
-      {rows.map((row) => <TimelineRow key={row.id} row={row} />)}
+      {rows.map((row) => <TimelineRow key={row.id} row={row} eventId={eventId} />)}
     </div>
   );
 }
 
-function TimelineRow({ row }: { row: EventTimelineRow }) {
+function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string }) {
   const failed = row.deliveries.filter((delivery) => delivery.status === 'failed');
   const successful = row.deliveries.filter((delivery) => delivery.status === 'sent');
   const attempted = row.deliveries.length;
@@ -166,8 +166,24 @@ function TimelineRow({ row }: { row: EventTimelineRow }) {
           {row.status === 'planned' ? (
             <QueueRowAction row={actionRow} />
           ) : row.roundId ? (
-            <Button asChild variant={row.status === 'in_progress' ? 'default' : 'outline'} size="sm">
-              <Link href={`rounds/${row.roundId}`}>{row.status === 'in_progress' ? 'Complete round' : 'Open round'}</Link>
+            /*
+             * A link, not a button: this navigates to the round, it does not do
+             * anything to it. Only the planned row carries a button, because
+             * Start is the one control here that changes the world.
+             */
+            <Button
+              asChild
+              variant="link"
+              size="sm"
+              className={cn(
+                'h-auto shrink-0 gap-0.5 px-0 text-[13px]',
+                row.status !== 'in_progress' && 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Link href={`/admin/events/${eventId}/rounds/${row.roundId}`}>
+                {row.status === 'in_progress' ? 'Complete round' : 'Open round'}
+                <ChevronRight className="size-3.5" />
+              </Link>
             </Button>
           ) : null}
         </div>

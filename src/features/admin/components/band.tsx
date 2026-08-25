@@ -26,9 +26,14 @@ export function Band({
         className,
       )}
     >
-      <div className="relative">
-        <h2 className="text-muted-foreground px-4 pt-3.5 pb-2.5 text-[11.5px] font-semibold tracking-[0.07em] uppercase">{title}</h2>
-        {action && <div className="absolute top-1/2 right-4 -translate-y-1/2">{action}</div>}
+      {/*
+       * The action sits in the flow rather than absolutely over the heading, so
+       * the header is sized by its tallest child. Centring a 32px control inside
+       * a header cut for 11.5px text left it 4px of air and reading as cramped.
+       */}
+      <div className={cn('flex items-center justify-between gap-3 px-4', action ? 'py-2' : 'pt-3.5 pb-2.5')}>
+        <h2 className="text-muted-foreground text-[11.5px] font-semibold tracking-[0.07em] uppercase">{title}</h2>
+        {action}
       </div>
       {children}
     </section>
