@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { EventSearchResult } from '../types';
+import { excludeIds, getTestScope } from './test-accounts';
 
 /**
  * Enough rows to recognise the one you meant, few enough to scan without
@@ -33,6 +34,7 @@ export async function searchEvents(term: string): Promise<EventSearchResult[]> {
   if (trimmed.length < MIN_TERM_LENGTH) return [];
 
   const supabase = createServiceClient();
+  const test = await getTestScope();
   const pattern = `%${escapeLike(trimmed)}%`;
 
   // events.user_id points at auth.users and there is no foreign key to
@@ -52,12 +54,19 @@ export async function searchEvents(term: string): Promise<EventSearchResult[]> {
     filters.push(`user_id.in.(${matchedOwnerIds.join(',')})`);
   }
 
-  const { data: events, error: eventsError } = await supabase
-    .from('events')
-    .select('id, title, event_date, user_id, status')
-    .or(filters.join(','))
-    .order('event_date', { ascending: true })
-    .limit(SEARCH_LIMIT);
+  // Only the events read is filtered for test accounts. The owner lookup above
+  // feeds an `or`, and an owner whose events are all excluded contributes
+  // nothing to the result either way.
+  const { data: events, error: eventsError } = await excludeIds(
+    supabase
+      .from('events')
+      .select('id, title, event_date, user_id, status')
+      .or(filters.join(','))
+      .order('event_date', { ascending: true })
+      .limit(SEARCH_LIMIT),
+    'user_id',
+    test.userIds,
+  );
 
   if (eventsError) throw new Error(eventsError.message);
   if (!events?.length) return [];
