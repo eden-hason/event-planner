@@ -1,7 +1,14 @@
 import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -300,30 +307,31 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     if (!event) return <BandFailure title="Outreach timeline" />;
     if (!event.canCreateSchedules) {
       return (
-        <section id="outreach-timeline" className="flex scroll-mt-20 flex-col gap-2">
-          <TimelineHeading />
-          <Card className="gap-0 py-0"><CardContent className="p-4"><Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert></CardContent></Card>
-        </section>
+        <Card id="outreach-timeline" className="scroll-mt-20 gap-0 py-0">
+          <TimelineHeader />
+          <CardContent className="p-4">
+            <Alert id="outreach-gate"><AlertTitle>Sending is not enabled for this event</AlertTitle><AlertDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</AlertDescription></Alert>
+          </CardContent>
+        </Card>
       );
     }
     const [rows, guestSummary] = await Promise.all([getEventTimeline(event.id), getEventGuestSummary(event.id)]);
     const canPlanCalls = guestSummary.pending + guestSummary.confirmed > 0;
     return (
-      <section id="outreach-timeline" className="flex scroll-mt-20 flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 px-0.5">
-          <TimelineHeading />
-          <div className="ml-auto">
-            {canPlanCalls && <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />}
-          </div>
-        </div>
-        {rows.length ? (
-          <EventTimeline rows={rows} />
-        ) : (
-          <Card className="gap-0 py-0"><CardContent className="p-4">
+      <Card id="outreach-timeline" className="scroll-mt-20 gap-0 py-0">
+        <TimelineHeader
+          action={canPlanCalls
+            ? <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
+            : null}
+        />
+        <CardContent className="p-4">
+          {rows.length ? (
+            <EventTimeline rows={rows} />
+          ) : (
             <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>No outreach planned</EmptyTitle><EmptyDescription>{canPlanCalls ? 'Add a call round or wait for the owner to configure messages' : 'Outreach can be planned as soon as the guest list has an eligible audience'}</EmptyDescription></EmptyHeader></Empty>
-          </CardContent></Card>
-        )}
-      </section>
+          )}
+        </CardContent>
+      </Card>
     );
   } catch (error) {
     console.error('Event outreach failed:', error);
@@ -331,12 +339,13 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
   }
 }
 
-function TimelineHeading() {
+function TimelineHeader({ action }: { action?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-      <h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2>
-      <p className="text-muted-foreground/70 text-xs">schedules and call rounds in one chronology</p>
-    </div>
+    <CardHeader className="border-b px-4 py-3">
+      <CardTitle><h2 className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Outreach timeline</h2></CardTitle>
+      <CardDescription className="text-xs">schedules and call rounds in one chronology</CardDescription>
+      {action && <CardAction>{action}</CardAction>}
+    </CardHeader>
   );
 }
 
