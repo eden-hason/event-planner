@@ -139,9 +139,9 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
     ? null
     : formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0];
   return (
-    <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[76px_minmax(0,1fr)] gap-3.5">
-      <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-[11.5px] tabular-nums">
-        {dateLabel && <span className="text-foreground text-[12.5px] font-medium">{dateLabel}</span>}
+    <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[86px_minmax(0,1fr)] gap-3.5">
+      <div className="text-muted-foreground flex flex-col items-start gap-0.5 pt-3 text-[11.5px] tabular-nums">
+        {dateLabel && <span className="text-foreground text-[12.5px] font-medium whitespace-nowrap">{dateLabel}</span>}
         {dateLabel && <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>}
       </div>
       <div className={cn('bg-card min-w-0 overflow-hidden rounded-lg border border-l-[3px] shadow-xs', rail)}>
