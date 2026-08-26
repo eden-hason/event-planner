@@ -109,11 +109,7 @@ export async function SchedulesPage({
 
       let seatingGap: ScheduleWithTemplate['seatingGap'] = null;
       if (hasTableVariant) {
-        const targeted = filterGuestsByTarget(
-          guests,
-          schedule.targetStatus,
-          schedule.scheduleTypeKey,
-        );
+        const targeted = filterGuestsByTarget(guests, schedule.targetStatus);
         const withoutTable = targeted.filter((guest) => !guest.tableId).length;
         if (withoutTable > 0) {
           seatingGap = { withoutTable, total: targeted.length };

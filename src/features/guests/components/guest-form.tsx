@@ -49,7 +49,6 @@ import {
 import { cn } from '@/lib/utils';
 import { DIETARY_PRESETS } from '@/features/guests/utils';
 import type { MealChoice } from '@/lib/meal-choices';
-import { OfflineRsvpDialog } from './offline-rsvp-dialog';
 import posthog from 'posthog-js';
 
 interface GuestFormProps {
@@ -63,10 +62,6 @@ interface GuestFormProps {
   onPendingChange?: (pending: boolean) => void;
   showDietary?: boolean;
   tables?: TableOption[];
-  hasReceivedInitialInvitation?: boolean;
-  nonOfflineCount?: number;
-  capacity?: number | null;
-  onOfflineRsvpChange?: (isOffline: boolean) => void;
 }
 
 export function GuestForm({
@@ -80,17 +75,10 @@ export function GuestForm({
   onPendingChange,
   showDietary = false,
   tables = [],
-  hasReceivedInitialInvitation = false,
-  nonOfflineCount,
-  capacity,
-  onOfflineRsvpChange,
 }: GuestFormProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const isEditMode = !!guest;
-
-  const [pendingRsvpStatus, setPendingRsvpStatus] = React.useState<'confirmed' | 'declined' | null>(null);
-  const [offlineRsvpDialogOpen, setOfflineRsvpDialogOpen] = React.useState(false);
 
   // Typed against the shared vocabulary so a new meal option cannot ship
   // without a label here.
@@ -119,14 +107,8 @@ export function GuestForm({
       notes: guest?.notes || '',
       side: guest?.side ?? null,
       tableId: guest?.tableId ?? null,
-      isOfflineRsvp: guest?.isOfflineRsvp ?? false,
     },
   });
-
-  const isOfflineRsvpValue = form.watch('isOfflineRsvp');
-  React.useEffect(() => {
-    onOfflineRsvpChange?.(isOfflineRsvpValue ?? false);
-  }, [isOfflineRsvpValue, onOfflineRsvpChange]);
 
   React.useEffect(() => {
     if (guest) {
@@ -142,7 +124,6 @@ export function GuestForm({
         notes: guest.notes || '',
         side: guest.side ?? null,
         tableId: guest.tableId ?? null,
-        isOfflineRsvp: guest.isOfflineRsvp ?? false,
       });
     }
   }, [guest, form]);
@@ -238,8 +219,7 @@ export function GuestForm({
   };
 
   return (
-    <>
-      <Form {...form}>
+    <Form {...form}>
         <form
           id={formId}
           onSubmit={form.handleSubmit(onSubmit)}
@@ -399,23 +379,7 @@ export function GuestForm({
                   <FormLabel>{t('form.rsvpStatus')}</FormLabel>
                   <Select
                     value={field.value}
-                    onValueChange={(newValue) => {
-                      const shouldWarn =
-                        isEditMode &&
-                        newValue !== 'pending' &&
-                        !hasReceivedInitialInvitation &&
-                        !isOfflineRsvpValue;
-
-                      if (shouldWarn) {
-                        setPendingRsvpStatus(newValue as 'confirmed' | 'declined');
-                        setOfflineRsvpDialogOpen(true);
-                      } else {
-                        field.onChange(newValue);
-                        if (newValue === 'pending') {
-                          form.setValue('isOfflineRsvp', false);
-                        }
-                      }
-                    }}
+                    onValueChange={field.onChange}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -585,26 +549,6 @@ export function GuestForm({
           </div>
         )}
         </form>
-      </Form>
-      <OfflineRsvpDialog
-        open={offlineRsvpDialogOpen}
-        newStatus={pendingRsvpStatus ?? 'confirmed'}
-        guestName={guest?.name ?? ''}
-        nonOfflineCount={nonOfflineCount}
-        capacity={capacity}
-        onConfirm={() => {
-          if (pendingRsvpStatus) {
-            form.setValue('rsvpStatus', pendingRsvpStatus);
-            form.setValue('isOfflineRsvp', true);
-          }
-          setOfflineRsvpDialogOpen(false);
-          setPendingRsvpStatus(null);
-        }}
-        onCancel={() => {
-          setOfflineRsvpDialogOpen(false);
-          setPendingRsvpStatus(null);
-        }}
-      />
-    </>
+    </Form>
   );
 }

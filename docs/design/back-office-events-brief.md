@@ -24,7 +24,7 @@ Implementation contract for `/admin/events` and `/admin/events/[eventId]`, based
 - Signal links scroll to the actionable Send now, failure, or Complete round row
 - Identity shows Event type, hosts, UTC-calendar Event date/countdown, venue, ceremony/reception times, owner, collaborators, and `/r/{shortCode}` Copy/Open guest page actions
 - Draft Events render a compact identity plus one incomplete-onboarding explanation
-- Guest List distinguishes Guest Records from actual guests, shows record-based RSVP totals and provenance, and lists groups/offline RSVP counts
+- Guest List distinguishes Guest Records from actual guests, shows record-based RSVP totals and provenance, and lists group counts
 - Phone quality uses the same `validatePhoneNumber()` function as sending. `List them` is an inline read-only disclosure of missing and invalid numbers
 - Unpaid Events keep their guest list visible but replace outreach with: `Sending is not enabled for this event. Outreach remains unavailable until payment is completed and Kululu enables sending.`
 - Paid Events with no guest list show `No guest list yet`; outreach explains that an eligible audience is required

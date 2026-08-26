@@ -289,11 +289,7 @@ export async function sendSchedule(
   // Explicitly-picked guests bypass target-status filtering
   const targetedGuests = guestIds
     ? allGuests
-    : filterGuestsByTarget(
-        allGuests,
-        schedule.targetStatus,
-        schedule.scheduleTypeKey,
-      );
+    : filterGuestsByTarget(allGuests, schedule.targetStatus);
 
   if (targetedGuests.length === 0) {
     return fail('No eligible guests after applying filters');

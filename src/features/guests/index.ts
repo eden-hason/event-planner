@@ -92,6 +92,6 @@ export {
 } from './schemas';
 
 // Note: getEventGuests, getEventGuestsWithGroups, getEventGuestPhones,
-// getGuestsWithInitialInvitation, getEventGroups, and getEventGroupsWithGuests
-// are exported from '@/features/guests/queries' to avoid importing server-only
-// code into client components
+// getEventGroups, and getEventGroupsWithGuests are exported from
+// '@/features/guests/queries' to avoid importing server-only code into client
+// components

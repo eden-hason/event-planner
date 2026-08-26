@@ -265,7 +265,7 @@ export async function getEventGuestSummary(eventId: string): Promise<EventGuestS
   const [guestsResult, groupsResult] = await Promise.all([
     supabase
       .from('guests')
-      .select('id, name, phone_number, amount, rsvp_status, group_id, is_offline_rsvp, rsvp_change_source, groups(name)')
+      .select('id, name, phone_number, amount, rsvp_status, group_id, rsvp_change_source, groups(name)')
       .eq('event_id', eventId),
     supabase.from('groups').select('id', { count: 'exact', head: true }).eq('event_id', eventId),
   ]);
@@ -276,7 +276,6 @@ export async function getEventGuestSummary(eventId: string): Promise<EventGuestS
     guestRecords: guests.length,
     actualGuests: guests.reduce((sum, guest) => sum + (guest.amount ?? 1), 0),
     groups: groupsResult.count ?? 0,
-    offlineRecords: guests.filter((guest) => guest.is_offline_rsvp).length,
     confirmed: guests.filter((guest) => guest.rsvp_status === 'confirmed').length,
     declined: guests.filter((guest) => guest.rsvp_status === 'declined').length,
     pending: guests.filter((guest) => guest.rsvp_status === 'pending').length,

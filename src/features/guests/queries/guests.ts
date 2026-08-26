@@ -47,31 +47,9 @@ export const getEventGuests = async (eventId: string): Promise<GuestApp[]> => {
 };
 
 /**
- * Fetches all guests for an event with their associated group info.
- * Uses the group_id FK to resolve the group relationship via Supabase join.
- */
-/**
  * Fetches all existing phone numbers for guests in an event.
  * Used for duplicate detection during CSV import.
  */
-export const getGuestsWithInitialInvitation = async (
-  eventId: string,
-): Promise<Set<string>> => {
-  try {
-    const { supabase } = await getEffectiveClient();
-    const { data } = await supabase
-      .from('message_deliveries')
-      .select('guest_id, schedules!inner(event_id, schedule_types!inner(key))')
-      .eq('schedules.event_id', eventId)
-      .eq('schedules.schedule_types.key', 'initial_invitation')
-      .in('status', ['sent', 'delivered', 'read']);
-    return new Set(data?.map((d) => d.guest_id) ?? []);
-  } catch (error) {
-    console.error('Error fetching guests with initial invitation:', error);
-    return new Set();
-  }
-};
-
 export const getEventGuestPhones = async (
   eventId: string,
 ): Promise<Map<string, string>> => {
