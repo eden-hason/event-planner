@@ -18,6 +18,7 @@ export {
 } from './components/event-workspace';
 export { Band, BandRow } from './components/band';
 export { EnableSendingButton } from './components/enable-sending-button';
+export { QuickSendDialog, type QuickSendSchedule } from './components/quick-send-dialog';
 export { BackOfficeNav } from './components/back-office-nav';
 export { StatCards } from './components/stat-cards';
 export { SignalList } from './components/signal-list';

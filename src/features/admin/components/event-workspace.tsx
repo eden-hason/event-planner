@@ -16,6 +16,7 @@ import {
   PublicEventActions,
   WorkspaceSignals,
 } from './event-workspace-client';
+import { QuickSendDialog } from './quick-send-dialog';
 import { RetryButton } from './retry-button';
 import {
   getEventGuestSummary,
@@ -317,14 +318,24 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     }
     const [rows, guestSummary] = await Promise.all([getEventTimeline(event.id), getEventGuestSummary(event.id)]);
     const canPlanCalls = guestSummary.pending + guestSummary.confirmed > 0;
+    // Cancelled messages are excluded: the schedule was called off, and a
+    // one-off send of it is the Operator resurrecting a decision, not helping a
+    // guest. Status is otherwise ignored - a planned message is exactly what a
+    // guest on the phone is usually asking for early.
+    const sendableMessages = rows
+      .filter((row) => row.kind === 'message' && row.status !== 'cancelled')
+      .map((row) => ({ id: row.id, title: row.title, scheduledDate: row.scheduledDate, status: row.status }));
     return (
       <Band
         id="outreach-timeline"
         title="Outreach timeline"
         className="scroll-mt-20"
-        action={canPlanCalls
-          ? <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
-          : null}
+        action={(sendableMessages.length > 0 || canPlanCalls) ? (
+          <div className="flex shrink-0 gap-2">
+            {sendableMessages.length > 0 && <QuickSendDialog schedules={sendableMessages} />}
+            {canPlanCalls && <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />}
+          </div>
+        ) : null}
       >
         <BandRow>
           {rows.length ? (
