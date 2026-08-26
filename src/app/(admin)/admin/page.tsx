@@ -1,14 +1,14 @@
 import { Suspense } from 'react';
 import {
-  getOverviewCounts,
+  getOverviewStats,
   getSignals,
   getUpcomingEvents,
 } from '@/features/admin/queries/overview';
 import {
-  CountStrip,
-  CountStripError,
-  CountStripSkeleton,
-} from '@/features/admin/components/count-strip';
+  StatCards,
+  StatCardsError,
+  StatCardsSkeleton,
+} from '@/features/admin/components/stat-cards';
 import {
   SignalList,
   SignalListError,
@@ -31,8 +31,8 @@ export default function OverviewPage() {
 
       {/* Each band streams and fails on its own - one broken query must not take
           the page down or, worse, render as an all-clear. */}
-      <Suspense fallback={<CountStripSkeleton />}>
-        <CountsBand />
+      <Suspense fallback={<StatCardsSkeleton />}>
+        <StatsBand />
       </Suspense>
 
       <Suspense fallback={<SignalListSkeleton />}>
@@ -46,12 +46,12 @@ export default function OverviewPage() {
   );
 }
 
-async function CountsBand() {
+async function StatsBand() {
   try {
-    return <CountStrip counts={await getOverviewCounts()} />;
+    return <StatCards stats={await getOverviewStats()} />;
   } catch (error) {
-    console.error('Overview counts failed:', error);
-    return <CountStripError />;
+    console.error('Overview stats failed:', error);
+    return <StatCardsError />;
   }
 }
 
