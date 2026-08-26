@@ -121,12 +121,13 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
   const includesManualResends = row.deliveries.some((delivery) => delivery.triggeredBy === 'manual')
     && row.deliveries.some((delivery) => delivery.triggeredBy === 'scheduled');
   const audienceLabel = `${row.audienceCount} ${row.targetStatus ?? 'guest'} ${row.audienceCount === 1 ? 'record' : 'records'}`;
+  const channelLabel = row.channel === 'whatsapp' ? 'WhatsApp' : row.channel === 'sms' ? 'SMS' : null;
   const actionRow: QueueActionRow = {
     id: row.id,
     kind: row.kind,
     title: row.title,
     audienceLabel,
-    channel: row.channel === 'whatsapp' ? 'WhatsApp' : row.channel === 'sms' ? 'SMS' : null,
+    channel: channelLabel,
   };
   const rail = failed.length
     ? 'border-l-destructive'
@@ -140,7 +141,7 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
     : formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0];
   return (
     <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[86px_minmax(0,1fr)] gap-3.5">
-      <div className="text-muted-foreground flex flex-col items-start gap-0.5 pt-3 text-[11.5px] tabular-nums">
+      <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-right text-[11.5px] tabular-nums">
         {dateLabel && <span className="text-foreground text-[12.5px] font-medium whitespace-nowrap">{dateLabel}</span>}
         {dateLabel && <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>}
       </div>
@@ -150,42 +151,42 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
             {row.kind === 'call' ? <Phone /> : <MessageSquare />}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <h3 className="truncate text-sm font-medium">{row.title}</h3>
-              <span className={cn('rounded-full border px-2 py-px text-[10px] font-semibold uppercase', failed.length ? 'border-destructive/40 text-destructive' : 'text-muted-foreground')}>
-                {row.status.replace('_', ' ')}
-              </span>
-            </div>
+            <h3 className="truncate text-sm font-medium">{row.title}</h3>
             <p className="text-muted-foreground mt-0.5 truncate text-[12.5px]">
               {row.kind === 'call'
                 ? row.roundId ? `${row.calledCount} of ${row.roundGuestCount} guest records called` : audienceLabel
                 : row.status === 'cancelled' ? 'Cancelled by owner'
-                  : attempted ? `${successful.length} sent${failed.length ? `, ${failed.length} failed` : ''}${includesManualResends ? ' · Includes manual resends' : ''}` : audienceLabel}
+                  : `${channelLabel ? `${channelLabel} · ` : ''}${attempted ? `${successful.length} sent${failed.length ? `, ${failed.length} failed` : ''}${includesManualResends ? ' · Includes manual resends' : ''}` : audienceLabel}`}
             </p>
           </div>
-          {row.status === 'planned' ? (
-            <QueueRowAction row={actionRow} />
-          ) : row.roundId ? (
-            /*
-             * A link, not a button: this navigates to the round, it does not do
-             * anything to it. Only the planned row carries a button, because
-             * Start is the one control here that changes the world.
-             */
-            <Button
-              asChild
-              variant="link"
-              size="sm"
-              className={cn(
-                'h-auto shrink-0 gap-0.5 px-0 text-[13px]',
-                row.status !== 'in_progress' && 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Link href={`/admin/events/${eventId}/rounds/${row.roundId}`}>
-                {row.status === 'in_progress' ? 'Complete round' : 'Open round'}
-                <ChevronRight className="size-3.5" />
-              </Link>
-            </Button>
-          ) : null}
+          <div className="flex shrink-0 items-center gap-2">
+            <span className={cn('rounded-full border px-2 py-px text-[10px] font-semibold uppercase', failed.length ? 'border-destructive/40 text-destructive' : 'text-muted-foreground')}>
+              {row.status.replace('_', ' ')}
+            </span>
+            {row.status === 'planned' ? (
+              <QueueRowAction row={actionRow} />
+            ) : row.roundId ? (
+              /*
+               * A link, not a button: this navigates to the round, it does not do
+               * anything to it. Only the planned row carries a button, because
+               * Start is the one control here that changes the world.
+               */
+              <Button
+                asChild
+                variant="link"
+                size="sm"
+                className={cn(
+                  'h-auto shrink-0 gap-0.5 px-0 text-[13px]',
+                  row.status !== 'in_progress' && 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Link href={`/admin/events/${eventId}/rounds/${row.roundId}`}>
+                  {row.status === 'in_progress' ? 'Complete round' : 'Open round'}
+                  <ChevronRight className="size-3.5" />
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
         {failed.length > 0 && <DeliveryPanel scheduleId={row.id} failed={failed} successful={successful} attempted={attempted} embedded />}
         {failed.length === 0 && successful.length > 0 && (
