@@ -1,7 +1,6 @@
 import {
   getEventGuestsWithGroups,
   getEventGuestPhones,
-  getGuestsWithInitialInvitation,
 } from '@/features/guests/queries';
 import { getEventGroupsWithGuests } from '@/features/guests/queries/groups';
 import { GuestsPage as GuestsPageComponent } from '@/features/guests';
@@ -21,7 +20,6 @@ export default async function GuestsPage({
     existingPhones,
     event,
     currentUser,
-    initialInvitedIds,
     tables,
   ] = await Promise.all([
     getEventGuestsWithGroups(eventId),
@@ -29,12 +27,10 @@ export default async function GuestsPage({
     getEventGuestPhones(eventId),
     getEventById(eventId),
     getCurrentUser(),
-    getGuestsWithInitialInvitation(eventId),
     getEventTableOptions(eventId),
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
-  const capacity = event?.guestsCapacity ?? null;
 
   return (
     <GuestsPageComponent
@@ -46,8 +42,6 @@ export default async function GuestsPage({
       showDietary={showDietary}
       tables={tables}
       currentUserId={currentUser?.id ?? null}
-      initialInvitedGuestIds={[...initialInvitedIds]}
-      capacity={capacity}
     />
   );
 }

@@ -141,7 +141,6 @@ export type EventGuestSummary = {
   guestRecords: number;
   actualGuests: number;
   groups: number;
-  offlineRecords: number;
   confirmed: number;
   declined: number;
   pending: number;

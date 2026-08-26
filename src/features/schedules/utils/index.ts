@@ -120,20 +120,9 @@ export function calculateScheduledDate(
 export function filterGuestsByTarget(
   guests: GuestApp[],
   targetStatus?: 'pending' | 'confirmed' | null,
-  scheduleTypeKey?: string,
 ): GuestApp[] {
   if (!targetStatus) return guests;
 
-  if (scheduleTypeKey === 'initial_invitation') {
-    // Offline RSVP guests receive the initial invitation even though they're not pending
-    return guests.filter(
-      (guest) => guest.rsvpStatus === targetStatus || guest.isOfflineRsvp,
-    );
-  }
-
-  // Every other type, including phone_call, matches on status alone. That is
-  // deliberate for calls: an offline-RSVP guest has already answered a person,
-  // so phoning them again is exactly the thing the target is meant to prevent.
   return guests.filter((guest) => guest.rsvpStatus === targetStatus);
 }
 

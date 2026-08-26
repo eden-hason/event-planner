@@ -66,8 +66,6 @@ interface GuestsPageProps {
   showDietary?: boolean;
   tables?: TableOption[];
   currentUserId?: string | null;
-  initialInvitedGuestIds?: string[];
-  capacity?: number | null;
 }
 
 
@@ -105,8 +103,6 @@ export function GuestsPage({
   showDietary = false,
   tables = [],
   currentUserId = null,
-  initialInvitedGuestIds = [],
-  capacity = null,
 }: GuestsPageProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
@@ -118,10 +114,6 @@ export function GuestsPage({
     setHasMounted(true);
   }, []);
 
-  const nonOfflineCount = guests
-    .filter((g) => !g.isOfflineRsvp)
-    .reduce((sum, g) => sum + g.amount, 0);
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
@@ -129,7 +121,6 @@ export function GuestsPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [formIsOfflineRsvp, setFormIsOfflineRsvp] = useState(false);
   const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
@@ -202,13 +193,11 @@ export function GuestsPage({
 
   const handleAddGuest = () => {
     setSelectedGuest(null);
-    setFormIsOfflineRsvp(false);
     setIsDrawerOpen(true);
   };
 
   const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
     setSelectedGuest(guest);
-    setFormIsOfflineRsvp(guest?.isOfflineRsvp ?? false);
     setIsDrawerOpen(true);
   };
 
@@ -494,11 +483,6 @@ export function GuestsPage({
                     <SheetTitle className="text-[19px] font-semibold leading-tight truncate">
                       {selectedGuest.name}
                     </SheetTitle>
-                    {selectedGuest.isOfflineRsvp && (
-                      <span className="inline-flex w-fit items-center rounded-full border border-dashed px-2 py-0.5 text-[11px] font-medium text-muted-foreground mt-1">
-                        {t('rsvp.offlineRsvp')}
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -550,16 +534,8 @@ export function GuestsPage({
               onPendingChange={setIsSubmitting}
               showDietary={showDietary}
               tables={tables}
-              hasReceivedInitialInvitation={
-                selectedGuest
-                  ? initialInvitedGuestIds.includes(selectedGuest.id)
-                  : false
-              }
-              nonOfflineCount={nonOfflineCount}
-              capacity={capacity}
-              onOfflineRsvpChange={setFormIsOfflineRsvp}
             />
-            {selectedGuest && !selectedGuest.isOfflineRsvp && !formIsOfflineRsvp && (
+            {selectedGuest && (
               <GuestActionsSection invitationToken={selectedGuest.invitationToken} />
             )}
           </div>

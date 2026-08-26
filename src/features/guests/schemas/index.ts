@@ -64,7 +64,6 @@ export const GuestAppSchema = z.object({
   rsvpChangedByName: z.string().nullable().optional(),
   rsvpChangedAt: z.string().nullable().optional(),
   rsvpChangeSource: z.enum(['manual', 'guest', 'admin_call']).nullable().optional(),
-  isOfflineRsvp: z.boolean().default(false),
 });
 
 // We infer the TypeScript type directly from the schema.
@@ -118,7 +117,6 @@ export const GuestDbSchema = z.object({
   rsvp_changed_by_name: z.string().max(255).nullable().optional(),
   rsvp_changed_at: z.string().nullable().optional(),
   rsvp_change_source: z.enum(['manual', 'guest', 'admin_call']).nullable().optional(),
-  is_offline_rsvp: z.boolean().default(false),
 });
 
 // We also infer the DB type for reference, though it's less used.
@@ -150,7 +148,6 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     rsvpChangedByName: dbData.rsvp_changed_by_name ?? null,
     rsvpChangedAt: dbData.rsvp_changed_at ?? null,
     rsvpChangeSource: dbData.rsvp_change_source ?? null,
-    isOfflineRsvp: dbData.is_offline_rsvp ?? false,
     side: dbData.side ?? null,
     tableId: dbData.table_id ?? null,
   };
@@ -181,7 +178,6 @@ export const GuestUpsertSchema = z.object({
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
-  isOfflineRsvp: z.boolean().optional(),
   tableId: z.uuid().nullable().optional(),
 });
 
@@ -219,9 +215,6 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     }
     if (appData.notes !== undefined) {
       dbData.notes = appData.notes ?? null;
-    }
-    if (appData.isOfflineRsvp !== undefined) {
-      dbData.is_offline_rsvp = appData.isOfflineRsvp;
     }
     if (appData.side !== undefined) {
       dbData.side = appData.side ?? null;

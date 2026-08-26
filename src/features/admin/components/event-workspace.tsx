@@ -208,7 +208,7 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
             <BandRow className="flex flex-wrap items-baseline gap-x-9 gap-y-5">
               <Metric value={summary.guestRecords} label="guest records" supporting="the billable unit" />
               <Metric value={summary.actualGuests} label="guests" supporting="actual humans invited" />
-              <Metric value={summary.groups} label="groups" supporting={`${summary.offlineRecords} answers taken offline`} />
+              <Metric value={summary.groups} label="groups" supporting="grouped guest records" />
             </BandRow>
             <BandRow className="flex flex-col gap-3">
               <RsvpBar summary={summary} />

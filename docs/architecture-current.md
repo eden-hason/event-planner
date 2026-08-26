@@ -111,7 +111,7 @@ features/<name>/
 ```
 features/guests/components/
 ├── guests-page.tsx  guest-directory.tsx  guest-form.tsx  guest-stats.tsx
-├── guest-search.tsx  guest-actions-section.tsx  offline-rsvp-dialog.tsx
+├── guest-search.tsx  guest-actions-section.tsx
 ├── index.ts
 ├── filters/         group-filter · rsvp-status-filter · side-filter · index
 ├── groups/          groups-directory · group-card · group-icon · guest-list-card
