@@ -140,7 +140,7 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
     : formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0];
   return (
     <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[86px_minmax(0,1fr)] gap-3.5">
-      <div className="text-muted-foreground flex flex-col items-start gap-0.5 pt-3 text-[11.5px] tabular-nums">
+      <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-right text-[11.5px] tabular-nums">
         {dateLabel && <span className="text-foreground text-[12.5px] font-medium whitespace-nowrap">{dateLabel}</span>}
         {dateLabel && <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>}
       </div>
