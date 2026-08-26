@@ -3,12 +3,21 @@
  * Signal, Operator and the Guest Record / Guest distinction.
  */
 
-export type OverviewCounts = {
+export type OverviewStats = {
   users: number;
+  /** Profiles created in the last 7 days - the "N joined this week" sub-line. */
+  usersJoinedThisWeek: number;
   /** Published events only. Draft Events are interest, not events. */
   events: number;
+  /** Published events dated within the next 30 days - the sub-line. */
+  eventsUpcoming: number;
   /** Guest Records: one row per guest list entry, the billable unit. */
   guestRecords: number;
+  /**
+   * Confirmed Guest Records across all published events. Its share of
+   * guestRecords is the headline percentage on the Confirmed card.
+   */
+  confirmed: number;
 };
 
 export type SignalKind = 'overdue_schedule' | 'failed_delivery' | 'stale_call_round';

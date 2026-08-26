@@ -2,7 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import type { OverviewCounts, Signal, UpcomingEvent } from '../types';
+import type { OverviewStats, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { formatScheduleDateTime } from '@/lib/date-time';
 
@@ -52,7 +52,7 @@ const SEVERITY: Record<Signal['kind'], number> = {
   stale_call_round: 2,
 };
 
-export async function getOverviewCounts(): Promise<OverviewCounts> {
+export async function getOverviewStats(): Promise<OverviewStats> {
   await assertAdmin();
   const supabase = createServiceClient();
 
@@ -62,9 +62,23 @@ export async function getOverviewCounts(): Promise<OverviewCounts> {
   // Test accounts are excluded for the same reason - see test-accounts.ts.
   const test = await getTestScope();
 
-  const [users, events, publishedEvents] = await Promise.all([
+  // Upcoming window: published events dated from today through the next 30 days,
+  // matching getUpcomingEvents so the sub-line and the Upcoming band agree.
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const upcomingEndUtc = new Date(todayUtc.getTime() + UPCOMING_WINDOW_DAYS * 86_400_000);
+
+  const [users, joinedThisWeek, events, eventsUpcoming, publishedEvents] = await Promise.all([
     excludeIds(
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      'id',
+      test.userIds,
+    ),
+    excludeIds(
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', daysAgo(7)),
       'id',
       test.userIds,
     ),
@@ -73,6 +87,16 @@ export async function getOverviewCounts(): Promise<OverviewCounts> {
         .from('events')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'published'),
+      'user_id',
+      test.userIds,
+    ),
+    excludeIds(
+      supabase
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'published')
+        .gte('event_date', todayUtc.toISOString())
+        .lt('event_date', upcomingEndUtc.toISOString()),
       'user_id',
       test.userIds,
     ),
@@ -87,19 +111,31 @@ export async function getOverviewCounts(): Promise<OverviewCounts> {
   // any test account's event.
   const publishedIds = unwrap(publishedEvents).map((e) => e.id);
 
-  const guestRecords = publishedIds.length
-    ? unwrapCount(
-        await supabase
-          .from('guests')
-          .select('id', { count: 'exact', head: true })
-          .in('event_id', publishedIds),
-      )
-    : 0;
+  let guestRecords = 0;
+  let confirmed = 0;
+  if (publishedIds.length) {
+    const [records, confirmedRecords] = await Promise.all([
+      supabase
+        .from('guests')
+        .select('id', { count: 'exact', head: true })
+        .in('event_id', publishedIds),
+      supabase
+        .from('guests')
+        .select('id', { count: 'exact', head: true })
+        .eq('rsvp_status', 'confirmed')
+        .in('event_id', publishedIds),
+    ]);
+    guestRecords = unwrapCount(records);
+    confirmed = unwrapCount(confirmedRecords);
+  }
 
   return {
     users: unwrapCount(users),
+    usersJoinedThisWeek: unwrapCount(joinedThisWeek),
     events: unwrapCount(events),
+    eventsUpcoming: unwrapCount(eventsUpcoming),
     guestRecords,
+    confirmed,
   };
 }
 

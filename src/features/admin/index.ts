@@ -19,7 +19,7 @@ export {
 export { Band, BandRow } from './components/band';
 export { EnableSendingButton } from './components/enable-sending-button';
 export { BackOfficeNav } from './components/back-office-nav';
-export { CountStrip } from './components/count-strip';
+export { StatCards } from './components/stat-cards';
 export { SignalList } from './components/signal-list';
 export { SignalRow } from './components/signal-row';
 export { UpcomingEvents } from './components/upcoming-events';
