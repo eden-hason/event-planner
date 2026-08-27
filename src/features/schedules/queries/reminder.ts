@@ -47,7 +47,10 @@ export async function getReminderPageEvent(
 
   const settings = data.event_settings as {
     paybox_config?: { enabled: boolean; link: string };
-    bit_config?: { enabled: boolean; link: string };
+    // `link` is optional: legacy rows configured before Bit moved from a phone
+    // number to a link have `phoneNumber` and no `link`. Such a row must read
+    // as "not configured", never crash - hence the optional chaining below.
+    bit_config?: { enabled: boolean; link?: string };
   } | null;
 
   const paybox = settings?.paybox_config;
@@ -77,6 +80,6 @@ export async function getReminderPageEvent(
     // toggle and its value are separate fields, and a button pointing at an
     // empty link is worse than no button.
     paybox: paybox?.enabled && paybox.link.trim() ? { link: paybox.link } : null,
-    bit: bit?.enabled && bit.link.trim() ? { link: bit.link } : null,
+    bit: bit?.enabled && bit.link?.trim() ? { link: bit.link } : null,
   };
 }

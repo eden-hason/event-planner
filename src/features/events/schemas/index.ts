@@ -35,9 +35,14 @@ export type PayboxConfig = z.infer<typeof PayboxConfigSchema>;
 // organiser's personal Bit payment link (copied from the Bit app, e.g. its
 // "personal QR"), used verbatim - Bit resolves the recipient from an opaque
 // token in the URL, not from a phone number.
+//
+// `link` is optional so legacy rows configured before this change - which hold
+// a `phoneNumber` and no `link` - still parse instead of throwing on read. Zod
+// drops the unknown `phoneNumber`; downstream code treats a missing link as
+// "not configured".
 export const BitConfigSchema = z.object({
   enabled: z.boolean(),
-  link: z.string(),
+  link: z.string().optional(),
 });
 
 export type BitConfig = z.infer<typeof BitConfigSchema>;
