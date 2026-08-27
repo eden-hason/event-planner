@@ -16,6 +16,7 @@ import {
   PublicEventActions,
   WorkspaceSignals,
 } from './event-workspace-client';
+import { BatchSendDialog } from './batch-send-dialog';
 import { QuickSendDialog } from './quick-send-dialog';
 import { RetryButton } from './retry-button';
 import {
@@ -332,6 +333,7 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
         className="scroll-mt-20"
         action={(sendableMessages.length > 0 || canPlanCalls) ? (
           <div className="flex shrink-0 gap-2">
+            {sendableMessages.length > 0 && <BatchSendDialog schedules={sendableMessages} />}
             {sendableMessages.length > 0 && <QuickSendDialog schedules={sendableMessages} />}
             {canPlanCalls && <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />}
           </div>

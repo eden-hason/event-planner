@@ -7,6 +7,7 @@ export {
   ExternalLink,
   Eye,
   Info,
+  Layers,
   Link2,
   MapPin,
   MessageSquare,
