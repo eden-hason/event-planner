@@ -1126,7 +1126,8 @@
       "descriptionSuccessEmail": "נשלח מייל הזמנה. תוכל גם לשתף את הקישור ידנית.",
       "descriptionSuccessLink": "שתף את הקישור הזה עם האדם שהזמנת.",
       "emailLabel": "כתובת מייל",
-      "emailPlaceholder": "partner@example.com",
+      "emailPlaceholder": "partner@gmail.com",
+      "emailHint": "כתובות Gmail בלבד (‎@gmail.com)",
       "roleLabel": "תפקיד",
       "ownerLabel": "בעלים",
       "ownerBadge": "גישה מלאה",
@@ -1146,6 +1147,7 @@
       "done": "סיום",
       "toast": {
         "emailRequired": "אנא הזן כתובת מייל",
+        "gmailOnly": "ניתן להזמין כתובות Gmail בלבד (‎@gmail.com)",
         "createFailed": "יצירת ההזמנה נכשלה",
         "created": "ההזמנה נוצרה",
         "linkCopied": "הקישור הועתק ללוח"

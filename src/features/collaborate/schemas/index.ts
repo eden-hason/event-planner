@@ -129,8 +129,18 @@ export type ScopeItem = z.infer<typeof ScopeItemSchema>;
 // Form / Action Schemas
 // ============================================================================
 
+// Collaborators sign in with Google, so invites are limited to Gmail addresses
+export const GMAIL_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+
+export const isGmailAddress = (email: string) =>
+  GMAIL_EMAIL_REGEX.test(email.trim());
+
 export const InviteFormSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email address')
+    .regex(GMAIL_EMAIL_REGEX, 'Only Gmail addresses (@gmail.com) can be invited'),
   role: z.enum(collaboratorRoles, {
     message: 'Please select a role',
   }),

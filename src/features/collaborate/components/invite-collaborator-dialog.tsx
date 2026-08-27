@@ -27,7 +27,7 @@ import { createInvitation } from '../actions';
 import { ScopePicker } from './scope-picker';
 import { cn } from '@/lib/utils';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
-import type { CollaboratorRole } from '../schemas';
+import { isGmailAddress, type CollaboratorRole } from '../schemas';
 import posthog from 'posthog-js';
 
 interface InviteCollaboratorDialogProps {
@@ -180,6 +180,7 @@ export function InviteCollaboratorDialog({
 
   // Form state
   const [email, setEmail] = React.useState('');
+  const [emailError, setEmailError] = React.useState<string | null>(null);
   const [role, setRole] = React.useState<CollaboratorRole>('owner');
   const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
   const [selectedGuests, setSelectedGuests] = React.useState<string[]>([]);
@@ -189,6 +190,7 @@ export function InviteCollaboratorDialog({
   const resetForm = () => {
     setStep('form');
     setEmail('');
+    setEmailError(null);
     setRole('owner');
     setSelectedGroups([]);
     setSelectedGuests([]);
@@ -198,10 +200,22 @@ export function InviteCollaboratorDialog({
   };
 
   const handleNext = () => {
-    if (!email) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmailError(t('toast.emailRequired'));
       toast.error(t('toast.emailRequired'));
       return;
     }
+
+    if (!isGmailAddress(trimmedEmail)) {
+      setEmailError(t('toast.gmailOnly'));
+      toast.error(t('toast.gmailOnly'));
+      return;
+    }
+
+    setEmailError(null);
+    setEmail(trimmedEmail);
 
     if (role === 'seating_manager') {
       setStep('scope');
@@ -214,7 +228,7 @@ export function InviteCollaboratorDialog({
     setIsPending(true);
 
     const formData = new FormData();
-    formData.set('email', email);
+    formData.set('email', email.trim());
     formData.set('role', role);
     formData.set('scopeGroups', JSON.stringify(selectedGroups));
     formData.set('scopeGuests', JSON.stringify(selectedGuests));
@@ -290,12 +304,28 @@ export function InviteCollaboratorDialog({
                   <Input
                     id="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     placeholder={t('emailPlaceholder')}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    aria-invalid={!!emailError}
+                    aria-describedby="email-hint"
+                    className={cn('pl-9', emailError && 'border-destructive')}
                   />
                 </div>
+                <p
+                  id="email-hint"
+                  className={cn(
+                    'text-xs',
+                    emailError ? 'text-destructive' : 'text-muted-foreground',
+                  )}
+                >
+                  {emailError ?? t('emailHint')}
+                </p>
               </div>
 
               <div className="space-y-2">
