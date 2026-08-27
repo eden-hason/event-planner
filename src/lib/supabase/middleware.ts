@@ -65,6 +65,7 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     !strippedPath.startsWith('/c/') &&
     !strippedPath.startsWith('/invitations') &&
     !strippedPath.startsWith('/privacy') &&
+    !strippedPath.startsWith('/terms') &&
     !strippedPath.startsWith('/nav')
   ) {
     const url = request.nextUrl.clone();
