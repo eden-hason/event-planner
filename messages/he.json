@@ -1305,9 +1305,9 @@
       "payboxPlaceholder": "https://payboxapp.page.link/...",
       "payboxHelper": "כיצד לעשות: פתח את אפליקציית PayBox, צור קבוצה חדשה לאירוע, לחץ על הזמן חברים, העתק את הקישור והדבק אותו כאן.",
       "payboxSubtitle": "אפשר לאורחים להעביר לכם מתנה דרך PayBox",
-      "bitLabel": "מספר טלפון Bit",
-      "bitPlaceholder": "050-000-0000",
-      "bitHelper": "הזן את מספר הטלפון הנייד המחובר לחשבון Bit שלך",
+      "bitLabel": "קישור תשלום Bit",
+      "bitPlaceholder": "https://www.bitpay.co.il/app/me/...",
+      "bitHelper": "כיצד לעשות: פתח את אפליקציית Bit, עבור ל-QR האישי לתשלום, שתף אותו והעתק את הקישור (מתחיל ב-https://www.bitpay.co.il). הדבק אותו כאן.",
       "bitSubtitle": "העברה מיידית דרך Bit"
     }
   },

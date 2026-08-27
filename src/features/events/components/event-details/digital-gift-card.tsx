@@ -32,7 +32,7 @@ const DigitalGiftCardSchema = EventDetailsUpdateSchema.pick({ id: true, eventSet
 type DigitalGiftCardValues = z.infer<typeof DigitalGiftCardSchema>;
 
 const PAYBOX_REGEX = /^https?:\/\//;
-const BIT_REGEX = /^\+?[\d\s\-]{7,}$/;
+const BIT_REGEX = /^https?:\/\/(www\.)?bitpay\.co\.il\//i;
 
 function PayboxIcon() {
   return <Image src="/gift-paybox-logo.svg" alt="PayBox" width={28} height={28} className="rounded-sm" />;
@@ -62,7 +62,7 @@ export function DigitalGiftCard({ event }: DigitalGiftCardProps) {
         },
         bitConfig: {
           enabled: event.eventSettings?.bitConfig?.enabled || false,
-          phoneNumber: event.eventSettings?.bitConfig?.phoneNumber || '',
+          link: event.eventSettings?.bitConfig?.link || '',
         },
       },
     },
@@ -71,10 +71,10 @@ export function DigitalGiftCard({ event }: DigitalGiftCardProps) {
   const isDirty = form.formState.isDirty;
 
   const payboxLink = form.watch('eventSettings.payboxConfig.link');
-  const bitPhone = form.watch('eventSettings.bitConfig.phoneNumber');
+  const bitLink = form.watch('eventSettings.bitConfig.link');
 
   const isPayboxValid = !!payboxLink && PAYBOX_REGEX.test(payboxLink);
-  const isBitValid = !!bitPhone && BIT_REGEX.test(bitPhone);
+  const isBitValid = !!bitLink && BIT_REGEX.test(bitLink);
 
   const [, formAction, isPending] = useActionState(
     async (_prev: UpdateEventDetailsState | null, formData: FormData) => {
@@ -182,18 +182,18 @@ export function DigitalGiftCard({ event }: DigitalGiftCardProps) {
                   >
                     <FormField
                       control={form.control}
-                      name="eventSettings.bitConfig.phoneNumber"
-                      render={({ field: phoneField }) => (
+                      name="eventSettings.bitConfig.link"
+                      render={({ field: linkField }) => (
                         <FormItem>
                           <FormLabel>{t('bitLabel')}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
-                                type="tel"
+                                type="url"
                                 dir="ltr"
                                 placeholder={t('bitPlaceholder')}
                                 className={isBitValid ? 'pr-9 border-emerald-500' : ''}
-                                {...phoneField}
+                                {...linkField}
                               />
                               {isBitValid && (
                                 <Check className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />

@@ -91,7 +91,7 @@ function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
   const settings = rawEvent.event_settings as {
     paybox_config?: { enabled: boolean; link: string };
-    bit_config?: { enabled: boolean; phoneNumber: string };
+    bit_config?: { enabled: boolean; link: string };
   } | null;
   const guestExperience = rawEvent.guests_experience as {
     send_table_numbers?: boolean;

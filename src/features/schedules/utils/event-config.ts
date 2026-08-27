@@ -8,7 +8,7 @@
 export type GiftingSettings =
   | {
       payboxConfig?: { enabled: boolean; link: string };
-      bitConfig?: { enabled: boolean; phoneNumber: string };
+      bitConfig?: { enabled: boolean; link: string };
     }
   | null
   | undefined;
@@ -28,7 +28,7 @@ export function isGiftingEnabled(settings: GiftingSettings): boolean {
 
   return Boolean(
     (paybox?.enabled && paybox.link.trim()) ||
-      (bit?.enabled && bit.phoneNumber.trim()),
+      (bit?.enabled && bit.link.trim()),
   );
 }
 

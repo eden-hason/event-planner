@@ -31,10 +31,13 @@ export const PayboxConfigSchema = z.object({
 
 export type PayboxConfig = z.infer<typeof PayboxConfigSchema>;
 
-// Bit configuration for phone-based digital gifting
+// Bit configuration for link-based digital gifting. The link is the
+// organiser's personal Bit payment link (copied from the Bit app, e.g. its
+// "personal QR"), used verbatim - Bit resolves the recipient from an opaque
+// token in the URL, not from a phone number.
 export const BitConfigSchema = z.object({
   enabled: z.boolean(),
-  phoneNumber: z.string(),
+  link: z.string(),
 });
 
 export type BitConfig = z.infer<typeof BitConfigSchema>;
@@ -316,7 +319,7 @@ export const EventDetailsUpdateSchema = z.object({
       bitConfig: z
         .object({
           enabled: z.boolean().optional(),
-          phoneNumber: z.string().optional(),
+          link: z.string().optional(),
         })
         .optional(),
     })

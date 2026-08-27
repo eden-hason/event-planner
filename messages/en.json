@@ -1305,9 +1305,9 @@
       "payboxPlaceholder": "Paste your PayBox group invite link",
       "payboxHelper": "How to: Open the PayBox app, create a new Group for your event, click Invite Friends, copy the link, and paste it here.",
       "payboxSubtitle": "Let guests send you a gift through PayBox",
-      "bitLabel": "Bit Phone Number",
-      "bitPlaceholder": "Enter phone number",
-      "bitHelper": "Enter the mobile phone number connected to your Bit account",
+      "bitLabel": "Bit Payment Link",
+      "bitPlaceholder": "https://www.bitpay.co.il/app/me/...",
+      "bitHelper": "How to: Open the Bit app, go to your personal payment QR, share it, and copy the link (it starts with https://www.bitpay.co.il). Paste it here.",
       "bitSubtitle": "Instant transfer via Bit"
     }
   },
