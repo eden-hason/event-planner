@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 type Lang = "he" | "en";
 
@@ -9,6 +12,7 @@ const content = {
     dir: "rtl",
     lang: "he",
     toggle: "English",
+    back: "חזרה",
     title: "תנאי שימוש",
     lastUpdated: "עודכן לאחרונה: אפריל 2025",
     intro:
@@ -115,6 +119,7 @@ const content = {
     dir: "ltr",
     lang: "en",
     toggle: "עברית",
+    back: "Back",
     title: "Terms of Use",
     lastUpdated: "Last updated: April 2025",
     intro:
@@ -243,7 +248,31 @@ export default function TermsPage() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">Kululu</span>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {c.dir === "rtl" ? (
+                <ArrowRight className="size-4" />
+              ) : (
+                <ArrowLeft className="size-4" />
+              )}
+              {c.back}
+            </Link>
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/kululu-logo-gray.svg"
+                alt="Kululu"
+                width={28}
+                height={28}
+                className="size-7"
+              />
+              <span className="text-xl font-bold tracking-tight">
+                Kululu
+              </span>
+            </Link>
+          </div>
           <button
             onClick={() => setLang(lang === "he" ? "en" : "he")}
             className="text-sm text-muted-foreground border border-border rounded-md px-3 py-1.5 hover:bg-muted transition-colors"
