@@ -8,7 +8,9 @@
 export type GiftingSettings =
   | {
       payboxConfig?: { enabled: boolean; link: string };
-      bitConfig?: { enabled: boolean; phoneNumber: string };
+      // `link` is optional so legacy rows still holding `phoneNumber` and no
+      // `link` read as "not configured" rather than crashing on `.trim()`.
+      bitConfig?: { enabled: boolean; link?: string };
     }
   | null
   | undefined;
@@ -28,7 +30,7 @@ export function isGiftingEnabled(settings: GiftingSettings): boolean {
 
   return Boolean(
     (paybox?.enabled && paybox.link.trim()) ||
-      (bit?.enabled && bit.phoneNumber.trim()),
+      (bit?.enabled && bit.link?.trim()),
   );
 }
 

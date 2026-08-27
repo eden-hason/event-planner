@@ -4,16 +4,6 @@ import { Calendar, Clock, Gift, MapPin } from 'lucide-react';
 
 import { getReminderPageEvent } from '../queries/reminder';
 
-/**
- * Base of the Bit payment deep link, with the recipient's phone appended.
- *
- * This has to match the base that was registered on the approved WhatsApp
- * template's gift button, which is the only place it previously existed - it
- * was never in this codebase. Verify it against Meta's template manager before
- * relying on it in production.
- */
-const BIT_LINK_BASE = 'https://www.bitpay.co.il/app/me/';
-
 /** Shared shape of the three actions - navigate, Bit, PayBox. */
 const ACTION_CLASS =
   'border-border box-border flex w-full items-center justify-center gap-3 rounded-xl border bg-white px-5 transition-colors hover:border-primary hover:bg-[#FFFCFD]';
@@ -193,7 +183,7 @@ export async function ReminderPage({ code }: { code: string }) {
             <div className="mt-[18px] flex flex-col gap-3">
               {event.bit ? (
                 <a
-                  href={`${BIT_LINK_BASE}${event.bit.phoneNumber.replace(/\D/g, '')}`}
+                  href={event.bit.link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${ACTION_CLASS} min-h-[58px] text-[17px] font-medium`}

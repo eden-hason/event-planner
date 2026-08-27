@@ -70,7 +70,7 @@ export function eventDetailsUpdateToDb(
     if (data.eventSettings?.bitConfig !== undefined) {
       dbData.event_settings.bit_config = {
         enabled: data.eventSettings.bitConfig.enabled ?? false,
-        phoneNumber: data.eventSettings.bitConfig.phoneNumber || '',
+        link: data.eventSettings.bitConfig.link || '',
       };
     }
   }
