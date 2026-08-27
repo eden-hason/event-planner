@@ -26,6 +26,16 @@ export function formatEventDate(
   return options?.weekday ? formatted.replace(',', '') : formatted;
 }
 
+/** "12 August 2026" - the full-month form used where a date stands alone, e.g. the Users sheet. */
+export function formatFullDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(iso));
+}
+
 export function formatScheduleDateTime(iso: string, time?: string | null): string {
   const value = new Date(iso);
   const date = new Intl.DateTimeFormat('en-GB', {

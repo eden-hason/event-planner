@@ -1,3 +1,5 @@
+import type { CollaboratorRole } from '@/features/collaborate/schemas';
+
 /**
  * Back Office view models. Vocabulary is defined in CONTEXT.md - in particular
  * Signal, Operator and the Guest Record / Guest distinction.
@@ -243,4 +245,73 @@ export type PlannedWorkQueue = {
   groups: PlannedWorkGroup[];
   callRounds: number;
   messages: number;
+};
+
+/**
+ * A directory, not a scoreboard - see docs/design/back-office-users-brief.md
+ * section 3. Most rows are partly empty and that is ordinary, not a defect, so
+ * nothing here is a completeness score or a judgement about the User.
+ */
+export type UserRow = {
+  id: string;
+  /** null when the profile has no full_name - the email becomes the primary line instead. */
+  fullName: string | null;
+  email: string;
+  phone: string | null;
+  isAdmin: boolean;
+  isTestAccount: boolean;
+  /** Events where this User is the creator, draft and published alike. */
+  ownedEvents: number;
+  /** Non-creator collaborations - Owner or Seating Manager on someone else's Event. */
+  sharedEvents: number;
+  createdAt: string;
+};
+
+export type UsersIndexFilters = {
+  q: string;
+  page: number;
+};
+
+export type UsersIndexPage = {
+  rows: UserRow[];
+  totalRows: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  /** Every User the toggle currently shows, unfiltered - the "N users" headline. */
+  totalUsers: number;
+  /** profiles.is_test_account = true, regardless of the toggle - drives the hidden-accounts footer. */
+  testAccountsTotal: number;
+};
+
+export type UserOwnedEvent = {
+  id: string;
+  title: string;
+  eventDate: string | null;
+  status: 'published' | 'draft';
+};
+
+export type UserSharedEvent = {
+  id: string;
+  title: string;
+  role: CollaboratorRole;
+};
+
+export type UserDetail = {
+  id: string;
+  fullName: string | null;
+  email: string;
+  phone: string | null;
+  isAdmin: boolean;
+  isTestAccount: boolean;
+  createdAt: string;
+  /**
+   * `profiles.initial_setup_complete`, labelled honestly. Set unconditionally
+   * the moment the setup form is submitted, even with a null phone number, so
+   * it means "passed through setup" and never "profile complete" - see the
+   * brief section 4. Never render it as a completeness signal.
+   */
+  onboardingFinished: boolean;
+  ownedEvents: UserOwnedEvent[];
+  sharedEvents: UserSharedEvent[];
 };

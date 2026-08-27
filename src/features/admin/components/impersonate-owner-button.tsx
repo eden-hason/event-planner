@@ -13,15 +13,18 @@ import { startImpersonation } from '../actions/impersonation';
 export function ImpersonateOwnerButton({
   ownerId,
   ownerName,
+  label = 'View as owner',
 }: {
   ownerId: string;
   ownerName: string;
+  /** "View as owner" on the event workspace; the Users sheet says "View as user" instead. */
+  label?: string;
 }) {
   return (
     <form action={startImpersonation.bind(null, ownerId)}>
       <Button type="submit" variant="outline" size="sm" title={`Open the app as ${ownerName}`}>
         <Eye className="size-3.5" />
-        View as owner
+        {label}
       </Button>
     </form>
   );

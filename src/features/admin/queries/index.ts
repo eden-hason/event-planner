@@ -8,3 +8,4 @@ export {
   getEventTimeline,
   getEventsIndex,
 } from './events';
+export { getUsersIndex, getUserDetail } from './users';
