@@ -7,3 +7,4 @@ export {
   type QuickSendResult,
 } from './quick-send';
 export { setTestAccountsVisible } from './test-accounts';
+export { setUserTestAccountFlag, type SetTestAccountResult } from './users';

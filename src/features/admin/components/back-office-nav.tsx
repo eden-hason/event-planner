@@ -27,7 +27,7 @@ import {
  */
 const NAV_ITEMS = [
   { label: 'Overview', href: '/admin', icon: LayoutDashboard, stub: false },
-  { label: 'Users', href: '/admin/users', icon: Users, stub: true },
+  { label: 'Users', href: '/admin/users', icon: Users, stub: false },
   { label: 'Events', href: '/admin/events', icon: CalendarDays, stub: false },
   { label: 'Operations', href: '/admin/operations', icon: Wrench, stub: false },
   {
