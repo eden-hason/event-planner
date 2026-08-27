@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import { sendSchedule } from '@/features/schedules/services/send-schedule';
+import { gateScheduleForSend } from '../services/schedule-send-gate';
 
 export type QuickSendGuest = {
   id: string;
@@ -16,50 +17,6 @@ export type QuickSendGuest = {
 };
 
 export type QuickSendResult = { success: boolean; message: string };
-
-type ScheduleGate = {
-  eventId: string;
-  scheduleTitle: string;
-};
-
-/**
- * Shared gate for both entry points: the schedule has to exist, be a message
- * schedule, and belong to an event with sending enabled. Returns the event id
- * so callers can scope their own guest lookups to it.
- */
-async function gateSchedule(
-  supabase: ReturnType<typeof createServiceClient>,
-  scheduleId: string,
-): Promise<{ ok: true; gate: ScheduleGate } | { ok: false; message: string }> {
-  const { data, error } = await supabase
-    .from('schedules')
-    .select(
-      'id, event_id, schedule_types!inner(name, execution_kind), events!inner(can_create_schedules)',
-    )
-    .eq('id', scheduleId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return { ok: false, message: 'That schedule no longer exists' };
-
-  const scheduleType = (Array.isArray(data.schedule_types)
-    ? data.schedule_types[0]
-    : data.schedule_types) as { name: string; execution_kind: string } | null;
-  if (scheduleType?.execution_kind !== 'message') {
-    return { ok: false, message: 'Call rounds are not sent from here' };
-  }
-
-  const event = (Array.isArray(data.events) ? data.events[0] : data.events) as
-    | { can_create_schedules: boolean }
-    | null;
-  if (!event?.can_create_schedules) {
-    return { ok: false, message: 'Sending is not enabled for this event' };
-  }
-
-  return {
-    ok: true,
-    gate: { eventId: data.event_id, scheduleTitle: scheduleType.name },
-  };
-}
 
 /**
  * The guest list behind the quick-send picker, fetched when the dialog opens
@@ -76,7 +33,7 @@ export async function getQuickSendGuests(
   await assertAdmin();
   const supabase = createServiceClient();
 
-  const gate = await gateSchedule(supabase, scheduleId);
+  const gate = await gateScheduleForSend(supabase, scheduleId);
   if (!gate.ok) return [];
 
   const [guestsResult, deliveriesResult] = await Promise.all([
@@ -130,7 +87,7 @@ export async function sendScheduleToGuest(
   const supabase = createServiceClient();
 
   try {
-    const gate = await gateSchedule(supabase, scheduleId);
+    const gate = await gateScheduleForSend(supabase, scheduleId);
     if (!gate.ok) return { success: false, message: gate.message };
 
     // Scoped to the event the schedule belongs to, so a guest id from another

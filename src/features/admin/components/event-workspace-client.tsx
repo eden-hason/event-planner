@@ -156,7 +156,7 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
               {row.kind === 'call'
                 ? row.roundId ? `${row.calledCount} of ${row.roundGuestCount} guest records called` : audienceLabel
                 : row.status === 'cancelled' ? 'Cancelled by owner'
-                  : `${channelLabel ? `${channelLabel} · ` : ''}${attempted ? `${successful.length} sent${failed.length ? `, ${failed.length} failed` : ''}${includesManualResends ? ' · Includes manual resends' : ''}` : audienceLabel}`}
+                  : `${channelLabel ? `${channelLabel} · ` : ''}${attempted ? `${successful.length} of ${row.audienceCount} sent${failed.length ? `, ${failed.length} failed` : ''}${includesManualResends ? ' · Includes manual resends' : ''}` : audienceLabel}`}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">

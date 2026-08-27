@@ -20,6 +20,8 @@ export { Band, BandRow } from './components/band';
 export { RetryButton } from './components/retry-button';
 export { EnableSendingButton } from './components/enable-sending-button';
 export { QuickSendDialog, type QuickSendSchedule } from './components/quick-send-dialog';
+export { BatchSendDialog } from './components/batch-send-dialog';
+export { MAX_BATCH_SIZE } from './utils/batch-send';
 export { BackOfficeNav } from './components/back-office-nav';
 export { StatCards } from './components/stat-cards';
 export { SignalList } from './components/signal-list';
