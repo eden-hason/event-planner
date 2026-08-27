@@ -715,6 +715,8 @@ export function HomepageClient() {
               <a href="#features">פיצ׳רים</a>
               <a href="#how">יצירת אירוע</a>
               <a href="#pricing">חבילות</a>
+              <Link href="/privacy">מדיניות פרטיות</Link>
+              <Link href="/terms">תנאי שימוש</Link>
             </div>
             <a href="#" className="logo" aria-label="Kululu home">
               <img src="/logo-navbar.png" alt="Kululu" />
