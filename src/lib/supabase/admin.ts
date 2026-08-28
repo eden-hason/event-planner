@@ -36,21 +36,32 @@ export async function getEffectiveClient() {
 
 export const assertAdmin = cache(async function assertAdmin(): Promise<string> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) redirect('/login');
+  // getClaims rather than getUser, for the reason updateSession already spells
+  // out in ./middleware.ts: getUser is a blocking round trip to /auth/v1/user,
+  // and this runs on every Back Office render before the page can stream a
+  // single byte. The project signs with ES256, so getClaims verifies the token
+  // locally against a cached JWKS and only reaches the network to refresh.
+  //
+  // The weaker guarantee - a verified signature rather than a live server check
+  // - costs nothing here, because the is_admin read below is a real query
+  // against the row. A token whose user has been deleted finds no profile and
+  // redirects; an account whose admin flag was revoked reads false and
+  // redirects. Only the token's own expiry is taken on trust.
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims.sub ?? null;
+
+  if (!userId) redirect('/login');
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single();
 
   if (!profile?.is_admin) redirect('/app');
 
-  return user.id;
+  return userId;
 });
 
 export async function assertNotImpersonating(): Promise<string | null> {
