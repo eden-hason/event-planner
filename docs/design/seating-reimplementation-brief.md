@@ -1,4 +1,4 @@
-# Seating reimplementation — Claude Design brief
+# Seating reimplementation - Claude Design brief
 
 Status: In discovery; decisions are locked incrementally through the accompanying grilling session.
 
@@ -6,12 +6,16 @@ Status: In discovery; decisions are locked incrementally through the accompanyin
 
 Design a responsive Seating Plan workspace for Kululu, an event-planning product whose primary users are couples organizing weddings. The page's single job is to help a planner organize invited people among Tables and confidently determine whether the plan is complete and valid.
 
-This is an assignment workspace, not a venue floor-plan editor. Do not introduce a free-form canvas, spatial table positioning, furniture geometry, or floor-plan controls.
+The workspace is an operational layout, not a venue blueprint. Tables carry a relative
+arrangement the planner can see and adjust, but the page models no measured venue: no
+scale, room boundaries, fixtures, or collision handling. See ADR-0005.
 
 ## Locked decisions
 
 - The canonical domain term is **Seating Plan**.
-- The page must focus on Tables and assignments rather than venue geometry.
+- The page must focus on Tables and assignments rather than measured venue geometry.
+- A visual canvas showing Tables' relative arrangement is a launch requirement, not a later phase.
+- Canvas position is an arrangement aid only; it never affects capacity, validity, or completion.
 - The replacement must work on both desktop and mobile; it must not preserve the former desktop-only boundary.
 - A Guest Record is assigned atomically: every person represented by that record sits at the same Table.
 - Splitting a Guest Record across Tables is not supported.
@@ -32,8 +36,9 @@ This is an assignment workspace, not a venue floor-plan editor. Do not introduce
 - New Tables default to the next integer after the Event's current highest Table number.
 - Never renumber existing Tables or reuse a numbering gap automatically.
 - A planner may deliberately fill a gap by editing a Table number, subject to uniqueness.
-- Tables are canonically ordered by ascending Table number on every surface.
-- Do not add persistent custom ordering or drag-to-reorder behavior.
+- Tables are canonically ordered by ascending Table number on every list surface.
+- Do not add persistent custom list ordering or drag-to-reorder behavior in lists.
+- Canvas position is persisted separately and never changes list order, and list order never moves a Table on the canvas.
 - Support both batch creation for initial setup and single-Table creation for later adjustments.
 - Batch creation captures quantity, starting number, and capacity; preview the resulting number range before confirmation.
 - Batch creation is atomic: if any requested Table number conflicts or any value is invalid, create none of the batch.
@@ -73,6 +78,8 @@ This is an assignment workspace, not a venue floor-plan editor. Do not introduce
 - Completion and warning behavior.
 - Bulk operations, automation, import/export, and print/share requirements.
 - Visual direction, responsive information architecture, states, and motion.
+- How the canvas behaves on mobile, and how it relates to the list surfaces.
+- Whether Table shape and rotation are retained as canvas properties.
 
 ## Implementation constraints
 
@@ -84,7 +91,9 @@ This is an assignment workspace, not a venue floor-plan editor. Do not introduce
 ## Explicitly out of scope
 
 - Backward compatibility for old seating data; there is no production seating data.
-- Preserving canvas-era implementation or schema solely to avoid a clean break.
+- Preserving canvas-era implementation or schema solely to avoid a clean break; the canvas
+  is retained on its own merits under ADR-0005, not for continuity.
+- Measured venue geometry: scale, room boundaries, fixtures, and collision modeling.
 - Automatic, algorithmic, or AI-generated seating suggestions.
 - Disabled “smart seating” controls or coming-soon affordances. The implemented workflow is intentionally manual.
 - Creating Tables implicitly from the Guest Directory's Table field.

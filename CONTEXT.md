@@ -43,10 +43,13 @@ split across Tables.
 Kululu is priced per Guest Record, not per Guest. Say "guest record" whenever the
 quantity being counted is billable; say "guest" when talking about human beings attending.
 
+Both the Owner and an **Operator** can create and delete Guest Records. Because the row
+is the billing unit, either act changes what the Owner pays.
+
 ## Seating Plan
 
-An Event's organization of invited people among Tables. It records who belongs at which
-Table, not the physical placement or geometry of furniture in the venue. Confirmed and
+An Event's arrangement of Guest Records among Tables and of those Tables relative to one
+another. It is an operational layout, not a measured venue blueprint. Confirmed and
 pending Guest Records may participate; declined Guest Records do not.
 
 _Avoid_: Seating chart, floor plan
@@ -119,8 +122,10 @@ The Owner watches a Call Round; they never run one.
 How one Guest's call ended: no answer, confirmed, or declined. Confirmed and declined
 carry straight through to the Guest's RSVP.
 
-Distinct from the RSVP itself: a Guest can be confirmed without any Call Outcome, having
-answered on their own after the round began.
+Distinct from the RSVP itself: a Guest can be confirmed without any Call Outcome - by
+answering on their own, by the Owner recording it, or by an Operator setting it directly
+in the Back Office. A Call Outcome is one of several ways an RSVP arrives, not the
+definition of one.
 
 ## Round Completion
 
@@ -161,7 +166,11 @@ and should not appear in routes, code, or copy.
 ## Operator
 
 A member of Kululu staff working in the Back Office. The Operator runs Call Rounds, sends
-messages by hand, and watches for things going wrong.
+messages by hand, watches for things going wrong, and maintains the guest list - correcting
+a Guest Record, and adding or deleting one.
+
+An Operator changing a guest is Kululu acting as itself. An Operator who needs the *Owner*
+to be the author of a change impersonates instead.
 
 Distinct from an **Owner**: an Owner plans their own Event, an Operator works across every
 Event. An Operator may impersonate an Owner to see exactly what they see, but the two roles
