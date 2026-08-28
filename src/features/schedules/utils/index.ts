@@ -1,4 +1,5 @@
 import type { GuestApp } from '@/features/guests/schemas';
+import { isValidPhone } from '@/lib/phone';
 
 // Re-export parameter resolution utilities
 export {
@@ -140,31 +141,14 @@ export function isMessageSchedule(schedule: { executionKind: string }): boolean 
 }
 
 /**
- * Validates if a phone number has a valid format.
- * Strips formatting characters and checks for minimum valid format.
+ * Validates if a phone number is real and dialable.
  *
- * @param phone - Phone number to validate
- * @returns True if phone number is valid
+ * Re-exported under the old name because it is the audience filter used across
+ * schedules and admin; the logic now lives in `@/lib/phone` so validation and
+ * canonicalisation cannot drift apart.
  */
 export function validatePhoneNumber(phone: string | undefined | null): boolean {
-  if (!phone) {
-    return false;
-  }
-
-  // Strip formatting characters
-  const cleaned = phone.replace(/[^\d+]/g, '');
-
-  // Must have at least 7 digits and contain only digits/+
-  if (cleaned.length < 7) {
-    return false;
-  }
-
-  // Check if contains only valid characters (digits and optional + at start)
-  if (!/^[+]?[\d]+$/.test(cleaned)) {
-    return false;
-  }
-
-  return true;
+  return isValidPhone(phone);
 }
 
 /**
@@ -178,34 +162,3 @@ export function getAudienceLabel(targetStatus?: 'pending' | 'confirmed' | null):
   if (targetStatus === 'pending') return 'Pending Guests';
   return 'All Guests';
 }
-
-/**
- * Formats a phone number to E.164 international format.
- * Handles Israeli numbers with special logic for 0 prefix.
- *
- * @param phone - Phone number to format
- * @returns Phone number in E.164 format (+country_code + number)
- */
-export function formatPhoneE164(phone: string): string {
-  // Strip all formatting characters
-  const cleaned = phone.replace(/[^\d+]/g, '');
-
-  // Already has + prefix (international format)
-  if (cleaned.startsWith('+')) {
-    return cleaned;
-  }
-
-  // Starts with country code without +
-  if (cleaned.startsWith('972')) {
-    return '+' + cleaned;
-  }
-
-  // Starts with 0 (Israeli local format) - replace with +972
-  if (cleaned.startsWith('0')) {
-    return '+972' + cleaned.substring(1);
-  }
-
-  // Default: prepend Israeli country code
-  return '+972' + cleaned;
-}
-

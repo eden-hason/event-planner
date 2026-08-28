@@ -11,6 +11,7 @@ import {
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { toE164 } from '@/lib/phone';
 import { z } from 'zod';
 
 export type UpsertGuestState = {
@@ -337,7 +338,9 @@ export async function importGuests(
 
     const guestsToInsert = validGuests.map((g) => ({
       name: g.name,
-      phone_number: g.phone,
+      // Bulk import bypasses AppToDbTransformerSchema, so it canonicalises here
+      // instead - the `CHECK` constraint on the column rejects anything else.
+      phone_number: g.phone ? toE164(g.phone) : null,
       amount: g.amount,
       event_id: eventId,
       side: g.side,

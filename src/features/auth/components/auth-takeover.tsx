@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
 import {
   TakeoverBackButton,
@@ -27,12 +28,6 @@ import {
  * page. A first-time user and a returning one use the identical form - there is
  * no separate sign-up, and no email/password.
  */
-
-/** Israeli local number to E.164, which is what Supabase expects. */
-function normalizePhone(local: string): string {
-  const digits = local.replace(/\D/g, '');
-  return `+972${digits.startsWith('0') ? digits.slice(1) : digits}`;
-}
 
 function GoogleGlyph() {
   return (
@@ -85,7 +80,10 @@ export function AuthTakeover({ next }: { next?: string }) {
 
   const handleSend = useCallback(
     (formData: FormData) => {
-      const phone = normalizePhone(localPhone);
+      // Supabase OTP wants E.164. A number that will not parse cannot be sent
+      // to, so stop here rather than handing Supabase a guessed-at string.
+      const phone = toE164(localPhone);
+      if (!phone) return;
       setE164Phone(phone);
       formData.set('phone', phone);
       sendAction(formData);

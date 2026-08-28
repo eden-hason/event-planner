@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { toE164 } from '@/lib/phone';
 
 export async function saveAvatarUrl(avatarUrl: string) {
   const supabase = await createClient();
@@ -44,7 +45,7 @@ export async function updateUserProfile(formData: FormData) {
   const { error } = await supabase.from('profiles').upsert({
     id: user.id,
     ...(fullName !== null && { full_name: fullName }),
-    ...(phoneNumber !== null && { phone_number: phoneNumber }),
+    ...(phoneNumber !== null && { phone_number: toE164(phoneNumber) }),
     ...(avatarUrl !== null && { avatar_url: avatarUrl }),
     ...(email !== null && { email }),
     initial_setup_complete: true,

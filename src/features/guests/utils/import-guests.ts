@@ -1,4 +1,5 @@
 import { ImportGuestSchema, normalizeSide } from '../schemas';
+import { phoneComparisonKey } from '@/lib/phone';
 import { type ColumnMapping } from '../components/groups/import-guests-dialog/map-step';
 
 export type ImportField = 'name' | 'phone' | 'amount' | 'side' | 'group';
@@ -59,10 +60,15 @@ export function transformCsvRow(
 }
 
 /**
- * Normalizes a phone number for comparison (removes formatting)
+ * Normalizes a phone number for comparison.
+ *
+ * Canonicalises to E.164 rather than only stripping punctuation, so that
+ * `0545451963`, `054-545-1963` and `+972545451963` collide as one guest. The
+ * punctuation-only version this replaced missed the last of those, which is how
+ * the same person got imported twice under two formats.
  */
 export function normalizePhone(phone: string): string {
-  return phone.replace(/[\s\-().]/g, '');
+  return phoneComparisonKey(phone);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { toE164 } from '@/lib/phone';
 import type { GuestApp } from '@/features/guests/schemas';
 import type { DeliveryMethod } from '../schemas';
 import type { SmsPayload, WhatsAppTemplateApp } from '../schemas/message-templates';
@@ -10,16 +11,6 @@ import {
   buildDynamicHeaderParameters,
   type ParameterResolutionContext,
 } from './parameter-resolvers';
-
-// Inline to avoid circular dependency (formatPhoneE164 lives in index.ts
-// which re-exports this file).
-function formatPhoneE164(phone: string): string {
-  const cleaned = phone.replace(/[^\d+]/g, '');
-  if (cleaned.startsWith('+')) return cleaned;
-  if (cleaned.startsWith('972')) return '+' + cleaned;
-  if (cleaned.startsWith('0')) return '+972' + cleaned.substring(1);
-  return '+972' + cleaned;
-}
 
 // ─── SMS fallback toggle ──────────────────────────────────────────────────────
 // Temporarily disabled — schedules send via WhatsApp only until the SMS copy
@@ -78,7 +69,21 @@ export async function sendToGuest(params: {
   confirmationToken: string;
 }): Promise<GuestSendResult> {
   const { guest, context, template, templateId, confirmationToken } = params;
-  const phoneE164 = formatPhoneE164(guest.phone!);
+
+  // Callers filter the audience on isValidPhone first, so a null here is a
+  // guest whose stored number does not parse at all. Fail the send rather than
+  // dialling a number we had to guess at.
+  const phoneE164 = toE164(guest.phone);
+  if (!phoneE164) {
+    return {
+      guest,
+      success: false,
+      message: 'No usable phone number',
+      channel: 'whatsapp',
+      confirmationToken,
+      templateId,
+    };
+  }
 
   const parameters = buildDynamicTemplateParameters(
     template.parameters!.placeholders,
@@ -172,7 +177,19 @@ export async function sendSmsToGuest(params: {
   confirmationToken: string;
 }): Promise<GuestSendResult> {
   const { guest, context, smsPayload, templateId, confirmationToken } = params;
-  const phoneE164 = formatPhoneE164(guest.phone!);
+
+  const phoneE164 = toE164(guest.phone);
+  if (!phoneE164) {
+    return {
+      guest,
+      success: false,
+      message: 'No usable phone number',
+      channel: 'sms',
+      confirmationToken,
+      templateId,
+    };
+  }
+
   const body = buildSmsBody(smsPayload, context);
   const result = await sendSmsMessage({ to: phoneE164, body });
 

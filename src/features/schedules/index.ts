@@ -24,7 +24,6 @@ export {
   filterGuestsByTarget,
   isMessageSchedule,
   validatePhoneNumber,
-  formatPhoneE164,
 } from './utils';
 
 // Schemas/Types

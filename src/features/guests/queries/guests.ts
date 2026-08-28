@@ -1,4 +1,5 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
+import { phoneComparisonKey } from '@/lib/phone';
 import {
   DbToAppTransformerSchema,
   GuestApp,
@@ -66,12 +67,13 @@ export const getEventGuestPhones = async (
       return new Map();
     }
 
-    // Map normalized phone → guest name for duplicate detection + conflict display
+    // Map normalized phone → guest name for duplicate detection + conflict display.
+    // Keyed on the same canonical form the import side uses, so a stored
+    // `+972545451963` still matches a pasted `054-545-1963`.
     const phones = new Map<string, string>();
     for (const row of data || []) {
       if (row.phone_number) {
-        const normalized = row.phone_number.replace(/[\s\-().]/g, '');
-        phones.set(normalized, row.name);
+        phones.set(phoneComparisonKey(row.phone_number), row.name);
       }
     }
 
