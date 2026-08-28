@@ -1,7 +1,6 @@
 'use server';
 
-import { assertAdmin } from '@/lib/supabase/admin';
-import { createServiceClient } from '@/lib/supabase/service';
+import { assertAdmin, getOperatorEmail } from '@/lib/supabase/admin';
 
 export type OperatorIdentity = {
   email: string;
@@ -10,14 +9,12 @@ export type OperatorIdentity = {
 };
 
 export async function getOperatorIdentity(): Promise<OperatorIdentity> {
-  const userId = await assertAdmin();
-  const supabase = createServiceClient();
+  await assertAdmin();
 
-  const { data } = await supabase
-    .from('profiles')
-    .select('email')
-    .eq('id', userId)
-    .single();
+  // The email comes off the row assertAdmin has already read on this request,
+  // so this adds no round trip of its own. It used to be a second read of the
+  // same row through the service client.
+  const email = await getOperatorEmail();
 
   // A Back Office that does not say which database it is reading is one
   // mis-click away from an Operator acting on the wrong data.
@@ -26,5 +23,5 @@ export async function getOperatorIdentity(): Promise<OperatorIdentity> {
     ? 'Local'
     : 'Production';
 
-  return { email: data?.email ?? 'Unknown operator', environment };
+  return { email: email ?? 'Unknown operator', environment };
 }
