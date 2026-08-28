@@ -1,5 +1,6 @@
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { z } from 'zod';
+import { toE164 } from '@/lib/phone';
 
 function isIsraeliMobile(val: string): boolean {
   try {
@@ -199,7 +200,11 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
       dbData.name = appData.name;
     }
     if (appData.phone !== undefined) {
-      dbData.phone_number = appData.phone ?? null;
+      // Canonicalised here rather than at the call sites, so every path that
+      // upserts a guest through this transform stores E.164 by construction.
+      // `israeliMobilePhone` above only validates - it passes the raw string
+      // through, which is how mixed formats reached the column.
+      dbData.phone_number = appData.phone ? toE164(appData.phone) : null;
     }
     if (appData.groupId !== undefined) {
       dbData.group_id = appData.groupId ?? null;
