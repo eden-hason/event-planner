@@ -11,7 +11,8 @@ import {
 } from '@/features/guests/schemas';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { toE164 } from '@/lib/phone';
+import { toE164, phoneComparisonKey } from '@/lib/phone';
+import { getEventGuestPhones } from '@/features/guests/queries';
 import { z } from 'zod';
 
 export type UpsertGuestState = {
@@ -187,6 +188,14 @@ export type ImportGuestsState = {
   message: string;
   importedCount?: number;
   failedCount?: number;
+  /**
+   * Rows dropped because their number already belongs to a guest on this event,
+   * or to an earlier row in the same file. Distinct from `failedCount`, which
+   * counts rows that did not survive schema validation.
+   */
+  skippedCount?: number;
+  /** Names behind `skippedCount`, for a summary the host can act on. */
+  skippedNames?: string[];
 };
 
 export async function importGuests(
@@ -246,6 +255,47 @@ export async function importGuests(
       };
     }
 
+    // Duplicate phones are flagged in the import dialog, but that check runs
+    // against a snapshot taken when the dialog opened and the dialog is not the
+    // only way into this action. Since `guests_event_id_phone_number_key` makes
+    // a duplicate fail the whole insert, one stale row would otherwise cost the
+    // host every good row in the file. Drop the duplicates and import the rest.
+    const existingPhones = await getEventGuestPhones(eventId);
+    const seenInBatch = new Set<string>();
+    const skippedNames: string[] = [];
+    const guestsToImport: ValidGuest[] = [];
+
+    for (const guest of validGuests) {
+      // The unique index is partial (`where phone_number is not null`), so
+      // guests with no number never collide with each other.
+      if (!guest.phone) {
+        guestsToImport.push(guest);
+        continue;
+      }
+
+      const phoneKey = phoneComparisonKey(guest.phone);
+      if (existingPhones.has(phoneKey) || seenInBatch.has(phoneKey)) {
+        skippedNames.push(guest.name);
+        continue;
+      }
+
+      seenInBatch.add(phoneKey);
+      guestsToImport.push(guest);
+    }
+
+    if (guestsToImport.length === 0) {
+      return {
+        success: false,
+        message:
+          skippedNames.length === 1
+            ? 'That guest is already on this event'
+            : `All ${skippedNames.length} guests are already on this event`,
+        failedCount: errors.length,
+        skippedCount: skippedNames.length,
+        skippedNames,
+      };
+    }
+
     const supabase = await createClient();
 
     // Resolve group names → group_id, auto-creating missing groups.
@@ -260,7 +310,7 @@ export async function importGuests(
       string,
       { name: string; side: 'bride' | 'groom' | null }
     >();
-    for (const g of validGuests) {
+    for (const g of guestsToImport) {
       if (g.group) {
         const k = groupKey(g.group, g.side);
         if (!desiredGroups.has(k))
@@ -336,7 +386,7 @@ export async function importGuests(
       }
     }
 
-    const guestsToInsert = validGuests.map((g) => ({
+    const guestsToInsert = guestsToImport.map((g) => ({
       name: g.name,
       // Bulk import bypasses AppToDbTransformerSchema, so it canonicalises here
       // instead - the `CHECK` constraint on the column rejects anything else.
@@ -353,19 +403,30 @@ export async function importGuests(
 
     if (error) {
       console.error('Supabase insert error:', error);
+      // 23505 is unique_violation. The filter above removes every duplicate we
+      // can see, so reaching here means one was created between that read and
+      // this insert - a concurrent import or a guest added in another tab.
+      // Name the cause rather than reporting a generic save failure.
       return {
         success: false,
-        message: 'Unable to save guests',
+        message:
+          error.code === '23505'
+            ? 'One of these guests was just added by someone else - reopen the import to try again'
+            : 'Unable to save guests',
       };
     }
 
     revalidatePath(`/app/${eventId}/guests`);
 
+    const importedCount = guestsToImport.length;
+
     return {
       success: true,
-      message: `Successfully imported ${validGuests.length} guest${validGuests.length === 1 ? '' : 's'}`,
-      importedCount: validGuests.length,
+      message: `Successfully imported ${importedCount} guest${importedCount === 1 ? '' : 's'}`,
+      importedCount,
       failedCount: errors.length,
+      skippedCount: skippedNames.length,
+      skippedNames,
     };
   } catch (error) {
     console.error('Import guests error:', error);

@@ -690,6 +690,8 @@
         "successHeading": "Import Successful!",
         "successMessage": "{count} guests have been added to your event.",
         "successMessageSingular": "{count} guest has been added to your event.",
+        "skippedMessage": "{count} guests were already on the event and were skipped.",
+        "skippedMessageSingular": "{count} guest was already on the event and was skipped.",
         "failedHeading": "Import Failed"
       }
     },

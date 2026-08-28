@@ -690,6 +690,8 @@
         "successHeading": "הייבוא הצליח!",
         "successMessage": "{count} אורחים נוספו לאירוע שלך.",
         "successMessageSingular": "אורח {count} נוסף לאירוע שלך.",
+        "skippedMessage": "{count} אורחים כבר היו באירוע ולכן דולגו.",
+        "skippedMessageSingular": "אורח {count} כבר היה באירוע ולכן דולג.",
         "failedHeading": "הייבוא נכשל"
       }
     },

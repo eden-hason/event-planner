@@ -69,6 +69,13 @@ export function SummaryStep({
               ? t('import.summary.successMessageSingular', { count: result.importedCount ?? 0 })
               : t('import.summary.successMessage', { count: result.importedCount ?? 0 })}
           </p>
+          {(result.skippedCount ?? 0) > 0 && (
+            <p className="text-muted-foreground mt-1 text-sm">
+              {result.skippedCount === 1
+                ? t('import.summary.skippedMessageSingular', { count: result.skippedCount })
+                : t('import.summary.skippedMessage', { count: result.skippedCount ?? 0 })}
+            </p>
+          )}
         </div>
       </div>
     );
