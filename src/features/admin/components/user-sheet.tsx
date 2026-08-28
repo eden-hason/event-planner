@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ChevronRight, Copy } from '@/components/icons';
+import { ChevronRight, Copy, TriangleAlert } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { AdminSheetContent } from './admin-sheet';
 import { ImpersonateOwnerButton } from './impersonate-owner-button';
 import { MarkTestAccountDialog } from './mark-test-account-dialog';
+import { RetryButton } from './retry-button';
 import type { UserDetail } from '../types';
 import { formatEventDate, formatFullDate } from '@/lib/date-time';
 import { ROLE_LABELS } from '@/features/collaborate/schemas';
@@ -18,7 +19,15 @@ import { cn } from '@/lib/utils';
 
 const OWNS_VISIBLE_LIMIT = 6;
 
-export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
+/**
+ * The sheet's chrome, and the only part that knows how to close it. It is
+ * deliberately separate from its contents: the contents are streamed in by a
+ * Suspense boundary underneath (see /admin/users/page.tsx), and Radix would
+ * replay the slide-in animation if the whole Sheet remounted when the fallback
+ * swapped for the real thing. Keeping the shell mounted means clicking a row
+ * opens the sheet immediately, and only the body waits on getUserDetail.
+ */
+export function UserSheetShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,56 +39,92 @@ export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
     router.push(query ? `${pathname}?${query}` : pathname);
   }
 
+  return (
+    <Sheet open onOpenChange={(open) => !open && close()}>
+      <AdminSheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
+        {children}
+      </AdminSheetContent>
+    </Sheet>
+  );
+}
+
+export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
   const isNotFound = detail === 'not-found';
   const title = isNotFound ? 'User not found' : detail.fullName || detail.email;
   const tint = avatarTint(isNotFound ? 'not-found' : detail.id);
 
   return (
-    <Sheet open onOpenChange={(open) => !open && close()}>
-      <AdminSheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
-        <div className="flex items-start gap-3 border-b px-5 py-4 pe-12">
-          <span
-            className="flex size-[38px] shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
-            style={{ background: tint.background, color: tint.color }}
-          >
-            {isNotFound ? '?' : initialsFor(detail.fullName, detail.email)}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <div className="flex min-w-0 items-center gap-2">
-              <SheetTitle className="truncate text-[16px] font-semibold tracking-tight">{title}</SheetTitle>
-              {!isNotFound && detail.isAdmin && (
-                <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                  ADMIN
-                </Badge>
-              )}
-              {!isNotFound && detail.isTestAccount && (
-                <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                  TEST
-                </Badge>
-              )}
-            </div>
-            <SheetDescription className="truncate text-[13px]">
-              {isNotFound
-                ? 'It may have been hidden by the test accounts toggle'
-                : detail.fullName
-                  ? detail.email
-                  : 'No name provided'}
-            </SheetDescription>
+    <>
+      <div className="flex items-start gap-3 border-b px-5 py-4 pe-12">
+        <span
+          className="flex size-[38px] shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
+          style={{ background: tint.background, color: tint.color }}
+        >
+          {isNotFound ? '?' : initialsFor(detail.fullName, detail.email)}
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <SheetTitle className="truncate text-[16px] font-semibold tracking-tight">{title}</SheetTitle>
+            {!isNotFound && detail.isAdmin && (
+              <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
+                ADMIN
+              </Badge>
+            )}
+            {!isNotFound && detail.isTestAccount && (
+              <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
+                TEST
+              </Badge>
+            )}
           </div>
-          {!isNotFound && (
-            <ImpersonateOwnerButton ownerId={detail.id} ownerName={title} label="View as user" />
-          )}
+          <SheetDescription className="truncate text-[13px]">
+            {isNotFound
+              ? 'It may have been hidden by the test accounts toggle'
+              : detail.fullName
+                ? detail.email
+                : 'No name provided'}
+          </SheetDescription>
         </div>
-
-        {isNotFound ? (
-          <div className="flex-1 px-5 py-6 text-[13.5px] text-muted-foreground">
-            This user no longer exists, or is a test account currently hidden by the top bar toggle
-          </div>
-        ) : (
-          <UserSheetBody detail={detail} title={title} />
+        {!isNotFound && (
+          <ImpersonateOwnerButton ownerId={detail.id} ownerName={title} label="View as user" />
         )}
-      </AdminSheetContent>
-    </Sheet>
+      </div>
+
+      {isNotFound ? (
+        <div className="flex-1 px-5 py-6 text-[13.5px] text-muted-foreground">
+          This user no longer exists, or is a test account currently hidden by the top bar toggle
+        </div>
+      ) : (
+        <UserSheetBody detail={detail} title={title} />
+      )}
+    </>
+  );
+}
+
+/**
+ * The sheet's third state, alongside a real user and 'not-found': the detail
+ * query itself failed. It stays inside the open sheet rather than taking over
+ * the page, because the directory behind it is still perfectly usable.
+ */
+export function UserSheetError() {
+  return (
+    <>
+      <div className="flex items-start gap-3 border-b px-5 py-4 pe-12">
+        <span className="bg-destructive/10 text-destructive flex size-[38px] shrink-0 items-center justify-center rounded-full">
+          <TriangleAlert className="size-[18px]" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <SheetTitle className="truncate text-[16px] font-semibold tracking-tight">
+            This user didn&apos;t load
+          </SheetTitle>
+          <SheetDescription className="text-[13px]">
+            Nothing was read, so nothing here is missing - the lookup failed
+          </SheetDescription>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col items-start gap-3 px-5 py-6">
+        <RetryButton />
+      </div>
+    </>
   );
 }
 
