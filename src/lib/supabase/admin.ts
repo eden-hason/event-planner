@@ -34,7 +34,28 @@ export async function getEffectiveClient() {
   return { supabase, impersonation };
 }
 
-export const assertAdmin = cache(async function assertAdmin(): Promise<string> {
+type OperatorProfile = {
+  /** null when the request carries no valid session at all. */
+  userId: string | null;
+  email: string | null;
+  isAdmin: boolean;
+};
+
+/**
+ * The Operator's own profile row, read once per request.
+ *
+ * Every Back Office render used to read this one row twice - assertAdmin for
+ * is_admin, getOperatorIdentity for email - for the same user, on the same
+ * request, and updateSession reads it a third time before either of them runs.
+ * That is fixed cost ahead of anything a page can stream: measured against
+ * production, /admin/configuration, which is seven lines of static JSX and
+ * makes no queries of its own, is as slow as /admin/users. The queries a page
+ * runs are not what makes the Back Office feel slow; this chain is.
+ *
+ * Both callers now share one query through cache(), so asking for is_admin and
+ * asking for the email together cost what asking for either used to.
+ */
+const readOperator = cache(async function readOperator(): Promise<OperatorProfile> {
   const supabase = await createClient();
 
   // getClaims rather than getUser, for the reason updateSession already spells
@@ -44,25 +65,47 @@ export const assertAdmin = cache(async function assertAdmin(): Promise<string> {
   // locally against a cached JWKS and only reaches the network to refresh.
   //
   // The weaker guarantee - a verified signature rather than a live server check
-  // - costs nothing here, because the is_admin read below is a real query
-  // against the row. A token whose user has been deleted finds no profile and
-  // redirects; an account whose admin flag was revoked reads false and
-  // redirects. Only the token's own expiry is taken on trust.
+  // - costs nothing here, because the read below is a real query against the
+  // row. A token whose user has been deleted finds no profile and redirects; an
+  // account whose admin flag was revoked reads false and redirects. Only the
+  // token's own expiry is taken on trust.
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub ?? null;
+  if (!userId) return { userId: null, email: null, isAdmin: false };
 
-  if (!userId) redirect('/login');
-
+  // Read through the user's own client rather than the service client: the
+  // profiles_select_own_or_shared_event policy already covers `id = auth.uid()`
+  // for the whole row, so nothing here needs RLS bypassed.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_admin')
+    .select('email, is_admin')
     .eq('id', userId)
     .single();
 
-  if (!profile?.is_admin) redirect('/app');
+  return { userId, email: profile?.email ?? null, isAdmin: !!profile?.is_admin };
+});
+
+export const assertAdmin = cache(async function assertAdmin(): Promise<string> {
+  const { userId, isAdmin } = await readOperator();
+
+  // The two failures stay distinct: no session means "sign in", a session
+  // without the flag means "you are not an Operator", and they land in
+  // different places. A missing profile row reads as the second, which is what
+  // it was before this shared a query with getOperatorIdentity.
+  if (!userId) redirect('/login');
+  if (!isAdmin) redirect('/app');
 
   return userId;
 });
+
+/**
+ * The Operator's email address, free to whoever has already called assertAdmin
+ * on this request - it comes off the same cached row.
+ */
+export async function getOperatorEmail(): Promise<string | null> {
+  const { email } = await readOperator();
+  return email;
+}
 
 export async function assertNotImpersonating(): Promise<string | null> {
   const impersonation = await getImpersonation();
