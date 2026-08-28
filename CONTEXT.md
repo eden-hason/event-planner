@@ -37,6 +37,8 @@ may represent several Guests.
 
 **The unit of billing.** One row in the guest list, which may cover more than one Guest -
 a family of five arriving as one entry is one Guest Record with an amount of five.
+For seating, every Guest it covers stays together at one Table; a Guest Record is never
+split across Tables.
 
 Kululu is priced per Guest Record, not per Guest. Say "guest record" whenever the
 quantity being counted is billable; say "guest" when talking about human beings attending.
@@ -47,7 +49,27 @@ is the billing unit, either act changes what the Owner pays.
 ## Seating Plan
 
 An Event's arrangement of Guest Records among Tables and of those Tables relative to one
-another. It is an operational layout, not a measured venue blueprint.
+another. It is an operational layout, not a measured venue blueprint. Confirmed and
+pending Guest Records may participate; declined Guest Records do not.
+
+_Avoid_: Seating chart, floor plan
+
+## Complete Seating Plan
+
+A Seating Plan in which every confirmed Guest Record has a Table Assignment. Pending
+Guest Records do not determine completion, even when they remain unassigned.
+
+## Table
+
+A destination in a Seating Plan with an Event-unique positive integer number and an
+optional descriptive label. Its capacity is a hard maximum: the total number of Guests
+covered by its Table Assignments can never exceed it, and Guest Records are assigned to
+it as indivisible groups. Table number is also its canonical order within the Event.
+
+## Table Assignment
+
+The placement of one confirmed or pending Guest Record at one Table. It ends immediately
+when that Guest Record declines or its Table is deleted, and is not restored automatically.
 
 ## RSVP
 
@@ -120,8 +142,10 @@ everything on the Event. A partner invited to plan together is an Owner.
 
 ## Seating Manager
 
-A collaborator with deliberately limited access: only the Guests and seating charts
-assigned to them. Intended for a planner or venue contact, not for a partner.
+A collaborator who can manage all Tables in an Event but can identify and assign only
+the Guest Records within their guest or group scope. Intended for a planner or venue
+contact, not for a partner. They cannot delete a Table when doing so would disturb an
+out-of-scope Table Assignment.
 
 Owner and Seating Manager are the **only** two collaborator roles. There is no
 "viewer" or "editor" role - avoid that vocabulary, in the product and in marketing copy.
