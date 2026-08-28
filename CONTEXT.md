@@ -41,6 +41,11 @@ a family of five arriving as one entry is one Guest Record with an amount of fiv
 Kululu is priced per Guest Record, not per Guest. Say "guest record" whenever the
 quantity being counted is billable; say "guest" when talking about human beings attending.
 
+## Seating Plan
+
+An Event's arrangement of Guest Records among Tables and of those Tables relative to one
+another. It is an operational layout, not a measured venue blueprint.
+
 ## RSVP
 
 A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; the act of
