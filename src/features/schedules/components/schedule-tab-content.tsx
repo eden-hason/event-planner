@@ -38,6 +38,7 @@ export function ScheduleTabContent({
         <MessageContentCard
           template={template}
           smsBody={smsBody}
+          channel={schedule.deliveryMethod}
           seatingGap={seatingGap}
           event={event}
         />

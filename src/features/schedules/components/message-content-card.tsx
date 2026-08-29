@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import {
   IconArrowBack,
+  IconBrandWhatsapp,
   IconExternalLink,
   IconInfoCircle,
   IconMessage,
@@ -16,9 +17,11 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -53,6 +56,8 @@ const chatBgStyle: React.CSSProperties = {
 interface MessageContentCardProps {
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
+  /** Delivery channel for this schedule, shown as a badge in the card action slot. */
+  channel?: 'whatsapp' | 'sms' | null;
   /**
    * Set only when this schedule has a table-number variant and some targeted
    * guests have no seating assignment. The preview shows the table version, so
@@ -66,10 +71,12 @@ interface MessageContentCardProps {
 export function MessageContentCard({
   template,
   smsBody,
+  channel,
   seatingGap,
   event,
 }: MessageContentCardProps) {
   const t = useTranslations('schedules.messagePreview');
+  const tChannel = useTranslations('schedules.channel');
   const { resolvedBody, hasMissingFields } = template
     ? resolveTemplateBodyForPreview(template, event)
     : { resolvedBody: '', hasMissingFields: false };
@@ -93,6 +100,18 @@ export function MessageContentCard({
         <CardDescription>
           {t('cardDescription')}
         </CardDescription>
+        {channel && (
+          <CardAction>
+            <Badge variant="outline" className="gap-1 font-normal">
+              {channel === 'whatsapp' ? (
+                <IconBrandWhatsapp size={13} className="shrink-0" />
+              ) : (
+                <IconMessage size={13} className="shrink-0" />
+              )}
+              {tChannel(channel)}
+            </Badge>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         {/* WhatsApp phone mockup */}
