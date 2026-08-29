@@ -1,10 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { isSeatingRoute } from './app-shell';
 
 export function LayoutContentWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isSeatingPage = pathname.includes('/seating');
+  const isSeatingPage = isSeatingRoute(pathname);
 
   if (isSeatingPage) {
     return <>{children}</>;

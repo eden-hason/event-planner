@@ -9,6 +9,9 @@ Accepted; expanded incrementally during the Seating Plan redesign.
 Builds on [ADR-0005](0005-seating-plan-is-an-operational-layout.md), which settles what
 the canvas is. This ADR settles how assignment behaves underneath it.
 
+Amended by [ADR-0009](0009-a-table-is-a-seat-diagram.md), which closes the `shape` and
+`rotation` question left open below and corrects the schema claim in the Consequences.
+
 ## Context
 
 The previous seating feature mixed guest-to-Table assignment with a free-form venue
@@ -83,11 +86,13 @@ assignments, not their identities.
 - The existing `guests.table_id` relationship remains the correct assignment model.
 - The `tables` relation retains identity, Event ownership, capacity, timestamps, and the
   `position_x`/`position_y` coordinates the canvas needs under ADR-0005.
-- `tables` still needs a required, Event-unique positive integer `number`, and its
-  `label` must become optional; neither is true of the current schema.
-- Whether `shape` and `rotation` survive is left open. ADR-0005 excludes measured venue
-  geometry but does not by itself decide these two, so they are reviewed on their own
-  merits rather than removed as "canvas-only" fields.
+- `tables` needs a required, Event-unique positive integer `number` and an optional
+  `label`. Both largely exist already: `20260516000002_add_table_number.sql` added
+  `table_number` with a unique index on `(event_id, table_number)` and dropped `label`'s
+  NOT NULL. What is missing is a check that the number is positive.
+- Whether `shape` and `rotation` survive was left open here. ADR-0009 settles it: both
+  survive as load-bearing geometry for the seat diagram - `shape` selects the seat layout,
+  and `rotation` is narrowed from a free angle to a quarter turn.
 - Assignment, capacity changes, RSVP transitions, and batch operations need transactional
   database enforcement rather than UI-only checks.
 - Seating Manager reads need truthful aggregate occupancy without leaking out-of-scope

@@ -1,264 +1,300 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
 import { getCurrentUser } from '@/features/auth/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  DEFAULT_CAPACITY,
   TableAppToDbTransformerSchema,
+  TableBatchCreateSchema,
+  TableDbToAppTransformerSchema,
   TableUpsertSchema,
   type TableApp,
+  type TableBatchCreate,
+  type TableRotation,
+  type TableShape,
+  type TableUpsert,
 } from '../schemas';
-import { TableDbToAppTransformerSchema } from '../schemas';
-import { nextFreePosition } from '../utils/auto-place';
+import { batchPositions, nextFreePosition } from '../utils/auto-place';
+import { isUniqueViolation, toSeatingFailure, type SeatingFailure } from './errors';
 
-export type UpsertTableState = {
+export type SeatingActionState<T = undefined> = {
   success: boolean;
-  message?: string | null;
-  table?: TableApp;
-  errors?: z.ZodError<z.input<typeof TableUpsertSchema>>;
+  /** Structured reason, so the UI can build copy that names the numbers. */
+  failure?: SeatingFailure;
+  data?: T;
 };
 
-export type DeleteTableState = {
-  success: boolean;
-  message: string;
+export type UpsertTableState = SeatingActionState<TableApp>;
+export type BatchCreateTablesState = SeatingActionState<{ created: number }>;
+export type DeleteTableState = SeatingActionState;
+export type UpdatePositionState = SeatingActionState;
+
+/**
+ * Both the Seating Plan and the Guest Directory read a Table's number, so a
+ * mutation on either has to refresh the other.
+ */
+const revalidateSeating = (eventId: string) => {
+  revalidatePath(`/app/${eventId}/seating`);
+  revalidatePath(`/app/${eventId}/guests`);
 };
 
-export type UpdatePositionState = {
-  success: boolean;
-  message?: string;
+const numeric = (value: FormDataEntryValue | null): number | undefined => {
+  if (value === null || value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-function parseFormDataAsUpsert(
-  formData: FormData,
-): z.infer<typeof TableUpsertSchema> | null {
-  const raw = Object.fromEntries(formData);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const parsed: Record<string, any> = { ...raw };
-  if (parsed.capacity && typeof parsed.capacity === 'string') {
-    parsed.capacity = Number(parsed.capacity);
-  }
-  if (parsed.positionX && typeof parsed.positionX === 'string') {
-    parsed.positionX = Number(parsed.positionX);
-  }
-  if (parsed.positionY && typeof parsed.positionY === 'string') {
-    parsed.positionY = Number(parsed.positionY);
-  }
-  if (parsed.rotation && typeof parsed.rotation === 'string') {
-    parsed.rotation = Number(parsed.rotation);
-  }
-  if (parsed.tableNumber && typeof parsed.tableNumber === 'string') {
-    parsed.tableNumber = Number(parsed.tableNumber);
-  }
-  // Empty label → null (use auto number as display fallback)
-  if (typeof parsed.label === 'string' && parsed.label.trim() === '') {
-    parsed.label = null;
-  }
-  const result = TableUpsertSchema.safeParse(parsed);
-  return result.success ? result.data : null;
+function parseUpsert(formData: FormData): TableUpsert | null {
+  const label = formData.get('label');
+  const shape = formData.get('shape');
+
+  const candidate = {
+    id: formData.get('id') ?? undefined,
+    label: label === null ? undefined : label === '' ? null : String(label),
+    shape: shape === null ? undefined : String(shape),
+    capacity: numeric(formData.get('capacity')),
+    rotation: numeric(formData.get('rotation')),
+    tableNumber: numeric(formData.get('tableNumber')),
+    positionX: numeric(formData.get('positionX')),
+    positionY: numeric(formData.get('positionY')),
+  };
+
+  const parsed = TableUpsertSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Every existing number in the Event, which both creation flows need. */
+async function usedNumbers(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventId: string,
+) {
+  const { data } = await supabase
+    .from('tables')
+    .select('table_number, shape, capacity, rotation, position_x, position_y')
+    .eq('event_id', eventId);
+
+  return {
+    numbers: new Set((data ?? []).map((row) => row.table_number as number)),
+    boxes: (data ?? []).map((row) => ({
+      positionX: row.position_x as number,
+      positionY: row.position_y as number,
+      shape: row.shape as TableShape,
+      capacity: row.capacity as number,
+      // Measured the way it is drawn: a quarter-turned long Table is taller
+      // than it is wide, and a new Table dropped beside it must not overlap.
+      rotation: row.rotation as TableRotation,
+    })),
+  };
 }
 
 export async function createTable(
   eventId: string,
   formData: FormData,
 ): Promise<UpsertTableState> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to create tables' };
-    }
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
 
-    const validated = parseFormDataAsUpsert(formData);
-    if (!validated) {
-      const raw = Object.fromEntries(formData);
-      const parsed: Record<string, unknown> = { ...raw };
-      if (typeof parsed.capacity === 'string') parsed.capacity = Number(parsed.capacity);
-      const issues = TableUpsertSchema.safeParse(parsed);
-      const message = !issues.success
-        ? (issues.error.issues[0]?.message ?? 'Invalid input')
-        : 'Invalid input';
-      return { success: false, message };
-    }
+  const values = parseUpsert(formData);
+  if (!values) return { success: false, failure: { kind: 'unknown' } };
 
-    if (!validated.shape || !validated.capacity) {
-      return { success: false, message: 'Shape and capacity are required' };
-    }
+  const supabase = await createClient();
+  const { numbers, boxes } = await usedNumbers(supabase, eventId);
 
-    const supabase = await createClient();
+  // ADR-0008: new Tables take the next integer after the current highest.
+  // Numbering gaps are never reused automatically - a planner fills one
+  // deliberately by editing a number.
+  const tableNumber =
+    values.tableNumber ??
+    (numbers.size === 0 ? 1 : Math.max(...numbers) + 1);
 
-    // Fetch existing tables once: used for both auto-place and next number
-    const { data: existingRows } = await supabase
-      .from('tables')
-      .select('position_x, position_y, shape, table_number')
-      .eq('event_id', eventId);
-
-    // Auto-place if no explicit position
-    let positionX = validated.positionX;
-    let positionY = validated.positionY;
-    if (positionX === undefined || positionY === undefined) {
-      const existing = (existingRows ?? []).map((r) => ({
-        positionX: r.position_x as number,
-        positionY: r.position_y as number,
-        shape: r.shape as TableApp['shape'],
-      }));
-      const placed = nextFreePosition(existing, validated.shape);
-      positionX = placed.positionX;
-      positionY = placed.positionY;
-    }
-
-    const dbData = TableAppToDbTransformerSchema.parse({
-      ...validated,
-      positionX,
-      positionY,
-    });
-
-    // Compute next table_number (unique per event). One retry on race.
-    const computeNextNumber = () => {
-      const max = (existingRows ?? []).reduce(
-        (m, r) => Math.max(m, (r.table_number as number) ?? 0),
-        0,
-      );
-      return max + 1;
+  if (values.tableNumber !== undefined && numbers.has(values.tableNumber)) {
+    return {
+      success: false,
+      failure: { kind: 'duplicateNumbers', numbers: [values.tableNumber] },
     };
-
-    // An explicit number is the host's choice, so a collision is a real
-    // conflict rather than a race to retry past.
-    const hasExplicitNumber = validated.tableNumber !== undefined;
-
-    let insertAttempts = 0;
-    let nextNumber = validated.tableNumber ?? computeNextNumber();
-    while (insertAttempts < 2) {
-      const { data, error } = await supabase
-        .from('tables')
-        .insert({ ...dbData, event_id: eventId, table_number: nextNumber })
-        .select('*')
-        .single();
-
-      if (!error) {
-        const table = TableDbToAppTransformerSchema.parse(data);
-        revalidatePath(`/app/${eventId}/seating`);
-        // The guests page renders the same tables in its table picker
-        revalidatePath(`/app/${eventId}/guests`);
-        return { success: true, message: 'Table created', table };
-      }
-
-      if (error.code === '23505' && hasExplicitNumber) {
-        return {
-          success: false,
-          message: `Table ${nextNumber} already exists`,
-        };
-      }
-
-      // 23505 = unique violation on (event_id, table_number) — race; refetch and retry once
-      if (error.code === '23505' && insertAttempts === 0) {
-        const { data: refetched } = await supabase
-          .from('tables')
-          .select('table_number')
-          .eq('event_id', eventId);
-        nextNumber =
-          (refetched ?? []).reduce(
-            (m, r) => Math.max(m, (r.table_number as number) ?? 0),
-            0,
-          ) + 1;
-        insertAttempts += 1;
-        continue;
-      }
-
-      console.error('Create table error:', error);
-      return { success: false, message: 'Database error: Could not create table' };
-    }
-
-    return { success: false, message: 'Could not create table' };
-  } catch (error) {
-    console.error('Create table error:', error);
-    return { success: false, message: 'Failed to create table' };
   }
+
+  const shape = values.shape ?? 'round';
+  const capacity = values.capacity ?? DEFAULT_CAPACITY;
+  const position =
+    values.positionX !== undefined && values.positionY !== undefined
+      ? { positionX: values.positionX, positionY: values.positionY }
+      : nextFreePosition(boxes, shape, capacity);
+
+  const payload = TableAppToDbTransformerSchema.parse({
+    ...values,
+    shape,
+    capacity,
+    tableNumber,
+    ...position,
+  });
+
+  const { data, error } = await supabase
+    .from('tables')
+    .insert({ ...payload, event_id: eventId })
+    .select('*')
+    .single();
+
+  if (error) {
+    if (isUniqueViolation(error)) {
+      return {
+        success: false,
+        failure: { kind: 'duplicateNumbers', numbers: [tableNumber] },
+      };
+    }
+    console.error('Error creating table:', error);
+    return { success: false, failure: toSeatingFailure(error) };
+  }
+
+  revalidateSeating(eventId);
+  return { success: true, data: TableDbToAppTransformerSchema.parse(data) };
+}
+
+/**
+ * Batch creation is atomic (ADR-0008): if any requested number conflicts, none
+ * of the batch is created. The conflict is detected up front so the dialog can
+ * name the taken numbers and suggest a starting point, and a single insert
+ * statement plus the unique constraint keeps it true under a race.
+ */
+export async function createTablesBatch(
+  eventId: string,
+  input: TableBatchCreate,
+): Promise<BatchCreateTablesState> {
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
+
+  const parsed = TableBatchCreateSchema.safeParse(input);
+  if (!parsed.success) return { success: false, failure: { kind: 'unknown' } };
+
+  const { quantity, startNumber, capacity, shape } = parsed.data;
+
+  const supabase = await createClient();
+  const { numbers, boxes } = await usedNumbers(supabase, eventId);
+
+  const wanted = Array.from({ length: quantity }, (_, i) => startNumber + i);
+  const clashes = wanted.filter((n) => numbers.has(n));
+  if (clashes.length > 0) {
+    return { success: false, failure: { kind: 'duplicateNumbers', numbers: clashes } };
+  }
+
+  const positions = batchPositions(boxes, shape, capacity, quantity);
+
+  const { error } = await supabase.from('tables').insert(
+    wanted.map((tableNumber, i) => ({
+      event_id: eventId,
+      table_number: tableNumber,
+      capacity,
+      shape,
+      label: null,
+      position_x: positions[i].positionX,
+      position_y: positions[i].positionY,
+    })),
+  );
+
+  if (error) {
+    if (isUniqueViolation(error)) {
+      return { success: false, failure: { kind: 'duplicateNumbers', numbers: wanted } };
+    }
+    console.error('Error creating tables in batch:', error);
+    return { success: false, failure: toSeatingFailure(error) };
+  }
+
+  revalidateSeating(eventId);
+  return { success: true, data: { created: quantity } };
 }
 
 export async function updateTable(
   eventId: string,
   formData: FormData,
 ): Promise<UpsertTableState> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to update tables' };
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
+
+  const values = parseUpsert(formData);
+  if (!values?.id) return { success: false, failure: { kind: 'unknown' } };
+
+  const supabase = await createClient();
+  const payload = TableAppToDbTransformerSchema.parse(values);
+  delete payload.id;
+
+  const { data, error } = await supabase
+    .from('tables')
+    .update(payload)
+    .eq('id', values.id)
+    .eq('event_id', eventId)
+    .select('*')
+    .single();
+
+  if (error) {
+    if (isUniqueViolation(error)) {
+      return {
+        success: false,
+        failure: {
+          kind: 'duplicateNumbers',
+          numbers: values.tableNumber ? [values.tableNumber] : [],
+        },
+      };
     }
-
-    const validated = parseFormDataAsUpsert(formData);
-    if (!validated || !validated.id) {
-      return { success: false, message: 'Table id is required' };
-    }
-
-    const dbData = TableAppToDbTransformerSchema.parse(validated);
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('tables')
-      .update(dbData)
-      .eq('id', validated.id)
-      .eq('event_id', eventId)
-      .select('*')
-      .single();
-
-    if (error) {
-      console.error('Update table error:', error);
-      return { success: false, message: 'Database error: Could not update table' };
-    }
-
-    const table = TableDbToAppTransformerSchema.parse(data);
-    revalidatePath(`/app/${eventId}/seating`);
-    return { success: true, message: 'Table updated', table };
-  } catch (error) {
-    console.error('Update table error:', error);
-    return { success: false, message: 'Failed to update table' };
+    // Shrinking below current occupancy lands here, carrying both numbers.
+    return { success: false, failure: toSeatingFailure(error) };
   }
+
+  revalidateSeating(eventId);
+  return { success: true, data: TableDbToAppTransformerSchema.parse(data) };
 }
 
 export async function deleteTable(
   eventId: string,
   tableId: string,
 ): Promise<DeleteTableState> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to delete tables' };
-    }
-    const supabase = await createClient();
-    const { error } = await supabase.from('tables').delete().eq('id', tableId);
-    if (error) {
-      console.error('Delete table error:', error);
-      return { success: false, message: 'Database error: Could not delete table' };
-    }
-    revalidatePath(`/app/${eventId}/seating`);
-    return { success: true, message: 'Table deleted' };
-  } catch (error) {
-    console.error('Delete table error:', error);
-    return { success: false, message: 'Failed to delete table' };
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tables')
+    .delete()
+    .eq('id', tableId)
+    .eq('event_id', eventId);
+
+  if (error) {
+    // A Seating Manager deleting a Table that holds guests outside their scope
+    // lands here. The refusal names nobody.
+    return { success: false, failure: toSeatingFailure(error) };
   }
+
+  revalidateSeating(eventId);
+  return { success: true };
 }
 
+/**
+ * Canvas position only. Kept separate from `updateTable` because it fires on
+ * every drag and carries nothing that could fail validation: position has no
+ * capacity meaning (ADR-0008), so this can never reject.
+ */
 export async function updateTablePosition(
+  eventId: string,
   tableId: string,
   positionX: number,
   positionY: number,
 ): Promise<UpdatePositionState> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in' };
-    }
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('tables')
-      .update({ position_x: positionX, position_y: positionY })
-      .eq('id', tableId);
-    if (error) {
-      console.error('Update position error:', error);
-      return { success: false, message: 'Could not save position' };
-    }
-    return { success: true };
-  } catch (error) {
-    console.error('Update position error:', error);
-    return { success: false, message: 'Failed to save position' };
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tables')
+    .update({ position_x: positionX, position_y: positionY })
+    .eq('id', tableId)
+    .eq('event_id', eventId);
+
+  if (error) {
+    console.error('Error updating table position:', error);
+    return { success: false, failure: toSeatingFailure(error) };
   }
+
+  // Deliberately no revalidate: the canvas already moved optimistically, and
+  // re-rendering the page under the planner's cursor would fight the drag.
+  return { success: true };
 }

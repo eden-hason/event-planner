@@ -46,106 +46,192 @@
     "templates": "Templates",
     "budget": "Budget",
     "getHelp": "Get Help",
-    "comingSoon": "Soon"
+    "comingSoon": "Soon",
+    "new": "New"
   },
   "seating": {
-    "addTable": "Add table",
-    "searchPlaceholder": "Search guests",
-    "filterAllGroups": "All groups",
-    "filterNoGroup": "Without group",
+    "title": "Seating Plan",
+    "addTable": "Add Table",
+    "addTablesBatch": "Add tables in batch",
+    "addTablesMenu": "Add tables",
+    "tableNumber": "Table {number}",
+    "tableTitle": "Table {number} · {label}",
+    "tabs": {
+      "tables": "Tables",
+      "unassigned": "Unassigned"
+    },
+    "progress": {
+      "ready": "of confirmed guests seated",
+      "confirmedLine": "{seated} of {total} confirmed guests seated",
+      "pendingLine": "{count, plural, one {# pending guest still unseated} other {# pending guests still unseated}}",
+      "capacityLine": "{used} of {total} places used",
+      "complete": "Plan complete",
+      "inProgress": "In progress",
+      "mobileLine": "{confirmed, plural, one {# confirmed guest left} other {# confirmed guests left}} · {pending} pending unseated"
+    },
     "unassigned": {
       "title": "Unassigned",
-      "empty": "Every guest is seated",
-      "noMatches": "No matching guests",
-      "help": "Drag guests to tables, or use Auto-seat to assign automatically"
+      "countLine": "{records, plural, one {# record} other {# records}} · {heads, plural, one {# guest} other {# guests}}",
+      "searchPlaceholder": "Search all guests…",
+      "viewGuests": "Guests",
+      "viewGroups": "Groups",
+      "selectAll": "Select all",
+      "toggleGroup": "Show or hide this group",
+      "seatedMatchHeading": "{count, plural, one {# match already seated} other {# matches already seated}} - tap to find them",
+      "allMatchesSeated": "Every match is already seated",
+      "noMatches": "No guest matches “{query}”",
+      "selectionLine": "{records, plural, one {# record} other {# records}} selected · {heads, plural, one {# guest} other {# guests}}",
+      "assignSelected": "Assign selected",
+      "assignSelectedLong": "Assign selected to a table",
+      "clear": "Clear",
+      "assign": "Assign",
+      "selectGuest": "Select guest",
+      "noGroup": "No group",
+      "heads": "{heads, plural, one {# guest} other {# guests}}",
+      "pendingCount": "{pending} pending",
+      "empty": "Everyone here has a seat 🎉",
+      "emptyHint": "Nothing left to assign"
     },
-    "canvas": {
-      "empty": "Add your first table to start seating"
-    },
-    "actions": {
-      "delete": "Delete"
-    },
-    "fields": {
-      "label": "Name",
-      "labelOptional": "(optional)",
-      "labelPlaceholder": "e.g. Family, VIP, Table 1",
-      "labelAutoPlaceholder": "Leave blank for #{number}",
+    "table": {
+      "occupancy": "{confirmed} confirmed of {capacity}",
+      "occupancyWithPending": "{confirmed} confirmed + {pending} pending of {capacity}",
+      "placesLeft": "{count, plural, one {# place left} other {# places left}}",
+      "left": "{count} left",
+      "full": "Full",
+      "emptyWithPlaces": "Empty · {capacity, plural, one {# place} other {# places}}",
+      "seatSummary": "{seated}/{capacity}",
+      "noOneSeated": "No one seated yet",
+      "noOneSeatedHint": "Drag a guest onto the table, or use Assign",
+      "pending": "pending",
+      "unassignGuest": "Unassign",
+      "close": "Close",
       "shape": "Shape",
-      "capacity": "Capacity"
+      "seats": "Seats",
+      "fewerSeats": "Fewer seats",
+      "moreSeats": "More seats",
+      "orientation": "Orientation",
+      "seatHintOccupied": "Can't go below {occupancy} - that's who is seated here now",
+      "editNumberAndLabel": "Edit number & label",
+      "deleteTable": "Delete table",
+      "showMore": "Show {count} more",
+      "showLess": "Show less"
     },
     "shapes": {
       "round": "Round",
-      "rectangle": "Rectangle",
-      "square": "Square"
+      "square": "Square",
+      "rectangle": "Rect"
+    },
+    "orientations": {
+      "horizontal": "Across",
+      "vertical": "Down"
+    },
+    "empty": {
+      "title": "Every guest needs a seat",
+      "description": "Start by creating your tables. Most couples set up the whole room at once, then adjust as RSVPs come in.",
+      "batch": "Create tables in batch",
+      "single": "Add a single table",
+      "waiting": "{count, plural, one {# confirmed guest record is waiting to be seated} other {# confirmed guest records are waiting to be seated}}"
     },
     "createDialog": {
-      "title": "New table",
-      "description": "Add a table to your floor plan",
-      "submit": "Create"
+      "title": "Add Table",
+      "description": "One more table for a late change of plan.",
+      "number": "Number",
+      "label": "Label",
+      "labelOptional": "(optional)",
+      "labelPlaceholder": "e.g. Work friends",
+      "seats": "Seats",
+      "shape": "Shape",
+      "hint": "Next free number after Table {number}. Shape and seats can be changed any time.",
+      "hintFirst": "The first table in this event. Shape and seats can be changed any time.",
+      "submit": "Add Table",
+      "cancel": "Cancel"
     },
-    "editSheet": {
-      "title": "Edit table",
-      "description": "Adjust this table's details or manage its guests",
-      "seatedHeading": "Seated",
-      "empty": "No guests at this table",
-      "unassign": "Unassign"
+    "editDialog": {
+      "title": "Edit {table}",
+      "description": "The number is what guests look for, so it has to stay unique in this event.",
+      "submit": "Save table"
+    },
+    "batchDialog": {
+      "title": "Add Tables in Batch",
+      "description": "Set up the whole room at once. All tables are created together, or none at all.",
+      "quantity": "How many tables",
+      "startNumber": "Starting number",
+      "seats": "Seats per table",
+      "shape": "Shape for all of them",
+      "shapeHint": "Any table's shape and capacity can be changed later",
+      "preview": "Preview",
+      "previewRange": "Tables {from} - {to} · {shape} · {seats} seats each",
+      "previewOne": "Table {from} · {shape} · {seats} seats",
+      "previewPlaces": "{places, plural, one {# new place} other {# new places}} · none of these numbers are in use",
+      "conflictDescription": "Nothing was created - fix the conflict and try again.",
+      "conflict": "{numbers} already exist. Start from {suggestion} to keep every number unique.",
+      "conflictOne": "Table {numbers} already exists. Start from {suggestion} to keep every number unique.",
+      "submit": "{count, plural, one {Create # table} other {Create # tables}}",
+      "cancel": "Cancel"
     },
     "deleteDialog": {
-      "title": "Delete this table?",
-      "description": "Guests at this table will become unassigned"
+      "title": "Delete {table}?",
+      "description": "{records, plural, one {# guest record} other {# guest records}} - {heads, plural, one {# guest} other {# guests}} in total - will move back to Unassigned. No guest is deleted. This action cannot be undone.",
+      "descriptionEmpty": "This table is empty, so nothing moves. This action cannot be undone.",
+      "returning": "Returning to Unassigned",
+      "cancel": "Keep table",
+      "confirm": "Delete table",
+      "blockedTitle": "{table} can't be deleted",
+      "blockedDescription": "This table seats {heads, plural, one {# guest} other {# guests}} assigned by another planner, outside your guest scope. Ask the event owner to delete it.",
+      "blockedNote": "You can still assign and unassign your own guests at this table.",
+      "close": "Close"
     },
-    "stats": {
-      "seated": "Seated",
-      "capacity": "Capacity",
-      "tables": "Tables",
-      "tablesFull": "{count} full",
-      "floorUsage": "Floor usage",
-      "healthy": "healthy",
-      "lowUsage": "low usage",
-      "tight": "tight",
-      "usage": "Capacity used"
+    "assignDialog": {
+      "title": "Assign {name}",
+      "titleBulk": "Assign {count} records",
+      "description": "Everyone on this record sits together. Tables without room are disabled.",
+      "descriptionBulk": "All of them move together, or none do. Tables without room are disabled.",
+      "fits": "Fits",
+      "short": "{count} short",
+      "freePlaces": "{count} free",
+      "cancel": "Cancel",
+      "noTables": "No tables yet - create one first"
     },
-    "sections": {
-      "confirmed": "Confirmed",
-      "pending": "Pending"
-    },
-    "tools": {
-      "move": "Move",
-      "round": "Round",
-      "square": "Square",
-      "rectangle": "Long table"
-    },
-    "legend": {
-      "groups": "Groups",
-      "moreCount": "+{count}"
+    "scope": {
+      "bannerTitle": "You're seating your assigned guests",
+      "bannerBody": "You can see every table and its true occupancy, but only assign the {count, plural, one {# guest record} other {# guest records}} in your scope.",
+      "outOfScope": "{count, plural, one {# record outside your scope} other {# records outside your scope}}",
+      "outOfScopeNote": "Names hidden. Their seats still count against capacity",
+      "deleteBlocked": "Delete is unavailable - this table holds guests you can't see",
+      "deleteBlockedTooltip": "Delete blocked"
     },
     "zoom": {
       "in": "Zoom in",
       "out": "Zoom out",
       "fit": "Fit to view"
     },
-    "autoSeat": {
-      "label": "Auto-seat",
-      "stubTooltip": "Smart seating is coming soon"
-    },
-    "addGuest": "Add guest",
-    "toast": {
-      "creating": "Creating table",
-      "created": "Table created",
-      "updating": "Updating table",
-      "updated": "Table updated",
-      "deleting": "Deleting table",
-      "deleted": "Table deleted"
-    },
     "errors": {
-      "createFailed": "Could not create table",
-      "updateFailed": "Could not update table",
-      "deleteFailed": "Could not delete table",
-      "assignFailed": "Could not assign guest"
+      "overCapacitySingle": "{name} brings {party, plural, one {# guest} other {# guests}}. {table} has {free, plural, one {# place} other {# places}} left - {shortfall} short. Pick a table with room, or free up seats first",
+      "overCapacityBulk": "{records} records seating {party} guests don't fit {table} - {free, plural, one {# place} other {# places}} left, {shortfall} short. Nobody was moved",
+      "capacityBelowOccupancy": "{table} seats {occupancy} guests today. Seats can't go below {occupancy} - unassign someone first",
+      "duplicateNumber": "Table {number} already exists. Numbers must be unique in this event",
+      "duplicateNumbers": "Tables {numbers} already exist. Numbers must be unique in this event",
+      "deleteOutOfScope": "This table holds guests outside your scope. Ask the event owner to delete it",
+      "tableNotFound": "That table no longer exists",
+      "nothingAssignable": "Nothing to assign",
+      "createFailed": "Could not create the table",
+      "updateFailed": "Could not update the table",
+      "deleteFailed": "Could not delete the table",
+      "assignFailed": "Could not update the seating"
     },
-    "mobile": {
-      "title": "Open on a larger screen",
-      "description": "The seating planner works best on desktop"
+    "toast": {
+      "seating": "Updating seating",
+      "seated": "{count, plural, one {# guest seated} other {# guests seated}} at {table} - {free, plural, =0 {no places left} one {# place left} other {# places left}}",
+      "unseated": "{name} moved back to Unassigned - {freed, plural, one {# place} other {# places}} freed at {table}",
+      "creatingTable": "Creating table",
+      "created": "{table} created",
+      "creatingBatch": "Creating tables",
+      "batchCreated": "{count, plural, one {# table created} other {# tables created}}",
+      "updatingTable": "Updating table",
+      "updated": "{table} updated",
+      "deletingTable": "Deleting table",
+      "deleted": "{table} deleted",
+      "positionFailed": "Could not save the table position - it may jump back on refresh"
     }
   },
   "sidebar": {
@@ -437,13 +523,24 @@
       "noSide": "No side",
       "table": {
         "label": "Table",
-        "placeholder": "No table",
-        "searchPlaceholder": "Search or type a table number",
+        "placeholder": "Unassigned",
+        "searchPlaceholder": "Search tables",
         "empty": "No tables found",
-        "none": "No table",
+        "none": "Unassigned",
         "tableNumber": "Table {number}",
-        "create": "Create table {number}",
-        "createError": "Could not create the table"
+        "tableTitle": "Table {number} · {label}",
+        "declined": "- not seated",
+        "declinedHint": "Declined records have no Table field. Setting RSVP to declined releases the seat in the same save.",
+        "assigning": "Assigning {name} · {heads, plural, one {# guest} other {# guests}}",
+        "footer": "Need a new table? Create it in the Seating Plan",
+        "occupancy": "{confirmed} confirmed of {capacity}",
+        "occupancyWithPending": "{confirmed} confirmed + {pending} pending of {capacity}",
+        "emptyWithPlaces": "Empty · {capacity, plural, one {# place} other {# places}}",
+        "free": "{count} free",
+        "short": "{count} short",
+        "fits": "Fits",
+        "overCapacity": "This party brings {party, plural, one {# guest} other {# guests}} and that table has {free, plural, one {# place} other {# places}} left - {shortfall} short. Pick a table with room, or lower the party size",
+        "tableGone": "That table no longer exists - pick another"
       }
     },
     "rsvp": {
@@ -487,7 +584,8 @@
       "firstPage": "First page",
       "previousPage": "Previous page",
       "nextPage": "Next page",
-      "lastPage": "Last page"
+      "lastPage": "Last page",
+      "notSeated": "- not seated"
     },
     "directory": {
       "importCsv": "Import File",

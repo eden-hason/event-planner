@@ -158,11 +158,15 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
               size="lg"
               className={cn(
                 'data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground',
+                // Collapsed, the `lg` size drops the button's padding, so a
+                // 16px icon in a 32px box sits flush against the edge unless
+                // the label and chevron get out of the way and the row centres.
+                'group-data-[collapsible=icon]:justify-center',
                 disabled && 'cursor-default opacity-50 pointer-events-none',
               )}
             >
               <CalendarDays />
-              <div className="grid flex-1 text-start text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">
                   {currentEvent ? getEventHostLabel(currentEvent) : t('events')}
                 </span>
@@ -170,7 +174,7 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
                   {getEventTypeLabel(currentEvent?.eventType)}
                 </span>
               </div>
-              <ChevronsUpDown className="ms-auto" />
+              <ChevronsUpDown className="ms-auto group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

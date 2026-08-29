@@ -13,7 +13,6 @@ import {
   IconArmchair,
   IconPalette,
 } from '@tabler/icons-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
 import { NavEvents } from '@/components/layout/nav-events';
@@ -27,7 +26,6 @@ import {
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
-import { Badge } from '@/components/ui/badge';
 
 const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
@@ -62,7 +60,6 @@ export function AppSidebar({
   const tNav = useTranslations('navigation');
   const locale = useLocale();
   const isRTL = locale === 'he';
-  const isMobile = useIsMobile();
   const isSeatingPage = pathname.includes('/seating');
   const { setOpen, state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
@@ -72,17 +69,28 @@ export function AppSidebar({
   const stateRef = React.useRef(state);
   React.useEffect(() => { stateRef.current = state; });
 
+  /*
+   * Held in a ref, and deliberately not in the effect's dependencies.
+   * `useSidebar`'s `setOpen` is rebuilt whenever the sidebar's open state
+   * changes, so depending on it re-runs this effect on the very change it
+   * makes: reopening the sidebar on the Seating Plan would immediately
+   * collapse it again, and the toggle would look broken. Collapsing is a
+   * one-shot on arrival, not a rule enforced for as long as you stay.
+   */
+  const setOpenRef = React.useRef(setOpen);
+  setOpenRef.current = setOpen;
+
   React.useEffect(() => {
     if (isSeatingPage) {
       if (prevOpenRef.current === null) {
         prevOpenRef.current = stateRef.current === 'expanded';
       }
-      setOpen(false);
+      setOpenRef.current(false);
     } else if (prevOpenRef.current !== null) {
-      setOpen(prevOpenRef.current);
+      setOpenRef.current(prevOpenRef.current);
       prevOpenRef.current = null;
     }
-  }, [isSeatingPage, setOpen]);
+  }, [isSeatingPage]);
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -175,9 +183,10 @@ export function AppSidebar({
           },
         ]
       : []),
-    ...(!isMobile &&
-    (process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true' ||
-      process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true')
+    // The Seating Plan works on mobile now (ADR-0009), so it is no longer
+    // hidden below the breakpoint - only the feature flags gate it.
+    ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true' ||
+    process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true'
       ? [
           {
             id: 'seating',
@@ -185,6 +194,7 @@ export function AppSidebar({
             url: '/app/seating',
             icon: IconArmchair,
             comingSoon: process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true',
+            isNew: true,
           },
         ]
       : []),

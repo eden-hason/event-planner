@@ -111,6 +111,15 @@ export async function upsertGuest(
 
     if (error) {
       console.error(error);
+      // The seating capacity guard (ADR-0008) rejects an over-capacity Table
+      // Assignment with a parseable message. Pass it through so the caller can
+      // explain the shortfall instead of showing a bare database error.
+      if (
+        typeof error.message === 'string' &&
+        error.message.includes('seating_')
+      ) {
+        return { success: false, message: error.message };
+      }
       return {
         success: false,
         message: 'Database error: Could not upsert guest.',

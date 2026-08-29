@@ -3,38 +3,52 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/features/auth/queries';
 import { createClient } from '@/lib/supabase/server';
+import { toSeatingFailure, type SeatingFailure } from './errors';
 
-export type AssignGuestState = {
+export type AssignGuestsState = {
   success: boolean;
-  message?: string | null;
+  failure?: SeatingFailure;
+  assigned?: number;
 };
 
-export async function assignGuestToTable(
+/**
+ * The single assignment operation. The Assign picker, the bulk "Assign
+ * selected" bar, drag-and-drop onto a Table, and the Guest Directory's Table
+ * field all come through here, so they cannot drift apart in what they allow.
+ *
+ * All or nothing: the whole selection fits the destination, or none of it
+ * moves. That is decided inside Postgres, which locks the Table row and
+ * validates against its *total* occupancy - including assignments the caller
+ * cannot see - then reports the party size, places left and shortfall so the
+ * refusal can explain itself (ADR-0008).
+ *
+ * Passing a null `tableId` unassigns.
+ */
+export async function assignGuestsToTable(
   eventId: string,
-  guestId: string,
+  guestIds: string[],
   tableId: string | null,
-): Promise<AssignGuestState> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in' };
-    }
+): Promise<AssignGuestsState> {
+  const user = await getCurrentUser();
+  if (!user) return { success: false, failure: { kind: 'unknown' } };
 
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('guests')
-      .update({ table_id: tableId })
-      .eq('id', guestId);
-
-    if (error) {
-      console.error('Assign guest error:', error);
-      return { success: false, message: 'Could not assign guest' };
-    }
-
-    revalidatePath(`/app/${eventId}/seating`);
-    return { success: true, message: tableId ? 'Guest seated' : 'Guest unseated' };
-  } catch (error) {
-    console.error('Assign guest error:', error);
-    return { success: false, message: 'Failed to assign guest' };
+  if (guestIds.length === 0) {
+    return { success: false, failure: { kind: 'nothingAssignable' } };
   }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('assign_guests_to_table', {
+    p_event_id: eventId,
+    p_guest_ids: guestIds,
+    p_table_id: tableId,
+  });
+
+  if (error) {
+    return { success: false, failure: toSeatingFailure(error) };
+  }
+
+  revalidatePath(`/app/${eventId}/seating`);
+  revalidatePath(`/app/${eventId}/guests`);
+
+  return { success: true, assigned: typeof data === 'number' ? data : guestIds.length };
 }

@@ -45,6 +45,7 @@ export function NavMain({
     url: string;
     icon?: Icon;
     comingSoon?: boolean;
+    isNew?: boolean;
   }[];
   disabled?: boolean;
 }) {
@@ -58,6 +59,18 @@ export function NavMain({
           {items.map((item) => {
             const isUnavailable = item.comingSoon || disabled;
             const isActive = !isUnavailable && isActiveRoute(pathname, item.url);
+            const newBadge = item.isNew && !item.comingSoon && (
+              <Badge
+                className={[
+                  'ms-auto rounded-sm border-none text-[10px] px-1.5 py-0 group-data-[collapsible=icon]:hidden',
+                  isActive
+                    ? 'bg-sidebar-primary-foreground text-sidebar-primary'
+                    : 'bg-primary text-primary-foreground',
+                ].join(' ')}
+              >
+                {t('new')}
+              </Badge>
+            );
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
@@ -85,6 +98,7 @@ export function NavMain({
                     <Link href={item.url}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
+                      {newBadge}
                     </Link>
                   )}
                 </SidebarMenuButton>

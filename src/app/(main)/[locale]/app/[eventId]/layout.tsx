@@ -6,7 +6,8 @@ import { getAllUserEvents, getEventById } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { Card, CardContent } from '@/components/ui/card';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarInset } from '@/components/ui/sidebar';
+import { AppShell, HiddenOnSeatingPlan } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppTopBar } from '@/components/layout/app-top-bar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
@@ -75,7 +76,7 @@ export default async function EventLayout({
   };
 
   return (
-    <SidebarProvider className="app-shell-gradient min-h-svh flex-col">
+    <AppShell>
       <AppTopBar user={user} />
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar
@@ -93,13 +94,15 @@ export default async function EventLayout({
                   <FeatureLayoutHeader />
                   <CardContent className="space-y-6 p-0">{children}</CardContent>
                 </Card>
-                <AiAssistant eventId={eventId} />
+                <HiddenOnSeatingPlan>
+                  <AiAssistant eventId={eventId} />
+                </HiddenOnSeatingPlan>
               </FeatureLayoutProvider>
             </CollaborationProvider>
           </LayoutContentWrapper>
           <MobileBottomNav />
         </SidebarInset>
       </div>
-    </SidebarProvider>
+    </AppShell>
   );
 }
