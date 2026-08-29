@@ -946,6 +946,10 @@
       "messages": "הודעות",
       "calls": "שיחות טלפון"
     },
+    "channel": {
+      "whatsapp": "WhatsApp",
+      "sms": "SMS"
+    },
     "tabs": {
       "overview": "סקירה",
       "results": "תוצאות שליחה"
