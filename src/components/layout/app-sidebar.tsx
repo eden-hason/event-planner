@@ -184,16 +184,14 @@ export function AppSidebar({
         ]
       : []),
     // The Seating Plan works on mobile now (ADR-0009), so it is no longer
-    // hidden below the breakpoint - only the feature flags gate it.
-    ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true' ||
-    process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true'
+    // hidden below the breakpoint - only the feature flag gates it.
+    ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
       ? [
           {
             id: 'seating',
             title: tNav('seating'),
             url: '/app/seating',
             icon: IconArmchair,
-            comingSoon: process.env.NEXT_PUBLIC_DISABLED_SEATING_OPTION === 'true',
             isNew: true,
           },
         ]
