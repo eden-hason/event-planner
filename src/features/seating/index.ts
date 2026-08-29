@@ -1,42 +1,53 @@
 // Components
-export { SeatingPage, SeatingMobilePlaceholder } from './components';
+export { SeatingPage, TableSeatDiagram, OccupancyBar } from './components';
 
 // Actions (server-only)
 export {
   createTable,
+  createTablesBatch,
   updateTable,
   deleteTable,
   updateTablePosition,
-  assignGuestToTable,
+  assignGuestsToTable,
+  type SeatingActionState,
+  type SeatingFailure,
   type UpsertTableState,
+  type BatchCreateTablesState,
   type DeleteTableState,
   type UpdatePositionState,
-  type AssignGuestState,
+  type AssignGuestsState,
 } from './actions';
 
 // Schemas
 export {
   TABLE_SHAPES,
+  MIN_CAPACITY,
+  MAX_CAPACITY,
+  DEFAULT_CAPACITY,
+  MAX_TABLE_NUMBER,
   TableAppSchema,
   TableDbSchema,
   TableDbToAppTransformerSchema,
   TableUpsertSchema,
   TableAppToDbTransformerSchema,
+  TableBatchCreateSchema,
   TableWithGuestsAppSchema,
   type TableShape,
   type TableApp,
   type TableDb,
   type TableUpsert,
   type TableDbUpsert,
+  type TableBatchCreate,
   type TableWithGuestsApp,
 } from './schemas';
 
 // Types
 export type {
-  SeatingStatsView,
   SeatingPageData,
-  TableOption,
+  SeatingProgressView,
   TableOccupancy,
+  TableOption,
+  TableView,
   DraggableGuestData,
   DraggableTableData,
   DraggableData,
@@ -44,13 +55,20 @@ export type {
   DroppableUnassignedData,
   DroppableData,
   SeatingPageProps,
-  Table,
 } from './types';
 
 // Utils (pure)
-export { tableOccupancy, rsvpSortKey } from './utils/occupancy';
+export {
+  rsvpSortKey,
+  headCount,
+  splitHeads,
+  freeSeats,
+  computeProgress,
+  readyPercent,
+} from './utils/occupancy';
+export { seatLayout, tableFootprint } from './utils/seat-layout';
 export { groupColor, type SeatColor } from './utils/group-color';
-export { nextFreePosition } from './utils/auto-place';
+export { nextFreePosition, batchPositions } from './utils/auto-place';
 
 // Note: getEventTables, getEventTableOptions and getSeatingPageData are
 // exported from '@/features/seating/queries' to avoid importing server-only

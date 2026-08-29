@@ -103,7 +103,7 @@ features/<name>/
 | `events` | 25 | ✓ | ✓ | ✓ | – | ✓ | ✓ | Event CRUD + onboarding wizard |
 | `guests` | 47 | ✓ | ✓ | ✓ | – | ✓ | ✗ | Largest; CSV import, table, groups, `hooks/` |
 | `schedules` | 40 | ✓ | ✓ | ✓ | – | ✓ | ✓ | Messaging; `config/`, `constants/`, inline `.md` |
-| `seating` | 23 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | Canvas floor plan (dnd-kit) |
+| `seating` | 38 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | Seat diagrams on a dnd-kit canvas; DB-enforced capacity |
 | `templates` | 22 | – | – | – | ✓ | ✓ | ✗ | Landing designs; `data/`, `designs/`, `registry.tsx` |
 
 ### Component tree (representative features)

@@ -2,8 +2,7 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
-import { IconChevronDown, IconPlus } from '@tabler/icons-react';
+import { IconChevronDown } from '@tabler/icons-react';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,97 +19,79 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { createTable, type TableOption } from '@/features/seating';
+import type { TableOption } from '@/features/seating';
 
 interface GuestTableComboboxProps {
-  eventId: string;
   tables: TableOption[];
   /** Selected table id, or null when the guest has no table */
   value: string | null;
   onChange: (tableId: string | null) => void;
+  /** Heads this record brings *as currently edited*, so ineligible tables can be disabled. */
+  partyHeads: number;
+  /**
+   * The Table this record is already seated at (persisted), and the head count
+   * it currently reserves there. Those seats belong to this record, so at its
+   * current Table the available capacity is the reported free seats plus this
+   * many - and an edited party that now exceeds that total makes even the
+   * current Table ineligible (ADR-0008).
+   */
+  originalTableId?: string | null;
+  originalPartyHeads?: number;
+  guestName?: string;
   disabled?: boolean;
 }
-
-const tableDisplayName = (
-  table: Pick<TableOption, 'tableNumber' | 'label'>,
-  numberLabel: (n: number) => string,
-) => (table.label ? `${numberLabel(table.tableNumber)} · ${table.label}` : numberLabel(table.tableNumber));
 
 /**
  * Table picker for the guest form.
  *
- * Writes guests.table_id - the same assignment the seating canvas makes - so a
- * host can seat a guest without opening the floor plan. Typing a number that
- * has no table yet creates one on the spot (round, default capacity), which is
- * why the created table persists even if the guest form is then cancelled.
+ * Writes guests.table_id - the same assignment the Seating Plan makes - so a
+ * host can seat a guest without leaving the directory. It cannot create a
+ * table: all table creation belongs to the Seating Plan's single and batch
+ * flows, so the directory has one job and does it in one place.
+ *
+ * Every option carries the destination's real occupancy, and one that cannot
+ * take this record is disabled with the shortfall rather than offered and then
+ * refused (ADR-0008).
  */
 export function GuestTableCombobox({
-  eventId,
   tables,
   value,
   onChange,
+  partyHeads,
+  originalTableId = null,
+  originalPartyHeads = 0,
+  guestName,
   disabled = false,
 }: GuestTableComboboxProps) {
   const t = useTranslations('guests.form.table');
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
-  const [isCreating, setIsCreating] = React.useState(false);
-  // Tables created from this combobox, kept locally so the new one is
-  // selectable immediately rather than after the page revalidates.
-  const [createdTables, setCreatedTables] = React.useState<TableOption[]>([]);
 
-  const numberLabel = React.useCallback(
-    (n: number) => t('tableNumber', { number: n }),
+  const displayName = React.useCallback(
+    (table: Pick<TableOption, 'tableNumber' | 'label'>) =>
+      table.label
+        ? t('tableTitle', { number: table.tableNumber, label: table.label })
+        : t('tableNumber', { number: table.tableNumber }),
     [t],
   );
 
-  const allTables = React.useMemo(() => {
-    const byId = new Map<string, TableOption>();
-    for (const table of [...tables, ...createdTables]) byId.set(table.id, table);
-    return [...byId.values()].sort((a, b) => a.tableNumber - b.tableNumber);
-  }, [tables, createdTables]);
+  const sorted = React.useMemo(
+    () => [...tables].sort((a, b) => a.tableNumber - b.tableNumber),
+    [tables],
+  );
 
-  const selected = allTables.find((table) => table.id === value) ?? null;
+  const selected = sorted.find((table) => table.id === value) ?? null;
 
-  // A bare number the host typed that no table claims yet
-  const typedNumber = /^\d+$/.test(search.trim())
-    ? Number(search.trim())
-    : null;
-  const canCreate =
-    typedNumber !== null &&
-    typedNumber >= 1 &&
-    typedNumber <= 999 &&
-    !allTables.some((table) => table.tableNumber === typedNumber);
-
-  const handleCreate = async () => {
-    if (typedNumber === null || isCreating) return;
-    setIsCreating(true);
-    try {
-      const formData = new FormData();
-      formData.append('tableNumber', String(typedNumber));
-      formData.append('shape', 'round');
-      formData.append('capacity', '8');
-
-      const result = await createTable(eventId, formData);
-      if (!result.success || !result.table) {
-        toast.error(result.message || t('createError'));
-        return;
-      }
-
-      const created: TableOption = {
-        id: result.table.id,
-        tableNumber: result.table.tableNumber,
-        label: result.table.label,
-        capacity: result.table.capacity,
-        seatedHeadCount: 0,
-      };
-      setCreatedTables((prev) => [...prev, created]);
-      onChange(created.id);
-      setSearch('');
-      setOpen(false);
-    } finally {
-      setIsCreating(false);
-    }
+  const describe = (table: TableOption) => {
+    const seated = table.confirmedHeads + table.pendingHeads;
+    if (seated === 0) return t('emptyWithPlaces', { capacity: table.capacity });
+    return table.pendingHeads > 0
+      ? t('occupancyWithPending', {
+          confirmed: table.confirmedHeads,
+          pending: table.pendingHeads,
+          capacity: table.capacity,
+        })
+      : t('occupancy', { confirmed: table.confirmedHeads, capacity: table.capacity });
   };
 
   return (
@@ -125,7 +106,7 @@ export function GuestTableCombobox({
           className="w-full justify-between font-normal"
         >
           <span className={cn(!selected && 'text-muted-foreground')}>
-            {selected ? tableDisplayName(selected, numberLabel) : t('placeholder')}
+            {selected ? displayName(selected) : t('placeholder')}
           </span>
           <IconChevronDown className="size-4 shrink-0 opacity-50" />
         </Button>
@@ -135,25 +116,18 @@ export function GuestTableCombobox({
         align="start"
       >
         <Command shouldFilter={false}>
+          {guestName && (
+            <p className="text-muted-foreground border-b px-3 py-2 text-xs">
+              {t('assigning', { name: guestName, heads: partyHeads })}
+            </p>
+          )}
           <CommandInput
             placeholder={t('searchPlaceholder')}
             value={search}
             onValueChange={setSearch}
           />
           <CommandList>
-            {!canCreate && <CommandEmpty>{t('empty')}</CommandEmpty>}
-            {canCreate && (
-              <CommandGroup>
-                <CommandItem
-                  value={`create-${typedNumber}`}
-                  disabled={isCreating}
-                  onSelect={handleCreate}
-                >
-                  <IconPlus className="size-4" />
-                  {t('create', { number: typedNumber })}
-                </CommandItem>
-              </CommandGroup>
-            )}
+            <CommandEmpty>{t('empty')}</CommandEmpty>
             <CommandGroup>
               {value !== null && (
                 <CommandItem
@@ -167,7 +141,7 @@ export function GuestTableCombobox({
                   <span className="text-muted-foreground">{t('none')}</span>
                 </CommandItem>
               )}
-              {allTables
+              {sorted
                 .filter((table) => {
                   const term = search.trim().toLowerCase();
                   if (!term) return true;
@@ -177,39 +151,61 @@ export function GuestTableCombobox({
                   );
                 })
                 .map((table) => {
-                  const isFull = table.seatedHeadCount >= table.capacity;
+                  // Total occupancy from the database already counts this
+                  // record's current seats, so at its own Table those seats are
+                  // available to it again - but nothing more. Everywhere else,
+                  // free capacity is measured against the full occupancy,
+                  // including assignments made outside this collaborator's scope.
+                  const reservedHere =
+                    originalTableId === table.id ? originalPartyHeads : 0;
+                  const free =
+                    table.capacity -
+                    table.confirmedHeads -
+                    table.pendingHeads +
+                    reservedHere;
+                  const isCurrent = value === table.id;
+                  const fits = partyHeads <= free;
+
                   return (
                     <CommandItem
                       key={table.id}
                       value={table.id}
+                      disabled={!fits}
                       onSelect={() => {
+                        if (!fits) return;
                         onChange(table.id);
                         setSearch('');
                         setOpen(false);
                       }}
+                      className={cn(!fits && 'opacity-55')}
                     >
                       <Check
-                        className={cn(
-                          'size-4',
-                          value === table.id ? 'opacity-100' : 'opacity-0',
-                        )}
+                        className={cn('size-4', isCurrent ? 'opacity-100' : 'opacity-0')}
                       />
-                      <span className="flex-1">
-                        {tableDisplayName(table, numberLabel)}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm">{displayName(table)}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {describe(table)}
+                        </p>
+                      </div>
                       <span
                         className={cn(
-                          'text-xs tabular-nums',
-                          isFull ? 'text-destructive' : 'text-muted-foreground',
+                          'shrink-0 rounded-full px-2 py-0.5 text-xs',
+                          fits
+                            ? 'bg-rsvp-confirmed/16 text-rsvp-confirmed'
+                            : 'bg-muted text-muted-foreground',
                         )}
                       >
-                        {table.seatedHeadCount}/{table.capacity}
+                        {fits ? t('fits') : t('short', { count: partyHeads - free })}
                       </span>
                     </CommandItem>
                   );
                 })}
             </CommandGroup>
           </CommandList>
+          <p className="text-muted-foreground border-t px-3 py-2 text-xs">
+            {t('footer')}
+          </p>
         </Command>
       </PopoverContent>
     </Popover>

@@ -9,428 +9,316 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type Modifier,
 } from '@dnd-kit/core';
-import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  createTable,
-  updateTable,
-  deleteTable,
-  updateTablePosition,
-  assignGuestToTable,
-} from '../actions';
-import { FloorPlanCanvas } from './floor-plan-canvas';
-import { UnassignedGuestsPanel } from './unassigned-guests-panel';
-import { GuestCard } from './guest-card';
-import { CreateTableDialog } from './create-table-dialog';
-import { EditTableSheet } from './edit-table-sheet';
-import { SeatingStats } from './seating-stats';
-import { SeatingMobilePlaceholder } from './seating-mobile-placeholder';
-import { tableOccupancy } from '../utils/occupancy';
-import type { CanvasTool } from './canvas-shape-toolbar';
-import type { SeatingPageProps, TableWithGuestsApp } from '../types';
-import type { GuestWithGroupApp } from '@/features/guests/schemas';
-import type { TableApp, TableShape } from '../schemas';
-import posthog from 'posthog-js';
+import { cn } from '@/lib/utils';
+import type { DraggableData, DroppableData, SeatingPageProps } from '../types';
+import { snapToGrid } from '../utils/snap';
+import { AssignDialog } from './assign-dialog';
+import { BatchCreateDialog } from './batch-create-dialog';
+import { DeleteTableDialog } from './delete-table-dialog';
+import { ScopeBanner } from './scope-banner';
+import { SeatingEmptyState } from './seating-empty-state';
+import { SeatingHeaderActions } from './seating-header-actions';
+import { SeatingMobile } from './seating-mobile';
+import { SeatingProgress } from './seating-progress';
+import { TableCanvas } from './table-canvas';
+import { TableDetailPanel } from './table-detail-panel';
+import { TableFormDialog } from './table-form-dialog';
+import { UnassignedPanel } from './unassigned-panel';
+import { useSeatingCopy } from './use-seating-copy';
+import { useSeatingWorkspace } from './use-seating-workspace';
 
-const POSITION_DEBOUNCE_MS = 300;
+/**
+ * The workspace owns a viewport-sized box and scrolls nothing at the page level:
+ * the Unassigned list and the canvas scroll independently inside it. The offset
+ * is the app header, which the sidebar keeps up to date at runtime.
+ */
+const WORKSPACE_HEIGHT = 'h-[calc(100svh-var(--app-header-offset,3.5rem))]';
 
-export function SeatingPage({
-  eventId,
-  tables: initialTables,
-  guests: initialGuests,
-  groups,
-}: SeatingPageProps) {
-  const t = useTranslations('seating');
+export function SeatingPage(props: SeatingPageProps) {
+  const { t } = useSeatingCopy();
   const isMobile = useIsMobile();
+  const workspace = useSeatingWorkspace(props);
 
-  const stripGuests = React.useCallback(
-    (rows: TableWithGuestsApp[]): TableApp[] =>
-      rows.map((row) => {
-        const {
-          id,
-          eventId: eId,
-          label,
-          tableNumber,
-          shape,
-          capacity,
-          positionX,
-          positionY,
-          rotation,
-          createdAt,
-          updatedAt,
-        } = row;
-        return {
-          id,
-          eventId: eId,
-          label,
-          tableNumber,
-          shape,
-          capacity,
-          positionX,
-          positionY,
-          rotation,
-          createdAt,
-          updatedAt,
-        };
-      }),
-    [],
-  );
+  const [draggingGuestId, setDraggingGuestId] = React.useState<string | null>(null);
 
-  const [tables, setTables] = React.useState<TableApp[]>(() => stripGuests(initialTables));
-  const [guests, setGuests] = React.useState<GuestWithGroupApp[]>(initialGuests);
-  const [activeDragGuest, setActiveDragGuest] = React.useState<GuestWithGroupApp | null>(null);
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [editTableId, setEditTableId] = React.useState<string | null>(null);
-  const [tool, setTool] = React.useState<CanvasTool>('move');
-
-  // Re-sync from server props on revalidation
-  React.useEffect(() => {
-    setTables(stripGuests(initialTables));
-    setGuests(initialGuests);
-  }, [initialTables, initialGuests, stripGuests]);
-
+  // A few pixels of travel before a drag starts, so a tap still opens a table.
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  const tablesWithGuests: TableWithGuestsApp[] = React.useMemo(() => {
-    const byTable = new Map<string, GuestWithGroupApp[]>();
-    for (const g of guests) {
-      if (g.tableId) {
-        const arr = byTable.get(g.tableId) ?? [];
-        arr.push(g);
-        byTable.set(g.tableId, arr);
-      }
-    }
-    return tables.map((tbl) => ({ ...tbl, guests: byTable.get(tbl.id) ?? [] }));
-  }, [tables, guests]);
+  // Live grid snap for Table drags. The quantization happens in world units -
+  // the Table's stored position plus the drag delta divided by the current
+  // zoom - so the lattice stays pinned to the plan at any scale. Guest drags
+  // share this DndContext and pass straight through untouched.
+  const snapTableToGrid = React.useCallback<Modifier>(
+    ({ transform, active }) => {
+      const data = active?.data.current as DraggableData | undefined;
+      if (data?.type !== 'table') return transform;
 
-  const unassignedGuests = React.useMemo(
-    () => guests.filter((g) => !g.tableId),
-    [guests],
-  );
+      const scale = workspace.scaleRef.current || 1;
+      const snappedX = snapToGrid(data.positionX + transform.x / scale);
+      const snappedY = snapToGrid(data.positionY + transform.y / scale);
 
-  const liveStats = React.useMemo(() => {
-    let seatedHead = 0;
-    let seatedCount = 0;
-    let totalHead = 0;
-    for (const g of guests) {
-      totalHead += g.amount;
-      if (g.tableId) {
-        seatedHead += g.amount;
-        seatedCount += 1;
-      }
-    }
-    const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
-    const fullTables = tablesWithGuests.filter((t) => {
-      const { seatedHeadCount } = tableOccupancy(t.capacity, t.guests);
-      return seatedHeadCount >= t.capacity && t.capacity > 0;
-    }).length;
-
-    return {
-      totalGuests: guests.length,
-      totalHeadCount: totalHead,
-      seatedGuestCount: seatedCount,
-      seatedHeadCount: seatedHead,
-      totalCapacity,
-      totalTables: tables.length,
-      fullTables,
-    };
-  }, [guests, tables, tablesWithGuests]);
-
-  const zoomScaleRef = React.useRef(1);
-
-  const positionDebouncers = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const queueSavePosition = React.useCallback(
-    (tableId: string, x: number, y: number) => {
-      const existing = positionDebouncers.current.get(tableId);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(() => {
-        updateTablePosition(tableId, x, y).then((r) => {
-          if (!r.success && r.message) toast.error(r.message);
-        });
-        positionDebouncers.current.delete(tableId);
-      }, POSITION_DEBOUNCE_MS);
-      positionDebouncers.current.set(tableId, timer);
+      return {
+        ...transform,
+        x: (snappedX - data.positionX) * scale,
+        y: (snappedY - data.positionY) * scale,
+      };
     },
-    [],
+    [workspace.scaleRef],
   );
 
-  React.useEffect(
-    () => () => {
-      positionDebouncers.current.forEach((t) => clearTimeout(t));
-    },
-    [],
-  );
+  // dnd-kit does not manage the cursor, and the Table drag has no DragOverlay to
+  // carry one - so while something is moving the pointer falls back to the
+  // arrow. Hold `grabbing` on the body for the length of the gesture.
+  const setBodyGrabbing = (on: boolean) => {
+    document.body.style.cursor = on ? 'grabbing' : '';
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const data = event.active.data.current as
-      | { type: 'guest'; guestId: string }
-      | { type: 'table'; tableId: string }
-      | undefined;
-    if (data?.type === 'guest') {
-      const guest = guests.find((g) => g.id === data.guestId) ?? null;
-      setActiveDragGuest(guest);
-    }
+    const data = event.active.data.current as DraggableData | undefined;
+    if (data?.type === 'guest') setDraggingGuestId(data.guestId);
+    setBodyGrabbing(true);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveDragGuest(null);
-    const data = event.active.data.current as
-      | { type: 'guest'; guestId: string; currentTableId: string | null }
-      | { type: 'table'; tableId: string }
-      | undefined;
-    if (!data) return;
+    setDraggingGuestId(null);
+    setBodyGrabbing(false);
 
-    if (data.type === 'table') {
-      const dx = event.delta.x;
-      const dy = event.delta.y;
-      const table = tables.find((t) => t.id === data.tableId);
-      if (!table) return;
-      const scale = zoomScaleRef.current;
-      const newX = Math.max(0, table.positionX + dx / scale);
-      const newY = Math.max(0, table.positionY + dy / scale);
-      setTables((prev) =>
-        prev.map((t) =>
-          t.id === data.tableId ? { ...t, positionX: newX, positionY: newY } : t,
-        ),
+    const active = event.active.data.current as DraggableData | undefined;
+    if (!active) return;
+
+    if (active.type === 'table') {
+      const scale = workspace.scaleRef.current || 1;
+      const view = workspace.tableById(active.tableId);
+      if (!view) return;
+      // No clamp at the origin: the canvas is an unbounded plane, and pinning
+      // coordinates at zero put an invisible wall wherever the origin happened
+      // to sit on screen (ADR-0005 - the arrangement is relative, not measured).
+      // Snapped again here so the committed value matches the grid the modifier
+      // showed during the drag, float error and all.
+      workspace.moveTable(
+        active.tableId,
+        snapToGrid(view.table.positionX + event.delta.x / scale),
+        snapToGrid(view.table.positionY + event.delta.y / scale),
       );
-      queueSavePosition(data.tableId, newX, newY);
       return;
     }
 
-    // Guest drop
-    const overData = event.over?.data.current as
-      | { type: 'table'; tableId: string }
-      | { type: 'unassigned' }
-      | undefined;
-    if (!event.over || !overData) return;
+    const over = event.over?.data.current as DroppableData | undefined;
+    if (!over) return;
 
-    const targetTableId =
-      overData.type === 'table' ? overData.tableId : null;
-    if (targetTableId === data.currentTableId) return;
-
-    const prevTableId = data.currentTableId;
-    setGuests((prev) =>
-      prev.map((g) =>
-        g.id === data.guestId ? { ...g, tableId: targetTableId } : g,
-      ),
-    );
-
-    assignGuestToTable(eventId, data.guestId, targetTableId).then((result) => {
-      if (!result.success) {
-        setGuests((prev) =>
-          prev.map((g) =>
-            g.id === data.guestId ? { ...g, tableId: prevTableId } : g,
-          ),
-        );
-        toast.error(result.message ?? t('errors.assignFailed'));
-        return;
-      }
-      if (
-        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-        process.env.NEXT_PUBLIC_POSTHOG_HOST
-      ) {
-        posthog.capture('guest_seating_updated', {
-          event_id: eventId,
-          assigned_to_table: targetTableId !== null,
-        });
-      }
-    });
+    // Drag-and-drop is a shortcut into the same operation the picker uses, so
+    // it gets the same capacity validation and the same failure copy.
+    if (over.type === 'table' && over.tableId !== active.currentTableId) {
+      workspace.assign([active.guestId], over.tableId);
+    } else if (over.type === 'unassigned' && active.currentTableId) {
+      workspace.assign([active.guestId], null);
+    }
   };
 
-  const handleCreateTable = React.useCallback(
-    (formData: FormData) => {
-      const promise = createTable(eventId, formData).then((result) => {
-        if (!result.success || !result.table) {
-          throw new Error(result.message ?? t('errors.createFailed'));
-        }
-        setTables((prev) => [...prev, result.table!]);
-        if (
-          process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-          process.env.NEXT_PUBLIC_POSTHOG_HOST
-        ) {
-          posthog.capture('table_created', {
-            event_id: eventId,
-            table_shape: result.table.shape,
-            capacity: result.table.capacity,
-          });
-        }
-        return result;
-      });
-      toast.promise(promise, {
-        loading: t('toast.creating'),
-        success: t('toast.created'),
-        error: (err) =>
-          err instanceof Error ? err.message : t('errors.createFailed'),
-      });
-    },
-    [eventId, t],
-  );
+  const draggingGuest = workspace.guests.find((guest) => guest.id === draggingGuestId);
+  const openTable = workspace.tableById(workspace.openTableId);
+  const editingTable =
+    workspace.dialog.kind === 'edit' ? workspace.tableById(workspace.dialog.tableId) : null;
+  const deletingTable =
+    workspace.dialog.kind === 'delete'
+      ? workspace.tableById(workspace.dialog.tableId)
+      : null;
 
-  const handleAddTableWithShape = React.useCallback(
-    (shape: TableShape) => {
-      const fd = new FormData();
-      fd.append('shape', shape);
-      fd.append('capacity', '8');
-      handleCreateTable(fd);
-    },
-    [handleCreateTable],
-  );
+  const scopedRecordCount = workspace.guests.length;
+  const confirmedUnseated =
+    workspace.progress.confirmedRecordsTotal -
+    workspace.progress.confirmedRecordsSeated;
 
-  const handlePlaceTable = React.useCallback(
-    (shape: Exclude<CanvasTool, 'move'>, x: number, y: number) => {
-      setTool('move');
-      const fd = new FormData();
-      fd.append('shape', shape);
-      fd.append('capacity', '8');
-      fd.append('positionX', String(Math.round(x)));
-      fd.append('positionY', String(Math.round(y)));
-      handleCreateTable(fd);
-    },
-    [handleCreateTable],
-  );
-
-  const handleUpdateTable = (formData: FormData) => {
-    const promise = updateTable(eventId, formData).then((result) => {
-      if (!result.success || !result.table) {
-        throw new Error(result.message ?? t('errors.updateFailed'));
-      }
-      const updated = result.table;
-      setTables((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-      setEditTableId(null);
-      return result;
-    });
-    toast.promise(promise, {
-      loading: t('toast.updating'),
-      success: t('toast.updated'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('errors.updateFailed'),
-    });
-  };
-
-  const handleDeleteTable = () => {
-    if (!editTableId) return;
-    const tableId = editTableId;
-    const promise = deleteTable(eventId, tableId).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message ?? t('errors.deleteFailed'));
-      }
-      setTables((prev) => prev.filter((t) => t.id !== tableId));
-      setGuests((prev) =>
-        prev.map((g) => (g.tableId === tableId ? { ...g, tableId: null } : g)),
-      );
-      setEditTableId(null);
-      return result;
-    });
-    toast.promise(promise, {
-      loading: t('toast.deleting'),
-      success: t('toast.deleted'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('errors.deleteFailed'),
-    });
-  };
-
-  const handleUnassignGuest = (guestId: string) => {
-    const prev = guests.find((g) => g.id === guestId);
-    const prevTableId = prev?.tableId ?? null;
-    setGuests((arr) =>
-      arr.map((g) => (g.id === guestId ? { ...g, tableId: null } : g)),
-    );
-    assignGuestToTable(eventId, guestId, null).then((result) => {
-      if (!result.success) {
-        setGuests((arr) =>
-          arr.map((g) =>
-            g.id === guestId ? { ...g, tableId: prevTableId } : g,
-          ),
-        );
-        toast.error(result.message ?? t('errors.assignFailed'));
-        return;
-      }
-      if (
-        process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-        process.env.NEXT_PUBLIC_POSTHOG_HOST
-      ) {
-        posthog.capture('guest_seating_updated', {
-          event_id: eventId,
-          assigned_to_table: false,
-        });
-      }
-    });
-  };
-
-  if (isMobile) {
-    return <SeatingMobilePlaceholder />;
-  }
-
-  const editingTable = tablesWithGuests.find((t) => t.id === editTableId) ?? null;
-
-  return (
-    <div className="flex h-svh flex-col">
-      <SeatingStats stats={liveStats} />
-
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex flex-1 overflow-hidden">
-          <UnassignedGuestsPanel
-            guests={unassignedGuests}
-            groups={groups}
-            onAddTableClick={() => setCreateOpen(true)}
-            onAddTableWithShape={handleAddTableWithShape}
-            onAddGuestClick={() => {
-              toast.info(t('addGuest'));
-            }}
-          />
-          <div className="relative flex-1">
-            <FloorPlanCanvas
-              tables={tablesWithGuests}
-              groups={groups}
-              onSelectTable={(id) => setEditTableId(id)}
-              scaleRef={zoomScaleRef}
-              tool={tool}
-              onToolChange={setTool}
-              onPlaceTable={handlePlaceTable}
-            />
-            {tablesWithGuests.length === 0 ? (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <p className="text-sm text-muted-foreground">{t('canvas.empty')}</p>
-              </div>
-            ) : null}
-            <EditTableSheet
-              table={editingTable}
-              onOpenChange={(o) => !o && setEditTableId(null)}
-              onSave={handleUpdateTable}
-              onDelete={handleDeleteTable}
-              onUnassignGuest={handleUnassignGuest}
-            />
-          </div>
-        </div>
-
-        <DragOverlay>
-          {activeDragGuest ? (
-            <div className="rotate-1 opacity-90">
-              <GuestCard guest={activeDragGuest} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      <CreateTableDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreate={handleCreateTable}
-        nextTableNumber={
-          tables.reduce((m, t) => Math.max(m, t.tableNumber ?? 0), 0) + 1
-        }
+  const dialogs = (
+    <>
+      <AssignDialog
+        open={workspace.dialog.kind === 'assign'}
+        onOpenChange={(open) => !open && workspace.closeDialog()}
+        tables={workspace.tables}
+        guestNames={workspace.assignParty.names}
+        partyHeads={workspace.assignParty.heads}
+        error={workspace.dialogError}
+        onPick={(tableId) => {
+          if (workspace.dialog.kind !== 'assign') return;
+          workspace.assign(workspace.dialog.guestIds, tableId);
+        }}
       />
 
-    </div>
+      <TableFormDialog
+        open={workspace.dialog.kind === 'create' || workspace.dialog.kind === 'edit'}
+        onOpenChange={(open) => !open && workspace.closeDialog()}
+        table={editingTable?.table ?? null}
+        nextNumber={workspace.nextNumber}
+        highestNumber={workspace.highestNumber}
+        seatedHeads={editingTable?.seatedHeads ?? 0}
+        error={workspace.dialogError}
+        isPending={workspace.isPending}
+        onSubmit={workspace.submitTableForm}
+      />
+
+      <BatchCreateDialog
+        open={workspace.dialog.kind === 'batch'}
+        onOpenChange={(open) => !open && workspace.closeDialog()}
+        usedNumbers={workspace.usedNumbers}
+        nextNumber={workspace.nextNumber}
+        error={workspace.dialogError}
+        isPending={workspace.isPending}
+        onSubmit={workspace.submitBatch}
+      />
+
+      <DeleteTableDialog
+        view={deletingTable}
+        onOpenChange={(open) => !open && workspace.closeDialog()}
+        onConfirm={() => deletingTable && workspace.removeTable(deletingTable)}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        className={cn(
+          WORKSPACE_HEIGHT,
+          'flex min-h-0 flex-col overflow-hidden pt-4',
+          // The fixed MobileBottomNav floats over the bottom of the viewport
+          // (52px tall, 1rem from the edge). The workspace is full-bleed with no
+          // page scroll, so without this the bottom bulk-selection bar and the
+          // last unassigned rows sit underneath it. Clear the nav plus the
+          // device safe-area inset.
+          'pb-[calc(4.5rem+env(safe-area-inset-bottom))]',
+        )}
+      >
+        {props.isScopedCollaborator && (
+          <div className="px-4 pb-3">
+            <ScopeBanner scopedRecordCount={scopedRecordCount} />
+          </div>
+        )}
+        <SeatingMobile workspace={workspace} groups={props.groups} />
+        {dialogs}
+      </div>
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      modifiers={[snapTableToGrid]}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => {
+        setDraggingGuestId(null);
+        setBodyGrabbing(false);
+      }}
+    >
+      {/*
+        An explicit viewport height, not `h-full`. The app shell wraps this in a
+        Card with only a `min-h`, so a percentage height has nothing to resolve
+        against and collapses to auto - which lets the canvas grow to its full
+        world size and drags the whole page with it.
+      */}
+      <div
+        className={cn(
+          WORKSPACE_HEIGHT,
+          'flex min-h-0 flex-col gap-4 overflow-hidden p-6',
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <SeatingHeaderActions
+            onAddTable={() => workspace.setDialog({ kind: 'create' })}
+            onAddBatch={() => workspace.setDialog({ kind: 'batch' })}
+          />
+        </div>
+
+        {props.isScopedCollaborator && (
+          <ScopeBanner scopedRecordCount={scopedRecordCount} />
+        )}
+
+        {workspace.tables.length === 0 ? (
+          <SeatingEmptyState
+            confirmedUnseated={confirmedUnseated}
+            onBatch={() => workspace.setDialog({ kind: 'batch' })}
+            onSingle={() => workspace.setDialog({ kind: 'create' })}
+          />
+        ) : (
+          <>
+            <SeatingProgress progress={workspace.progress} />
+
+            <div className="flex min-h-0 min-w-0 flex-1 gap-4">
+              <UnassignedPanel
+                className="w-80 shrink-0"
+                unassigned={workspace.unassigned}
+                groups={props.groups}
+                query={workspace.search.query}
+                onQueryChange={workspace.setQuery}
+                seatedMatches={workspace.search.seatedMatches}
+                onRevealGuest={workspace.revealGuest}
+                selectedIds={workspace.selectedIds}
+                onToggleSelect={workspace.toggleSelect}
+                onSelectMany={workspace.selectMany}
+                onClearSelection={workspace.clearSelection}
+                onAssignOne={(guestId) => workspace.openAssign([guestId])}
+                onAssignSelected={() => workspace.openAssign(workspace.selectedIds)}
+                draggable
+              />
+
+              <TableCanvas
+                tables={workspace.tables}
+                openTableId={workspace.openTableId}
+                onOpenTable={workspace.setOpenTableId}
+                scaleRef={workspace.scaleRef}
+              >
+                {openTable && (
+                  // Stacked directly above the zoom controls, which sit at `bottom-4`
+                  // and stand 2.25rem tall. Same corner, so both stay where the eye
+                  // already looks, and neither covers the other.
+                  <div className="absolute bottom-16 start-4 z-40">
+                    <TableDetailPanel
+                      view={openTable}
+                      highlightGuestId={workspace.highlightGuestId}
+                      onClose={() => workspace.setOpenTableId(null)}
+                      onUnassign={workspace.unassign}
+                      onShapeChange={(shape) => workspace.patchTable(openTable, { shape })}
+                      onRotationChange={(rotation) =>
+                        workspace.patchTable(openTable, { rotation })
+                      }
+                      onCapacityChange={(capacity) =>
+                        workspace.patchTable(openTable, { capacity })
+                      }
+                      onEdit={() =>
+                        workspace.setDialog({ kind: 'edit', tableId: openTable.table.id })
+                      }
+                      onDelete={() =>
+                        workspace.setDialog({ kind: 'delete', tableId: openTable.table.id })
+                      }
+                    />
+                  </div>
+                )}
+              </TableCanvas>
+            </div>
+          </>
+        )}
+      </div>
+
+      <DragOverlay dropAnimation={null}>
+        {draggingGuest && (
+          // Deliberately small: the overlay follows the cursor over the canvas, and
+          // anything larger hides the very table the planner is aiming at.
+          <div className="bg-card border-primary flex max-w-40 items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium">
+            <span className="truncate">{draggingGuest.name}</span>
+            <span className="text-muted-foreground shrink-0 tabular-nums">
+              {draggingGuest.amount ?? 1}
+            </span>
+          </div>
+        )}
+      </DragOverlay>
+
+      {dialogs}
+    </DndContext>
   );
 }

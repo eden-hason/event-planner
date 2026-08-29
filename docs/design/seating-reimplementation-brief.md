@@ -1,6 +1,7 @@
 # Seating reimplementation - Claude Design brief
 
-Status: In discovery; decisions are locked incrementally through the accompanying grilling session.
+Status: Resolved. The design (Claude Design project `fb874f26`, `Seating Plan.dc.html`) answers
+every open question below; see [ADR-0009](../adr/0009-a-table-is-a-seat-diagram.md).
 
 ## Product premise
 
@@ -72,14 +73,25 @@ scale, room boundaries, fixtures, or collision handling. See ADR-0005.
 - An occupied Table may be deleted only after an explicit destructive confirmation naming the Table and showing both the affected Guest Record count and represented Guest count.
 - Deleting a Table returns all of its Guest Records to Unassigned; it never deletes Guest Records.
 
-## Decisions still in discovery
+## Previously open, now settled by the design
 
-- Core assignment interactions on desktop and mobile.
-- Completion and warning behavior.
-- Bulk operations, automation, import/export, and print/share requirements.
-- Visual direction, responsive information architecture, states, and motion.
-- How the canvas behaves on mobile, and how it relates to the list surfaces.
-- Whether Table shape and rotation are retained as canvas properties.
+- Core assignment interactions: an explicit Assign picker everywhere, plus drag-and-drop from
+  the Unassigned panel onto a Table as a desktop-only speed enhancement. Both call the same
+  operation and the same capacity validation.
+- Completion and warning behavior: a single headline percentage of confirmed Guest Records
+  seated, with the supporting counts (confirmed still to seat, unseated pending) shown beside
+  it in guests rather than records, as a separate provisional line and never folded into the
+  percentage. See ADR-0009.
+- Bulk operations: multi-select in Unassigned with an all-or-nothing "Assign selected", and
+  atomic batch Table creation. No automation, import/export, or print/share at launch.
+- Visual direction and responsive IA: a Table renders as a top-down seat diagram whose seats
+  fill confirmed-first then provisional. Desktop is a canvas of those diagrams beside a
+  searchable Unassigned panel; mobile is Tables and Unassigned tabs.
+- How the canvas behaves on mobile: it does not. Mobile is list-first and draws no canvas.
+  Both surfaces read and write the same plan, and neither is authoritative.
+- Whether Table shape and rotation are retained: both are, as the seat diagram's geometry.
+  `shape` selects the seat layout; `rotation` is narrowed from a free angle to a quarter
+  turn, and is a desktop canvas affordance.
 
 ## Implementation constraints
 

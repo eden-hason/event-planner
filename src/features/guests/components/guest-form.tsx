@@ -134,6 +134,29 @@ export function GuestForm({
     }
   }, [guest, form]);
 
+  // The seating capacity guard (ADR-0008) rejects an over-capacity Table
+  // Assignment inside Postgres and raises a parseable message. `upsertGuest`
+  // passes it through untranslated; turn it into the same shortfall sentence the
+  // Seating Plan shows rather than exposing a bare guest-upsert database error.
+  const describeUpsertError = React.useCallback(
+    (raw: string): string => {
+      if (raw.includes('seating_over_capacity')) {
+        const read = (key: string) =>
+          Number(new RegExp(`${key}=(-?\\d+)`).exec(raw)?.[1] ?? 0);
+        return t('form.table.overCapacity', {
+          party: read('party'),
+          free: read('free'),
+          shortfall: read('shortfall'),
+        });
+      }
+      if (raw.includes('seating_table_not_found')) {
+        return t('form.table.tableGone');
+      }
+      return raw;
+    },
+    [t],
+  );
+
   const [, formAction, isPending] = useActionState(
     async (
       _prevState: UpsertGuestState | null,
@@ -141,7 +164,11 @@ export function GuestForm({
     ): Promise<UpsertGuestState | null> => {
       const promise = upsertGuest(eventId, formData).then((result) => {
         if (!result.success) {
-          throw new Error(result.message || t('form.somethingWentWrong'));
+          throw new Error(
+            result.message
+              ? describeUpsertError(result.message)
+              : t('form.somethingWentWrong'),
+          );
         }
         return result;
       });
@@ -218,6 +245,19 @@ export function GuestForm({
     .map((s: string) => s.trim())
     .filter(Boolean);
   const amountValue = form.watch('amount') || 1;
+
+  // A declined Guest Record has no Table Assignment (ADR-0008). The database
+  // clears it on save whatever the form sends, so the field disappears here
+  // rather than showing a value that is about to stop being true.
+  const rsvpValue = form.watch('rsvpStatus');
+  const isDeclined = rsvpValue === 'declined';
+  const tableIdValue = form.watch('tableId');
+
+  React.useEffect(() => {
+    if (isDeclined && tableIdValue) {
+      form.setValue('tableId', null, { shouldDirty: true });
+    }
+  }, [form, isDeclined, tableIdValue]);
 
   const toggleChip = (chip: string) => {
     const next = selectedChips.includes(chip) ? '' : chip;
@@ -458,22 +498,37 @@ export function GuestForm({
                 );
               }}
             />
-            <FormField
-              control={form.control}
-              name="tableId"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>{t('form.table.label')}</FormLabel>
-                  <GuestTableCombobox
-                    eventId={eventId}
-                    tables={tables}
-                    value={field.value ?? null}
-                    onChange={field.onChange}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {isDeclined ? (
+              <FormItem className="col-span-2">
+                <FormLabel>{t('form.table.label')}</FormLabel>
+                <p className="text-muted-foreground text-sm">
+                  {t('form.table.declined')}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {t('form.table.declinedHint')}
+                </p>
+              </FormItem>
+            ) : (
+              <FormField
+                control={form.control}
+                name="tableId"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>{t('form.table.label')}</FormLabel>
+                    <GuestTableCombobox
+                      tables={tables}
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      partyHeads={amountValue}
+                      originalTableId={guest?.tableId ?? null}
+                      originalPartyHeads={guest?.amount ?? 0}
+                      guestName={form.watch('name')}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         </div>
 

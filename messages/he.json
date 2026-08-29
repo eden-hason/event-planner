@@ -46,106 +46,192 @@
     "templates": "תבניות",
     "budget": "תקציב",
     "getHelp": "עזרה",
-    "comingSoon": "בקרוב"
+    "comingSoon": "בקרוב",
+    "new": "חדש"
   },
   "seating": {
-    "addTable": "הוסף שולחן",
-    "searchPlaceholder": "חיפוש אורחים",
-    "filterAllGroups": "כל הקבוצות",
-    "filterNoGroup": "ללא קבוצה",
+    "title": "סידור הושבה",
+    "addTable": "הוספת שולחן",
+    "addTablesBatch": "הוספת שולחנות בכמות",
+    "addTablesMenu": "הוספת שולחנות",
+    "tableNumber": "שולחן {number}",
+    "tableTitle": "שולחן {number} · {label}",
+    "tabs": {
+      "tables": "שולחנות",
+      "unassigned": "ללא שיבוץ"
+    },
+    "progress": {
+      "ready": "מהאורחים שאישרו הגעה משובצים",
+      "confirmedLine": "{seated} מתוך {total} אורחים מאושרים משובצים",
+      "pendingLine": "{count, plural, one {אורח אחד ממתין ללא שיבוץ} other {# אורחים ממתינים ללא שיבוץ}}",
+      "capacityLine": "{used} מתוך {total} מקומות בשימוש",
+      "complete": "הסידור הושלם",
+      "inProgress": "בתהליך",
+      "mobileLine": "{confirmed, plural, one {נותר אורח מאושר אחד} other {נותרו # אורחים מאושרים}} · {pending} ממתינים ללא שיבוץ"
+    },
     "unassigned": {
-      "title": "ללא הושבה",
-      "empty": "כל האורחים יושבים",
-      "noMatches": "לא נמצאו אורחים תואמים",
-      "help": "גררו אורחים לשולחנות, או השתמשו בהושבה אוטומטית"
+      "title": "ללא שיבוץ",
+      "countLine": "{records, plural, one {רשומה אחת} other {# רשומות}} · {heads, plural, one {אורח אחד} other {# אורחים}}",
+      "searchPlaceholder": "חיפוש בכל האורחים…",
+      "viewGuests": "אורחים",
+      "viewGroups": "קבוצות",
+      "selectAll": "בחירת הכול",
+      "toggleGroup": "הצגה או הסתרה של הקבוצה",
+      "seatedMatchHeading": "{count, plural, one {התאמה אחת כבר משובצת} other {# התאמות כבר משובצות}} - הקישו כדי למצוא",
+      "allMatchesSeated": "כל ההתאמות כבר משובצות",
+      "noMatches": "לא נמצא אורח שתואם ל”{query}“",
+      "selectionLine": "{records, plural, one {רשומה אחת נבחרה} other {# רשומות נבחרו}} · {heads, plural, one {אורח אחד} other {# אורחים}}",
+      "assignSelected": "שיבוץ הנבחרים",
+      "assignSelectedLong": "שיבוץ הנבחרים לשולחן",
+      "clear": "ניקוי",
+      "assign": "שיבוץ",
+      "selectGuest": "בחירת אורח",
+      "noGroup": "ללא קבוצה",
+      "heads": "{heads, plural, one {אורח אחד} other {# אורחים}}",
+      "pendingCount": "{pending} ממתינים",
+      "empty": "לכולם כאן יש מקום 🎉",
+      "emptyHint": "לא נותר מה לשבץ"
     },
-    "canvas": {
-      "empty": "הוסיפו שולחן ראשון כדי להתחיל בהושבה"
-    },
-    "actions": {
-      "delete": "מחיקה"
-    },
-    "fields": {
-      "label": "שם",
-      "labelOptional": "(לא חובה)",
-      "labelPlaceholder": "למשל משפחה, VIP, שולחן 1",
-      "labelAutoPlaceholder": "אם תשאירו ריק, השם יהיה #{number}",
+    "table": {
+      "occupancy": "{confirmed} מאושרים מתוך {capacity}",
+      "occupancyWithPending": "{confirmed} מאושרים + {pending} ממתינים מתוך {capacity}",
+      "placesLeft": "{count, plural, one {נותר מקום אחד} other {נותרו # מקומות}}",
+      "left": "נותרו {count}",
+      "full": "מלא",
+      "emptyWithPlaces": "ריק · {capacity, plural, one {מקום אחד} other {# מקומות}}",
+      "seatSummary": "{seated}/{capacity}",
+      "noOneSeated": "עדיין לא שובץ אף אחד",
+      "noOneSeatedHint": "גררו אורח אל השולחן, או השתמשו בשיבוץ",
+      "pending": "ממתין",
+      "unassignGuest": "ביטול שיבוץ",
+      "close": "סגירה",
       "shape": "צורה",
-      "capacity": "קיבולת"
+      "seats": "מקומות",
+      "fewerSeats": "פחות מקומות",
+      "moreSeats": "עוד מקומות",
+      "orientation": "כיוון",
+      "seatHintOccupied": "אי אפשר לרדת מתחת ל-{occupancy} - זה מספר המשובצים כאן כרגע",
+      "editNumberAndLabel": "עריכת מספר ותיאור",
+      "deleteTable": "מחיקת שולחן",
+      "showMore": "הצגת {count} נוספים",
+      "showLess": "הצגה מצומצמת"
     },
     "shapes": {
       "round": "עגול",
-      "rectangle": "מלבני",
-      "square": "מרובע"
+      "square": "מרובע",
+      "rectangle": "אבירים"
+    },
+    "orientations": {
+      "horizontal": "לרוחב",
+      "vertical": "לאורך"
+    },
+    "empty": {
+      "title": "לכל אורח מגיע מקום",
+      "description": "התחילו ביצירת השולחנות. רוב הזוגות מסדרים את כל האולם בבת אחת, ומתאימים בהמשך לפי האישורים.",
+      "batch": "יצירת שולחנות בכמות",
+      "single": "הוספת שולחן בודד",
+      "waiting": "{count, plural, one {רשומה מאושרת אחת ממתינה לשיבוץ} other {# רשומות מאושרות ממתינות לשיבוץ}}"
     },
     "createDialog": {
-      "title": "שולחן חדש",
-      "description": "הוסיפו שולחן לתוכנית ההושבה",
-      "submit": "יצירה"
+      "title": "הוספת שולחן",
+      "description": "עוד שולחן אחד לשינוי של הרגע האחרון.",
+      "number": "מספר",
+      "label": "תיאור",
+      "labelOptional": "(רשות)",
+      "labelPlaceholder": "לדוגמה: חברים מהעבודה",
+      "seats": "מקומות",
+      "shape": "צורה",
+      "hint": "המספר הפנוי הבא אחרי שולחן {number}. אפשר לשנות צורה ומקומות בכל עת.",
+      "hintFirst": "השולחן הראשון באירוע הזה. אפשר לשנות צורה ומקומות בכל עת.",
+      "submit": "הוספת שולחן",
+      "cancel": "ביטול"
     },
-    "editSheet": {
-      "title": "עריכת שולחן",
-      "description": "עדכנו את פרטי השולחן או נהלו את האורחים שבו",
-      "seatedHeading": "מושבים",
-      "empty": "אין אורחים בשולחן זה",
-      "unassign": "הסרה"
+    "editDialog": {
+      "title": "עריכת {table}",
+      "description": "המספר הוא מה שהאורחים מחפשים, ולכן הוא חייב להישאר ייחודי באירוע.",
+      "submit": "שמירת השולחן"
+    },
+    "batchDialog": {
+      "title": "הוספת שולחנות בכמות",
+      "description": "סדרו את כל האולם בבת אחת. כל השולחנות נוצרים יחד, או שאף אחד לא נוצר.",
+      "quantity": "כמה שולחנות",
+      "startNumber": "מספר התחלה",
+      "seats": "מקומות בכל שולחן",
+      "shape": "צורה לכולם",
+      "shapeHint": "אפשר לשנות צורה וקיבולת של כל שולחן בהמשך",
+      "preview": "תצוגה מקדימה",
+      "previewRange": "שולחנות {from} - {to} · {shape} · {seats} מקומות בכל אחד",
+      "previewOne": "שולחן {from} · {shape} · {seats} מקומות",
+      "previewPlaces": "{places, plural, one {מקום חדש אחד} other {# מקומות חדשים}} · אף אחד מהמספרים האלה אינו בשימוש",
+      "conflictDescription": "שום דבר לא נוצר - תקנו את ההתנגשות ונסו שוב.",
+      "conflict": "{numbers} כבר קיימים. התחילו מ-{suggestion} כדי לשמור על מספרים ייחודיים.",
+      "conflictOne": "שולחן {numbers} כבר קיים. התחילו מ-{suggestion} כדי לשמור על מספרים ייחודיים.",
+      "submit": "{count, plural, one {יצירת שולחן אחד} other {יצירת # שולחנות}}",
+      "cancel": "ביטול"
     },
     "deleteDialog": {
-      "title": "למחוק את השולחן?",
-      "description": "האורחים שבשולחן יעברו לרשימת הלא משובצים"
+      "title": "למחוק את {table}?",
+      "description": "{records, plural, one {רשומת אורח אחת} other {# רשומות אורחים}} - {heads, plural, one {אורח אחד} other {# אורחים}} בסך הכול - יחזרו ללא שיבוץ. אף אורח לא נמחק. אי אפשר לבטל את הפעולה.",
+      "descriptionEmpty": "השולחן ריק, כך שדבר לא זז. אי אפשר לבטל את הפעולה.",
+      "returning": "חוזרים ללא שיבוץ",
+      "cancel": "השארת השולחן",
+      "confirm": "מחיקת השולחן",
+      "blockedTitle": "אי אפשר למחוק את {table}",
+      "blockedDescription": "בשולחן הזה יושבים {heads, plural, one {אורח אחד ששובץ} other {# אורחים ששובצו}} על ידי מארגן אחר, מחוץ להרשאות שלכם. בקשו מבעלי האירוע למחוק אותו.",
+      "blockedNote": "עדיין אפשר לשבץ ולבטל שיבוץ של האורחים שלכם בשולחן הזה.",
+      "close": "סגירה"
     },
-    "stats": {
-      "seated": "מושבים",
-      "capacity": "קיבולת",
-      "tables": "שולחנות",
-      "tablesFull": "{count} מלאים",
-      "floorUsage": "ניצול אולם",
-      "healthy": "תקין",
-      "lowUsage": "נמוך",
-      "tight": "מלא",
-      "usage": "ניצול קיבולת"
+    "assignDialog": {
+      "title": "שיבוץ {name}",
+      "titleBulk": "שיבוץ {count} רשומות",
+      "description": "כל מי שברשומה הזו יושב יחד. שולחנות ללא מקום מושבתים.",
+      "descriptionBulk": "כולם עוברים יחד, או שאף אחד לא עובר. שולחנות ללא מקום מושבתים.",
+      "fits": "מתאים",
+      "short": "חסרים {count}",
+      "freePlaces": "{count} פנויים",
+      "cancel": "ביטול",
+      "noTables": "עדיין אין שולחנות - צרו אחד קודם"
     },
-    "sections": {
-      "confirmed": "מאושרים",
-      "pending": "ממתינים"
-    },
-    "tools": {
-      "move": "הזזה",
-      "round": "עגול",
-      "square": "מרובע",
-      "rectangle": "שולחן ארוך"
-    },
-    "legend": {
-      "groups": "קבוצות",
-      "moreCount": "+{count}"
+    "scope": {
+      "bannerTitle": "אתם מסדרים את האורחים שהוקצו לכם",
+      "bannerBody": "אתם רואים כל שולחן ואת התפוסה האמיתית שלו, אבל יכולים לשבץ רק את {count, plural, one {רשומת האורח האחת} other {# רשומות האורחים}} שבהרשאות שלכם.",
+      "outOfScope": "{count, plural, one {רשומה אחת מחוץ להרשאות שלכם} other {# רשומות מחוץ להרשאות שלכם}}",
+      "outOfScopeNote": "השמות מוסתרים. המקומות שלהם עדיין נספרים בקיבולת",
+      "deleteBlocked": "המחיקה אינה זמינה - בשולחן הזה יושבים אורחים שאינכם רואים",
+      "deleteBlockedTooltip": "מחיקה חסומה"
     },
     "zoom": {
-      "in": "הגדל",
-      "out": "הקטן",
-      "fit": "התאם למסך"
-    },
-    "autoSeat": {
-      "label": "הושבה אוטומטית",
-      "stubTooltip": "הושבה חכמה בקרוב"
-    },
-    "addGuest": "הוסף אורח",
-    "toast": {
-      "creating": "יוצר שולחן",
-      "created": "השולחן נוצר",
-      "updating": "מעדכן שולחן",
-      "updated": "השולחן עודכן",
-      "deleting": "מוחק שולחן",
-      "deleted": "השולחן נמחק"
+      "in": "התקרבות",
+      "out": "התרחקות",
+      "fit": "התאמה לתצוגה"
     },
     "errors": {
-      "createFailed": "לא ניתן ליצור את השולחן",
-      "updateFailed": "לא ניתן לעדכן את השולחן",
-      "deleteFailed": "לא ניתן למחוק את השולחן",
-      "assignFailed": "לא ניתן לשבץ את האורח"
+      "overCapacitySingle": "{name} מגיע עם {party, plural, one {אורח אחד} other {# אורחים}}. ב{table} {free, plural, =0 {לא נותרו מקומות} one {נותר מקום אחד} other {נותרו # מקומות}} - חסרים {shortfall}. בחרו שולחן עם מקום, או פנו מקומות קודם",
+      "overCapacityBulk": "{records} רשומות עם {party} אורחים לא נכנסות ל{table} - {free, plural, =0 {לא נותרו מקומות} one {נותר מקום אחד} other {נותרו # מקומות}}, חסרים {shortfall}. אף אחד לא הועבר",
+      "capacityBelowOccupancy": "ב{table} יושבים כרגע {occupancy} אורחים. אי אפשר לרדת מתחת ל-{occupancy} - בטלו שיבוץ של מישהו קודם",
+      "duplicateNumber": "שולחן {number} כבר קיים. המספרים חייבים להיות ייחודיים באירוע",
+      "duplicateNumbers": "שולחנות {numbers} כבר קיימים. המספרים חייבים להיות ייחודיים באירוע",
+      "deleteOutOfScope": "בשולחן הזה יושבים אורחים מחוץ להרשאות שלכם. בקשו מבעלי האירוע למחוק אותו",
+      "tableNotFound": "השולחן הזה כבר לא קיים",
+      "nothingAssignable": "אין מה לשבץ",
+      "createFailed": "יצירת השולחן נכשלה",
+      "updateFailed": "עדכון השולחן נכשל",
+      "deleteFailed": "מחיקת השולחן נכשלה",
+      "assignFailed": "עדכון ההושבה נכשל"
     },
-    "mobile": {
-      "title": "פתחו במסך גדול יותר",
-      "description": "מתכנן ההושבה פועל בצורה הטובה ביותר במחשב"
+    "toast": {
+      "seating": "מעדכן שיבוץ",
+      "seated": "{count, plural, one {אורח אחד שובץ} other {# אורחים שובצו}} ל{table} - {free, plural, =0 {לא נותרו מקומות} one {נותר מקום אחד} other {נותרו # מקומות}}",
+      "unseated": "{name} חזר ללא שיבוץ - {freed, plural, one {מקום אחד פונה} other {# מקומות פונו}} ב{table}",
+      "creatingTable": "יוצר שולחן",
+      "created": "{table} נוצר",
+      "creatingBatch": "יוצר שולחנות",
+      "batchCreated": "{count, plural, one {נוצר שולחן אחד} other {נוצרו # שולחנות}}",
+      "updatingTable": "מעדכן שולחן",
+      "updated": "{table} עודכן",
+      "deletingTable": "מוחק שולחן",
+      "deleted": "{table} נמחק",
+      "positionFailed": "לא ניתן היה לשמור את מיקום השולחן - ייתכן שיחזור בריענון"
     }
   },
   "sidebar": {
@@ -437,13 +523,24 @@
       "noSide": "ללא צד",
       "table": {
         "label": "שולחן",
-        "placeholder": "ללא שולחן",
-        "searchPlaceholder": "חפש או הקלד מספר שולחן",
+        "placeholder": "ללא שיבוץ",
+        "searchPlaceholder": "חיפוש שולחנות",
         "empty": "לא נמצאו שולחנות",
-        "none": "ללא שולחן",
+        "none": "ללא שיבוץ",
         "tableNumber": "שולחן {number}",
-        "create": "צור שולחן {number}",
-        "createError": "יצירת השולחן נכשלה"
+        "tableTitle": "שולחן {number} · {label}",
+        "declined": "- לא משובץ",
+        "declinedHint": "לרשומות שסירבו אין שדה שולחן. שינוי הסטטוס לסירוב משחרר את המקום באותה שמירה.",
+        "assigning": "שיבוץ {name} · {heads, plural, one {אורח אחד} other {# אורחים}}",
+        "footer": "צריך שולחן חדש? צרו אותו בסידור ההושבה",
+        "occupancy": "{confirmed} מאושרים מתוך {capacity}",
+        "occupancyWithPending": "{confirmed} מאושרים + {pending} ממתינים מתוך {capacity}",
+        "emptyWithPlaces": "ריק · {capacity, plural, one {מקום אחד} other {# מקומות}}",
+        "free": "{count} פנויים",
+        "short": "חסרים {count}",
+        "fits": "מתאים",
+        "overCapacity": "הרשומה כוללת {party, plural, one {אורח אחד} other {# אורחים}} ולשולחן הזה {free, plural, one {נותר מקום אחד} other {נותרו # מקומות}} - חסרים {shortfall}. בחרו שולחן עם מקום, או הקטינו את מספר האורחים",
+        "tableGone": "השולחן הזה כבר לא קיים - בחרו אחר"
       }
     },
     "rsvp": {
@@ -487,7 +584,8 @@
       "firstPage": "עמוד ראשון",
       "previousPage": "עמוד קודם",
       "nextPage": "עמוד הבא",
-      "lastPage": "עמוד אחרון"
+      "lastPage": "עמוד אחרון",
+      "notSeated": "- לא משובץ"
     },
     "directory": {
       "importCsv": "ייבוא קובץ",

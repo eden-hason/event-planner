@@ -1,57 +1,64 @@
 'use client';
 
-import * as React from 'react';
-import { Plus, Minus, Maximize } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { Minus, Plus, Scan } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSeatingCopy } from './use-seating-copy';
 
 interface CanvasZoomControlsProps {
   scale: number;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onFitView: () => void;
+  onFit: () => void;
 }
 
 export function CanvasZoomControls({
   scale,
+  canZoomIn,
+  canZoomOut,
   onZoomIn,
   onZoomOut,
-  onFitView,
+  onFit,
 }: CanvasZoomControlsProps) {
-  const t = useTranslations('seating');
+  const { t } = useSeatingCopy();
 
   return (
-    <div className="absolute bottom-3 right-3 z-10 flex flex-col items-center gap-0.5 rounded-lg border bg-background p-1 shadow-sm">
+    <div className="bg-card border-border absolute bottom-4 start-4 flex items-center gap-1 rounded-lg border p-1">
       <Button
-        size="icon"
+        type="button"
         variant="ghost"
-        className="h-7 w-7"
-        onClick={onZoomIn}
-        title={t('zoom.in')}
+        size="icon"
+        className="size-7"
+        aria-label={t('zoom.out')}
+        disabled={!canZoomOut}
+        onClick={onZoomOut}
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Minus className="size-3.5" />
       </Button>
-      <span className="w-9 select-none text-center text-xs font-medium text-muted-foreground">
+      <span className="text-muted-foreground w-11 text-center text-xs tabular-nums">
         {Math.round(scale * 100)}%
       </span>
       <Button
-        size="icon"
+        type="button"
         variant="ghost"
-        className="h-7 w-7"
-        onClick={onZoomOut}
-        title={t('zoom.out')}
+        size="icon"
+        className="size-7"
+        aria-label={t('zoom.in')}
+        disabled={!canZoomIn}
+        onClick={onZoomIn}
       >
-        <Minus className="h-3.5 w-3.5" />
+        <Plus className="size-3.5" />
       </Button>
-      <div className="my-0.5 h-px w-5 bg-border" />
       <Button
-        size="icon"
+        type="button"
         variant="ghost"
-        className="h-7 w-7"
-        onClick={onFitView}
-        title={t('zoom.fit')}
+        size="icon"
+        className="size-7"
+        aria-label={t('zoom.fit')}
+        onClick={onFit}
       >
-        <Maximize className="h-3.5 w-3.5" />
+        <Scan className="size-3.5" />
       </Button>
     </div>
   );

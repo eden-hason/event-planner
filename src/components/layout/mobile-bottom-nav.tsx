@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
+  IconArmchair,
   IconDashboard,
   IconUsers,
   IconUsersGroup,
@@ -12,8 +13,9 @@ import {
 import { Bot } from 'lucide-react';
 import { BottomNavBar } from '@/components/ui/bottom-nav-bar';
 import { useCollaboration } from '@/components/feature-layout';
+import { isSeatingRoute } from './app-shell';
 
-const SEATING_MANAGER_ALLOWED = new Set(['dashboard', 'guests', 'aiAssistant']);
+const SEATING_MANAGER_ALLOWED = new Set(['dashboard', 'guests', 'seating', 'aiAssistant']);
 
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
@@ -38,13 +40,33 @@ export function MobileBottomNav() {
     { id: 'guests', title: tNav('guests'), url: buildNavUrl('/app/guests', eventId), icon: IconUsers },
     { id: 'schedules', title: tNav('schedules'), url: buildNavUrl('/app/schedules', eventId), icon: IconCalendar },
     { id: 'collaboration', title: tNav('collaboration'), url: buildNavUrl('/app/collaborate', eventId), icon: IconUsersGroup },
-    {
-      id: 'aiAssistant',
-      title: tChat('title'),
-      icon: Bot,
-      variant: 'featured' as const,
-      onClick: () => window.dispatchEvent(new Event('kululu:open-ai-assistant')),
-    },
+    // Without this a Seating Manager - whose entire job is the Seating Plan -
+    // could not reach it on a phone at all.
+    ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
+      ? [
+          {
+            id: 'seating',
+            title: tNav('seating'),
+            url: buildNavUrl('/app/seating', eventId),
+            icon: IconArmchair,
+          },
+        ]
+      : []),
+    // The Seating Plan hides the AI assistant launcher (its workspace owns both
+    // bottom corners), so the panel is not mounted there - drop the nav entry
+    // too rather than leave a button that opens nothing.
+    ...(isSeatingRoute(pathname)
+      ? []
+      : [
+          {
+            id: 'aiAssistant',
+            title: tChat('title'),
+            icon: Bot,
+            variant: 'featured' as const,
+            onClick: () =>
+              window.dispatchEvent(new Event('kululu:open-ai-assistant')),
+          },
+        ]),
   ];
 
   const items = isOwner
