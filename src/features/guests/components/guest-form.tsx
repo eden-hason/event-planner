@@ -51,6 +51,12 @@ import { DIETARY_PRESETS } from '@/features/guests/utils';
 import type { MealChoice } from '@/lib/meal-choices';
 import posthog from 'posthog-js';
 
+const RSVP_STATUS_OPTIONS = [
+  { value: 'confirmed', dotClassName: 'bg-green-500' },
+  { value: 'declined', dotClassName: 'bg-red-500' },
+  { value: 'pending', dotClassName: 'bg-amber-400' },
+] as const;
+
 interface GuestFormProps {
   eventId: string;
   guest?: GuestApp | null;
@@ -327,9 +333,58 @@ export function GuestForm({
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="side"
+              name="rsvpStatus"
               render={({ field }) => (
                 <FormItem className="col-span-2">
+                  <FormLabel>{t('form.rsvpStatus')}</FormLabel>
+                  <FormControl>
+                    <div
+                      role="radiogroup"
+                      aria-label={t('form.rsvpStatus')}
+                      className="grid grid-cols-3 overflow-hidden rounded-lg border bg-background"
+                    >
+                      {RSVP_STATUS_OPTIONS.map((option) => {
+                        const isSelected = field.value === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={isSelected}
+                            onClick={() => field.onChange(option.value)}
+                            className={cn(
+                              'flex items-center justify-center gap-2 border-s px-3 py-2.5 text-sm transition-colors first:border-s-0 focus-visible:ring-ring/50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-[3px]',
+                              isSelected
+                                ? 'bg-muted font-semibold text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/50',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'size-2 shrink-0 rounded-full',
+                                option.dotClassName,
+                              )}
+                            />
+                            {t(
+                              `rsvp.${option.value}` as
+                                | 'rsvp.confirmed'
+                                | 'rsvp.declined'
+                                | 'rsvp.pending',
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="side"
+              render={({ field }) => (
+                <FormItem>
                   <FormLabel>{t('form.side')}</FormLabel>
                   <Select
                     value={field.value ?? 'none'}
@@ -349,47 +404,6 @@ export function GuestForm({
                           {t(`sides.${side}` as 'sides.bride' | 'sides.groom')}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="tableId"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>{t('form.table.label')}</FormLabel>
-                  <GuestTableCombobox
-                    eventId={eventId}
-                    tables={tables}
-                    value={field.value ?? null}
-                    onChange={field.onChange}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="rsvpStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('form.rsvpStatus')}</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={t('form.rsvpPlaceholder')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">{t('rsvp.pending')}</SelectItem>
-                      <SelectItem value="confirmed">{t('rsvp.confirmed')}</SelectItem>
-                      <SelectItem value="declined">{t('rsvp.declined')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -443,6 +457,22 @@ export function GuestForm({
                   </FormItem>
                 );
               }}
+            />
+            <FormField
+              control={form.control}
+              name="tableId"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>{t('form.table.label')}</FormLabel>
+                  <GuestTableCombobox
+                    eventId={eventId}
+                    tables={tables}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
         </div>
