@@ -549,11 +549,11 @@
       "declined": "סירב"
     },
     "stats": {
-      "totalGuests": "סה\"כ רשומות",
+      "totalGuests": "סה\"כ אורחים",
       "confirmed": "אישרו",
       "pending": "ממתינים",
       "declined": "סירבו",
-      "people": "{count} אורחים",
+      "records": "{count} רשומות",
       "all": "הכל",
       "guestsLabel": "אורחים"
     },
@@ -580,7 +580,7 @@
       "addGuest": "הוסף אורח",
       "noGuestsSearch": "לא נמצאו אורחים התואמים לחיפוש.",
       "noGuestsFound": "לא נמצאו אורחים.",
-      "showing": "מציג {start}-{end} מתוך {total} אורחים",
+      "showing": "מציג {start}-{end} מתוך {total} רשומות",
       "firstPage": "עמוד ראשון",
       "previousPage": "עמוד קודם",
       "nextPage": "עמוד הבא",

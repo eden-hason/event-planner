@@ -553,7 +553,7 @@
       "confirmed": "Confirmed",
       "pending": "Pending",
       "declined": "Declined",
-      "people": "{count} people",
+      "records": "{count} records",
       "all": "All",
       "guestsLabel": "Guests"
     },
@@ -580,7 +580,7 @@
       "addGuest": "Add Guest",
       "noGuestsSearch": "No guests found matching your search.",
       "noGuestsFound": "No guests found.",
-      "showing": "Showing {start}-{end} of {total} guests",
+      "showing": "Showing {start}-{end} of {total} records",
       "firstPage": "First page",
       "previousPage": "Previous page",
       "nextPage": "Next page",

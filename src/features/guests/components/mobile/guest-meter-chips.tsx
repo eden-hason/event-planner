@@ -26,15 +26,24 @@ export function GuestMeterChips({
 }: GuestMeterChipsProps) {
   const t = useTranslations('guests');
 
+  // Counts are in guests (the sum of every record's amount), matching the
+  // desktop stat cards. The record count rides along as the secondary number.
   const counts = useMemo(() => {
-    const total = guests.length;
-    const confirmed = guests.filter((g) => g.rsvpStatus === 'confirmed').length;
-    const pending = guests.filter((g) => g.rsvpStatus === 'pending').length;
-    const declined = guests.filter((g) => g.rsvpStatus === 'declined').length;
-    return { total, confirmed, pending, declined };
+    const guestCount = (rows: GuestWithGroupApp[]) =>
+      rows.reduce((s, g) => s + g.amount, 0);
+    const byStatus = (status: string) =>
+      guestCount(guests.filter((g) => g.rsvpStatus === status));
+
+    return {
+      total: guestCount(guests),
+      totalRecords: guests.length,
+      confirmed: byStatus('confirmed'),
+      pending: byStatus('pending'),
+      declined: byStatus('declined'),
+    };
   }, [guests]);
 
-  if (counts.total === 0) return null;
+  if (guests.length === 0) return null;
 
   const pct = (n: number) => (counts.total > 0 ? (n / counts.total) * 100 : 0);
   const isAllActive = selectedStatuses.length === 0;
@@ -59,6 +68,12 @@ export function GuestMeterChips({
             <span className="text-lg font-bold">{counts.total.toLocaleString()}</span>
             <span className="text-sm font-normal text-muted-foreground">
               {t('stats.guestsLabel')}
+            </span>
+            <span className="text-xs font-normal text-muted-foreground">
+              ·{' '}
+              {t('stats.records', {
+                count: counts.totalRecords.toLocaleString(),
+              })}
             </span>
           </span>
           <span className="text-sm font-normal text-foreground">
