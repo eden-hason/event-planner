@@ -529,8 +529,7 @@
         "none": "Unassigned",
         "tableNumber": "Table {number}",
         "tableTitle": "Table {number} · {label}",
-        "declined": "- not seated",
-        "declinedHint": "Declined records have no Table field. Setting RSVP to declined releases the seat in the same save.",
+        "declinedHint": "Declined guests are not seated - setting RSVP to declined releases the table in the same save",
         "assigning": "Assigning {name} · {heads, plural, one {# guest} other {# guests}}",
         "footer": "Need a new table? Create it in the Seating Plan",
         "occupancy": "{confirmed} confirmed of {capacity}",
@@ -584,8 +583,7 @@
       "firstPage": "First page",
       "previousPage": "Previous page",
       "nextPage": "Next page",
-      "lastPage": "Last page",
-      "notSeated": "- not seated"
+      "lastPage": "Last page"
     },
     "directory": {
       "importCsv": "Import File",
