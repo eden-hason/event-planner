@@ -48,7 +48,14 @@ export function UserSheetShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
+export function UserSheet({
+  detail,
+  testAccountsVisible,
+}: {
+  detail: UserDetail | 'not-found';
+  /** Passed through to the footer's confirm, which changes what marking costs. */
+  testAccountsVisible: boolean;
+}) {
   const isNotFound = detail === 'not-found';
   const title = isNotFound ? 'User not found' : detail.fullName || detail.email;
   const tint = avatarTint(isNotFound ? 'not-found' : detail.id);
@@ -78,7 +85,9 @@ export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
           </div>
           <SheetDescription className="truncate text-[13px]">
             {isNotFound
-              ? 'It may have been hidden by the test accounts toggle'
+              ? testAccountsVisible
+                ? 'Nothing in the directory carries that id'
+                : 'It may have been hidden by the test accounts toggle'
               : detail.fullName
                 ? detail.email
                 : 'No name provided'}
@@ -90,11 +99,18 @@ export function UserSheet({ detail }: { detail: UserDetail | 'not-found' }) {
       </div>
 
       {isNotFound ? (
-        <div className="flex-1 px-5 py-6 text-[13.5px] text-muted-foreground">
-          This user no longer exists, or is a test account currently hidden by the top bar toggle
+        <div className="text-muted-foreground flex-1 px-5 py-6 text-[13.5px]">
+          {/*
+           * With the toggle already on there is nothing left for it to be
+           * hiding, so blaming it would send the Operator to a switch that
+           * cannot help.
+           */}
+          {testAccountsVisible
+            ? 'This user no longer exists. Test accounts are already showing, so nothing is being hidden from you here'
+            : 'This user no longer exists, or is a test account currently hidden by the top bar toggle'}
         </div>
       ) : (
-        <UserSheetBody detail={detail} title={title} />
+        <UserSheetBody detail={detail} title={title} testAccountsVisible={testAccountsVisible} />
       )}
     </>
   );
@@ -128,15 +144,31 @@ export function UserSheetError() {
   );
 }
 
-function UserSheetBody({ detail, title }: { detail: UserDetail; title: string }) {
+function UserSheetBody({
+  detail,
+  title,
+  testAccountsVisible,
+}: {
+  detail: UserDetail;
+  title: string;
+  testAccountsVisible: boolean;
+}) {
   const hasOwns = detail.ownedEvents.length > 0;
   const hasShared = detail.sharedEvents.length > 0;
   const ownsVisible = detail.ownedEvents.slice(0, OWNS_VISIBLE_LIMIT);
   const ownsHiddenCount = detail.ownedEvents.length - ownsVisible.length;
 
   async function copyUserId() {
-    await navigator.clipboard.writeText(detail.id);
-    toast.success('User ID copied');
+    // The clipboard API is unavailable outside a secure context and can be
+    // refused by permissions, and a rejected promise here would otherwise
+    // surface as an unhandled rejection with the Operator still believing the
+    // id is on their clipboard.
+    try {
+      await navigator.clipboard.writeText(detail.id);
+      toast.success('User ID copied');
+    } catch {
+      toast.error('Could not copy the user ID - select it and copy by hand');
+    }
   }
 
   return (
@@ -238,7 +270,12 @@ function UserSheetBody({ detail, title }: { detail: UserDetail; title: string })
         <span className="text-muted-foreground/70 text-[12px]">
           {detail.isTestAccount ? 'Excluded from every Back Office count' : 'Counted everywhere in the Back Office'}
         </span>
-        <MarkTestAccountDialog userId={detail.id} userName={title} isTestAccount={detail.isTestAccount}>
+        <MarkTestAccountDialog
+          userId={detail.id}
+          userName={title}
+          isTestAccount={detail.isTestAccount}
+          testAccountsVisible={testAccountsVisible}
+        >
           {(open) => (
             <Button type="button" variant="outline" size="sm" className="text-muted-foreground ms-auto shrink-0" onClick={open}>
               {detail.isTestAccount ? 'Remove test account mark' : 'Mark as test account'}

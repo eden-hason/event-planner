@@ -100,8 +100,15 @@ async function UsersDirectory({
 
 async function UserSheetContents({ userId }: { userId: string }) {
   try {
-    const detail = await getUserDetail(userId);
-    return <UserSheet detail={detail ?? 'not-found'} />;
+    // areTestAccountsVisible is cached per render, so asking for it here as
+    // well as in the directory above costs one cookie read, not two. The sheet
+    // needs it for two honest answers: why a User is missing, and what marking
+    // one is about to cost.
+    const [detail, testAccountsVisible] = await Promise.all([
+      getUserDetail(userId),
+      areTestAccountsVisible(),
+    ]);
+    return <UserSheet detail={detail ?? 'not-found'} testAccountsVisible={testAccountsVisible} />;
   } catch (error) {
     console.error('User detail failed:', error);
     return <UserSheetError />;
