@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { getQuickSendGuests, sendScheduleToGuest } from '../actions/quick-send';
 import type { QuickSendGuest } from '../actions/quick-send';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 
 export type QuickSendSchedule = {
@@ -198,7 +199,7 @@ export function QuickSendDialog({ schedules }: { schedules: QuickSendSchedule[] 
                           {guest.name}
                         </span>
                         <span className="text-muted-foreground block truncate text-[12px]">
-                          {guest.phone ?? 'No phone number'}
+                          {guest.phone ? formatPhone(guest.phone) : 'No phone number'}
                           {guest.groupName ? ` · ${guest.groupName}` : ''}
                         </span>
                       </span>

@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
@@ -56,7 +57,7 @@ export const createGuestColumns = (
       cell: ({ row }) => {
         const phone = row.getValue('phone') as string;
         return phone ? (
-          <span className="text-sm">{phone}</span>
+          <span className="text-sm">{formatPhone(phone)}</span>
         ) : (
           <span className="text-sm text-gray-400">-</span>
         );

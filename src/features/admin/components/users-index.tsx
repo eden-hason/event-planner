@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Search, Users as UsersIcon, X } from '@/components/icons';
 import { EyeOff } from 'lucide-react';
+import { formatPhone } from '@/lib/phone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -219,7 +220,7 @@ function UserTableRow({
         </Link>
       </TableCell>
       <TableCell className={cn('text-[13px] tabular-nums', !row.phone && 'text-muted-foreground/70')}>
-        {row.phone || 'not provided'}
+        {row.phone ? formatPhone(row.phone) : 'not provided'}
       </TableCell>
       <TableCell>
         <span className={cn('block text-[13px] tabular-nums', row.ownedEvents === 0 && 'text-muted-foreground')}>

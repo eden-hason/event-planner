@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ChevronRight, Copy, TriangleAlert } from '@/components/icons';
+import { formatPhone } from '@/lib/phone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetTitle } from '@/components/ui/sheet';
@@ -178,7 +179,7 @@ function UserSheetBody({
           <SheetField label="Email" value={detail.email} />
           <SheetField
             label="Phone"
-            value={detail.phone || 'Not provided'}
+            value={detail.phone ? formatPhone(detail.phone) : 'Not provided'}
             muted={!detail.phone}
           />
         </SheetSection>
