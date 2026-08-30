@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { toE164 } from '@/lib/phone';
+import { sendNewUserAdminEmail } from '@/lib/email/send-new-user-admin-email';
 
 export async function saveAvatarUrl(avatarUrl: string) {
   const supabase = await createClient();
@@ -42,6 +44,17 @@ export async function updateUserProfile(formData: FormData) {
   const avatarUrl = formData.get('avatar_url') as string | null;
   const email = formData.get('email') as string | null;
 
+  // A profile row can already exist before onboarding finishes - an avatar
+  // upload or an accepted collaboration invitation both create a minimal one -
+  // so row existence does not mark a registration. The transition of
+  // initial_setup_complete to true does, and it happens exactly once.
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('initial_setup_complete')
+    .eq('id', user.id)
+    .maybeSingle();
+  const isNewRegistration = !existingProfile?.initial_setup_complete;
+
   const { error } = await supabase.from('profiles').upsert({
     id: user.id,
     ...(fullName !== null && { full_name: fullName }),
@@ -53,6 +66,25 @@ export async function updateUserProfile(formData: FormData) {
 
   if (error) {
     return { success: false, message: 'Failed to save profile' };
+  }
+
+  if (isNewRegistration) {
+    // Runs after the response is sent, so a slow or failing notification never
+    // delays or fails the user's onboarding. A bare floating promise would risk
+    // being cut off when the serverless invocation ends.
+    after(async () => {
+      const result = await sendNewUserAdminEmail({
+        fullName,
+        email: email ?? user.email ?? null,
+        phoneNumber: toE164(phoneNumber) ?? phoneNumber,
+        authProvider: user.app_metadata?.provider ?? null,
+        registeredAt: new Date(),
+      });
+
+      if (!result.success && !result.skipped) {
+        console.error('New user admin notification not sent:', result.error);
+      }
+    });
   }
 
   return { success: true, message: 'Profile saved' };
