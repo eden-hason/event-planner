@@ -529,8 +529,7 @@
         "none": "ללא שיבוץ",
         "tableNumber": "שולחן {number}",
         "tableTitle": "שולחן {number} · {label}",
-        "declined": "- לא משובץ",
-        "declinedHint": "לרשומות שסירבו אין שדה שולחן. שינוי הסטטוס לסירוב משחרר את המקום באותה שמירה.",
+        "declinedHint": "אורחים שסירבו אינם משובצים - שינוי הסטטוס לסירוב משחרר את השולחן באותה שמירה",
         "assigning": "שיבוץ {name} · {heads, plural, one {אורח אחד} other {# אורחים}}",
         "footer": "צריך שולחן חדש? צרו אותו בסידור ההושבה",
         "occupancy": "{confirmed} מאושרים מתוך {capacity}",
@@ -584,8 +583,7 @@
       "firstPage": "עמוד ראשון",
       "previousPage": "עמוד קודם",
       "nextPage": "עמוד הבא",
-      "lastPage": "עמוד אחרון",
-      "notSeated": "- לא משובץ"
+      "lastPage": "עמוד אחרון"
     },
     "directory": {
       "importCsv": "ייבוא קובץ",

@@ -18,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -247,8 +248,8 @@ export function GuestForm({
   const amountValue = form.watch('amount') || 1;
 
   // A declined Guest Record has no Table Assignment (ADR-0008). The database
-  // clears it on save whatever the form sends, so the field disappears here
-  // rather than showing a value that is about to stop being true.
+  // clears it on save whatever the form sends, so the field stays put and goes
+  // disabled rather than showing a value that is about to stop being true.
   const rsvpValue = form.watch('rsvpStatus');
   const isDeclined = rsvpValue === 'declined';
   const tableIdValue = form.watch('tableId');
@@ -498,37 +499,31 @@ export function GuestForm({
                 );
               }}
             />
-            {isDeclined ? (
-              <FormItem className="col-span-2">
-                <FormLabel>{t('form.table.label')}</FormLabel>
-                <p className="text-muted-foreground text-sm">
-                  {t('form.table.declined')}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {t('form.table.declinedHint')}
-                </p>
-              </FormItem>
-            ) : (
-              <FormField
-                control={form.control}
-                name="tableId"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>{t('form.table.label')}</FormLabel>
-                    <GuestTableCombobox
-                      tables={tables}
-                      value={field.value ?? null}
-                      onChange={field.onChange}
-                      partyHeads={amountValue}
-                      originalTableId={guest?.tableId ?? null}
-                      originalPartyHeads={guest?.amount ?? 0}
-                      guestName={form.watch('name')}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="tableId"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>{t('form.table.label')}</FormLabel>
+                  <GuestTableCombobox
+                    tables={tables}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    partyHeads={amountValue}
+                    originalTableId={guest?.tableId ?? null}
+                    originalPartyHeads={guest?.amount ?? 0}
+                    guestName={form.watch('name')}
+                    disabled={isDeclined}
+                  />
+                  {isDeclined && (
+                    <FormDescription>
+                      {t('form.table.declinedHint')}
+                    </FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 

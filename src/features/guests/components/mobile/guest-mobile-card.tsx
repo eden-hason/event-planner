@@ -107,16 +107,10 @@ export function GuestMobileCard({
               {guest.group.name}
             </Badge>
           )}
-          {status === 'declined' ? (
-            <span className="text-muted-foreground text-xs">
-              {t('table.notSeated')}
-            </span>
-          ) : (
-            tableNumber !== undefined && (
-              <Badge variant="outline">
-                {t('table.tableNumber', { number: tableNumber })}
-              </Badge>
-            )
+          {tableNumber !== undefined && (
+            <Badge variant="outline">
+              {t('table.tableNumber', { number: tableNumber })}
+            </Badge>
           )}
         </div>
 

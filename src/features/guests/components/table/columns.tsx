@@ -106,13 +106,6 @@ export const createGuestColumns = (
       accessorKey: 'tableId',
       header: () => <div>{t('table.tableColumn')}</div>,
       cell: ({ row }) => {
-        // A declined Guest Record has no Table Assignment at all (ADR-0008),
-        // which is a different thing from being unassigned and waiting.
-        if (row.original.rsvpStatus === 'declined') {
-          return (
-            <span className="text-muted-foreground text-sm">{t('table.notSeated')}</span>
-          );
-        }
         const tableId = row.original.tableId;
         const tableNumber = tableId ? tableNumberById.get(tableId) : undefined;
         return tableNumber !== undefined ? (
