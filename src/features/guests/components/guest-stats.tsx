@@ -16,22 +16,31 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
   const t = useTranslations('guests');
 
   const stats = useMemo<StatItem[]>(() => {
+    // A record is one row in the guest list; a guest is one seat at the event, so
+    // a single record can carry several guests through its amount. Guests are the
+    // headline number here, records the supporting detail.
+    const guestCount = (rows: GuestWithGroupApp[]) =>
+      rows.reduce((s, g) => s + g.amount, 0);
+
     const totalRecords = guests.length;
-    const totalPeople = guests.reduce((s, g) => s + g.amount, 0);
+    const totalGuests = guestCount(guests);
 
     const confirmed = guests.filter((g) => g.rsvpStatus === 'confirmed');
     const pending = guests.filter((g) => g.rsvpStatus === 'pending');
     const declined = guests.filter((g) => g.rsvpStatus === 'declined');
 
     const pct = (n: number) =>
-      totalRecords > 0 ? Math.round((n / totalRecords) * 100) : 0;
+      totalGuests > 0 ? Math.round((n / totalGuests) * 100) : 0;
+
+    const records = (count: number) =>
+      t('stats.records', { count: count.toLocaleString() });
 
     return [
       {
         label: t('stats.totalGuests'),
         status: null,
-        value: totalRecords,
-        secondaryText: t('stats.people', { count: totalPeople.toLocaleString() }),
+        value: totalGuests,
+        secondaryText: records(totalRecords),
         pct: 100,
         icon: <IconUsers className="text-blue-500" />,
         barColor: 'bg-blue-500',
@@ -40,9 +49,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
       {
         label: t('stats.confirmed'),
         status: 'confirmed',
-        value: confirmed.length,
-        secondaryText: t('stats.people', { count: confirmed.reduce((s, g) => s + g.amount, 0).toLocaleString() }),
-        pct: pct(confirmed.length),
+        value: guestCount(confirmed),
+        secondaryText: records(confirmed.length),
+        pct: pct(guestCount(confirmed)),
         icon: <IconUserCheck className="text-green-500" />,
         barColor: 'bg-green-500',
         activeRing: 'bg-green-50 border-green-300',
@@ -50,9 +59,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
       {
         label: t('stats.pending'),
         status: 'pending',
-        value: pending.length,
-        secondaryText: t('stats.people', { count: pending.reduce((s, g) => s + g.amount, 0).toLocaleString() }),
-        pct: pct(pending.length),
+        value: guestCount(pending),
+        secondaryText: records(pending.length),
+        pct: pct(guestCount(pending)),
         icon: <IconUserQuestion className="text-amber-400" />,
         barColor: 'bg-amber-400',
         activeRing: 'bg-amber-50 border-amber-300',
@@ -60,9 +69,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
       {
         label: t('stats.declined'),
         status: 'declined',
-        value: declined.length,
-        secondaryText: t('stats.people', { count: declined.reduce((s, g) => s + g.amount, 0).toLocaleString() }),
-        pct: pct(declined.length),
+        value: guestCount(declined),
+        secondaryText: records(declined.length),
+        pct: pct(guestCount(declined)),
         icon: <IconUserX className="text-red-500" />,
         barColor: 'bg-red-500',
         activeRing: 'bg-red-50 border-red-300',
