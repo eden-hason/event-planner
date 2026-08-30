@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -24,14 +24,24 @@ export function MarkTestAccountDialog({
   userId,
   userName,
   isTestAccount,
+  testAccountsVisible,
   children,
 }: {
   userId: string;
   userName: string;
   isTestAccount: boolean;
+  /**
+   * Whether the global toggle is currently showing flagged accounts. Only used
+   * for the confirm copy: marking a User while it is off takes them out of the
+   * directory the Operator is standing in, and the dialog is the last place
+   * that can say so before it happens.
+   */
+  testAccountsVisible: boolean;
   children: (open: () => void) => React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -44,6 +54,21 @@ export function MarkTestAccountDialog({
       }
       toast.success(result.message);
       setOpen(false);
+
+      if (result.userHidden) {
+        // The flag has just taken this User out of every Back Office read, so
+        // the sheet behind this dialog is open on a row that is no longer
+        // there. Dropping ?user= closes it; a plain refresh would leave the
+        // Operator staring at "User not found" for a User they just marked.
+        // The action revalidated /admin, so this navigation re-renders the
+        // directory without them rather than serving a cached table.
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('user');
+        const query = params.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname);
+        return;
+      }
+
       router.refresh();
     });
   }
@@ -51,7 +76,7 @@ export function MarkTestAccountDialog({
   return (
     <>
       {children(() => setOpen(true))}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <AdminDialogContent className="sm:max-w-[428px]">
           <DialogHeader>
             <DialogTitle>
@@ -67,6 +92,11 @@ export function MarkTestAccountDialog({
                 <>
                   {userName} will be treated as a Kululu account, not a customer. This removes
                   them from every count in the Back Office
+                  {!testAccountsVisible && (
+                    <>
+                      , and from this directory until you switch test accounts back on
+                    </>
+                  )}
                 </>
               )}
             </DialogDescription>
@@ -76,7 +106,11 @@ export function MarkTestAccountDialog({
               Cancel
             </Button>
             <Button type="button" onClick={confirm} disabled={pending}>
-              {isTestAccount ? 'Remove the mark' : 'Mark as test account'}
+              {pending
+                ? 'Saving'
+                : isTestAccount
+                  ? 'Remove the mark'
+                  : 'Mark as test account'}
             </Button>
           </DialogFooter>
         </AdminDialogContent>
