@@ -1,4 +1,5 @@
 import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
+import { formatPhone } from '@/lib/phone';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,7 +57,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Owner</p>
             <p className="mt-1 truncate text-[13.5px]">{event.owner.email ?? event.owner.name}</p>
-            <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ?? 'No phone number'}</p>
+            <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'No phone number'}</p>
           </div>
         </CardContent>
       </Card>
@@ -97,7 +98,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="truncate text-sm font-medium">{event.owner.name}</p>
           <p className="text-muted-foreground truncate text-[12.5px]">{event.owner.email ?? 'No email'}</p>
-          <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ?? 'No phone number'}</p>
+          <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'No phone number'}</p>
         </div>
         {event.collaborators.length > 0 && (
           <>

@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { formatPhone } from '@/lib/phone';
 import { logout } from '@/features/auth';
 
 export interface AppShellUser {
@@ -83,7 +84,7 @@ export function UserMenu({ user }: { user: AppShellUser }) {
             <span className="truncate font-medium">{user.name}</span>
             {(user.email || user.phone) && (
               <span className="text-muted-foreground truncate text-xs">
-                {user.email || user.phone}
+                {user.email || formatPhone(user.phone)}
               </span>
             )}
           </div>

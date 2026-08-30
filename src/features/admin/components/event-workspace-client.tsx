@@ -21,6 +21,7 @@ import { QueueRowAction, type QueueActionRow } from './queue-row-action';
 import { resendScheduleToSelected } from '@/features/schedules';
 import type { EventGuestSummary, EventTimelineRow, EventWorkspaceSignal } from '../types';
 import { formatScheduleDateTime } from '@/lib/date-time';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 
 export function PublicEventActions({ shortCode }: { shortCode: string }) {
@@ -58,7 +59,7 @@ export function PhoneQualityDisclosure({ summary }: { summary: EventGuestSummary
         {summary.unusablePhones.map((guest) => (
           <div key={guest.id} className="flex items-center justify-between gap-4 border-b px-3 py-2 text-[12.5px] last:border-b-0">
             <span className="font-medium">{guest.name}</span>
-            <span className="text-muted-foreground">{guest.groupName ?? 'No group'} · {guest.phone || 'No phone number'}</span>
+            <span className="text-muted-foreground">{guest.groupName ?? 'No group'} · {guest.phone ? formatPhone(guest.phone) : 'No phone number'}</span>
           </div>
         ))}
       </CollapsibleContent>

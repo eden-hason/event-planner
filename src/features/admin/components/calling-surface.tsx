@@ -14,6 +14,7 @@ import {
 } from '@/features/calls/actions/call-rounds';
 import { CALL_OUTCOMES, type CallOutcome } from '@/features/calls/types';
 import type { RoundDetail, RoundGuestRow } from '@/features/admin/queries/call-round';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 
 const OUTCOME_LABELS: Record<CallOutcome, string> = {
@@ -270,7 +271,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                 <td className="px-3 py-2">
                   <span className="block font-medium">{guest.name}</span>
                   <span className="text-muted-foreground block text-[12px] tabular-nums">
-                    {guest.phone ?? 'No phone number'}
+                    {guest.phone ? formatPhone(guest.phone) : 'No phone number'}
                   </span>
                 </td>
                 <td className="px-3 py-2">

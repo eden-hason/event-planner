@@ -31,6 +31,7 @@ import { getBatchSendPlan, sendScheduleBatch } from '../actions/batch-send';
 import { MAX_BATCH_SIZE } from '../utils/batch-send';
 import type { BatchSendPlan } from '../actions/batch-send';
 import type { QuickSendSchedule } from './quick-send-dialog';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 
 /** Offered as one-tap batch sizes; anything else is typed into the field. */
@@ -360,7 +361,7 @@ export function BatchSendDialog({ schedules }: { schedules: QuickSendSchedule[] 
                                     {recipient.name}
                                   </span>
                                   <span className="text-muted-foreground block truncate text-[12px]">
-                                    {recipient.phone}
+                                    {formatPhone(recipient.phone)}
                                     {recipient.groupName ? ` · ${recipient.groupName}` : ''}
                                   </span>
                                 </span>

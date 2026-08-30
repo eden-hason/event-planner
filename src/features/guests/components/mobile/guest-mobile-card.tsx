@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { GroupIcon } from '@/features/guests/components/groups';
 
@@ -89,7 +90,7 @@ export function GuestMobileCard({
               <IconPhone size={16} />
             </a>
             <span dir="ltr" className="text-sm text-muted-foreground">
-              {guest.phone}
+              {formatPhone(guest.phone)}
             </span>
           </div>
         )}

@@ -53,6 +53,42 @@ export function toE164(
   }
 }
 
+/**
+ * Renders a stored E.164 number the way a person would write it locally:
+ * `+972548129777` becomes `054-8129777`, `+97236100000` becomes `03-6100000`.
+ *
+ * Israeli convention is `0`, the area/mobile prefix, a hyphen, then the
+ * seven-digit subscriber number. Numbers from other regions fall back to the
+ * international format, and anything that does not parse is returned untouched
+ * so the UI never shows a blank where a value exists.
+ */
+export function formatPhone(
+  input: string | null | undefined,
+  region: string = DEFAULT_PHONE_REGION,
+): string {
+  if (!input) return '';
+
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = parsePhoneNumberWithError(
+      trimmed,
+      region as Parameters<typeof parsePhoneNumberWithError>[1],
+    );
+    if (!parsed.isValid()) return trimmed;
+
+    if (parsed.country === 'IL') {
+      const nn = parsed.nationalNumber;
+      return `0${nn.slice(0, -7)}-${nn.slice(-7)}`;
+    }
+
+    return parsed.formatInternational();
+  } catch {
+    return trimmed;
+  }
+}
+
 /** True when the input parses to a real, dialable number. */
 export function isValidPhone(
   input: string | null | undefined,
