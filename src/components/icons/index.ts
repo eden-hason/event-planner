@@ -1,5 +1,6 @@
 export {
   CalendarDays,
+  Check,
   ChevronDown,
   ChevronRight,
   Clock3,
@@ -9,6 +10,7 @@ export {
   Info,
   Layers,
   Link2,
+  ListChecks,
   MapPin,
   MessageSquare,
   Phone,
