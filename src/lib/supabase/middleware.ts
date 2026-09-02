@@ -66,11 +66,20 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     !strippedPath.startsWith('/invitations') &&
     !strippedPath.startsWith('/privacy') &&
     !strippedPath.startsWith('/terms') &&
-    !strippedPath.startsWith('/nav')
+    !strippedPath.startsWith('/nav') &&
+    // Partners signs in on its own host. Supabase session cookies are
+    // host-scoped, so a session established on kulu-lu.com is never sent to
+    // partners.kulu-lu.com - /partners/login is that host's own front door and
+    // has to be reachable without one, exactly as /login is on the main app.
+    !strippedPath.startsWith('/partners/login')
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('next', rawPath);
+    // The *requested* path, not the rewritten one. On a subdomain host the
+    // rewrite is an internal detail: sending the Partner back to `/partners`
+    // after login would rewrite a second time, to `/partners/partners`, and
+    // 404. The browser asked for `/`, so `/` is what it returns to.
+    url.searchParams.set('next', request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
