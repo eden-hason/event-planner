@@ -44,6 +44,27 @@ const RSVP_STYLES: Record<RoundGuestRow['currentRsvpStatus'], string> = {
   declined: 'border-red-300 text-red-700',
 };
 
+/**
+ * The outcome buttons borrow the same vocabulary, so a scan down the column
+ * reads as results rather than three identical chips: a tint while the button
+ * is an option, the solid fill once it is the recorded outcome. No answer
+ * stays neutral - it is the absence of a result, not one of them.
+ */
+const OUTCOME_STYLES: Record<CallOutcome, { idle: string; active: string }> = {
+  no_answer: {
+    idle: 'bg-card hover:bg-accent',
+    active: 'border-primary bg-primary text-primary-foreground',
+  },
+  confirmed: {
+    idle: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+    active: 'border-emerald-600 bg-emerald-600 text-white',
+  },
+  declined: {
+    idle: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100',
+    active: 'border-red-600 bg-red-600 text-white',
+  },
+};
+
 function Tally({
   label,
   value,
@@ -295,8 +316,8 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                         className={cn(
                           'rounded-md border px-2 py-1 text-[12.5px] font-medium disabled:opacity-60',
                           guest.outcome === outcome
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'bg-card hover:bg-accent',
+                            ? OUTCOME_STYLES[outcome].active
+                            : OUTCOME_STYLES[outcome].idle,
                         )}
                       >
                         {OUTCOME_LABELS[outcome]}
