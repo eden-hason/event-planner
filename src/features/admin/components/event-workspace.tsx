@@ -73,7 +73,17 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
             <h1 className="min-w-0 truncate text-xl font-semibold tracking-[-0.015em]">{event.title}</h1>
             <Badge variant="outline" className="text-muted-foreground shrink-0 text-[11px] tracking-[0.04em] uppercase">{event.eventTypeName}</Badge>
           </div>
-          {hosts && <p className="text-foreground/80 truncate text-[13.5px]">{hosts}</p>}
+          {hosts && (
+            <p className="text-foreground/80 truncate text-[13.5px]">
+              <span className="text-muted-foreground">{event.hostNames.length > 1 ? 'Hosts: ' : 'Host: '}</span>
+              {hosts}
+            </p>
+          )}
+          {event.parentNames.length > 0 && (
+            <p className="text-muted-foreground truncate text-[12.5px]">
+              Parents: {event.parentNames.join(' · ')}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">

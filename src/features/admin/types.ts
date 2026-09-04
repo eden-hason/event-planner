@@ -132,6 +132,8 @@ export type EventIdentity = {
   owner: { name: string; email: string | null; phone: string | null };
   collaborators: { id: string; name: string; email: string | null; role: string }[];
   hostNames: string[];
+  /** Free-text "parents" side of each host, e.g. "Mr. and Mrs. Cohen" */
+  parentNames: string[];
 };
 
 export type EventRouteState = {
