@@ -220,10 +220,14 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
   const collaborators = unwrap(collaboratorsResult);
   const owner = ownerResult.data;
   const location = event.location as { name?: string } | null;
-  const hosts = event.host_details as Record<string, { name?: string } | string> | null;
+  const hosts = event.host_details as Record<string, { name?: string; parents?: string } | string> | null;
   const hostNames = Object.values(hosts ?? {}).flatMap((value) => {
     const name = typeof value === 'string' ? value : value?.name;
     return name?.trim() ? [name.trim()] : [];
+  });
+  const parentNames = Object.values(hosts ?? {}).flatMap((value) => {
+    const parents = typeof value === 'string' ? undefined : value?.parents;
+    return parents?.trim() ? [parents.trim()] : [];
   });
 
   return {
@@ -256,6 +260,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
       };
     }),
     hostNames,
+    parentNames,
   };
 });
 
