@@ -65,7 +65,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
                   )}
                 </p>
 
-                <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-gray-100">
+                <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-muted">
                   {breakdown.map((item) => {
                     const width = breakdownTotal > 0 ? (item.value / breakdownTotal) * 100 : 0;
                     return (
@@ -92,7 +92,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
               <>
                 <div className="flex items-center gap-3">
                   {/* Icon chip */}
-                  <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 [&>svg]:size-4', isActive && 'bg-white/60')}>
+                  <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted [&>svg]:size-4', isActive && 'bg-background/60')}>
                     {icon}
                   </div>
                   {/* Label + value */}
@@ -110,7 +110,7 @@ export function StatsCards({ stats, selectedStatuses = [], onStatClick, columns 
                 </div>
                 {/* Progress bar + percentage */}
                 <div className="flex items-center gap-2">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
                       className={cn('h-full rounded-full transition-all duration-700', barColor)}
                       style={{ width: `${pct}%` }}

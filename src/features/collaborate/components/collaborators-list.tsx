@@ -70,7 +70,7 @@ export function CollaboratorsList({
         return (
           <div
             key={collaborator.id}
-            className="flex items-center justify-between rounded-xl border bg-white px-5 py-4"
+            className="flex items-center justify-between rounded-xl border bg-card px-5 py-4"
           >
             <div className="flex items-center gap-4">
               <Avatar className="h-10 w-10">
@@ -90,7 +90,7 @@ export function CollaboratorsList({
                     {collaborator.email}
                   </span>
                   {isCurrentUser && (
-                    <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-500">
+                    <span className="rounded-full border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                       {t('you')}
                     </span>
                   )}

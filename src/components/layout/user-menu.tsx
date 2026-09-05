@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { ThemeMenuItems } from '@/components/layout/theme-toggle';
 import { formatPhone } from '@/lib/phone';
 import { logout } from '@/features/auth';
 
@@ -115,6 +116,17 @@ export function UserMenu({ user }: { user: AppShellUser }) {
                 )}
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <ThemeMenuItems
+                labels={{
+                  theme: t('theme'),
+                  light: t('themeLight'),
+                  dark: t('themeDark'),
+                  system: t('themeSystem'),
+                }}
+              />
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem

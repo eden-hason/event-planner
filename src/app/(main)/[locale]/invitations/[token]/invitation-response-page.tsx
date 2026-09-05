@@ -62,7 +62,10 @@ export function InvitationResponsePage({
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    // theme-locked-light: reached from an invite link, before the invitee is
+    // necessarily set up in the app - see the comment above
+    // `.theme-locked-light` in globals.css.
+    <div className="theme-locked-light flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{t('title')}</CardTitle>

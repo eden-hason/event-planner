@@ -62,7 +62,7 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
       >
         <span
           className={cn(
-            'absolute top-0.5 size-3.5 rounded-full bg-white shadow-sm transition-all',
+            'absolute top-0.5 size-3.5 rounded-full bg-background shadow-sm transition-all',
             optimistic ? 'left-[16px]' : 'left-0.5',
           )}
         />

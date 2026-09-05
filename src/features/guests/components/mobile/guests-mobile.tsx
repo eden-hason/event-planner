@@ -159,7 +159,7 @@ export function GuestsMobile({
             <GuestSearch
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
-              className="bg-white"
+              className="bg-background"
             />
           </div>
           <Button

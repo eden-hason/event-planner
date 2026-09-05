@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
 import { NotificationsMenu } from '@/components/layout/notifications-menu';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
+import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 import { isSeatingRoute } from './app-shell';
 
@@ -35,6 +37,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const seating = isSeatingRoute(pathname);
   const { title, action } = useFeatureLayoutContext();
+  const t = useTranslations('sidebar');
 
   return (
     <Card
@@ -82,6 +85,14 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {action}
+          <ThemeMenuButton
+            labels={{
+              theme: t('theme'),
+              light: t('themeLight'),
+              dark: t('themeDark'),
+              system: t('themeSystem'),
+            }}
+          />
           <NotificationsMenu />
         </div>
       </div>

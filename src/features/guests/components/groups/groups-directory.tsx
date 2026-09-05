@@ -166,12 +166,12 @@ export function GroupsDirectory({
       ) : (
         <div className="flex items-center justify-between gap-2">
           <div className="relative">
-            <IconSearch size={16} className="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400" />
+            <IconSearch size={16} className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform" />
             <Input
               placeholder={t('groups.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-[250px] bg-white pl-10"
+              className="bg-background w-[250px] pl-10"
             />
           </div>
           <SideFilter
@@ -200,7 +200,7 @@ export function GroupsDirectory({
           onClick={onAddGroup}
           className="hover:border-primary hover:text-foreground border-muted-foreground/50 flex min-h-[275px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 transition-colors"
         >
-          <div className="rounded-full bg-white p-4">
+          <div className="bg-background rounded-full p-4">
             <IconPlus size={24} className="text-primary" />
           </div>
           <span className="text-lg font-bold">{t('groups.createNew')}</span>

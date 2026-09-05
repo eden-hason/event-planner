@@ -28,6 +28,8 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-rsvp-confirmed: var(--rsvp-confirmed);
   --color-rsvp-declined: var(--rsvp-declined);
   --color-rsvp-pending: var(--rsvp-pending);
@@ -69,6 +71,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.6 0.15 150);
   --success-foreground: oklch(0.98 0.01 150);
+  --warning: oklch(0.65 0.19 70);
+  --warning-foreground: oklch(0.98 0.01 70);
   --rsvp-confirmed: oklch(0.696 0.17 162.48);
   --rsvp-declined: oklch(0.704 0.191 22.216);
   --rsvp-pending: oklch(0.828 0.189 84.429);
@@ -109,6 +113,8 @@
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.65 0.18 150);
   --success-foreground: oklch(0.98 0.01 150);
+  --warning: oklch(0.75 0.17 70);
+  --warning-foreground: oklch(0.98 0.01 70);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.74 0.238 333);
@@ -126,6 +132,67 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.74 0.238 333);
   --app-shell: oklch(0.19 0.02 333);
+}
+
+/*
+ * Dark mode is otherwise global - `.dark` lands on <html> (next-themes
+ * always targets the document element) and every design token above cascades
+ * from there, which is what lets a Radix portal (Dialog, Select, Tooltip,
+ * DropdownMenu, ...) render correctly in dark mode however it's appended to
+ * <body>, without every primitive having to be taught a custom portal
+ * container.
+ *
+ * Guest-facing and marketing surfaces - the onboarding takeover (which
+ * already lives in its own `--kt-*` namespace below and never touches these
+ * tokens), the homepage, auth screens, and the RSVP/invitation/reminder
+ * pages a guest opens from a text message - are a fixed brand look, though:
+ * an anonymous guest's OS theme, or an operator's dark-mode choice bleeding
+ * across a client-side navigation, should never change them. `.theme-locked
+ * -light` reasserts the light values directly on those pages' own root
+ * element, which wins over the inherited `.dark` values regardless of
+ * ancestry - see each usage for why that page needs it.
+ */
+.theme-locked-light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.592 0.249 333);
+  --primary-foreground: oklch(0.98 0.01 333);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.6 0.15 150);
+  --success-foreground: oklch(0.98 0.01 150);
+  --warning: oklch(0.65 0.19 70);
+  --warning-foreground: oklch(0.98 0.01 70);
+  --rsvp-confirmed: oklch(0.696 0.17 162.48);
+  --rsvp-declined: oklch(0.704 0.191 22.216);
+  --rsvp-pending: oklch(0.828 0.189 84.429);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.592 0.249 333);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.592 0.249 333);
+  --sidebar-primary-foreground: oklch(0.98 0.01 333);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.592 0.249 333);
+  --app-shell: oklch(97.7% 0.014 308.299);
+  color-scheme: light;
 }
 
 /* Flat design: zero out Tailwind's shadow composition variables.

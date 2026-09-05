@@ -32,6 +32,7 @@ import {
   FileUploadItemDelete,
 } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   Dialog,
   DialogContent,
@@ -276,7 +277,7 @@ export function EventInvitationCard({
                   <FileUploadDropzone
                     className={cn(
                       'aspect-[3/4] w-56 cursor-pointer rounded-lg border-2 border-dashed',
-                      'bg-gradient-to-br from-slate-50 to-slate-100/80',
+                      'bg-gradient-to-br from-muted/40 to-muted',
                       'transition-all duration-200 ease-out',
                       'hover:border-primary/40 hover:bg-primary/5',
                       'data-[dragging]:border-primary data-[dragging]:bg-primary/10',
@@ -284,14 +285,14 @@ export function EventInvitationCard({
                     )}
                   >
                     <div className="flex flex-col items-center justify-center gap-3 text-center">
-                      <div className="rounded-full bg-slate-200/80 p-3">
-                        <IconPhoto size={24} className="text-slate-400" />
+                      <div className="bg-muted rounded-full p-3">
+                        <IconPhoto size={24} className="text-muted-foreground" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-slate-600">
+                        <p className="text-foreground text-sm font-medium">
                           {t('dropImage')}
                         </p>
-                        <p className="text-xs text-slate-400">{t('clickToBrowse')}</p>
+                        <p className="text-muted-foreground text-xs">{t('clickToBrowse')}</p>
                       </div>
                       <Button
                         type="button"
@@ -310,30 +311,17 @@ export function EventInvitationCard({
                 <p className="text-destructive mt-2 text-sm">{uploadError}</p>
               )}
             </div>
-            <div
-              className={cn(
-                'flex w-full items-start gap-3 rounded-lg p-3 text-sm',
-                hasPreview
-                  ? 'bg-green-50 text-green-800'
-                  : 'bg-amber-50 text-amber-800',
-              )}
-            >
-              {hasPreview ? (
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-              ) : (
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-              )}
-              <div>
-                <p className="font-medium">
-                  {hasPreview ? t('status.set.title') : t('status.notSet.title')}
-                </p>
-                <p className="text-xs opacity-80">
-                  {hasPreview
-                    ? t('status.set.description')
-                    : t('status.notSet.description')}
-                </p>
-              </div>
-            </div>
+            <Alert variant={hasPreview ? 'success' : 'warning'}>
+              {hasPreview ? <CheckCircle2 /> : <AlertTriangle />}
+              <AlertTitle>
+                {hasPreview ? t('status.set.title') : t('status.notSet.title')}
+              </AlertTitle>
+              <AlertDescription>
+                {hasPreview
+                  ? t('status.set.description')
+                  : t('status.notSet.description')}
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </form>

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { getLocale } from 'next-intl/server';
-import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 import ogPreview from '@/assets/og-preview.png';
+import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
 // Self-hosted rather than next/font/google: that loader downloads every family
@@ -99,10 +99,12 @@ export default async function RootLayout({
   const dir = locale === 'he' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={dir}>
+    // suppressHydrationWarning: next-themes sets the `class` attribute on this
+    // element from localStorage/system preference before React hydrates, which
+    // would otherwise mismatch the server-rendered markup on the first paint.
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} ${heebo.variable} ${rubik.variable} ${assistant.variable} antialiased`}>
-        {children}
-        <Toaster />
+        <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
       </body>
     </html>

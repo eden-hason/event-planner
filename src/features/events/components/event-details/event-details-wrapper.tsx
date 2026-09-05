@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { EventDetailsHeader } from './event-details-header';
 import { DateTimeCard } from './date-time-card';
 import { LocationCard } from './location-card';
@@ -33,26 +34,24 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
 
       <div className="mb-4">
         {allSet ? (
-          <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-            <div>
-              <p className="font-medium">{t('success.title')}</p>
-              <p className="text-xs opacity-80">{t('success.description')}</p>
-            </div>
-          </div>
+          <Alert variant="success">
+            <CheckCircle2 />
+            <AlertTitle>{t('success.title')}</AlertTitle>
+            <AlertDescription>{t('success.description')}</AlertDescription>
+          </Alert>
         ) : (
-          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <div>
-              <p className="font-medium">{t('warning.title')}</p>
-              <p className="text-xs opacity-80">{t('warning.description')}</p>
-              <ul className="mt-1 list-disc ps-4 text-xs opacity-80">
+          <Alert variant="warning">
+            <AlertTriangle />
+            <AlertTitle>{t('warning.title')}</AlertTitle>
+            <AlertDescription>
+              {t('warning.description')}
+              <ul className="mt-1 list-disc ps-4">
                 {missingItems.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-            </div>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 

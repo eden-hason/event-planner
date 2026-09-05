@@ -10,6 +10,7 @@ import { CheckCircle2, AlertTriangle, MapPin } from 'lucide-react';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LocationInput } from '@/components/ui/location-input';
 import { GoogleMap } from '@/components/ui/google-map';
 import {
@@ -20,7 +21,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { cn } from '@/lib/utils';
 import {
   EventApp,
   EventDetailsUpdateSchema,
@@ -132,30 +132,17 @@ export function LocationCard({ event }: LocationCardProps) {
               )}
             />
             <GoogleMap coords={location?.coords} height="300px" />
-            <div
-              className={cn(
-                'flex items-start gap-3 rounded-lg p-3 text-sm',
-                location?.coords
-                  ? 'bg-green-50 text-green-800'
-                  : 'bg-amber-50 text-amber-800',
-              )}
-            >
-              {location?.coords ? (
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-              ) : (
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-              )}
-              <div>
-                <p className="font-medium">
-                  {location?.coords ? t('status.set.title') : t('status.notSet.title')}
-                </p>
-                <p className="text-xs opacity-80">
-                  {location?.coords
-                    ? t('status.set.description')
-                    : t('status.notSet.description')}
-                </p>
-              </div>
-            </div>
+            <Alert variant={location?.coords ? 'success' : 'warning'}>
+              {location?.coords ? <CheckCircle2 /> : <AlertTriangle />}
+              <AlertTitle>
+                {location?.coords ? t('status.set.title') : t('status.notSet.title')}
+              </AlertTitle>
+              <AlertDescription>
+                {location?.coords
+                  ? t('status.set.description')
+                  : t('status.notSet.description')}
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </form>

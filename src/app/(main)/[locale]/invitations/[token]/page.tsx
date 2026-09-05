@@ -15,7 +15,9 @@ export default async function InvitationPage({
 
   if (!invitation) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      // theme-locked-light: reached from an invite link - see the comment
+      // above `.theme-locked-light` in globals.css.
+      <div className="theme-locked-light flex min-h-screen items-center justify-center">
         <div className="max-w-md text-center">
           <h1 className="mb-2 text-2xl font-bold">Invitation Not Found</h1>
           <p className="text-muted-foreground">
@@ -29,7 +31,9 @@ export default async function InvitationPage({
   // Check if expired
   if (new Date(invitation.expiresAt) < new Date()) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      // theme-locked-light: reached from an invite link - see the comment
+      // above `.theme-locked-light` in globals.css.
+      <div className="theme-locked-light flex min-h-screen items-center justify-center">
         <div className="max-w-md text-center">
           <h1 className="mb-2 text-2xl font-bold">Invitation Expired</h1>
           <p className="text-muted-foreground">
@@ -44,7 +48,9 @@ export default async function InvitationPage({
   // Check if already responded
   if (invitation.status !== 'pending') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      // theme-locked-light: reached from an invite link - see the comment
+      // above `.theme-locked-light` in globals.css.
+      <div className="theme-locked-light flex min-h-screen items-center justify-center">
         <div className="max-w-md text-center">
           <h1 className="mb-2 text-2xl font-bold">
             Invitation Already {invitation.status === 'accepted' ? 'Accepted' : 'Declined'}
@@ -73,7 +79,9 @@ export default async function InvitationPage({
   // Check email mismatch
   if (user.email !== invitation.invitedEmail) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      // theme-locked-light: reached from an invite link - see the comment
+      // above `.theme-locked-light` in globals.css.
+      <div className="theme-locked-light flex min-h-screen items-center justify-center">
         <div className="max-w-md text-center">
           <h1 className="mb-2 text-2xl font-bold">Email Mismatch</h1>
           <p className="text-muted-foreground">

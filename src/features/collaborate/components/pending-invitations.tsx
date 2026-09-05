@@ -46,7 +46,7 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
         <h3 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           {t('title')}
         </h3>
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-medium text-gray-500">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
           {invitations.length}
         </span>
       </div>
@@ -54,14 +54,14 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
         {invitations.map((invitation) => (
           <div
             key={invitation.id}
-            className="flex items-center justify-between rounded-xl border border-dashed border-gray-300 bg-white px-5 py-4"
+            className="border-border flex items-center justify-between rounded-xl border border-dashed bg-card px-5 py-4"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                <IconMail className="h-5 w-5 text-gray-400" />
+              <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
+                <IconMail className="text-muted-foreground h-5 w-5" />
               </div>
               <div>
-                <span className="text-base font-semibold text-gray-500">
+                <span className="text-muted-foreground text-base font-semibold">
                   {invitation.invitedEmail}
                 </span>
                 <div className="mt-1 flex items-center gap-1.5">
@@ -87,11 +87,11 @@ export function PendingInvitations({ invitations }: PendingInvitationsProps) {
               >
                 {t('resend')}
               </Button>
-              <span className="text-gray-300">|</span>
+              <span className="text-border">|</span>
               <Button
                 variant="link"
                 size="sm"
-                className="font-medium text-gray-500 hover:text-gray-700"
+                className="text-muted-foreground hover:text-foreground font-medium"
                 onClick={() => handleRevoke(invitation)}
               >
                 {t('cancel')}

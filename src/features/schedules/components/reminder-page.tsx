@@ -66,7 +66,9 @@ export async function ReminderPage({ code }: { code: string }) {
   return (
     <div
       dir="rtl"
-      className="flex min-h-dvh justify-center px-5 pb-10 font-[family-name:var(--font-rubik)] text-[oklch(0.21_0.006_285.9)]"
+      // theme-locked-light: a guest opens this from an SMS link, anonymously
+      // - see the comment above `.theme-locked-light` in globals.css.
+      className="theme-locked-light flex min-h-dvh justify-center px-5 pb-10 font-[family-name:var(--font-rubik)] text-[oklch(0.21_0.006_285.9)]"
       style={{
         background:
           'radial-gradient(120% 70% at 50% 0%, #FFF3F8 0%, rgba(255,243,248,0) 62%), radial-gradient(90% 55% at 50% 100%, #FBF4EC 0%, rgba(251,244,236,0) 70%), #FBF8F5',

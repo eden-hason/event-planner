@@ -21,10 +21,13 @@ export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] })
   const data = useMemo(() => computeGroupRsvpData(groups), [groups]);
   const chartWidth = Math.max(groups.length * BAR_WIDTH, MIN_CHART_WIDTH);
 
+  // Reuses the same `--rsvp-*` tokens the guest table's status badges are
+  // built from, rather than duplicating their colors as literal hex, so the
+  // chart and the badges always agree - dark mode included.
   const chartConfig = useMemo(() => ({
-    confirmed: { label: t('confirmed'), color: '#10b981' },
-    pending: { label: t('pending'), color: '#f59e0b' },
-    declined: { label: t('declined'), color: '#ef4444' },
+    confirmed: { label: t('confirmed'), color: 'var(--rsvp-confirmed)' },
+    pending: { label: t('pending'), color: 'var(--rsvp-pending)' },
+    declined: { label: t('declined'), color: 'var(--rsvp-declined)' },
   }) satisfies ChartConfig, [t]);
 
   if (groups.length === 0) {

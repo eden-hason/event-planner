@@ -59,7 +59,7 @@ export const createGuestColumns = (
         return phone ? (
           <span className="text-sm">{formatPhone(phone)}</span>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
     },
@@ -74,7 +74,7 @@ export const createGuestColumns = (
             {group.name}
           </Badge>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
       filterFn: (row, _id, value) => {
@@ -96,7 +96,7 @@ export const createGuestColumns = (
         return side ? (
           <span className="text-sm">{t(`sides.${side}`)}</span>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
       filterFn: (row, _id, value: string[]) => {
@@ -138,11 +138,11 @@ export const createGuestColumns = (
           | string
           | undefined;
         return mealChoice ? (
-          <span className="text-sm text-gray-600">
+          <span className="text-foreground text-sm">
             {dietaryLabelMap[mealChoice] ?? mealChoice}
           </span>
         ) : (
-          <span className="text-sm text-gray-400">{t('table.dietaryNone')}</span>
+          <span className="text-muted-foreground text-sm">{t('table.dietaryNone')}</span>
         );
       },
     });
@@ -156,7 +156,7 @@ export const createGuestColumns = (
         const amount = row.getValue('amount') as number;
         return (
           <div className="text-sm">
-            <div className="text-gray-500">{amount}</div>
+            <div className="text-foreground">{amount}</div>
           </div>
         );
       },
@@ -167,11 +167,11 @@ export const createGuestColumns = (
       cell: ({ row }) => {
         const notes = row.getValue('notes') as string | undefined;
         return notes ? (
-          <span className="block max-w-xs truncate text-sm text-gray-600">
+          <span className="text-foreground block max-w-xs truncate text-sm">
             {notes}
           </span>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
     },
@@ -183,7 +183,7 @@ export const createGuestColumns = (
         return guestNotes ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="block max-w-xs truncate text-sm text-gray-600">
+              <span className="text-foreground block max-w-xs truncate text-sm">
                 {guestNotes}
               </span>
             </TooltipTrigger>
@@ -192,7 +192,7 @@ export const createGuestColumns = (
             </TooltipContent>
           </Tooltip>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
     },
