@@ -29,8 +29,6 @@ export function CollaboratePage({
   const headerConfig = useMemo(
     () => ({
       title: t('header.title'),
-      description: t('header.description'),
-      containerClass: 'mx-auto w-full max-w-5xl',
     }),
     [t],
   );

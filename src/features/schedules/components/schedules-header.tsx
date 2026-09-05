@@ -12,7 +12,6 @@ export function SchedulesHeader({ onAddSchedule }: SchedulesHeaderProps) {
 
   useFeatureHeader({
     title: t('title'),
-    description: t('description'),
   });
 
   return null;

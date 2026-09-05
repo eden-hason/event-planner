@@ -26,7 +26,6 @@ export function BudgetPage({ expenses, eventId, eventBudget, gifts }: BudgetPage
 
   useFeatureHeader({
     title: t('title'),
-    description: t('description'),
   });
 
   return (

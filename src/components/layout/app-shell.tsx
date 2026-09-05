@@ -2,38 +2,28 @@
 
 import { usePathname } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
 
 /**
- * Routes that opt out of the shell gradient.
+ * Routes that opt out of the default full-bleed layout.
  *
- * Exported so `LayoutContentWrapper` tests the same thing this does; the two
- * decisions are one decision - full-bleed layout and a flat backdrop - and
- * splitting the predicate is how they drift apart.
+ * Exported so `LayoutContentWrapper` tests the same thing this does: the
+ * Seating Plan is a work surface rather than a page, so it fills the
+ * viewport instead of getting the usual padded content column.
  */
 export function isSeatingRoute(pathname: string) {
   return pathname.includes('/seating');
 }
 
 /**
- * The app shell.
- *
- * Every route gets the tinted gradient except the Seating Plan, which is a work
- * surface rather than a page: the canvas is a dotted arrangement field, and a
- * colour wash behind it competes with the tables for attention. It gets a flat
- * `--muted` gray instead, which stays theme-aware where the gradient's two
- * hardcoded hex stops do not.
+ * A dedicated `--app-shell` token, not `bg-muted`/`bg-background`: the
+ * sidebar (`variant="floating"`) and the page's content `Card` are both
+ * white, and only read as floating panels if the canvas behind them is a
+ * different shade - `--muted` would also tint every other neutral surface
+ * that borrows it.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
   return (
-    <SidebarProvider
-      className={cn(
-        'min-h-svh flex-col',
-        isSeatingRoute(pathname) ? 'bg-muted' : 'app-shell-gradient',
-      )}
-    >
+    <SidebarProvider className="bg-app-shell min-h-svh flex-col">
       {children}
     </SidebarProvider>
   );

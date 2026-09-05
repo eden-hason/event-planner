@@ -8,8 +8,6 @@ export function EventDetailsHeader() {
 
   useFeatureHeader({
     title: t('title'),
-    description: t('description'),
-    containerClass: 'mx-auto w-full max-w-3xl',
   });
 
   return null;

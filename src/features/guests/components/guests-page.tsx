@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -331,24 +330,9 @@ export function GuestsPage({
     [],
   );
 
-  const headerDescription = isMobile ? undefined : t('description');
+  useFeatureHeader({ title: t('title') });
 
-  const { setHeader } = useFeatureHeader({
-    title: t('title'),
-    description: headerDescription,
-    action: guestsHeaderAction,
-  });
-
-  const handleTabsChange = useCallback(
-    (value: string) => {
-      setHeader({
-        title: t('title'),
-        description: headerDescription,
-        action: value === 'guests' ? guestsHeaderAction : groupHeaderAction,
-      });
-    },
-    [setHeader, guestsHeaderAction, groupHeaderAction, headerDescription],
-  );
+  const [activeTab, setActiveTab] = useState<'guests' | 'groups'>('guests');
 
   const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
   const guestGroup = selectedGuest?.group;
@@ -367,34 +351,26 @@ export function GuestsPage({
 
   return (
     <>
-      <Tabs defaultValue="guests" onValueChange={handleTabsChange} dir={locale === 'he' ? 'rtl' : 'ltr'}>
-        <TabsList
-          className={cn(
-            'border-border mb-4 h-10 w-full rounded-none border-b bg-transparent p-0',
-            isMobile ? 'justify-stretch gap-0' : 'justify-start gap-4',
-          )}
-        >
-          <TabsTrigger
-            value="guests"
-            className={cn(
-              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
-              isMobile ? 'flex-1' : 'flex-none',
-            )}
-          >
-            <IconUsers size={18} />
-            {t('tabGuests')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="groups"
-            className={cn(
-              'data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full rounded-none border-none bg-transparent px-1 pb-3 text-sm shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none',
-              isMobile ? 'flex-1' : 'flex-none',
-            )}
-          >
-            <IconUsersGroup size={18} />
-            {t('tabGroups')}
-          </TabsTrigger>
-        </TabsList>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'guests' | 'groups')}
+        dir={locale === 'he' ? 'rtl' : 'ltr'}
+      >
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="w-full sm:w-fit">
+            <TabsTrigger value="guests">
+              <IconUsers size={16} />
+              {t('tabGuests')}
+            </TabsTrigger>
+            <TabsTrigger value="groups">
+              <IconUsersGroup size={16} />
+              {t('tabGroups')}
+            </TabsTrigger>
+          </TabsList>
+          <div className="flex justify-end">
+            {activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction}
+          </div>
+        </div>
         {!isMobile && (
           <GuestStats
             guests={guests}
