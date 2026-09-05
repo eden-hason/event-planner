@@ -5,17 +5,15 @@ import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents, getEventById } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
-import { Card, CardContent } from '@/components/ui/card';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { AppShell, HiddenOnSeatingPlan } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
-import { AppTopBar } from '@/components/layout/app-top-bar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { LayoutContentWrapper } from '@/components/layout/layout-content-wrapper';
+import { PageCard } from '@/components/layout/page-card';
 import { ImpersonationBanner } from '@/features/admin/components/impersonation-banner';
 import {
   FeatureLayoutProvider,
-  FeatureLayoutHeader,
   CollaborationProvider,
 } from '@/components/feature-layout';
 import { AiAssistant } from '@/features/ai-chat';
@@ -77,23 +75,19 @@ export default async function EventLayout({
 
   return (
     <AppShell>
-      <AppTopBar user={user} />
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar
           variant="floating"
-          className="top-(--app-header-offset) h-[calc(100svh-var(--app-header-offset))]"
           events={events}
           currentUserId={effectiveUser?.id ?? auth.user.id}
+          user={user}
         />
         <SidebarInset className="bg-transparent">
           <ImpersonationBanner />
           <LayoutContentWrapper>
             <CollaborationProvider role={role} isCreator={isCreator}>
               <FeatureLayoutProvider>
-                <Card className="min-h-[calc(100vh-101px)] gap-4 border-none bg-transparent p-0 shadow-none">
-                  <FeatureLayoutHeader />
-                  <CardContent className="space-y-6 p-0">{children}</CardContent>
-                </Card>
+                <PageCard>{children}</PageCard>
                 <HiddenOnSeatingPlan>
                   <AiAssistant eventId={eventId} />
                 </HiddenOnSeatingPlan>

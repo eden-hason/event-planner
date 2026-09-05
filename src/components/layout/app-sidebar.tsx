@@ -17,15 +17,18 @@ import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
 import { NavEvents } from '@/components/layout/nav-events';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { type AppShellUser, UserMenu } from '@/components/layout/user-menu';
+import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
+import { cn } from '@/lib/utils';
 
 const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
 
@@ -47,11 +50,13 @@ function buildNavUrl(basePath: string, eventId: string | null): string {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   events: EventApp[];
   currentUserId?: string;
+  user: AppShellUser;
 }
 
 export function AppSidebar({
   events,
   currentUserId,
+  user,
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname();
@@ -61,8 +66,7 @@ export function AppSidebar({
   const locale = useLocale();
   const isRTL = locale === 'he';
   const isSeatingPage = pathname.includes('/seating');
-  const { setOpen, state, toggleSidebar } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const { setOpen, state } = useSidebar();
 
   // Track what the open state was before entering seating so we can restore it on exit
   const prevOpenRef = React.useRef<boolean | null>(null);
@@ -91,46 +95,6 @@ export function AppSidebar({
       prevOpenRef.current = null;
     }
   }, [isSeatingPage]);
-
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const header = document.querySelector<HTMLElement>('[data-app-header]');
-
-    if (!header) return;
-
-    let frameId: number | null = null;
-
-    const updateHeaderOffset = () => {
-      frameId = null;
-      const visibleHeaderHeight = Math.max(
-        0,
-        Math.min(header.offsetHeight, header.getBoundingClientRect().bottom),
-      );
-
-      root.style.setProperty(
-        '--app-header-offset',
-        `${visibleHeaderHeight}px`,
-      );
-    };
-
-    const scheduleHeaderOffsetUpdate = () => {
-      if (frameId !== null) return;
-      frameId = window.requestAnimationFrame(updateHeaderOffset);
-    };
-
-    updateHeaderOffset();
-    window.addEventListener('scroll', scheduleHeaderOffsetUpdate, {
-      passive: true,
-    });
-    window.addEventListener('resize', scheduleHeaderOffsetUpdate);
-
-    return () => {
-      window.removeEventListener('scroll', scheduleHeaderOffsetUpdate);
-      window.removeEventListener('resize', scheduleHeaderOffsetUpdate);
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
-      root.style.removeProperty('--app-header-offset');
-    };
-  }, []);
 
   const navMainBase = [
     {
@@ -217,42 +181,49 @@ export function AppSidebar({
       collapsible="icon"
       {...props}
       variant={isSeatingPage ? 'sidebar' : props.variant}
+      // The `ui/sidebar.tsx` primitive hardcodes bg/border/shadow on an inner
+      // div its own className prop doesn't reach - this app's sidebar wants
+      // none of them, but the shared primitive (also used by the admin back
+      // office) shouldn't lose them for every consumer, so it's overridden
+      // here via the one class the primitive does expose, targeting its
+      // inner div by its `data-sidebar` attribute.
+      //
+      // `--sidebar-accent` (the hover/active tint every menu button uses) is
+      // defined app-wide as the same gray as `--muted` - indistinguishable
+      // from the AppShell's own background now that the sidebar itself has
+      // no background to show it against. Redefining it locally to white
+      // keeps every `bg-sidebar-accent` hover/active class working, but
+      // visible, without changing the token for the admin sidebar (still
+      // opaque, where gray-on-white already has contrast).
+      className={cn(
+        '[--sidebar-accent:var(--background)] [&_[data-sidebar=sidebar]]:border-none [&_[data-sidebar=sidebar]]:bg-transparent [&_[data-sidebar=sidebar]]:shadow-none',
+        props.className,
+      )}
     >
+      <SidebarHeader>
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <NavEvents
+              events={events}
+              currentUserId={currentUserId}
+              disabled={!eventId}
+            />
+          </div>
+          <SidebarToggleButton className="md:hidden" />
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} disabled={!eventId} />
         <NavSecondary items={navSecondary} disabled={!eventId} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <div
-          className={`flex items-center gap-1 px-2 pb-1 ${
-            isCollapsed ? 'justify-center' : ''
-          } ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
-            <div className="flex-1">
-              <LanguageSwitcher />
-            </div>
-          )}
-          <button
-            onClick={toggleSidebar}
-            className="flex size-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          >
-            {isCollapsed ? (
-              isRTL ? (
-                <PanelRightOpen className="size-4" />
-              ) : (
-                <PanelLeftOpen className="size-4" />
-              )
-            ) : isRTL ? (
-              <PanelRightClose className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
-            )}
-            <span className="sr-only">Toggle sidebar</span>
-          </button>
-        </div>
+        {process.env.NODE_ENV !== 'production' && state === 'expanded' && (
+          <div className="px-2 pb-1">
+            <LanguageSwitcher />
+          </div>
+        )}
 
-        <NavEvents events={events} currentUserId={currentUserId} disabled={!eventId} />
+        <UserMenu user={user} />
       </SidebarFooter>
     </Sidebar>
   );

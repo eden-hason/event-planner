@@ -31,11 +31,14 @@ import { useSeatingCopy } from './use-seating-copy';
 import { useSeatingWorkspace } from './use-seating-workspace';
 
 /**
- * The workspace owns a viewport-sized box and scrolls nothing at the page level:
- * the Unassigned list and the canvas scroll independently inside it. The offset
- * is the app header, which the sidebar keeps up to date at runtime.
+ * The workspace scrolls nothing at the page level: the Unassigned list and the
+ * canvas scroll independently inside it. `PageCard` gives the flat/seating
+ * `Card` and `CardContent` a `flex-1 min-h-0` chain up to the viewport-height
+ * `AppShell`, so filling with `flex-1 min-h-0` here rather than computing a
+ * viewport-offset height directly means this never has to know how tall the
+ * chrome above it happens to be.
  */
-const WORKSPACE_HEIGHT = 'h-[calc(100svh-var(--app-header-offset,3.5rem))]';
+const WORKSPACE_HEIGHT = 'min-h-0 flex-1';
 
 export function SeatingPage(props: SeatingPageProps) {
   const { t } = useSeatingCopy();
@@ -216,10 +219,11 @@ export function SeatingPage(props: SeatingPageProps) {
       }}
     >
       {/*
-        An explicit viewport height, not `h-full`. The app shell wraps this in a
-        Card with only a `min-h`, so a percentage height has nothing to resolve
-        against and collapses to auto - which lets the canvas grow to its full
-        world size and drags the whole page with it.
+        `flex-1`, not `h-full`: on this route `PageCard` makes the Card and
+        CardContent around this a `flex-1 min-h-0` chain rather than giving
+        them a resolvable height, so a percentage height here would have
+        nothing to resolve against and collapse to auto - which lets the
+        canvas grow to its full world size and drags the whole page with it.
       */}
       <div
         className={cn(

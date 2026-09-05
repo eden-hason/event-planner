@@ -7,7 +7,6 @@ export function TemplatesHeader() {
   const t = useTranslations('templates.header');
   useFeatureHeader({
     title: t('title'),
-    description: t('description'),
   });
   return null;
 }

@@ -72,7 +72,6 @@ export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutPro
   useEffect(() => {
     setHeader({
       title: t('header.title'),
-      description: t('header.description'),
     });
     return () => clearHeader();
   }, [setHeader, clearHeader]);

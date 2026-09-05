@@ -2,10 +2,9 @@
 
 import { useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { LogOutIcon } from 'lucide-react';
+import { ChevronsUpDown, LogOutIcon } from 'lucide-react';
 import posthog from 'posthog-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +14,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
 import { formatPhone } from '@/lib/phone';
 import { logout } from '@/features/auth';
 
@@ -68,38 +72,62 @@ export function UserMenu({ user }: { user: AppShellUser }) {
     await logout();
   };
 
+  const subtitle = user.email || (user.phone && formatPhone(user.phone));
+
   return (
-    <DropdownMenu dir={dir}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t('userMenu')}>
-          <Avatar>
-            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-            <AvatarFallback>{initials || '?'}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="min-w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col gap-1 text-start">
-            <span className="truncate font-medium">{user.name}</span>
-            {(user.email || user.phone) && (
-              <span className="text-muted-foreground truncate text-xs">
-                {user.email || formatPhone(user.phone)}
-              </span>
-            )}
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem
-            variant="destructive"
-            onSelect={() => void handleLogout()}
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu dir={dir}>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              aria-label={t('userMenu')}
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
+            >
+              <Avatar>
+                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                <AvatarFallback>{initials || '?'}</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                <span className="truncate font-semibold">{user.name}</span>
+                {subtitle && (
+                  <span className="text-muted-foreground truncate text-xs">
+                    {subtitle}
+                  </span>
+                )}
+              </div>
+              <ChevronsUpDown className="ms-auto group-data-[collapsible=icon]:hidden" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            align="end"
+            side="top"
+            sideOffset={8}
           >
-            <LogOutIcon />
-            {t('logOut')}
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-1 text-start">
+                <span className="truncate font-medium">{user.name}</span>
+                {subtitle && (
+                  <span className="text-muted-foreground truncate text-xs">
+                    {subtitle}
+                  </span>
+                )}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => void handleLogout()}
+              >
+                <LogOutIcon />
+                {t('logOut')}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

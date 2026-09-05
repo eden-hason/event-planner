@@ -241,6 +241,7 @@
     "shared": "משותף",
     "newEvent": "אירוע חדש",
     "userMenu": "תפריט משתמש",
+    "toggleSidebar": "הצג/הסתר תפריט צד",
     "logOut": "התנתקות",
     "duplicateEvent": "שכפול אירוע",
     "deleteEvent": "מחיקת אירוע",
@@ -253,11 +254,14 @@
       "deleting": "מוחק את {title}...",
       "deleted": "האירוע נמחק בהצלחה",
       "deleteFailed": "מחיקת האירוע נכשלה. נסה שנית."
+    },
+    "notifications": {
+      "title": "התראות",
+      "empty": "אין התראות עדיין"
     }
   },
   "budget": {
     "title": "תקציב",
-    "description": "עקוב אחר הוצאות האירוע והמתנות",
     "tabs": {
       "expenses": "הוצאות",
       "gifts": "מתנות"
@@ -450,7 +454,6 @@
   },
   "guests": {
     "title": "אורחים",
-    "description": "נהל את אורחי האירוע",
     "addGuest": "הוסף אורח",
     "addGroup": "הוסף קבוצה",
     "tabGuests": "אורחים",
@@ -803,8 +806,7 @@
   },
   "dashboard": {
     "header": {
-      "title": "לוח בקרה",
-      "description": "סקירה כללית של האירוע"
+      "title": "לוח בקרה"
     },
     "eventNotFound": "האירוע לא נמצא",
     "stats": {
@@ -937,8 +939,7 @@
   },
   "schedules": {
     "header": {
-      "title": "תזמונים",
-      "description": "נהל את תזמוני ההודעות של האירוע"
+      "title": "תזמונים"
     },
     "nav": {
       "messages": "הודעות",
@@ -1155,8 +1156,7 @@
   "collaborate": {
     "page": {
       "header": {
-        "title": "שיתוף",
-        "description": "נהל את שותפי האירוע שלך"
+        "title": "שיתוף"
       }
     },
     "tab": {
@@ -1313,7 +1313,6 @@
     },
     "header": {
       "title": "פרטי האירוע",
-      "description": "נהל את פרטי האירוע שלך",
       "save": "שמור",
       "saving": "שומר..."
     },
@@ -1477,8 +1476,7 @@
   },
   "templates": {
     "header": {
-      "title": "תבניות",
-      "description": "בחרו את העיצוב שהאורחים יראו בדף ההזמנה שלהם"
+      "title": "תבניות"
     },
     "showcase": {
       "title": "עיצוב נבחר",
