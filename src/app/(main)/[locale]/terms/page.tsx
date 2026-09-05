@@ -232,7 +232,9 @@ export default function TermsPage() {
     <div
       dir={c.dir}
       lang={c.lang}
-      className="min-h-screen bg-background text-foreground"
+      // theme-locked-light: a legal/marketing page, always light - see the
+      // comment above `.theme-locked-light` in globals.css.
+      className="theme-locked-light min-h-screen bg-background text-foreground"
     >
       <style>{`
         .text-link {

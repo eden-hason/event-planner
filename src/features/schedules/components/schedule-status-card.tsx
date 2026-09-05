@@ -5,13 +5,13 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { IconActivity, IconPower } from '@tabler/icons-react';
 
-import { cn } from '@/lib/utils';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription, AlertAction } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 
 import { updateScheduleStatus } from '../actions';
@@ -65,42 +65,22 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
         <p className="text-muted-foreground text-sm">{t(`description.${key}`)}</p>
         {!isSent && (
           <div className="mt-4">
-            <div
-              className={cn(
-                'flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 transition-all duration-150',
-                isEnabled
-                  ? 'bg-green-100 border-green-300'
-                  : 'bg-muted/40 border-border',
-              )}
-            >
-              <div
-                className={cn(
-                  'size-[34px] rounded-lg shrink-0 flex items-center justify-center transition-colors duration-150',
-                  isEnabled ? 'bg-green-200' : 'bg-muted',
-                )}
-              >
-                <IconPower
-                  size={15}
-                  strokeWidth={2.2}
-                  className={isEnabled ? 'text-green-700' : 'text-muted-foreground'}
+            <Alert variant={isEnabled ? 'success' : 'default'}>
+              <IconPower strokeWidth={2.2} />
+              <AlertTitle>
+                {t(isEnabled ? 'toggle.enabled' : 'toggle.disabled')}
+              </AlertTitle>
+              <AlertDescription>
+                {t(isEnabled ? 'toggle.enabledDescription' : 'toggle.disabledDescription')}
+              </AlertDescription>
+              <AlertAction>
+                <Switch
+                  checked={isEnabled}
+                  onCheckedChange={handleToggle}
+                  disabled={isPending}
                 />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className={cn('text-sm font-medium', isEnabled ? 'text-green-800' : 'text-foreground')}>
-                  {t(isEnabled ? 'toggle.enabled' : 'toggle.disabled')}
-                </div>
-                <div className={cn('text-[11.5px] mt-0.5', isEnabled ? 'text-green-700' : 'text-muted-foreground')}>
-                  {t(isEnabled ? 'toggle.enabledDescription' : 'toggle.disabledDescription')}
-                </div>
-              </div>
-
-              <Switch
-                checked={isEnabled}
-                onCheckedChange={handleToggle}
-                disabled={isPending}
-              />
-            </div>
+              </AlertAction>
+            </Alert>
           </div>
         )}
       </CardContent>

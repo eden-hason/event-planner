@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { OperatorSearch } from './operator-search';
 import { TestAccountsToggle } from './test-accounts-toggle';
 
@@ -36,6 +37,7 @@ export function BackOfficeTopBar({
        * applies to every route, and the slot belongs to the route.
        */}
       <TestAccountsToggle visible={testAccountsVisible} />
+      <ThemeToggle labels={{ light: 'Light', dark: 'Dark', system: 'System' }} />
       <span className="text-muted-foreground shrink-0 text-[12.5px]">{today}</span>
     </header>
   );

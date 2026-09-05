@@ -106,7 +106,7 @@ export function CollaborateTab({
             {FEATURES.map((feature) => (
               <div
                 key={feature.title}
-                className="flex flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm"
+                className="flex flex-col items-center rounded-xl border bg-card px-3 py-5 text-center shadow-sm"
               >
                 <div
                   className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${feature.iconClassName}`}

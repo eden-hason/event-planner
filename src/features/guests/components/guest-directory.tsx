@@ -192,7 +192,7 @@ export function GuestDirectory({
                       <ItemMedia>
                         <span
                           className="size-2.5 rounded-full shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #22c55e 50%, #fb923c 50%)' }}
+                          style={{ background: 'linear-gradient(135deg, var(--rsvp-confirmed) 50%, var(--rsvp-pending) 50%)' }}
                         />
                       </ItemMedia>
                       <ItemContent>

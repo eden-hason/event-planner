@@ -6,6 +6,7 @@ import { IconCheck, IconMailForward, IconClockPause, IconInfoCircle } from '@tab
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { type EventApp } from '@/features/events/schemas';
 import { type WhatsAppTemplateApp } from '../../schemas';
@@ -59,10 +60,10 @@ export function WizardInvitationStep({
     <div className="space-y-5">
       <MessageContentCard template={template} event={event} />
 
-      <div className="border-primary/20 bg-primary/5 text-primary flex items-start gap-2.5 rounded-lg border px-3.5 py-3">
-        <IconInfoCircle className="mt-px size-4 shrink-0" />
-        <p className="text-xs leading-relaxed">{t('invitationPrivacyNote')}</p>
-      </div>
+      <Alert variant="info">
+        <IconInfoCircle />
+        <AlertDescription>{t('invitationPrivacyNote')}</AlertDescription>
+      </Alert>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {options.map((option) => {

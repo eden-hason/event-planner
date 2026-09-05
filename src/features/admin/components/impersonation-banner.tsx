@@ -27,7 +27,7 @@ export async function ImpersonationBanner() {
       <form action={stopImpersonation}>
         <button
           type="submit"
-          className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 shadow-sm transition-colors hover:bg-amber-100"
+          className="rounded-md border border-amber-300 bg-background px-3 py-1 text-xs font-medium text-amber-800 shadow-sm transition-colors hover:bg-amber-100"
         >
           Exit
         </button>

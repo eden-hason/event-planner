@@ -37,12 +37,12 @@ export async function EventHeroBanner({ event }: { event: EventApp }) {
     >
       <div className="flex h-full items-center justify-between gap-4">
         <div className="flex flex-col gap-3">
-          <h2 className="text-xl leading-tight font-semibold text-zinc-900">
+          <h2 className="text-foreground text-xl leading-tight font-semibold">
             {event.title}
           </h2>
           <div className="flex flex-col gap-2">
             {event.eventDate ? (
-              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
+              <div className="border-border/60 bg-background/60 text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm backdrop-blur-sm">
                 <IconCalendar className="h-3.5 w-3.5 shrink-0 text-pink-400" />
                 <span>{formatEventDate(event.eventDate, locale)}</span>
               </div>
@@ -50,13 +50,13 @@ export async function EventHeroBanner({ event }: { event: EventApp }) {
               // Dashed rather than solid, so a date the owner has not picked
               // reads as deliberately open rather than as a chip that failed to
               // load.
-              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-violet-400/50 bg-violet-100/50 px-3 py-1.5 text-sm font-medium text-violet-700 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-violet-400/50 bg-violet-100/50 px-3 py-1.5 text-sm font-medium text-violet-700 backdrop-blur-sm dark:bg-violet-500/15 dark:text-violet-300">
                 <IconSparkles className="h-3.5 w-3.5 shrink-0" />
                 <span>{t('noDateChip')}</span>
               </div>
             )}
             {event.location?.name && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/60 px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur-sm">
+              <div className="border-border/60 bg-background/60 text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm backdrop-blur-sm">
                 <IconMapPin className="h-3.5 w-3.5 shrink-0 text-violet-400" />
                 <span className="truncate">{event.location.name}</span>
               </div>

@@ -161,7 +161,7 @@ export function GuestsTable({
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
-                  <div className="p-8 text-center text-gray-500">
+                  <div className="text-muted-foreground p-8 text-center">
                     {searchTerm
                       ? t('table.noGuestsSearch')
                       : t('table.noGuestsFound')}
@@ -173,7 +173,7 @@ export function GuestsTable({
                 <TableRow
                   key={row.id}
                   className={cn(
-                    'group cursor-pointer transition-colors hover:bg-gray-50',
+                    'hover:bg-muted/50 group cursor-pointer transition-colors',
                     row.original.id === recentlyUpdatedGuestId && 'row-updated',
                   )}
                   onClick={() => handleRowClick(row.original)}
