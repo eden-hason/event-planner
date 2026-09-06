@@ -58,6 +58,29 @@ failing. A delivery row we could not update is worth much less than the
 subscription carrying every future one, so processing errors are logged and the
 response is still 200.
 
+## Reading the logs
+
+Every line is prefixed `[whatsapp-webhook]`, so `[whatsapp-webhook]` in the
+Vercel function logs is the whole picture. The happy path is quiet: one summary
+line per request, no per-row output.
+
+| Line | Means |
+|---|---|
+| `Handshake verified, echoing challenge` | Meta's GET succeeded. |
+| `Handshake rejected: verify token mismatch (Meta sent N chars, this environment holds M)` | The console and the environment disagree. Lengths only, never the token. A wildly different N and M means a stale value; N one or two greater than M usually means whitespace came along with a paste. |
+| `Handshake rejected: WHATSAPP_WEBHOOK_VERIFY_TOKEN is not set` | The var is missing in the environment the callback URL points at. On Vercel a new env var only reaches deployments built after it was added, so this persists until a redeploy. |
+| `Rejected: signature mismatch over N bytes` | `WHATSAPP_APP_SECRET` almost certainly belongs to a different Meta app than the one holding the subscription. |
+| `Rejected: no X-Hub-Signature-256 header` | Something that is not Meta is calling this URL. |
+| `N status(es) -> M message(s), K matched, A applied, S already current, E write error(s)` | The one line that says the endpoint is working. `A` climbing over a send window is the thing to watch. |
+| `N of M message id(s) matched no delivery row` | Sending and tracking have come apart: the delivery upsert failed, rows were deleted, or another environment shares this phone number. |
+| `Delivery <id> to ***NNNN FAILED - <code>: <detail>` | A guest did not get their message. Always logged, never sampled. |
+| `Template <name>: REJECTED (reason)` | A template Kululu sends is no longer usable. Every schedule bound to it will fail. |
+
+Set `WHATSAPP_WEBHOOK_DEBUG=true` for raw payload dumps and per-delivery status
+transitions. Off by default: one 500-guest send produces up to 1500
+notifications, and the bodies carry guest phone numbers. Phone numbers are
+masked to their last four digits in every non-debug line.
+
 ## Webhook fields to subscribe to
 
 Subscribed in **App Dashboard → WhatsApp → Configuration → Webhook fields**.
