@@ -1449,7 +1449,7 @@
       "foundCheck": "Open it once to check it shows your name before you confirm.",
       "use": "Use this link",
       "replace": "Replace QR",
-      "connectedNote": "Guests will see a \"Send a gift with Bit\" button in the reminder. The QR image itself was not kept.",
+      "connectedNote": "Guests will see a \"Send a gift with Bit\" button in the reminder.",
       "disconnect": "Disconnect",
       "tryAgain": "Try again",
       "chooseAnother": "Choose another image",
