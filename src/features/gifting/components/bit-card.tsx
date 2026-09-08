@@ -77,7 +77,7 @@ export function BitCard({ config, pending, onSave, onDisconnect }: BitCardProps)
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex min-w-0 flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Image src="/gift-bit-logo.svg" alt="Bit" width={40} height={40} />
