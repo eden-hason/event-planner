@@ -1606,6 +1606,7 @@
       "confirmed": "Confirmed",
       "declined": "Declined",
       "noAnswer": "No answer",
+      "willUpdate": "Will update",
       "confirmedGuests": "{count, plural, one {# guest} other {# guests}}"
     },
     "table": {
@@ -1619,6 +1620,7 @@
       "confirmed": "Confirmed",
       "declined": "Declined",
       "noAnswer": "No answer",
+      "willUpdate": "Will update themselves",
       "notCalled": "Not called yet"
     },
     "rsvp": {

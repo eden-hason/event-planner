@@ -6,6 +6,7 @@ import {
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
+  IconMessage,
   IconPhoneOff,
   IconX,
 } from '@tabler/icons-react';
@@ -41,6 +42,7 @@ export type CallRoundResultsLabels = {
   outcomeConfirmed: string;
   outcomeDeclined: string;
   outcomeNoAnswer: string;
+  outcomeWillUpdate: string;
   outcomeNotCalled: string;
   rsvpConfirmed: string;
   rsvpDeclined: string;
@@ -75,6 +77,17 @@ function OutcomeBadge({
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
         <IconPhoneOff size={11} strokeWidth={2.5} />
         {labels.outcomeNoAnswer}
+      </span>
+    );
+  }
+  // Reached, undecided: the guest answered and promised to reply to their
+  // WhatsApp invitation. Sky rather than amber - amber is "we could not reach
+  // them", and this guest we did.
+  if (outcome === 'guest_will_update') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600">
+        <IconMessage size={11} strokeWidth={2.5} />
+        {labels.outcomeWillUpdate}
       </span>
     );
   }

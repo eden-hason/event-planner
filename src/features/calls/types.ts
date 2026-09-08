@@ -1,7 +1,18 @@
 // View-model types for the calls feature.
 // These are not Zod-backed DB schemas - use schemas/ for those.
 
-export const CALL_OUTCOMES = ['no_answer', 'confirmed', 'declined'] as const;
+/**
+ * `guest_will_update` is the answered-but-undecided case: the guest picked up,
+ * would not commit on the phone, and said they will respond to the WhatsApp
+ * invitation themselves. Like `no_answer` it never moves the guest's RSVP - it
+ * records a promise, not an answer - but unlike it, the call did reach someone.
+ */
+export const CALL_OUTCOMES = [
+  'no_answer',
+  'confirmed',
+  'declined',
+  'guest_will_update',
+] as const;
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 
 // A round is in progress until whoever ran it declares it over. Derived
@@ -29,6 +40,7 @@ export type CallRoundSummary = {
   confirmed: number;
   declined: number;
   noAnswer: number;
+  willUpdate: number;
 };
 
 /**
@@ -61,7 +73,7 @@ export type CallRoundGuestRow = {
 export type CallRoundResults = {
   summary: Pick<
     CallRoundSummary,
-    'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer'
+    'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate'
   > & {
     /**
      * People the confirmed records cover, not the number of records. The

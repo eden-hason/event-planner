@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import {
   IconCheck,
+  IconMessage,
   IconPhone,
   IconPhoneOff,
   IconX,
@@ -73,6 +74,11 @@ export async function CallRoundResultsCard({
       year: 'numeric',
     });
 
+  // The fourth chip only earns its place once a call actually ended this way.
+  // Three chips share one row comfortably; four would have to wrap to a 2x2
+  // grid on phones, so the layout follows the chip rather than the reverse.
+  const hasWillUpdate = results.summary.willUpdate > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -92,7 +98,12 @@ export async function CallRoundResultsCard({
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <div className="flex gap-2">
+        <div
+          className={cn(
+            'grid gap-2',
+            hasWillUpdate ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3',
+          )}
+        >
           <StatChip
             icon={<IconCheck size={13} strokeWidth={2.5} />}
             label={t('stats.confirmed')}
@@ -112,6 +123,14 @@ export async function CallRoundResultsCard({
             value={results.summary.noAnswer}
             colorClass="text-amber-600"
           />
+          {hasWillUpdate && (
+            <StatChip
+              icon={<IconMessage size={13} strokeWidth={2.5} />}
+              label={t('stats.willUpdate')}
+              value={results.summary.willUpdate}
+              colorClass="text-sky-600"
+            />
+          )}
         </div>
         <CallRoundResultsTable
           guests={results.guests}
@@ -124,6 +143,7 @@ export async function CallRoundResultsCard({
             outcomeConfirmed: t('outcome.confirmed'),
             outcomeDeclined: t('outcome.declined'),
             outcomeNoAnswer: t('outcome.noAnswer'),
+            outcomeWillUpdate: t('outcome.willUpdate'),
             outcomeNotCalled: t('outcome.notCalled'),
             rsvpConfirmed: t('rsvp.confirmed'),
             rsvpDeclined: t('rsvp.declined'),

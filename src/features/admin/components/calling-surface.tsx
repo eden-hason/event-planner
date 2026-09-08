@@ -22,9 +22,17 @@ const OUTCOME_LABELS: Record<CallOutcome, string> = {
   no_answer: 'No answer',
   confirmed: 'Confirmed',
   declined: 'Declined',
+  guest_will_update: 'Will update',
 };
 
-const FILTERS = ['All', 'Not called', 'No answer', 'Confirmed', 'Declined'] as const;
+const FILTERS = [
+  'All',
+  'Not called',
+  'No answer',
+  'Confirmed',
+  'Declined',
+  'Will update',
+] as const;
 type Filter = (typeof FILTERS)[number];
 
 const FILTER_OUTCOME: Record<Exclude<Filter, 'All'>, CallOutcome | null> = {
@@ -32,6 +40,7 @@ const FILTER_OUTCOME: Record<Exclude<Filter, 'All'>, CallOutcome | null> = {
   'No answer': 'no_answer',
   Confirmed: 'confirmed',
   Declined: 'declined',
+  'Will update': 'guest_will_update',
 };
 
 /**
@@ -47,9 +56,11 @@ const RSVP_STYLES: Record<RoundGuestRow['currentRsvpStatus'], string> = {
 
 /**
  * The outcome buttons borrow the same vocabulary, so a scan down the column
- * reads as results rather than three identical chips: a tint while the button
- * is an option, the solid fill once it is the recorded outcome. No answer
- * stays neutral - it is the absence of a result, not one of them.
+ * reads as results rather than a row of identical chips: a tint while the
+ * button is an option, the solid fill once it is the recorded outcome. No
+ * answer stays neutral - it is the absence of a result, not one of them. Will
+ * update takes sky: the call was answered and produced something, just not a
+ * decision.
  */
 const OUTCOME_STYLES: Record<CallOutcome, { idle: string; active: string }> = {
   no_answer: {
@@ -63,6 +74,10 @@ const OUTCOME_STYLES: Record<CallOutcome, { idle: string; active: string }> = {
   declined: {
     idle: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100',
     active: 'border-red-600 bg-red-600 text-white',
+  },
+  guest_will_update: {
+    idle: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100',
+    active: 'border-sky-600 bg-sky-600 text-white',
   },
 };
 
@@ -94,8 +109,8 @@ function Tally({
  * and the caller has just been told how many are actually coming. Clicking
  * Confirmed opens a popover seeded with the record's current number; nothing is
  * written until the operator presses the confirm button in it, so the real
- * party size lands in a single write. No answer and Declined still commit
- * immediately - they carry no headcount.
+ * party size lands in a single write. Every other outcome still commits
+ * immediately - none of them carries a headcount.
  */
 function OutcomeCell({
   guest,
@@ -262,7 +277,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       if (guest.outcome === 'confirmed') counts.confirmedGuests += guest.amount;
       return counts;
     },
-    { confirmed: 0, declined: 0, no_answer: 0, confirmedGuests: 0 },
+    { confirmed: 0, declined: 0, no_answer: 0, guest_will_update: 0, confirmedGuests: 0 },
   );
 
   const visible = useMemo(() => {
@@ -415,6 +430,11 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
           />
           <Tally label="Declined" value={tally.declined} className="text-red-700" />
           <Tally label="No answer" value={tally.no_answer} className="text-amber-700" />
+          <Tally
+            label="Will update"
+            value={tally.guest_will_update}
+            className="text-sky-700"
+          />
           <Tally label="Not called" value={total - called} className="text-muted-foreground" />
         </div>
       )}
@@ -520,7 +540,9 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         <Info className="mt-px size-3.5 shrink-0" />
         <span>
           Notes are visible to the couple in their app. RSVP now is what the guest record says
-          today, the outcome is what happened on the call
+          today, the outcome is what happened on the call. Will update means the guest answered
+          but would not commit, and will reply to the WhatsApp message themselves - it leaves the
+          RSVP untouched
         </span>
       </p>
     </div>

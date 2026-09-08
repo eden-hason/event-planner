@@ -1606,6 +1606,7 @@
       "confirmed": "אישרו",
       "declined": "סירבו",
       "noAnswer": "לא ענו",
+      "willUpdate": "יעדכנו בעצמם",
       "confirmedGuests": "{count, plural, one {אורח אחד} two {# אורחים} other {# אורחים}}"
     },
     "table": {
@@ -1619,6 +1620,7 @@
       "confirmed": "אישר",
       "declined": "סירב",
       "noAnswer": "לא ענה",
+      "willUpdate": "יעדכן בעצמו",
       "notCalled": "טרם התקשרנו"
     },
     "rsvp": {

@@ -16,6 +16,7 @@ function summarise(logs: { outcome: CallOutcome | null }[]) {
     confirmed: logs.filter((l) => l.outcome === 'confirmed').length,
     declined: logs.filter((l) => l.outcome === 'declined').length,
     noAnswer: logs.filter((l) => l.outcome === 'no_answer').length,
+    willUpdate: logs.filter((l) => l.outcome === 'guest_will_update').length,
   };
 }
 
@@ -128,6 +129,7 @@ export async function getCallRoundResults(
       confirmed: 0,
       declined: 0,
       noAnswer: 0,
+      willUpdate: 0,
       confirmedGuests: 0,
     },
     guests: [],
