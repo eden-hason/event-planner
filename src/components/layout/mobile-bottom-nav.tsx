@@ -1,32 +1,72 @@
 'use client';
 
+import { type ComponentProps, useId } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
   IconArmchair,
+  IconCalendar,
+  IconCalendarFilled,
   IconDashboard,
+  IconDashboardFilled,
   IconDots,
+  IconDotsFilled,
   IconGift,
+  IconGiftFilled,
+  IconListDetails,
+  IconListDetailsFilled,
   IconUsers,
   IconUsersGroup,
-  IconCalendar,
-  IconListDetails,
 } from '@tabler/icons-react';
 import { Bot } from 'lucide-react';
-import { BottomNavBar, type BottomNavItem } from '@/components/ui/bottom-nav-bar';
+import {
+  MobileTabBar,
+  type MobileTabBarHref,
+  type MobileTabBarItem,
+} from '@/components/ui/mobile-tab-bar';
 import { useCollaboration } from '@/components/feature-layout';
 import { isSeatingRoute } from './app-shell';
 
 const SEATING_MANAGER_ALLOWED = new Set(['dashboard', 'guests', 'seating', 'aiAssistant']);
+
+const AI_GRADIENT_STOPS = (
+  <>
+    <stop offset="0%" stopColor="#22d3ee" />
+    <stop offset="45%" stopColor="#8b5cf6" />
+    <stop offset="100%" stopColor="#d946ef" />
+  </>
+);
+
+/** Keeps the assistant's gradient glyph now that the bar has no featured variant. */
+function AiBotIcon(props: ComponentProps<typeof Bot>) {
+  const gradientId = `ai-tab-gradient-${useId().replace(/:/g, '')}`;
+
+  return (
+    <Bot {...props} color={`url(#${gradientId})`}>
+      <defs>
+        <linearGradient
+          id={gradientId}
+          x1="3"
+          y1="3"
+          x2="21"
+          y2="21"
+          gradientUnits="userSpaceOnUse"
+        >
+          {AI_GRADIENT_STOPS}
+        </linearGradient>
+      </defs>
+    </Bot>
+  );
+}
 
 function getEventIdFromPathname(pathname: string): string | null {
   const match = pathname.match(/^\/app\/([^/]+)/);
   return match ? match[1] : null;
 }
 
-function buildNavUrl(basePath: string, eventId: string | null): string {
-  if (!eventId) return basePath;
-  return basePath.replace(/^\/app\//, `/app/${eventId}/`);
+function buildNavUrl(basePath: string, eventId: string | null): MobileTabBarHref {
+  const url = eventId ? basePath.replace(/^\/app\//, `/app/${eventId}/`) : basePath;
+  return url as MobileTabBarHref;
 }
 
 export function MobileBottomNav() {
@@ -36,28 +76,75 @@ export function MobileBottomNav() {
   const tChat = useTranslations('aiChat');
   const { isOwner } = useCollaboration();
 
-  const primaryItems: (BottomNavItem & { id: string })[] = [
-    { id: 'dashboard', title: tNav('dashboard'), url: buildNavUrl('/app/dashboard', eventId), icon: IconDashboard },
-    { id: 'eventDetails', title: tNav('eventDetails'), url: buildNavUrl('/app/details', eventId), icon: IconListDetails },
-    { id: 'guests', title: tNav('guests'), url: buildNavUrl('/app/guests', eventId), icon: IconUsers },
-    { id: 'schedules', title: tNav('schedules'), url: buildNavUrl('/app/schedules', eventId), icon: IconCalendar },
+  // Without an event there is nowhere for the tabs to lead, so they stay inert
+  // rather than linking back to a route that cannot resolve.
+  const disabled = !eventId;
+
+  const primaryItems: MobileTabBarItem[] = [
+    {
+      value: 'dashboard',
+      label: tNav('dashboard'),
+      icon: IconDashboard,
+      activeIcon: IconDashboardFilled,
+      href: buildNavUrl('/app/dashboard', eventId),
+      disabled,
+    },
+    {
+      value: 'eventDetails',
+      label: tNav('eventDetails'),
+      icon: IconListDetails,
+      activeIcon: IconListDetailsFilled,
+      href: buildNavUrl('/app/details', eventId),
+      disabled,
+    },
+    {
+      // Tabler has no filled plural-user glyph, so this one opts out of the
+      // fill fallback and reads as active through colour and label weight.
+      value: 'guests',
+      label: tNav('guests'),
+      icon: IconUsers,
+      activeIcon: IconUsers,
+      href: buildNavUrl('/app/guests', eventId),
+      disabled,
+    },
+    {
+      value: 'schedules',
+      label: tNav('schedules'),
+      icon: IconCalendar,
+      activeIcon: IconCalendarFilled,
+      href: buildNavUrl('/app/schedules', eventId),
+      disabled,
+    },
   ];
 
   // Digital Gifting, Share, Seating and the AI assistant live behind a single
-  // "More" launcher so the bar stays down to five slots and the active item has
-  // room for its label.
-  const moreItems: (BottomNavItem & { id: string })[] = [
-    { id: 'gifting', title: tNav('gifting'), url: buildNavUrl('/app/gifting', eventId), icon: IconGift },
-    { id: 'collaboration', title: tNav('collaboration'), url: buildNavUrl('/app/collaborate', eventId), icon: IconUsersGroup },
+  // "More" launcher so the bar stays down to five slots.
+  const moreItems: MobileTabBarItem[] = [
+    {
+      value: 'gifting',
+      label: tNav('gifting'),
+      icon: IconGift,
+      activeIcon: IconGiftFilled,
+      href: buildNavUrl('/app/gifting', eventId),
+      disabled,
+    },
+    {
+      value: 'collaboration',
+      label: tNav('collaboration'),
+      icon: IconUsersGroup,
+      href: buildNavUrl('/app/collaborate', eventId),
+      disabled,
+    },
     // Without this a Seating Manager - whose entire job is the Seating Plan -
     // could not reach it on a phone at all.
     ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
       ? [
           {
-            id: 'seating',
-            title: tNav('seating'),
-            url: buildNavUrl('/app/seating', eventId),
+            value: 'seating',
+            label: tNav('seating'),
             icon: IconArmchair,
+            href: buildNavUrl('/app/seating', eventId),
+            disabled,
           },
         ]
       : []),
@@ -68,39 +155,36 @@ export function MobileBottomNav() {
       ? []
       : [
           {
-            id: 'aiAssistant',
-            title: tChat('title'),
-            icon: Bot,
-            variant: 'featured' as const,
+            value: 'aiAssistant',
+            label: tChat('title'),
+            icon: AiBotIcon,
+            disabled,
             onClick: () =>
               window.dispatchEvent(new Event('kululu:open-ai-assistant')),
           },
         ]),
   ];
 
-  const allowed = (item: { id: string }) =>
-    isOwner || SEATING_MANAGER_ALLOWED.has(item.id);
+  const allowed = (item: MobileTabBarItem) =>
+    isOwner || SEATING_MANAGER_ALLOWED.has(item.value);
 
   const visiblePrimary = primaryItems.filter(allowed);
   const visibleMore = moreItems.filter(allowed);
 
-  const items: BottomNavItem[] = [
+  const items: MobileTabBarItem[] = [
     ...visiblePrimary,
     ...(visibleMore.length > 0
       ? [
           {
-            title: tNav('more'),
+            value: 'more',
+            label: tNav('more'),
             icon: IconDots,
-            variant: 'menu' as const,
+            activeIcon: IconDotsFilled,
             items: visibleMore,
           },
         ]
       : []),
   ];
 
-  return (
-    <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-3 md:hidden">
-      <BottomNavBar items={items} disabled={!eventId} />
-    </div>
-  );
+  return <MobileTabBar items={items} />;
 }

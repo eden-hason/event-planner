@@ -18,6 +18,9 @@ import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
 import { NavEvents } from '@/components/layout/nav-events';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { NotificationsMenu } from '@/components/layout/notifications-menu';
+import { ThemeMenuButton } from '@/components/layout/theme-toggle';
+import { Separator } from '@/components/ui/separator';
 import { type AppShellUser, UserMenu } from '@/components/layout/user-menu';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import {
@@ -64,6 +67,7 @@ export function AppSidebar({
   const eventId = getEventIdFromPathname(pathname);
   const { isOwner } = useCollaboration();
   const tNav = useTranslations('navigation');
+  const tSidebar = useTranslations('sidebar');
   const locale = useLocale();
   const isRTL = locale === 'he';
   const isSeatingPage = pathname.includes('/seating');
@@ -229,6 +233,28 @@ export function AppSidebar({
             <LanguageSwitcher />
           </div>
         )}
+
+        {/*
+          Below `md` the page's chrome row drops these two, so the drawer is
+          where they live instead - one row, split down the middle, directly
+          above the user menu.
+        */}
+        <div className="flex items-center px-2 pb-1 md:hidden">
+          <div className="flex flex-1 justify-center">
+            <ThemeMenuButton
+              labels={{
+                theme: tSidebar('theme'),
+                light: tSidebar('themeLight'),
+                dark: tSidebar('themeDark'),
+                system: tSidebar('themeSystem'),
+              }}
+            />
+          </div>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex flex-1 justify-center">
+            <NotificationsMenu />
+          </div>
+        </div>
 
         <UserMenu user={user} />
       </SidebarFooter>

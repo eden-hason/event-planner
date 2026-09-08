@@ -330,9 +330,31 @@ export function GuestsPage({
     [],
   );
 
-  useFeatureHeader({ title: t('title') });
-
   const [activeTab, setActiveTab] = useState<'guests' | 'groups'>('guests');
+
+  /*
+   * On a phone the tab's action goes into `PageCard`'s chrome row beside the
+   * title: stacked above the tab list it cost a whole extra row, and the row it
+   * shared with the tabs broke onto two lines. Desktop keeps it inline with the
+   * tabs, where the width is there for both.
+   *
+   * `useFeatureHeader` only re-runs on a title change, so the action is pushed
+   * through `setHeader` as well - it changes with the active tab.
+   */
+  const title = t('title');
+  const headerAction =
+    activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction;
+  const headerConfig = { title, action: isMobile ? headerAction : undefined };
+  const { setHeader } = useFeatureHeader(headerConfig);
+  useEffect(() => {
+    setHeader(headerConfig);
+    // Keyed on what the action actually depends on, not on `headerConfig`:
+    // `guestsHeaderAction` is rebuilt every render (its own deps include
+    // handlers that are), so an identity-keyed effect would set state in a
+    // loop. `guests`/`eventName` are here because the export items close over
+    // them and would otherwise keep exporting a stale list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, isMobile, activeTab, guests, eventName, setHeader]);
 
   const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
   const guestGroup = selectedGuest?.group;
@@ -367,9 +389,7 @@ export function GuestsPage({
               {t('tabGroups')}
             </TabsTrigger>
           </TabsList>
-          <div className="flex justify-end">
-            {activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction}
-          </div>
+          {!isMobile && <div className="flex justify-end">{headerAction}</div>}
         </div>
         {!isMobile && (
           <GuestStats
