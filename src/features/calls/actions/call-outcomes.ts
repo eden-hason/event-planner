@@ -10,9 +10,11 @@ export type CallOutcomeResult = { success: boolean; message: string };
 /**
  * Records what happened on one call, and propagates it to the guest's RSVP.
  *
- * Only `confirmed` and `declined` move `rsvp_status` - `no_answer` is a fact
- * about the call, not about the guest's intention, and writing it through would
- * silently reclassify someone who simply did not pick up.
+ * Only `confirmed` and `declined` move `rsvp_status`. `no_answer` and
+ * `guest_will_update` are facts about the call, not about the guest's
+ * intention: one did not pick up, the other picked up and promised to answer
+ * the WhatsApp invitation themselves. Writing either through would silently
+ * reclassify a guest who has not actually decided.
  *
  * Clearing an outcome (passing null) deliberately does **not** revert the RSVP.
  * The guest really did say yes on the phone; undoing the operator's bookkeeping
