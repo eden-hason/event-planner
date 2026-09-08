@@ -11,6 +11,7 @@ import {
   type DragStartEvent,
   type Modifier,
 } from '@dnd-kit/core';
+import { useFeatureHeader } from '@/components/feature-layout';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import type { DraggableData, DroppableData, SeatingPageProps } from '../types';
@@ -46,6 +47,41 @@ export function SeatingPage(props: SeatingPageProps) {
   const workspace = useSeatingWorkspace(props);
 
   const [draggingGuestId, setDraggingGuestId] = React.useState<string | null>(null);
+
+  /*
+   * On a phone the workspace hands its title and its actions to `PageCard`'s
+   * chrome row rather than carrying a header of its own: one row of chrome
+   * instead of two, and the actions stop wrapping onto a second line beside a
+   * title that already fills the width. Desktop keeps its own in-page header
+   * (the canvas is full-bleed and the chrome row is only the sidebar toggle
+   * there), so it clears the slot with an empty title.
+   *
+   * `setDialog` is a `useState` setter and `title` a resolved string, so the
+   * config is stable between renders - depending on `workspace` itself would
+   * rebuild it every render and the header effect would loop.
+   */
+  const setDialog = workspace.setDialog;
+  const title = t('title');
+  const headerConfig = React.useMemo(
+    () =>
+      isMobile
+        ? {
+            title,
+            action: (
+              <SeatingHeaderActions
+                compact
+                onAddTable={() => setDialog({ kind: 'create' })}
+                onAddBatch={() => setDialog({ kind: 'batch' })}
+              />
+            ),
+          }
+        : { title: '' },
+    [isMobile, title, setDialog],
+  );
+  const { setHeader } = useFeatureHeader(headerConfig);
+  React.useEffect(() => {
+    setHeader(headerConfig);
+  }, [headerConfig, setHeader]);
 
   // A few pixels of travel before a drag starts, so a tap still opens a table.
   const sensors = useSensors(
@@ -187,13 +223,15 @@ export function SeatingPage(props: SeatingPageProps) {
       <div
         className={cn(
           WORKSPACE_HEIGHT,
-          'flex min-h-0 flex-col overflow-hidden pt-4',
-          // The fixed MobileBottomNav floats over the bottom of the viewport
-          // (52px tall, 1rem from the edge). The workspace is full-bleed with no
+          // No top padding: the chrome row's band closes with its own `pb-3`
+          // and the Card adds the gap below it.
+          'flex min-h-0 flex-col overflow-hidden',
+          // The fixed MobileBottomNav is docked to the bottom of the viewport
+          // (56px tall, flush with the edge). The workspace is full-bleed with no
           // page scroll, so without this the bottom bulk-selection bar and the
           // last unassigned rows sit underneath it. Clear the nav plus the
           // device safe-area inset.
-          'pb-[calc(4.5rem+env(safe-area-inset-bottom))]',
+          'pb-[calc(4rem+env(safe-area-inset-bottom))]',
         )}
       >
         {props.isScopedCollaborator && (

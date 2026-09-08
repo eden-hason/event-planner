@@ -86,10 +86,7 @@ export function GiftingPage({ event }: { event: EventApp }) {
 
   return (
     <div
-      // The hero is `hidden` below `md`, so on mobile the section heading would
-      // butt straight against the chrome row - add the spacing the hero gives
-      // for free on desktop.
-      className="mx-auto flex max-w-4xl flex-col gap-8 pt-4 pb-16 md:pt-0"
+      className="mx-auto flex max-w-4xl flex-col gap-8 pb-16"
       dir={locale === 'he' ? 'rtl' : 'ltr'}
     >
       <GiftingHero connectedCount={connectedCount} />

@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { groupGuests } from '../utils/grouping';
 import { headCount } from '../utils/occupancy';
 import { matchesQuery, SeatedSearchMatches } from './unassigned-panel';
-import { SeatingHeaderActions } from './seating-header-actions';
 import { SeatingProgress } from './seating-progress';
 import { TableDetailPanel } from './table-detail-panel';
 import { TableSummaryCard } from './table-summary-card';
@@ -74,15 +73,11 @@ export function SeatingMobile({ workspace, groups }: SeatingMobileProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-3 px-4 pb-3">
-        <h1 className="text-xl font-semibold">{t('title')}</h1>
-        <SeatingHeaderActions
-          compact
-          onAddTable={() => workspace.setDialog({ kind: 'create' })}
-          onAddBatch={() => workspace.setDialog({ kind: 'batch' })}
-        />
-      </div>
-
+      {/*
+        No title row: `SeatingPage` puts the title and these actions into
+        `PageCard`'s chrome row on mobile, so the workspace opens straight
+        into its tabs.
+      */}
       <Tabs
         defaultValue="tables"
         dir={dir}

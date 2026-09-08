@@ -46,20 +46,26 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         seating
           ? 'gap-4 min-h-0 flex-1 p-0'
           : cn(
-              // `gap-0`, not `gap-4`: below `md` the chrome row's own `pb-3`
-              // is the only header-to-content spacing there should be: the
-              // flex gap on top of that padding was doubling it up. Restored
-              // at `md` since the border there needs the room back.
-              'gap-0 md:gap-4',
+              // The same `gap-4` at every width, but it does two different
+              // jobs: at `md` it is the room the card's header border needs,
+              // and below it - where the row is a white band on the gray
+              // shell - it is the gap that separates the band from the
+              // content, with the row's own `pb-3` closing out the band.
+              'gap-4',
               // Card's own default is `py-6` top and bottom; the chrome row
               // wants less air above it than CardContent wants below it, and
               // below `md` there's no bottom padding at all since nothing
               // needs the room without the border/background.
-              'pt-4 pb-0 md:pt-3 md:pb-6',
+              // No top padding below `md` either - the chrome row owns its own
+              // there, so its white band reaches the top edge of the viewport
+              // instead of leaving a strip of the gray shell above it.
+              'pt-0 pb-0 md:pt-3 md:pb-6',
               // Clearance above the fixed `MobileBottomNav`, at every width
               // below `md` - the card frame is gone there, but the nav still
-              // floats over the bottom of the viewport.
-              'mb-24 md:mb-2',
+              // sits over the bottom of the viewport. The bar is 56px tall and
+              // adds the device safe-area inset below itself, so the gap has to
+              // clear both.
+              'mb-[calc(4rem+env(safe-area-inset-bottom))] md:mb-2',
               // `mt-2`/`me-2` (8px), matching the floating sidebar's own
               // outer gap so the two sit level. `me-2` (not `mx-2`): the
               // sidebar-facing side already gets its 8px from the sidebar's
@@ -74,7 +80,27 @@ export function PageCard({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           'flex items-center justify-between gap-4',
-          seating ? 'px-2 pb-1' : 'px-4 pb-3 md:border-b md:px-6',
+          seating
+            ? cn(
+                // Below `md` the Seating Plan gets the same white band as every
+                // other page - it hands its title and its actions to this row
+                // rather than keeping a header of its own (see `SeatingPage`).
+                'bg-card px-4 pt-4 pb-3',
+                // From `md` up the workspace is full-bleed again and the row is
+                // just somewhere to hang the sidebar toggle.
+                'md:bg-transparent md:px-2 md:pt-0 md:pb-1',
+              )
+            : cn(
+                'px-4 pb-3 md:border-b md:px-6',
+                // Below `md` the card frame is gone and the page sits straight
+                // on the gray shell, so the row needs its own surface to read
+                // as a header rather than as the first line of the content.
+                // `bg-card`, not `bg-white`: it is the same white the card uses
+                // at `md` and up, and it follows the theme into dark mode.
+                // The top padding lives here rather than on the Card so the
+                // band covers it (see the Card's `pt-0` below `md`).
+                'bg-card pt-4 md:bg-transparent md:pt-0',
+              ),
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -85,15 +111,22 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {action}
-          <ThemeMenuButton
-            labels={{
-              theme: t('theme'),
-              light: t('themeLight'),
-              dark: t('themeDark'),
-              system: t('themeSystem'),
-            }}
-          />
-          <NotificationsMenu />
+          {/*
+            Below `md` these two move into the sidebar footer, above the user
+            menu (see `AppSidebar`): the phone header has room for the page's
+            own action and little else.
+          */}
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeMenuButton
+              labels={{
+                theme: t('theme'),
+                light: t('themeLight'),
+                dark: t('themeDark'),
+                system: t('themeSystem'),
+              }}
+            />
+            <NotificationsMenu />
+          </div>
         </div>
       </div>
       <CardContent
