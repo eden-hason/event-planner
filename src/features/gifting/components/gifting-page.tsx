@@ -102,7 +102,9 @@ export function GiftingPage({ event }: { event: EventApp }) {
           <p className="text-sm text-muted-foreground">{t('connect.subtitle')}</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        {/* `[&>*]:min-w-0` so a long saved link inside a card can't blow the
+            grid track wider than the viewport on mobile. */}
+        <div className="grid grid-cols-1 gap-5 [&>*]:min-w-0 lg:grid-cols-2">
           <PayboxCard
             config={paybox}
             pending={pending === 'paybox'}
