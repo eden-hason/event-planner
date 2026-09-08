@@ -9,6 +9,7 @@ import {
   IconUsersGroup,
   IconCalendar,
   IconCoins,
+  IconGift,
   IconListDetails,
   IconArmchair,
   IconPalette,
@@ -120,6 +121,12 @@ export function AppSidebar({
       title: tNav('schedules'),
       url: '/app/schedules',
       icon: IconCalendar,
+    },
+    {
+      id: 'gifting',
+      title: tNav('gifting'),
+      url: '/app/gifting',
+      icon: IconGift,
     },
     ...(process.env.NEXT_PUBLIC_ENABLE_TEMPLATES === 'true'
       ? [

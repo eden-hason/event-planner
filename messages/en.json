@@ -41,13 +41,15 @@
     "guests": "Guests",
     "seating": "Seating",
     "schedules": "Schedules",
+    "gifting": "Digital Gifting",
     "collaboration": "Collaboration",
     "settings": "Settings",
     "templates": "Templates",
     "budget": "Budget",
     "getHelp": "Get Help",
     "comingSoon": "Soon",
-    "new": "New"
+    "new": "New",
+    "more": "More"
   },
   "seating": {
     "title": "Seating Plan",
@@ -1405,17 +1407,91 @@
         "glutenFree": "Gluten-Free",
         "strictlyKosher": "Strictly Kosher"
       }
+    }
+  },
+  "gifting": {
+    "title": "Digital Gift",
+    "notFound": "Event not found",
+    "hero": {
+      "heading": "Let guests send a gift in seconds",
+      "body": "Connect Bit or PayBox once and a gift link is added to the reminder your guests get before the event. Money goes straight to your account - Kululu never holds it.",
+      "summaryConnected": "{count, plural, one {1 app connected} other {# apps connected}}"
     },
-    "digitalGift": {
-      "title": "Digital Gift",
-      "payboxLabel": "PayBox Group Invite Link",
-      "payboxPlaceholder": "Paste your PayBox group invite link",
-      "payboxHelper": "How to: Open the PayBox app, create a new Group for your event, click Invite Friends, copy the link, and paste it here.",
-      "payboxSubtitle": "Let guests send you a gift through PayBox",
-      "bitLabel": "Bit Payment Link",
-      "bitPlaceholder": "https://www.bitpay.co.il/app/me/...",
-      "bitHelper": "How to: Open the Bit app, go to your personal payment QR, share it, and copy the link (it starts with https://www.bitpay.co.il). Paste it here.",
-      "bitSubtitle": "Instant transfer via Bit"
+    "connect": {
+      "heading": "Your payment apps",
+      "subtitle": "Connect one or both. Guests pick whichever they have"
+    },
+    "linkError": {
+      "empty": "Paste a link to continue",
+      "notUrl": "That doesn't look like a link - it should start with https://",
+      "wrongProvider": "This link isn't for that provider"
+    },
+    "paybox": {
+      "kind": "Share link",
+      "label": "Your PayBox group link",
+      "placeholder": "https://links.payboxapp.com/…",
+      "help": "Open PayBox, create a group for your event, tap Invite Friends, copy the link and paste it here.",
+      "valid": "Looks like a valid PayBox link",
+      "connectedNote": "Guests will see a \"Send a gift with PayBox\" button in the pre-event reminder.",
+      "save": "Save link",
+      "update": "Update link",
+      "cancel": "Cancel",
+      "disconnect": "Disconnect"
+    },
+    "bit": {
+      "kind": "QR code",
+      "uploadLabel": "Upload your Bit QR code",
+      "dropzone": "Drop your Bit QR here",
+      "dropzoneHint": "or choose a file · PNG, JPG or WebP up to 10MB",
+      "help": "In the Bit app: Request money → Share QR, save it to your photos, then upload it here. We read the payment link from it - guests never see the picture.",
+      "decoding": "Reading the QR code…",
+      "found": "Bit link found",
+      "foundCheck": "Open it once to check it shows your name before you confirm.",
+      "use": "Use this link",
+      "replace": "Replace QR",
+      "connectedNote": "Guests will see a \"Send a gift with Bit\" button in the reminder. The QR image itself was not kept.",
+      "disconnect": "Disconnect",
+      "tryAgain": "Try again",
+      "chooseAnother": "Choose another image",
+      "cancel": "Cancel",
+      "errors": {
+        "unsupported": {
+          "title": "That file type isn't supported",
+          "body": "Upload a PNG, JPG or WebP of your Bit QR code. A screenshot from your phone works well."
+        },
+        "oversized": {
+          "title": "This image is too large",
+          "body": "Keep it under 10MB. Try a screenshot instead of the original photo."
+        },
+        "noqr": {
+          "title": "We couldn't find a QR code",
+          "body": "Make sure the whole square is visible, in focus and not cropped, then try again."
+        },
+        "notbit": {
+          "title": "This QR isn't from Bit",
+          "body": "It points somewhere else. In the Bit app go to Request money → Share QR and upload that one."
+        },
+        "generic": {
+          "title": "We couldn't read that image",
+          "body": "Try another file, or a screenshot of the QR code."
+        }
+      }
+    },
+    "privacy": {
+      "title": "Your privacy.",
+      "body": "The QR image is used only to extract your payment link, then discarded. Kululu never sees or holds gift money - payments go directly between your guests and your Bit or PayBox account."
+    },
+    "badge": {
+      "off": "Not connected",
+      "connected": "Connected",
+      "incomplete": "Incomplete",
+      "error": "Needs attention"
+    },
+    "toast": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "disconnected": "Disconnected",
+      "error": "Something went wrong"
     }
   },
   "aiChat": {

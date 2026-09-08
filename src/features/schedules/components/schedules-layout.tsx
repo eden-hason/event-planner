@@ -104,7 +104,12 @@ export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutPro
     <div className="flex flex-col gap-4 md:flex-row md:gap-6">
       {/* Mobile nav - the same entries as the sidebar, in a picker */}
       <Select value={selectValue} onValueChange={handleSelect}>
-        <SelectTrigger className="w-full md:hidden" aria-label={t('header.title')}>
+        {/* Below md the picker floats on the shell's gray - fill it so it reads
+            as an input, not a hole. */}
+        <SelectTrigger
+          className="w-full bg-background md:hidden"
+          aria-label={t('header.title')}
+        >
           {/* One line only - the trigger clamps its value, so the status shows
               as a bare dot here and spells itself out in the open list. */}
           <SelectValue>

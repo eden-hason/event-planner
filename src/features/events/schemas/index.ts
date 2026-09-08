@@ -23,10 +23,14 @@ export const LocationSchema = z.object({
 export type Location = z.infer<typeof LocationSchema>;
 
 // --- Event Settings Sub-Schemas ---
-// Paybox configuration for payment integration
+// Paybox configuration for payment integration. `link` is optional for the same
+// reason as `BitConfigSchema` below: a half-configured row (toggle flipped on,
+// link never filled, or a hand-edited row) must still parse on read - a missing
+// link reads as "not configured", it never throws. The gifting UI always writes
+// a string link.
 export const PayboxConfigSchema = z.object({
   enabled: z.boolean(),
-  link: z.string(),
+  link: z.string().optional(),
 });
 
 export type PayboxConfig = z.infer<typeof PayboxConfigSchema>;

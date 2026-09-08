@@ -5,13 +5,15 @@ import { usePathname } from '@/i18n/navigation';
 import {
   IconArmchair,
   IconDashboard,
+  IconDots,
+  IconGift,
   IconUsers,
   IconUsersGroup,
   IconCalendar,
   IconListDetails,
 } from '@tabler/icons-react';
 import { Bot } from 'lucide-react';
-import { BottomNavBar } from '@/components/ui/bottom-nav-bar';
+import { BottomNavBar, type BottomNavItem } from '@/components/ui/bottom-nav-bar';
 import { useCollaboration } from '@/components/feature-layout';
 import { isSeatingRoute } from './app-shell';
 
@@ -34,11 +36,18 @@ export function MobileBottomNav() {
   const tChat = useTranslations('aiChat');
   const { isOwner } = useCollaboration();
 
-  const allItems = [
+  const primaryItems: (BottomNavItem & { id: string })[] = [
     { id: 'dashboard', title: tNav('dashboard'), url: buildNavUrl('/app/dashboard', eventId), icon: IconDashboard },
     { id: 'eventDetails', title: tNav('eventDetails'), url: buildNavUrl('/app/details', eventId), icon: IconListDetails },
     { id: 'guests', title: tNav('guests'), url: buildNavUrl('/app/guests', eventId), icon: IconUsers },
     { id: 'schedules', title: tNav('schedules'), url: buildNavUrl('/app/schedules', eventId), icon: IconCalendar },
+  ];
+
+  // Digital Gifting, Share, Seating and the AI assistant live behind a single
+  // "More" launcher so the bar stays down to five slots and the active item has
+  // room for its label.
+  const moreItems: (BottomNavItem & { id: string })[] = [
+    { id: 'gifting', title: tNav('gifting'), url: buildNavUrl('/app/gifting', eventId), icon: IconGift },
     { id: 'collaboration', title: tNav('collaboration'), url: buildNavUrl('/app/collaborate', eventId), icon: IconUsersGroup },
     // Without this a Seating Manager - whose entire job is the Seating Plan -
     // could not reach it on a phone at all.
@@ -53,8 +62,8 @@ export function MobileBottomNav() {
         ]
       : []),
     // The Seating Plan hides the AI assistant launcher (its workspace owns both
-    // bottom corners), so the panel is not mounted there - drop the nav entry
-    // too rather than leave a button that opens nothing.
+    // bottom corners), so the panel is not mounted there - drop the entry too
+    // rather than leave a button that opens nothing.
     ...(isSeatingRoute(pathname)
       ? []
       : [
@@ -69,9 +78,25 @@ export function MobileBottomNav() {
         ]),
   ];
 
-  const items = isOwner
-    ? allItems
-    : allItems.filter((item) => SEATING_MANAGER_ALLOWED.has(item.id));
+  const allowed = (item: { id: string }) =>
+    isOwner || SEATING_MANAGER_ALLOWED.has(item.id);
+
+  const visiblePrimary = primaryItems.filter(allowed);
+  const visibleMore = moreItems.filter(allowed);
+
+  const items: BottomNavItem[] = [
+    ...visiblePrimary,
+    ...(visibleMore.length > 0
+      ? [
+          {
+            title: tNav('more'),
+            icon: IconDots,
+            variant: 'menu' as const,
+            items: visibleMore,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-3 md:hidden">
