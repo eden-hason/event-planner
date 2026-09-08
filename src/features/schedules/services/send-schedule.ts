@@ -90,8 +90,10 @@ function outcomeError(
 function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
   const settings = rawEvent.event_settings as {
-    paybox_config?: { enabled: boolean; link: string };
-    // Optional `link`: legacy rows still hold `phoneNumber` and no `link`.
+    // Optional `link` on both: a half-configured row, or a legacy Bit row that
+    // still holds `phoneNumber` and no `link`. `isGiftingEnabled` treats a
+    // missing link as "not configured".
+    paybox_config?: { enabled: boolean; link?: string };
     bit_config?: { enabled: boolean; link?: string };
   } | null;
   const guestExperience = rawEvent.guests_experience as {

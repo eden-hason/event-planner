@@ -7,7 +7,6 @@ import { EventDetailsHeader } from './event-details-header';
 import { DateTimeCard } from './date-time-card';
 import { LocationCard } from './location-card';
 import { CoupleCard } from './couple-card';
-import { DigitalGiftCard } from './digital-gift-card';
 import { GuestExperienceCard } from './guest-experience-card';
 import { EventInvitationCard } from './event-invitation-card';
 import { EventApp } from '../../schemas';
@@ -63,7 +62,6 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
           eventId={event.id}
           imageUrl={event.invitations?.imageUrl}
         />
-        <DigitalGiftCard event={event} />
         <GuestExperienceCard event={event} />
       </div>
     </div>
