@@ -588,7 +588,8 @@
       "declined": "Declined",
       "records": "{count} records",
       "all": "All",
-      "guestsLabel": "Guests"
+      "guestsLabel": "Guests",
+      "rsvpStatus": "RSVP status"
     },
     "table": {
       "name": "Name",
@@ -617,10 +618,13 @@
       "firstPage": "First page",
       "previousPage": "Previous page",
       "nextPage": "Next page",
-      "lastPage": "Last page"
+      "lastPage": "Last page",
+      "prev": "Previous",
+      "next": "Next"
     },
     "directory": {
       "importCsv": "Import File",
+      "export": "Export",
       "exportIplan": "Export to iPlan",
       "exportConfirmed": "Confirmed guests",
       "exportConfirmedDesc": "Only guests who confirmed attendance",
@@ -650,6 +654,9 @@
     },
     "search": {
       "placeholder": "Search guests..."
+    },
+    "mobile": {
+      "seats": "{count, plural, one {# guest} other {# guests}}"
     },
     "dietary": {
       "vegan": "Vegan",
