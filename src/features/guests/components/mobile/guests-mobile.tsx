@@ -5,8 +5,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import {
   IconChevronLeft,
   IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconFilter2,
   IconPlus,
   IconUpload,
@@ -32,6 +30,25 @@ import { GuestFiltersSheet } from './guest-filters-sheet';
 import { cn } from '@/lib/utils';
 
 const MOBILE_PAGE_SIZE = 12;
+
+/**
+ * Page numbers to render, 1-based, with 'gap' markers for elided ranges.
+ * Keeps first + last + a window around the current page so the pager stays
+ * one row wide however many pages there are.
+ */
+function pageWindow(current: number, count: number): (number | 'gap')[] {
+  if (count <= 7) {
+    return Array.from({ length: count }, (_, i) => i + 1);
+  }
+  const pages: (number | 'gap')[] = [1];
+  const left = Math.max(2, current - 1);
+  const right = Math.min(count - 1, current + 1);
+  if (left > 2) pages.push('gap');
+  for (let p = left; p <= right; p++) pages.push(p);
+  if (right < count - 1) pages.push('gap');
+  pages.push(count);
+  return pages;
+}
 
 interface GuestsMobileProps {
   guests: GuestWithGroupApp[];
@@ -182,6 +199,17 @@ export function GuestsMobile({
         </div>
       </div>
 
+      {/* Result count, above the list */}
+      {total > 0 && (
+        <p className="text-muted-foreground px-0.5 text-[13px]">
+          {t('table.showing', {
+            start: start + 1,
+            end: Math.min(start + MOBILE_PAGE_SIZE, total),
+            total,
+          })}
+        </p>
+      )}
+
       {/* Card list */}
       {total === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
@@ -211,60 +239,57 @@ export function GuestsMobile({
       )}
 
       {/* Pagination */}
-      {total > 0 && (
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <p className="text-muted-foreground text-sm">
-            {t('table.showing', {
-              start: start + 1,
-              end: Math.min(start + MOBILE_PAGE_SIZE, total),
-              total,
-            })}
-          </p>
+      {total > 0 && pageCount > 1 && (
+        <div className="flex items-center justify-between gap-2 pt-2 pb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+            disabled={safePageIndex === 0}
+          >
+            {isRTL ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+            {t('table.prev')}
+          </Button>
+
           <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setPageIndex(0)}
-              disabled={safePageIndex === 0}
-            >
-              {isRTL ? <IconChevronsRight size={16} /> : <IconChevronsLeft size={16} />}
-              <span className="sr-only">{t('table.firstPage')}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
-              disabled={safePageIndex === 0}
-            >
-              {isRTL ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
-              <span className="sr-only">{t('table.previousPage')}</span>
-            </Button>
-            <span className="px-2 text-sm font-medium">
-              {safePageIndex + 1} / {pageCount}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
-              disabled={safePageIndex >= pageCount - 1}
-            >
-              {isRTL ? <IconChevronLeft size={16} /> : <IconChevronRight size={16} />}
-              <span className="sr-only">{t('table.nextPage')}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setPageIndex(pageCount - 1)}
-              disabled={safePageIndex >= pageCount - 1}
-            >
-              {isRTL ? <IconChevronsLeft size={16} /> : <IconChevronsRight size={16} />}
-              <span className="sr-only">{t('table.lastPage')}</span>
-            </Button>
+            {pageWindow(safePageIndex + 1, pageCount).map((p, i) =>
+              p === 'gap' ? (
+                <span
+                  key={`gap-${i}`}
+                  className="text-muted-foreground px-1 text-sm"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPageIndex(p - 1)}
+                  aria-current={p === safePageIndex + 1 ? 'page' : undefined}
+                  className={cn(
+                    'flex size-8 items-center justify-center rounded-md text-sm font-semibold transition-colors',
+                    p === safePageIndex + 1
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent',
+                  )}
+                >
+                  {p}
+                </button>
+              ),
+            )}
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={safePageIndex >= pageCount - 1}
+          >
+            {t('table.next')}
+            {isRTL ? <IconChevronLeft size={16} /> : <IconChevronRight size={16} />}
+          </Button>
         </div>
       )}
 

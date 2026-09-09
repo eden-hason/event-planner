@@ -20,6 +20,7 @@ import {
 import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { GroupIcon } from '@/features/guests/components/groups';
+import { cn } from '@/lib/utils';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
 
@@ -33,10 +34,10 @@ interface GuestMobileCardProps {
   t: TFn;
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  confirmed: 'bg-green-100 text-green-800 border-green-200',
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  declined: 'bg-red-100 text-red-800 border-red-200',
+const STATUS_PILL: Record<string, string> = {
+  confirmed: 'bg-green-100 text-green-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  declined: 'bg-red-100 text-red-800',
 };
 
 function getInitials(name: string): string {
@@ -68,52 +69,57 @@ export function GuestMobileCard({
           onSelect(guest);
         }
       }}
-      className="bg-card flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-accent/40"
+      className="bg-card flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-accent/40"
     >
       {/* Initials badge */}
-      <div className="bg-primary/10 text-primary flex size-10 shrink-0 self-center items-center justify-center rounded-full text-sm font-semibold">
+      <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
         {getInitials(guest.name)}
       </div>
 
       {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="truncate font-medium">{guest.name}</span>
-
-        {guest.phone && (
-          <div className="flex items-center gap-2">
-            <a
-              href={`tel:${guest.phone}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label={t('table.phone')}
-            >
-              <IconPhone size={16} />
-            </a>
-            <span dir="ltr" className="text-sm text-muted-foreground">
-              {formatPhone(guest.phone)}
-            </span>
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge className={STATUS_BADGE[status] ?? STATUS_BADGE.pending}>
-            {t(`rsvp.${status}`)}
-          </Badge>
-          {guest.side && (
-            <Badge variant="outline">{t(`sides.${guest.side}`)}</Badge>
-          )}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-[15px] font-semibold">
+            {guest.name}
+          </span>
           {guest.group && (
-            <Badge variant="outline" className="gap-1.5">
+            <span className="text-muted-foreground bg-muted flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px]">
               <GroupIcon iconName={guest.group.icon} size="sm" />
               {guest.group.name}
-            </Badge>
-          )}
-          {tableNumber !== undefined && (
-            <Badge variant="outline">
-              {t('table.tableNumber', { number: tableNumber })}
-            </Badge>
+            </span>
           )}
         </div>
+
+        <div className="text-muted-foreground flex items-center gap-2 text-[13px]">
+          {guest.phone && (
+            <>
+              <a
+                href={`tel:${guest.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-foreground -m-1 p-1"
+                aria-label={t('table.phone')}
+              >
+                <IconPhone size={14} />
+              </a>
+              <span dir="ltr">{formatPhone(guest.phone)}</span>
+              <span className="text-border">·</span>
+            </>
+          )}
+          <span>{t('mobile.seats', { count: guest.amount })}</span>
+        </div>
+
+        {(guest.side || tableNumber !== undefined) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {guest.side && (
+              <Badge variant="outline">{t(`sides.${guest.side}`)}</Badge>
+            )}
+            {tableNumber !== undefined && (
+              <Badge variant="outline">
+                {t('table.tableNumber', { number: tableNumber })}
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Guest-written comment from the RSVP page */}
         {guest.guestNotes && (
@@ -124,13 +130,23 @@ export function GuestMobileCard({
         )}
       </div>
 
+      {/* Status pill */}
+      <span
+        className={cn(
+          'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
+          STATUS_PILL[status] ?? STATUS_PILL.pending,
+        )}
+      >
+        {t(`rsvp.${status}`)}
+      </span>
+
       {/* Options menu */}
       <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 self-center"
+            className="text-muted-foreground size-8 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="sr-only">{t('table.openMenu')}</span>

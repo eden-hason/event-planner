@@ -588,7 +588,8 @@
       "declined": "סירבו",
       "records": "{count} רשומות",
       "all": "הכל",
-      "guestsLabel": "אורחים"
+      "guestsLabel": "אורחים",
+      "rsvpStatus": "סטטוס אישורים"
     },
     "table": {
       "name": "שם",
@@ -617,10 +618,13 @@
       "firstPage": "עמוד ראשון",
       "previousPage": "עמוד קודם",
       "nextPage": "עמוד הבא",
-      "lastPage": "עמוד אחרון"
+      "lastPage": "עמוד אחרון",
+      "prev": "הקודם",
+      "next": "הבא"
     },
     "directory": {
       "importCsv": "ייבוא קובץ",
+      "export": "ייצוא",
       "exportIplan": "ייצוא ל-iPlan",
       "exportConfirmed": "אורחים שאישרו",
       "exportConfirmedDesc": "אורחים שאישרו הגעה בלבד",
@@ -650,6 +654,9 @@
     },
     "search": {
       "placeholder": "חפש אורחים..."
+    },
+    "mobile": {
+      "seats": "{count, plural, one {מוזמן אחד} other {# מוזמנים}}"
     },
     "dietary": {
       "vegan": "טבעוני",

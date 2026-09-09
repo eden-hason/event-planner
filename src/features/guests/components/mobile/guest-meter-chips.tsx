@@ -11,13 +11,22 @@ interface GuestMeterChipsProps {
   onStatusClick: (status: string | null) => void;
 }
 
-type ChipStatus = 'pending' | 'confirmed' | 'declined';
+type ChipStatus = 'confirmed' | 'pending' | 'declined';
 
-const CHIP_CONFIG: { status: ChipStatus; dot: string; bar: string }[] = [
-  { status: 'pending', dot: 'bg-yellow-500', bar: 'bg-yellow-500' },
-  { status: 'confirmed', dot: 'bg-green-500', bar: 'bg-green-500' },
-  { status: 'declined', dot: 'bg-red-500', bar: 'bg-red-500' },
-];
+const BAR_ORDER: ChipStatus[] = ['confirmed', 'pending', 'declined'];
+
+const DOT_CLASS: Record<ChipStatus | 'all', string> = {
+  all: 'bg-muted-foreground/50',
+  confirmed: 'bg-green-500',
+  pending: 'bg-yellow-500',
+  declined: 'bg-red-500',
+};
+
+const BAR_CLASS: Record<ChipStatus, string> = {
+  confirmed: 'bg-green-500',
+  pending: 'bg-yellow-500',
+  declined: 'bg-red-500',
+};
 
 export function GuestMeterChips({
   guests,
@@ -48,85 +57,78 @@ export function GuestMeterChips({
   const pct = (n: number) => (counts.total > 0 ? (n / counts.total) * 100 : 0);
   const isAllActive = selectedStatuses.length === 0;
 
-  const chipLabel: Record<ChipStatus, string> = {
-    pending: t('stats.pending'),
-    confirmed: t('stats.confirmed'),
-    declined: t('stats.declined'),
-  };
-  const chipCount: Record<ChipStatus, number> = {
-    pending: counts.pending,
-    confirmed: counts.confirmed,
-    declined: counts.declined,
-  };
+  const tiles: { key: ChipStatus | 'all'; label: string; count: number }[] = [
+    { key: 'all', label: t('stats.all'), count: counts.total },
+    { key: 'confirmed', label: t('stats.confirmed'), count: counts.confirmed },
+    { key: 'pending', label: t('stats.pending'), count: counts.pending },
+    { key: 'declined', label: t('stats.declined'), count: counts.declined },
+  ];
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {/* Count + stacked-bar meter */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline justify-between">
-          <span className="flex items-baseline gap-1">
-            <span className="text-lg font-bold">{counts.total.toLocaleString()}</span>
-            <span className="text-sm font-normal text-muted-foreground">
-              {t('stats.guestsLabel')}
-            </span>
-            <span className="text-xs font-normal text-muted-foreground">
-              ·{' '}
-              {t('stats.records', {
-                count: counts.totalRecords.toLocaleString(),
-              })}
-            </span>
-          </span>
-          <span className="text-sm font-normal text-foreground">
-            {Math.round(pct(counts.confirmed))}% {t('stats.confirmed')}
-          </span>
-        </div>
-        <div className="bg-muted flex h-2 w-full overflow-hidden rounded-full">
-          {CHIP_CONFIG.map(({ status, bar }) => {
-            const width = pct(chipCount[status]);
-            if (width === 0) return null;
-            return (
-              <div
-                key={status}
-                className={bar}
-                style={{ width: `${width}%` }}
-              />
-            );
-          })}
-        </div>
+    <div className="bg-card flex flex-col gap-3 rounded-xl border p-4">
+      {/* Title + confirmed headline */}
+      <div className="flex items-baseline justify-between">
+        <span className="text-sm font-semibold">{t('stats.rsvpStatus')}</span>
+        <span className="text-muted-foreground text-sm">
+          <b className="text-foreground text-base">
+            {Math.round(pct(counts.confirmed))}%
+          </b>{' '}
+          {t('stats.confirmed')}
+        </span>
       </div>
 
-      {/* Status chips (double as the status filter) */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => onStatusClick(null)}
-          className={cn(
-            'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors',
-            isAllActive
-              ? 'border-primary/40 bg-primary/10 text-primary'
-              : 'border-border bg-background text-muted-foreground hover:bg-accent',
-          )}
-        >
-          {t('stats.all')}
-          <span className="tabular-nums">{counts.total}</span>
-        </button>
-        {CHIP_CONFIG.map(({ status, dot }) => {
-          const isActive = selectedStatuses.includes(status);
+      {/* Stacked-bar meter */}
+      <div className="bg-muted flex h-2 w-full gap-0.5 overflow-hidden rounded-full">
+        {BAR_ORDER.map((status) => {
+          const width = pct(counts[status]);
+          if (width === 0) return null;
+          return (
+            <div
+              key={status}
+              className={BAR_CLASS[status]}
+              style={{ width: `${width}%` }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Totals line */}
+      <span className="text-muted-foreground text-xs">
+        {counts.total.toLocaleString()} {t('stats.guestsLabel')} ·{' '}
+        {t('stats.records', { count: counts.totalRecords.toLocaleString() })}
+      </span>
+
+      {/* Status tiles (double as the status filter) */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {tiles.map(({ key, label, count }) => {
+          const isActive =
+            key === 'all' ? isAllActive : selectedStatuses.includes(key);
           return (
             <button
-              key={status}
+              key={key}
               type="button"
-              onClick={() => onStatusClick(status)}
+              onClick={() => onStatusClick(key === 'all' ? null : key)}
               className={cn(
-                'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors',
+                'flex min-h-[3.75rem] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 transition-colors',
                 isActive
-                  ? 'border-primary/40 bg-primary/10 text-primary'
-                  : 'border-border bg-background text-muted-foreground hover:bg-accent',
+                  ? 'border-primary/50 bg-primary/10'
+                  : 'border-border bg-background hover:bg-accent',
               )}
             >
-              <span className={cn('size-2 rounded-full', dot)} />
-              {chipLabel[status]}
-              <span className="tabular-nums">{chipCount[status]}</span>
+              <span className="text-muted-foreground flex items-center gap-1 text-[11px] whitespace-nowrap">
+                <span
+                  className={cn('size-1.5 shrink-0 rounded-full', DOT_CLASS[key])}
+                />
+                {label}
+              </span>
+              <span
+                className={cn(
+                  'text-base font-bold tabular-nums',
+                  isActive ? 'text-primary' : 'text-foreground',
+                )}
+              >
+                {count.toLocaleString()}
+              </span>
             </button>
           );
         })}
