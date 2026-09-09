@@ -1,14 +1,18 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { usePathname } from '@/i18n/navigation';
+import { ChevronLeft } from 'lucide-react';
+import { Link, usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
 import { NotificationsMenu } from '@/components/layout/notifications-menu';
+import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 import { isSeatingRoute } from './app-shell';
+import { useMoreNavItems } from './more-nav-items';
+import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
 /**
  * Wraps every event page's content in a floating white card on the gray
@@ -38,13 +42,25 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   const seating = isSeatingRoute(pathname);
   const { title, action } = useFeatureLayoutContext();
   const t = useTranslations('sidebar');
+  const tNav = useTranslations('navigation');
+
+  // Pages reached from the "More" tab (gifting, collaborate, seating) are not
+  // in the bottom nav, so below `md` they would otherwise have no way back.
+  // The list is the same one the tab bar and the More page render from.
+  const eventId = getEventIdFromPathname(pathname);
+  const moreItems = useMoreNavItems();
+  const isMoreSubpage = moreItems.some((item) => {
+    if (typeof item.href !== 'string') return false;
+    const target = item.href.split(/[?#]/)[0];
+    return pathname === target || pathname.startsWith(`${target}/`);
+  });
 
   return (
     <Card
       className={cn(
         'rounded-none border-none bg-transparent shadow-none',
         seating
-          ? 'gap-4 min-h-0 flex-1 p-0'
+          ? 'min-h-0 flex-1 gap-4 p-0'
           : cn(
               // The same `gap-4` at every width, but it does two different
               // jobs: at `md` it is the room the card's header border needs,
@@ -72,8 +88,8 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               // own `p-2` inset, so only the far edge needs its own margin -
               // logical, so it lands on the right in LTR and the left in
               // RTL.
-              'md:min-h-[calc(100svh-1rem)] md:mt-2 md:me-2',
-              'md:rounded-xl md:border md:bg-card md:shadow-sm',
+              'md:me-2 md:mt-2 md:min-h-[calc(100svh-1rem)]',
+              'md:bg-card md:rounded-xl md:border md:shadow-sm',
             ),
       )}
     >
@@ -104,19 +120,35 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <SidebarToggleButton />
-          {title && (
-            <h1 className="truncate text-xl font-semibold">{title}</h1>
+          {/*
+            Toggles the sidebar - `md` and up only. Below `md` navigation is the
+            bottom nav and the More page, so the sidebar has no opener there and
+            this side of the header holds just the page title (with a back arrow
+            on the pages reached from More).
+          */}
+          <SidebarToggleButton className="hidden md:flex" />
+          {isMoreSubpage && (
+            <Link
+              href={buildNavUrl('/app/more', eventId)}
+              aria-label={tNav('back')}
+              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground -ms-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors md:hidden"
+            >
+              <ChevronLeft className="size-5 rtl:rotate-180" />
+            </Link>
           )}
+          {title && <h1 className="truncate text-xl font-semibold">{title}</h1>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {action}
           {/*
-            Below `md` these two move into the sidebar footer, above the user
-            menu (see `AppSidebar`): the phone header has room for the page's
-            own action and little else.
+            The account-status pill (see `@/features/billing`), the theme menu,
+            and notifications - `md` and up only. Below `md` the phone header
+            has room for the page's own action and little else: the theme menu
+            and notifications move into the sidebar footer (see `AppSidebar`);
+            the status pill drops entirely.
           */}
           <div className="hidden items-center gap-2 md:flex">
+            <EventBillingStatusPill />
             <ThemeMenuButton
               labels={{
                 theme: t('theme'),

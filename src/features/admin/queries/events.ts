@@ -202,7 +202,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
 
   const { data: event, error } = await supabase
     .from('events')
-    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, onboarding_step, created_at, host_details')
+    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, billing_status, onboarding_step, created_at, host_details')
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -242,6 +242,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     receptionTime: event.reception_time,
     shortCode: event.short_code,
     canCreateSchedules: event.can_create_schedules ?? false,
+    billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,

@@ -1,4 +1,5 @@
 import type { CollaboratorRole } from '@/features/collaborate/schemas';
+import type { EventBillingStatus } from '@/features/billing';
 
 /**
  * Back Office view models. Vocabulary is defined in CONTEXT.md - in particular
@@ -125,6 +126,8 @@ export type EventIdentity = {
   receptionTime: string | null;
   shortCode: string;
   canCreateSchedules: boolean;
+  /** The commercial state - see `@/features/billing`. `canCreateSchedules` derives from it. */
+  billingStatus: EventBillingStatus;
   onboardingStep: string | null;
   createdAt: string;
   /** The account the event belongs to - the identity an Operator impersonates. */

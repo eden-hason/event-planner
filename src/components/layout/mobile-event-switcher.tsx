@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, Plus, X } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { useRouter } from '@/i18n/navigation';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerTitle,
@@ -60,23 +59,11 @@ export function MobileEventSwitcher({
         </Button>
       </DrawerTrigger>
       <DrawerContent className="mx-auto max-w-md">
-        <div className="flex items-start justify-between gap-4 px-4 pt-3 pb-4">
-          <div className="min-w-0 text-start">
-            <DrawerTitle className="text-lg">{t('picker.title')}</DrawerTitle>
-            <DrawerDescription className="mt-0.5 text-xs">
-              {t('picker.description')}
-            </DrawerDescription>
-          </div>
-          <DrawerClose asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-mt-1 shrink-0"
-              aria-label={t('picker.close')}
-            >
-              <X />
-            </Button>
-          </DrawerClose>
+        <div className="min-w-0 px-4 pt-3 pb-4 text-start">
+          <DrawerTitle className="text-lg">{t('picker.title')}</DrawerTitle>
+          <DrawerDescription className="mt-0.5 text-xs">
+            {t('picker.description')}
+          </DrawerDescription>
         </div>
 
         <div

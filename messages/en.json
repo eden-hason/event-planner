@@ -49,7 +49,8 @@
     "getHelp": "Get Help",
     "comingSoon": "Soon",
     "new": "New",
-    "more": "More"
+    "more": "More",
+    "back": "Back"
   },
   "more": {
     "title": "More",
@@ -59,16 +60,20 @@
     "language": "Language",
     "wordmark": "Kululu",
     "versionLine": "Kululu · version {version}",
+    "groups": {
+      "event": "My event",
+      "tools": "Event tools",
+      "account": "Account"
+    },
     "descriptions": {
-      "gifting": "Collect gifts and track payments",
+      "gifting": "Collect gifts from guests via Bit/Paybox",
       "collaboration": "Invite partners and share the workload",
       "seating": "Tables, groups and where everyone sits",
       "aiAssistant": "Ask anything about your event"
     },
     "picker": {
       "title": "Choose an event",
-      "description": "Your events on Kululu",
-      "close": "Close"
+      "description": "Your events on Kululu"
     }
   },
   "seating": {
@@ -1752,6 +1757,74 @@
       "subtitle": "Your event exists. From here, everything starts falling into place",
       "cta": "Let's start planning",
       "entering": "One moment..."
+    }
+  },
+  "billing": {
+    "pill": {
+      "ariaLabel": "Account status",
+      "free": "Free",
+      "payment_pending": "Payment pending",
+      "paid": "Premium",
+      "comped": "Premium",
+      "canceled": "Sending stopped"
+    },
+    "planCard": {
+      "group": "Your plan",
+      "active": "Active",
+      "manage": "Manage",
+      "details": "Details",
+      "free": {
+        "title": "You're on the free plan",
+        "description": "Upgrade to send invitations, reminders and RSVP tracking",
+        "cta": "Upgrade to Premium"
+      },
+      "paid": {
+        "description": "All tools unlocked"
+      },
+      "pending": {
+        "description": "Sending switches on once your payment is confirmed"
+      }
+    },
+    "sheet": {
+      "free": {
+        "title": "Planning is free",
+        "description": "You only pay when you send - everything until then is free"
+      },
+      "payment_pending": {
+        "title": "Payment in progress",
+        "description": "Sending switches on as soon as your payment is confirmed"
+      },
+      "paid": {
+        "title": "Sending is active",
+        "description": "Your RSVP campaign is running - invitations, reminders and calls"
+      },
+      "comped": {
+        "title": "Sending is active",
+        "description": "Sending has been enabled for this event by the Kululu team"
+      },
+      "canceled": {
+        "title": "Sending is switched off",
+        "description": "This event was active and has been switched back to planning"
+      },
+      "includedTitle": "Free while you plan",
+      "included": {
+        "guests": "Build and import your full guest list",
+        "budget": "Track your budget",
+        "collaborate": "Plan together with a partner",
+        "seating": "Design your seating plan"
+      },
+      "unlocksTitle": "Sending unlocks",
+      "activeTitle": "Active now",
+      "unlocks": {
+        "whatsapp": "WhatsApp invitations, reminders and thank-yous",
+        "calls": "Two call rounds by the Kululu team",
+        "tracking": "Live RSVP tracking as replies come in"
+      },
+      "whatsAppMessage": "Hi, I'd like to enable invitation sending for my event",
+      "cta": {
+        "talk": "Talk with us"
+      },
+      "close": "Close"
     }
   }
 }

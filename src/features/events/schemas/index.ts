@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EVENT_BILLING_STATUSES } from '@/features/billing/schemas';
 
 // --- Location Schema ---
 export const LocationCoordsSchema = z.object({
@@ -161,6 +162,10 @@ export const EventAppSchema = z.object({
   guestsCapacity: z.number().int().positive().optional(),
   budget: z.number().optional(),
   landingTemplateId: z.string().optional(),
+  // The commercial state of the event - see `@/features/billing`. `canCreateSchedules`
+  // is derived from it in the database (paid | comped => can send) and kept here as the
+  // read-only send gate every outreach path already checks.
+  billingStatus: z.enum(EVENT_BILLING_STATUSES).default('free'),
   canCreateSchedules: z.boolean().default(false),
   shortCode: z.string(),
   createdAt: z.string(),
@@ -208,6 +213,7 @@ export const EventDbSchema = z.object({
   guests_capacity: z.number().int().positive().optional().nullable(),
   budget: z.number().optional().nullable(),
   landing_template_id: z.string().optional().nullable(),
+  billing_status: z.enum(EVENT_BILLING_STATUSES).default('free'),
   can_create_schedules: z.boolean().default(false),
   short_code: z.string(),
   created_at: z.string(),
@@ -242,6 +248,7 @@ export function dbToAppTransformer(dbData: {
   guests_capacity?: number | null;
   budget?: number | null;
   landing_template_id?: string | null;
+  billing_status?: string | null;
   can_create_schedules?: boolean | null;
   short_code: string;
   created_at: string;
@@ -249,6 +256,9 @@ export function dbToAppTransformer(dbData: {
 }): EventApp {
   const status: 'draft' | 'published' | 'archived' =
     (dbData.status as 'draft' | 'published' | 'archived') || 'draft';
+
+  const billingStatus: EventApp['billingStatus'] =
+    (dbData.billing_status as EventApp['billingStatus']) || 'free';
 
   // Transform event_settings from snake_case to camelCase
   const eventSettings: EventSettingsApp | undefined = dbData.event_settings
@@ -294,6 +304,7 @@ export function dbToAppTransformer(dbData: {
     guestsCapacity: dbData.guests_capacity ?? undefined,
     budget: dbData.budget ?? undefined,
     landingTemplateId: dbData.landing_template_id ?? undefined,
+    billingStatus,
     canCreateSchedules: dbData.can_create_schedules ?? false,
     shortCode: dbData.short_code,
     createdAt: dbData.created_at,

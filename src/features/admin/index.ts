@@ -18,7 +18,6 @@ export {
 } from './components/event-workspace';
 export { Band, BandRow } from './components/band';
 export { RetryButton } from './components/retry-button';
-export { EnableSendingButton } from './components/enable-sending-button';
 export { QuickSendDialog, type QuickSendSchedule } from './components/quick-send-dialog';
 export { BatchSendDialog } from './components/batch-send-dialog';
 export { VerifySendDialog } from './components/verify-send-dialog';
