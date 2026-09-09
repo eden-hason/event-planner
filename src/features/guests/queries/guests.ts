@@ -151,3 +151,42 @@ export const getEventGuestsWithGroups = async (
     return [];
   }
 };
+
+/**
+ * Guest headcount per event, keyed by event id.
+ *
+ * One `head: true` count per event rather than a single `.in()` select:
+ * PostgREST caps a select at 1000 rows, which would quietly undercount a large
+ * guest list, and a user only ever holds a handful of events. Events with no
+ * guests still get a `0` entry, so callers can tell "none" from "not fetched".
+ */
+export const getGuestCountsByEvent = async (
+  eventIds: string[],
+): Promise<Record<string, number>> => {
+  if (eventIds.length === 0) return {};
+
+  try {
+    const { supabase } = await getEffectiveClient();
+
+    const entries = await Promise.all(
+      eventIds.map(async (eventId) => {
+        const { count, error } = await supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', eventId);
+
+        if (error) {
+          console.error('Error counting guests for event:', error);
+          return [eventId, 0] as const;
+        }
+
+        return [eventId, count ?? 0] as const;
+      }),
+    );
+
+    return Object.fromEntries(entries);
+  } catch (error) {
+    console.error('Error counting guests for events:', error);
+    return {};
+  }
+};

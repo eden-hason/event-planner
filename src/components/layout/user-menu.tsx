@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeMenuItems } from '@/components/layout/theme-toggle';
 import { formatPhone } from '@/lib/phone';
-import { logout } from '@/features/auth';
+import { useLogout } from '@/components/layout/use-logout';
 
 export interface AppShellUser {
   id: string;
@@ -62,16 +62,7 @@ export function UserMenu({ user }: { user: AppShellUser }) {
     });
   }, [user.email, user.id, user.name]);
 
-  const handleLogout = async () => {
-    if (
-      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-      process.env.NEXT_PUBLIC_POSTHOG_HOST
-    ) {
-      posthog.reset();
-    }
-
-    await logout();
-  };
+  const handleLogout = useLogout();
 
   const subtitle = user.email || (user.phone && formatPhone(user.phone));
 

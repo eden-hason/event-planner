@@ -3,11 +3,6 @@
 import { useState, type ComponentProps, type ElementType } from 'react';
 
 import { Link, usePathname } from '@/i18n/navigation';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 export type MobileTabBarHref = ComponentProps<typeof Link>['href'];
@@ -32,11 +27,6 @@ export type MobileTabBarItem = {
   /** `true` shows a plain dot, a number or string shows a count pill. */
   badge?: number | string | boolean;
   disabled?: boolean;
-  /**
-   * Sub-items listed in a popover above the bar, which turns the tab into a
-   * "More" launcher. Only one level deep - sub-items of sub-items are ignored.
-   */
-  items?: MobileTabBarItem[];
 };
 
 type MobileTabBarProps = {
@@ -66,8 +56,7 @@ function isRouteActive(pathname: string, href: NavHref | undefined): boolean {
 }
 
 // The longest matching href wins, so `/app/guests/import` lights up a `/app/guests`
-// tab instead of a shorter `/app` tab that prefix-matches every route. A sub-item
-// match reports its parent, which is the tab that has to light up in the bar.
+// tab instead of a shorter `/app` tab that prefix-matches every route.
 function matchByRoute(
   items: MobileTabBarItem[],
   pathname: string,
@@ -75,27 +64,16 @@ function matchByRoute(
   let match: string | null = null;
   let matchLength = -1;
 
-  const consider = (href: NavHref | undefined, value: string) => {
-    const target = toPathname(href);
-    if (!target || !isRouteActive(pathname, href)) return;
+  for (const item of items) {
+    const target = toPathname(item.href);
+    if (!target || !isRouteActive(pathname, item.href)) continue;
     if (target.length > matchLength) {
-      match = value;
+      match = item.value;
       matchLength = target.length;
     }
-  };
-
-  for (const item of items) {
-    consider(item.href, item.value);
-    for (const sub of item.items ?? []) consider(sub.href, item.value);
   }
 
   return match;
-}
-
-function isTabActive(item: MobileTabBarItem, activeValue?: string): boolean {
-  if (activeValue === undefined) return false;
-  if (item.value === activeValue) return true;
-  return (item.items ?? []).some((sub) => sub.value === activeValue);
 }
 
 function hasBadge(
@@ -142,21 +120,6 @@ function TabBadge({ badge }: { badge: number | string | true }) {
   );
 }
 
-/** Sits at the end of a popover row rather than over an icon. */
-function RowBadge({ badge }: { badge: number | string | true }) {
-  if (badge === true) {
-    return (
-      <span aria-hidden className="bg-destructive ms-auto size-2 shrink-0 rounded-full" />
-    );
-  }
-
-  return (
-    <span className="bg-destructive text-destructive-foreground ms-auto flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold tabular-nums">
-      {badgeContent(badge)}
-    </span>
-  );
-}
-
 function TabContent({
   item,
   isActive,
@@ -191,116 +154,6 @@ function TabContent({
         </span>
       ) : null}
     </>
-  );
-}
-
-function MenuRow({
-  item,
-  isActive,
-  onSelect,
-}: {
-  item: MobileTabBarItem;
-  isActive: boolean;
-  onSelect: () => void;
-}) {
-  const Icon = isActive ? (item.activeIcon ?? item.icon) : item.icon;
-  const className = cn(
-    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-    isActive ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted',
-    item.disabled && 'pointer-events-none opacity-50',
-  );
-
-  const content = (
-    <>
-      <Icon aria-hidden className="size-[18px] shrink-0" />
-      <span className="truncate">{item.label}</span>
-      {hasBadge(item.badge) ? <RowBadge badge={item.badge} /> : null}
-    </>
-  );
-
-  if (item.href !== undefined && !item.disabled) {
-    return (
-      <Link
-        href={item.href}
-        aria-current={isActive ? 'page' : undefined}
-        data-active={isActive || undefined}
-        className={className}
-        onClick={onSelect}
-      >
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      aria-current={isActive ? 'page' : undefined}
-      data-active={isActive || undefined}
-      disabled={item.disabled}
-      className={className}
-      onClick={onSelect}
-    >
-      {content}
-    </button>
-  );
-}
-
-function MenuTab({
-  item,
-  isActive,
-  activeValue,
-  showLabels,
-  onSelect,
-}: {
-  item: MobileTabBarItem;
-  isActive: boolean;
-  activeValue?: string;
-  showLabels: boolean;
-  onSelect: (item: MobileTabBarItem) => void;
-}) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const subItems = item.items ?? [];
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={showLabels ? undefined : item.label}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          data-active={isActive || undefined}
-          disabled={item.disabled}
-          className={tabClassName(isActive || open, item.disabled)}
-        >
-          <TabContent item={item} isActive={isActive} showLabels={showLabels} />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="top"
-        align="center"
-        sideOffset={8}
-        className="w-56 rounded-2xl p-1.5"
-      >
-        <div className="flex flex-col">
-          {subItems.map((sub) => (
-            <MenuRow
-              key={sub.value}
-              item={sub}
-              isActive={
-                sub.value === activeValue || isRouteActive(pathname, sub.href)
-              }
-              onSelect={() => {
-                setOpen(false);
-                onSelect(sub);
-              }}
-            />
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -348,21 +201,7 @@ export function MobileTabBar({
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
-          const isActive = isTabActive(item, activeValue);
-
-          if (item.items?.length) {
-            return (
-              <li key={item.value} className="flex">
-                <MenuTab
-                  item={item}
-                  isActive={isActive}
-                  activeValue={activeValue}
-                  showLabels={showLabels}
-                  onSelect={select}
-                />
-              </li>
-            );
-          }
+          const isActive = item.value === activeValue;
 
           return (
             <li key={item.value} className="flex">
