@@ -17,6 +17,10 @@ import {
   CollaborationProvider,
 } from '@/components/feature-layout';
 import { AiAssistant } from '@/features/ai-chat';
+import {
+  EventBillingStatusProvider,
+  deriveHeaderStatus,
+} from '@/features/billing';
 
 /**
  * The app shell, and the guard that decides whether it should exist at all.
@@ -58,7 +62,7 @@ export default async function EventLayout({
   // this layout assumes the answers exist. Reaching one by URL sends the user
   // back into onboarding to finish it, which is the only way out of the state.
   if (!event || event.status === 'draft') {
-    redirect({ href: '/start', locale });
+    return redirect({ href: '/start', locale });
   }
 
   const collaboratorRole = await getCollaboratorRole(eventId);
@@ -87,7 +91,11 @@ export default async function EventLayout({
           <LayoutContentWrapper>
             <CollaborationProvider role={role} isCreator={isCreator}>
               <FeatureLayoutProvider>
-                <PageCard>{children}</PageCard>
+                <EventBillingStatusProvider
+                  value={deriveHeaderStatus(event.billingStatus)}
+                >
+                  <PageCard>{children}</PageCard>
+                </EventBillingStatusProvider>
                 <HiddenOnSeatingPlan>
                   <AiAssistant eventId={eventId} />
                 </HiddenOnSeatingPlan>

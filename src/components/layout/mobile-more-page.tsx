@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/popover';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { EventPlanCard } from '@/features/billing';
 import { type EventApp } from '@/features/events';
 import { cn } from '@/lib/utils';
 import {
@@ -46,6 +47,18 @@ function RowCard({ children }: { children: ReactNode }) {
     <div className="bg-card divide-border divide-y overflow-hidden rounded-xl border">
       {children}
     </div>
+  );
+}
+
+/** A labelled section - a small zinc heading over one card, per the design. */
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-1.5">
+      <h2 className="text-muted-foreground px-1.5 text-xs font-medium">
+        {label}
+      </h2>
+      {children}
+    </section>
   );
 }
 
@@ -216,121 +229,131 @@ export function MobileMorePage({
   const ThemeIcon = activeTheme?.Icon ?? THEME_OPTIONS[2].Icon;
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-3.5">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
       {currentEvent && (
-        <div className="bg-card flex items-center gap-3 rounded-xl border p-3.5">
-          <span
-            aria-hidden
-            className="bg-primary text-primary-foreground flex size-12 shrink-0 items-center justify-center rounded-[10px] text-lg font-bold"
-          >
-            {eventInitials(currentEvent)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base leading-tight font-semibold">
-              {eventDisplayTitle(currentEvent, locale)}
-            </p>
-            <p className="text-muted-foreground mt-0.5 truncate text-xs">
-              {[
-                date ?? t('noDate'),
-                guestCount === undefined
-                  ? null
-                  : t('guestCount', { count: guestCount }),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
+        <Group label={t('groups.event')}>
+          <div className="bg-card flex items-center gap-3 rounded-xl border p-3.5">
+            <span
+              aria-hidden
+              className="bg-primary text-primary-foreground flex size-12 shrink-0 items-center justify-center rounded-[10px] text-lg font-bold"
+            >
+              {eventInitials(currentEvent)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base leading-tight font-semibold">
+                {eventDisplayTitle(currentEvent, locale)}
+              </p>
+              <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                {[
+                  date ?? t('noDate'),
+                  guestCount === undefined
+                    ? null
+                    : t('guestCount', { count: guestCount }),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </div>
+            <MobileEventSwitcher
+              events={events}
+              currentEventId={eventId}
+              guestCounts={guestCounts}
+              currentUserId={currentUserId}
+            />
           </div>
-          <MobileEventSwitcher
-            events={events}
-            currentEventId={eventId}
-            guestCounts={guestCounts}
-            currentUserId={currentUserId}
-          />
-        </div>
+        </Group>
       )}
 
       {tools.length > 0 && (
-        <RowCard>
-          {tools.map((tool) => (
-            <ToolRow
-              key={tool.value}
-              icon={tool.icon}
-              tint={tool.tint}
-              label={tool.label}
-              description={tool.description}
-              href={tool.href}
-              onClick={tool.onClick}
-            />
-          ))}
-        </RowCard>
+        <Group label={t('groups.tools')}>
+          <RowCard>
+            {tools.map((tool) => (
+              <ToolRow
+                key={tool.value}
+                icon={tool.icon}
+                tint={tool.tint}
+                label={tool.label}
+                description={tool.description}
+                href={tool.href}
+                onClick={tool.onClick}
+              />
+            ))}
+          </RowCard>
+        </Group>
       )}
 
-      <RowCard>
-        <DropdownMenu dir={dir}>
-          <DropdownMenuTrigger className={ROW_CLASS}>
-            <AccountRow
-              bare
-              icon={ThemeIcon}
-              label={themeLabels.theme}
-              trailing={
-                <>
-                  <span className="text-muted-foreground shrink-0 text-xs">
-                    {activeTheme ? themeLabels[activeTheme.value] : ''}
-                  </span>
-                  <RowChevron />
-                </>
-              }
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-              {THEME_OPTIONS.map(({ value, Icon }) => (
-                <DropdownMenuRadioItem key={value} value={value}>
-                  <Icon />
-                  {themeLabels[value]}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <EventPlanCard />
 
-        <Popover>
-          <PopoverTrigger className={ROW_CLASS}>
-            <AccountRow
-              bare
-              icon={Bell}
-              label={tNotifications('title')}
-              trailing={<RowChevron />}
-            />
-          </PopoverTrigger>
-          <PopoverContent align="end" sideOffset={8} className="w-72 p-0">
-            <div className="border-b px-4 py-3">
-              <p className="text-sm font-semibold">{tNotifications('title')}</p>
-            </div>
-            <div className="text-muted-foreground px-4 py-8 text-center text-sm">
-              {tNotifications('empty')}
-            </div>
-          </PopoverContent>
-        </Popover>
+      <Group label={t('groups.account')}>
+        <RowCard>
+          <DropdownMenu dir={dir}>
+            <DropdownMenuTrigger className={ROW_CLASS}>
+              <AccountRow
+                bare
+                icon={ThemeIcon}
+                label={themeLabels.theme}
+                trailing={
+                  <>
+                    <span className="text-muted-foreground shrink-0 text-xs">
+                      {activeTheme ? themeLabels[activeTheme.value] : ''}
+                    </span>
+                    <RowChevron />
+                  </>
+                }
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8}>
+              <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                {THEME_OPTIONS.map(({ value, Icon }) => (
+                  <DropdownMenuRadioItem key={value} value={value}>
+                    <Icon />
+                    {themeLabels[value]}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/*
+          <Popover>
+            <PopoverTrigger className={ROW_CLASS}>
+              <AccountRow
+                bare
+                icon={Bell}
+                label={tNotifications('title')}
+                trailing={<RowChevron />}
+              />
+            </PopoverTrigger>
+            <PopoverContent align="end" sideOffset={8} className="w-72 p-0">
+              <div className="border-b px-4 py-3">
+                <p className="text-sm font-semibold">
+                  {tNotifications('title')}
+                </p>
+              </div>
+              <div className="text-muted-foreground px-4 py-8 text-center text-sm">
+                {tNotifications('empty')}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/*
           Same gate as the sidebar footer: the switcher is a development aid
           until the English catalogue is ready to be offered to users.
         */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className={cn(ROW_CLASS, 'justify-between')}>
-            <span className="text-[15px] font-medium">{t('language')}</span>
-            <LanguageSwitcher />
-          </div>
-        )}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className={cn(ROW_CLASS, 'justify-between')}>
+              <span className="text-[15px] font-medium">{t('language')}</span>
+              <LanguageSwitcher />
+            </div>
+          )}
 
-        <AccountRow
-          icon={LogOut}
-          label={tSidebar('logOut')}
-          destructive
-          onClick={() => void logout()}
-        />
-      </RowCard>
+          <AccountRow
+            icon={LogOut}
+            label={tSidebar('logOut')}
+            destructive
+            onClick={() => void logout()}
+          />
+        </RowCard>
+      </Group>
 
       <p className="text-muted-foreground/70 py-1 text-center text-[11px]">
         {appVersion ? t('versionLine', { version: appVersion }) : t('wordmark')}

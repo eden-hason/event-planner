@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddCallRoundDialog } from './add-call-round-dialog';
 import { Band, BandRow } from './band';
-import { EnableSendingButton } from './enable-sending-button';
+import { BILLING_STATUS_LABELS, EventBillingStatusControl } from '@/features/billing';
 import {
   EventTimeline,
   PhoneQualityDisclosure,
@@ -323,7 +323,7 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
                 <ItemTitle>Sending is not enabled for this event</ItemTitle>
                 <ItemDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</ItemDescription>
               </ItemContent>
-              <ItemActions><EnableSendingButton eventId={event.id} /></ItemActions>
+              <ItemActions><EventBillingStatusControl eventId={event.id} currentStatus={event.billingStatus} /></ItemActions>
             </Item>
           </BandRow>
         </Band>
@@ -372,7 +372,7 @@ export function EventDetailsBand({ event }: { event: EventIdentity }) {
     <Band title="Event details">
       <BandRow className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
         <Detail label="Created" value={formatEventDate(event.createdAt)} />
-        <Detail label="Sending" value={event.canCreateSchedules ? 'Enabled' : 'Not enabled'} />
+        <Detail label="Billing" value={BILLING_STATUS_LABELS[event.billingStatus]} supporting={event.canCreateSchedules ? 'Sending enabled' : 'Sending disabled'} />
         <Detail label="Guest page code" value={event.shortCode || 'Not assigned'} />
         <Detail label="Collaborators" value={String(event.collaborators.length)} />
       </BandRow>
