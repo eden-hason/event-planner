@@ -73,7 +73,10 @@ function CommandInput({
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+          // `text-base` below `md`, matching `Input`: iOS auto-zooms the whole
+          // page when a focused control renders under 16px and never zooms back
+          // out, which pushes the fixed bottom nav out of the visual viewport.
+          "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           className
         )}
         {...props}
