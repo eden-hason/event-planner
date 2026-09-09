@@ -446,7 +446,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             value={term}
             onChange={(event) => setTerm(event.target.value)}
             placeholder="Search this round"
-            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13.5px] outline-none"
+            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px]"
           />
         </div>
         {FILTERS.map((option) => (

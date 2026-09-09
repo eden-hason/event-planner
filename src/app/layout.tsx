@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { getLocale } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/react';
@@ -88,6 +88,22 @@ export const metadata: Metadata = {
     description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',
     images: [ogPreview.src],
   },
+};
+
+/**
+ * `viewport-fit=cover` is what makes `env(safe-area-inset-*)` resolve to
+ * anything other than `0px`. Without it the bottom nav's own
+ * `pb-[env(safe-area-inset-bottom)]` and `PageCard`'s clearance above it were
+ * both silently no-ops, and the tab row sat under the iPhone home indicator.
+ *
+ * No `maximumScale`/`userScalable`: pinching has to keep working (WCAG 1.4.4).
+ * iOS auto-zoom on focus is prevented by keeping form controls at 16px on
+ * mobile instead, which is what `Input`/`Textarea`/`CommandInput` do.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({
