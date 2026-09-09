@@ -51,6 +51,26 @@
     "new": "New",
     "more": "More"
   },
+  "more": {
+    "title": "More",
+    "switchEvent": "Switch event",
+    "noDate": "No date yet",
+    "guestCount": "{count, plural, =0 {No guests} one {# guest} other {# guests}}",
+    "language": "Language",
+    "wordmark": "Kululu",
+    "versionLine": "Kululu · version {version}",
+    "descriptions": {
+      "gifting": "Collect gifts and track payments",
+      "collaboration": "Invite partners and share the workload",
+      "seating": "Tables, groups and where everyone sits",
+      "aiAssistant": "Ask anything about your event"
+    },
+    "picker": {
+      "title": "Choose an event",
+      "description": "Your events on Kululu",
+      "close": "Close"
+    }
+  },
   "seating": {
     "title": "Seating Plan",
     "addTable": "Add Table",

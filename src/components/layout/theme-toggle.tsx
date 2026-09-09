@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const THEME_OPTIONS = [
+export const THEME_OPTIONS = [
   { value: 'light', Icon: Sun },
   { value: 'dark', Icon: Moon },
   { value: 'system', Icon: Monitor },
@@ -26,7 +26,7 @@ const THEME_OPTIONS = [
  * before that `theme` is `undefined` - so every trigger icon below holds off
  * on choosing Sun vs Moon until then to avoid a hydration mismatch.
  */
-function useMountedTheme() {
+export function useMountedTheme() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

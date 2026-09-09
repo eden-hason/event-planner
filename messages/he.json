@@ -51,6 +51,26 @@
     "new": "חדש",
     "more": "עוד"
   },
+  "more": {
+    "title": "עוד",
+    "switchEvent": "החלף אירוע",
+    "noDate": "עדיין אין תאריך",
+    "guestCount": "{count, plural, =0 {אין מוזמנים} one {מוזמן אחד} two {# מוזמנים} other {# מוזמנים}}",
+    "language": "שפה",
+    "wordmark": "Kululu",
+    "versionLine": "Kululu · גרסה {version}",
+    "descriptions": {
+      "gifting": "קבלת מתנות ומעקב אחר תשלומים",
+      "collaboration": "שיתוף שותפים וחלוקת המשימות",
+      "seating": "שולחנות, קבוצות והושבת אורחים",
+      "aiAssistant": "שאלו כל דבר על האירוע שלכם"
+    },
+    "picker": {
+      "title": "בחירת אירוע",
+      "description": "האירועים שלך בקולולו",
+      "close": "סגירה"
+    }
+  },
   "seating": {
     "title": "סידור הושבה",
     "addTable": "הוספת שולחן",
