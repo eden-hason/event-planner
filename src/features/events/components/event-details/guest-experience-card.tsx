@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { IconDeviceFloppy } from '@tabler/icons-react';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/toggle-switch';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';

@@ -226,12 +226,12 @@ export function SeatingPage(props: SeatingPageProps) {
           // No top padding: the chrome row's band closes with its own `pb-3`
           // and the Card adds the gap below it.
           'flex min-h-0 flex-col overflow-hidden',
-          // The fixed MobileBottomNav is docked to the bottom of the viewport
-          // (56px tall, flush with the edge). The workspace is full-bleed with no
-          // page scroll, so without this the bottom bulk-selection bar and the
-          // last unassigned rows sit underneath it. Clear the nav plus the
-          // device safe-area inset.
-          'pb-[calc(4rem+env(safe-area-inset-bottom))]',
+          // The fixed MobileBottomNav is docked to the bottom of the viewport,
+          // flush with the edge. The workspace is full-bleed with no page
+          // scroll, so without this the bottom bulk-selection bar and the last
+          // unassigned rows sit underneath it. Clear the nav plus the device
+          // safe-area inset.
+          'pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))]',
         )}
       >
         {props.isScopedCollaborator && (
@@ -270,7 +270,7 @@ export function SeatingPage(props: SeatingPageProps) {
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
+          <h1 className="text-xl font-semibold">{t('title')}</h1>
           <SeatingHeaderActions
             onAddTable={() => workspace.setDialog({ kind: 'create' })}
             onAddBatch={() => workspace.setDialog({ kind: 'batch' })}

@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { Surface } from './band';
 
 /**
  * Server rendered per request (see docs/admin/ADMIN-CONTEXT.md), so this is
@@ -13,7 +14,7 @@ export function UsersIndexSkeleton() {
         <Skeleton className="h-4 w-56" />
       </div>
       <Skeleton className="h-9 w-[320px]" />
-      <div className="bg-card overflow-hidden rounded-xl border">
+      <Surface>
         <div className="flex items-center gap-3.5 border-b px-4 py-2.5">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="ms-auto h-3 w-16" />
@@ -32,7 +33,7 @@ export function UsersIndexSkeleton() {
             <Skeleton className="h-3 w-11" />
           </div>
         ))}
-      </div>
+      </Surface>
     </div>
   );
 }

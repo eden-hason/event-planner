@@ -192,7 +192,7 @@ export function GuestTableCombobox({
                         className={cn(
                           'shrink-0 rounded-full px-2 py-0.5 text-xs',
                           fits
-                            ? 'bg-rsvp-confirmed/16 text-rsvp-confirmed'
+                            ? 'bg-rsvp-confirmed-tint text-rsvp-confirmed-strong'
                             : 'bg-muted text-muted-foreground',
                         )}
                       >

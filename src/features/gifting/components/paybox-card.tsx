@@ -125,7 +125,7 @@ export function PayboxCard({
                 aria-invalid={!!showError}
                 onChange={(e) => setValue(e.target.value)}
                 onBlur={() => setTouched(true)}
-                className={cn(showValid && 'border-emerald-500')}
+                className={cn(showValid && 'border-success')}
               />
               {showError && (
                 <p
@@ -137,7 +137,7 @@ export function PayboxCard({
                 </p>
               )}
               {showValid && (
-                <p className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <p className="flex items-center gap-1.5 text-xs text-success">
                   <Check className="size-3.5" />
                   {t('valid')}
                 </p>

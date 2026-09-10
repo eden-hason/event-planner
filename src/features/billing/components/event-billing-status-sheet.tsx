@@ -63,7 +63,7 @@ export function EventBillingStatusSheet({
                     className="text-muted-foreground flex items-start gap-2 text-sm"
                   >
                     <Check
-                      className="mt-0.5 size-4 shrink-0 text-emerald-600"
+                      className="mt-0.5 size-4 shrink-0 text-success"
                       aria-hidden
                     />
                     <span>{t(`sheet.included.${key}`)}</span>
@@ -89,7 +89,7 @@ export function EventBillingStatusSheet({
                     className={cn(
                       'mt-0.5 size-4 shrink-0',
                       status.sendingEnabled
-                        ? 'text-emerald-600'
+                        ? 'text-success'
                         : 'text-muted-foreground/50',
                     )}
                     aria-hidden

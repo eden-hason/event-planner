@@ -865,6 +865,7 @@
       "invited": "מוזמנים",
       "confirmed": "אישרו",
       "pending": "ממתינים",
+      "declined": "סירב",
       "ofTotal": "מתוך {total}"
     },
     "rsvpBreakdown": {

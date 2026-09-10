@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { CircleCheckBig, TriangleAlert } from 'lucide-react';
-import { Band, BandRow } from './band';
+import { Band, BandRow, Surface } from './band';
 import { SignalRow } from './signal-row';
 import { RetryButton } from './retry-button';
 import type { Signal, SignalKind } from '../types';
@@ -113,7 +113,7 @@ export function SignalListError() {
 
 export function SignalListSkeleton() {
   return (
-    <section className="bg-card overflow-hidden rounded-xl border shadow-xs">
+    <Surface as="section">
       <div className="px-4 pt-4 pb-3">
         <div className="bg-accent h-2.5 w-[118px] animate-pulse rounded-sm" />
       </div>
@@ -130,6 +130,6 @@ export function SignalListSkeleton() {
           <div className="bg-accent h-2.5 w-16 animate-pulse rounded-md" />
         </div>
       ))}
-    </section>
+    </Surface>
   );
 }

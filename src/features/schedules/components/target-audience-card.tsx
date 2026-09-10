@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { rsvpPresentation } from '@/features/guests';
 
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
@@ -27,12 +28,11 @@ export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudie
   const AudienceIcon =
     targetStatus === 'confirmed' ? IconUserCheck : targetStatus === 'pending' ? IconClock : IconUsers;
 
+  // 'all' is not an RSVP answer, so it is the one case the module does not own.
   const statusClass =
-    targetStatus === 'confirmed'
-      ? 'bg-green-100 text-green-800'
-      : targetStatus === 'pending'
-        ? 'bg-amber-100 text-amber-800'
-        : 'bg-primary/10 text-primary';
+    targetStatus === 'confirmed' || targetStatus === 'pending'
+      ? rsvpPresentation(targetStatus).chip
+      : 'bg-primary/10 text-primary';
 
   return (
     <Card>

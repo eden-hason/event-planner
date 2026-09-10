@@ -7,16 +7,16 @@ import type { GiftProviderStatus } from '../types';
 const STYLES: Record<GiftProviderStatus, string> = {
   off: 'bg-muted text-muted-foreground',
   connected:
-    'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
+    'bg-success/10 text-success',
   incomplete:
-    'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
+    'bg-warning/10 text-warning',
   error: 'bg-destructive/10 text-destructive',
 };
 
 const DOT: Record<GiftProviderStatus, string> = {
   off: 'bg-muted-foreground/50',
-  connected: 'bg-emerald-500',
-  incomplete: 'bg-amber-500',
+  connected: 'bg-success',
+  incomplete: 'bg-warning',
   error: 'bg-destructive',
 };
 

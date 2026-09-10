@@ -58,7 +58,7 @@ export function DateScreen({
           min={todayISO()}
           onChange={(e) => handleChange(e.target.value)}
           aria-label={t('title')}
-          className="h-[54px] w-full rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white px-[18px] font-[family-name:var(--font-rubik)] text-base text-[var(--kt-ink)] outline-none focus:border-[var(--kt-brand)] focus:shadow-[0_0_0_3px_rgba(210,60,194,0.18)]"
+          className="h-[54px] w-full rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white px-[18px] font-rubik text-base text-[var(--kt-ink)] outline-none focus:border-[var(--kt-brand)] focus:shadow-[0_0_0_3px_rgba(210,60,194,0.18)]"
         />
         {isPast && <TakeoverError>{t('pastError')}</TakeoverError>}
         <TakeoverButton

@@ -1,5 +1,15 @@
 'use client';
 
+/*
+ * Not shadcn's switch. This is a hand-rolled <label> + sr-only checkbox with an
+ * RTL-aware thumb, and it does not depend on @radix-ui/react-switch.
+ *
+ * It lives under `toggle-switch` precisely so it does not occupy a registry
+ * name: as `switch.tsx` an innocent `npx shadcn add switch` would overwrite it,
+ * silently dropping the `rtl:` thumb translation below and the
+ * InputHTMLAttributes contract every caller relies on.
+ */
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 

@@ -335,14 +335,14 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
                     className={cn(
                       'flex h-auto w-full items-center justify-between rounded-xl border p-3 text-left transition-colors',
                       'data-[state=off]:border-border data-[state=off]:bg-background data-[state=off]:hover:bg-muted/30',
-                      'data-[state=on]:border-green-200 data-[state=on]:bg-green-50 data-[state=on]:hover:bg-green-50',
+                      'data-[state=on]:border-success/20 data-[state=on]:bg-success/10 data-[state=on]:hover:bg-success/10',
                     )}
                   >
-                    <span className={cn('text-sm font-medium', form.advancePaid ? 'text-green-700' : 'text-foreground')}>
+                    <span className={cn('text-sm font-medium', form.advancePaid ? 'text-success' : 'text-foreground')}>
                       {form.advancePaid ? t('expenseSheet.advancePaidLabel') : t('expenseSheet.advanceNotPaidLabel')}
                     </span>
                     {form.advancePaid
-                      ? <IconCircleCheckFilled size={20} className="shrink-0 text-green-600" />
+                      ? <IconCircleCheckFilled size={20} className="shrink-0 text-success" />
                       : <IconCircleDashed size={20} className="shrink-0 text-muted-foreground" />}
                   </Toggle>
                 </div>
@@ -356,14 +356,14 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
               className={cn(
                 'flex h-auto w-full items-center justify-between rounded-xl border p-3.5 text-left transition-colors',
                 'data-[state=off]:border-border data-[state=off]:bg-muted/30 data-[state=off]:hover:bg-muted/40',
-                'data-[state=on]:border-green-200 data-[state=on]:bg-green-50 data-[state=on]:hover:bg-green-50',
+                'data-[state=on]:border-success/20 data-[state=on]:bg-success/10 data-[state=on]:hover:bg-success/10',
               )}
             >
-              <p className={cn('text-sm font-medium', form.fullyPaid ? 'text-green-700' : 'text-foreground')}>
+              <p className={cn('text-sm font-medium', form.fullyPaid ? 'text-success' : 'text-foreground')}>
                 {form.fullyPaid ? t('expenseSheet.fullyPaidLabel') : t('expenseSheet.markFullyPaid')}
               </p>
               {form.fullyPaid
-                ? <IconCircleCheckFilled size={20} className="shrink-0 text-green-600" />
+                ? <IconCircleCheckFilled size={20} className="shrink-0 text-success" />
                 : <IconCircleDashed size={20} className="shrink-0 text-muted-foreground" />}
             </Toggle>
           </div>

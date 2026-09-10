@@ -16,7 +16,7 @@ export default function AuthCodeErrorPage() {
     <div className="theme-locked-light min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-red-600">
+          <CardTitle className="text-2xl font-bold text-destructive">
             Authentication Error
           </CardTitle>
           <CardDescription>
@@ -25,7 +25,7 @@ export default function AuthCodeErrorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ul className="text-sm text-gray-600 space-y-2">
+          <ul className="text-muted-foreground space-y-2 text-sm">
             <li>• The authentication code expired</li>
             <li>• The request was cancelled</li>
             <li>• There was a network error</li>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useOptimistic, useState, useTransition } from 'react';
+import { Surface } from './band';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Search, Info, Minus, Plus } from 'lucide-react';
@@ -17,6 +18,8 @@ import { CALL_OUTCOMES, type CallOutcome } from '@/features/calls/types';
 import type { RoundDetail, RoundGuestRow } from '@/features/admin/queries/call-round';
 import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
+import { rsvpPresentation } from '@/features/guests';
+import { callOutcomePresentation } from '@/features/calls';
 
 const OUTCOME_LABELS: Record<CallOutcome, string> = {
   no_answer: 'No answer',
@@ -43,16 +46,13 @@ const FILTER_OUTCOME: Record<Exclude<Filter, 'All'>, CallOutcome | null> = {
   'Will update': 'guest_will_update',
 };
 
-/**
- * RSVP is a category, not a severity: amber pending / emerald confirmed / red
- * declined is the vocabulary the Owner app already speaks. It is the only
- * colour on this page that is not lateness or failure.
+/*
+ * RSVP is a category, not a severity - it is the only colour on this page that
+ * is not lateness or failure. The vocabulary itself comes from the Owner app's
+ * RSVP presentation module, so the Back Office cannot drift from it. It used to
+ * hand-roll emerald/amber/red here and claim to match the Owner app, which
+ * spoke green/yellow at the time.
  */
-const RSVP_STYLES: Record<RoundGuestRow['currentRsvpStatus'], string> = {
-  pending: 'border-amber-300 text-amber-700',
-  confirmed: 'border-emerald-300 text-emerald-700',
-  declined: 'border-red-300 text-red-700',
-};
 
 /**
  * The outcome buttons borrow the same vocabulary, so a scan down the column
@@ -63,21 +63,26 @@ const RSVP_STYLES: Record<RoundGuestRow['currentRsvpStatus'], string> = {
  * decision.
  */
 const OUTCOME_STYLES: Record<CallOutcome, { idle: string; active: string }> = {
+  /*
+   * No answer is the one outcome this page overrides: on the Owner's results
+   * table it is a result among several and takes the pending hue, but here it
+   * is the absence of a result, so it stays neutral.
+   */
   no_answer: {
     idle: 'bg-card hover:bg-accent',
     active: 'border-primary bg-primary text-primary-foreground',
   },
   confirmed: {
-    idle: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
-    active: 'border-emerald-600 bg-emerald-600 text-white',
+    idle: callOutcomePresentation('confirmed').chip,
+    active: callOutcomePresentation('confirmed').filled,
   },
   declined: {
-    idle: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100',
-    active: 'border-red-600 bg-red-600 text-white',
+    idle: callOutcomePresentation('declined').chip,
+    active: callOutcomePresentation('declined').filled,
   },
   guest_will_update: {
-    idle: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100',
-    active: 'border-sky-600 bg-sky-600 text-white',
+    idle: callOutcomePresentation('guest_will_update').chip,
+    active: callOutcomePresentation('guest_will_update').filled,
   },
 };
 
@@ -191,7 +196,7 @@ function OutcomeCell({
                     <Button
                       type="button"
                       size="sm"
-                      className="h-8 bg-emerald-600 text-white hover:bg-emerald-700"
+                      className={cn('h-8', callOutcomePresentation('confirmed').filled)}
                       disabled={disabled}
                       onClick={() => {
                         onRecord('confirmed', Math.max(1, draft));
@@ -426,14 +431,22 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             label="Confirmed"
             value={tally.confirmed}
             hint={`${tally.confirmedGuests} ${tally.confirmedGuests === 1 ? 'guest' : 'guests'}`}
-            className="text-emerald-700"
+            className={callOutcomePresentation('confirmed').text}
           />
-          <Tally label="Declined" value={tally.declined} className="text-red-700" />
-          <Tally label="No answer" value={tally.no_answer} className="text-amber-700" />
+          <Tally
+            label="Declined"
+            value={tally.declined}
+            className={callOutcomePresentation('declined').text}
+          />
+          <Tally
+            label="No answer"
+            value={tally.no_answer}
+            className={callOutcomePresentation('no_answer').text}
+          />
           <Tally
             label="Will update"
             value={tally.guest_will_update}
-            className="text-sky-700"
+            className={callOutcomePresentation('guest_will_update').text}
           />
           <Tally label="Not called" value={total - called} className="text-muted-foreground" />
         </div>
@@ -464,7 +477,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         ))}
       </div>
 
-      <div className="bg-card overflow-hidden rounded-xl border">
+      <Surface>
         <table className="w-full border-collapse text-[13px]">
           <thead>
             <tr className="text-muted-foreground border-b text-left text-[11.5px] font-semibold tracking-[0.06em] uppercase">
@@ -498,7 +511,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                   <span
                     className={cn(
                       'rounded-full border px-2 py-px text-[11.5px] font-medium capitalize',
-                      RSVP_STYLES[guest.currentRsvpStatus],
+                      rsvpPresentation(guest.currentRsvpStatus).outline,
                     )}
                   >
                     {guest.currentRsvpStatus}
@@ -534,7 +547,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             )}
           </tbody>
         </table>
-      </div>
+      </Surface>
 
       <p className="text-muted-foreground flex items-start gap-2 text-[12.5px]">
         <Info className="mt-px size-3.5 shrink-0" />

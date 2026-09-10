@@ -143,7 +143,7 @@ export function GroupCard({
           </div>
         ) : (
           <div className="flex flex-row items-center gap-2 py-[2px]">
-            <IconUserFilled className="text-muted-foreground bg-muted-foreground/10 size-6 rounded-full border border-dashed border-gray-500 p-1" />
+            <IconUserFilled className="text-muted-foreground bg-muted-foreground/10 size-6 rounded-full border border-dashed border-muted-foreground p-1" />
             <p className="text-muted-foreground text-sm">
               {t('groups.noGuests')}
             </p>

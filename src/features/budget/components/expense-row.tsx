@@ -17,9 +17,9 @@ export function ExpenseRow({ expense, onClick }: ExpenseRowProps) {
   const status = getExpenseStatus(expense);
 
   const STATUS_STYLES: Record<string, string> = {
-    'fully-paid':   'bg-green-100 text-green-700',
-    'advance-paid': 'bg-amber-100 text-amber-700',
-    'advance-due':  'bg-red-100 text-red-700',
+    'fully-paid':   'bg-success/10 text-success',
+    'advance-paid': 'bg-warning/10 text-warning',
+    'advance-due':  'bg-destructive/10 text-destructive',
     'not-paid':     'bg-muted text-muted-foreground',
   };
 
@@ -54,7 +54,9 @@ export function ExpenseRow({ expense, onClick }: ExpenseRowProps) {
             <span
               className={cn(
                 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
-                expense.advancePaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700',
+                expense.advancePaid
+                  ? 'bg-success/10 text-success'
+                  : 'bg-destructive/10 text-destructive',
               )}
             >
               {expense.advancePaid ? t('expenseRow.advancePaidBadge') : t('expenseRow.advanceDueBadge')} · {formatCurrency(expense.advanceAmount)}

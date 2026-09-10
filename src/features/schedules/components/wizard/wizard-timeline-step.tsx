@@ -4,9 +4,10 @@ import { useTranslations } from 'next-intl';
 import { IconClock } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import { rsvpPresentation } from '@/features/guests';
 import { Badge } from '@/components/ui/badge';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/toggle-switch';
 import {
   Select,
   SelectContent,
@@ -51,9 +52,9 @@ const AUDIENCE_KEY: Record<'pending' | 'confirmed' | 'all', string> = {
 };
 
 const AUDIENCE_DOT_CLASS: Record<'pending' | 'confirmed' | 'all', string> = {
-  pending: 'bg-yellow-400',
-  confirmed: 'bg-green-500',
-  all: 'bg-blue-400',
+  pending: rsvpPresentation('pending').solid,
+  confirmed: rsvpPresentation('confirmed').solid,
+  all: 'bg-primary',
 };
 
 function getDayOffset(rowDate: Date, eventDate: string): number {

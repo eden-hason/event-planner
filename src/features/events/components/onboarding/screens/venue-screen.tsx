@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { LocationInput } from '@/components/ui/location-input';
+import { LocationInput } from '@/features/events/components/location-input';
 import { cn } from '@/lib/utils';
 import {
   TAKEOVER_FIELD,

@@ -20,26 +20,25 @@ import {
 } from '@/components/ui/item';
 import { Button } from '@/components/ui/button';
 import { IconCheck, IconX, IconClock } from '@tabler/icons-react';
+import { rsvpPresentation } from '@/features/guests';
+import { cn } from '@/lib/utils';
 import type { RecentRsvpRow } from '../types';
 
+const STATUS_GLYPH = {
+  confirmed: <IconCheck className="h-3.5 w-3.5" strokeWidth={2.5} />,
+  declined: <IconX className="h-3.5 w-3.5" strokeWidth={2.5} />,
+  pending: <IconClock className="h-3.5 w-3.5" />,
+} as const;
+
 function StatusIcon({ status }: { status: RecentRsvpRow['rsvpStatus'] }) {
-  if (status === 'confirmed') {
-    return (
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-        <IconCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
-      </div>
-    );
-  }
-  if (status === 'declined') {
-    return (
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500">
-        <IconX className="h-3.5 w-3.5" strokeWidth={2.5} />
-      </div>
-    );
-  }
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-      <IconClock className="h-3.5 w-3.5" />
+    <div
+      className={cn(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+        rsvpPresentation(status).chip,
+      )}
+    >
+      {STATUS_GLYPH[status]}
     </div>
   );
 }

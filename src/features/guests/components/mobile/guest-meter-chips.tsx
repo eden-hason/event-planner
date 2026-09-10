@@ -4,6 +4,11 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
+import {
+  rsvpPresentation,
+  RSVP_STATUSES,
+  type RsvpStatus,
+} from '../../utils/rsvp-presentation';
 
 interface GuestMeterChipsProps {
   guests: GuestWithGroupApp[];
@@ -11,22 +16,16 @@ interface GuestMeterChipsProps {
   onStatusClick: (status: string | null) => void;
 }
 
-type ChipStatus = 'confirmed' | 'pending' | 'declined';
+type ChipStatus = RsvpStatus;
 
-const BAR_ORDER: ChipStatus[] = ['confirmed', 'pending', 'declined'];
+const BAR_ORDER: readonly ChipStatus[] = RSVP_STATUSES;
 
-const DOT_CLASS: Record<ChipStatus | 'all', string> = {
-  all: 'bg-muted-foreground/50',
-  confirmed: 'bg-green-500',
-  pending: 'bg-yellow-500',
-  declined: 'bg-red-500',
-};
+/** "All" is not an RSVP answer, so it is the one dot the module does not own. */
+const ALL_DOT_CLASS = 'bg-muted-foreground/50';
 
-const BAR_CLASS: Record<ChipStatus, string> = {
-  confirmed: 'bg-green-500',
-  pending: 'bg-yellow-500',
-  declined: 'bg-red-500',
-};
+function dotClass(key: ChipStatus | 'all'): string {
+  return key === 'all' ? ALL_DOT_CLASS : rsvpPresentation(key).solid;
+}
 
 export function GuestMeterChips({
   guests,
@@ -85,7 +84,7 @@ export function GuestMeterChips({
           return (
             <div
               key={status}
-              className={BAR_CLASS[status]}
+              className={rsvpPresentation(status).solid}
               style={{ width: `${width}%` }}
             />
           );
@@ -117,7 +116,10 @@ export function GuestMeterChips({
             >
               <span className="text-muted-foreground flex items-center gap-1 text-[11px] whitespace-nowrap">
                 <span
-                  className={cn('size-1.5 shrink-0 rounded-full', DOT_CLASS[key])}
+                  className={cn(
+                    'size-1.5 shrink-0 rounded-full',
+                    dotClass(key),
+                  )}
                 />
                 {label}
               </span>

@@ -34,6 +34,7 @@ import {
   ItemDescription,
 } from '@/components/ui/item';
 import { cn } from '@/lib/utils';
+import { rsvpPresentation } from '@/features/guests/utils';
 
 interface GuestDirectoryProps {
   guests: GuestWithGroupApp[];
@@ -179,7 +180,7 @@ export function GuestDirectory({
                   <DropdownMenuItem onClick={() => handleExport('confirmed')}>
                     <Item size="sm" className="p-0 gap-3">
                       <ItemMedia>
-                        <span className="size-2.5 rounded-full bg-green-500" />
+                        <span className="size-2.5 rounded-full bg-success" />
                       </ItemMedia>
                       <ItemContent>
                         <ItemTitle>{t('directory.exportConfirmed')}</ItemTitle>
@@ -192,7 +193,9 @@ export function GuestDirectory({
                       <ItemMedia>
                         <span
                           className="size-2.5 rounded-full shrink-0"
-                          style={{ background: 'linear-gradient(135deg, var(--rsvp-confirmed) 50%, var(--rsvp-pending) 50%)' }}
+                          style={{
+                            background: `linear-gradient(135deg, ${rsvpPresentation('confirmed').cssVar} 50%, ${rsvpPresentation('pending').cssVar} 50%)`,
+                          }}
                         />
                       </ItemMedia>
                       <ItemContent>

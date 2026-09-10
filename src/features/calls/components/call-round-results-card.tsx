@@ -8,6 +8,8 @@ import {
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import { StatChip } from '@/components/stat-chip';
+import { callOutcomePresentation } from '../utils';
 import { RefreshButton } from '@/components/refresh-button';
 import {
   Card,
@@ -21,34 +23,6 @@ import {
 import { getCallRoundResults } from '../queries/call-rounds';
 import type { CallRoundSummary } from '../types';
 import { CallRoundResultsTable } from './call-round-results-table';
-
-function StatChip({
-  icon,
-  label,
-  value,
-  hint,
-  colorClass,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  /** Secondary line - e.g. the headcount behind a count of guest records */
-  hint?: string;
-  colorClass: string;
-}) {
-  return (
-    // min-w-0 lets the three chips share a narrow row instead of forcing the
-    // stat strip wider than the card.
-    <div className="bg-muted/50 flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center sm:px-3">
-      <div className={cn('flex items-center gap-1.5 text-xs font-medium', colorClass)}>
-        {icon}
-        <span>{label}</span>
-      </div>
-      <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
-      {hint && <span className="text-muted-foreground text-[11px] tabular-nums">{hint}</span>}
-    </div>
-  );
-}
 
 export async function CallRoundResultsCard({
   round,
@@ -109,26 +83,26 @@ export async function CallRoundResultsCard({
             label={t('stats.confirmed')}
             value={results.summary.confirmed}
             hint={t('stats.confirmedGuests', { count: results.summary.confirmedGuests })}
-            colorClass="text-green-600"
+            accentClassName={callOutcomePresentation('confirmed').accent}
           />
           <StatChip
             icon={<IconX size={13} strokeWidth={2.5} />}
             label={t('stats.declined')}
             value={results.summary.declined}
-            colorClass="text-red-500"
+            accentClassName={callOutcomePresentation('declined').accent}
           />
           <StatChip
             icon={<IconPhoneOff size={13} strokeWidth={2.5} />}
             label={t('stats.noAnswer')}
             value={results.summary.noAnswer}
-            colorClass="text-amber-600"
+            accentClassName={callOutcomePresentation('no_answer').accent}
           />
           {hasWillUpdate && (
             <StatChip
               icon={<IconMessage size={13} strokeWidth={2.5} />}
               label={t('stats.willUpdate')}
               value={results.summary.willUpdate}
-              colorClass="text-sky-600"
+              accentClassName={callOutcomePresentation('guest_will_update').accent}
             />
           )}
         </div>

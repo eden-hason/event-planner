@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import { ConfettiBackground } from '@/components/ui/confetti';
+import { ConfettiBackground } from '@/features/dashboard/components/confetti';
 import { IconCalendar, IconMapPin, IconSparkles } from '@tabler/icons-react';
 import type { EventApp } from '@/features/events/schemas';
 

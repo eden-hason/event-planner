@@ -63,7 +63,7 @@ export function TableSummaryCard({ view, onOpen, onUnassign }: TableSummaryCardP
               'rounded-full px-2 py-0.5 text-xs font-medium',
               freeSeats === 0
                 ? 'bg-muted text-muted-foreground'
-                : 'bg-rsvp-confirmed/14 text-muted-foreground',
+                : 'bg-rsvp-confirmed-tint text-muted-foreground',
             )}
           >
             {freeSeats === 0 ? t('table.full') : t('table.left', { count: freeSeats })}

@@ -57,11 +57,11 @@ export function SummaryStep({
   if (result.success) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-          <IconCircleCheck size={40} className="text-green-600" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+          <IconCircleCheck size={40} className="text-success" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-medium text-green-700 dark:text-green-400">
+          <p className="text-lg font-medium text-success">
             {t('import.summary.successHeading')}
           </p>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -83,11 +83,11 @@ export function SummaryStep({
 
   return (
     <div className="flex min-h-[200px] flex-col items-center justify-center space-y-4">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-        <IconCircleX size={40} className="text-red-600" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+        <IconCircleX size={40} className="text-destructive" />
       </div>
       <div className="text-center">
-        <p className="text-lg font-medium text-red-700 dark:text-red-400">
+        <p className="text-lg font-medium text-destructive">
           {t('import.summary.failedHeading')}
         </p>
         <p className="text-muted-foreground mt-1 text-sm">{result.message}</p>

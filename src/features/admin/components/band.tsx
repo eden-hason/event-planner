@@ -1,6 +1,36 @@
 import { cn } from '@/lib/utils';
 
 /**
+ * The Back Office's flat card chrome. Extracted because six sibling files were
+ * hand-rolling this exact string alongside `Band` - two of them in the same
+ * file that imported `Band`.
+ *
+ * No `shadow-xs`: globals.css zeroes Tailwind's shadow variables for the flat
+ * design, so the four copies that carried it rendered identically to the two
+ * that did not.
+ */
+export function Surface({
+  className,
+  children,
+  id,
+  as: As = 'div',
+}: {
+  className?: string;
+  children: React.ReactNode;
+  id?: string;
+  as?: 'div' | 'section';
+}) {
+  return (
+    <As
+      id={id}
+      className={cn('bg-card overflow-hidden rounded-xl border', className)}
+    >
+      {children}
+    </As>
+  );
+}
+
+/**
  * The Overview's surface. Each band is one flat card with its label inside the
  * top edge and hairline-separated rows below - the label belongs to the card,
  * not to the page.
@@ -19,13 +49,7 @@ export function Band({
   id?: string;
 }) {
   return (
-    <section
-      id={id}
-      className={cn(
-        'bg-card overflow-hidden rounded-xl border shadow-xs',
-        className,
-      )}
-    >
+    <Surface as="section" id={id} className={className}>
       {/*
        * The action sits in the flow rather than absolutely over the heading, so
        * the header is sized by its tallest child. Centring a 32px control inside
@@ -36,7 +60,7 @@ export function Band({
         {action}
       </div>
       {children}
-    </section>
+    </Surface>
   );
 }
 

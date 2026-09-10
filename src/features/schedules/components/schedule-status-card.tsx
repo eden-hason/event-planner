@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription, AlertAction } from '@/components/ui/alert';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/toggle-switch';
 
 import { updateScheduleStatus } from '../actions';
 import type { ScheduleApp } from '../schemas';

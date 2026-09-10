@@ -8,6 +8,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-rubik: var(--font-rubik);
+  --font-heebo: var(--font-heebo);
+  --font-plus-jakarta: var(--font-plus-jakarta);
+  --font-assistant: var(--font-assistant);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -26,6 +30,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -33,6 +38,15 @@
   --color-rsvp-confirmed: var(--rsvp-confirmed);
   --color-rsvp-declined: var(--rsvp-declined);
   --color-rsvp-pending: var(--rsvp-pending);
+  --color-rsvp-confirmed-tint: var(--rsvp-confirmed-tint);
+  --color-rsvp-confirmed-strong: var(--rsvp-confirmed-strong);
+  --color-rsvp-declined-tint: var(--rsvp-declined-tint);
+  --color-rsvp-declined-strong: var(--rsvp-declined-strong);
+  --color-rsvp-pending-tint: var(--rsvp-pending-tint);
+  --color-rsvp-pending-strong: var(--rsvp-pending-strong);
+  --color-outcome-will-update: var(--outcome-will-update);
+  --color-outcome-will-update-tint: var(--outcome-will-update-tint);
+  --color-outcome-will-update-strong: var(--outcome-will-update-strong);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -69,6 +83,7 @@
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --success: oklch(0.6 0.15 150);
   --success-foreground: oklch(0.98 0.01 150);
   --warning: oklch(0.65 0.19 70);
@@ -76,6 +91,26 @@
   --rsvp-confirmed: oklch(0.696 0.17 162.48);
   --rsvp-declined: oklch(0.704 0.191 22.216);
   --rsvp-pending: oklch(0.828 0.189 84.429);
+  /*
+   * The 500-level tokens above are for dots, bars and seat fills, where the
+   * colour sits on its own. Text on a tinted chip needs a pair instead: a
+   * tint light enough to read as a surface, and a strong enough to clear 4.5:1
+   * on it. Never pair `text-rsvp-confirmed` with a tint - that lands at ~2.8:1.
+   */
+  --rsvp-confirmed-tint: oklch(0.95 0.052 163.051);
+  --rsvp-confirmed-strong: oklch(0.432 0.095 166.913);
+  --rsvp-declined-tint: oklch(0.936 0.032 17.717);
+  --rsvp-declined-strong: oklch(0.444 0.177 26.899);
+  --rsvp-pending-tint: oklch(0.962 0.059 95.617);
+  --rsvp-pending-strong: oklch(0.473 0.137 46.201);
+  /*
+   * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
+   * because the RSVP trio has no word for it: amber already means "we could not
+   * reach them", and this guest we did.
+   */
+  --outcome-will-update: oklch(0.685 0.169 237.323);
+  --outcome-will-update-tint: oklch(0.951 0.026 236.824);
+  --outcome-will-update-strong: oklch(0.443 0.11 240.79);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.592 0.249 333);
@@ -93,6 +128,13 @@
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.592 0.249 333);
   --app-shell: oklch(97.7% 0.014 308.299);
+  /*
+   * The mobile bottom nav's height. A token rather than a local constant
+   * because the nav is `fixed`: PageCard and the Seating workspace have to
+   * reserve the space it occupies and neither is inside it. Both used to
+   * hardcode 4rem while their own comments said 56px.
+   */
+  --app-bottom-nav-height: 3.5rem;
 }
 
 .dark {
@@ -111,10 +153,28 @@
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
   --success: oklch(0.65 0.18 150);
   --success-foreground: oklch(0.98 0.01 150);
   --warning: oklch(0.75 0.17 70);
   --warning-foreground: oklch(0.98 0.01 70);
+  /*
+   * The RSVP trio had no dark values at all - `bg-rsvp-confirmed` rendered its
+   * light oklch on a dark surface everywhere seating and the Back Office used
+   * it. Lifted the same way --success and --warning are above.
+   */
+  --rsvp-confirmed: oklch(0.765 0.16 162.48);
+  --rsvp-declined: oklch(0.75 0.17 22.216);
+  --rsvp-pending: oklch(0.86 0.17 84.429);
+  --rsvp-confirmed-tint: oklch(0.28 0.055 165);
+  --rsvp-confirmed-strong: oklch(0.845 0.143 164.978);
+  --rsvp-declined-tint: oklch(0.28 0.08 25);
+  --rsvp-declined-strong: oklch(0.808 0.114 19.571);
+  --rsvp-pending-tint: oklch(0.29 0.06 75);
+  --rsvp-pending-strong: oklch(0.879 0.169 91.605);
+  --outcome-will-update: oklch(0.75 0.15 237.323);
+  --outcome-will-update-tint: oklch(0.28 0.06 240);
+  --outcome-will-update-strong: oklch(0.828 0.111 230.318);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.74 0.238 333);
@@ -168,6 +228,7 @@
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --success: oklch(0.6 0.15 150);
   --success-foreground: oklch(0.98 0.01 150);
   --warning: oklch(0.65 0.19 70);
@@ -175,6 +236,26 @@
   --rsvp-confirmed: oklch(0.696 0.17 162.48);
   --rsvp-declined: oklch(0.704 0.191 22.216);
   --rsvp-pending: oklch(0.828 0.189 84.429);
+  /*
+   * The 500-level tokens above are for dots, bars and seat fills, where the
+   * colour sits on its own. Text on a tinted chip needs a pair instead: a
+   * tint light enough to read as a surface, and a strong enough to clear 4.5:1
+   * on it. Never pair `text-rsvp-confirmed` with a tint - that lands at ~2.8:1.
+   */
+  --rsvp-confirmed-tint: oklch(0.95 0.052 163.051);
+  --rsvp-confirmed-strong: oklch(0.432 0.095 166.913);
+  --rsvp-declined-tint: oklch(0.936 0.032 17.717);
+  --rsvp-declined-strong: oklch(0.444 0.177 26.899);
+  --rsvp-pending-tint: oklch(0.962 0.059 95.617);
+  --rsvp-pending-strong: oklch(0.473 0.137 46.201);
+  /*
+   * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
+   * because the RSVP trio has no word for it: amber already means "we could not
+   * reach them", and this guest we did.
+   */
+  --outcome-will-update: oklch(0.685 0.169 237.323);
+  --outcome-will-update-tint: oklch(0.951 0.026 236.824);
+  --outcome-will-update-strong: oklch(0.443 0.11 240.79);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.592 0.249 333);
@@ -195,14 +276,20 @@
   color-scheme: light;
 }
 
-/* Flat design: zero out Tailwind's shadow composition variables.
-   Unlayered rules beat @layer utilities, so this overrides all shadow-* utility classes. */
+/*
+ * Flat design: zero out Tailwind's *shadow* composition variables. Unlayered
+ * rules beat @layer utilities, so this overrides all shadow-* utility classes.
+ *
+ * Deliberately NOT --tw-ring-shadow / --tw-ring-offset-shadow /
+ * --tw-inset-ring-shadow. Tailwind builds `ring-*` out of those same
+ * variables, so zeroing them silently deleted every focus ring in the app
+ * (~50 declarations), the aria-invalid error ring, and the `ring-2
+ * ring-background` that separates the notification dot from its icon in
+ * mobile-tab-bar. Flat means no drop shadows, not no focus indicator.
+ */
 * {
   --tw-shadow: 0 0 #0000;
   --tw-inset-shadow: 0 0 #0000;
-  --tw-ring-shadow: 0 0 #0000;
-  --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-inset-ring-shadow: 0 0 #0000;
 }
 
 @layer base {
@@ -213,21 +300,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Chart colors */
-  :root {
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-  }
-  .dark {
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-  }
   .leaflet-container {
     @apply !bg-card !font-[inherit];
   }
@@ -278,27 +350,6 @@
   }
 }
 
-/* Custom animations for the event planner app */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
-  }
-}
-
 @keyframes slide-up {
   from {
     opacity: 0;
@@ -310,29 +361,8 @@
   }
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
 .animate-slide-up {
   animation: slide-up 0.6s ease-out;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.8s ease-out;
 }
 
 @keyframes row-updated {
@@ -378,81 +408,9 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Glass morphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark .glass {
-  background: rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Gradient text animation */
-.gradient-text-animate {
-  background: linear-gradient(-45deg, #3b82f6, #6366f1, #8b5cf6, #3b82f6);
-  background-size: 400% 400%;
-  animation: gradient-shift 3s ease infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Hover effects */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Focus styles for accessibility - removed for buttons to prevent blue border */
 a:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
-}
-
-/* Loading animation */
-.loading-dots {
-  display: inline-block;
-}
-
-.loading-dots::after {
-  content: '';
-  animation: loading-dots 1.5s infinite;
-}
-
-@keyframes loading-dots {
-  0%,
-  20% {
-    content: '';
-  }
-  40% {
-    content: '.';
-  }
-  60% {
-    content: '..';
-  }
-  80%,
-  100% {
-    content: '...';
-  }
 }
 
 /* Toast styling - using default background colors */

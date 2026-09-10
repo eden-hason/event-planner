@@ -147,7 +147,7 @@ export function MapStep({
         <div
           className={`border-t px-4 py-3 text-sm ${
             isAllMapped
-              ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
+              ? 'bg-success/10 text-success'
               : 'bg-muted/50 text-muted-foreground'
           }`}
         >

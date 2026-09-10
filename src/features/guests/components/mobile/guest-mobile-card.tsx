@@ -20,7 +20,7 @@ import {
 import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { GroupIcon } from '@/features/guests/components/groups';
-import { cn } from '@/lib/utils';
+import { RsvpPill } from '../rsvp-pill';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
 
@@ -33,12 +33,6 @@ interface GuestMobileCardProps {
   tableNumber?: number;
   t: TFn;
 }
-
-const STATUS_PILL: Record<string, string> = {
-  confirmed: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  declined: 'bg-red-100 text-red-800',
-};
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -131,14 +125,7 @@ export function GuestMobileCard({
       </div>
 
       {/* Status pill */}
-      <span
-        className={cn(
-          'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
-          STATUS_PILL[status] ?? STATUS_PILL.pending,
-        )}
-      >
-        {t(`rsvp.${status}`)}
-      </span>
+      <RsvpPill status={status} />
 
       {/* Options menu */}
       <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>

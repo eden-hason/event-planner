@@ -78,10 +78,10 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               'pt-0 pb-0 md:pt-3 md:pb-6',
               // Clearance above the fixed `MobileBottomNav`, at every width
               // below `md` - the card frame is gone there, but the nav still
-              // sits over the bottom of the viewport. The bar is 56px tall and
-              // adds the device safe-area inset below itself, so the gap has to
-              // clear both.
-              'mb-[calc(4rem+env(safe-area-inset-bottom))] md:mb-2',
+              // sits over the bottom of the viewport. The nav publishes its own
+              // height as `--app-bottom-nav-height`; it adds the device
+              // safe-area inset below itself, so the gap has to clear both.
+              'mb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-2',
               // `mt-2`/`me-2` (8px), matching the floating sidebar's own
               // outer gap so the two sit level. `me-2` (not `mx-2`): the
               // sidebar-facing side already gets its 8px from the sidebar's

@@ -56,6 +56,7 @@ import { GuestsMobile } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { avatarTintFor } from '@/lib/avatar-tint';
 
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
@@ -69,30 +70,6 @@ interface GuestsPageProps {
 }
 
 
-const RSVP_DOT_STYLES: Record<string, string> = {
-  confirmed: 'bg-green-500',
-  pending: 'bg-yellow-500',
-  declined: 'bg-red-500',
-};
-
-const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700',
-  'bg-sky-100 text-sky-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-blue-100 text-blue-700',
-  'bg-orange-100 text-orange-700',
-  'bg-pink-100 text-pink-700',
-];
-
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
 
 export function GuestsPage({
   guests,
@@ -473,7 +450,7 @@ export function GuestsPage({
                 {/* Avatar + name row */}
                 <div className="flex items-center gap-3 mb-4">
                   <div
-                    className={`size-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold ${getAvatarColor(selectedGuest.name)}`}
+                    className={`size-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold ${avatarTintFor(selectedGuest.name)}`}
                   >
                     {selectedGuest.name.charAt(0).toUpperCase()}
                   </div>

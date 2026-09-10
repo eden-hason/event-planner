@@ -287,7 +287,7 @@ export function EventCard({
         <div className="relative flex items-baseline justify-center gap-2 pt-2 pb-1">
           <span
             dir="ltr"
-            className="bg-gradient-to-l from-[var(--kt-violet-soft)] to-[var(--kt-brand)] bg-clip-text font-[family-name:var(--font-rubik)] text-[44px] font-extrabold tracking-[-0.03em] text-transparent"
+            className="bg-gradient-to-l from-[var(--kt-violet-soft)] to-[var(--kt-brand)] bg-clip-text font-rubik text-[44px] font-extrabold tracking-[-0.03em] text-transparent"
           >
             {days}
           </span>

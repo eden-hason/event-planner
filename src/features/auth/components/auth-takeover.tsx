@@ -140,7 +140,7 @@ export function AuthTakeover({ next }: { next?: string }) {
             onChange={(e) => setLocalPhone(e.target.value)}
             required
             autoComplete="tel"
-            className="px-4 text-right font-[family-name:var(--font-rubik)]"
+            className="px-4 text-right font-rubik"
           />
         </div>
         {sendState.message && !sendState.success && (
@@ -183,7 +183,7 @@ export function AuthTakeover({ next }: { next?: string }) {
       </h1>
       <p className="text-[15px] text-[var(--kt-ink-muted)]">
         {t('sentCodeTo')}{' '}
-        <span dir="ltr" className="font-[family-name:var(--font-rubik)] font-semibold">
+        <span dir="ltr" className="font-rubik font-semibold">
           {e164Phone}
         </span>
       </p>
@@ -200,7 +200,7 @@ export function AuthTakeover({ next }: { next?: string }) {
               <div
                 key={i}
                 className={cn(
-                  'flex h-14 w-[46px] items-center justify-center rounded-[14px] bg-white font-[family-name:var(--font-rubik)] text-2xl font-bold text-[var(--kt-ink)] transition-colors',
+                  'flex h-14 w-[46px] items-center justify-center rounded-[14px] bg-white font-rubik text-2xl font-bold text-[var(--kt-ink)] transition-colors',
                   i === otp.length
                     ? 'border-2 border-[var(--kt-brand)]'
                     : 'border-[1.5px] border-[var(--kt-border)]',

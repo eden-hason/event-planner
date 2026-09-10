@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { rsvpPresentation } from '@/features/guests';
 import { useLocale } from 'next-intl';
 import { IconCheck, IconChevronLeft, IconChevronRight, IconEye, IconX } from '@tabler/icons-react';
 
@@ -42,9 +44,15 @@ function ResponseBadge({
   row: GuestInteractionRow;
   labels: { confirmed: string; declined: string; pending: string };
 }) {
+  // A response of confirm/decline *is* an RSVP, so it speaks that vocabulary.
   if (row.response === 'rsvp_confirm') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+          rsvpPresentation('confirmed').chip,
+        )}
+      >
         <IconCheck size={11} strokeWidth={2.5} />
         {labels.confirmed}
       </span>
@@ -52,7 +60,12 @@ function ResponseBadge({
   }
   if (row.response === 'rsvp_decline') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+          rsvpPresentation('declined').chip,
+        )}
+      >
         <IconX size={11} strokeWidth={2.5} />
         {labels.declined}
       </span>

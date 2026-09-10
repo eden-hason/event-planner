@@ -16,7 +16,7 @@ import {
 import {
   MobileTabBar,
   type MobileTabBarItem,
-} from '@/components/ui/mobile-tab-bar';
+} from '@/components/layout/mobile-tab-bar';
 import { useCollaboration } from '@/components/feature-layout';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';

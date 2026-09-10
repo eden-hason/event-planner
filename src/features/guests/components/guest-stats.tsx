@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconUserCheck, IconUserQuestion, IconUsers, IconUserX } from '@tabler/icons-react';
 import { GuestWithGroupApp } from '../schemas';
+import { rsvpPresentation } from '@/features/guests/utils';
 import { StatsCards, StatItem } from '@/components/ui/stats-cards';
 
 interface GuestStatsProps {
@@ -52,9 +53,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: guestCount(confirmed),
         secondaryText: records(confirmed.length),
         pct: pct(guestCount(confirmed)),
-        icon: <IconUserCheck className="text-green-500" />,
-        barColor: 'bg-green-500',
-        activeRing: 'bg-green-50 border-green-300',
+        icon: <IconUserCheck className={rsvpPresentation('confirmed').accent} />,
+        barColor: rsvpPresentation('confirmed').solid,
+        activeRing: rsvpPresentation('confirmed').activeSurface,
       },
       {
         label: t('stats.pending'),
@@ -62,9 +63,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: guestCount(pending),
         secondaryText: records(pending.length),
         pct: pct(guestCount(pending)),
-        icon: <IconUserQuestion className="text-amber-400" />,
-        barColor: 'bg-amber-400',
-        activeRing: 'bg-amber-50 border-amber-300',
+        icon: <IconUserQuestion className={rsvpPresentation('pending').accent} />,
+        barColor: rsvpPresentation('pending').solid,
+        activeRing: rsvpPresentation('pending').activeSurface,
       },
       {
         label: t('stats.declined'),
@@ -72,9 +73,9 @@ export function GuestStats({ guests, selectedStatuses = [], onStatClick }: Guest
         value: guestCount(declined),
         secondaryText: records(declined.length),
         pct: pct(guestCount(declined)),
-        icon: <IconUserX className="text-red-500" />,
-        barColor: 'bg-red-500',
-        activeRing: 'bg-red-50 border-red-300',
+        icon: <IconUserX className={rsvpPresentation('declined').accent} />,
+        barColor: rsvpPresentation('declined').solid,
+        activeRing: rsvpPresentation('declined').activeSurface,
       },
     ];
   }, [guests, t]);

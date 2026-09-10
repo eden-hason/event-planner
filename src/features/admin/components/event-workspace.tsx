@@ -30,6 +30,7 @@ import {
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, relativeEventDate } from '@/lib/date-time';
 import { cn } from '@/lib/utils';
+import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
 export function EventIdentityBand({ event }: { event: EventIdentity }) {
   const hosts = event.hostNames.length ? event.hostNames.join(' and ') : null;
@@ -227,9 +228,9 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
             <BandRow className="flex flex-col gap-3">
               <RsvpBar summary={summary} />
               <div className="flex flex-wrap items-baseline gap-x-7 gap-y-2">
-                <RsvpLegend color="bg-rsvp-confirmed" value={summary.confirmed} label="confirmed" total={summary.guestRecords} />
-                <RsvpLegend color="bg-rsvp-declined" value={summary.declined} label="declined" total={summary.guestRecords} />
-                <RsvpLegend color="bg-rsvp-pending" value={summary.pending} label="pending" total={summary.guestRecords} />
+                <RsvpLegend status="confirmed" value={summary.confirmed} total={summary.guestRecords} />
+                <RsvpLegend status="declined" value={summary.declined} total={summary.guestRecords} />
+                <RsvpLegend status="pending" value={summary.pending} total={summary.guestRecords} />
               </div>
             </BandRow>
             {summary.unusablePhones.length > 0 && <BandRow><PhoneQualityDisclosure summary={summary} /></BandRow>}
@@ -273,23 +274,30 @@ function RsvpBar({ summary }: { summary: EventGuestSummary }) {
   );
 }
 
+/*
+ * Takes the status, not a colour and a label: those were two props carrying the
+ * same fact, which a caller had to keep in sync by hand.
+ */
 function RsvpLegend({
-  color,
+  status,
   value,
-  label,
   total,
 }: {
-  color: 'bg-rsvp-confirmed' | 'bg-rsvp-declined' | 'bg-rsvp-pending';
+  status: RsvpStatus;
   value: number;
-  label: string;
   total: number;
 }) {
   const percent = total ? Math.round(value / total * 100) : 0;
   return (
     <div className="flex items-baseline gap-2">
-      <span className={cn('size-2 shrink-0 rounded-full', color)} />
+      <span
+        className={cn(
+          'size-2 shrink-0 rounded-full',
+          rsvpPresentation(status).solid,
+        )}
+      />
       <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('en-GB')}</span>
-      <span className="text-muted-foreground text-[13px]">{label}</span>
+      <span className="text-muted-foreground text-[13px]">{status}</span>
       <span className="text-muted-foreground/70 text-[12.5px] tabular-nums">{percent}%</span>
     </div>
   );

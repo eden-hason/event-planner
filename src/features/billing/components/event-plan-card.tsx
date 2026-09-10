@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronRight, Clock, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BILLING_TONE_CLASS } from '../utils';
 import { useCollaboration } from '@/components/feature-layout';
 import { useEventBillingStatus } from './event-billing-status-provider';
 import { EventBillingStatusSheet } from './event-billing-status-sheet';
@@ -38,10 +39,8 @@ export function EventPlanCard() {
   const badge = (
     <span
       className={cn(
-        'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
-        status.tone === 'premium'
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-          : 'bg-background text-muted-foreground',
+        'shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+        BILLING_TONE_CLASS[status.tone],
       )}
     >
       {status.tone === 'premium'

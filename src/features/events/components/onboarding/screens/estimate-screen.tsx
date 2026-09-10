@@ -95,7 +95,7 @@ export function EstimateScreen({
       {/* The unit sits under the rate rather than beside it: a bare "1.5 ₪"
           invites reading it as the price of the whole thing. */}
       <span className="flex flex-col items-center leading-[1.25] text-[var(--kt-ink-faint)]">
-        <span dir="ltr" className="font-[family-name:var(--font-rubik)] text-xs">
+        <span dir="ltr" className="font-rubik text-xs">
           {t('rate', { rate: CHANNEL_RATES[id] })}
         </span>
         <span className="text-[10.5px] font-medium">{t('perRecord')}</span>
@@ -118,7 +118,7 @@ export function EstimateScreen({
             </label>
             <span
               dir="ltr"
-              className="font-[family-name:var(--font-rubik)] text-xl font-extrabold text-[var(--kt-ink)]"
+              className="font-rubik text-xl font-extrabold text-[var(--kt-ink)]"
             >
               {fmt(records)}
               {records >= GUESTS_ESTIMATE_MAX ? '+' : ''}
@@ -175,7 +175,7 @@ export function EstimateScreen({
         <div className="flex items-baseline justify-end gap-3 px-1">
           <span
             dir="ltr"
-            className="font-[family-name:var(--font-rubik)] text-3xl font-extrabold tracking-[-0.02em] text-[var(--kt-ink)]"
+            className="font-rubik text-3xl font-extrabold tracking-[-0.02em] text-[var(--kt-ink)]"
           >
             ₪ {fmt(price)}
           </span>
