@@ -49,12 +49,15 @@ export function SeatingPage(props: SeatingPageProps) {
   const [draggingGuestId, setDraggingGuestId] = React.useState<string | null>(null);
 
   /*
-   * On a phone the workspace hands its title and its actions to `PageCard`'s
-   * chrome row rather than carrying a header of its own: one row of chrome
-   * instead of two, and the actions stop wrapping onto a second line beside a
-   * title that already fills the width. Desktop keeps its own in-page header
-   * (the canvas is full-bleed and the chrome row is only the sidebar toggle
-   * there), so it clears the slot with an empty title.
+   * At every width the workspace hands its title and its actions to
+   * `PageCard`'s chrome row rather than carrying a header of its own: one row
+   * of chrome instead of two, and on a phone the actions stop wrapping onto a
+   * second line beside a title that already fills the width. On desktop it
+   * also keeps the full height of the card for the canvas and the Unassigned
+   * list, which is the whole point of the full-bleed treatment.
+   *
+   * Only the trigger differs: the phone has no room for a label, so it
+   * collapses to an icon.
    *
    * `setDialog` is a `useState` setter and `title` a resolved string, so the
    * config is stable between renders - depending on `workspace` itself would
@@ -63,19 +66,16 @@ export function SeatingPage(props: SeatingPageProps) {
   const setDialog = workspace.setDialog;
   const title = t('title');
   const headerConfig = React.useMemo(
-    () =>
-      isMobile
-        ? {
-            title,
-            action: (
-              <SeatingHeaderActions
-                compact
-                onAddTable={() => setDialog({ kind: 'create' })}
-                onAddBatch={() => setDialog({ kind: 'batch' })}
-              />
-            ),
-          }
-        : { title: '' },
+    () => ({
+      title,
+      action: (
+        <SeatingHeaderActions
+          compact={isMobile}
+          onAddTable={() => setDialog({ kind: 'create' })}
+          onAddBatch={() => setDialog({ kind: 'batch' })}
+        />
+      ),
+    }),
     [isMobile, title, setDialog],
   );
   const { setHeader } = useFeatureHeader(headerConfig);
@@ -266,17 +266,11 @@ export function SeatingPage(props: SeatingPageProps) {
       <div
         className={cn(
           WORKSPACE_HEIGHT,
-          'flex min-h-0 flex-col gap-4 overflow-hidden p-6',
+          // No top padding: the title now lives in the chrome row above, and
+          // the Card's own `gap-4` is already the space below it.
+          'flex min-h-0 flex-col gap-4 overflow-hidden px-6 pb-6',
         )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-xl font-semibold">{t('title')}</h1>
-          <SeatingHeaderActions
-            onAddTable={() => workspace.setDialog({ kind: 'create' })}
-            onAddBatch={() => workspace.setDialog({ kind: 'batch' })}
-          />
-        </div>
-
         {props.isScopedCollaborator && (
           <ScopeBanner scopedRecordCount={scopedRecordCount} />
         )}

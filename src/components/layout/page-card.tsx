@@ -33,9 +33,9 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
  *
  * The Seating Plan keeps the flat, full-bleed treatment at every size - a
  * work surface, not a page, so a card frame would eat into the canvas at any
- * width - but still gets the chrome row (stripped of its own padding/border,
- * and it never sets a title), since it would otherwise be the one route with
- * no way to collapse the sidebar.
+ * width - but still gets the chrome row (stripped of its border), which is
+ * where it hangs its title and its actions at every width so the workspace
+ * below is nothing but workspace.
  */
 export function PageCard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -102,9 +102,12 @@ export function PageCard({ children }: { children: React.ReactNode }) {
                 // other page - it hands its title and its actions to this row
                 // rather than keeping a header of its own (see `SeatingPage`).
                 'bg-card px-4 pt-4 pb-3',
-                // From `md` up the workspace is full-bleed again and the row is
-                // just somewhere to hang the sidebar toggle.
-                'md:bg-transparent md:px-2 md:pt-0 md:pb-1',
+                // From `md` up the workspace is full-bleed again, so the row
+                // loses the band but keeps the title: it is the page's only
+                // header there too. `px-6` lines the title and its actions up
+                // with the workspace below rather than with the card edge; the
+                // Card's own `gap-4` closes the row out, so no bottom padding.
+                'md:bg-transparent md:px-6 md:pt-3 md:pb-0',
               )
             : cn(
                 'px-4 pb-3 md:border-b md:px-6',
