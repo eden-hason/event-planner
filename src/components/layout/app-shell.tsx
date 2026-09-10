@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 /**
  * Routes that opt out of the default full-bleed layout.
@@ -22,8 +23,21 @@ export function isSeatingRoute(pathname: string) {
  * that borrows it.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
-    <SidebarProvider className="bg-app-shell min-h-svh flex-col">
+    <SidebarProvider
+      className={cn(
+        'bg-app-shell flex-col',
+        // Every other route is as tall as its content and scrolls the page.
+        // The Seating Plan is a fixed work surface: the Unassigned list and
+        // the canvas scroll inside it, and nothing scrolls at the page level.
+        // That needs a *definite* height to hang the `flex-1 min-h-0` chain
+        // below off - `min-h-svh` alone leaves the shell content-sized, so a
+        // long Unassigned list grows the shell instead of scrolling in place.
+        isSeatingRoute(pathname) ? 'h-svh overflow-hidden' : 'min-h-svh',
+      )}
+    >
       {children}
     </SidebarProvider>
   );
