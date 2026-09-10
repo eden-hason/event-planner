@@ -3,7 +3,12 @@
 import { type ComponentProps, type ElementType, useId } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
-import { IconArmchair, IconGift, IconUsersGroup } from '@tabler/icons-react';
+import {
+  IconArmchair,
+  IconCoins,
+  IconGift,
+  IconUsersGroup,
+} from '@tabler/icons-react';
 import { Bot } from 'lucide-react';
 import { useCollaboration } from '@/components/feature-layout';
 import { isSeatingRoute } from './app-shell';
@@ -94,6 +99,14 @@ export function useMoreNavItems(): MoreNavItem[] {
       icon: IconUsersGroup,
       tint: 'bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300',
       href: buildNavUrl('/app/collaborate', eventId),
+    },
+    {
+      value: 'budget',
+      label: tNav('budget'),
+      description: tMore('budget'),
+      icon: IconCoins,
+      tint: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
+      href: buildNavUrl('/app/budget', eventId),
     },
     // Without this a Seating Manager - whose entire job is the Seating Plan -
     // could not reach it on a phone at all.

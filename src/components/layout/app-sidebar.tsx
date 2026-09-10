@@ -148,16 +148,12 @@ export function AppSidebar({
       url: '/app/collaborate',
       icon: IconUsersGroup,
     },
-    ...(process.env.NEXT_PUBLIC_ENABLE_BUDGET === 'true'
-      ? [
-          {
-            id: 'budget',
-            title: tNav('budget'),
-            url: '/app/budget',
-            icon: IconCoins,
-          },
-        ]
-      : []),
+    {
+      id: 'budget',
+      title: tNav('budget'),
+      url: '/app/budget',
+      icon: IconCoins,
+    },
     // The Seating Plan works on mobile now (ADR-0009), so it is no longer
     // hidden below the breakpoint - only the feature flag gates it.
     ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
