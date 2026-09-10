@@ -865,6 +865,7 @@
       "invited": "invited",
       "confirmed": "Confirmed",
       "pending": "Pending",
+      "declined": "Declined",
       "ofTotal": "of {total}"
     },
     "rsvpBreakdown": {

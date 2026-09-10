@@ -2,6 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
+import { RsvpPill } from '../rsvp-pill';
 import {
   Tooltip,
   TooltipContent,
@@ -13,18 +14,6 @@ import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
-
-const getStatusBadge = (status: GuestWithGroupApp['rsvpStatus'], t: TFn) => {
-  const statusConfig = {
-    confirmed: { className: 'bg-green-100 text-green-800 border-green-200' },
-    pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-    declined: { className: 'bg-red-100 text-red-800 border-red-200' },
-  };
-
-  const config = statusConfig[status] || statusConfig.pending;
-  const label = t(`rsvp.${status}`);
-  return <Badge className={config.className}>{label}</Badge>;
-};
 
 interface GuestColumnsOptions {
   onDelete: (guest: GuestWithGroupApp) => void;
@@ -121,7 +110,7 @@ export const createGuestColumns = (
       header: () => <div>{t('table.rsvpStatus')}</div>,
       cell: ({ row }) => {
         const status = row.getValue('rsvpStatus') as GuestWithGroupApp['rsvpStatus'];
-        return getStatusBadge(status, t);
+        return <RsvpPill status={status} />;
       },
       filterFn: (row, _id, value: string[]) => {
         return value.length === 0 || value.includes(row.original.rsvpStatus);

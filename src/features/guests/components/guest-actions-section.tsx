@@ -35,7 +35,7 @@ export function GuestActionsSection({ invitationToken }: GuestActionsSectionProp
         className={cn(
           'flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 text-start cursor-pointer transition-all duration-150',
           copied
-            ? 'bg-green-50 border-green-200'
+            ? 'bg-success/10 border-success/20'
             : 'bg-muted/40 border-border hover:bg-purple-50 hover:border-purple-200',
         )}
       >
@@ -43,12 +43,12 @@ export function GuestActionsSection({ invitationToken }: GuestActionsSectionProp
           className={cn(
             'size-[34px] rounded-lg shrink-0 flex items-center justify-center transition-colors duration-150',
             copied
-              ? 'bg-green-100'
+              ? 'bg-success/10'
               : 'bg-muted hover:bg-purple-100',
           )}
         >
           {copied ? (
-            <IconCheck size={15} className="text-green-600" strokeWidth={2.2} />
+            <IconCheck size={15} className="text-success" strokeWidth={2.2} />
           ) : (
             <IconLink size={15} className="text-muted-foreground group-hover:text-purple-500" />
           )}
@@ -58,7 +58,7 @@ export function GuestActionsSection({ invitationToken }: GuestActionsSectionProp
           <div
             className={cn(
               'text-sm font-medium',
-              copied ? 'text-green-700' : 'text-foreground',
+              copied ? 'text-success' : 'text-foreground',
             )}
           >
             {copied ? t('copied') : t('copyInvitationLink')}
@@ -66,7 +66,7 @@ export function GuestActionsSection({ invitationToken }: GuestActionsSectionProp
           <div
             className={cn(
               'text-[11.5px] mt-0.5 truncate',
-              copied ? 'text-green-400' : 'text-muted-foreground',
+              copied ? 'text-success' : 'text-muted-foreground',
             )}
           >
             {copied ? t('linkCopied') : t('copyInvitationLinkDescription')}

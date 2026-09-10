@@ -9,12 +9,7 @@ import {
 } from '@/components/ui/popover';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-
-const RSVP_STATUS_VALUES = [
-  { value: 'confirmed', className: 'text-green-700' },
-  { value: 'pending', className: 'text-yellow-700' },
-  { value: 'declined', className: 'text-red-700' },
-] as const;
+import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
 
 interface RsvpStatusFilterProps {
   selectedStatuses: string[];
@@ -27,9 +22,10 @@ export function RsvpStatusFilter({
 }: RsvpStatusFilterProps) {
   const t = useTranslations('guests');
 
-  const statuses = RSVP_STATUS_VALUES.map((s) => ({
-    ...s,
-    label: t(`rsvp.${s.value}` as 'rsvp.confirmed' | 'rsvp.pending' | 'rsvp.declined'),
+  const statuses = RSVP_STATUSES.map((value) => ({
+    value,
+    className: rsvpPresentation(value).text,
+    label: t(`rsvp.${value}` as 'rsvp.confirmed' | 'rsvp.pending' | 'rsvp.declined'),
   }));
 
   const isActive = selectedStatuses.length > 0;

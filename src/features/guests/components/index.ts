@@ -4,3 +4,5 @@ export { GuestTableCombobox } from './guest-table-combobox';
 export { GuestDirectory } from './guest-directory';
 export { GuestSearch } from './guest-search';
 export { GuestStats } from './guest-stats';
+export { RsvpPill } from './rsvp-pill';
+export { RsvpDot } from './rsvp-dot';

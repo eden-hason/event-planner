@@ -7,7 +7,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 
-import { cn } from '@/lib/utils';
+import { StatChip } from '@/components/stat-chip';
+import { rsvpPresentation } from '@/features/guests';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { getScheduleInteractionData } from '../queries/guest-interactions';
@@ -16,34 +17,6 @@ import { InteractionsRefreshButton } from './interactions-refresh-button';
 
 interface ScheduleInteractionsCardProps {
   scheduleId: string;
-}
-
-function StatChip({
-  icon,
-  label,
-  value,
-  hint,
-  colorClass,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  /** Secondary line - e.g. the headcount behind a count of guest records */
-  hint?: string;
-  colorClass: string;
-}) {
-  return (
-    // min-w-0 lets the three chips share a narrow row instead of forcing the
-    // stat strip wider than the card.
-    <div className="bg-muted/50 flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center sm:px-3">
-      <div className={cn('flex items-center gap-1.5 text-xs font-medium', colorClass)}>
-        {icon}
-        <span>{label}</span>
-      </div>
-      <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
-      {hint && <span className="text-muted-foreground text-[11px] tabular-nums">{hint}</span>}
-    </div>
-  );
 }
 
 export async function ScheduleInteractionsCard({ scheduleId }: ScheduleInteractionsCardProps) {
@@ -80,20 +53,20 @@ export async function ScheduleInteractionsCard({ scheduleId }: ScheduleInteracti
                 icon={<IconEye size={13} />}
                 label={t('views')}
                 value={data.summary.views}
-                colorClass="text-blue-500"
+                accentClassName={'text-primary'}
               />
               <StatChip
                 icon={<IconCheck size={13} strokeWidth={2.5} />}
                 label={t('confirmed')}
                 value={data.summary.confirmed}
                 hint={t('confirmedGuests', { count: data.summary.confirmedGuests })}
-                colorClass="text-green-600"
+                accentClassName={rsvpPresentation('confirmed').accent}
               />
               <StatChip
                 icon={<IconX size={13} strokeWidth={2.5} />}
                 label={t('declined')}
                 value={data.summary.declined}
-                colorClass="text-red-500"
+                accentClassName={rsvpPresentation('declined').accent}
               />
             </div>
             <GuestInteractionsTable

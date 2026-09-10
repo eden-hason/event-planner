@@ -29,7 +29,7 @@ export function SeatedGuestChip({
     <div
       className={cn(
         'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm',
-        isPending ? 'bg-rsvp-pending/12' : 'bg-muted',
+        isPending ? 'bg-rsvp-pending-tint' : 'bg-muted',
         highlighted && 'ring-primary ring-2 ring-offset-1',
       )}
     >

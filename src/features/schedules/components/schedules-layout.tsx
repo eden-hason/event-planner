@@ -224,10 +224,10 @@ export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutPro
 // 'completed'. Both read as a green dot - the distinction that matters in the
 // nav is done / in flight / abandoned, not which kind produced it.
 const STATUS_DOT: Record<OutreachItem['status'], string> = {
-  sent: 'bg-green-500',
-  completed: 'bg-green-500',
-  pending: 'bg-amber-500',
-  in_progress: 'bg-amber-500',
+  sent: 'bg-success',
+  completed: 'bg-success',
+  pending: 'bg-warning',
+  in_progress: 'bg-warning',
   cancelled: 'bg-muted-foreground/40',
 };
 

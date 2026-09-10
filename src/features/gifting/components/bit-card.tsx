@@ -162,7 +162,7 @@ export function BitCard({ config, pending, onSave, onDisconnect }: BitCardProps)
 
         {phase === 'resolved' && (
           <div className="flex flex-col gap-3">
-            <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-success">
               <Check className="size-4" />
               {t('found')}
             </span>

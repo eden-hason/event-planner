@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { rsvpPresentation } from '@/features/guests';
 import { useTranslations } from 'next-intl';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,9 +26,9 @@ export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] })
   // built from, rather than duplicating their colors as literal hex, so the
   // chart and the badges always agree - dark mode included.
   const chartConfig = useMemo(() => ({
-    confirmed: { label: t('confirmed'), color: 'var(--rsvp-confirmed)' },
-    pending: { label: t('pending'), color: 'var(--rsvp-pending)' },
-    declined: { label: t('declined'), color: 'var(--rsvp-declined)' },
+    confirmed: { label: t('confirmed'), color: rsvpPresentation('confirmed').cssVar },
+    pending: { label: t('pending'), color: rsvpPresentation('pending').cssVar },
+    declined: { label: t('declined'), color: rsvpPresentation('declined').cssVar },
   }) satisfies ChartConfig, [t]);
 
   if (groups.length === 0) {

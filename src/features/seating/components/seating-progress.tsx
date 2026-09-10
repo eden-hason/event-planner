@@ -88,7 +88,7 @@ export function SeatingProgress({ progress, variant = 'desktop' }: SeatingProgre
         className={cn(
           'rounded-full px-3 py-1 text-xs font-medium',
           progress.isComplete
-            ? 'bg-rsvp-confirmed/15 text-rsvp-confirmed'
+            ? 'bg-rsvp-confirmed-tint text-rsvp-confirmed-strong'
             : 'bg-muted text-muted-foreground',
         )}
       >

@@ -88,7 +88,7 @@ function hasBadge(
 
 function tabClassName(isActive: boolean, disabled?: boolean) {
   return cn(
-    'flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-lg px-1 pt-1.5 pb-1',
+    'flex min-h-(--app-bottom-nav-height) w-full flex-col items-center justify-center gap-1 rounded-lg px-1 pt-1.5 pb-1',
     'text-muted-foreground transition-colors outline-none',
     'focus-visible:ring-ring focus-visible:ring-2',
     'active:opacity-70',
@@ -194,7 +194,7 @@ export function MobileTabBar({
         // `bg-card`, matching the mobile header band in `PageCard`: `--background`
         // is darker than `--card` in dark mode, which left the bar reading as a
         // hole below the app-shell canvas.
-        'bg-card/95 supports-[backdrop-filter]:bg-card/80 fixed inset-x-0 z-50 border-t backdrop-blur md:hidden',
+        'bg-card/95 supports-[backdrop-filter]:bg-card/80 fixed inset-x-0 z-40 border-t backdrop-blur md:hidden',
         // Not `bottom-0`: iOS positions fixed elements against the layout
         // viewport, so while the page is zoomed in the bottom of that viewport
         // is off-screen and a `0` bar goes with it. The variable is the gap

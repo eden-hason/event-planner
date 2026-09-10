@@ -20,7 +20,7 @@ export function GuestSearch({ searchTerm, onSearchChange, className }: GuestSear
 
   return (
     <div className="relative w-full">
-      <IconSearch size={16} className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform" />
+      <IconSearch size={16} className="text-muted-foreground absolute top-1/2 start-3 -translate-y-1/2 transform" />
       <Input
         placeholder={t('search.placeholder')}
         value={searchTerm}

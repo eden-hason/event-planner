@@ -11,8 +11,8 @@ import { IconDeviceFloppy } from '@tabler/icons-react';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { LocationInput } from '@/components/ui/location-input';
-import { GoogleMap } from '@/components/ui/google-map';
+import { LocationInput } from '@/features/events/components/location-input';
+import { GoogleMap } from '@/features/events/components/google-map';
 import {
   Form,
   FormControl,

@@ -5,6 +5,8 @@ export {
   GuestDirectory,
   GuestSearch,
   GuestStats,
+  RsvpPill,
+  RsvpDot,
 } from './components';
 
 // Actions (server-only)
@@ -45,11 +47,16 @@ export {
   parseCSVFile,
   getSampleData,
   exportGuestsToIplan,
+  rsvpPresentation,
+  RSVP_STATUSES,
+  RSVP_LABEL_NAMESPACE,
   DIETARY_PRESETS,
   type ValidatedRow,
   type FieldErrors,
   type ParsedCSV,
   type IplanScope,
+  type RsvpStatus,
+  type RsvpPresentation,
 } from './utils';
 
 // Schemas/Types

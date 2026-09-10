@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Band, BandRow } from './band';
+import { Band, BandRow, Surface } from './band';
 import type { UpcomingEvent } from '../types';
 import { formatEventDate } from '@/lib/date-time';
 
@@ -72,7 +72,7 @@ export function UpcomingEventsError() {
 
 export function UpcomingEventsSkeleton() {
   return (
-    <section className="bg-card overflow-hidden rounded-xl border shadow-xs">
+    <Surface as="section">
       <div className="px-4 pt-4 pb-3">
         <div className="bg-accent h-2.5 w-[190px] animate-pulse rounded-sm" />
       </div>
@@ -87,6 +87,6 @@ export function UpcomingEventsSkeleton() {
           <div className="bg-accent h-3 w-25 animate-pulse rounded-md" />
         </div>
       ))}
-    </section>
+    </Surface>
   );
 }

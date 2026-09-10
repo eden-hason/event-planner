@@ -91,7 +91,7 @@ function AnalyzeLoadingPreview({
                 </span>
                 <span
                   className={cn(
-                    done && 'text-emerald-600 dark:text-emerald-400',
+                    done && 'text-success',
                     active && 'text-foreground font-semibold',
                   )}
                 >
@@ -226,8 +226,8 @@ export function AnalyzeStep({
 
   return (
     <div className="flex flex-col items-center gap-6 py-4 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-        <CheckCircle2 className="h-10 w-10 text-green-500 dark:text-green-400" />
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
+        <CheckCircle2 className="h-10 w-10 text-success" />
       </div>
 
       <div className="space-y-1.5">
@@ -240,13 +240,13 @@ export function AnalyzeStep({
       <div className="bg-muted/40 w-full rounded-xl border px-5 py-4 text-left">
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
+            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-success" />
             <span>
               {t('import.analyze.rowsDetected', { count: parsedData?.rows.length ?? 0 })}
             </span>
           </div>
           <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
+            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-success" />
             <span className="flex flex-wrap items-center gap-1">
               {t('import.analyze.columnsIdentified')}
               {mappedLabels.map((label) => (
@@ -260,7 +260,7 @@ export function AnalyzeStep({
             </span>
           </div>
           <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-green-500 dark:text-green-400" />
+            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-success" />
             <span>{t('import.analyze.mappingComplete')}</span>
           </div>
         </div>

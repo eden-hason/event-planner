@@ -48,15 +48,14 @@ import {
   IconToolsKitchen,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-import { DIETARY_PRESETS } from '@/features/guests/utils';
+import {
+  DIETARY_PRESETS,
+  rsvpPresentation,
+  RSVP_STATUSES,
+} from '@/features/guests/utils';
 import type { MealChoice } from '@/lib/meal-choices';
 import posthog from 'posthog-js';
 
-const RSVP_STATUS_OPTIONS = [
-  { value: 'confirmed', dotClassName: 'bg-green-500' },
-  { value: 'declined', dotClassName: 'bg-red-500' },
-  { value: 'pending', dotClassName: 'bg-amber-400' },
-] as const;
 
 interface GuestFormProps {
   eventId: string;
@@ -384,15 +383,15 @@ export function GuestForm({
                       aria-label={t('form.rsvpStatus')}
                       className="grid grid-cols-3 overflow-hidden rounded-lg border bg-background"
                     >
-                      {RSVP_STATUS_OPTIONS.map((option) => {
-                        const isSelected = field.value === option.value;
+                      {RSVP_STATUSES.map((option) => {
+                        const isSelected = field.value === option;
                         return (
                           <button
-                            key={option.value}
+                            key={option}
                             type="button"
                             role="radio"
                             aria-checked={isSelected}
-                            onClick={() => field.onChange(option.value)}
+                            onClick={() => field.onChange(option)}
                             className={cn(
                               'flex items-center justify-center gap-2 border-s px-3 py-2.5 text-sm transition-colors first:border-s-0 focus-visible:ring-ring/50 focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-[3px]',
                               isSelected
@@ -403,11 +402,11 @@ export function GuestForm({
                             <span
                               className={cn(
                                 'size-2 shrink-0 rounded-full',
-                                option.dotClassName,
+                                rsvpPresentation(option).solid,
                               )}
                             />
                             {t(
-                              `rsvp.${option.value}` as
+                              `rsvp.${option}` as
                                 | 'rsvp.confirmed'
                                 | 'rsvp.declined'
                                 | 'rsvp.pending',

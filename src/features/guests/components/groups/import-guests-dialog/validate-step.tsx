@@ -348,7 +348,7 @@ export function ValidateStep({
           >
             {t('import.validate.tabNeedsFix')}
             {invalidCount > 0 && (
-              <Badge className="ms-1.5 h-4 min-w-4 border-transparent bg-red-100 px-1 text-[10px] text-red-700 dark:bg-red-900/40 dark:text-red-400">
+              <Badge className="ms-1.5 h-4 min-w-4 border-transparent bg-destructive/10 px-1 text-[10px] text-destructive">
                 {invalidCount}
               </Badge>
             )}
@@ -389,7 +389,7 @@ export function ValidateStep({
                             key={row.rowIndex}
                             className={cn(
                               'group',
-                              !row.isValid && 'bg-red-50/60 dark:bg-red-950/20',
+                              !row.isValid && 'bg-destructive/5',
                             )}
                           >
                             {/* Status pill */}
@@ -397,8 +397,8 @@ export function ValidateStep({
                               <span className={cn(
                                 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
                                 row.isValid
-                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-                                  : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+                                  ? 'bg-success/10 text-success'
+                                  : 'bg-destructive/10 text-destructive',
                               )}>
                                 {row.isValid && <IconCheck size={10} strokeWidth={2.5} />}
                                 {row.isValid ? t('import.validate.statusReady') : t('import.validate.statusNeedsFix')}
@@ -526,7 +526,7 @@ export function ValidateStep({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-muted-foreground h-7 w-7 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                                  className="text-muted-foreground h-7 w-7 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                                   onClick={() => setPendingDelete(row.rowIndex)}
                                   aria-label={t('import.validate.removeRow', { row: row.rowIndex + 1 })}
                                 >
@@ -552,7 +552,7 @@ export function ValidateStep({
           <div className="flex flex-col">
             <span className={cn(
               'text-sm font-semibold tabular-nums',
-              invalidCount === 0 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400',
+              invalidCount === 0 ? 'text-success' : 'text-warning',
             )}>
               {t('import.validate.summaryReady', { valid: validCount, total: totalCount })}
             </span>
@@ -565,7 +565,7 @@ export function ValidateStep({
                     key={i}
                     className={cn(
                       'h-1.5 w-1.5 rounded-full transition-colors',
-                      isValid ? 'bg-green-500' : 'bg-red-300 dark:bg-red-700',
+                      isValid ? 'bg-success' : 'bg-destructive/50',
                     )}
                   />
                 );
@@ -608,7 +608,7 @@ export function ValidateStep({
           <AlertDialogFooter>
             <AlertDialogCancel>{t('import.validate.deleteDialogCancel')}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60"
+              className="bg-destructive/10 text-destructive hover:bg-destructive/20"
               onClick={() => pendingDelete !== null && handleRemoveRow(pendingDelete)}
             >
               {t('import.validate.deleteDialogConfirm')}
@@ -702,7 +702,7 @@ function EditableCell({
           <p
             id={errorId}
             role="alert"
-            className="flex items-center gap-1 px-1.5 text-[10px] leading-tight text-red-700 dark:text-red-400"
+            className="flex items-center gap-1 px-1.5 text-[10px] leading-tight text-destructive"
           >
             <span>{error}</span>
             {errorHint && (
@@ -710,7 +710,7 @@ function EditableCell({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex shrink-0 text-red-400 hover:text-red-600 focus:outline-none dark:text-red-500 dark:hover:text-red-300"
+                    className="inline-flex shrink-0 text-destructive/70 hover:text-destructive focus:outline-none"
                   >
                     <IconInfoCircle size={11} />
                   </button>
@@ -739,8 +739,8 @@ function EmptyState({
   if (tab === 'errors') {
     return (
       <div className="flex flex-col items-center justify-center gap-1 py-10">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-          <IconCheck size={20} className="text-green-600 dark:text-green-400" />
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+          <IconCheck size={20} className="text-success" />
         </span>
         <p className="mt-2 text-sm font-medium">{t('import.validate.emptyNeedsFix')}</p>
         <p className="text-xs text-muted-foreground">{t('import.validate.emptyNeedsFixSub')}</p>

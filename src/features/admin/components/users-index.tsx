@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Surface } from './band';
 import { Search, Users as UsersIcon, X } from '@/components/icons';
 import { EyeOff } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
@@ -113,7 +114,7 @@ export function UsersIndex({
           </Button>
         </Empty>
       ) : (
-        <div className="bg-card overflow-hidden rounded-xl border shadow-xs">
+        <Surface>
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/35 hover:bg-muted/35">
@@ -157,7 +158,7 @@ export function UsersIndex({
               </div>
             )}
           </div>
-        </div>
+        </Surface>
       )}
 
       {data.testAccountsTotal > 0 && (

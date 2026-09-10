@@ -164,7 +164,7 @@ export function InviteCollaboratorDialog({
       icon: IconShieldCheck,
       badge: t('ownerBadge'),
       badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
-      iconBgClass: 'bg-amber-50 text-amber-600',
+      iconBgClass: 'bg-amber-50 text-amber-700',
       description: t('ownerDescription'),
     },
     {
@@ -447,7 +447,7 @@ export function InviteCollaboratorDialog({
         {step === 'success' && (
           <div className="space-y-4">
             {emailSent && (
-              <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+              <div className="flex items-center gap-2 rounded-md border-success/20 bg-success/10 text-success border p-3 text-sm">
                 <IconMail className="h-4 w-4 shrink-0" />
                 <span>{t('invitationSentTo', { email })}</span>
               </div>

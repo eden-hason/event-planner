@@ -79,7 +79,7 @@ export function ProfileScreen({
           inputMode="numeric"
           placeholder="050-000-0000"
           autoComplete="tel"
-          className="px-4 text-right font-[family-name:var(--font-rubik)]"
+          className="px-4 text-right font-rubik"
         />
       </div>
       <p className="text-xs leading-relaxed text-[var(--kt-ink-faint)]">

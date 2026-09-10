@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { callOutcomePresentation } from '../utils';
 import { useLocale } from 'next-intl';
 import {
   IconCheck,
@@ -49,6 +51,13 @@ export type CallRoundResultsLabels = {
   rsvpPending: string;
 };
 
+const OUTCOME_GLYPH = {
+  confirmed: <IconCheck size={11} strokeWidth={2.5} />,
+  declined: <IconX size={11} strokeWidth={2.5} />,
+  no_answer: <IconPhoneOff size={11} strokeWidth={2.5} />,
+  guest_will_update: <IconMessage size={11} strokeWidth={2.5} />,
+} as const;
+
 function OutcomeBadge({
   outcome,
   labels,
@@ -56,42 +65,32 @@ function OutcomeBadge({
   outcome: CallRoundGuestRow['outcome'];
   labels: CallRoundResultsLabels;
 }) {
-  if (outcome === 'confirmed') {
+  if (!outcome) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
-        <IconCheck size={11} strokeWidth={2.5} />
-        {labels.outcomeConfirmed}
+      <span className="text-muted-foreground text-xs">
+        {labels.outcomeNotCalled}
       </span>
     );
   }
-  if (outcome === 'declined') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">
-        <IconX size={11} strokeWidth={2.5} />
-        {labels.outcomeDeclined}
-      </span>
-    );
-  }
-  if (outcome === 'no_answer') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
-        <IconPhoneOff size={11} strokeWidth={2.5} />
-        {labels.outcomeNoAnswer}
-      </span>
-    );
-  }
-  // Reached, undecided: the guest answered and promised to reply to their
-  // WhatsApp invitation. Sky rather than amber - amber is "we could not reach
-  // them", and this guest we did.
-  if (outcome === 'guest_will_update') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600">
-        <IconMessage size={11} strokeWidth={2.5} />
-        {labels.outcomeWillUpdate}
-      </span>
-    );
-  }
-  return <span className="text-muted-foreground text-xs">{labels.outcomeNotCalled}</span>;
+
+  const label = {
+    confirmed: labels.outcomeConfirmed,
+    declined: labels.outcomeDeclined,
+    no_answer: labels.outcomeNoAnswer,
+    guest_will_update: labels.outcomeWillUpdate,
+  }[outcome];
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+        callOutcomePresentation(outcome).chip,
+      )}
+    >
+      {OUTCOME_GLYPH[outcome]}
+      {label}
+    </span>
+  );
 }
 
 /**

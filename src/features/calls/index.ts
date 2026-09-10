@@ -20,3 +20,9 @@ export {
   type CallRoundStatus,
   type CallRoundSummary,
 } from './types';
+
+// Presentation (pure)
+export {
+  callOutcomePresentation,
+  type CallOutcomePresentation,
+} from './utils';

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { rsvpPresentation } from '@/features/guests';
 import { useTranslations } from 'next-intl';
 import { Label, Pie, PieChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,9 +19,9 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
 
   const chartConfig = useMemo(() => ({
     people: { label: t('total') },
-    confirmed: { label: t('confirmed'), color: 'var(--color-emerald-500)' },
-    pending: { label: t('pending'), color: 'var(--color-amber-400)' },
-    declined: { label: t('declined'), color: 'var(--color-red-400)' },
+    confirmed: { label: t('confirmed'), color: rsvpPresentation('confirmed').cssVar },
+    pending: { label: t('pending'), color: rsvpPresentation('pending').cssVar },
+    declined: { label: t('declined'), color: rsvpPresentation('declined').cssVar },
   }) satisfies ChartConfig, [t]);
 
   const chartData = useMemo(
@@ -28,18 +29,18 @@ export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
       {
         status: 'confirmed',
         people: confirmed,
-        fill: 'var(--color-emerald-500)',
+        fill: rsvpPresentation('confirmed').cssVar,
       },
-      { status: 'pending', people: pending, fill: 'var(--color-amber-400)' },
-      { status: 'declined', people: declined, fill: 'var(--color-red-400)' },
+      { status: 'pending', people: pending, fill: rsvpPresentation('pending').cssVar },
+      { status: 'declined', people: declined, fill: rsvpPresentation('declined').cssVar },
     ],
     [confirmed, pending, declined],
   );
 
   const legendRows = [
-    { label: t('confirmed'), value: confirmed, color: 'var(--color-emerald-500)' },
-    { label: t('pending'), value: pending, color: 'var(--color-amber-400)' },
-    { label: t('declined'), value: declined, color: 'var(--color-red-400)' },
+    { label: t('confirmed'), value: confirmed, color: rsvpPresentation('confirmed').cssVar },
+    { label: t('pending'), value: pending, color: rsvpPresentation('pending').cssVar },
+    { label: t('declined'), value: declined, color: rsvpPresentation('declined').cssVar },
   ];
 
   if (total === 0) {

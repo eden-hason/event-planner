@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Surface } from './band';
 import { CalendarDays, Search, X } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -92,7 +93,7 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
           )}
         </Empty>
       ) : (
-        <div className="bg-card overflow-hidden rounded-xl border shadow-xs">
+        <Surface>
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/35 hover:bg-muted/35">
@@ -135,7 +136,7 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
               </Button>
             </div>
           </div>
-        </div>
+        </Surface>
       )}
     </div>
   );

@@ -161,7 +161,7 @@ export function GuestWriteConfirmCard({
     }
     if (output?.ok) {
       return (
-        <span className="inline-flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
+        <span className="inline-flex items-center gap-1 text-sm text-success">
           <Check className="size-3.5" />
           {t(RESOLVED_KEY[toolName])}
         </span>

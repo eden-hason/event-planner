@@ -20,7 +20,7 @@ export function TakeoverShell({ children }: { children: ReactNode }) {
     <div
       data-takeover=""
       dir="rtl"
-      className="relative flex min-h-svh flex-col overflow-x-hidden bg-[var(--kt-surface)] font-[family-name:var(--font-heebo)] text-[var(--kt-ink)]"
+      className="relative flex min-h-svh flex-col overflow-x-hidden bg-[var(--kt-surface)] font-heebo text-[var(--kt-ink)]"
       style={TAKEOVER_TOKENS as CSSProperties}
     >
       <div
@@ -67,7 +67,7 @@ export function TakeoverWordmark({ className }: { className?: string }) {
     <div
       dir="ltr"
       className={cn(
-        'bg-gradient-to-l from-[var(--kt-violet-soft)] to-[var(--kt-brand)] bg-clip-text font-[family-name:var(--font-rubik)] font-extrabold tracking-[-0.02em] text-transparent',
+        'bg-gradient-to-l from-[var(--kt-violet-soft)] to-[var(--kt-brand)] bg-clip-text font-rubik font-extrabold tracking-[-0.02em] text-transparent',
         className,
       )}
     >

@@ -7,16 +7,7 @@ import { cn } from '@/lib/utils';
 import { useCollaboration } from '@/components/feature-layout';
 import { useEventBillingStatus } from './event-billing-status-provider';
 import { EventBillingStatusSheet } from './event-billing-status-sheet';
-import type { BillingPillTone } from '../types';
-
-const TONE_CLASS: Record<BillingPillTone, string> = {
-  premium: cn(
-    'border-amber-300/80 bg-amber-50 text-amber-800',
-    'dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200',
-  ),
-  plain: 'border-border bg-transparent text-muted-foreground',
-  pending: 'border-border bg-muted text-muted-foreground',
-};
+import { BILLING_TONE_CLASS } from '../utils';
 
 /**
  * The account-status pill on the header's action side (left in RTL).
@@ -50,7 +41,7 @@ export function EventBillingStatusPill() {
           'text-xs font-semibold transition-colors',
           'hover:brightness-[0.97] active:brightness-95',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none',
-          TONE_CLASS[status.tone],
+          BILLING_TONE_CLASS[status.tone],
         )}
       >
         <span>{t(`pill.${status.status}`)}</span>
