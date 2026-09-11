@@ -16,6 +16,9 @@ export type UpsertGroupState = {
   errors?: z.ZodError<z.input<typeof GroupUpsertSchema>>;
   message?: string | null;
   errorCode?: UpsertGroupErrorCode;
+  // Only set on a successful create - lets a caller chain straight into
+  // assigning members without waiting on the revalidated groups list.
+  groupId?: string;
 };
 
 export type DeleteGroupsState = {
@@ -57,15 +60,19 @@ export async function upsertGroup(
     const dbData = GroupAppToDbTransformerSchema.parse(validatedData);
     const supabase = await createClient();
 
-    const { error } = await supabase.from('groups').upsert(
-      {
-        ...dbData,
-        event_id: eventId,
-      },
-      {
-        onConflict: 'id',
-      },
-    );
+    const { data, error } = await supabase
+      .from('groups')
+      .upsert(
+        {
+          ...dbData,
+          event_id: eventId,
+        },
+        {
+          onConflict: 'id',
+        },
+      )
+      .select('id')
+      .single();
 
     if (error) {
       console.error(error);
@@ -81,6 +88,7 @@ export async function upsertGroup(
       message: validatedData.id
         ? 'Group updated successfully.'
         : 'Group created successfully.',
+      groupId: data.id,
     };
   } catch (error) {
     console.error('Upsert group error:', error);
