@@ -89,7 +89,7 @@ export function CreateGroupSheet({
         side="bottom"
         className="[&_[data-slot=sheet-close]]:hidden flex h-[92dvh] flex-col gap-0 overflow-clip rounded-t-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200"
       >
-        <SheetHeader className="flex-row items-center gap-3 border-b px-4 pt-5 pb-3">
+        <SheetHeader className="flex-row items-center gap-3 px-4 pt-5 pb-3">
           <button
             type="button"
             onClick={() => handleClose(false)}

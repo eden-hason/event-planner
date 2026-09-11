@@ -29,6 +29,8 @@ interface GroupsMobileProps {
 
 type TileKey = 'bride' | 'groom' | 'unassigned';
 
+const UNASSIGNED_PREVIEW_COUNT = 5;
+
 export function GroupsMobile({
   eventId,
   groups,
@@ -40,6 +42,7 @@ export function GroupsMobile({
 
   const [sideFilter, setSideFilter] = useState<GroupSide | null>(null);
   const [showUnassigned, setShowUnassigned] = useState(false);
+  const [unassignedExpanded, setUnassignedExpanded] = useState(false);
 
   // Counted by which group's side a guest belongs to - not the guest's own
   // `side` field, which is a separate concept used on the Guests tab. This
@@ -72,6 +75,10 @@ export function GroupsMobile({
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   const unassignedGuests = useMemo(() => guests.filter((g) => !g.groupId), [guests]);
+  const hiddenUnassignedCount = Math.max(0, unassignedGuests.length - UNASSIGNED_PREVIEW_COUNT);
+  const visibleUnassignedGuests = unassignedExpanded
+    ? unassignedGuests
+    : unassignedGuests.slice(0, UNASSIGNED_PREVIEW_COUNT);
 
   const filteredGroups = useMemo(
     () => (sideFilter ? groups.filter((g) => g.side === sideFilter) : groups),
@@ -175,7 +182,11 @@ export function GroupsMobile({
                 type="button"
                 onClick={() =>
                   tile.key === 'unassigned'
-                    ? setShowUnassigned((v) => !v)
+                    ? setShowUnassigned((v) => {
+                        const next = !v;
+                        if (!next) setUnassignedExpanded(false);
+                        return next;
+                      })
                     : setSideFilter((prev) => (prev === tile.key ? null : (tile.key as GroupSide)))
                 }
                 className={cn(
@@ -212,8 +223,13 @@ export function GroupsMobile({
               {t('groups.mobile.tapToAssignHint')}
             </span>
           </div>
-          <div className="bg-card flex flex-col">
-            {unassignedGuests.map((guest) => (
+          <div
+            className={cn(
+              'bg-card flex flex-col',
+              unassignedExpanded && hiddenUnassignedCount > 0 && 'max-h-[280px] overflow-y-auto',
+            )}
+          >
+            {visibleUnassignedGuests.map((guest) => (
               <div
                 key={guest.id}
                 className="flex items-center gap-2.5 border-t px-3.5 py-2.5 first:border-t-0"
@@ -228,6 +244,17 @@ export function GroupsMobile({
               </div>
             ))}
           </div>
+          {hiddenUnassignedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setUnassignedExpanded((v) => !v)}
+              className="text-primary border-t px-3.5 py-2.5 text-center text-[13px] font-medium"
+            >
+              {unassignedExpanded
+                ? t('groups.mobile.showLessUnassigned')
+                : t('groups.mobile.showMoreUnassigned', { count: hiddenUnassignedCount })}
+            </button>
+          )}
         </div>
       )}
 
@@ -253,7 +280,7 @@ export function GroupsMobile({
       </div>
 
       {/* Groups list */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 pb-2">
         {filteredGroups.map((group) => (
           <GroupMobileCard
             key={group.id}

@@ -490,6 +490,7 @@
     "addGroup": "Add Group",
     "tabGuests": "Guests",
     "tabGroups": "Groups",
+    "headerSubtitle": "{total, plural, one {# guest} other {# guests}} · {groupCount, plural, one {# group} other {# groups}}",
     "sheet": {
       "editGuest": "Edit Guest",
       "addNewGuest": "Add New Guest",
@@ -715,6 +716,8 @@
         "tileUnassigned": "Unassigned",
         "awaitingAssignment": "Awaiting assignment",
         "tapToAssignHint": "Tap a group to assign",
+        "showMoreUnassigned": "Show {count} more",
+        "showLessUnassigned": "Show less",
         "allGroups": "All groups ({count})",
         "sideGroups": "{side} ({count})",
         "showAll": "Show all",

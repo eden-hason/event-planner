@@ -1,12 +1,7 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconDotsVertical,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconDotsVertical, IconTrash } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,12 +68,6 @@ export function GroupMobileCard({ group, onSelect, onDelete }: GroupMobileCardPr
         <span className="text-[17px] leading-none font-bold">{group.guestCount}</span>
         <span className="text-muted-foreground text-[10px]">{t('groups.mobile.guestsLabel')}</span>
       </div>
-
-      {isRTL ? (
-        <IconChevronLeft size={16} className="text-muted-foreground/50 shrink-0" />
-      ) : (
-        <IconChevronRight size={16} className="text-muted-foreground/50 shrink-0" />
-      )}
 
       <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
         <DropdownMenuTrigger asChild>
