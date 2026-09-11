@@ -40,7 +40,7 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 export function PageCard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const seating = isSeatingRoute(pathname);
-  const { title, action } = useFeatureLayoutContext();
+  const { title, subtitle, action } = useFeatureLayoutContext();
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -139,7 +139,12 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               <ChevronLeft className="size-5 rtl:rotate-180" />
             </Link>
           )}
-          {title && <h1 className="truncate text-xl font-semibold">{title}</h1>}
+          <div className="flex min-w-0 flex-col gap-0.5">
+            {title && <h1 className="truncate text-xl font-semibold">{title}</h1>}
+            {subtitle && (
+              <span className="text-muted-foreground truncate text-xs">{subtitle}</span>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {action}

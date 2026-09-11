@@ -490,6 +490,7 @@
     "addGroup": "הוסף קבוצה",
     "tabGuests": "אורחים",
     "tabGroups": "קבוצות",
+    "headerSubtitle": "{total, plural, one {אורח אחד} other {# אורחים}} · {groupCount, plural, one {קבוצה אחת} other {# קבוצות}}",
     "sheet": {
       "editGuest": "עריכת אורח",
       "addNewGuest": "הוספת אורח חדש",
@@ -715,6 +716,8 @@
         "tileUnassigned": "לא משויכים",
         "awaitingAssignment": "ממתינים לשיוך",
         "tapToAssignHint": "הקישו על קבוצה כדי לשייך",
+        "showMoreUnassigned": "הצג עוד {count}",
+        "showLessUnassigned": "הצג פחות",
         "allGroups": "כל הקבוצות ({count})",
         "sideGroups": "{side} ({count})",
         "showAll": "הצג הכל",

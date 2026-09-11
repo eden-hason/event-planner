@@ -327,7 +327,16 @@ export function GuestsPage({
   const title = t('title');
   const headerAction =
     activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction;
-  const headerConfig = { title, action: isMobile ? headerAction : undefined };
+  // Mobile-only: the desktop header relies on `GuestStats` below it for
+  // these same counts, so repeating them here would just be noise there.
+  const subtitle = isMobile
+    ? t('headerSubtitle', { total: guests.length, groupCount: groups.length })
+    : undefined;
+  const headerConfig = {
+    title,
+    subtitle,
+    action: isMobile ? headerAction : undefined,
+  };
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {
     setHeader(headerConfig);
@@ -335,9 +344,10 @@ export function GuestsPage({
     // `guestsHeaderAction` is rebuilt every render (its own deps include
     // handlers that are), so an identity-keyed effect would set state in a
     // loop. `guests`/`eventName` are here because the export items close over
-    // them and would otherwise keep exporting a stale list.
+    // them and would otherwise keep exporting a stale list; `groups` feeds
+    // the subtitle's group count the same way.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, isMobile, activeTab, guests, eventName, setHeader]);
+  }, [title, isMobile, activeTab, guests, groups, eventName, setHeader]);
 
   const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
   const guestGroup = selectedGuest?.group;
