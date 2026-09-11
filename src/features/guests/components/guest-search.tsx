@@ -25,7 +25,7 @@ export function GuestSearch({ searchTerm, onSearchChange, className }: GuestSear
         placeholder={t('search.placeholder')}
         value={searchTerm}
         onChange={handleSearchChange}
-        className={cn('pl-10', className)}
+        className={cn('ps-10', className)}
       />
     </div>
   );

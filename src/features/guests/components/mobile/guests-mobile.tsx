@@ -5,12 +5,21 @@ import { useTranslations, useLocale } from 'next-intl';
 import {
   IconChevronLeft,
   IconChevronRight,
+  IconDownload,
+  IconFileSpreadsheet,
   IconFilter2,
   IconPlus,
   IconUpload,
   IconUsers,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Empty,
   EmptyContent,
@@ -21,6 +30,7 @@ import {
 } from '@/components/ui/empty';
 import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
+import type { IplanScope } from '@/features/guests/utils';
 import { useGuestFilters } from '@/features/guests/hooks';
 import { filterAndSortGuests } from '@/features/guests/utils';
 import { GuestSearch } from '@/features/guests/components/guest-search';
@@ -57,6 +67,7 @@ interface GuestsMobileProps {
   onDeleteGuest: (guest: GuestWithGroupApp) => void;
   onMarkConfirmed: (guest: GuestWithGroupApp) => void;
   onUploadFile: () => void;
+  onExport: (scope: IplanScope) => void;
   selectedStatuses: string[];
   onStatusClick: (status: string | null) => void;
   tables?: TableOption[];
@@ -69,12 +80,14 @@ export function GuestsMobile({
   onDeleteGuest,
   onMarkConfirmed,
   onUploadFile,
+  onExport,
   selectedStatuses,
   onStatusClick,
   tables = [],
 }: GuestsMobileProps) {
   const t = useTranslations('guests');
-  const isRTL = useLocale() === 'he';
+  const locale = useLocale();
+  const isRTL = locale === 'he';
 
   const tableNumberById = useMemo(
     () => new Map(tables.map((table) => [table.id, table.tableNumber])),
@@ -179,6 +192,42 @@ export function GuestsMobile({
               className="bg-background"
             />
           </div>
+          <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                aria-label={t('directory.export')}
+              >
+                <IconDownload size={18} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={() => onExport('confirmed')}
+              >
+                <IconFileSpreadsheet size={20} />
+                {t('directory.exportConfirmed')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={() => onExport('all')}
+              >
+                <IconFileSpreadsheet size={20} />
+                {t('directory.exportAll')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
+                onClick={onUploadFile}
+              >
+                <IconUpload size={20} />
+                {t('directory.importCsv')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="icon"

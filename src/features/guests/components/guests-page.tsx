@@ -22,19 +22,9 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  IconChevronDown,
   IconClock,
-  IconFileSpreadsheet,
   IconPlus,
   IconTrash,
-  IconUpload,
   IconUserPlus,
   IconUsers,
   IconUsersGroup,
@@ -48,6 +38,12 @@ import {
   CreateGroupDialog,
   ImportGuestsDialog,
 } from '@/features/guests/components/groups';
+import {
+  GroupsMobile,
+  AssignGuestsSheet,
+  CreateGroupSheet,
+  type AssignTarget,
+} from '@/features/guests/components/groups/mobile';
 import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
 import { deleteGuest, upsertGuest } from '@/features/guests/actions';
 import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
@@ -69,7 +65,14 @@ interface GuestsPageProps {
   currentUserId?: string | null;
 }
 
-
+// The base `TabsTrigger` ships a border on every side (for the desktop pill),
+// a `data-[state=active]:bg-background`, and a `shadow-sm` - all of which
+// have to be zeroed out explicitly, not just left unset, or they show through
+// as a boxed rectangle around the active tab instead of the design's plain
+// underline. `border-b-primary` (not `border-primary`) is what keeps the
+// active color off the top/left/right edges.
+const MOBILE_TAB_TRIGGER_CLASS =
+  'h-10 flex-1 rounded-none border-0 border-b-2 border-transparent bg-transparent text-[15px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
 
 export function GuestsPage({
   guests,
@@ -93,6 +96,8 @@ export function GuestsPage({
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [assignSheetOpen, setAssignSheetOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
   const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
     null,
   );
@@ -117,24 +122,23 @@ export function GuestsPage({
     );
   };
 
+  const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
+    const errorMessages: Record<UpsertGroupErrorCode, string> = {
+      GROUP_NAME_TAKEN: t('toast.groupNameTaken'),
+      UNKNOWN: t('toast.groupCreateFailed'),
+    };
+    return errorCode ? errorMessages[errorCode] : t('toast.groupCreateFailed');
+  };
+
   const createGroupActionWithToast = async (
     _prevState: UpsertGroupState | null,
     params: { formData: FormData },
   ): Promise<UpsertGroupState | null> => {
     const groupName = params.formData.get('name') as string;
 
-    const errorMessages: Record<UpsertGroupErrorCode, string> = {
-      GROUP_NAME_TAKEN: t('toast.groupNameTaken'),
-      UNKNOWN: t('toast.groupCreateFailed'),
-    };
-
     const promise = upsertGroup(eventId, params.formData).then((result) => {
       if (!result.success) {
-        throw new Error(
-          result.errorCode
-            ? errorMessages[result.errorCode]
-            : t('toast.groupCreateFailed'),
-        );
+        throw new Error(groupCreateErrorMessage(result.errorCode));
       }
       return result;
     });
@@ -164,8 +168,44 @@ export function GuestsPage({
     });
   };
 
+  // Mobile's "create & assign guests" flow needs the new group's id right
+  // away to open the assign sheet, so it calls the server action directly
+  // instead of going through `createGroupAction` - the revalidated `groups`
+  // prop wouldn't be ready in time anyway.
+  const handleCreateGroupAndAssign = (formData: FormData) => {
+    const groupName = (formData.get('name') as string) || '';
+
+    const promise = upsertGroup(eventId, formData).then((result) => {
+      if (!result.success) {
+        throw new Error(groupCreateErrorMessage(result.errorCode));
+      }
+      return result;
+    });
+
+    toast.promise(promise, {
+      loading: t('toast.creatingGroup', { name: groupName }),
+      success: () => t('toast.groupCreated'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('toast.groupCreateFailed'),
+    });
+
+    promise
+      .then((result) => {
+        if (result.groupId) {
+          setAssignTarget({ id: result.groupId, name: groupName, guests: [] });
+          setAssignSheetOpen(true);
+        }
+      })
+      .catch(() => {});
+  };
+
   const handleOpenGroupDialog = () => {
     setIsGroupDialogOpen(true);
+  };
+
+  const handleOpenAssign = (group: GroupWithGuestsApp) => {
+    setAssignTarget({ id: group.id, name: group.name, guests: group.guests });
+    setAssignSheetOpen(true);
   };
 
   const handleAddGuest = () => {
@@ -255,48 +295,12 @@ export function GuestsPage({
 
   const guestsHeaderAction = useMemo(
     () => (
-      <div className="flex items-center gap-2">
-        <Button onClick={handleAddGuest}>
-          <IconUserPlus size={16} />
-          {t('addGuest')}
-        </Button>
-        {isMobile && (
-          <DropdownMenu dir={locale === 'he' ? 'rtl' : 'ltr'}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                {t('directory.export')}
-                <IconChevronDown size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-                onClick={() => handleExport('confirmed')}
-              >
-                <IconFileSpreadsheet size={20} />
-                {t('directory.exportConfirmed')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-                onClick={() => handleExport('all')}
-              >
-                <IconFileSpreadsheet size={20} />
-                {t('directory.exportAll')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-                onClick={() => setIsImportDialogOpen(true)}
-              >
-                <IconUpload size={20} />
-                {t('directory.importCsv')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+      <Button onClick={handleAddGuest}>
+        <IconUserPlus size={16} />
+        {t('addGuest')}
+      </Button>
     ),
-    [handleAddGuest, isMobile, locale],
+    [handleAddGuest],
   );
 
   const groupHeaderAction = useMemo(
@@ -357,14 +361,34 @@ export function GuestsPage({
         onValueChange={(value) => setActiveTab(value as 'guests' | 'groups')}
         dir={locale === 'he' ? 'rtl' : 'ltr'}
       >
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="w-full sm:w-fit">
-            <TabsTrigger value="guests">
-              <IconUsers size={16} />
+        <div
+          className={cn(
+            'mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+            // On mobile the design keeps the tabs on the same white surface as
+            // the title above, not the gray shell: bleed past `CardContent`'s
+            // own inset and pull up through the Card's `gap-4` so the band
+            // reads as one continuous header instead of two floating pieces.
+            // No bottom padding of its own - the border sits flush against
+            // the tabs themselves, exactly like the design's header block.
+            isMobile && '-mx-4 -mt-4 border-b bg-card px-4',
+          )}
+        >
+          <TabsList
+            className={cn(
+              'w-full sm:w-fit',
+              // Mobile mirrors the design's full-width underline tabs, not
+              // the pill switch desktop keeps: no background or icons, an
+              // even split, and the active state reads through the border.
+              isMobile &&
+                'h-10 gap-0 rounded-none bg-transparent p-0',
+            )}
+          >
+            <TabsTrigger value="guests" className={cn(isMobile && MOBILE_TAB_TRIGGER_CLASS)}>
+              {!isMobile && <IconUsers size={16} />}
               {t('tabGuests')}
             </TabsTrigger>
-            <TabsTrigger value="groups">
-              <IconUsersGroup size={16} />
+            <TabsTrigger value="groups" className={cn(isMobile && MOBILE_TAB_TRIGGER_CLASS)}>
+              {!isMobile && <IconUsersGroup size={16} />}
               {t('tabGroups')}
             </TabsTrigger>
           </TabsList>
@@ -386,6 +410,7 @@ export function GuestsPage({
               onDeleteGuest={handleDeleteGuestById}
               onMarkConfirmed={handleMarkConfirmed}
               onUploadFile={() => setIsImportDialogOpen(true)}
+              onExport={handleExport}
               selectedStatuses={selectedStatuses}
               onStatusClick={handleStatCardClick}
               tables={tables}
@@ -407,20 +432,49 @@ export function GuestsPage({
           )}
         </TabsContent>
         <TabsContent value="groups">
-          <GroupsDirectory
-            eventId={eventId}
-            groups={groups}
-            guests={guests}
-            onAddGroup={handleOpenGroupDialog}
-          />
+          {isMobile ? (
+            <GroupsMobile
+              eventId={eventId}
+              groups={groups}
+              guests={guests}
+              onAddGroup={handleOpenGroupDialog}
+              onOpenAssign={handleOpenAssign}
+            />
+          ) : (
+            <GroupsDirectory
+              eventId={eventId}
+              groups={groups}
+              guests={guests}
+              onAddGroup={handleOpenGroupDialog}
+            />
+          )}
         </TabsContent>
       </Tabs>
 
-      <CreateGroupDialog
-        open={isGroupDialogOpen}
-        onOpenChange={setIsGroupDialogOpen}
-        onCreateGroup={handleCreateGroup}
-      />
+      {isMobile ? (
+        <CreateGroupSheet
+          open={isGroupDialogOpen}
+          onOpenChange={setIsGroupDialogOpen}
+          onCreateGroup={handleCreateGroup}
+          onCreateAndAssign={handleCreateGroupAndAssign}
+        />
+      ) : (
+        <CreateGroupDialog
+          open={isGroupDialogOpen}
+          onOpenChange={setIsGroupDialogOpen}
+          onCreateGroup={handleCreateGroup}
+        />
+      )}
+
+      {isMobile && (
+        <AssignGuestsSheet
+          open={assignSheetOpen}
+          onOpenChange={setAssignSheetOpen}
+          group={assignTarget}
+          availableGuests={guests.filter((g) => !g.groupId)}
+          eventId={eventId}
+        />
+      )}
 
       {isMobile && (
         <ImportGuestsDialog
