@@ -40,7 +40,6 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { type ParsedCSV } from '@/features/guests/utils/parse-csv';
-import { type ColumnMapping } from './map-step';
 import {
   validateCsvRows,
   validateGuestData,
@@ -48,6 +47,7 @@ import {
   autoFixPhone,
   type ValidatedRow,
   type FieldErrors,
+  type ColumnMapping,
 } from '@/features/guests/utils';
 
 type RowEdit = Partial<{
@@ -111,7 +111,7 @@ export function ValidateStep({
   const t = useTranslations('guests');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
-  const [activeTab, setActiveTab] = useState<'all' | 'errors' | 'valid'>('errors');
+  const [activeTab, setActiveTab] = useState<'errors' | 'valid'>('errors');
   const [editingCell, setEditingCell] = useState<EditingCell>(null);
   const [editValue, setEditValue] = useState('');
   const [pendingDelete, setPendingDelete] = useState<number | null>(null);
@@ -165,9 +165,9 @@ export function ValidateStep({
   }, [enrichedRows]);
 
   const filteredRows = useMemo(() => {
-    if (activeTab === 'errors') return sortedRows.filter((r) => !r.isValid);
-    if (activeTab === 'valid') return sortedRows.filter((r) => r.isValid);
-    return sortedRows;
+    return activeTab === 'errors'
+      ? sortedRows.filter((r) => !r.isValid)
+      : sortedRows.filter((r) => r.isValid);
   }, [sortedRows, activeTab]);
 
   const getPhoneConflictName = useCallback(
@@ -314,7 +314,7 @@ export function ValidateStep({
 
   // When all errors are resolved, switch off the errors tab
   useEffect(() => {
-    if (invalidCount === 0 && activeTab === 'errors') setActiveTab('all');
+    if (invalidCount === 0 && activeTab === 'errors') setActiveTab('valid');
   }, [invalidCount, activeTab]);
 
   if (!parsedData) {
@@ -337,12 +337,6 @@ export function ValidateStep({
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="border-border h-8 w-full justify-start rounded-none border-b bg-transparent p-0">
           <TabsTrigger
-            value="all"
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
-            {t('import.validate.tabAll')} <span className="ms-1 text-muted-foreground">{totalCount}</span>
-          </TabsTrigger>
-          <TabsTrigger
             value="errors"
             className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 cursor-pointer rounded-none border-none bg-transparent px-1 pb-2 text-xs shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
@@ -361,7 +355,7 @@ export function ValidateStep({
           </TabsTrigger>
         </TabsList>
 
-        {(['all', 'errors', 'valid'] as const).map((tab) => (
+        {(['errors', 'valid'] as const).map((tab) => (
           <TabsContent key={tab} value={tab} className="mt-0">
             <div className="overflow-hidden rounded-b-lg border border-t-0">
               <div className="max-h-[280px] overflow-y-auto">
@@ -733,7 +727,7 @@ function EmptyState({
   tab,
   t,
 }: {
-  tab: 'all' | 'errors' | 'valid';
+  tab: 'errors' | 'valid';
   t: ReturnType<typeof useTranslations<'guests'>>;
 }) {
   if (tab === 'errors') {
@@ -748,18 +742,10 @@ function EmptyState({
     );
   }
 
-  if (tab === 'valid') {
-    return (
-      <div className="flex flex-col items-center justify-center gap-1 py-10">
-        <p className="text-sm font-medium">{t('import.validate.emptyValid')}</p>
-        <p className="text-xs text-muted-foreground">{t('import.validate.emptyValidSub')}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center py-10">
-      <p className="text-sm text-muted-foreground">No data to validate</p>
+    <div className="flex flex-col items-center justify-center gap-1 py-10">
+      <p className="text-sm font-medium">{t('import.validate.emptyValid')}</p>
+      <p className="text-xs text-muted-foreground">{t('import.validate.emptyValidSub')}</p>
     </div>
   );
 }

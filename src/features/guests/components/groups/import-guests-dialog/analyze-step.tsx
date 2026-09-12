@@ -12,7 +12,10 @@ import {
   type AnalyzeCsvResult,
 } from '@/features/guests/actions/analyze-csv';
 import { type ParsedCSV } from '@/features/guests/utils/parse-csv';
-import { type ColumnMapping, type KululuFieldValue } from './map-step';
+import {
+  type ColumnMapping,
+  type KululuFieldValue,
+} from '@/features/guests/utils';
 
 const AI_FIELD_TO_KULULU: Record<string, KululuFieldValue> = {
   full_name: 'name',

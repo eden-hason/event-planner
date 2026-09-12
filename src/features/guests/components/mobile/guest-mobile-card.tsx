@@ -6,7 +6,6 @@ import {
   IconDotsVertical,
   IconEdit,
   IconMessage,
-  IconPhone,
   IconTrash,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
-import { GroupIcon } from '@/features/guests/components/groups';
 import { RsvpPill } from '../rsvp-pill';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
@@ -77,8 +75,7 @@ export function GuestMobileCard({
             {guest.name}
           </span>
           {guest.group && (
-            <span className="text-muted-foreground bg-muted flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px]">
-              <GroupIcon iconName={guest.group.icon} size="sm" />
+            <span className="text-muted-foreground bg-muted shrink-0 rounded px-1.5 py-0.5 text-[11px]">
               {guest.group.name}
             </span>
           )}
@@ -91,11 +88,10 @@ export function GuestMobileCard({
                 href={`tel:${guest.phone}`}
                 onClick={(e) => e.stopPropagation()}
                 className="hover:text-foreground -m-1 p-1"
-                aria-label={t('table.phone')}
+                dir="ltr"
               >
-                <IconPhone size={14} />
+                {formatPhone(guest.phone)}
               </a>
-              <span dir="ltr">{formatPhone(guest.phone)}</span>
               <span className="text-border">·</span>
             </>
           )}

@@ -205,6 +205,10 @@ export type ImportGuestsState = {
   skippedCount?: number;
   /** Names behind `skippedCount`, for a summary the host can act on. */
   skippedNames?: string[];
+  /** Sum of `amount` across the guests actually inserted - seats, not rows. */
+  seatsImported?: number;
+  /** Groups this import created because no existing group matched name+side. */
+  newGroupsCount?: number;
 };
 
 export async function importGuests(
@@ -340,6 +344,11 @@ export async function importGuests(
       }
     };
 
+    // Groups this import determined were missing, regardless of whether this
+    // request or a concurrent one ends up winning the insert - it is a count
+    // of what the import needed, not a receipt of who created it.
+    let newGroupsCount = 0;
+
     if (desiredGroups.size > 0) {
       const { data: existingGroups, error: gFetchErr } = await supabase
         .from('groups')
@@ -359,6 +368,8 @@ export async function importGuests(
       const toCreate = [...desiredGroups.values()]
         .filter(({ name, side }) => !groupIdByKey.has(groupKey(name, side)))
         .map(({ name, side }) => ({ event_id: eventId, name, side }));
+
+      newGroupsCount = toCreate.length;
 
       if (toCreate.length > 0) {
         const { data: created, error: gInsertErr } = await supabase
@@ -428,6 +439,7 @@ export async function importGuests(
     revalidatePath(`/app/${eventId}/guests`);
 
     const importedCount = guestsToImport.length;
+    const seatsImported = guestsToImport.reduce((sum, g) => sum + g.amount, 0);
 
     return {
       success: true,
@@ -436,6 +448,8 @@ export async function importGuests(
       failedCount: errors.length,
       skippedCount: skippedNames.length,
       skippedNames,
+      seatsImported,
+      newGroupsCount,
     };
   } catch (error) {
     console.error('Import guests error:', error);

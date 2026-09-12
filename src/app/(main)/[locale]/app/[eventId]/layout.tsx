@@ -6,7 +6,7 @@ import { getAllUserEvents, getEventById } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { SidebarInset } from '@/components/ui/sidebar';
-import { AppShell, HiddenOnSeatingPlan } from '@/components/layout/app-shell';
+import { AppShell, HiddenOnFullTakeoverRoute } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { LayoutContentWrapper } from '@/components/layout/layout-content-wrapper';
@@ -96,9 +96,9 @@ export default async function EventLayout({
                 >
                   <PageCard>{children}</PageCard>
                 </EventBillingStatusProvider>
-                <HiddenOnSeatingPlan>
+                <HiddenOnFullTakeoverRoute>
                   <AiAssistant eventId={eventId} />
-                </HiddenOnSeatingPlan>
+                </HiddenOnFullTakeoverRoute>
               </FeatureLayoutProvider>
             </CollaborationProvider>
           </LayoutContentWrapper>

@@ -18,6 +18,7 @@ import {
   type MobileTabBarItem,
 } from '@/components/layout/mobile-tab-bar';
 import { useCollaboration } from '@/components/feature-layout';
+import { isGuestImportRoute } from './app-shell';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
@@ -31,6 +32,12 @@ export function MobileBottomNav() {
   // Only to decide whether the tab has anywhere to lead - the "More" page owns
   // the rendering of the tools themselves.
   const moreItems = useMoreNavItems();
+
+  // The guest-import wizard is a full-screen takeover with its own sticky
+  // footer sitting exactly where this nav would - see `isGuestImportRoute`.
+  if (isGuestImportRoute(pathname)) {
+    return null;
+  }
 
   // Without an event there is nowhere for the tabs to lead, so they stay inert
   // rather than linking back to a route that cannot resolve.

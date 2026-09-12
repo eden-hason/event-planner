@@ -1,3 +1,5 @@
+export { GoogleDriveIcon } from './google-drive-icon';
+
 export {
   CalendarDays,
   Check,

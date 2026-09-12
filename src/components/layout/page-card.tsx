@@ -10,7 +10,7 @@ import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
-import { isSeatingRoute } from './app-shell';
+import { isSeatingRoute, isGuestImportRoute } from './app-shell';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
@@ -54,6 +54,16 @@ export function PageCard({ children }: { children: React.ReactNode }) {
     const target = item.href.split(/[?#]/)[0];
     return pathname === target || pathname.startsWith(`${target}/`);
   });
+
+  // The guest-import wizard draws its own header (back arrow, step title,
+  // progress bar) and its own sticky footer - it wants the full viewport with
+  // none of this card's chrome, not a variant of it the way the Seating Plan
+  // below still takes the chrome row for its title and actions. Checked after
+  // every hook above runs, so this early return can't shift their order
+  // between renders.
+  if (isGuestImportRoute(pathname)) {
+    return <div className="flex min-h-0 flex-1 flex-col">{children}</div>;
+  }
 
   return (
     <Card
@@ -139,12 +149,14 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               <ChevronLeft className="size-5 rtl:rotate-180" />
             </Link>
           )}
-          <div className="flex min-w-0 flex-col gap-0.5">
-            {title && <h1 className="truncate text-xl font-semibold">{title}</h1>}
-            {subtitle && (
-              <span className="text-muted-foreground truncate text-xs">{subtitle}</span>
-            )}
-          </div>
+          {title && (
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold">{title}</h1>
+              {subtitle && (
+                <p className="text-muted-foreground truncate text-xs">{subtitle}</p>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {action}

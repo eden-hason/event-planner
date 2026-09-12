@@ -829,7 +829,6 @@
         "colErrors": "Errors",
         "rowCount": "{valid} valid, {invalid} invalid out of {total} rows",
         "rowCountSuccess": "{valid} valid, {invalid} invalid out of {total} rows ✓",
-        "tabAll": "All",
         "tabNeedsFix": "Needs fix",
         "tabValid": "Valid",
         "statusReady": "Ready",
@@ -841,7 +840,7 @@
         "autoFixApplied": "Fixed {count} phone {count, plural, one {number} other {numbers}}",
         "resetRow": "Reset row",
         "emptyNeedsFix": "All rows look good",
-        "emptyNeedsFixSub": "Switch to All to review valid rows",
+        "emptyNeedsFixSub": "Switch to Valid to review your rows",
         "emptyValid": "No valid rows yet",
         "emptyValidSub": "Fix errors or remove invalid rows to proceed",
         "editNameAria": "Edit name for row {row}",
@@ -879,6 +878,105 @@
         "skippedMessage": "{count} guests were already on the event and were skipped.",
         "skippedMessageSingular": "{count} guest was already on the event and was skipped.",
         "failedHeading": "Import Failed"
+      },
+      "mobile": {
+        "sourceSheet": {
+          "title": "Add guests",
+          "singleGuest": "Single guest",
+          "singleGuestDescription": "Enter a name and phone number by hand",
+          "uploadFile": "Upload a file",
+          "uploadFileDescription": "CSV or Excel from your device - up to 5MB",
+          "googleDrive": "Import from Google Drive",
+          "googleDriveDescription": "Pick a CSV, Excel, or Sheets file from your Drive",
+          "newBadge": "New"
+        },
+        "header": {
+          "stepOf": "Step {step} of {total}",
+          "back": "Back"
+        },
+        "upload": {
+          "chooseFile": "Choose a file from your device",
+          "fileTypes": "CSV, XLSX or XLS - one file - up to 5MB",
+          "firstRowHint": "First row = column headers",
+          "whatYouCanImport": "What you can import",
+          "columnsNote": "Column names don't have to be exact - detection is automatic.",
+          "downloadTemplate": "Download template",
+          "orDivider": "or",
+          "driveButtonTitle": "Choose from Google Drive",
+          "driveButtonSubtitle": "One-time connection to your Google account",
+          "connectingToDrive": "Connecting to Google Drive…",
+          "driveFailed": "Couldn't import from Google Drive"
+        },
+        "analyze": {
+          "fileMeta": "{rows} rows · {columns} columns",
+          "identifyingColumns": "Identifying your columns…",
+          "usuallyFast": "This usually takes less than 10 seconds"
+        },
+        "review": {
+          "bannerTitleOne": "Not sure about one field",
+          "bannerTitleOther": "Not sure about {count} fields",
+          "bannerDescription": "We identified {mapped} of {total} fields confidently. Review the marked field and confirm.",
+          "confidenceHigh": "High confidence",
+          "confidenceLow": "Low confidence",
+          "samplesLabel": "Examples: {samples}",
+          "requiredBadge": "Required",
+          "confirm": "Confirm and continue"
+        },
+        "validate": {
+          "seatsCount": "{count} seats",
+          "issueMissingName": "Missing name",
+          "issueInvalidPhone": "Invalid phone",
+          "issuePhoneExists": "Already on your list",
+          "issuePhoneDuplicateCsv": "Duplicate in file",
+          "issueNewGroup": "New group",
+          "autofixBannerTitle": "Auto-fix {count} phone numbers",
+          "autofixBannerSubtitle": "Add a leading 0, remove spaces and dashes",
+          "autofixAction": "Fix",
+          "importCount": "Import {count} guests",
+          "footerSkip": "{count} rows with problems will be skipped - you can fix them first",
+          "footerAllGood": "All rows look good"
+        },
+        "edit": {
+          "title": "Edit {name}",
+          "titleUnnamed": "Edit guest",
+          "issuesCount": "{count} issues to fix",
+          "nameLabel": "Name",
+          "phoneLabel": "Phone",
+          "phoneInvalid": "Invalid phone number",
+          "phoneRequiredFormat": "An Israeli mobile number is required (05X-XXXXXXX)",
+          "phoneSuggestion": "Suggestion: {value}",
+          "amountLabel": "Seats",
+          "amountDecrease": "Decrease seats",
+          "amountIncrease": "Increase seats",
+          "sideLabel": "Side",
+          "sideNone": "No side",
+          "sideBride": "Bride",
+          "sideGroom": "Groom",
+          "groupLabel": "Group",
+          "groupNewBadge": "New group",
+          "groupSearchPlaceholder": "Search or create a group",
+          "groupCreateOption": "Create \"{name}\"",
+          "groupNone": "No group",
+          "save": "Save",
+          "removeRow": "Remove record"
+        },
+        "summary": {
+          "guestsAdded": "{count} guests added",
+          "fromFile": "out of {total} rows in the file · {seats} seats",
+          "statImported": "Imported",
+          "statSkipped": "Skipped",
+          "statNewGroups": "New groups",
+          "reasonsHeading": "Why {count} rows were skipped",
+          "reasonMissingName": "Row with no name",
+          "reasonInvalidPhone": "Invalid phone number",
+          "reasonPhoneExists": "Duplicate phone - already on your list",
+          "reasonPhoneDuplicateCsv": "Duplicate phone - already in the file",
+          "reasonRemovedByUser": "Removed by you before import",
+          "reasonOther": "Other issue",
+          "pendingNote": "New guests are all Pending. Assign them to groups from the Groups tab.",
+          "goToGuestList": "Go to guest list",
+          "importAnother": "Import another file"
+        }
       }
     },
     "sort": {

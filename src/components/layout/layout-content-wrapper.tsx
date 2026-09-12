@@ -1,13 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { isSeatingRoute } from './app-shell';
+import { isFullTakeoverRoute } from './app-shell';
 
 export function LayoutContentWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isSeatingPage = isSeatingRoute(pathname);
 
-  if (isSeatingPage) {
+  // Full-bleed takeovers (Seating Plan, guest import) manage their own
+  // height and scrolling - see `isFullTakeoverRoute`.
+  if (isFullTakeoverRoute(pathname)) {
     return <>{children}</>;
   }
 

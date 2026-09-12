@@ -32,11 +32,16 @@ import {
 } from '@/components/ui/stepper';
 import { UploadStep } from './upload-step';
 import { AnalyzeStep } from './analyze-step';
-import { KULULU_FIELDS, type ColumnMapping } from './map-step';
 import { ValidateStep } from './validate-step';
 import { SummaryStep } from './summary-step';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
-import { validateCsvRows, validateGuestData, normalizePhone } from '@/features/guests/utils';
+import {
+  validateCsvRows,
+  validateGuestData,
+  normalizePhone,
+  KULULU_FIELDS,
+  type ColumnMapping,
+} from '@/features/guests/utils';
 import { type ImportGuestData } from '@/features/guests/schemas';
 
 type StepKey = 'upload' | 'analyze' | 'validate' | 'summary';
