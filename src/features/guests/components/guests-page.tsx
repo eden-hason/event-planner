@@ -10,6 +10,7 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import { GuestStats } from './guest-stats';
@@ -36,7 +37,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   GroupsDirectory,
   CreateGroupDialog,
-  ImportGuestsDialog,
 } from '@/features/guests/components/groups';
 import {
   GroupsMobile,
@@ -48,7 +48,7 @@ import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/
 import { deleteGuest, upsertGuest } from '@/features/guests/actions';
 import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
 import { GuestActionsSection } from './guest-actions-section';
-import { GuestsMobile } from './mobile';
+import { GuestsMobile, AddGuestSourceSheet } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -87,6 +87,7 @@ export function GuestsPage({
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const locale = useLocale();
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -104,7 +105,13 @@ export function GuestsPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+
+  const goToImportRoute = () => router.push(`/app/${eventId}/guests/import`);
+  // `?source=drive` tells the wizard to open straight into the Drive picker
+  // instead of the plain upload screen - see `GuestImportFlow`.
+  const goToImportRouteViaDrive = () =>
+    router.push(`/app/${eventId}/guests/import?source=drive`);
 
   const handleStatCardClick = (status: string | null) => {
     if (status === null) {
@@ -293,14 +300,20 @@ export function GuestsPage({
     });
   };
 
+  // Mobile routes the header button through a source sheet (single guest vs.
+  // upload a file) rather than straight into the guest form - see
+  // `AddGuestSourceSheet`. That sheet is also now the only way into import on
+  // mobile: it replaces the entry that used to live in the export dropdown
+  // (see `GuestsMobile`), so bulk import isn't hidden behind a download icon
+  // anymore, at the cost of one extra tap before adding a single guest.
   const guestsHeaderAction = useMemo(
     () => (
-      <Button onClick={handleAddGuest}>
+      <Button onClick={isMobile ? () => setSourceSheetOpen(true) : handleAddGuest}>
         <IconUserPlus size={16} />
         {t('addGuest')}
       </Button>
     ),
-    [handleAddGuest],
+    [isMobile, handleAddGuest],
   );
 
   const groupHeaderAction = useMemo(
@@ -419,7 +432,7 @@ export function GuestsPage({
               onSelectGuest={handleSelectGuest}
               onDeleteGuest={handleDeleteGuestById}
               onMarkConfirmed={handleMarkConfirmed}
-              onUploadFile={() => setIsImportDialogOpen(true)}
+              onUploadFile={goToImportRoute}
               onExport={handleExport}
               selectedStatuses={selectedStatuses}
               onStatusClick={handleStatCardClick}
@@ -487,11 +500,12 @@ export function GuestsPage({
       )}
 
       {isMobile && (
-        <ImportGuestsDialog
-          open={isImportDialogOpen}
-          onOpenChange={setIsImportDialogOpen}
-          eventId={eventId}
-          existingPhones={existingPhones}
+        <AddGuestSourceSheet
+          open={sourceSheetOpen}
+          onOpenChange={setSourceSheetOpen}
+          onSelectSingleGuest={handleAddGuest}
+          onSelectUploadFile={goToImportRoute}
+          onSelectGoogleDrive={goToImportRouteViaDrive}
         />
       )}
 

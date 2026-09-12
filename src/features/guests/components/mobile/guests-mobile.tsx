@@ -17,7 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -217,14 +216,6 @@ export function GuestsMobile({
               >
                 <IconFileSpreadsheet size={20} />
                 {t('directory.exportAll')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-                onClick={onUploadFile}
-              >
-                <IconUpload size={20} />
-                {t('directory.importCsv')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

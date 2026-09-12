@@ -829,7 +829,6 @@
         "colErrors": "שגיאות",
         "rowCount": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות",
         "rowCountSuccess": "{valid} תקינות, {invalid} לא תקינות מתוך {total} שורות ✓",
-        "tabAll": "הכל",
         "tabNeedsFix": "דורש תיקון",
         "tabValid": "תקין",
         "statusReady": "מוכן",
@@ -841,7 +840,7 @@
         "autoFixApplied": "תוקנו {count} מספרי טלפון",
         "resetRow": "אפס שורה",
         "emptyNeedsFix": "כל השורות תקינות",
-        "emptyNeedsFixSub": "עבור ל\"הכל\" כדי לסקור שורות תקינות",
+        "emptyNeedsFixSub": "עבור ל\"תקין\" כדי לסקור את השורות שלך",
         "emptyValid": "אין שורות תקינות עדיין",
         "emptyValidSub": "תקן שגיאות או הסר שורות לא תקינות להמשך",
         "editNameAria": "ערוך שם עבור שורה {row}",
@@ -879,6 +878,105 @@
         "skippedMessage": "{count} אורחים כבר היו באירוע ולכן דולגו.",
         "skippedMessageSingular": "אורח {count} כבר היה באירוע ולכן דולג.",
         "failedHeading": "הייבוא נכשל"
+      },
+      "mobile": {
+        "sourceSheet": {
+          "title": "הוספת אורחים",
+          "singleGuest": "אורח בודד",
+          "singleGuestDescription": "הזנה ידנית של שם וטלפון",
+          "uploadFile": "העלאת קובץ",
+          "uploadFileDescription": "CSV או Excel מהמכשיר - עד 5MB",
+          "googleDrive": "ייבוא מ-Google Drive",
+          "googleDriveDescription": "בחירת קובץ CSV, Excel או Sheets מהדרייב",
+          "newBadge": "חדש"
+        },
+        "header": {
+          "stepOf": "שלב {step} מתוך {total}",
+          "back": "חזרה"
+        },
+        "upload": {
+          "chooseFile": "בחירת קובץ מהמכשיר",
+          "fileTypes": "CSV, XLSX או XLS - קובץ אחד - עד 5MB",
+          "firstRowHint": "שורה ראשונה = כותרות עמודות",
+          "whatYouCanImport": "מה אפשר לייבא",
+          "columnsNote": "שמות העמודות לא חייבים להיות מדויקים - הזיהוי אוטומטי.",
+          "downloadTemplate": "הורדת תבנית",
+          "orDivider": "או",
+          "driveButtonTitle": "בחירה מ-Google Drive",
+          "driveButtonSubtitle": "התחברות חד-פעמית לחשבון Google שלך",
+          "connectingToDrive": "מתחבר ל-Google Drive…",
+          "driveFailed": "הייבוא מ-Google Drive נכשל"
+        },
+        "analyze": {
+          "fileMeta": "{rows} שורות · {columns} עמודות",
+          "identifyingColumns": "מזהים את העמודות…",
+          "usuallyFast": "בדרך כלל לוקח פחות מ-10 שניות"
+        },
+        "review": {
+          "bannerTitleOne": "לא בטוחים לגבי שדה אחד",
+          "bannerTitleOther": "לא בטוחים לגבי {count} שדות",
+          "bannerDescription": "זיהינו {mapped} מתוך {total} שדות בביטחון. בדקו את השדה המסומן ואשרו.",
+          "confidenceHigh": "ביטחון גבוה",
+          "confidenceLow": "ביטחון נמוך",
+          "samplesLabel": "דוגמאות: {samples}",
+          "requiredBadge": "שדה חובה",
+          "confirm": "אישור והמשך"
+        },
+        "validate": {
+          "seatsCount": "{count} מקומות",
+          "issueMissingName": "חסר שם",
+          "issueInvalidPhone": "טלפון לא תקין",
+          "issuePhoneExists": "כבר ברשימה שלך",
+          "issuePhoneDuplicateCsv": "כפול בקובץ",
+          "issueNewGroup": "קבוצה חדשה",
+          "autofixBannerTitle": "תיקון אוטומטי של {count} מספרי טלפון",
+          "autofixBannerSubtitle": "הוספת 0 מוביל, הסרת רווחים ומקפים",
+          "autofixAction": "תקן",
+          "importCount": "ייבוא {count} אורחים",
+          "footerSkip": "{count} שורות עם בעיות ידולגו - אפשר לתקן אותן קודם",
+          "footerAllGood": "כל השורות תקינות"
+        },
+        "edit": {
+          "title": "עריכת {name}",
+          "titleUnnamed": "עריכת אורח",
+          "issuesCount": "{count} בעיות לתיקון",
+          "nameLabel": "שם",
+          "phoneLabel": "טלפון",
+          "phoneInvalid": "מספר טלפון לא תקין",
+          "phoneRequiredFormat": "נדרש מספר נייד ישראלי (05X-XXXXXXX)",
+          "phoneSuggestion": "הצעה: {value}",
+          "amountLabel": "מקומות",
+          "amountDecrease": "הפחת מקומות",
+          "amountIncrease": "הוסף מקומות",
+          "sideLabel": "צד",
+          "sideNone": "ללא צד",
+          "sideBride": "כלה",
+          "sideGroom": "חתן",
+          "groupLabel": "קבוצה",
+          "groupNewBadge": "קבוצה חדשה",
+          "groupSearchPlaceholder": "חיפוש או יצירת קבוצה",
+          "groupCreateOption": "יצירת \"{name}\"",
+          "groupNone": "ללא קבוצה",
+          "save": "שמירה",
+          "removeRow": "הסרת רשומה"
+        },
+        "summary": {
+          "guestsAdded": "{count} אורחים נוספו",
+          "fromFile": "מתוך {total} שורות בקובץ · {seats} מקומות",
+          "statImported": "יובאו",
+          "statSkipped": "דולגו",
+          "statNewGroups": "קבוצות חדשות",
+          "reasonsHeading": "למה {count} שורות דולגו",
+          "reasonMissingName": "שורה ללא שם",
+          "reasonInvalidPhone": "מספר טלפון לא תקין",
+          "reasonPhoneExists": "טלפון כפול - כבר ברשימה שלך",
+          "reasonPhoneDuplicateCsv": "טלפון כפול - כבר בקובץ",
+          "reasonRemovedByUser": "הוסר על ידך לפני הייבוא",
+          "reasonOther": "בעיה אחרת",
+          "pendingNote": "כל האורחים החדשים בסטטוס ממתינים. אפשר לשייך אותם לקבוצות מלשונית קבוצות.",
+          "goToGuestList": "לרשימת האורחים",
+          "importAnother": "ייבוא קובץ נוסף"
+        }
       }
     },
     "sort": {

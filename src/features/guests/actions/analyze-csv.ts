@@ -5,10 +5,28 @@ import Anthropic from '@anthropic-ai/sdk';
 // column index -> field name (e.g. { "0": "full_name", "1": "phone" })
 export type AnalyzeCsvMapping = Record<number, string>;
 
+export type AnalyzeCsvConfidence = 'high' | 'low';
+
+const REQUIRED_AI_FIELDS = ['full_name'] as const;
+
 export type AnalyzeCsvResult = {
   mapping: AnalyzeCsvMapping;
-  preview: Array<{ columnIndex: number; field: string; sample: string }>;
+  preview: Array<{
+    columnIndex: number;
+    field: string;
+    sample: string;
+    confidence: AnalyzeCsvConfidence;
+  }>;
   detectedCount: number;
+  /**
+   * True when a required field wasn't mapped at all, or the model flagged any
+   * mapped field as low confidence - the mobile mapping-review screen only
+   * interrupts the flow in that case, so this is the one thing it checks.
+   * Without a required-field trigger, an unmapped name column used to leave
+   * the wizard's Next button permanently disabled with no manual remap to
+   * fall back to (`map-step.tsx` exists but nothing renders it).
+   */
+  needsReview: boolean;
 };
 
 export type AnalyzeCsvState = {
@@ -82,17 +100,22 @@ You will receive a list of columns, each labeled with its 0-indexed position in 
 Return ONLY a valid JSON object with this exact structure:
 {
   "mapping": { "<column_index>": "<field_name>" },
-  "preview": [{ "columnIndex": <column_index>, "field": "<field_name>", "sample": "<first_value>" }],
+  "preview": [{ "columnIndex": <column_index>, "field": "<field_name>", "sample": "<first_value>", "confidence": "high" | "low" }],
   "detectedCount": <number>
 }
 
 Rules:
 - Refer to columns by their integer index (0-based), never by header text
 - Column indices must be between 0 and ${columnCount - 1}
-- Only map columns you are confident about
-- Skip columns that don't match any field, and do not include them in "mapping" or "preview"
+- Map every column you have a plausible guess for, even a weak one - do not
+  skip a column just because you are unsure
+- Mark "confidence" as "low" whenever the header is ambiguous, absent, or the
+  sample values are inconsistent with the field; use "high" only when you are
+  confident the mapping is correct
+- Skip columns that don't match any field at all, and do not include them in
+  "mapping" or "preview"
 - Map each field to at most one column, and each column to at most one field
-- "preview" should include all mapped columns with a sample value
+- "preview" should include all mapped columns with a sample value and a confidence
 - "detectedCount" is the number of successfully mapped fields`,
       messages: [
         {
@@ -140,11 +163,30 @@ Rules:
       }
     }
 
-    const sanitizedPreview = parsed.preview.filter(
-      (item) =>
-        Number.isInteger(item.columnIndex) &&
-        item.columnIndex >= 0 &&
-        item.columnIndex < columnCount,
+    const sanitizedPreview = parsed.preview
+      .filter(
+        (item) =>
+          Number.isInteger(item.columnIndex) &&
+          item.columnIndex >= 0 &&
+          item.columnIndex < columnCount,
+      )
+      // A missing or malformed confidence defaults to "low" rather than
+      // "high" - an unrecognized value from the model should route the user
+      // to the review screen, not silently pass through as trustworthy.
+      .map((item) => ({
+        ...item,
+        confidence:
+          item.confidence === 'high'
+            ? ('high' as const)
+            : ('low' as const),
+      }));
+
+    const mappedFields = new Set(sanitizedPreview.map((item) => item.field));
+    const missingRequiredField = REQUIRED_AI_FIELDS.some(
+      (field) => !mappedFields.has(field),
+    );
+    const hasLowConfidence = sanitizedPreview.some(
+      (item) => item.confidence === 'low',
     );
 
     return {
@@ -153,6 +195,7 @@ Rules:
         mapping: sanitizedMapping,
         preview: sanitizedPreview,
         detectedCount: sanitizedPreview.length,
+        needsReview: missingRequiredField || hasLowConfidence,
       },
     };
   } catch (error) {

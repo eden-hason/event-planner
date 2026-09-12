@@ -11,17 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-export const KULULU_FIELDS = [
-  { value: 'name', required: true },
-  { value: 'phone', required: false },
-  { value: 'amount', required: false },
-  { value: 'side', required: false },
-  { value: 'group', required: false },
-] as const;
-
-export type KululuFieldValue = (typeof KULULU_FIELDS)[number]['value'];
-export type ColumnMapping = Record<number, KululuFieldValue | null>;
+import {
+  KULULU_FIELDS,
+  type KululuFieldValue,
+  type ColumnMapping,
+} from '@/features/guests/utils/import-guests';
 
 interface MapStepProps {
   parsedData: ParsedCSV | null;

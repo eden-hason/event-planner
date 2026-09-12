@@ -11,7 +11,7 @@ import {
 
 interface FeatureLayoutContextType {
   title: string;
-  subtitle: string;
+  subtitle: ReactNode | null;
   action: ReactNode | null;
   setHeader: (config: FeatureHeaderConfig) => void;
   clearHeader: () => void;
@@ -19,7 +19,7 @@ interface FeatureLayoutContextType {
 
 interface FeatureHeaderConfig {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   action?: ReactNode;
 }
 
@@ -29,18 +29,18 @@ const FeatureLayoutContext = createContext<FeatureLayoutContextType | null>(
 
 export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
   const [title, setTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
+  const [subtitle, setSubtitle] = useState<ReactNode | null>(null);
   const [action, setAction] = useState<ReactNode | null>(null);
 
   const setHeader = useCallback((config: FeatureHeaderConfig) => {
     setTitle(config.title);
-    setSubtitle(config.subtitle ?? '');
+    setSubtitle(config.subtitle ?? null);
     setAction(config.action ?? null);
   }, []);
 
   const clearHeader = useCallback(() => {
     setTitle('');
-    setSubtitle('');
+    setSubtitle(null);
     setAction(null);
   }, []);
 

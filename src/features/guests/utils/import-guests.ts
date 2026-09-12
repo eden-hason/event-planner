@@ -1,6 +1,27 @@
 import { ImportGuestSchema, normalizeSide } from '../schemas';
 import { phoneComparisonKey } from '@/lib/phone';
-import { type ColumnMapping } from '../components/groups/import-guests-dialog/map-step';
+
+// Shared by every import entry point (device upload, Drive download) so the
+// ceiling can't silently drift between them - see `mobile-upload-step.tsx`
+// and `google-drive-picker.ts`.
+export const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
+
+// The mappable Kululu fields for a CSV/Excel import, and the column-index ->
+// field mapping every import UI (desktop's `MapStep`, the mobile analyze/
+// mapping-review steps) builds and hands off. Lives here rather than on any
+// one of those components - `MapStep` in particular is currently unrendered
+// (see its own file) - so this domain concept doesn't depend on a UI that
+// may or may not be mounted.
+export const KULULU_FIELDS = [
+  { value: 'name', required: true },
+  { value: 'phone', required: false },
+  { value: 'amount', required: false },
+  { value: 'side', required: false },
+  { value: 'group', required: false },
+] as const;
+
+export type KululuFieldValue = (typeof KULULU_FIELDS)[number]['value'];
+export type ColumnMapping = Record<number, KululuFieldValue | null>;
 
 export type ImportField = 'name' | 'phone' | 'amount' | 'side' | 'group';
 
