@@ -192,6 +192,56 @@ The Back Office home page. It answers one question - what needs an Operator's at
 now - and carries business counts only as context for that answer, never as the point of the
 page.
 
+## Home
+
+The Owner-facing landing page for a single Event - the page previously called
+"dashboard" in code and casually "control panel." It orients the Owner in one glance
+(see **Hero**) and surfaces what to do next (see **Featured Action**), on top of the
+Event's ongoing activity and stats.
+
+_Avoid_: Dashboard, Control Panel - both are retired names for this page.
+
+## Hero
+
+The top-of-page block on Home that fuses the Event's identity (title, date, location,
+illustration) with its single most urgent live number - the countdown to the Event -
+and a secondary RSVP-progress line. Purely decorative art (illustration, confetti); it
+carries no interactive controls of its own.
+
+## Featured Action
+
+A specific, actionable suggestion offered to the Owner on Home. Each Featured Action is
+backed by a real capability and an eligibility rule evaluated from the Event's current
+state - it appears only while its rule is true, the same way a **Signal** exists only
+while its condition holds.
+
+An unfinished setup step (completing details, adding guests, forming groups, uploading
+an invitation image, inviting a collaborator) is a Featured Action like any other -
+there is no separate "onboarding checklist" concept standing apart from it.
+
+Like a Signal, a Featured Action is never stored and cannot be dismissed: it disappears
+only because its eligibility rule turned false, never because the Owner hid it. There is
+no per-Owner "seen" or "snoozed" state to track.
+
+## Test Message
+
+A copy of a real outbound Schedule message, sent to the Owner's own phone instead of any
+Guest's, so the Owner can see exactly what a Guest will receive before the Schedule
+actually goes out. Available once the Event has at least one Schedule to preview; sending
+one has no effect on any Guest's RSVP or delivery history.
+
+## Guest List Health Check
+
+A read-only scan of the Guest list for likely data problems - duplicate Guest Records and
+Guest Records missing a phone number - offered as a Featured Action once the list is
+large enough for drift to matter. It flags; it does not merge or fix anything itself.
+
+## Live Invite Preview Link
+
+A shareable link to the guest-facing invitation site exactly as a Guest would see it.
+Distinct from the admin **Templates** picker (which chooses the design skin) - this is
+the artifact you'd hand to someone else to look at, not a tool for changing anything.
+
 ## Free to Plan, Pay to Send
 
 The commercial boundary. Planning the Event costs nothing: creating it, building or
