@@ -42,6 +42,10 @@ export const MessageTemplateDbSchema = z.object({
   // services/resolve-reminder-templates.ts.
   requires_table_numbers: z.boolean(),
   requires_gifting: z.boolean(),
+  // Body/button carries an organiser-authored free-text line, resolved per
+  // schedule instance from schedules.custom_text rather than per event - see
+  // the resolver in services/resolve-reminder-templates.ts.
+  requires_note: z.boolean(),
   payload: z.unknown(),
 });
 
@@ -59,6 +63,7 @@ type MessageTemplateBase = {
   languageCode: string;
   requiresTableNumbers: boolean;
   requiresGifting: boolean;
+  requiresNote: boolean;
 };
 
 export type MessageTemplateApp =
@@ -87,6 +92,7 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       languageCode: db.language_code,
       requiresTableNumbers: db.requires_table_numbers,
       requiresGifting: db.requires_gifting,
+      requiresNote: db.requires_note,
     };
 
     if (db.channel === 'whatsapp') {

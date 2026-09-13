@@ -11,12 +11,12 @@ import {
  *
  * `schedules.template_id` (and `event_type_default_schedules.template_id`) name
  * a *family* - key + channel + variant + language - not a message. This reads
- * the family's rows and picks by the two configuration axes. The anchor's own
- * requires_* flags are deliberately ignored: it is a pointer into the family,
- * and reading its flags would silently pin resolution to whichever row the
- * wizard happened to bind weeks earlier.
+ * the family's rows and picks by the three configuration axes (table numbers,
+ * gifting, note). The anchor's own requires_* flags are deliberately ignored:
+ * it is a pointer into the family, and reading its flags would silently pin
+ * resolution to whichever row the wizard happened to bind weeks earlier.
  *
- * Only the reminder family is authored across both axes today. A family that
+ * Only the reminder family is authored across these axes today. A family that
  * offers no choice on an axis (an invitation has no table-number variant) is
  * resolved as if the event had that setting off, so adding axes to one family
  * never breaks another. But a family that *does* offer an axis must be complete
@@ -24,10 +24,10 @@ import {
  * quietly sending a near-miss. The migration's guard exists to keep that branch
  * unreachable.
  *
- * Gifting is event-level, so it selects a single row. Table numbers are
- * per-guest - the number lives on the guest's seating assignment, which is
- * routinely incomplete on the day - so both candidates come back and the caller
- * picks per guest.
+ * Gifting is event-level and note is per schedule instance, so each selects a
+ * single row. Table numbers are per-guest - the number lives on the guest's
+ * seating assignment, which is routinely incomplete on the day - so both
+ * candidates come back and the caller picks per guest.
  */
 
 export type ResolvedTemplates = {
@@ -35,6 +35,13 @@ export type ResolvedTemplates = {
   withTable: MessageTemplateApp | null;
   /** Sent to everyone else, and to every guest when there is no table variant. */
   withoutTable: MessageTemplateApp;
+  /**
+   * Whether this family offers a note variant at all, regardless of whether
+   * `note` was requested - callers use this to decide whether to show a
+   * custom-note input for the schedule, independent of what is currently
+   * typed into it.
+   */
+  offersNote: boolean;
 };
 
 export type ResolveTemplatesResult =
@@ -44,12 +51,19 @@ export type ResolveTemplatesResult =
 export async function resolveTemplatesForEvent(params: {
   supabase: SupabaseClient;
   anchor: MessageTemplateApp;
-  /** Event-level: does the copy mention gifting? */
+  /** Event-level: does the copy/button mention gifting? */
   gifting: boolean;
   /** Event-level gate for the table-number variant. */
   tableNumbers: boolean;
+  /**
+   * Per schedule instance, not per event: whether this send should carry an
+   * organiser-authored note. Defaults to false so callers that predate this
+   * axis (there are none left after this change, but new ones may forget)
+   * resolve exactly as they did before it existed.
+   */
+  note?: boolean;
 }): Promise<ResolveTemplatesResult> {
-  const { supabase, anchor, gifting, tableNumbers } = params;
+  const { supabase, anchor, gifting, tableNumbers, note = false } = params;
 
   const family = `${anchor.key}/${anchor.channel}/${anchor.variant}/${anchor.languageCode}`;
 
@@ -85,41 +99,47 @@ export async function resolveTemplatesForEvent(params: {
   const wantGifting = gifting && candidates.some((t) => t.requiresGifting);
   const wantTable =
     tableNumbers && candidates.some((t) => t.requiresTableNumbers);
+  const wantNote = note && candidates.some((t) => t.requiresNote);
+  const offersNote = candidates.some((t) => t.requiresNote);
 
   const pick = (requiresTable: boolean) =>
     candidates.find(
       (t) =>
         t.requiresGifting === wantGifting &&
-        t.requiresTableNumbers === requiresTable,
+        t.requiresTableNumbers === requiresTable &&
+        t.requiresNote === wantNote,
     ) ?? null;
 
   const withoutTable = pick(false);
 
   if (!withoutTable) {
     console.error(
-      `[resolve-templates] No row in ${family} for gifting=${wantGifting}, tableNumbers=false`,
+      `[resolve-templates] No row in ${family} for gifting=${wantGifting}, tableNumbers=false, note=${wantNote}`,
     );
     return {
       success: false,
-      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting})`,
+      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote})`,
     };
   }
 
   if (!wantTable) {
-    return { success: true, templates: { withTable: null, withoutTable } };
+    return {
+      success: true,
+      templates: { withTable: null, withoutTable, offersNote },
+    };
   }
 
   const withTable = pick(true);
 
   if (!withTable) {
     console.error(
-      `[resolve-templates] No table-number row in ${family} for gifting=${wantGifting}`,
+      `[resolve-templates] No table-number row in ${family} for gifting=${wantGifting}, note=${wantNote}`,
     );
     return {
       success: false,
-      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting})`,
+      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote})`,
     };
   }
 
-  return { success: true, templates: { withTable, withoutTable } };
+  return { success: true, templates: { withTable, withoutTable, offersNote } };
 }

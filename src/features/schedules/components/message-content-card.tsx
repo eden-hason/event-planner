@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import {
   IconArrowBack,
@@ -27,9 +29,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 import { type EventApp } from '@/features/events/schemas';
 import type { WhatsAppTemplateApp } from '../schemas';
+import { updateCustomText } from '../actions';
 import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 
 function resolveSourcePath(
@@ -54,6 +59,8 @@ const chatBgStyle: React.CSSProperties = {
 };
 
 interface MessageContentCardProps {
+  /** Needed to save the custom note; omit when there is nothing to save against. */
+  scheduleId?: string;
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
   /** Delivery channel for this schedule, shown as a badge in the card action slot. */
@@ -65,20 +72,60 @@ interface MessageContentCardProps {
    * also going out.
    */
   seatingGap?: { withoutTable: number; total: number } | null;
+  /** Whether this schedule's family offers a note variant at all. */
+  offersNote?: boolean;
+  /** The note currently saved on the schedule, if any. */
+  customText?: string | null;
+  /** A sent or cancelled schedule's note can no longer be edited. */
+  scheduleLocked?: boolean;
   event: EventApp | null;
 }
 
 export function MessageContentCard({
+  scheduleId,
   template,
   smsBody,
   channel,
   seatingGap,
+  offersNote,
+  customText,
+  scheduleLocked,
   event,
 }: MessageContentCardProps) {
   const t = useTranslations('schedules.messagePreview');
   const tChannel = useTranslations('schedules.channel');
+  const [isSaving, startSaveTransition] = useTransition();
+  const [savedNote, setSavedNote] = useState(customText ?? '');
+  const [note, setNote] = useState(customText ?? '');
+  const isDirty = !scheduleLocked && note !== savedNote;
+
+  const handleSaveNote = () => {
+    if (!scheduleId || !isDirty) return;
+
+    startSaveTransition(async () => {
+      const promise = updateCustomText(scheduleId, note).then((result) => {
+        if (!result.success)
+          throw new Error(result.message ?? t('customNote.toast.error'));
+        return result;
+      });
+
+      toast.promise(promise, {
+        loading: t('customNote.toast.updating'),
+        success: () => t('customNote.toast.updated'),
+        error: (err) => (err instanceof Error ? err.message : t('customNote.toast.error')),
+      });
+
+      try {
+        await promise;
+        setSavedNote(note);
+      } catch {
+        // error toast handled above
+      }
+    });
+  };
+
   const { resolvedBody, hasMissingFields } = template
-    ? resolveTemplateBodyForPreview(template, event)
+    ? resolveTemplateBodyForPreview(template, event, savedNote)
     : { resolvedBody: '', hasMissingFields: false };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];
@@ -248,6 +295,37 @@ export function MessageContentCard({
               </Button>
             </AlertDescription>
           </Alert>
+        )}
+        {offersNote && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs text-muted-foreground tracking-wide">
+                {t('customNote.label')}
+              </Label>
+              {isDirty && (
+                <Button
+                  onClick={handleSaveNote}
+                  disabled={isSaving}
+                  size="xs"
+                  variant="outline"
+                >
+                  {isSaving ? t('customNote.saving') : t('customNote.save')}
+                </Button>
+              )}
+            </div>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t('customNote.placeholder')}
+              disabled={isSaving || !scheduleId || scheduleLocked}
+              dir="rtl"
+              className="mt-1"
+              rows={2}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('customNote.helper')}
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -14,6 +14,7 @@ export async function resolveTemplatesForPreview(params: {
   anchor: MessageTemplateApp;
   gifting: boolean;
   tableNumbers: boolean;
+  note?: boolean;
 }) {
   const { supabase } = await getEffectiveClient();
   return resolveTemplatesForEvent({ supabase, ...params });

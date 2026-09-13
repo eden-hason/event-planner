@@ -10,6 +10,8 @@ interface ScheduleTabContentProps {
   template: WhatsAppTemplateApp | null;
   smsBody?: string | null;
   seatingGap?: { withoutTable: number; total: number } | null;
+  /** Whether this schedule's family offers a note variant at all. */
+  offersNote?: boolean;
   eventDate: string | null;
   event: EventApp | null;
 }
@@ -19,6 +21,7 @@ export function ScheduleTabContent({
   template,
   smsBody,
   seatingGap,
+  offersNote,
   eventDate,
   event,
 }: ScheduleTabContentProps) {
@@ -36,10 +39,16 @@ export function ScheduleTabContent({
       </div>
       <div className="h-full">
         <MessageContentCard
+          scheduleId={schedule.id}
           template={template}
           smsBody={smsBody}
           channel={schedule.deliveryMethod}
           seatingGap={seatingGap}
+          offersNote={offersNote}
+          customText={schedule.customText}
+          scheduleLocked={
+            schedule.status === 'sent' || schedule.status === 'cancelled'
+          }
           event={event}
         />
       </div>

@@ -96,6 +96,68 @@ export async function updateScheduledDate(
   }
 }
 
+export type UpdateCustomTextState = {
+  success: boolean;
+  message?: string | null;
+};
+
+/**
+ * Updates the organiser-authored note (schedules.custom_text) for a schedule.
+ * A blank value is stored as null so "no note" reads the same way whether the
+ * organiser never typed one or cleared it - the resolver only checks for a
+ * non-empty trimmed value.
+ * RLS ensures the user can only update their own schedules.
+ */
+export async function updateCustomText(
+  scheduleId: string,
+  customText: string,
+): Promise<UpdateCustomTextState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
+  try {
+    const supabase = await createClient();
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('schedules')
+      .select('status, schedule_types (execution_kind)')
+      .eq('id', scheduleId)
+      .single();
+
+    if (fetchError || !existing) {
+      return { success: false, message: 'Schedule not found' };
+    }
+
+    if (existing.status === 'sent' || existing.status === 'cancelled') {
+      return { success: false, message: 'Cannot modify a schedule that has already been sent' };
+    }
+
+    if (!isMessageScheduleRow(existing)) {
+      return {
+        success: false,
+        message: 'A call round has no message content to note',
+      };
+    }
+
+    const trimmed = customText.trim();
+    const { error } = await supabase
+      .from('schedules')
+      .update({ custom_text: trimmed === '' ? null : trimmed })
+      .eq('id', scheduleId);
+
+    if (error) {
+      console.error('Error updating custom text:', error);
+      return { success: false, message: 'Failed to update note' };
+    }
+
+    revalidatePath('/app');
+
+    return { success: true, message: 'Note updated' };
+  } catch (error) {
+    console.error('Error in updateCustomText:', error);
+    return { success: false, message: 'An unexpected error occurred' };
+  }
+}
+
 export type UpdateScheduleStatusState = {
   success: boolean;
   message?: string | null;
