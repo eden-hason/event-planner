@@ -336,9 +336,6 @@ export function MessageContentCard({
               className="mt-1"
               rows={2}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('customNote.helper')}
-            </p>
           </div>
         )}
       </CardContent>

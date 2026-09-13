@@ -1227,9 +1227,8 @@
         "link": "Seating"
       },
       "customNote": {
-        "label": "Custom note",
+        "label": "Custom note (optional)",
         "placeholder": "Add a note to include in this message",
-        "helper": "Leave blank to send the version without a note",
         "save": "Save",
         "saving": "Saving...",
         "toast": {
