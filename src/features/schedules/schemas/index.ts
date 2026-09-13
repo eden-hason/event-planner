@@ -31,13 +31,17 @@ export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
 export const DELIVERY_METHODS = ['whatsapp', 'sms'] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 
-// Delivery status for individual messages
+// A Delivery's rolled-up state (message_deliveries.status). 'not_sent' is a
+// guest in the audience no attempt could be made for; an attempt itself is
+// never 'not_sent'. 'bounced' is not a database value and is kept only so older
+// parsed shapes still type-check.
 export const DELIVERY_STATUSES = [
   'pending',
   'sent',
   'delivered',
   'read',
   'failed',
+  'not_sent',
   'bounced',
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];

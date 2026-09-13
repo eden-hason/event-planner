@@ -2,9 +2,28 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 
+/**
+ * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
+ *
+ * - `whatsapp` / `sms`: Reached, over that channel. An accepted SMS counts -
+ *   SMS never reports further than accepted.
+ * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
+ * - `not_delivered`: every attempt failed. Deliberately factual - nothing here
+ *   promises a retry until an SMS attempt actually exists.
+ * - `no_phone`: in the audience, but no attempt was possible.
+ */
+export type GuestDeliveryOutcome =
+  | 'whatsapp'
+  | 'sms'
+  | 'on_its_way'
+  | 'not_delivered'
+  | 'no_phone';
+
 export type GuestInteractionRow = {
   guestId: string;
   guestName: string;
+  /** Null for a guest who interacted but has no delivery record (a shared link) */
+  delivery: GuestDeliveryOutcome | null;
   viewed: boolean;
   viewedAt?: string;
   response?: 'rsvp_confirm' | 'rsvp_decline';
@@ -18,6 +37,12 @@ export type GuestInteractionRow = {
 
 export type ScheduleInteractionData = {
   summary: {
+    /** Guest records this schedule was meant for (one delivery each) */
+    audience: number;
+    reached: number;
+    reachedWhatsapp: number;
+    reachedSms: number;
+    notReached: { onItsWay: number; notDelivered: number; noPhone: number };
     views: number;
     /** Guest records that confirmed */
     confirmed: number;
@@ -28,44 +53,87 @@ export type ScheduleInteractionData = {
   guests: GuestInteractionRow[];
 };
 
+function toOutcome(status: string | null, channel: string | null): GuestDeliveryOutcome {
+  switch (status) {
+    case 'delivered':
+    case 'read':
+      return channel === 'sms' ? 'sms' : 'whatsapp';
+    case 'sent':
+      return channel === 'sms' ? 'sms' : 'on_its_way';
+    case 'failed':
+      return 'not_delivered';
+    case 'not_sent':
+      return 'no_phone';
+    default:
+      // pending: reserved just before sending, the attempt not recorded yet
+      return 'on_its_way';
+  }
+}
+
 export async function getScheduleInteractionData(
   scheduleId: string,
 ): Promise<ScheduleInteractionData> {
   const { supabase } = await getEffectiveClient();
 
-  const { data, error } = await supabase
-    .from('guest_interactions')
-    .select('interaction_type, created_at, metadata, guest_id, guests!inner(name, amount)')
-    .eq('schedule_id', scheduleId)
-    .order('created_at', { ascending: false });
+  const [interactionsResult, deliveriesResult] = await Promise.all([
+    supabase
+      .from('guest_interactions')
+      .select('interaction_type, created_at, metadata, guest_id, guests!inner(name, amount)')
+      .eq('schedule_id', scheduleId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('message_deliveries')
+      .select('guest_id, status, delivery_method, guests!inner(name, amount)')
+      .eq('schedule_id', scheduleId),
+  ]);
 
   const empty: ScheduleInteractionData = {
-    summary: { views: 0, confirmed: 0, confirmedGuests: 0, declined: 0 },
+    summary: {
+      audience: 0,
+      reached: 0,
+      reachedWhatsapp: 0,
+      reachedSms: 0,
+      notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0 },
+      views: 0,
+      confirmed: 0,
+      confirmedGuests: 0,
+      declined: 0,
+    },
     guests: [],
   };
 
-  if (error || !data) {
-    if (error) console.error('Error fetching schedule interaction data:', error);
+  if (interactionsResult.error || deliveriesResult.error) {
+    console.error(
+      'Error fetching schedule interaction data:',
+      interactionsResult.error ?? deliveriesResult.error,
+    );
     return empty;
   }
 
-  // Aggregate per guest
   const guestMap = new Map<string, GuestInteractionRow>();
-
-  for (const row of data) {
-    const guestId = row.guest_id as string;
-    const guest = row.guests as unknown as { name: string; amount: number | null };
-
-    if (!guestMap.has(guestId)) {
-      guestMap.set(guestId, {
+  const rowFor = (guestId: string, guest: { name: string; amount: number | null }) => {
+    let entry = guestMap.get(guestId);
+    if (!entry) {
+      entry = {
         guestId,
         guestName: guest.name,
+        delivery: null,
         viewed: false,
         amount: guest.amount ?? 1,
-      });
+      };
+      guestMap.set(guestId, entry);
     }
+    return entry;
+  };
 
-    const entry = guestMap.get(guestId)!;
+  for (const row of deliveriesResult.data ?? []) {
+    const guest = row.guests as unknown as { name: string; amount: number | null };
+    rowFor(row.guest_id as string, guest).delivery = toOutcome(row.status, row.delivery_method);
+  }
+
+  for (const row of interactionsResult.data ?? []) {
+    const guest = row.guests as unknown as { name: string; amount: number | null };
+    const entry = rowFor(row.guest_id as string, guest);
     const meta = row.metadata as { guestCount?: number; mealChoice?: string } | null;
 
     if (row.interaction_type === 'view' && !entry.viewed) {
@@ -83,19 +151,34 @@ export async function getScheduleInteractionData(
   }
 
   const guests = Array.from(guestMap.values());
-
+  const withDelivery = guests.filter((g) => g.delivery !== null);
+  const count = (outcome: GuestDeliveryOutcome) =>
+    withDelivery.filter((g) => g.delivery === outcome).length;
   const confirmedGuestRecords = guests.filter((g) => g.response === 'rsvp_confirm');
 
   const summary = {
+    audience: withDelivery.length,
+    reached: count('whatsapp') + count('sms'),
+    reachedWhatsapp: count('whatsapp'),
+    reachedSms: count('sms'),
+    notReached: {
+      onItsWay: count('on_its_way'),
+      notDelivered: count('not_delivered'),
+      noPhone: count('no_phone'),
+    },
     views: guests.filter((g) => g.viewed).length,
     confirmed: confirmedGuestRecords.length,
     confirmedGuests: confirmedGuestRecords.reduce((sum, g) => sum + g.amount, 0),
     declined: guests.filter((g) => g.response === 'rsvp_decline').length,
   };
 
-  // Sort: responded first, then viewed, then no interaction
+  // Responded first, then viewed, then reached, then everyone not reached
   guests.sort((a, b) => {
-    const rank = (g: GuestInteractionRow) => (g.response ? 0 : g.viewed ? 1 : 2);
+    const rank = (g: GuestInteractionRow) =>
+      g.response ? 0
+        : g.viewed ? 1
+          : g.delivery === 'whatsapp' || g.delivery === 'sms' ? 2
+            : 3;
     return rank(a) - rank(b);
   });
 

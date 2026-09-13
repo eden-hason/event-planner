@@ -21,11 +21,11 @@ import {
   validatePhoneNumber,
   sendInChunks,
   sendSmsToGuest,
-  buildDeliveryRecord,
-  generateConfirmationToken,
+  buildAttemptRecord,
   type ParameterResolutionContext,
   type GuestSendResult,
 } from '../utils';
+import { recordNotSent, reserveDeliveries } from './deliveries';
 
 /**
  * The single execution engine behind every send path (manual action, cron,
@@ -34,7 +34,7 @@ import {
  */
 export type SendScheduleOptions = {
   supabase: SupabaseClient;
-  /** Recorded on message_deliveries.triggered_by */
+  /** Recorded on message_deliveries.triggered_by and on each attempt */
   triggeredBy: 'scheduled' | 'manual';
   /**
    * How to guard against double execution:
@@ -87,7 +87,7 @@ function outcomeError(
 }
 
 /** Maps a joined events row (snake_case) to the parameter-resolution shape. */
-function mapEventRow(rawEvent: Record<string, unknown>) {
+export function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
   const settings = rawEvent.event_settings as {
     // Optional `link` on both: a half-configured row, or a legacy Bit row that
@@ -303,6 +303,25 @@ export async function sendSchedule(
     validatePhoneNumber(guest.phone),
   );
 
+  // Guests in the audience with no usable number are a fact the Owner needs to
+  // see ("never got it - no phone number"), not just a count in the outcome.
+  const unreachable = targetedGuests.filter(
+    (guest) => !validatePhoneNumber(guest.phone),
+  );
+  if (unreachable.length > 0) {
+    try {
+      await recordNotSent(
+        supabase,
+        scheduleId,
+        unreachable.map((guest) => guest.id),
+        triggeredBy,
+      );
+    } catch (error) {
+      // Worth logging, not worth failing the send over.
+      console.error('[send-schedule] Could not record not-sent deliveries:', error);
+    }
+  }
+
   if (guestsWithPhones.length === 0) {
     return fail('No guests with valid phone numbers');
   }
@@ -339,18 +358,38 @@ export async function sendSchedule(
     }
   }
 
-  // 8. Send per channel, persisting delivery records per chunk
+  // 8. Reserve the deliveries before anything goes out: the RSVP token is part
+  // of the message, and a guest who already has a delivery for this schedule
+  // keeps theirs (ADR 0011).
+  let reserved: Awaited<ReturnType<typeof reserveDeliveries>>;
+  try {
+    reserved = await reserveDeliveries(
+      supabase,
+      scheduleId,
+      pendingGuests.map((guest) => guest.id),
+      triggeredBy,
+    );
+  } catch (error) {
+    console.error('[send-schedule] Could not reserve delivery records:', error);
+    return fail('Could not prepare delivery records');
+  }
+  pendingGuests = pendingGuests.filter((guest) => reserved.has(guest.id));
+  const tokenFor = (guest: GuestApp) => reserved.get(guest.id)!.confirmationToken;
+
+  // 9. Send per channel, recording one attempt per guest per chunk
   let sentCount = 0;
   let failedCount = 0;
 
   const persistChunk = async (
     chunkResults: PromiseSettledResult<GuestSendResult>[],
   ) => {
-    const deliveryRecords: Record<string, unknown>[] = [];
+    const attemptRecords: Record<string, unknown>[] = [];
     for (const settled of chunkResults) {
       if (settled.status === 'fulfilled') {
         const r = settled.value;
-        deliveryRecords.push(buildDeliveryRecord(scheduleId, r, triggeredBy));
+        attemptRecords.push(
+          buildAttemptRecord(reserved.get(r.guest.id)!.id, r, triggeredBy),
+        );
         if (r.success) {
           sentCount++;
         } else {
@@ -366,14 +405,14 @@ export async function sendSchedule(
       }
     }
 
-    if (deliveryRecords.length > 0) {
-      const { error: upsertError } = await supabase
-        .from('message_deliveries')
-        .upsert(deliveryRecords, { onConflict: 'schedule_id,guest_id' });
-      if (upsertError) {
+    if (attemptRecords.length > 0) {
+      const { error: insertError } = await supabase
+        .from('message_delivery_attempts')
+        .insert(attemptRecords);
+      if (insertError) {
         console.error(
-          '[send-schedule] Error upserting delivery records:',
-          upsertError,
+          '[send-schedule] Error recording delivery attempts:',
+          insertError,
         );
       }
     }
@@ -421,7 +460,7 @@ export async function sendSchedule(
   if (template.channel === 'sms') {
     const results = await Promise.allSettled(
       pendingGuests.map((guest) => {
-        const confirmationToken = generateConfirmationToken();
+        const confirmationToken = tokenFor(guest);
         // Same channel as the anchor by construction - the resolver filters on
         // it - so the payload shape is the SMS one.
         const guestTemplate = templateForGuest(guest) as Extract<
@@ -471,7 +510,7 @@ export async function sendSchedule(
     await sendInChunks(
       pendingGuests,
       (guest) => {
-        const confirmationToken = generateConfirmationToken();
+        const confirmationToken = tokenFor(guest);
         const guestTemplate = templateForGuest(guest);
         const context: ParameterResolutionContext = {
           guest,
@@ -494,7 +533,7 @@ export async function sendSchedule(
     );
   }
 
-  // 9. Final status
+  // 10. Final status
   if (sentCount > 0) {
     if (claim !== 'optimistic-lock' && markSentOnSuccess) {
       const { error: updateError } = await supabase

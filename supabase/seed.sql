@@ -268,3 +268,23 @@ join lateral (
 where s.status = 'sent'
   and s.template_id is not null
 on conflict do nothing;
+
+-- Every delivery above was one WhatsApp attempt (ADR 0011). The roll-up trigger
+-- recomputes each parent from its attempt, landing on the values it already
+-- holds. On the Cohen invitation the two 131049 failures are guest-level and
+-- eligible for SMS fallback; 63016 is not a guest-level code, so it is left out.
+insert into message_delivery_attempts (delivery_id, channel, status, template_id, error_code, error_message, triggered_by, sent_at, created_at)
+select
+  d.id,
+  d.delivery_method::delivery_method,
+  d.status,
+  d.template_id,
+  d.error_code,
+  d.error_message,
+  d.triggered_by,
+  d.sent_at,
+  coalesce(d.sent_at, d.created_at)
+from message_deliveries d
+where not exists (
+  select 1 from message_delivery_attempts a where a.delivery_id = d.id
+);

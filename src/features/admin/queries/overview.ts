@@ -168,7 +168,7 @@ export async function getSignals(): Promise<Signal[]> {
     // rather than by a filter.
     supabase
       .from('message_deliveries')
-      .select('id, error_code, created_at, schedules!inner(id, event_id, events(title))')
+      .select('id, error_code, created_at, schedules!inner(id, event_id, events(title)), message_delivery_attempts(channel)')
       .eq('status', 'failed')
       .gte('created_at', daysAgo(FAILED_DELIVERY_LOOKBACK_DAYS)),
 
@@ -214,6 +214,9 @@ export async function getSignals(): Promise<Signal[]> {
       events: { title: string | null } | null;
     } | null;
     if (!schedule?.event_id || testEventIds.has(schedule.event_id)) continue;
+    // Already tried by SMS: nothing left for an Operator to do from here.
+    const attempts = (row.message_delivery_attempts ?? []) as { channel: string }[];
+    if (attempts.some((attempt) => attempt.channel === 'sms')) continue;
 
     const entry = byEvent.get(schedule.event_id) ?? {
       title: schedule.events?.title ?? 'Untitled event',

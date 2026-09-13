@@ -2,13 +2,16 @@
 
 > **Methods:** `GET` (verification handshake), `POST` (notifications)
 > **Runtime:** `nodejs`
-> **Source:** `src/app/api/webhooks/whatsapp/route.ts`
+> **Source:** `src/app/api/webhooks/whatsapp/route.ts` (intake),
+> `src/features/schedules/services/process-whatsapp-webhook.ts` (processing),
+> `src/lib/webhooks/inbox.ts` (store / retry)
 > **Env:** `WHATSAPP_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`
 
 This is the return path for everything `sendWhatsAppTemplateMessage()` puts on
 the wire. The send call only tells us Meta accepted the message and hands back a
-`wamid`, which is stored on `message_deliveries.external_message_id`. Whether the
-message actually reached the guest, was opened, or bounced is known only here.
+`wamid`, which is stored on `message_delivery_attempts.external_message_id`.
+Whether the message actually reached the guest, was opened, or failed is known
+only here.
 
 ## What the handler does
 
@@ -16,16 +19,21 @@ message actually reached the guest, was opened, or bounced is known only here.
 POST /api/webhooks/whatsapp
   ├─ 1. Verify X-Hub-Signature-256 (HMAC-SHA256 of the raw body, app secret)
   ├─ 2. Parse JSON (a signed but unparseable body answers 400, not 500)
-  ├─ 3. Collect statuses[] across every entry/change in the payload
-  ├─ 4. Collapse to the most advanced status per wamid
-  ├─ 5. One indexed lookup for all of them (external_message_id IN (...))
-  └─ For each matched delivery:
-       └─ Write only if the new status outranks the stored one
+  ├─ 3. Store the raw body in webhook_events (a byte-identical redelivery is
+  │     recognised by its sha256 and stored once)
+  ├─ 4. Answer 200
+  └─ after():
+       ├─ Process the stored row
+       │    ├─ Collect statuses[], collapse to the most advanced per wamid
+       │    ├─ One indexed lookup on message_delivery_attempts (channel, wamid)
+       │    └─ Write each only if it outranks the attempt's stored status
+       │       (the database rolls the Delivery up from its attempts - ADR 0011)
+       └─ Retry up to 25 older rows still unprocessed
 ```
 
 Anything that is not a delivery status (inbound messages, marketing preference
-changes, template status changes) is logged and otherwise ignored. There is no
-table for it yet.
+changes, template status changes) is stored in `webhook_events` and logged, but
+not acted on.
 
 ## Rules the handler holds to
 
@@ -49,14 +57,32 @@ null (see `20260906000000_whatsapp_webhook_delivery_status.sql`).
 
 **Failures keep their numeric code.** `error_code` gets `errors[0].code` and
 `error_message` prefers `error_data.details` (the specific reason) over `title`
-(the generic bucket). The code is the part `categoriseWhatsAppError()` in
-`send-helpers.ts` branches on, and the only part of a Meta error stable enough
-to build logic around.
+(the generic bucket). The code is what `classifyWhatsAppFailure()`
+(`utils/whatsapp-failures.ts`) uses to decide whether a failure is guest-level
+and eligible for SMS Fallback (ADR 0012), and the only part of a Meta error
+stable enough to build logic around. An unlisted code is system-level.
 
-**Processing errors never reach Meta.** Meta disables a webhook that keeps
-failing. A delivery row we could not update is worth much less than the
-subscription carrying every future one, so processing errors are logged and the
-response is still 200.
+**Store first, then process.** The raw body is in `webhook_events` before Meta
+hears 200, so a processing failure leaves a row to retry instead of an event
+lost behind a response already sent. A processor signals "try again" by
+throwing; the row keeps `processed_at` null and records `last_error`. Retries
+happen only opportunistically, after each later notification - during a send
+window that is within minutes. There is no cron: a row left over from a quiet
+period waits for the next notification.
+
+**Processing errors never reach Meta; storage errors do.** Meta disables a
+webhook that keeps failing, so a notification that was stored always answers
+200. One that could not be stored exists nowhere else, so that - and only that -
+answers 500 and leaves Meta's retry to bring it back.
+
+**A status can beat its attempt row.** The send engine records attempts once per
+chunk, after the chunk's API calls return, so Meta's `sent` can arrive a few
+seconds before the row exists. A wamid with no attempt is retried for 15
+minutes, then logged as unmatched and given up on.
+
+**Raw payloads are not purged yet.** They carry guest phone numbers, and what
+matters long-term already lives on the attempts, so a retention purge is the
+natural next addition. Until then `webhook_events` only grows.
 
 ## Reading the logs
 
@@ -72,8 +98,11 @@ line per request, no per-row output.
 | `Rejected: signature mismatch over N bytes` | `WHATSAPP_APP_SECRET` almost certainly belongs to a different Meta app than the one holding the subscription. |
 | `Rejected: no X-Hub-Signature-256 header` | Something that is not Meta is calling this URL. |
 | `N status(es) -> M message(s), K matched, A applied, S already current, E write error(s)` | The one line that says the endpoint is working. `A` climbing over a send window is the thing to watch. |
-| `N of M message id(s) matched no delivery row` | Sending and tracking have come apart: the delivery upsert failed, rows were deleted, or another environment shares this phone number. |
-| `Delivery <id> to ***NNNN FAILED - <code>: <detail>` | A guest did not get their message. Always logged, never sampled. |
+| `N of M message id(s) matched no attempt after K min` | Sending and tracking have come apart: the attempt insert failed, rows were deleted, or another environment shares this phone number. |
+| `Attempt <id> to ***NNNN FAILED - <code>: <detail>` | A guest did not get their message. Always logged, never sampled. |
+| `Stored event <id> left for retry` | Processing threw; `webhook_events.last_error` says why. Normal for a few seconds at the start of a send (status before attempt row). |
+| `Retried N stored event(s), M now processed` | The opportunistic retry doing its job. |
+| `Could not store notification` | The inbox insert failed and Meta was told 500. Meta retries; persistent lines mean the database is unreachable. |
 | `Template <name>: REJECTED (reason)` | A template Kululu sends is no longer usable. Every schedule bound to it will fail. |
 
 Set `WHATSAPP_WEBHOOK_DEBUG=true` for raw payload dumps and per-delivery status

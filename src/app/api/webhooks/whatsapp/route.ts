@@ -1,54 +1,26 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import { NextResponse } from 'next/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { after, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import {
+  processWebhookEvent,
+  storeWebhookEvent,
+  sweepUnprocessedWebhookEvents,
+} from '@/lib/webhooks/inbox';
+import {
+  TAG,
+  collectFields,
+  debugEnabled,
+  processWhatsAppWebhookEvent,
+  type WhatsAppWebhookPayload,
+} from '@/features/schedules/services/process-whatsapp-webhook';
 
 // node:crypto and the service-role client both rule out the edge runtime.
 export const runtime = 'nodejs';
 
-const TAG = '[whatsapp-webhook]';
-
-/**
- * Set WHATSAPP_WEBHOOK_DEBUG=true to dump raw payloads. Off by default: a send
- * to 500 guests produces up to 1500 notifications, and the bodies carry guest
- * phone numbers. Turn it on in Vercel while diagnosing, then turn it back off.
- */
-function debugEnabled(): boolean {
-  return process.env.WHATSAPP_WEBHOOK_DEBUG === 'true';
-}
-
-/** Phone numbers are guest personal data - enough to correlate, not to identify. */
-function maskPhone(value: string | undefined): string {
-  if (!value) return 'unknown';
-  return value.length <= 4 ? '****' : `***${value.slice(-4)}`;
-}
-
-/**
- * Meta's delivery lifecycle, ordered. A status is only written when it ranks
- * above what the row already holds, which makes the handler idempotent under
- * Meta's at-least-once redelivery and safe when a retry arrives out of order.
- *
- * `failed` sits at the top deliberately. Meta never delivers a message it has
- * already reported as failed, so a lower-ranked status arriving afterwards is a
- * late duplicate of an earlier event, not a recovery - and an organiser looking
- * at a failure list should not see rows flip back out of it.
- */
-const STATUS_RANK = {
-  pending: 0,
-  sent: 1,
-  delivered: 2,
-  read: 3,
-  failed: 4,
-} as const;
-
-type DeliveryStatus = keyof typeof STATUS_RANK;
-
-/** The statuses a row may hold for `target` to still be an advance on it. */
-function statusesBelow(target: DeliveryStatus): DeliveryStatus[] {
-  return (Object.keys(STATUS_RANK) as DeliveryStatus[]).filter(
-    (status) => STATUS_RANK[status] < STATUS_RANK[target],
-  );
-}
+/** A stored row still unprocessed after this long is picked up by the next sweep. */
+const SWEEP_AFTER_MS = 2 * 60 * 1000;
+/** Bounded so one notification never turns into a long catch-up job. */
+const SWEEP_LIMIT = 25;
 
 // ---------------------------------------------------------------------------
 // GET - Meta webhook verification handshake
@@ -105,6 +77,10 @@ export async function GET(request: Request) {
 
 // ---------------------------------------------------------------------------
 // POST - notifications from the Meta WhatsApp Cloud API
+//
+// Store first, process second (see src/lib/webhooks/inbox.ts). The raw body is
+// in webhook_events before Meta hears 200, so a processing failure is a row to
+// retry, not an event lost behind a response we already sent.
 // ---------------------------------------------------------------------------
 export async function POST(request: Request) {
   const body = await request.text();
@@ -135,14 +111,53 @@ export async function POST(request: Request) {
     console.log(`${TAG} [debug] Raw payload: ${body}`);
   }
 
-  // Meta disables a webhook that keeps failing, so processing errors are logged
-  // and swallowed: a delivery record we could not update is worth far less than
-  // the subscription that carries every future one.
-  try {
-    await processPayload(payload);
-  } catch (error) {
-    console.error(`${TAG} Processing error:`, error);
+  const supabase = createServiceClient();
+  const stored = await storeWebhookEvent(supabase, {
+    provider: 'whatsapp',
+    rawBody: body,
+    payload,
+    fields: collectFields(payload),
+  });
+
+  if (stored.status === 'error') {
+    // The one failure Meta is told about. Processing errors are swallowed
+    // because the stored row gets retried; a notification we could not even
+    // store exists nowhere else, and Meta's own retry is its only way back.
+    console.error(`${TAG} Could not store notification:`, stored.error);
+    return NextResponse.json({ error: 'Storage unavailable' }, { status: 500 });
   }
+
+  after(async () => {
+    if (stored.status === 'stored') {
+      const ok = await processWebhookEvent(
+        supabase,
+        stored.event,
+        processWhatsAppWebhookEvent,
+      );
+      if (!ok) {
+        console.warn(`${TAG} Stored event ${stored.event.id} left for retry`);
+      }
+    }
+
+    // Retry whatever earlier notifications left behind. During a send window
+    // Meta calls every few seconds, so this is a retry within minutes. This is
+    // the only retry path - there is no cron.
+    try {
+      const swept = await sweepUnprocessedWebhookEvents(supabase, {
+        provider: 'whatsapp',
+        processor: processWhatsAppWebhookEvent,
+        olderThanMs: SWEEP_AFTER_MS,
+        limit: SWEEP_LIMIT,
+      });
+      if (swept.picked > 0) {
+        console.log(
+          `${TAG} Retried ${swept.picked} stored event(s), ${swept.processed} now processed`,
+        );
+      }
+    } catch (error) {
+      console.error(`${TAG} Retry sweep failed:`, error);
+    }
+  });
 
   return NextResponse.json({ success: true }, { status: 200 });
 }
@@ -177,313 +192,4 @@ function verifySignature(body: string, signatureHeader: string): boolean {
   }
 
   return true;
-}
-
-// ---------------------------------------------------------------------------
-// Payload shapes
-//
-// Only the fields this handler reads are typed. Meta sends a good deal more
-// (conversation, pricing, profile, ...) and adds to it over time.
-// ---------------------------------------------------------------------------
-interface WhatsAppError {
-  code?: number;
-  title?: string;
-  message?: string;
-  error_data?: { details?: string };
-}
-
-interface WhatsAppStatus {
-  /** The wamid returned by the send call, stored as external_message_id. */
-  id: string;
-  status: string;
-  /** Unix seconds. */
-  timestamp: string;
-  recipient_id?: string;
-  errors?: WhatsAppError[];
-}
-
-interface WhatsAppInboundMessage {
-  id: string;
-  from: string;
-  type: string;
-}
-
-interface WhatsAppUserPreference {
-  wa_id?: string;
-  category?: string;
-  /** 'stop' | 'resume' */
-  value?: string;
-}
-
-interface WhatsAppChangeValue {
-  statuses?: WhatsAppStatus[];
-  messages?: WhatsAppInboundMessage[];
-  user_preferences?: WhatsAppUserPreference[];
-  /** message_template_status_update */
-  event?: string;
-  message_template_name?: string;
-  reason?: string;
-}
-
-interface WhatsAppWebhookPayload {
-  object?: string;
-  entry?: Array<{
-    id?: string;
-    changes?: Array<{ field?: string; value?: WhatsAppChangeValue }>;
-  }>;
-}
-
-// ---------------------------------------------------------------------------
-// Dispatch
-// ---------------------------------------------------------------------------
-async function processPayload(payload: WhatsAppWebhookPayload) {
-  if (payload.object && payload.object !== 'whatsapp_business_account') {
-    console.warn(`${TAG} Ignored a payload for object "${payload.object}"`);
-    return;
-  }
-
-  const statuses: WhatsAppStatus[] = [];
-  const fields = new Set<string>();
-
-  for (const entry of payload.entry ?? []) {
-    for (const change of entry.changes ?? []) {
-      if (change.field) fields.add(change.field);
-      const value = change.value;
-      if (!value) continue;
-
-      statuses.push(...(value.statuses ?? []));
-
-      // Everything below is subscribed to for visibility, not for state: none
-      // of it has a table to land in yet. Logged rather than dropped so the
-      // signal exists the day one of them earns persistence.
-      for (const message of value.messages ?? []) {
-        console.log(
-          `${TAG} Inbound ${message.type} message from ${maskPhone(message.from)} (${message.id})`,
-        );
-      }
-
-      for (const preference of value.user_preferences ?? []) {
-        console.warn(
-          `${TAG} Marketing preference "${preference.value}" for ${maskPhone(preference.wa_id)} (category: ${preference.category})`,
-        );
-      }
-
-      if (change.field === 'message_template_status_update') {
-        console.warn(
-          `${TAG} Template ${value.message_template_name}: ${value.event}${value.reason ? ` (${value.reason})` : ''}`,
-        );
-      }
-    }
-  }
-
-  if (statuses.length === 0) {
-    // Not an error - a template or account notification legitimately carries no
-    // statuses - but worth saying, so a payload that produced no delivery
-    // writes is distinguishable from one that was never received.
-    console.log(
-      `${TAG} No delivery statuses in payload (fields: ${[...fields].join(', ') || 'none'})`,
-    );
-    return;
-  }
-
-  await processStatusUpdates(statuses);
-}
-
-// ---------------------------------------------------------------------------
-// Delivery status updates
-// ---------------------------------------------------------------------------
-async function processStatusUpdates(statuses: WhatsAppStatus[]) {
-  // One payload routinely carries several statuses for the same message, and
-  // only the most advanced one changes anything. Collapsing first turns a
-  // sent+delivered+read batch into a single row read and a single write.
-  const byMessageId = new Map<string, WhatsAppStatus>();
-  let unknownStatusCount = 0;
-
-  for (const status of statuses) {
-    if (!status.id) continue;
-    if (!isKnownStatus(status.status)) {
-      unknownStatusCount++;
-      continue;
-    }
-    const existing = byMessageId.get(status.id);
-    if (
-      !existing ||
-      STATUS_RANK[status.status as DeliveryStatus] >
-        STATUS_RANK[existing.status as DeliveryStatus]
-    ) {
-      byMessageId.set(status.id, status);
-    }
-  }
-
-  if (unknownStatusCount > 0) {
-    // A status Meta has added since this code was written. Worth knowing about.
-    console.warn(
-      `${TAG} Ignored ${unknownStatusCount} status(es) of a kind this handler does not recognise`,
-    );
-  }
-
-  if (byMessageId.size === 0) return;
-
-  const supabase = createServiceClient();
-
-  const { data: deliveries, error } = await supabase
-    .from('message_deliveries')
-    .select('id, status, delivered_at, read_at, external_message_id')
-    .in('external_message_id', [...byMessageId.keys()]);
-
-  if (error) {
-    console.error(`${TAG} Delivery lookup failed:`, error);
-    return;
-  }
-
-  const matched = deliveries ?? [];
-
-  // A wamid with no row is the signal that sending and tracking have come
-  // apart: the delivery upsert failed, the row was deleted, or the
-  // notification belongs to a message sent from another environment sharing
-  // this phone number. Silence here is how that goes unnoticed for weeks.
-  if (matched.length < byMessageId.size) {
-    const found = new Set(matched.map((d) => d.external_message_id));
-    const missing = [...byMessageId.keys()].filter((id) => !found.has(id));
-    console.warn(
-      `${TAG} ${missing.length} of ${byMessageId.size} message id(s) matched no delivery row. First few: ${missing.slice(0, 5).join(', ')}`,
-    );
-  }
-
-  let applied = 0;
-  let skipped = 0;
-  let failedWrites = 0;
-
-  await Promise.all(
-    matched.map(async (delivery) => {
-      const status = byMessageId.get(delivery.external_message_id!);
-      if (!status) return;
-      try {
-        const outcome = await applyStatus(supabase, delivery, status);
-        if (outcome === 'applied') applied++;
-        else if (outcome === 'skipped') skipped++;
-        else failedWrites++;
-      } catch (err) {
-        failedWrites++;
-        console.error(
-          `${TAG} Failed to apply ${status.status} to ${status.id}:`,
-          err,
-        );
-      }
-    }),
-  );
-
-  // The one line that says the endpoint is doing its job. Per-row logging would
-  // be 1500 lines for a single 500-guest blast; this is one.
-  console.log(
-    `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ${matched.length} matched, ${applied} applied, ${skipped} already current, ${failedWrites} write error(s)`,
-  );
-}
-
-function isKnownStatus(status: string): status is DeliveryStatus {
-  return status in STATUS_RANK;
-}
-
-type DeliveryRow = {
-  id: string;
-  status: DeliveryStatus | null;
-  delivered_at: string | null;
-  read_at: string | null;
-  external_message_id: string | null;
-};
-
-type ApplyOutcome = 'applied' | 'skipped' | 'error';
-
-async function applyStatus(
-  supabase: SupabaseClient,
-  delivery: DeliveryRow,
-  status: WhatsAppStatus,
-): Promise<ApplyOutcome> {
-  const target = status.status as DeliveryStatus;
-  const current = delivery.status ?? 'pending';
-
-  if (STATUS_RANK[target] <= STATUS_RANK[current]) {
-    if (debugEnabled()) {
-      console.log(
-        `${TAG} [debug] Delivery ${delivery.id} already ${current}, ignoring ${target}`,
-      );
-    }
-    return 'skipped';
-  }
-
-  // Meta's own clock, not ours: a webhook can be minutes late or a retry of an
-  // event from hours ago, and "when WhatsApp delivered it" is the fact worth
-  // storing. Existing values win so a redelivery never rewrites history.
-  const eventTimestamp = toIsoTimestamp(status.timestamp);
-
-  const patch: Record<string, unknown> = { status: target };
-
-  if (target === 'delivered' || target === 'read') {
-    patch.delivered_at = delivery.delivered_at ?? eventTimestamp;
-  }
-  if (target === 'read') {
-    patch.read_at = delivery.read_at ?? eventTimestamp;
-  }
-  if (target === 'failed') {
-    // The numeric code is what the send path already categorises on
-    // (categoriseWhatsAppError) and the only part of a Meta error that is
-    // stable enough to branch on - 131049 marketing cap, 131050 opt-out,
-    // 131026 undeliverable. Keep it alongside the human-readable text.
-    patch.error_code = status.errors?.[0]?.code ?? null;
-    patch.error_message = formatErrors(status.errors);
-
-    // Always logged, never sampled. A failure is the actionable event here: it
-    // means a guest did not get their invitation, and the code says whether
-    // that is fixable (a bad number) or a policy wall (an opt-out).
-    console.warn(
-      `${TAG} Delivery ${delivery.id} to ${maskPhone(status.recipient_id)} FAILED - ${patch.error_message}`,
-    );
-  }
-
-  // Guarding the write on the statuses this one outranks makes the update
-  // atomic: two webhook deliveries racing on the same row cannot reorder it.
-  const { error } = await supabase
-    .from('message_deliveries')
-    .update(patch)
-    .eq('id', delivery.id)
-    .in('status', statusesBelow(target));
-
-  if (error) {
-    console.error(`${TAG} Update failed for delivery ${delivery.id}:`, error);
-    return 'error';
-  }
-
-  if (debugEnabled()) {
-    console.log(
-      `${TAG} [debug] Delivery ${delivery.id}: ${current} -> ${target}`,
-    );
-  }
-
-  return 'applied';
-}
-
-/** Unix seconds to ISO, falling back to now for a missing or junk value. */
-function toIsoTimestamp(timestamp: string | undefined): string {
-  const seconds = Number(timestamp);
-  if (!timestamp || !Number.isFinite(seconds) || seconds <= 0) {
-    console.warn(
-      `${TAG} Status carried an unusable timestamp (${timestamp}), using now`,
-    );
-    return new Date().toISOString();
-  }
-  return new Date(seconds * 1000).toISOString();
-}
-
-function formatErrors(errors: WhatsAppError[] | undefined): string {
-  if (!errors || errors.length === 0) return 'Unknown error';
-
-  return errors
-    .map((error) => {
-      // error_data.details is the specific one ("this message was not delivered
-      // to maintain healthy ecosystem engagement"); title is the generic bucket.
-      const text = error.error_data?.details ?? error.message ?? error.title;
-      return [error.code, text].filter(Boolean).join(': ');
-    })
-    .filter(Boolean)
-    .join('; ');
 }

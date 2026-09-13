@@ -22,16 +22,21 @@ export {
 
 // Re-export send helpers
 export {
-  categoriseWhatsAppError,
   sendToGuest,
   sendSmsToGuest,
   buildSmsBody,
   sendInChunks,
-  buildDeliveryRecord,
+  buildAttemptRecord,
   generateConfirmationToken,
-  type WhatsAppErrorCategory,
+  type AttemptTrigger,
   type GuestSendResult,
 } from './send-helpers';
+
+export {
+  classifyWhatsAppFailure,
+  describeGuestLevelFailure,
+  type WhatsAppFailureSide,
+} from './whatsapp-failures';
 
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 

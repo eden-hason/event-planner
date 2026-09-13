@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { AdminDialogContent } from './admin-dialog';
 import { QueueRowAction, type QueueActionRow } from './queue-row-action';
+import { SmsFallbackDialog } from './sms-fallback-dialog';
 import { resendScheduleToSelected } from '@/features/schedules';
 import type { EventGuestSummary, EventTimelineRow, EventWorkspaceSignal } from '../types';
 import { formatScheduleDateTime } from '@/lib/date-time';
@@ -50,7 +51,7 @@ export function PhoneQualityDisclosure({ summary }: { summary: EventGuestSummary
       <Alert>
         <PhoneOff />
         <AlertTitle>{summary.unusablePhones.length} of {summary.guestRecords} records have no phone number</AlertTitle>
-        <AlertDescription>Every send skips them silently, so the reach numbers below can never reach 100%. They can only be answered by a call or by the owner typing the answer in</AlertDescription>
+        <AlertDescription>Every send skips them and records them as not sent, so the reach numbers below can never reach 100%. They can only be answered by a call or by the owner typing the answer in</AlertDescription>
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="xs" className="absolute top-2 right-2">List them</Button>
         </CollapsibleTrigger>
@@ -117,8 +118,9 @@ export function EventTimeline({ rows, eventId }: { rows: EventTimelineRow[]; eve
 
 function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string }) {
   const failed = row.deliveries.filter((delivery) => delivery.status === 'failed');
-  const successful = row.deliveries.filter((delivery) => delivery.status === 'sent');
-  const attempted = row.deliveries.length;
+  const successful = row.deliveries.filter((delivery) => ['sent', 'delivered', 'read'].includes(delivery.status));
+  // A not-sent delivery is a guest no attempt could be made for (no phone).
+  const attempted = row.deliveries.filter((delivery) => delivery.status !== 'not_sent').length;
   const includesManualResends = row.deliveries.some((delivery) => delivery.triggeredBy === 'manual')
     && row.deliveries.some((delivery) => delivery.triggeredBy === 'scheduled');
   const audienceLabel = `${row.audienceCount} ${row.targetStatus ?? 'guest'} ${row.audienceCount === 1 ? 'record' : 'records'}`;
@@ -270,6 +272,7 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
         )}
         <p className="text-muted-foreground mt-3 text-[11.5px]">Resends use the event&apos;s current template and configuration</p>
         <Button type="button" size="sm" className="mt-3" disabled={!selected.size} onClick={() => setOpen(true)}>Resend selected ({selected.size})</Button>
+        <SmsFallbackDialog scheduleId={scheduleId} />
       </CollapsibleContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -299,7 +302,11 @@ function DeliveryChoice({ delivery, selected, onToggle }: {
       <Checkbox checked={selected} onCheckedChange={(value) => onToggle(delivery.guestId, value === true)} />
       <span className="min-w-0 flex-1">
         <span className="font-medium">{delivery.guestName}</span>
-        <span className="text-muted-foreground ml-2">{delivery.guestPhone ?? 'No phone'} · {delivery.status}</span>
+        <span className="text-muted-foreground ml-2">
+          {delivery.guestPhone ?? 'No phone'} · {delivery.status}
+          {delivery.channel === 'sms' ? ' via SMS' : ''}
+          {delivery.status === 'failed' && delivery.hasSmsAttempt ? ' · SMS also tried' : ''}
+        </span>
         {delivery.errorMessage && <span className="text-destructive block">{delivery.errorMessage}</span>}
       </span>
     </label>
