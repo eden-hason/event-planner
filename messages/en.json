@@ -1225,6 +1225,18 @@
         "title": "Some guests are not seated yet",
         "description": "{withoutTable} of {total} guests have no table yet. They will get the version of the message without a table number.",
         "link": "Seating"
+      },
+      "customNote": {
+        "label": "Custom note",
+        "placeholder": "Add a note to include in this message",
+        "helper": "Leave blank to send the version without a note",
+        "save": "Save",
+        "saving": "Saving...",
+        "toast": {
+          "updating": "Updating note...",
+          "updated": "Note updated",
+          "error": "Something went wrong"
+        }
       }
     },
     "sendDialog": {

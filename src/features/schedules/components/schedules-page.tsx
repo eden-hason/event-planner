@@ -50,6 +50,8 @@ type ScheduleWithTemplate = {
    * no table variant in play, so there is nothing to warn about.
    */
   seatingGap: { withoutTable: number; total: number } | null;
+  /** Whether this schedule's family offers a note variant at all. */
+  offersNote: boolean;
 };
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -86,13 +88,20 @@ export async function SchedulesPage({
   const resolved = await Promise.all(
     schedules.map(async (schedule): Promise<ScheduleWithTemplate> => {
       if (!schedule.template) {
-        return { schedule, template: null, smsBody: null, seatingGap: null };
+        return {
+          schedule,
+          template: null,
+          smsBody: null,
+          seatingGap: null,
+          offersNote: false,
+        };
       }
 
       const resolution = await resolveTemplatesForPreview({
         anchor: schedule.template,
         gifting,
         tableNumbers,
+        note: Boolean(schedule.customText?.trim()),
       });
 
       // A failed resolution is a seeding bug that will also fail the send.
@@ -124,10 +133,14 @@ export async function SchedulesPage({
             : null,
         smsBody:
           previewTemplate.channel === 'sms'
-            ? resolveSmsBodyForPreview(previewTemplate.payload, event)
-                .resolvedBody
+            ? resolveSmsBodyForPreview(
+                previewTemplate.payload,
+                event,
+                schedule.customText,
+              ).resolvedBody
             : null,
         seatingGap,
+        offersNote: resolution.success ? resolution.templates.offersNote : false,
       };
     }),
   );
@@ -199,7 +212,7 @@ export async function SchedulesPage({
     const multiple = items.length > 1;
 
     contentByType[type] = items.map(
-      ({ schedule, template, smsBody, seatingGap }, index) => {
+      ({ schedule, template, smsBody, seatingGap, offersNote }, index) => {
         const label = multiple ? `${baseLabel} ${index + 1}` : baseLabel;
 
         // A call round is planned like a message but executed by a person, so it
@@ -272,6 +285,7 @@ export async function SchedulesPage({
                     template={template}
                     smsBody={smsBody}
                     seatingGap={seatingGap}
+                    offersNote={offersNote}
                     eventDate={eventDate}
                     event={event}
                   />
@@ -286,6 +300,7 @@ export async function SchedulesPage({
                 template={template}
                 smsBody={smsBody}
                 seatingGap={seatingGap}
+                offersNote={offersNote}
                 eventDate={eventDate}
                 event={event}
               />

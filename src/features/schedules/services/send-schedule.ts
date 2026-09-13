@@ -255,6 +255,7 @@ export async function sendSchedule(
     anchor: template,
     gifting: isGiftingEnabled(event.eventSettings),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
+    note: Boolean(schedule.customText?.trim()),
   });
 
   if (!resolution.success) {

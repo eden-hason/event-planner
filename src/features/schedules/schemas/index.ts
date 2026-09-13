@@ -77,6 +77,10 @@ export const ScheduleDbSchema = z.object({
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   schedule_type_id: z.uuid(),
   template_id: z.uuid().nullable(),
+  // Organiser-authored free-text line for this schedule instance (e.g. a
+  // custom note). Read by templates whose family offers requires_note - see
+  // services/resolve-reminder-templates.ts.
+  custom_text: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
   schedule_types: z.object({
@@ -107,6 +111,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   template: db.message_templates as MessageTemplateApp | null,
   // Derived from the template row - the single source of truth for channel
   deliveryMethod: db.message_templates?.channel ?? null,
+  customText: db.custom_text ?? null,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));

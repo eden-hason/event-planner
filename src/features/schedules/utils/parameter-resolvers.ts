@@ -399,9 +399,20 @@ function isPerGuestSource(source: string): boolean {
   );
 }
 
+/**
+ * Sources that live on the schedule instance rather than the event - just
+ * the organiser's note today. Resolved directly from the value the caller
+ * hands in rather than treated as "missing": an empty note is the normal
+ * state of a without-note variant, not an event field nobody filled in.
+ */
+function isScheduleSource(source: string): boolean {
+  return source.startsWith('schedule.');
+}
+
 export function resolveSmsBodyForPreview(
   smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
+  customText?: string | null,
 ): { resolvedBody: string; hasMissingFields: boolean } {
   const placeholders = smsConfig.parameters?.placeholders;
   if (!placeholders || placeholders.length === 0) {
@@ -410,13 +421,19 @@ export function resolveSmsBodyForPreview(
 
   let hasMissingFields = false;
   const resolvedValues: string[] = [];
-  const mockContext = { event: event ?? {}, guest: {} } as unknown as ParameterResolutionContext;
+  const mockContext = {
+    event: event ?? {},
+    guest: {},
+    schedule: { customText },
+  } as unknown as ParameterResolutionContext;
 
   for (const config of placeholders) {
     const source = config.source ?? config.name;
     if (isPerGuestSource(source)) {
       const fieldName = source.split('.').pop() ?? source;
       resolvedValues.push(`[${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}]`);
+    } else if (isScheduleSource(source)) {
+      resolvedValues.push(resolvePlaceholder(config.name, config, mockContext) || '…');
     } else {
       const rawValue = event ? getValueByPath({ event }, source) : undefined;
       if (!rawValue) {
@@ -439,6 +456,7 @@ export function resolveSmsBodyForPreview(
 export function resolveTemplateBodyForPreview(
   template: WhatsAppTemplateApp,
   event: EventApp | null,
+  customText?: string | null,
 ): { resolvedBody: string; hasMissingFields: boolean } {
   const placeholders = template.parameters?.placeholders;
 
@@ -451,6 +469,7 @@ export function resolveTemplateBodyForPreview(
   const mockContext = {
     event: event ?? {},
     guest: {},
+    schedule: { customText },
   } as unknown as ParameterResolutionContext;
 
   for (const config of placeholders) {
@@ -460,6 +479,9 @@ export function resolveTemplateBodyForPreview(
       const fieldName = source.split('.').pop() ?? source;
       const label = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
       resolvedValues.push(`[${label}]`);
+    } else if (isScheduleSource(source)) {
+      const resolved = resolvePlaceholder(config.name, config, mockContext);
+      resolvedValues.push(resolved || '…');
     } else {
       const rawValue = event ? getValueByPath({ event }, source) : undefined;
 
