@@ -1,6 +1,5 @@
-export { DashboardHeader } from './dashboard-header';
+export { HomeHeader } from './home-header';
 export { EventHeroBanner } from './event-hero-banner';
-export { GuestStatCards } from './guest-stat-cards';
 export { RsvpBreakdownCard } from './rsvp-breakdown-card';
 export { RecentRsvpActivityCard } from './recent-rsvp-activity-card';
 export { OnboardingChecklistCard } from './onboarding-checklist-card';

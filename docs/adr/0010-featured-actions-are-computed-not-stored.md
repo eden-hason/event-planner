@@ -1,8 +1,8 @@
 # Featured Actions are computed, not stored
 
 Home replaces the per-event dashboard's separate Onboarding Checklist with a single
-Featured Action mechanism: each candidate action (finish an unfinished setup step, send
-an RSVP reminder, try a new capability, etc.) carries its own eligibility rule evaluated
+Featured Action mechanism: each candidate action (finish an unfinished setup step, fix
+the guest list, try a new capability, etc.) carries its own eligibility rule evaluated
 from the Event's current state, the same way a Back Office **Signal** works. We rejected
 keeping a distinct checklist model, and rejected adding per-action dismissal, because
 either would require persisted per-Owner state ("seen", "snoozed", "done") that the rest

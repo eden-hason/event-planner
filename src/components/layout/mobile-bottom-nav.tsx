@@ -5,8 +5,8 @@ import { usePathname } from '@/i18n/navigation';
 import {
   IconCalendar,
   IconCalendarFilled,
-  IconDashboard,
-  IconDashboardFilled,
+  IconHome,
+  IconHomeFilled,
   IconDots,
   IconDotsFilled,
   IconListDetails,
@@ -22,7 +22,7 @@ import { isGuestImportRoute } from './app-shell';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
-const SEATING_MANAGER_ALLOWED = new Set(['dashboard', 'guests', 'more']);
+const SEATING_MANAGER_ALLOWED = new Set(['home', 'guests', 'more']);
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -45,11 +45,11 @@ export function MobileBottomNav() {
 
   const primaryItems: MobileTabBarItem[] = [
     {
-      value: 'dashboard',
-      label: tNav('dashboard'),
-      icon: IconDashboard,
-      activeIcon: IconDashboardFilled,
-      href: buildNavUrl('/app/dashboard', eventId),
+      value: 'home',
+      label: tNav('home'),
+      icon: IconHome,
+      activeIcon: IconHomeFilled,
+      href: buildNavUrl('/app/home', eventId),
       disabled,
     },
     {

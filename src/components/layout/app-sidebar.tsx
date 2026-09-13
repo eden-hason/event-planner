@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import {
-  IconDashboard,
+  IconHome,
   IconUsers,
   IconUsersGroup,
   IconCalendar,
@@ -34,7 +34,7 @@ import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
 import { cn } from '@/lib/utils';
 
-const SEATING_MANAGER_ALLOWED = ['dashboard', 'guests', 'seating', 'settings'];
+const SEATING_MANAGER_ALLOWED = ['home', 'guests', 'seating', 'settings'];
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -103,10 +103,10 @@ export function AppSidebar({
 
   const navMainBase = [
     {
-      id: 'dashboard',
-      title: tNav('dashboard'),
-      url: '/app/dashboard',
-      icon: IconDashboard,
+      id: 'home',
+      title: tNav('home'),
+      url: '/app/home',
+      icon: IconHome,
     },
     {
       id: 'eventDetails',

@@ -285,7 +285,7 @@ export function OnboardingTakeover({
       }
       const result = await publishDraftEvent(id);
       if (result.success) {
-        router.replace(`/app/${id}/dashboard`);
+        router.replace(`/app/${id}/home`);
       }
     });
   };

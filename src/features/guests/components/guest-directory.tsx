@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, startTransition, useRef } from 'react';
+import { useState, useActionState, startTransition, useRef, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { GuestSearch } from './guest-search';
@@ -16,8 +16,8 @@ import type { TableOption } from '@/features/seating';
 import { useGuestFilters, GuestSortKey } from '@/features/guests/hooks';
 import { useDynamicPageSize } from '@/hooks/use-dynamic-page-size';
 import { deleteGuest, type DeleteGuestState } from '@/features/guests/actions';
-import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
-import { IconUpload, IconPhoneOff, IconFileSpreadsheet, IconArrowsSort, IconCheck } from '@tabler/icons-react';
+import { exportGuestsToIplan, scopeToGuestIssue, type IplanScope } from '@/features/guests/utils';
+import { IconUpload, IconPhoneOff, IconFileSpreadsheet, IconArrowsSort, IconCheck, IconX } from '@tabler/icons-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -87,7 +87,14 @@ export function GuestDirectory({
     toggleNoPhoneOnly,
     sortKey,
     setSortKey,
+    issue,
+    clearIssue,
   } = useGuestFilters(groups);
+
+  const listedGuests = useMemo(
+    () => (issue ? scopeToGuestIssue(guests, issue) : guests),
+    [guests, issue],
+  );
 
   const selectedStatuses = externalStatuses ?? internalStatuses;
   const handleStatusToggle = externalStatusToggle ?? internalStatusToggle;
@@ -266,13 +273,24 @@ export function GuestDirectory({
               <IconPhoneOff size={16} />
               {t('filters.noPhone')}
             </Button>
+            {issue && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearIssue}
+                className="border-primary/50 bg-primary/8 text-primary hover:bg-primary/15 hover:text-primary gap-1.5 font-medium"
+              >
+                {t(`issues.${issue}`)} · {listedGuests.length}
+                <IconX size={14} aria-label={t('issues.clear')} />
+              </Button>
+            )}
           </div>
         </CardHeader>
       )}
       <CardContent ref={tableContainerRef}>
         {isCalculated ? (
           <GuestsTable
-            guests={guests}
+            guests={listedGuests}
             searchTerm={searchTerm}
             groupFilter={selectedGroupIds}
             statusFilter={selectedStatuses}

@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { daysUntil } from '@/lib/date-time';
 
 /**
  * The card the couple watches take shape.
@@ -116,18 +117,6 @@ function SparkIcon() {
   );
 }
 
-/** Whole days from today to the event, floored at zero. */
-function daysUntil(eventDate: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(eventDate);
-  target.setHours(0, 0, 0, 0);
-  return Math.max(
-    0,
-    Math.round((target.getTime() - today.getTime()) / 86_400_000),
-  );
-}
-
 const CHIP_BASE =
   'inline-flex items-center gap-[7px] rounded-full px-3 py-[7px] font-medium backdrop-blur-[4px]';
 
@@ -156,7 +145,7 @@ export function EventCard({
         year: 'numeric',
       })
     : null;
-  const days = data.eventDate ? daysUntil(data.eventDate) : null;
+  const days = data.eventDate ? Math.max(0, daysUntil(data.eventDate)) : null;
 
   const typeLabel = data.eventType
     ? t(`typeLabel.${data.eventType}` as 'typeLabel.wedding')

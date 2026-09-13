@@ -1,6 +1,7 @@
 import {
   getConfirmationDataByToken,
   getConfirmationDataByGuestToken,
+  getConfirmationPreviewData,
   isGuestInvitationToken,
 } from '@/features/confirmation/queries';
 import { ConfirmationExperience } from '@/features/confirmation';
@@ -37,11 +38,19 @@ export async function ConfirmationPage({
       ? await getConfirmationDataByToken(token)
       : null;
 
-  if (!data) {
-    return <InvalidTokenView />;
+  if (data) {
+    return <ConfirmationExperience token={token} data={data} />;
   }
 
-  return <ConfirmationExperience token={token} data={data} />;
+  // An event preview token shares the uuid shape of a Guest's invitation token.
+  // The WhatsApp button on a Test Message can only append a token to the /c/
+  // base registered with Meta, so previews must resolve here too.
+  const preview = await getConfirmationPreviewData(token);
+  if (preview) {
+    return <ConfirmationExperience token={token} data={preview} preview />;
+  }
+
+  return <InvalidTokenView />;
 }
 
 function InvalidTokenView() {

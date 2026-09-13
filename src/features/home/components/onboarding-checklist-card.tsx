@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Onboarding } from '@/features/events/components/onboarding-checklist';
-import type { OnboardingStatus } from '@/features/dashboard/types';
+import type { OnboardingStatus } from '@/features/home/types';
 
 export function OnboardingChecklistCard({
   eventId,
@@ -11,7 +11,7 @@ export function OnboardingChecklistCard({
   eventId: string;
   status: OnboardingStatus;
 }) {
-  const t = useTranslations('dashboard.onboarding');
+  const t = useTranslations('home.onboarding');
 
   const steps = [
     {

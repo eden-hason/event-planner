@@ -10,7 +10,8 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import { GuestStats } from './guest-stats';
@@ -220,6 +221,24 @@ export function GuestsPage({
     setIsDrawerOpen(true);
   };
 
+  // Home's Featured Actions deep-link here: `?tab=groups` lands on the groups
+  // tab, `?add=1` opens the same add-guest entry point as the header button
+  // (the source sheet on a phone, the drawer on desktop) once, then drops the
+  // flag so a refresh or a back navigation does not open it again. It waits
+  // for mount, which is when `isMobile` is first known.
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!hasMounted || searchParams.get('add') !== '1') return;
+    if (isMobile) setSourceSheetOpen(true);
+    else handleAddGuest();
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('add');
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, hasMounted]);
+
   const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
     setSelectedGuest(guest);
     setIsDrawerOpen(true);
@@ -326,7 +345,9 @@ export function GuestsPage({
     [],
   );
 
-  const [activeTab, setActiveTab] = useState<'guests' | 'groups'>('guests');
+  const [activeTab, setActiveTab] = useState<'guests' | 'groups'>(() =>
+    searchParams.get('tab') === 'groups' ? 'groups' : 'guests',
+  );
 
   /*
    * On a phone the tab's action goes into `PageCard`'s chrome row beside the

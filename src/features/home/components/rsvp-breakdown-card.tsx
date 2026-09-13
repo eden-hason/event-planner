@@ -14,7 +14,7 @@ import {
 import type { GuestStats } from '../types';
 
 export function RsvpBreakdownCard({ stats }: { stats: GuestStats }) {
-  const t = useTranslations('dashboard.rsvpBreakdown');
+  const t = useTranslations('home.rsvpBreakdown');
   const { total, confirmed, pending, declined } = stats;
 
   const chartConfig = useMemo(() => ({

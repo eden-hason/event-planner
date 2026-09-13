@@ -11,6 +11,29 @@ export function eventDaysFromToday(eventDate: string | null, now = new Date()): 
   return Math.round((utcCalendarStart(eventDate) - utcCalendarStart(now)) / DAY_MS);
 }
 
+/** Today's calendar date in Israel, where the product's events happen, as a UTC midnight. */
+function israelCalendarStart(now: Date): number {
+  const ymd = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ADMIN_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  return Date.parse(`${ymd}T00:00:00Z`);
+}
+
+/**
+ * Whole days from today to a calendar date: 0 on the day, negative after it.
+ *
+ * `event_date` is a calendar date stored at 00:00 UTC, so its UTC date is the
+ * day the Owner picked; "today" is read in Israel time so the countdown ticks
+ * over at local midnight on every server and browser, rather than at 02:00 or
+ * 03:00 on a UTC server.
+ */
+export function daysUntil(date: string, now: Date = new Date()): number {
+  return Math.round((utcCalendarStart(date) - israelCalendarStart(now)) / DAY_MS);
+}
+
 export function formatEventDate(
   eventDate: string | null,
   options?: { year?: boolean; weekday?: boolean },

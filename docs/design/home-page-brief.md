@@ -144,13 +144,12 @@ Composition, roughly:
   em-dash-free, reads as deliberate rather than broken) rather than a "0" or a dash that
   looks like an error
 - **RSVP progress, secondary**: a slim progress bar or ring, "`{confirmed} of
-  {total} confirmed`" against `guestsEstimate` when set. Zero guests is not an edge
+  {total} confirmed`" in heads. Zero guests is not an edge
   case to gloss over - see section 9
-- **Illustration**: keep it capability-free - the existing per-event-type SVGs
-  (`/hero-wedding.svg`, `/hero-mitzva.svg`) refined into a fuller, more dynamic
-  composition, plus the existing confetti canvas treatment
-  (`src/features/dashboard/components/confetti.tsx`). No cover-photo upload, no
-  template-borrowed art
+- **Illustration**: keep it capability-free - a soft wash with decorative line art in
+  the primary and violet accents behind the title, plus the existing confetti canvas
+  treatment (`src/features/home/components/confetti.tsx`) on the day of the event. No
+  cover-photo upload, no template-borrowed art
 
 ## 6. Featured Actions
 
@@ -158,12 +157,13 @@ A row of up to **4 cards**, ranked, contextual, computed fresh on every page loa
 `CONTEXT.md`'s **Featured Action** entry and ADR 0010. No dismiss affordance anywhere,
 even as a hover action - there is nothing to dismiss.
 
-**Selection rule:** walk the tiers top to bottom, take the highest-priority eligible
-action from each until 4 slots are filled; if fewer than 4 are eligible, fill remaining
+**Selection rule:** every eligible Setup action comes first, in order. Then take the
+highest-priority eligible action from each later tier, then the remaining eligible ones
+in tier order, until 4 slots are filled; if fewer than 4 are eligible, fill remaining
 slots from Fallback, in order.
 
 ```
-TIER 1 - Setup (highest priority, one at a time)
+TIER 1 - Setup (highest priority, all eligible steps lead the row)
   1. Complete event details        eligible while !detailsComplete
   2. Add guests / import list      eligible while !hasGuests
   3. Form groups                   eligible while hasGuests && !hasGroups
@@ -171,19 +171,19 @@ TIER 1 - Setup (highest priority, one at a time)
   5. Invite a collaborator         eligible while !hasCollaborator
 
 TIER 2 - Urgent ongoing
-  6. Send an RSVP reminder         eligible while pendingGuests > 0
-                                     and no reminder Schedule sent in last 7d
-  7. Guest list health check (NEW) eligible while totalGuestRecords >= 20
+  6. Guest list health check (NEW) eligible while totalGuestRecords >= 20
                                      and duplicates/missing phones found
 
 TIER 3 - Discovery
-  8. Get a test message (NEW)      eligible once >= 1 Schedule exists
-  9. Set up seating                eligible while confirmedGuests > 0
+  7. Get a test message (NEW)      eligible while an unsent confirmation
+                                     Schedule exists, the viewer has not
+                                     received a test, and the Event is under
+                                     its cap
+  8. Set up seating                eligible while confirmedGuests > 0
                                      and no Seating Plan started
- 10. Set up digital gifting        eligible while gifting not configured
- 11. Choose an invitation template eligible while still on the default template
- 12. Share a live invite preview   eligible once a template is chosen (NEW)
- 13. Log budget / expenses         eligible while no Expense logged
+  9. Set up digital gifting        eligible while gifting not configured
+ 10. Share a live invite preview   eligible once a template is chosen (NEW)
+ 11. Log budget / expenses         eligible while no Expense logged
 
 FALLBACK - Steady-state (always eligible, fills empty slots, never dismissible)
   - Add a guest
@@ -209,7 +209,7 @@ FALLBACK - Steady-state (always eligible, fills empty slots, never dismissible)
 
 ### Card anatomy
 
-Each card needs, at minimum: an icon, a short label (imperative, e.g. "Send a reminder"
+Each card needs, at minimum: an icon, a short label (imperative, e.g. "Add guests"
 - no trailing period per the copy rules), and enough room to convey *why now* (e.g. "42
 guests haven't responded") without becoming a paragraph. Tapping/clicking either
 performs the action inline (test message, health check, preview link, ask AI) or
@@ -236,8 +236,8 @@ summaries, each linking into its own feature:
   see events schema) when set; otherwise just the spend total, no ratio
 - **Seating**: `SeatingProgressView.confirmedRecordsSeated` /
   `confirmedRecordsTotal` (Guest Records, not heads - per ADR-0009/seating `types.ts`)
-- **Schedules**: the next upcoming Schedule's type and date, or the pending count
-  (`getPendingSchedulesCount`) if none is imminently due
+- **Schedules**: the next upcoming Schedule's type and date when it is due within 14
+  days, otherwise the pending count (`getPendingSchedulesCount`)
 
 Each of the three has a real "not started yet" state (see section 9) - it must not be
 confused with a loading or error state.

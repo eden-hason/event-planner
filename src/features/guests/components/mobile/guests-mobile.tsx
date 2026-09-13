@@ -11,6 +11,7 @@ import {
   IconPlus,
   IconUpload,
   IconUsers,
+  IconX,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +32,7 @@ import { GuestWithGroupApp, GroupInfo } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
 import type { IplanScope } from '@/features/guests/utils';
 import { useGuestFilters } from '@/features/guests/hooks';
-import { filterAndSortGuests } from '@/features/guests/utils';
+import { filterAndSortGuests, scopeToGuestIssue } from '@/features/guests/utils';
 import { GuestSearch } from '@/features/guests/components/guest-search';
 import { GuestMeterChips } from './guest-meter-chips';
 import { GuestMobileCard } from './guest-mobile-card';
@@ -107,11 +108,13 @@ export function GuestsMobile({
     toggleNoPhoneOnly,
     sortKey,
     setSortKey,
+    issue,
+    clearIssue,
   } = useGuestFilters(groups);
 
   const filteredGuests = useMemo(
     () =>
-      filterAndSortGuests(guests, {
+      filterAndSortGuests(issue ? scopeToGuestIssue(guests, issue) : guests, {
         searchTerm,
         groupIds: selectedGroupIds,
         statuses: selectedStatuses,
@@ -119,13 +122,13 @@ export function GuestsMobile({
         noPhoneOnly,
         sortKey,
       }),
-    [guests, searchTerm, selectedGroupIds, selectedStatuses, selectedSides, noPhoneOnly, sortKey],
+    [guests, issue, searchTerm, selectedGroupIds, selectedStatuses, selectedSides, noPhoneOnly, sortKey],
   );
 
   // Reset to first page whenever the filtered result set changes.
   useEffect(() => {
     setPageIndex(0);
-  }, [searchTerm, selectedGroupIds, selectedStatuses, selectedSides, noPhoneOnly, sortKey]);
+  }, [issue, searchTerm, selectedGroupIds, selectedStatuses, selectedSides, noPhoneOnly, sortKey]);
 
   const total = filteredGuests.length;
   const pageCount = Math.max(1, Math.ceil(total / MOBILE_PAGE_SIZE));
@@ -145,6 +148,7 @@ export function GuestsMobile({
     if (noPhoneOnly) toggleNoPhoneOnly();
     setSortKey('created_asc');
     onStatusClick(null);
+    if (issue) clearIssue();
   };
 
   // First use: no guests at all.
@@ -238,6 +242,19 @@ export function GuestsMobile({
           </Button>
         </div>
       </div>
+
+      {issue && (
+        <div>
+          <button
+            type="button"
+            onClick={clearIssue}
+            className="border-primary/50 bg-primary/8 text-primary inline-flex h-8 items-center gap-1.5 rounded-full border ps-3 pe-2 text-[13px] font-medium"
+          >
+            {t(`issues.${issue}`)} · {total}
+            <IconX size={14} aria-label={t('issues.clear')} />
+          </button>
+        </div>
+      )}
 
       {/* Result count, above the list */}
       {total > 0 && (

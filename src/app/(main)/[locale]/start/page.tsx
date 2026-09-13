@@ -31,7 +31,7 @@ export default async function StartPage({
   const existing = draft ? null : await getLastUserEvent();
 
   if (existing?.id && requestedNew === undefined) {
-    redirect({ href: `/app/${existing.id}/dashboard`, locale });
+    redirect({ href: `/app/${existing.id}/home`, locale });
   }
 
   return (
@@ -39,7 +39,7 @@ export default async function StartPage({
       draft={draft}
       // Someone who arrived from the app has a workspace to return to, so the
       // takeover's first screen gets a way out instead of a dead end.
-      exitHref={existing?.id ? `/app/${existing.id}/dashboard` : undefined}
+      exitHref={existing?.id ? `/app/${existing.id}/home` : undefined}
       profile={{
         fullName: profile?.fullName ?? '',
         phoneNumber: profile?.phoneNumber ?? '',

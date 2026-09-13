@@ -92,9 +92,15 @@ function buildTimeRows(
 export function ConfirmationExperience({
   token,
   data,
+  preview = false,
 }: {
   token: string;
   data: ConfirmationPageData;
+  /**
+   * Opened through an event's preview token rather than a Guest's: the page
+   * plays out in full, but no view or answer ever reaches the server.
+   */
+  preview?: boolean;
 }) {
   const { guest, event, scheduleId } = data;
 
@@ -128,7 +134,7 @@ export function ConfirmationExperience({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (scheduleId) {
+    if (scheduleId && !preview) {
       recordViewInteraction(guest.id, scheduleId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -142,6 +148,12 @@ export function ConfirmationExperience({
     if (!choice || pending) return;
     setPending(true);
     setError('');
+
+    if (preview) {
+      setDone(true);
+      setPending(false);
+      return;
+    }
 
     const formData = new FormData();
     formData.set('token', token);
@@ -204,6 +216,12 @@ export function ConfirmationExperience({
           .rsvp-rise, .rsvp-reveal, .rsvp-pop, .rsvp-draw { animation: none; }
         }
       `}</style>
+
+      {preview ? (
+        <div className="fixed inset-x-0 top-0 z-10 bg-[oklch(0.21_0.006_285.9)] px-4 py-2 text-center text-[13px] font-medium text-white">
+          תצוגה מקדימה · תשובות לא נשמרות
+        </div>
+      ) : null}
 
       <main className="flex min-h-dvh w-full max-w-[600px] flex-col items-center pb-10">
         {event.titlePrefix ? (

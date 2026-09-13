@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useFeatureHeader } from '@/components/feature-layout';
 
-export function DashboardHeader() {
-  const t = useTranslations('dashboard.header');
+export function HomeHeader() {
+  const t = useTranslations('home.header');
 
   useFeatureHeader({
     title: t('title'),

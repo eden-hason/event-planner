@@ -37,7 +37,7 @@
     "heroSubtitle": "אישורי הגעה בוואטסאפ, סידורי הושבה ותקציב חכם"
   },
   "navigation": {
-    "dashboard": "לוח בקרה",
+    "home": "בית",
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
     "seating": "הושבה",
@@ -987,11 +987,16 @@
       "created_desc": "תאריך הוספה - חדש",
       "rsvp": "סטטוס אישור הגעה",
       "amount_desc": "הכי הרבה מוזמנים"
+    },
+    "issues": {
+      "duplicates": "כפילויות אפשריות",
+      "all": "לבדיקה",
+      "clear": "הסרת הסינון"
     }
   },
-  "dashboard": {
+  "home": {
     "header": {
-      "title": "לוח בקרה"
+      "title": "בית"
     },
     "eventNotFound": "האירוע לא נמצא",
     "stats": {
@@ -1006,14 +1011,6 @@
       "pendingMessageSingular": "הודעה ממתינה",
       "pendingMessages": "הודעות ממתינות",
       "noDateYet": "עוד אין תאריך"
-    },
-    "guestStats": {
-      "totalGuests": "סה\"כ אורחים",
-      "invited": "מוזמנים",
-      "confirmed": "אישרו",
-      "pending": "ממתינים",
-      "declined": "סירב",
-      "ofTotal": "מתוך {total}"
     },
     "rsvpBreakdown": {
       "title": "פירוט אישורי הגעה",
@@ -1051,31 +1048,6 @@
       "noDateDescription": "ברגע שתקבעו, הכל כאן יתעדכן לבד",
       "noDateChip": "התאריך עוד לפניכם"
     },
-    "upcomingSchedules": {
-      "title": "תזמונים קרובים",
-      "noSchedules": "אין תזמונים קרובים",
-      "createOne": "צור אחד",
-      "viewAll": "צפה בכל התזמונים ←",
-      "actionTypes": {
-        "initial_invitation": "הזמנה ראשונית",
-        "confirmation": "אישור הגעה",
-        "event_reminder": "תזכורת אירוע",
-        "post_event": "תודה",
-        "phone_call": "סבב שיחות"
-      }
-    },
-    "quickActions": {
-      "title": "פעולות מהירות",
-      "description": "משימות נפוצות",
-      "addGuest": "הוסף אורח",
-      "addGuestDesc": "הזמן אורחים חדשים",
-      "createSchedule": "צור לוח זמנים",
-      "createScheduleDesc": "תכנן את ציר הזמן",
-      "viewGuests": "כל האורחים",
-      "viewGuestsDesc": "נהל את רשימת האורחים",
-      "importCsv": "ייבוא קובץ",
-      "importCsvDesc": "העלאה המונית של אורחים"
-    },
     "recentActivity": {
       "title": "פעילות אחרונה",
       "description": "עדכוני אישור הגעה אחרונים",
@@ -1089,7 +1061,6 @@
       "hoursAgo": "לפני {count} שעות",
       "dayAgo": "לפני {count} יום",
       "daysAgo": "לפני {count} ימים",
-      "showMore": "הצג עוד",
       "byPhone": "בטלפון"
     },
     "onboarding": {
@@ -1121,6 +1092,164 @@
         "description": "הזמן שותף או בן משפחה לעזור לנהל אישורי הגעה ופרטי אורחים.",
         "action": "נהל שותפים"
       }
+    },
+    "mobile": {
+      "typeLabel": {
+        "wedding": "חתונה",
+        "henna": "חינה",
+        "bar_mitzva": "בר מצווה",
+        "bat_mitzva": "בת מצווה"
+      },
+      "hero": {
+        "daysLabel": "{count, plural, one {יום לאירוע} other {ימים לאירוע}}",
+        "todayTitle": "היום",
+        "todaySub": "האירוע שלכם",
+        "dateLabel": "תאריך",
+        "venueLabel": "מקום",
+        "venueMissing": "עדיין לא נבחר מקום",
+        "rsvpLabel": "אישורי הגעה",
+        "rsvpLine": "<b>{confirmed}</b> מתוך {total} אישרו",
+        "noDateTitle": "מחכים לתאריך המושלם",
+        "noDateDescription": "ברגע שתקבעו, הכל כאן יתעדכן לבד",
+        "zeroGuestsTitle": "הוסיפו את האורחים הראשונים",
+        "zeroGuestsDescription": "רשימת האורחים עדיין ריקה"
+      },
+      "actions": {
+        "title": "מה עושים עכשיו",
+        "subtitle": "מתעדכן בכל כניסה",
+        "details": {
+          "label": "השלימו את פרטי האירוע",
+          "why": "שעה ומקום האירוע"
+        },
+        "addGuests": {
+          "label": "הוסיפו אורחים",
+          "why": "ידנית, מקובץ Excel או מ-Google Drive"
+        },
+        "groups": {
+          "label": "חלקו לקבוצות",
+          "why": "משפחה, חברים, עבודה"
+        },
+        "invitationImage": {
+          "label": "העלו תמונת הזמנה",
+          "why": "תופיע בראש ההודעות לאורחים"
+        },
+        "collaborator": {
+          "label": "הזמינו שותף לתכנון",
+          "why": "בן או בת זוג, אמא, חבר טוב"
+        },
+        "health": {
+          "label": "בדקו את רשימת האורחים",
+          "whyBoth": "{duplicates} כפילויות אפשריות ו-{noPhone} ללא טלפון",
+          "whyDuplicates": "{duplicates} כפילויות אפשריות",
+          "whyNoPhone": "{noPhone} רשומות ללא טלפון"
+        },
+        "test": {
+          "label": "קבלו הודעת ניסיון",
+          "why": "רואים בדיוק מה האורחים יקבלו, לפני שמישהו מקבל",
+          "badge": "נשלחת אליכם בלבד"
+        },
+        "seating": {
+          "label": "התחילו בסידורי הושבה",
+          "why": "{count} אורחים כבר אישרו"
+        },
+        "gifting": {
+          "label": "הפעילו מתנות דיגיטליות",
+          "why": "האורחים מעניקים ישירות מההזמנה"
+        },
+        "preview": {
+          "label": "שתפו תצוגה מקדימה של ההזמנה",
+          "why": "קישור לעמוד האישור בדיוק כפי שאורח רואה אותו",
+          "copiedLabel": "הקישור הועתק",
+          "copiedWhy": "שלחו אותו למי שרוצים שיראה איך ההזמנה נראית",
+          "shareTitle": "תצוגה מקדימה של ההזמנה"
+        },
+        "budget": {
+          "label": "תעדו הוצאה ראשונה",
+          "why": "התקציב מתחיל להתעדכן מהרגע הראשון"
+        },
+        "addGuest": {
+          "label": "הוסיפו אורח",
+          "why": "אורח אחד, בלי קובץ"
+        },
+        "ai": {
+          "label": "שאלו את העוזר החכם",
+          "why": "כל שאלה על האירוע, בעברית"
+        },
+        "viewList": {
+          "label": "לרשימת האורחים",
+          "why": "{count} רשומות ברשימה"
+        }
+      },
+      "testMessage": {
+        "confirmTitle": "נשלחת רק אליכם, למספר <ltr>{phone}</ltr>",
+        "confirmBody": "הודעת אישור ההגעה כפי שאורח יקבל אותה. מגיעה תוך דקה. אף אורח לא מקבל כלום.",
+        "phoneTitle": "לאיזה מספר לשלוח?",
+        "phoneHint": "רק להודעת הבדיקה הזו, לא נשמר. אף אורח לא מקבל כלום",
+        "phonePlaceholder": "050-0000000",
+        "send": "שלחו לי עכשיו",
+        "sending": "שולחים",
+        "cancel": "ביטול",
+        "sentTitle": "נשלחה אליכם",
+        "sentBody": "בדקו את הטלפון במספר <ltr>{phone}</ltr>",
+        "errors": {
+          "invalid-phone": "מספר הטלפון לא תקין",
+          "no-phone": "הזינו מספר טלפון כדי לקבל את ההודעה",
+          "cap-reached": "נוצלו כל הודעות הניסיון של האירוע",
+          "no-schedule": "אין עדיין הודעת אישור הגעה לשלוח",
+          "not-allowed": "רק בעלי האירוע יכולים לקבל הודעת ניסיון",
+          "send-failed": "לא הצלחנו לשלוח, נסו שוב"
+        }
+      },
+      "healthCheck": {
+        "duplicates": "כפילויות אפשריות",
+        "duplicatesHint": "אותו שם בדיוק",
+        "noPhone": "ללא טלפון",
+        "noPhoneHint": "לא יקבלו הודעות",
+        "openList": "פתחו את הרשימה מסוננת לשורות האלה",
+        "noneFound": "לא נמצאו"
+      },
+      "strip": {
+        "title": "תמונת מצב",
+        "budget": "תקציב",
+        "budgetOf": "{spent} מתוך {total}",
+        "budgetSpent": "{spent} בהוצאות",
+        "budgetEmpty": "הגדירו תקציב ותעדו הוצאות",
+        "seating": "הושבה",
+        "seatingValue": "{seated} מתוך {total} רשומות מאושרות הושבו",
+        "seatingEmpty": "התחילו לסדר שולחנות",
+        "messages": "הודעות",
+        "scheduleNext": "{type} · {days, plural, =0 {היום} =1 {מחר} other {בעוד # ימים}}",
+        "scheduleQueued": "{count, plural, =1 {הודעה אחת מתוזמנת} other {# הודעות מתוזמנות}}",
+        "scheduleAllSent": "כל ההודעות נשלחו",
+        "scheduleEmpty": "תזמנו הודעה ראשונה לאורחים",
+        "scheduleTypes": {
+          "initial_invitation": "הזמנה ראשונית",
+          "confirmation": "אישור הגעה",
+          "event_reminder": "תזכורת אירוע",
+          "post_event": "תודה",
+          "phone_call": "סבב שיחות"
+        }
+      },
+      "analytics": {
+        "donutTitle": "פילוח אישורים",
+        "donutCenter": "אישרו",
+        "confirmed": "אישרו",
+        "pending": "ממתינים",
+        "declined": "סירבו",
+        "donutEmpty": "הגרף יתמלא כשהאורחים הראשונים יענו להזמנה",
+        "engagementTitle": "מעורבות לפי קבוצה",
+        "engagementLegend": "אישרו · ממתינים · סירבו",
+        "engagementRow": "<b>{confirmed}</b> מתוך {total}",
+        "engagementEmpty": "ברגע שתחלקו את האורחים לקבוצות, תראו כאן מי כבר ענה",
+        "groupsTitle": "לפי קבוצה",
+        "groupsSummary": "{groups} קבוצות · {guests} אורחים",
+        "groupRow": "{count} אורחים",
+        "groupsEmpty": "אין קבוצות עדיין. נוצרות אוטומטית מעמודת \"קבוצה\" בייבוא, או ידנית בלשונית קבוצות",
+        "activityTitle": "פעילות אחרונה",
+        "activityEmpty": "כל אישור או סירוב של אורחים יופיע כאן",
+        "activityViewAll": "לכל האורחים"
+      },
+      "sectionError": "לא הצלחנו לטעון את החלק הזה"
     }
   },
   "schedules": {

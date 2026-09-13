@@ -116,7 +116,7 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
       .neq('id', newEvent.id);
 
     revalidatePath('/app');
-    revalidatePath('/app/dashboard');
+    revalidatePath('/app/home');
 
     return {
       success: true,
@@ -313,7 +313,7 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
       };
     }
 
-    revalidatePath('/app/dashboard');
+    revalidatePath('/app/home');
     revalidatePath('/events');
     return {
       success: true,
@@ -364,7 +364,7 @@ export async function setDefaultEvent(
       };
     }
 
-    revalidatePath('/app/dashboard');
+    revalidatePath('/app/home');
     revalidatePath('/events');
     return {
       success: true,

@@ -157,7 +157,7 @@ export async function duplicateEvent(
     }
 
     revalidatePath('/app');
-    revalidatePath('/app/dashboard');
+    revalidatePath('/app/home');
 
     return {
       success: true,

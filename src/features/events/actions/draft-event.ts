@@ -409,7 +409,7 @@ export async function publishDraftEvent(
       .neq('id', eventId);
 
     revalidatePath('/app');
-    revalidatePath(`/app/${eventId}/dashboard`);
+    revalidatePath(`/app/${eventId}/home`);
 
     return { success: true, message: null };
   } catch (error) {

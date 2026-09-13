@@ -49,7 +49,7 @@ export async function acceptInvitation(token: string): Promise<ActionState> {
     return {
       success: true,
       message: data.message || 'Invitation accepted!',
-      invitationLink: eventId ? `/app/${eventId}/dashboard` : null,
+      invitationLink: eventId ? `/app/${eventId}/home` : null,
     };
   } catch (error) {
     console.error('Accept invitation error:', error);
