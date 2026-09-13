@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import {
@@ -98,6 +98,20 @@ export function MessageContentCard({
   const [savedNote, setSavedNote] = useState(customText ?? '');
   const [note, setNote] = useState(customText ?? '');
   const isDirty = !scheduleLocked && note !== savedNote;
+
+  // `useState(customText ?? '')` only seeds state on the initial mount. This
+  // card stays mounted across a server round-trip (e.g. the router refresh a
+  // Server Action triggers, or navigating back to an already-rendered route),
+  // so a later render can hand it a new `customText` prop without React ever
+  // re-running that initializer. Left unsynced, the mount-time value (often
+  // '' - the schedule had no note yet) keeps feeding the preview resolver
+  // forever, which resolves the note placeholder to '' and falls back to the
+  // "…" placeholder even though a real note is saved. Resync both whenever the
+  // prop actually changes, so the preview never drifts from the server value.
+  useEffect(() => {
+    setSavedNote(customText ?? '');
+    setNote(customText ?? '');
+  }, [customText]);
 
   const handleSaveNote = () => {
     if (!scheduleId || !isDirty) return;
