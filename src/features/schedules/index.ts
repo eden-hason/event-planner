@@ -24,6 +24,9 @@ export {
   filterGuestsByTarget,
   isMessageSchedule,
   validatePhoneNumber,
+  classifyWhatsAppFailure,
+  describeGuestLevelFailure,
+  type WhatsAppFailureSide,
 } from './utils';
 
 // Schemas/Types

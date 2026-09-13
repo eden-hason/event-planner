@@ -3,7 +3,7 @@
 import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { validatePhoneNumber } from '@/features/schedules';
+import { classifyWhatsAppFailure, validatePhoneNumber } from '@/features/schedules';
 import type {
   EventGuestSummary,
   EventIdentity,
@@ -352,9 +352,11 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
     supabase.from('guests').select('id, name, phone_number, rsvp_status').eq('event_id', eventId),
     supabase
       .from('message_deliveries')
-      .select('id, schedule_id, guest_id, status, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number)')
+      .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel)')
       .in('schedule_id', scheduleIds)
-      .in('status', ['sent', 'failed']),
+      // Every state a delivery can settle in. Filtering to sent/failed dropped a
+      // delivery from the timeline the moment the webhook marked it delivered.
+      .in('status', ['sent', 'delivered', 'read', 'failed', 'not_sent']),
     supabase
       .from('call_rounds')
       .select('id, schedule_id, created_at, completed_at, call_logs(id, notes, outcome)')
@@ -419,6 +421,9 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
           createdAt: delivery.created_at,
           sentAt: delivery.sent_at,
           triggeredBy: delivery.triggered_by,
+          channel: delivery.delivery_method,
+          hasSmsAttempt: ((delivery.message_delivery_attempts ?? []) as { channel: string }[])
+            .some((attempt) => attempt.channel === 'sms'),
         };
       }),
     };
@@ -432,6 +437,7 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
   const failureCutoff = now - 30 * 86_400_000;
   const signals: EventWorkspaceSignal[] = [];
   let failedCount = 0;
+  let fallbackCount = 0;
   let firstFailedSchedule: EventTimelineRow | null = null;
   for (const row of timeline) {
     if (row.status === 'planned' && new Date(row.scheduledDate).getTime() < now) {
@@ -443,12 +449,21 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
         href: `#schedule-${row.id}`,
       });
     }
+    // Only failures an Operator can still act on: once a delivery has had an
+    // SMS attempt, a guest unreachable on both channels is no longer a
+    // messaging problem and must not hold the Signal open forever.
     const failures = row.deliveries.filter(
       (delivery) => delivery.status === 'failed'
+        && !delivery.hasSmsAttempt
         && new Date(delivery.createdAt).getTime() >= failureCutoff,
     );
     if (failures.length) {
       failedCount += failures.length;
+      fallbackCount += failures.filter(
+        (delivery) => delivery.channel === 'whatsapp'
+          && classifyWhatsAppFailure(delivery.errorCode) === 'guest'
+          && validatePhoneNumber(delivery.guestPhone),
+      ).length;
       firstFailedSchedule ??= row;
     }
     if (row.status === 'in_progress' && row.roundStartedAt && now - new Date(row.roundStartedAt).getTime() > STALE_ROUND_MS) {
@@ -465,8 +480,8 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
     signals.push({
       id: `failed:${eventId}`,
       kind: 'failed_delivery',
-      headline: `${failedCount} ${failedCount === 1 ? 'delivery' : 'deliveries'} failed`,
-      detail: 'Failed deliveries recorded in the last 30 days',
+      headline: `${failedCount} ${failedCount === 1 ? 'delivery' : 'deliveries'} failed${fallbackCount ? ` - ${fallbackCount} can fall back to SMS` : ''}`,
+      detail: 'Failed deliveries in the last 30 days not yet tried by SMS',
       href: `#schedule-${firstFailedSchedule.id}-failures`,
     });
   }

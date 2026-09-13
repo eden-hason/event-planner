@@ -1142,9 +1142,7 @@
     "interactions": {
       "cardTitle": "Guests Activity",
       "views": "Views",
-      "confirmed": "Confirmed",
-      "declined": "Declined",
-      "emptyDescription": "No interactions recorded yet - results appear once the schedule has been sent and guests have engaged",
+      "emptyDescription": "No results yet - they appear once the schedule has been sent",
       "columnGuest": "Guest",
       "columnViewed": "Viewed",
       "columnResponse": "Response",
@@ -1153,8 +1151,22 @@
       "responseDeclined": "Declined",
       "responsePending": "No response",
       "refresh": "Refresh",
-      "confirmedGuests": "{count, plural, one {# guest} other {# guests}}",
-      "columnAmount": "Guests"
+      "columnAmount": "Guests",
+      "audience": "In audience",
+      "reached": "Reached",
+      "reachedChannels": "{whatsapp} WhatsApp · {sms} SMS",
+      "responded": "Responded",
+      "respondedBreakdown": "{confirmed, plural, one {# guest} other {# guests}} confirmed · {declined} declined",
+      "columnDelivery": "Delivery",
+      "delivery": {
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "onItsWay": "On its way",
+        "notDelivered": "Not delivered",
+        "noPhone": "No phone number"
+      },
+      "notReached": "{count} not reached",
+      "filterAll": "Show all"
     },
     "status": {
       "cardTitle": "Status",

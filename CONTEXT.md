@@ -107,6 +107,68 @@ order:
 "Reminder" without qualification means Event Reminder (stage 3), never a chase-up during
 the Confirmation stage. A repeat ask during stage 2 is a *second Confirmation round*.
 
+## Delivery
+
+What one Schedule achieved for one Guest in its audience - the roll-up of every Delivery
+Attempt made to that Guest for that Schedule. There is exactly one Delivery per Guest per
+Schedule, and it is what the Owner sees.
+
+A Delivery is in exactly one of five states:
+
+- **Not sent** - the Guest was in the audience but no attempt was possible (no usable phone
+  number). Recorded, not merely counted.
+- **Sent** - an attempt was accepted by the provider and has not yet been confirmed.
+- **Delivered** - an attempt reached the Guest's phone.
+- **Read** - a WhatsApp attempt was opened. SMS cannot reach this state.
+- **Failed** - every attempt failed and nothing further is pending.
+
+A Delivery takes the most advanced state any of its attempts reached - Read, then
+Delivered, then Sent, then Failed. A later attempt that fails never takes back a Guest who
+was already reached.
+
+The channel that reached the Guest is an attribute of a Delivery ("delivered via SMS"),
+never a state of its own.
+
+A Guest is **Reached** by a Schedule when their Delivery is Delivered or Read, or when an
+SMS attempt was accepted - SMS never reports further than that, so accepted is as reached
+as SMS gets. "Reached" is the word the Owner sees; the five states are not.
+
+_Avoid_: Delivery outcome (collides with Call Outcome), message status
+
+## Delivery Attempt
+
+One try at putting a Schedule's message in front of one Guest, over exactly one channel
+(WhatsApp or SMS). A Delivery is made of one or more Delivery Attempts - a fallback, a
+resend - and each keeps its own result; a later attempt never rewrites an earlier one.
+
+The Owner does not reason about attempts. Operators do.
+
+## SMS Fallback
+
+A further Delivery Attempt over SMS, made to Guests whose WhatsApp attempt for a Schedule
+failed. It carries the same message intent and the same RSVP link as the WhatsApp attempt
+it stands in for. An SMS Fallback is launched by an Operator from the Back Office, for a
+Schedule's failed Deliveries in one batch. It is part of what the Owner already paid for and
+is never billed on its own.
+
+Not to be confused with a Schedule whose own channel is SMS: that is a first attempt, not a
+fallback.
+
+Only a Delivery that failed for a **Guest-level Failure** and has had no SMS attempt is
+eligible for an SMS Fallback.
+
+## Guest-level Failure
+
+A failed Delivery Attempt caused by the Guest's own number - it is not on WhatsApp, it is
+invalid, WhatsApp is withholding messages from it, or the Guest has stopped WhatsApp
+messages from Kululu. Another channel is the right remedy in every one of these cases.
+
+## System-level Failure
+
+A failed Delivery Attempt caused by Kululu's side - a template no longer usable, a
+restricted account, a throughput limit. It typically hits every Guest at once. Another
+channel is the wrong remedy: the cause is fixed and the message resent on the same channel.
+
 ## Call Round
 
 A pass of **human phone calls** made by the Kululu team to Guests who have not responded
@@ -185,6 +247,10 @@ A Signal is never stored. There is no signals table and no row to mark as read: 
 exists exactly as long as the condition producing it is true, and vanishes when the
 underlying situation resolves. Nothing is pushed, nothing is emailed, and nothing records
 whether an Operator saw it. A Signal is therefore not a notification, and not an alert.
+
+A **Failed Delivery** Signal holds while an Event has Failed Deliveries an Operator can still
+act on - those with no SMS attempt yet. A Guest unreachable on both channels no longer
+raises it.
 
 ## Overview
 

@@ -1142,9 +1142,7 @@
     "interactions": {
       "cardTitle": "פעילות אורחים",
       "views": "צפיות",
-      "confirmed": "אישרו",
-      "declined": "סירבו",
-      "emptyDescription": "אין אינטראקציות עדיין - התוצאות יופיעו לאחר שהתזמון נשלח והאורחים פעלו",
+      "emptyDescription": "אין תוצאות עדיין - הן יופיעו לאחר שהתזמון יישלח",
       "columnGuest": "אורח",
       "columnViewed": "צפה",
       "columnResponse": "תגובה",
@@ -1153,8 +1151,22 @@
       "responseDeclined": "סירב",
       "responsePending": "לא הגיב",
       "refresh": "רענן",
-      "confirmedGuests": "{count, plural, one {אורח אחד} two {# אורחים} other {# אורחים}}",
-      "columnAmount": "כמות"
+      "columnAmount": "כמות",
+      "audience": "קהל יעד",
+      "reached": "הגיעו",
+      "reachedChannels": "{whatsapp} וואטסאפ · {sms} SMS",
+      "responded": "הגיבו",
+      "respondedBreakdown": "{confirmed, plural, one {אורח אחד אישר} other {# אורחים אישרו}} · {declined} סירבו",
+      "columnDelivery": "משלוח",
+      "delivery": {
+        "whatsapp": "וואטסאפ",
+        "sms": "SMS",
+        "onItsWay": "בדרך",
+        "notDelivered": "לא נמסר",
+        "noPhone": "אין מספר טלפון"
+      },
+      "notReached": "{count} לא קיבלו",
+      "filterAll": "הצג הכל"
     },
     "status": {
       "cardTitle": "סטטוס",

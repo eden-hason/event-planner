@@ -174,6 +174,10 @@ export type EventTimelineDelivery = {
   createdAt: string;
   sentAt: string | null;
   triggeredBy: string | null;
+  /** The channel of the attempt that decided the delivery's status */
+  channel: string | null;
+  /** Whether an SMS attempt exists - a failed delivery with one is no longer actionable */
+  hasSmsAttempt: boolean;
 };
 
 export type EventTimelineRow = {

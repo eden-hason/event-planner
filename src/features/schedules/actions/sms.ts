@@ -1,12 +1,4 @@
-import type { ParameterResolutionContext } from '../utils/parameter-resolvers';
-
 const BASE_URL = 'https://webapi.mymarketing.co.il';
-
-// TODO: Make SMS body dynamic based on the schedule's message type (e.g. initial_invitation,
-// first_confirmation, event_reminder, etc.) so the tone and content match the original
-// WhatsApp template intent rather than always using a generic invitation copy.
-const DEFAULT_SMS_BODY =
-  "Hi! You're invited to {{event_name}}. Please confirm your attendance:";
 
 /**
  * Sends an SMS message via ActiveTrail API.
@@ -77,28 +69,4 @@ export async function sendSmsMessage({
     console.error('SMS send error:', error);
     return { success: false, message: 'Failed to send SMS message' };
   }
-}
-
-/**
- * Builds an SMS fallback body by interpolating the default template and
- * appending the RSVP confirmation link on a new line.
- *
- * Supported placeholders: {{guest_name}}, {{event_name}}.
- */
-export function buildSmsFallbackBody(
-  context: ParameterResolutionContext,
-  confirmationToken: string,
-): string {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
-    'http://localhost:3000';
-  const rsvpLink = `${siteUrl}/c/${confirmationToken}`;
-
-  const body = DEFAULT_SMS_BODY.replace(
-    '{{event_name}}',
-    context.event.title ?? '',
-  );
-
-  return `${body}\n${rsvpLink}`;
 }
