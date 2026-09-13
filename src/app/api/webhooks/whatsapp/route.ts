@@ -140,8 +140,8 @@ export async function POST(request: Request) {
     }
 
     // Retry whatever earlier notifications left behind. During a send window
-    // Meta calls every few seconds, so this is a retry within minutes without
-    // a frequent cron (the daily cron covers quiet periods).
+    // Meta calls every few seconds, so this is a retry within minutes. This is
+    // the only retry path - there is no cron.
     try {
       const swept = await sweepUnprocessedWebhookEvents(supabase, {
         provider: 'whatsapp',

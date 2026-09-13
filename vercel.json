@@ -6,10 +6,6 @@
     {
       "path": "/api/cron/process-messages",
       "schedule": "5 7 * * *"
-    },
-    {
-      "path": "/api/cron/webhook-events",
-      "schedule": "30 3 * * *"
     }
   ]
 }

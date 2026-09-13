@@ -4,8 +4,7 @@
 > **Runtime:** `nodejs`
 > **Source:** `src/app/api/webhooks/whatsapp/route.ts` (intake),
 > `src/features/schedules/services/process-whatsapp-webhook.ts` (processing),
-> `src/lib/webhooks/inbox.ts` (store / retry / purge),
-> `src/app/api/cron/webhook-events/route.ts` (daily retry + purge)
+> `src/lib/webhooks/inbox.ts` (store / retry)
 > **Env:** `WHATSAPP_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`
 
 This is the return path for everything `sendWhatsAppTemplateMessage()` puts on
@@ -67,9 +66,9 @@ stable enough to build logic around. An unlisted code is system-level.
 hears 200, so a processing failure leaves a row to retry instead of an event
 lost behind a response already sent. A processor signals "try again" by
 throwing; the row keeps `processed_at` null and records `last_error`. Retries
-happen opportunistically after each later notification (during a send window
-that is within minutes) and in the daily `/api/cron/webhook-events` run - daily
-because the Vercel plan allows nothing more frequent.
+happen only opportunistically, after each later notification - during a send
+window that is within minutes. There is no cron: a row left over from a quiet
+period waits for the next notification.
 
 **Processing errors never reach Meta; storage errors do.** Meta disables a
 webhook that keeps failing, so a notification that was stored always answers
@@ -81,8 +80,9 @@ chunk, after the chunk's API calls return, so Meta's `sent` can arrive a few
 seconds before the row exists. A wamid with no attempt is retried for 15
 minutes, then logged as unmatched and given up on.
 
-**Raw payloads are purged after 90 days.** They carry guest phone numbers; what
-matters long-term already lives on the attempts.
+**Raw payloads are not purged yet.** They carry guest phone numbers, and what
+matters long-term already lives on the attempts, so a retention purge is the
+natural next addition. Until then `webhook_events` only grows.
 
 ## Reading the logs
 

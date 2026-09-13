@@ -20,9 +20,6 @@ export type StoredWebhookEvent = {
   process_attempts: number;
 };
 
-/** Rows kept this long, then purged - payloads carry guest phone numbers. */
-export const WEBHOOK_EVENT_RETENTION_DAYS = 90;
-
 export type StoreResult =
   | { status: 'stored'; event: StoredWebhookEvent }
   | { status: 'duplicate' }
@@ -102,9 +99,9 @@ export async function processWebhookEvent(
 
 /**
  * Processes events still waiting after `olderThanMs`. Called opportunistically
- * by the webhook itself after each notification - during a send window Meta
- * calls every few seconds, so a failed row is retried within minutes - and by
- * the daily cron for whatever a quiet period left behind.
+ * by the webhook itself after each notification: during a send window Meta
+ * calls every few seconds, so a failed row is retried within minutes. A row left
+ * over from a quiet period waits for the next notification - there is no cron.
  */
 export async function sweepUnprocessedWebhookEvents(
   supabase: SupabaseClient,
@@ -132,19 +129,4 @@ export async function sweepUnprocessedWebhookEvents(
     if (await processWebhookEvent(supabase, event, params.processor)) processed++;
   }
   return { picked: data?.length ?? 0, processed };
-}
-
-/** Deletes rows past the retention window. Returns how many went. */
-export async function purgeExpiredWebhookEvents(
-  supabase: SupabaseClient,
-): Promise<number> {
-  const cutoff = new Date(
-    Date.now() - WEBHOOK_EVENT_RETENTION_DAYS * 86_400_000,
-  ).toISOString();
-  const { count, error } = await supabase
-    .from('webhook_events')
-    .delete({ count: 'exact' })
-    .lt('received_at', cutoff);
-  if (error) throw error;
-  return count ?? 0;
 }

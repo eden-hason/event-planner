@@ -9,13 +9,13 @@
 -- logged and never stored at all.
 --
 -- Now the handler verifies the signature, inserts the body here, answers 200,
--- and processes the stored row afterwards. A row left unprocessed is picked up
--- again later. Provider-agnostic so the next webhook (ActiveTrail, payments)
--- lands in the same place.
+-- and processes the stored row afterwards. A row left unprocessed is retried
+-- when a later notification arrives. Provider-agnostic so the next webhook
+-- (ActiveTrail, payments) lands in the same place.
 --
--- Payloads carry guest phone numbers. They are working data, not an archive:
--- rows older than 90 days are purged, and what matters long-term already lives
--- on message_delivery_attempts.
+-- Payloads carry guest phone numbers. They are working data, not an archive -
+-- what matters long-term already lives on message_delivery_attempts - but no
+-- purge runs yet; rows accumulate until one is added.
 
 create table public.webhook_events (
   id            uuid        primary key default gen_random_uuid(),
@@ -36,7 +36,7 @@ create table public.webhook_events (
 );
 
 comment on table public.webhook_events is
-  'Raw provider webhook notifications, stored before processing. Unprocessed rows are retried; rows are purged after 90 days (they contain guest phone numbers).';
+  'Raw provider webhook notifications, stored before processing. Unprocessed rows are retried when later notifications arrive. Payloads contain guest phone numbers.';
 
 create unique index webhook_events_provider_payload_hash_key
   on public.webhook_events (provider, payload_hash);
@@ -46,7 +46,7 @@ create index webhook_events_unprocessed_idx
   on public.webhook_events (received_at)
   where processed_at is null;
 
--- The purge and any "what did Meta send around 20:00" lookup.
+-- Any "what did Meta send around 20:00" lookup, and a future purge.
 create index webhook_events_received_at_idx
   on public.webhook_events (received_at);
 
