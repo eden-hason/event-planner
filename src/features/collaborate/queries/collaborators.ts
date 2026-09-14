@@ -94,12 +94,18 @@ export async function getCollaboratorRole(
   eventId: string,
 ): Promise<{ role: CollaboratorRole; isCreator: boolean } | null> {
   try {
-    const { supabase } = await getEffectiveClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, impersonation } = await getEffectiveClient();
 
-    if (!user) return null;
+    // Whose role this is. Under impersonation `supabase` is the service-role
+    // client, which carries no session at all - asking it for the user returns
+    // nobody, and every caller then reads the Operator as a non-Owner. The
+    // impersonation cookie already names who is being viewed, and
+    // getImpersonation has checked the Operator's admin flag, so take the id
+    // from there instead.
+    const userId =
+      impersonation?.userId ?? (await supabase.auth.getUser()).data.user?.id;
+
+    if (!userId) return null;
 
     // First check if user is the event owner (user_id on events table)
     const { data: event } = await supabase
@@ -108,7 +114,7 @@ export async function getCollaboratorRole(
       .eq('id', eventId)
       .single();
 
-    if (event?.user_id === user.id) {
+    if (event?.user_id === userId) {
       return { role: 'owner', isCreator: true };
     }
 
@@ -117,7 +123,7 @@ export async function getCollaboratorRole(
       .from('event_collaborators')
       .select('role, is_creator')
       .eq('event_id', eventId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (error || !data) return null;
