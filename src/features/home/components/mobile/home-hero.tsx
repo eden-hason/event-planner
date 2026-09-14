@@ -134,7 +134,7 @@ export async function HomeHero({ eventId }: { eventId: string }) {
         the safe-area inset is added to both the height and the top padding so
         a notch eats into the band instead of into the text.
       */}
-      <div className="relative flex min-h-[calc(200px+env(safe-area-inset-top))] items-center gap-5 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6">
+      <div className="relative flex min-h-[calc(160px+env(safe-area-inset-top))] items-center gap-5 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {typeKey && (
             <span className="text-primary text-[13px] font-semibold">
