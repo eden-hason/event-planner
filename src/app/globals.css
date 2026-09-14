@@ -47,6 +47,8 @@
   --color-outcome-will-update: var(--outcome-will-update);
   --color-outcome-will-update-tint: var(--outcome-will-update-tint);
   --color-outcome-will-update-strong: var(--outcome-will-update-strong);
+  --color-home-violet: var(--home-violet);
+  --color-home-violet-tint: var(--home-violet-tint);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -111,6 +113,14 @@
   --outcome-will-update: oklch(0.685 0.169 237.323);
   --outcome-will-update-tint: oklch(0.951 0.026 236.824);
   --outcome-will-update-strong: oklch(0.443 0.11 240.79);
+  /*
+   * Home's second accent, beside the magenta: the no-date state, the venue row,
+   * and the far end of the countdown gradient. `--home-wash` is the pink-violet-
+   * peach field the Hero sits on.
+   */
+  --home-violet: oklch(0.58 0.2 288);
+  --home-violet-tint: oklch(0.58 0.2 288 / 10%);
+  --home-wash: linear-gradient(135deg, oklch(0.95 0.04 340) 0%, oklch(0.95 0.03 300) 55%, oklch(0.95 0.035 40) 100%);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.592 0.249 333);
@@ -175,6 +185,9 @@
   --outcome-will-update: oklch(0.75 0.15 237.323);
   --outcome-will-update-tint: oklch(0.28 0.06 240);
   --outcome-will-update-strong: oklch(0.828 0.111 230.318);
+  --home-violet: oklch(0.72 0.14 293);
+  --home-violet-tint: oklch(0.72 0.14 293 / 14%);
+  --home-wash: linear-gradient(135deg, oklch(0.59 0.25 333 / 28%) 0%, oklch(0.58 0.2 288 / 22%) 55%, oklch(0.72 0.17 40 / 18%) 100%);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.74 0.238 333);
@@ -256,6 +269,9 @@
   --outcome-will-update: oklch(0.685 0.169 237.323);
   --outcome-will-update-tint: oklch(0.951 0.026 236.824);
   --outcome-will-update-strong: oklch(0.443 0.11 240.79);
+  --home-violet: oklch(0.58 0.2 288);
+  --home-violet-tint: oklch(0.58 0.2 288 / 10%);
+  --home-wash: linear-gradient(135deg, oklch(0.95 0.04 340) 0%, oklch(0.95 0.03 300) 55%, oklch(0.95 0.035 40) 100%);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.592 0.249 333);

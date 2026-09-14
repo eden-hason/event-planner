@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import { ConfettiBackground } from '@/features/dashboard/components/confetti';
+import { ConfettiBackground } from '@/features/home/components/confetti';
 import { IconCalendar, IconMapPin, IconSparkles } from '@tabler/icons-react';
 import type { EventApp } from '@/features/events/schemas';
 
@@ -26,7 +26,7 @@ export async function EventHeroBanner({ event }: { event: EventApp }) {
   // Formatted against the active locale rather than a fixed one, so the
   // headline date reads in the language the rest of the page is in.
   const locale = await getLocale();
-  const t = await getTranslations('dashboard.countdown');
+  const t = await getTranslations('home.countdown');
 
   return (
     <ConfettiBackground

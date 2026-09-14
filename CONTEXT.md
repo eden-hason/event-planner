@@ -289,24 +289,49 @@ Like a Signal, a Featured Action is never stored and cannot be dismissed: it dis
 only because its eligibility rule turned false, never because the Owner hid it. There is
 no per-Owner "seen" or "snoozed" state to track.
 
+Up to four are shown, drawn from three tiers in priority order - every unfinished setup
+step first, then the **Guest List Health Check**, then discovery (**Test Message**,
+seating, digital gifting, **Live Invite Preview Link**, budget). After setup, each tier
+contributes its top eligible action before the rest fill in tier order, with "add a
+guest", "ask the assistant" and "view the guest list" filling any slot left over. Only Owners see them; a Seating Manager's Home
+has none.
+
+A fact the system records for its own reasons can still retire an action - a Test
+Message the viewer has already received, for one. That is a rule turning false, not a
+dismissal.
+
 ## Test Message
 
 A copy of a real outbound Schedule message, sent to the Owner's own phone instead of any
 Guest's, so the Owner can see exactly what a Guest will receive before the Schedule
-actually goes out. Available once the Event has at least one Schedule to preview; sending
-one has no effect on any Guest's RSVP or delivery history.
+actually goes out. It previews the Event's earliest confirmation Schedule that has not
+gone out yet, and goes to the viewer's own profile phone - or, when the profile has none,
+to a number they type for that one send, which is not saved. Sending one has no effect on any Guest's RSVP or delivery
+history: it is not a Delivery, and its RSVP link opens the **Live Invite Preview Link**
+rather than any Guest's page.
+
+An Event gets three accepted Test Messages for its whole life, across all its Owners. Each
+viewer is offered one until they have received it.
 
 ## Guest List Health Check
 
 A read-only scan of the Guest list for likely data problems - duplicate Guest Records and
 Guest Records missing a phone number - offered as a Featured Action once the list is
-large enough for drift to matter. It flags; it does not merge or fix anything itself.
+large enough for drift to matter (20 Guest Records). It flags; it does not merge or fix
+anything itself - it hands off to the guest list filtered to the flagged rows.
+
+A duplicate means two Guest Records with the same name once case, spacing and punctuation
+are ignored. Never the same phone: an Event cannot hold two Guest Records with one number.
 
 ## Live Invite Preview Link
 
 A shareable link to the guest-facing invitation site exactly as a Guest would see it.
 Distinct from the admin **Templates** picker (which chooses the design skin) - this is
 the artifact you'd hand to someone else to look at, not a tool for changing anything.
+
+It opens the RSVP page with a sample guest; every answer given there plays out on screen
+and writes nothing. The link belongs to the Event, not to any Guest. It is offered as a
+Featured Action once the Owner has chosen a landing template.
 
 ## Free to Plan, Pay to Send
 

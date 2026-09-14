@@ -15,7 +15,7 @@ export function GroupBreakdownCard({
 }: {
   groups: GroupWithGuestsApp[];
 }) {
-  const t = useTranslations('dashboard.groupBreakdown');
+  const t = useTranslations('home.groupBreakdown');
   const rows = groups.map((group) => ({
     ...group,
     total: group.guests.reduce((sum, g) => sum + g.amount, 0),

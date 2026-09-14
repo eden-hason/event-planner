@@ -101,7 +101,7 @@ export function NewEventDialog({
         }
         setOpen(false);
         form.reset();
-        router.push(`/app/${data.eventId}/dashboard`);
+        router.push(`/app/${data.eventId}/home`);
         return t('toast.created');
       },
       error: (err) =>

@@ -208,3 +208,43 @@ export async function getConfirmationDataByGuestToken(
     scheduleId: null,
   };
 }
+
+/**
+ * Fetches the RSVP page for an event's preview token - the Live Invite Preview
+ * Link and the link inside an Owner's Test Message. The guest is a sample, never
+ * a real Guest Record, so there is nothing for the page to write to.
+ */
+export async function getConfirmationPreviewData(
+  token: string,
+): Promise<ConfirmationPageData | null> {
+  if (!UUID_REGEX.test(token)) return null;
+
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('events')
+    .select(EVENT_COLUMNS)
+    .eq('preview_token', token)
+    .neq('status', 'draft')
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    deliveryId: null,
+    respondedAt: null,
+    responseData: null,
+    guest: {
+      id: 'preview',
+      name: 'אורח לדוגמה',
+      amount: 2,
+      rsvpStatus: 'pending',
+      mealChoice: undefined,
+      guestNotes: undefined,
+    },
+    event: toEventView(data as unknown as EventRow),
+    scheduleId: null,
+  };
+}

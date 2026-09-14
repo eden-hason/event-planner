@@ -37,7 +37,7 @@
     "heroSubtitle": "WhatsApp RSVPs, seating charts and a budget that keeps up"
   },
   "navigation": {
-    "dashboard": "Dashboard",
+    "home": "Home",
     "eventDetails": "Event Details",
     "guests": "Guests",
     "seating": "Seating",
@@ -987,11 +987,16 @@
       "created_desc": "Date added - newest",
       "rsvp": "RSVP status",
       "amount_desc": "Largest party first"
+    },
+    "issues": {
+      "duplicates": "Possible duplicates",
+      "all": "Needs a look",
+      "clear": "Clear filter"
     }
   },
-  "dashboard": {
+  "home": {
     "header": {
-      "title": "Dashboard"
+      "title": "Home"
     },
     "eventNotFound": "Event not found",
     "stats": {
@@ -1006,14 +1011,6 @@
       "pendingMessageSingular": "pending message",
       "pendingMessages": "pending messages",
       "noDateYet": "No date yet"
-    },
-    "guestStats": {
-      "totalGuests": "Total Guests",
-      "invited": "invited",
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "declined": "Declined",
-      "ofTotal": "of {total}"
     },
     "rsvpBreakdown": {
       "title": "RSVP Breakdown",
@@ -1051,31 +1048,6 @@
       "noDateDescription": "The moment you pick one, everything here updates itself",
       "noDateChip": "The date is still ahead of you"
     },
-    "upcomingSchedules": {
-      "title": "Upcoming Schedules",
-      "noSchedules": "No upcoming schedules",
-      "createOne": "Create one",
-      "viewAll": "View all schedules →",
-      "actionTypes": {
-        "initial_invitation": "Initial Invitation",
-        "confirmation": "RSVP Confirmation",
-        "event_reminder": "Event Reminder",
-        "post_event": "Thank You",
-        "phone_call": "Call Round"
-      }
-    },
-    "quickActions": {
-      "title": "Quick Actions",
-      "description": "Common tasks",
-      "addGuest": "Add Guest",
-      "addGuestDesc": "Invite new guests",
-      "createSchedule": "Create Schedule",
-      "createScheduleDesc": "Plan event timeline",
-      "viewGuests": "View All Guests",
-      "viewGuestsDesc": "Manage guest list",
-      "importCsv": "Import File",
-      "importCsvDesc": "Bulk upload guests"
-    },
     "recentActivity": {
       "title": "Recent Activity",
       "description": "Latest RSVP updates",
@@ -1089,7 +1061,6 @@
       "hoursAgo": "{count} hours ago",
       "dayAgo": "{count} day ago",
       "daysAgo": "{count} days ago",
-      "showMore": "Show more",
       "byPhone": "by phone"
     },
     "onboarding": {
@@ -1121,6 +1092,164 @@
         "description": "Invite a partner or family member to help manage RSVPs and guest details.",
         "action": "Manage collaborators"
       }
+    },
+    "mobile": {
+      "typeLabel": {
+        "wedding": "Wedding",
+        "henna": "Henna",
+        "bar_mitzva": "Bar Mitzvah",
+        "bat_mitzva": "Bat Mitzvah"
+      },
+      "hero": {
+        "daysLabel": "{count, plural, one {day to go} other {days to go}}",
+        "todayTitle": "Today",
+        "todaySub": "is your day",
+        "dateLabel": "Date",
+        "venueLabel": "Venue",
+        "venueMissing": "No venue picked yet",
+        "rsvpLabel": "RSVPs",
+        "rsvpLine": "<b>{confirmed}</b> of {total} confirmed",
+        "noDateTitle": "Waiting on the perfect date",
+        "noDateDescription": "The moment you pick one, everything here updates itself",
+        "zeroGuestsTitle": "Add your first guests",
+        "zeroGuestsDescription": "Your guest list is still empty"
+      },
+      "actions": {
+        "title": "What to do now",
+        "subtitle": "Updates every visit",
+        "details": {
+          "label": "Complete your event details",
+          "why": "The time and the venue"
+        },
+        "addGuests": {
+          "label": "Add guests",
+          "why": "By hand, from Excel or from Google Drive"
+        },
+        "groups": {
+          "label": "Sort guests into groups",
+          "why": "Family, friends, work"
+        },
+        "invitationImage": {
+          "label": "Upload an invitation image",
+          "why": "Shown at the top of your guest messages"
+        },
+        "collaborator": {
+          "label": "Invite a planning partner",
+          "why": "Your partner, a parent, a good friend"
+        },
+        "health": {
+          "label": "Check your guest list",
+          "whyBoth": "{duplicates} possible duplicates and {noPhone} without a phone",
+          "whyDuplicates": "{duplicates} possible duplicates",
+          "whyNoPhone": "{noPhone} records without a phone"
+        },
+        "test": {
+          "label": "Get a test message",
+          "why": "See exactly what guests will get, before anyone does",
+          "badge": "Sent only to you"
+        },
+        "seating": {
+          "label": "Start your seating plan",
+          "why": "{count} guests have already confirmed"
+        },
+        "gifting": {
+          "label": "Turn on digital gifts",
+          "why": "Guests give straight from the invitation"
+        },
+        "preview": {
+          "label": "Share an invitation preview",
+          "why": "A link to the RSVP page exactly as a guest sees it",
+          "copiedLabel": "Link copied",
+          "copiedWhy": "Send it to anyone you want to show the invitation to",
+          "shareTitle": "Invitation preview"
+        },
+        "budget": {
+          "label": "Log your first expense",
+          "why": "Your budget starts tracking from the first one"
+        },
+        "addGuest": {
+          "label": "Add a guest",
+          "why": "One guest, no file needed"
+        },
+        "ai": {
+          "label": "Ask the assistant",
+          "why": "Any question about your event"
+        },
+        "viewList": {
+          "label": "Go to the guest list",
+          "why": "{count} records on the list"
+        }
+      },
+      "testMessage": {
+        "confirmTitle": "Sent only to you, at <ltr>{phone}</ltr>",
+        "confirmBody": "The RSVP message exactly as a guest gets it. Arrives within a minute. No guest receives anything.",
+        "phoneTitle": "Which number should we send to?",
+        "phoneHint": "Only for this test, not saved. No guest receives anything",
+        "phonePlaceholder": "050-0000000",
+        "send": "Send it to me",
+        "sending": "Sending",
+        "cancel": "Cancel",
+        "sentTitle": "Sent to you",
+        "sentBody": "Check your phone at <ltr>{phone}</ltr>",
+        "errors": {
+          "invalid-phone": "That phone number isn't valid",
+          "no-phone": "Enter a phone number to get the message",
+          "cap-reached": "This event has used all its test messages",
+          "no-schedule": "There's no RSVP message to send yet",
+          "not-allowed": "Only the event's owners can get a test message",
+          "send-failed": "We couldn't send it, try again"
+        }
+      },
+      "healthCheck": {
+        "duplicates": "Possible duplicates",
+        "duplicatesHint": "Exactly the same name",
+        "noPhone": "No phone",
+        "noPhoneHint": "Won't get messages",
+        "openList": "Open the list filtered to these rows",
+        "noneFound": "None found"
+      },
+      "strip": {
+        "title": "At a glance",
+        "budget": "Budget",
+        "budgetOf": "{spent} of {total}",
+        "budgetSpent": "{spent} in expenses",
+        "budgetEmpty": "Set a budget and log expenses",
+        "seating": "Seating",
+        "seatingValue": "{seated} of {total} confirmed records seated",
+        "seatingEmpty": "Start arranging tables",
+        "messages": "Messages",
+        "scheduleNext": "{type} · {days, plural, =0 {today} =1 {tomorrow} other {in # days}}",
+        "scheduleQueued": "{count, plural, =1 {# message scheduled} other {# messages scheduled}}",
+        "scheduleAllSent": "All messages have gone out",
+        "scheduleEmpty": "Schedule your first guest message",
+        "scheduleTypes": {
+          "initial_invitation": "Initial Invitation",
+          "confirmation": "RSVP Confirmation",
+          "event_reminder": "Event Reminder",
+          "post_event": "Thank You",
+          "phone_call": "Call Round"
+        }
+      },
+      "analytics": {
+        "donutTitle": "RSVP breakdown",
+        "donutCenter": "confirmed",
+        "confirmed": "Confirmed",
+        "pending": "Pending",
+        "declined": "Declined",
+        "donutEmpty": "The chart fills in as your first guests respond",
+        "engagementTitle": "Responses by group",
+        "engagementLegend": "Confirmed · Pending · Declined",
+        "engagementRow": "<b>{confirmed}</b> of {total}",
+        "engagementEmpty": "Once guests are in groups, you'll see who has answered here",
+        "groupsTitle": "By group",
+        "groupsSummary": "{groups} groups · {guests} guests",
+        "groupRow": "{count} guests",
+        "groupsEmpty": "No groups yet. They're created from the \"group\" column on import, or by hand on the groups tab",
+        "activityTitle": "Recent activity",
+        "activityEmpty": "Every guest confirmation or decline shows up here",
+        "activityViewAll": "All guests"
+      },
+      "sectionError": "We couldn't load this section"
     }
   },
   "schedules": {

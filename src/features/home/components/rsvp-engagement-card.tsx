@@ -18,7 +18,7 @@ const BAR_WIDTH = 80;
 const MIN_CHART_WIDTH = 400;
 
 export function RsvpEngagementCard({ groups }: { groups: GroupWithGuestsApp[] }) {
-  const t = useTranslations('dashboard.rsvpEngagement');
+  const t = useTranslations('home.rsvpEngagement');
   const data = useMemo(() => computeGroupRsvpData(groups), [groups]);
   const chartWidth = Math.max(groups.length * BAR_WIDTH, MIN_CHART_WIDTH);
 

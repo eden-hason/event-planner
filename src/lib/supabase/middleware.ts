@@ -63,6 +63,8 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     // beginning with c, /collaborate among them
     strippedPath !== '/c' &&
     !strippedPath.startsWith('/c/') &&
+    // Live Invite Preview Link - opened by whoever the Owner shares it with
+    !strippedPath.startsWith('/p/') &&
     !strippedPath.startsWith('/invitations') &&
     !strippedPath.startsWith('/privacy') &&
     !strippedPath.startsWith('/terms') &&

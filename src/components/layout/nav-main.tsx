@@ -12,15 +12,15 @@ import {
 } from '@/components/ui/sidebar';
 
 // Helper function to check if pathname matches the route pattern
-// Handles both /app/dashboard and /app/{eventId}/dashboard
+// Handles both /app/home and /app/{eventId}/home
 function isActiveRoute(pathname: string, routeUrl: string): boolean {
-  // Exact match (handles both /app/dashboard and /app/{eventId}/dashboard)
+  // Exact match (handles both /app/home and /app/{eventId}/home)
   if (pathname === routeUrl) {
     return true;
   }
 
   // Extract the route path without /app prefix
-  // routeUrl might be /app/dashboard or /app/{eventId}/dashboard
+  // routeUrl might be /app/home or /app/{eventId}/home
   const routeMatch = routeUrl.match(/^\/app\/(?:[^/]+\/)?(.+)$/);
   if (!routeMatch) return false;
 

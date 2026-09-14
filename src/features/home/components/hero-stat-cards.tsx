@@ -36,7 +36,7 @@ export function DaysToEventCard({
   /** Null when the event has no date - there is nothing to count down to. */
   daysRemaining: number | null;
 }) {
-  const t = useTranslations('dashboard.stats');
+  const t = useTranslations('home.stats');
 
   // An em-dash-free placeholder rather than a zero: zero would read as "the
   // event is today", which is the one thing we know it is not.
@@ -60,7 +60,7 @@ export function GuestsInvitedCard({
   total: number;
   estimate?: GuestsEstimate;
 }) {
-  const t = useTranslations('dashboard.stats');
+  const t = useTranslations('home.stats');
   // The estimate is now the number the owner chose on the slider, so it is both
   // the bar's ceiling and the figure shown - no bucket to widen into a range.
   const pct = estimate ? Math.min(100, Math.round((total / estimate) * 100)) : null;
@@ -95,7 +95,7 @@ export function ScheduledMessagesCard({
 }: {
   count: number;
 }) {
-  const t = useTranslations('dashboard.stats');
+  const t = useTranslations('home.stats');
   return (
     <StatCard
       label={t('scheduledMessages')}

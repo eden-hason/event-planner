@@ -85,7 +85,7 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
       : event.title;
   };
 
-  // Extract eventId from pathname (e.g., /app/{eventId}/dashboard)
+  // Extract eventId from pathname (e.g., /app/{eventId}/home)
   const currentEventId = pathname.match(/^\/app\/([^/]+)/)?.[1] || null;
 
   // Find the current event
@@ -100,7 +100,7 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
 
   const handleEventSelect = (eventId: string) => {
     setDropdownOpen(false);
-    router.push(`/app/${eventId}/dashboard`);
+    router.push(`/app/${eventId}/home`);
   };
 
   const currentEventIsShared = currentEvent
@@ -132,7 +132,7 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
         if (remainingEvents.length === 0) {
           router.push('/app');
         } else if (currentEventId === eventId) {
-          router.push(`/app/${remainingEvents[0].id}/dashboard`);
+          router.push(`/app/${remainingEvents[0].id}/home`);
         }
 
         return t('toast.deleted');

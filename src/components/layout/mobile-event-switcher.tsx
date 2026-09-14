@@ -85,7 +85,7 @@ export function MobileEventSwitcher({
                 type="button"
                 role="radio"
                 aria-checked={isActive}
-                onClick={() => go(`/app/${event.id}/dashboard`)}
+                onClick={() => go(`/app/${event.id}/home`)}
                 className={cn(
                   'flex w-full items-center gap-3 border-b px-3.5 py-3 text-start last:border-b-0',
                   'transition-colors active:opacity-70',

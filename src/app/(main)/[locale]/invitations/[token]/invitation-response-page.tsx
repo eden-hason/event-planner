@@ -33,7 +33,7 @@ export function InvitationResponsePage({
       const result = await acceptInvitation(token);
       if (result.success) {
         toast.success(t('toast.accepted'));
-        router.push(`/app/${invitation.eventId}/dashboard`);
+        router.push(`/app/${invitation.eventId}/home`);
       } else {
         toast.error(result.message || t('toast.acceptFailed'));
       }

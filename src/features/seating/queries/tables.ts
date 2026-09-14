@@ -39,7 +39,7 @@ interface ProgressRow {
  * Event - not just the ones RLS lets them read (ADR-0008). Returns null when
  * the aggregate is unavailable, so the caller can fall back to the visible set.
  */
-const getGlobalProgressCounts = async (
+export const getGlobalProgressCounts = async (
   eventId: string,
 ): Promise<GuestProgressCounts | null> => {
   try {

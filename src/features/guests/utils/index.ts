@@ -31,3 +31,11 @@ export {
   type RsvpStatus,
   type RsvpPresentation,
 } from './rsvp-presentation';
+
+export {
+  NO_PHONE_ISSUE,
+  parseGuestIssue,
+  findGuestIssues,
+  scopeToGuestIssue,
+  type GuestIssue,
+} from './guest-health';

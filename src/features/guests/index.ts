@@ -52,6 +52,7 @@ export {
   RSVP_STATUSES,
   RSVP_LABEL_NAMESPACE,
   DIETARY_PRESETS,
+  findGuestIssues,
   type ValidatedRow,
   type FieldErrors,
   type ParsedCSV,

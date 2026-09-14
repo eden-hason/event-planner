@@ -28,7 +28,7 @@ export default async function AppPage({
   const event = await getLastUserEvent();
 
   if (event?.id) {
-    redirect({ href: `/app/${event.id}/dashboard`, locale });
+    redirect({ href: `/app/${event.id}/home`, locale });
   }
 
   redirect({ href: '/start', locale });
