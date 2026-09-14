@@ -26,6 +26,19 @@ export function isGuestImportRoute(pathname: string) {
   return pathname.includes('/guests/import');
 }
 
+/**
+ * The event Home page (`/app/<eventId>/home`).
+ *
+ * Below `md` its Hero runs to the top edge of the viewport, so Home is the one
+ * page that drops the chrome row there - see `PageCard`. Matched by shape
+ * rather than by `includes('/home')` so an unrelated segment can't claim it,
+ * and anchored so it survives the locale prefix being present or stripped
+ * (`usePathname` from `@/i18n/navigation` removes it, `next/navigation` does not).
+ */
+export function isHomeRoute(pathname: string) {
+  return /\/app\/[^/]+\/home$/.test(pathname);
+}
+
 /** Either full-screen takeover route - see `isSeatingRoute` and `isGuestImportRoute`. */
 export function isFullTakeoverRoute(pathname: string) {
   return isSeatingRoute(pathname) || isGuestImportRoute(pathname);
