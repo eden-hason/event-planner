@@ -92,7 +92,10 @@ export async function HomeHero({ eventId }: { eventId: string }) {
     : null;
 
   return (
-    <section className="relative -mx-4 -mt-4 px-4 pb-0.5">
+    // No negative top margin: below `md` the chrome row above this is gone (see
+    // `PageCard`), so the section already starts at the top edge of the
+    // viewport and the wash below runs off it rather than under a white band.
+    <section className="relative -mx-4 px-4 pb-0.5">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[300px] [mask-image:linear-gradient(180deg,#000_0%,#000_52%,transparent_100%)]"
@@ -123,7 +126,15 @@ export async function HomeHero({ eventId }: { eventId: string }) {
         <ConfettiBackground className="pointer-events-none absolute inset-x-0 top-0 h-[300px]" count={30} />
       )}
 
-      <div className="relative flex items-center gap-5 px-1.5 pt-10 pb-6">
+      {/*
+        The lead: title and countdown, centered in a band of their own rather
+        than sitting right under the status bar now that nothing else is above
+        them. `min-h` plus `items-center` is what centers them - the padding is
+        symmetric so the middle of the band is the middle of the content, and
+        the safe-area inset is added to both the height and the top padding so
+        a notch eats into the band instead of into the text.
+      */}
+      <div className="relative flex min-h-[calc(200px+env(safe-area-inset-top))] items-center gap-5 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {typeKey && (
             <span className="text-primary text-[13px] font-semibold">

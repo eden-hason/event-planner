@@ -2,8 +2,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function HeroSkeleton() {
   return (
-    <div className="-mx-4 -mt-4 flex flex-col gap-4 px-4 pt-10">
-      <div className="flex items-start gap-4 px-1.5">
+    <div className="-mx-4 flex flex-col gap-4 px-4">
+      {/* Mirrors the Hero's lead band (see `home-hero.tsx`) so the real thing
+          lands in place instead of shifting the sections below it. */}
+      <div className="flex min-h-[calc(200px+env(safe-area-inset-top))] items-center gap-4 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6">
         <div className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-8 w-4/5" />

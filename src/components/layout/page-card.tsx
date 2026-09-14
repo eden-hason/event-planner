@@ -10,7 +10,7 @@ import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
-import { isSeatingRoute, isGuestImportRoute } from './app-shell';
+import { isSeatingRoute, isGuestImportRoute, isHomeRoute } from './app-shell';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
@@ -40,6 +40,12 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 export function PageCard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const seating = isSeatingRoute(pathname);
+  // Home's mobile Hero is its own header: it opens with the event title and the
+  // countdown against a full-bleed wash that has to start at the top edge of
+  // the viewport, which a white chrome band above it would cut off. The row
+  // stays from `md` up, where Home is the desktop layout and the Hero is one
+  // card in a grid rather than the top of the page.
+  const hideChromeRowOnMobile = isHomeRoute(pathname);
   const { title, subtitle, action } = useFeatureLayoutContext();
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
@@ -106,6 +112,9 @@ export function PageCard({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           'flex items-center justify-between gap-4',
+          // `hidden`, not just an unpainted band: gone from the flex flow, the
+          // Card's `gap-4` goes with it and the content starts at y=0.
+          hideChromeRowOnMobile && 'hidden md:flex',
           seating
             ? cn(
                 // Below `md` the Seating Plan gets the same white band as every
