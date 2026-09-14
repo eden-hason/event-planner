@@ -1245,6 +1245,8 @@
         "groupsSummary": "{groups} groups · {guests} guests",
         "groupRow": "{count} guests",
         "groupsEmpty": "No groups yet. They're created from the \"group\" column on import, or by hand on the groups tab",
+        "groupsShowAll": "Show all {count} groups",
+        "groupsShowLess": "Show less",
         "activityTitle": "Recent activity",
         "activityEmpty": "Every guest confirmation or decline shows up here",
         "activityViewAll": "All guests"

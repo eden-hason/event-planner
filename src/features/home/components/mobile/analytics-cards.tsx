@@ -6,6 +6,7 @@ import { rsvpPresentation } from '@/features/guests/utils';
 import { getHomeGroups, getHomeGuests, getRecentRsvpActivity } from '../../queries';
 import { countHeads, groupHeads, percent } from '../../utils/counts';
 import { RsvpTriBar } from './rsvp-tri-bar';
+import { CollapsibleRows } from './collapsible-rows';
 
 const GROUP_COLORS = ['bg-primary', 'bg-home-violet', 'bg-chart-2', 'bg-rsvp-pending', 'bg-rsvp-confirmed'];
 
@@ -90,21 +91,23 @@ export async function GroupEngagementCard({ eventId }: { eventId: string }) {
         )}
       </div>
       {rows.length > 0 ? (
-        rows.map((row) => (
-          <div key={row.id} className="flex flex-col gap-1.5">
-            <div className="flex justify-between gap-3 text-[13px]">
-              <span className="truncate font-semibold">{row.name}</span>
-              <span className="text-muted-foreground shrink-0">
-                {t.rich('engagementRow', {
-                  confirmed: row.confirmed,
-                  total: row.total,
-                  b: (chunks) => <b className="text-rsvp-confirmed-strong">{chunks}</b>,
-                })}
-              </span>
+        <CollapsibleRows className="flex flex-col gap-3" buttonClassName="text-start">
+          {rows.map((row) => (
+            <div key={row.id} className="flex flex-col gap-1.5">
+              <div className="flex justify-between gap-3 text-[13px]">
+                <span className="truncate font-semibold">{row.name}</span>
+                <span className="text-muted-foreground shrink-0">
+                  {t.rich('engagementRow', {
+                    confirmed: row.confirmed,
+                    total: row.total,
+                    b: (chunks) => <b className="text-rsvp-confirmed-strong">{chunks}</b>,
+                  })}
+                </span>
+              </div>
+              <RsvpTriBar counts={row} className="h-[7px]" />
             </div>
-            <RsvpTriBar counts={row} className="h-[7px]" />
-          </div>
-        ))
+          ))}
+        </CollapsibleRows>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="bg-muted h-[7px] rounded-full" />
@@ -135,14 +138,16 @@ export async function GroupHeadsCard({ eventId }: { eventId: string }) {
         )}
       </div>
       {rows.length > 0 ? (
-        rows.map((row, i) => (
-          <div key={row.id} className="border-border flex items-center gap-2.5 border-t px-4 py-[11px]">
-            <span className={cn('size-2 shrink-0 rounded-[2px]', GROUP_COLORS[i % GROUP_COLORS.length])} />
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">{row.name}</span>
-            <span className="text-muted-foreground text-[13px]">{t('groupRow', { count: row.total })}</span>
-            <span className="w-10 text-end text-[13px] font-bold">{percent(row.confirmed, row.total)}%</span>
-          </div>
-        ))
+        <CollapsibleRows buttonClassName="border-border w-full border-t px-4 py-[11px]">
+          {rows.map((row, i) => (
+            <div key={row.id} className="border-border flex items-center gap-2.5 border-t px-4 py-[11px]">
+              <span className={cn('size-2 shrink-0 rounded-[2px]', GROUP_COLORS[i % GROUP_COLORS.length])} />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{row.name}</span>
+              <span className="text-muted-foreground text-[13px]">{t('groupRow', { count: row.total })}</span>
+              <span className="w-10 text-end text-[13px] font-bold">{percent(row.confirmed, row.total)}%</span>
+            </div>
+          ))}
+        </CollapsibleRows>
       ) : (
         <p className="text-muted-foreground px-4 pt-1 pb-4 text-[13px]">{t('groupsEmpty')}</p>
       )}

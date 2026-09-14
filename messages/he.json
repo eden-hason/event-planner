@@ -1245,6 +1245,8 @@
         "groupsSummary": "{groups} קבוצות · {guests} אורחים",
         "groupRow": "{count} אורחים",
         "groupsEmpty": "אין קבוצות עדיין. נוצרות אוטומטית מעמודת \"קבוצה\" בייבוא, או ידנית בלשונית קבוצות",
+        "groupsShowAll": "הצגת כל {count} הקבוצות",
+        "groupsShowLess": "הצגה מצומצמת",
         "activityTitle": "פעילות אחרונה",
         "activityEmpty": "כל אישור או סירוב של אורחים יופיע כאן",
         "activityViewAll": "לכל האורחים"
