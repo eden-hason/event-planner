@@ -24,6 +24,14 @@ export type GuestInteractionRow = {
   guestName: string;
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
+  /**
+   * WhatsApp read receipt - the guest opened the message itself, which is not
+   * the same as `viewed` (that one means they opened the RSVP page). SMS never
+   * reports past accepted, so an SMS guest stays false here forever and the UI
+   * shows those as not-applicable rather than unseen.
+   */
+  seen: boolean;
+  seenAt?: string;
   viewed: boolean;
   viewedAt?: string;
   response?: 'rsvp_confirm' | 'rsvp_decline';
@@ -43,6 +51,14 @@ export type ScheduleInteractionData = {
     reachedWhatsapp: number;
     reachedSms: number;
     notReached: { onItsWay: number; notDelivered: number; noPhone: number };
+    /** Guest records with a WhatsApp read receipt */
+    seen: number;
+    /**
+     * Deliveries that could ever produce a read receipt (WhatsApp, not failed
+     * and not skipped). The denominator `seen` is honest against - counting it
+     * out of the whole audience would score every SMS guest as unseen.
+     */
+    seenCapable: number;
     views: number;
     /** Guest records that confirmed */
     confirmed: number;
@@ -83,7 +99,7 @@ export async function getScheduleInteractionData(
       .order('created_at', { ascending: false }),
     supabase
       .from('message_deliveries')
-      .select('guest_id, status, delivery_method, guests!inner(name, amount)')
+      .select('guest_id, status, read_at, delivery_method, guests!inner(name, amount)')
       .eq('schedule_id', scheduleId),
   ]);
 
@@ -94,6 +110,8 @@ export async function getScheduleInteractionData(
       reachedWhatsapp: 0,
       reachedSms: 0,
       notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0 },
+      seen: 0,
+      seenCapable: 0,
       views: 0,
       confirmed: 0,
       confirmedGuests: 0,
@@ -118,6 +136,7 @@ export async function getScheduleInteractionData(
         guestId,
         guestName: guest.name,
         delivery: null,
+        seen: false,
         viewed: false,
         amount: guest.amount ?? 1,
       };
@@ -126,9 +145,21 @@ export async function getScheduleInteractionData(
     return entry;
   };
 
+  let seenCapable = 0;
+
   for (const row of deliveriesResult.data ?? []) {
     const guest = row.guests as unknown as { name: string; amount: number | null };
-    rowFor(row.guest_id as string, guest).delivery = toOutcome(row.status, row.delivery_method);
+    const entry = rowFor(row.guest_id as string, guest);
+    entry.delivery = toOutcome(row.status, row.delivery_method);
+
+    // `read` is the only status carrying a receipt, and only WhatsApp reports it.
+    if (row.delivery_method === 'whatsapp') {
+      if (row.status !== 'not_sent' && row.status !== 'failed') seenCapable++;
+      if (row.status === 'read') {
+        entry.seen = true;
+        entry.seenAt = (row.read_at as string | null) ?? undefined;
+      }
+    }
   }
 
   for (const row of interactionsResult.data ?? []) {
@@ -166,19 +197,22 @@ export async function getScheduleInteractionData(
       notDelivered: count('not_delivered'),
       noPhone: count('no_phone'),
     },
+    seen: guests.filter((g) => g.seen).length,
+    seenCapable,
     views: guests.filter((g) => g.viewed).length,
     confirmed: confirmedGuestRecords.length,
     confirmedGuests: confirmedGuestRecords.reduce((sum, g) => sum + g.amount, 0),
     declined: guests.filter((g) => g.response === 'rsvp_decline').length,
   };
 
-  // Responded first, then viewed, then reached, then everyone not reached
+  // Responded first, then viewed, then seen, then reached, then not reached
   guests.sort((a, b) => {
     const rank = (g: GuestInteractionRow) =>
       g.response ? 0
         : g.viewed ? 1
-          : g.delivery === 'whatsapp' || g.delivery === 'sms' ? 2
-            : 3;
+          : g.seen ? 2
+            : g.delivery === 'whatsapp' || g.delivery === 'sms' ? 3
+              : 4;
     return rank(a) - rank(b);
   });
 
