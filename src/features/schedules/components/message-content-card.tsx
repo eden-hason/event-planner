@@ -13,6 +13,7 @@ import {
 } from '@tabler/icons-react';
 
 import { Link } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 import {
   Alert,
@@ -175,12 +176,16 @@ export function MessageContentCard({
         )}
       </CardHeader>
       <CardContent>
-        {/* WhatsApp phone mockup */}
+        {/* Phone mockup - the WhatsApp chat wallpaper only where the message
+            actually arrives in WhatsApp; an SMS sits on a plain thread */}
         <div className="overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
           {/* Chat area */}
           <div
-            className="flex flex-col gap-1 px-3 py-4"
-            style={chatBgStyle}
+            className={cn(
+              'flex flex-col gap-1 px-3 py-4',
+              channel === 'sms' && 'bg-zinc-50',
+            )}
+            style={channel === 'sms' ? undefined : chatBgStyle}
           >
             {template === null && smsBody ? (
               <div className="flex justify-end rtl:justify-start py-2 px-1">

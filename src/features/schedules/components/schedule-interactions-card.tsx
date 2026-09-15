@@ -29,16 +29,30 @@ interface ScheduleInteractionsCardProps {
    * reads "No response" on every row of a reminder is noise.
    */
   collectsRsvp: boolean;
+  /**
+   * The schedule's own channel. An SMS schedule has nothing WhatsApp-shaped to
+   * report - no read receipts, no per-channel split - so it gets none of that
+   * layout. A WhatsApp schedule keeps the split, since SMS Fallback can reach
+   * some of its guests over SMS.
+   */
+  channel: 'whatsapp' | 'sms' | null;
 }
 
 export async function ScheduleInteractionsCard({
   scheduleId,
   collectsRsvp,
+  channel,
 }: ScheduleInteractionsCardProps) {
   const t = await getTranslations('schedules.interactions');
   const data = await getScheduleInteractionData(scheduleId);
 
   const isEmpty = data.guests.length === 0;
+  const isSms = channel === 'sms';
+  // Scored against WhatsApp deliveries only, so it is shown only when there are some.
+  const showSeen = !isSms && data.summary.seenCapable > 0;
+  // A view is recorded from the RSVP link, and only a Confirmation round
+  // carries one - on any other schedule this would read 0 forever.
+  const showViews = collectsRsvp;
 
   return (
     <Card>
@@ -74,7 +88,8 @@ export async function ScheduleInteractionsCard({
                 Seen sits beside that funnel rather than inside it: a read receipt
                 is WhatsApp-only, so it is scored against the WhatsApp deliveries
                 and hidden entirely when none of them could report one. Folding it
-                in as a step would make every SMS guest look worse. */}
+                in as a step would make every SMS guest look worse.
+                Opened is only a step where the message carries the RSVP link. */}
             <div className="grid grid-cols-2 gap-2 sm:flex">
               <StatChip
                 icon={<IconUsers size={13} />}
@@ -93,13 +108,17 @@ export async function ScheduleInteractionsCard({
                 icon={<IconSend size={13} />}
                 label={t('reached')}
                 value={data.summary.reached}
-                hint={t('reachedChannels', {
-                  whatsapp: data.summary.reachedWhatsapp,
-                  sms: data.summary.reachedSms,
-                })}
+                hint={
+                  isSms
+                    ? undefined
+                    : t('reachedChannels', {
+                        whatsapp: data.summary.reachedWhatsapp,
+                        sms: data.summary.reachedSms,
+                      })
+                }
                 accentClassName="text-primary"
               />
-              {data.summary.seenCapable > 0 && (
+              {showSeen && (
                 <StatChip
                   icon={<IconChecks size={13} />}
                   label={t('seen')}
@@ -110,12 +129,14 @@ export async function ScheduleInteractionsCard({
                   accentClassName="text-primary"
                 />
               )}
-              <StatChip
-                icon={<IconEye size={13} />}
-                label={t('views')}
-                value={data.summary.views}
-                accentClassName="text-primary"
-              />
+              {showViews && (
+                <StatChip
+                  icon={<IconEye size={13} />}
+                  label={t('views')}
+                  value={data.summary.views}
+                  accentClassName="text-primary"
+                />
+              )}
               {collectsRsvp && (
                 <StatChip
                   icon={<IconMessageCircle size={13} />}
@@ -133,6 +154,8 @@ export async function ScheduleInteractionsCard({
               guests={data.guests}
               notReached={data.summary.notReached}
               collectsRsvp={collectsRsvp}
+              showSeen={showSeen}
+              showViews={showViews}
               labels={{
                 columnGuest: t('columnGuest'),
                 columnSeen: t('columnSeen'),
