@@ -107,6 +107,28 @@ export function WorkspaceSignals({ signals }: { signals: EventWorkspaceSignal[] 
   );
 }
 
+const CHANNEL_LABEL: Record<string, string> = { whatsapp: 'WhatsApp', sms: 'SMS' };
+
+/**
+ * How a set of deliveries splits across channels, or null when they all went the
+ * same way. A schedule is labelled with its template's channel, but any delivery
+ * can fall back to SMS - so a bare count under a "WhatsApp" heading silently
+ * counts the SMS ones as WhatsApp. Spell the split out rather than filtering it
+ * away: those messages were still sent, they just did not go over WhatsApp.
+ */
+function channelBreakdown(deliveries: EventTimelineRow['deliveries']): string | null {
+  const counts = new Map<string, number>();
+  for (const delivery of deliveries) {
+    const key = delivery.channel ?? 'unknown';
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  if (counts.size < 2) return null;
+  return [...counts.entries()]
+    .sort(([, a], [, b]) => b - a)
+    .map(([channel, count]) => `${count} ${CHANNEL_LABEL[channel] ?? channel}`)
+    .join(' · ');
+}
+
 export function EventTimeline({ rows, eventId }: { rows: EventTimelineRow[]; eventId: string }) {
   if (!rows.length) return null;
   return (
@@ -121,6 +143,7 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
   const successful = row.deliveries.filter((delivery) => ['sent', 'delivered', 'read'].includes(delivery.status));
   // A not-sent delivery is a guest no attempt could be made for (no phone).
   const attempted = row.deliveries.filter((delivery) => delivery.status !== 'not_sent').length;
+  const successfulChannels = channelBreakdown(successful);
   const includesManualResends = row.deliveries.some((delivery) => delivery.triggeredBy === 'manual')
     && row.deliveries.some((delivery) => delivery.triggeredBy === 'scheduled');
   const audienceLabel = `${row.audienceCount} ${row.targetStatus ?? 'guest'} ${row.audienceCount === 1 ? 'record' : 'records'}`;
@@ -195,7 +218,14 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
         {failed.length === 0 && successful.length > 0 && (
           <Collapsible className="border-t">
             <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 px-3.5 py-2.5 text-[12px] font-medium">
-              Successful deliveries ({successful.length}) <ChevronDown />
+              Successful deliveries ({successful.length})
+              {successfulChannels && (
+                <span className="text-muted-foreground/80 font-normal">
+                  {' '}
+                  &middot; {successfulChannels}
+                </span>
+              )}{' '}
+              <ChevronDown />
             </CollapsibleTrigger>
             <CollapsibleContent className="flex flex-col gap-1 border-t px-3.5 py-2.5 text-[12px]">
               {successful.map((delivery) => <p key={delivery.id}>{delivery.guestName} · {delivery.status}</p>)}
@@ -218,6 +248,7 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [selected, setSelected] = useState(() => new Set(failed.map((delivery) => delivery.guestId)));
+  const successfulChannels = channelBreakdown(successful);
   function toggle(id: string, checked: boolean) {
     setSelected((current) => {
       const next = new Set(current);
@@ -261,7 +292,14 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
         {successful.length > 0 && (
           <Collapsible className="mt-3 border-t pt-3">
             <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[12px] font-medium">
-              Successful deliveries ({successful.length}) <ChevronDown />
+              Successful deliveries ({successful.length})
+              {successfulChannels && (
+                <span className="text-muted-foreground/80 font-normal">
+                  {' '}
+                  &middot; {successfulChannels}
+                </span>
+              )}{' '}
+              <ChevronDown />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 space-y-2">
               {successful.map((delivery) => (

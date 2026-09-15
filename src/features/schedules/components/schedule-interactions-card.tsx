@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import {
+  IconChecks,
   IconEye,
   IconMessageCircle,
   IconMoodSad,
@@ -70,15 +71,11 @@ export async function ScheduleInteractionsCard({
           <div className="flex flex-col gap-5">
             {/* The funnel, in guest records: meant for -> reached -> opened -> answered
                 (answered only where the schedule collects RSVPs).
-                Read receipts are not a step of their own - SMS cannot produce one,
-                so a "read" step would make every SMS guest look worse. */}
-            <div
-              className={
-                collectsRsvp
-                  ? 'grid grid-cols-2 gap-2 sm:flex'
-                  : 'grid grid-cols-3 gap-2'
-              }
-            >
+                Seen sits beside that funnel rather than inside it: a read receipt
+                is WhatsApp-only, so it is scored against the WhatsApp deliveries
+                and hidden entirely when none of them could report one. Folding it
+                in as a step would make every SMS guest look worse. */}
+            <div className="grid grid-cols-2 gap-2 sm:flex">
               <StatChip
                 icon={<IconUsers size={13} />}
                 label={t('audience')}
@@ -102,6 +99,17 @@ export async function ScheduleInteractionsCard({
                 })}
                 accentClassName="text-primary"
               />
+              {data.summary.seenCapable > 0 && (
+                <StatChip
+                  icon={<IconChecks size={13} />}
+                  label={t('seen')}
+                  value={data.summary.seen}
+                  hint={t('seenOfWhatsapp', {
+                    whatsapp: data.summary.seenCapable,
+                  })}
+                  accentClassName="text-primary"
+                />
+              )}
               <StatChip
                 icon={<IconEye size={13} />}
                 label={t('views')}
@@ -127,6 +135,7 @@ export async function ScheduleInteractionsCard({
               collectsRsvp={collectsRsvp}
               labels={{
                 columnGuest: t('columnGuest'),
+                columnSeen: t('columnSeen'),
                 columnViewed: t('columnViewed'),
                 columnResponse: t('columnResponse'),
                 columnAmount: t('columnAmount'),

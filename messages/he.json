@@ -1273,8 +1273,11 @@
     "interactions": {
       "cardTitle": "פעילות אורחים",
       "views": "צפיות",
+      "seen": "נקרא",
+      "seenOfWhatsapp": "מתוך {whatsapp} בוואטסאפ",
       "emptyDescription": "אין תוצאות עדיין - הן יופיעו לאחר שהתזמון יישלח",
       "columnGuest": "אורח",
+      "columnSeen": "נקרא",
       "columnViewed": "צפה",
       "columnResponse": "תגובה",
       "columnDate": "תאריך",

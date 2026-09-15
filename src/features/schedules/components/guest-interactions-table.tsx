@@ -6,6 +6,7 @@ import { rsvpPresentation } from '@/features/guests';
 import { useLocale } from 'next-intl';
 import {
   IconCheck,
+  IconChecks,
   IconChevronLeft,
   IconChevronRight,
   IconEye,
@@ -123,6 +124,17 @@ function DeliveryLabel({
   );
 }
 
+/**
+ * The WhatsApp read receipt. Only WhatsApp reports one, so an SMS guest is
+ * blank here rather than unseen - the two are different facts and a cross would
+ * claim the second.
+ */
+function SeenMark({ row }: { row: GuestInteractionRow }) {
+  if (row.delivery === 'sms' || !row.seen)
+    return <span className="text-muted-foreground/40 text-xs">-</span>;
+  return <IconChecks size={15} className="inline text-primary" />;
+}
+
 interface GuestInteractionsTableProps {
   guests: GuestInteractionRow[];
   notReached: ScheduleInteractionData['summary']['notReached'];
@@ -130,6 +142,7 @@ interface GuestInteractionsTableProps {
   collectsRsvp: boolean;
   labels: {
     columnGuest: string;
+    columnSeen: string;
     columnViewed: string;
     columnResponse: string;
     columnAmount: string;
@@ -194,7 +207,9 @@ export function GuestInteractionsTable({
       ? formatDate(row.respondedAt)
       : row.viewedAt
         ? formatDate(row.viewedAt)
-        : '-';
+        : row.seenAt
+          ? formatDate(row.seenAt)
+          : '-';
 
   return (
     <div className="flex flex-col gap-3">
@@ -241,6 +256,13 @@ export function GuestInteractionsTable({
             <ItemContent className="min-w-0 gap-1">
               <ItemTitle className="w-full min-w-0">
                 <span className="truncate">{row.guestName}</span>
+                {row.seen && row.delivery !== 'sms' && (
+                  <IconChecks
+                    size={14}
+                    className="text-primary shrink-0"
+                    aria-label={labels.columnSeen}
+                  />
+                )}
                 {row.viewed && (
                   <IconEye size={14} className="shrink-0 text-blue-500" />
                 )}
@@ -282,6 +304,9 @@ export function GuestInteractionsTable({
                 {labels.columnDelivery}
               </TableHead>
               <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                {labels.columnSeen}
+              </TableHead>
+              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
                 {labels.columnViewed}
               </TableHead>
               {collectsRsvp && (
@@ -305,6 +330,9 @@ export function GuestInteractionsTable({
                 <TableCell className="font-medium">{row.guestName}</TableCell>
                 <TableCell>
                   <DeliveryLabel outcome={row.delivery} labels={labels} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <SeenMark row={row} />
                 </TableCell>
                 <TableCell className="text-center">
                   {row.viewed ? (

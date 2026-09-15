@@ -1273,8 +1273,11 @@
     "interactions": {
       "cardTitle": "Guests Activity",
       "views": "Views",
+      "seen": "Seen",
+      "seenOfWhatsapp": "of {whatsapp} on WhatsApp",
       "emptyDescription": "No results yet - they appear once the schedule has been sent",
       "columnGuest": "Guest",
+      "columnSeen": "Seen",
       "columnViewed": "Viewed",
       "columnResponse": "Response",
       "columnDate": "Date",
