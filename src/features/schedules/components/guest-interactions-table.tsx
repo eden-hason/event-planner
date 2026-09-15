@@ -140,6 +140,10 @@ interface GuestInteractionsTableProps {
   notReached: ScheduleInteractionData['summary']['notReached'];
   /** Show the Response and Guests columns - only a Confirmation round collects them */
   collectsRsvp: boolean;
+  /** Show the WhatsApp read receipt - never on an SMS schedule */
+  showSeen: boolean;
+  /** Show whether the guest opened the RSVP link - only where the message carries one */
+  showViews: boolean;
   labels: {
     columnGuest: string;
     columnSeen: string;
@@ -166,6 +170,8 @@ export function GuestInteractionsTable({
   guests,
   notReached,
   collectsRsvp,
+  showSeen,
+  showViews,
   labels,
 }: GuestInteractionsTableProps) {
   const [page, setPage] = useState(0);
@@ -209,7 +215,9 @@ export function GuestInteractionsTable({
         ? formatDate(row.viewedAt)
         : row.seenAt
           ? formatDate(row.seenAt)
-          : '-';
+          : row.sentAt
+            ? formatDate(row.sentAt)
+            : '-';
 
   return (
     <div className="flex flex-col gap-3">
@@ -256,14 +264,14 @@ export function GuestInteractionsTable({
             <ItemContent className="min-w-0 gap-1">
               <ItemTitle className="w-full min-w-0">
                 <span className="truncate">{row.guestName}</span>
-                {row.seen && row.delivery !== 'sms' && (
+                {showSeen && row.seen && row.delivery !== 'sms' && (
                   <IconChecks
                     size={14}
                     className="text-primary shrink-0"
                     aria-label={labels.columnSeen}
                   />
                 )}
-                {row.viewed && (
+                {showViews && row.viewed && (
                   <IconEye size={14} className="shrink-0 text-blue-500" />
                 )}
               </ItemTitle>
@@ -303,12 +311,16 @@ export function GuestInteractionsTable({
               <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {labels.columnDelivery}
               </TableHead>
-              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
-                {labels.columnSeen}
-              </TableHead>
-              <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
-                {labels.columnViewed}
-              </TableHead>
+              {showSeen && (
+                <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                  {labels.columnSeen}
+                </TableHead>
+              )}
+              {showViews && (
+                <TableHead className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase">
+                  {labels.columnViewed}
+                </TableHead>
+              )}
               {collectsRsvp && (
                 <>
                   <TableHead className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -331,16 +343,20 @@ export function GuestInteractionsTable({
                 <TableCell>
                   <DeliveryLabel outcome={row.delivery} labels={labels} />
                 </TableCell>
-                <TableCell className="text-center">
-                  <SeenMark row={row} />
-                </TableCell>
-                <TableCell className="text-center">
-                  {row.viewed ? (
-                    <IconEye size={15} className="inline text-blue-500" />
-                  ) : (
-                    <span className="text-muted-foreground/40 text-xs">-</span>
-                  )}
-                </TableCell>
+                {showSeen && (
+                  <TableCell className="text-center">
+                    <SeenMark row={row} />
+                  </TableCell>
+                )}
+                {showViews && (
+                  <TableCell className="text-center">
+                    {row.viewed ? (
+                      <IconEye size={15} className="inline text-blue-500" />
+                    ) : (
+                      <span className="text-muted-foreground/40 text-xs">-</span>
+                    )}
+                  </TableCell>
+                )}
                 {collectsRsvp && (
                   <>
                     <TableCell>

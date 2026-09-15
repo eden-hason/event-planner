@@ -296,6 +296,7 @@ export async function SchedulesPage({
                 <ScheduleInteractionsCard
                   scheduleId={schedule.id}
                   collectsRsvp={schedule.scheduleTypeKey === 'confirmation'}
+                  channel={schedule.deliveryMethod}
                 />
               </TabsContent>
             </Tabs>

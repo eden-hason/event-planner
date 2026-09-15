@@ -33,6 +33,8 @@ export type GuestInteractionRow = {
    */
   seen: boolean;
   seenAt?: string;
+  /** When the message left us - the only timestamp a guest who did nothing has */
+  sentAt?: string;
   viewed: boolean;
   viewedAt?: string;
   response?: 'rsvp_confirm' | 'rsvp_decline';
@@ -108,7 +110,7 @@ export async function getScheduleInteractionData(
       .order('created_at', { ascending: false }),
     supabase
       .from('message_deliveries')
-      .select('guest_id, status, read_at, delivery_method, guests!inner(name, amount)')
+      .select('guest_id, status, sent_at, read_at, delivery_method, guests!inner(name, amount)')
       .eq('schedule_id', scheduleId),
   ]);
 
@@ -161,6 +163,7 @@ export async function getScheduleInteractionData(
     const guest = row.guests as unknown as { name: string; amount: number | null };
     const entry = rowFor(row.guest_id as string, guest);
     entry.delivery = toOutcome(row.status, row.delivery_method);
+    entry.sentAt = (row.sent_at as string | null) ?? undefined;
 
     // `read` is the only status carrying a receipt, and only WhatsApp reports it.
     if (row.delivery_method === 'whatsapp') {
