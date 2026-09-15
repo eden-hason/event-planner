@@ -10,7 +10,8 @@ import { getEffectiveClient } from '@/lib/supabase/admin';
  * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
  * - `not_delivered`: every attempt failed. Deliberately factual - nothing here
  *   promises a retry until an SMS attempt actually exists.
- * - `no_phone`: in the audience, but no attempt was possible.
+ * - `no_phone`: targeted, but no attempt was possible, so no send ever
+ *   happened. Listed in the table and excluded from the audience total.
  */
 export type GuestDeliveryOutcome =
   | 'whatsapp'
@@ -37,12 +38,20 @@ export type GuestInteractionRow = {
 
 export type ScheduleInteractionData = {
   summary: {
-    /** Guest records this schedule was meant for (one delivery each) */
+    /**
+     * Guest records this schedule could actually be sent to. A record with no
+     * usable phone number was never a recipient - the send engine files it as
+     * `not_sent` before it ever reaches a channel - so counting it here made
+     * the audience (and every rate read against it) look bigger than the send
+     * ever was. Those records are excluded and reported as `excludedNoPhone`.
+     */
     audience: number;
     reached: number;
     reachedWhatsapp: number;
     reachedSms: number;
     notReached: { onItsWay: number; notDelivered: number; noPhone: number };
+    /** Targeted records left out of `audience` for want of a phone number */
+    excludedNoPhone: number;
     views: number;
     /** Guest records that confirmed */
     confirmed: number;
@@ -94,6 +103,7 @@ export async function getScheduleInteractionData(
       reachedWhatsapp: 0,
       reachedSms: 0,
       notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0 },
+      excludedNoPhone: 0,
       views: 0,
       confirmed: 0,
       confirmedGuests: 0,
@@ -156,16 +166,19 @@ export async function getScheduleInteractionData(
     withDelivery.filter((g) => g.delivery === outcome).length;
   const confirmedGuestRecords = guests.filter((g) => g.response === 'rsvp_confirm');
 
+  const noPhone = count('no_phone');
+
   const summary = {
-    audience: withDelivery.length,
+    audience: withDelivery.length - noPhone,
     reached: count('whatsapp') + count('sms'),
     reachedWhatsapp: count('whatsapp'),
     reachedSms: count('sms'),
     notReached: {
       onItsWay: count('on_its_way'),
       notDelivered: count('not_delivered'),
-      noPhone: count('no_phone'),
+      noPhone,
     },
+    excludedNoPhone: noPhone,
     views: guests.filter((g) => g.viewed).length,
     confirmed: confirmedGuestRecords.length,
     confirmedGuests: confirmedGuestRecords.reduce((sum, g) => sum + g.amount, 0),

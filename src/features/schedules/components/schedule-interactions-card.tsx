@@ -83,6 +83,13 @@ export async function ScheduleInteractionsCard({
                 icon={<IconUsers size={13} />}
                 label={t('audience')}
                 value={data.summary.audience}
+                hint={
+                  data.summary.excludedNoPhone > 0
+                    ? t('audienceExcluded', {
+                        count: data.summary.excludedNoPhone,
+                      })
+                    : undefined
+                }
                 accentClassName="text-muted-foreground"
               />
               <StatChip
