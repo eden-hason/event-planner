@@ -146,7 +146,7 @@ export function GuestDirectory({
 
   const handleExport = (scope: IplanScope) => {
     const fileName = eventName ? `${eventName}-iplan.xls` : 'iplan-guests.xls';
-    const promise = exportGuestsToIplan(guests, { scope, fileName });
+    const promise = exportGuestsToIplan(guests, { scope, fileName, tables });
 
     toast.promise(promise, {
       loading: t('directory.exportingIplan'),
