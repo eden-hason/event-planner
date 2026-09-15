@@ -1287,6 +1287,7 @@
       "refresh": "רענן",
       "columnAmount": "כמות",
       "audience": "קהל יעד",
+      "audienceExcluded": "{count, plural, one {רשומה אחת לא נכללת - אין מספר טלפון} other {# רשומות לא נכללות - אין מספר טלפון}}",
       "reached": "הגיעו",
       "reachedChannels": "{whatsapp} וואטסאפ · {sms} SMS",
       "responded": "הגיבו",

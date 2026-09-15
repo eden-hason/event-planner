@@ -1287,6 +1287,7 @@
       "refresh": "Refresh",
       "columnAmount": "Guests",
       "audience": "In audience",
+      "audienceExcluded": "{count, plural, one {# record excluded - no phone number} other {# records excluded - no phone number}}",
       "reached": "Reached",
       "reachedChannels": "{whatsapp} WhatsApp · {sms} SMS",
       "responded": "Responded",
