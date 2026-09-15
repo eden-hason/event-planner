@@ -6,17 +6,29 @@
  * - Row 1: reserved header (blank)
  * - Row 2: column titles
  * - Row 3+: guest data
- * - Column order: name → guests amount → side → group → phone
+ * - Column order: name → guests amount → side → group → phone → table number
+ *
+ * The table number is appended after the template's own columns so the leading
+ * five stay exactly where iPlan expects them. It carries whatever seating
+ * assignment the guest already has; unseated guests export a blank cell.
  */
 
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
+import type { TableOption } from '@/features/seating';
 
 const SIDE_HE: Record<string, string> = {
   bride: 'כלה',
   groom: 'חתן',
 };
 
-export const IPLAN_COLUMN_HEADERS = ['שם', 'כמות אורחים', 'צד', 'קבוצה', 'טלפון'];
+export const IPLAN_COLUMN_HEADERS = [
+  'שם',
+  'כמות אורחים',
+  'צד',
+  'קבוצה',
+  'טלפון',
+  'מספר שולחן',
+];
 
 export type IplanScope = 'confirmed' | 'confirmedPending' | 'all';
 
@@ -24,6 +36,8 @@ interface ExportIplanOptions {
   scope: IplanScope;
   /** Download filename (defaults to 'iplan-guests.xls'). */
   fileName?: string;
+  /** Seating tables, used to resolve each guest's `tableId` to its number. */
+  tables?: Pick<TableOption, 'id' | 'tableNumber'>[];
 }
 
 export async function exportGuestsToIplan(
@@ -38,13 +52,18 @@ export async function exportGuestsToIplan(
     return g.rsvpStatus === 'confirmed' || g.rsvpStatus === 'pending';
   });
 
-  // Column order: name, guests amount, side, group, phone
+  const tableNumberById = new Map(
+    (opts.tables ?? []).map((table) => [table.id, table.tableNumber]),
+  );
+
+  // Column order: name, guests amount, side, group, phone, table number
   const dataRows = filtered.map((g) => [
     g.name,
     g.amount ?? 1,
     g.side ? (SIDE_HE[g.side] ?? '') : 'חתן,כלה',
     g.group?.name ?? '',
     g.phone ?? '',
+    (g.tableId ? tableNumberById.get(g.tableId) : undefined) ?? '',
   ]);
 
   // Row 1: reserved/blank, Row 2: column titles, Row 3+: data
