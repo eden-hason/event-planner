@@ -87,6 +87,17 @@ When adding code, preserve the pattern above:
   client component can import.
 - One icon location: `src/components/icons/`.
 
+## Written Knowledge
+
+Three places, and they do not overlap:
+
+- `CONTEXT.md` - the glossary. Vocabulary only, no specs and no decisions.
+- `docs/adr/` - decisions that have been made, and why the alternatives were rejected.
+- `docs/backlog/` - gaps we understand and chose to defer. **Check it before proposing new
+  work in an area**: the thinking may already be written down, including the dead ends.
+  Adding an item is cheap and preferred over losing the analysis - see
+  `docs/backlog/README.md` for the format.
+
 ## Database Migrations
 
 **There is no sandbox project.** The rollout is **local → production**, with nothing in
