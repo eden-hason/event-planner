@@ -213,7 +213,7 @@ export function EventInvitationCard({
                         <Button
                           variant="secondary"
                           size="icon"
-                          className="absolute top-2 left-2 z-20 size-8 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          className="absolute top-2 left-2 z-20 size-8 shadow-lg transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                           type="button"
                           disabled={isUploading}
                         >
@@ -241,7 +241,7 @@ export function EventInvitationCard({
                           <Button
                             variant="destructive"
                             size="icon"
-                            className="absolute top-2 right-2 size-8 opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                            className="absolute top-2 right-2 size-8 shadow-lg transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                             type="button"
                             onClick={handleRemove}
                             disabled={isUploading}
@@ -262,7 +262,7 @@ export function EventInvitationCard({
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="absolute top-2 right-2 size-8 opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                          className="absolute top-2 right-2 size-8 shadow-lg transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                           type="button"
                           onClick={handleRemove}
                           disabled={isUploading}

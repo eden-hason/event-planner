@@ -190,7 +190,7 @@ export function CoupleCard({ event }: CoupleCardProps) {
             )}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-[1fr_40px_1fr] items-start gap-2">
+            <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_40px_1fr]">
               <PersonPanel
                 roleLabel={t('bride')}
                 initial={brideInitial}
@@ -202,12 +202,20 @@ export function CoupleCard({ event }: CoupleCardProps) {
                 parentsPlaceholder={t('brideSidePlaceholder')}
               />
 
-              <div className="flex flex-col items-center gap-1 self-stretch py-6">
-                <div className="w-px flex-1 bg-gradient-to-b from-transparent via-border to-border" />
+              {/*
+                The divider runs between the two panels, so it turns with them:
+                a horizontal rule above the groom panel once the grid stacks on
+                mobile, the vertical column it has always been from `sm` up.
+                Below `sm` both halves fade out at both ends instead of into
+                the panel beside them - which end is the "outer" one flips in
+                RTL, and a symmetric fade reads the same either way.
+              */}
+              <div className="flex items-center gap-2 self-stretch py-1 sm:flex-col sm:gap-1 sm:py-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:to-border" />
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-card text-primary">
                   <Ampersand className="size-4" />
                 </div>
-                <div className="w-px flex-1 bg-gradient-to-b from-border via-border to-transparent" />
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:from-border" />
               </div>
 
               <PersonPanel

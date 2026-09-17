@@ -132,7 +132,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
             )}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg bg-primary/5 px-4 py-3 ring-1 ring-primary/10">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary/5 px-4 py-3 ring-1 ring-primary/10">
               <div className="flex items-center gap-2.5">
                 <span className="text-sm font-semibold">{formatEventDate(event.eventDate, locale)}</span>
               </div>
@@ -145,7 +145,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="receptionTime"
