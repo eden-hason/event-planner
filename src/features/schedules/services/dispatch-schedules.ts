@@ -5,27 +5,12 @@ import {
   ScheduleDbToAppSchema,
   type ScheduleApp,
 } from '../schemas';
-import type { MessageTemplateApp } from '../schemas/message-templates';
-import {
-  DbToAppTransformerSchema,
-  GroupDbToAppTransformerSchema,
-  type GroupApp,
-  type GuestApp,
-} from '@/features/guests/schemas';
-import { resolveTemplatesForEvent } from './resolve-reminder-templates';
 import { mapEventRow } from './map-event-row';
-import { recordNotSent, reserveDeliveries } from './deliveries';
-import {
-  isGiftingEnabled,
-  shouldSendTableNumbers,
-  filterGuestsByTarget,
-  isMessageSchedule,
-  validatePhoneNumber,
-  type ParameterResolutionContext,
-} from '../utils';
-import { renderSendPayload, type SendPayload } from '../utils/send-payload';
-import { isWithinSendWindow } from '../utils/send-window';
+import { renderScheduleDeliveries } from './render-deliveries';
+import { isMessageSchedule } from '../utils';
+import { isWithinSendWindow, nextOpenSlot } from '../utils/send-window';
 import { sendingConfig } from '@/lib/config/sending';
+import { formatScheduleDateTime } from '@/lib/date-time';
 
 /**
  * The Dispatcher: finds Schedules whose Due Time has come, and turns each into
@@ -121,39 +106,6 @@ async function logDispatchAttempt(
   }
 }
 
-/** Everything the renderer needs about the audience, fetched in two queries. */
-async function loadAudienceContext(
-  supabase: SupabaseClient,
-  guests: GuestApp[],
-  needTables: boolean,
-) {
-  const groups = new Map<string, GroupApp>();
-  const tables = new Map<string, { tableNumber: number; label: string | null }>();
-
-  const groupIds = [...new Set(guests.map((g) => g.groupId).filter((id): id is string => !!id))];
-  if (groupIds.length > 0) {
-    const { data } = await supabase.from('groups').select('*').in('id', groupIds);
-    for (const raw of data ?? []) {
-      const group = GroupDbToAppTransformerSchema.parse(raw);
-      groups.set(group.id, group);
-    }
-  }
-
-  const tableIds = [...new Set(guests.map((g) => g.tableId).filter((id): id is string => !!id))];
-  if (needTables && tableIds.length > 0) {
-    const { data, error } = await supabase
-      .from('tables')
-      .select('id, table_number, label')
-      .in('id', tableIds);
-    if (error) throw error;
-    for (const row of data ?? []) {
-      tables.set(row.id, { tableNumber: row.table_number, label: row.label });
-    }
-  }
-
-  return { groups, tables };
-}
-
 /**
  * Dispatches one Schedule that has already been found due, expanded its
  * audience and queued a rendered Delivery per Guest.
@@ -225,7 +177,13 @@ async function dispatchOne(
   //    stands when it finally goes, not as it stood 29 hours earlier. An RSVP
   //    that changes overnight is still respected.
   if (!isWithinSendWindow(now, config.sendWindow)) {
-    const reason = `Outside the send window (${config.sendWindow.start}-${config.sendWindow.end} Israel, and not Friday afternoon to Saturday evening)`;
+    // Say when it will go, not just that it is waiting. "Held" with no time is
+    // the same unanswered question the dispatch log exists to end.
+    const opensAt = nextOpenSlot(now, config.sendWindow);
+    const reason =
+      `Outside the send window (${config.sendWindow.start}-${config.sendWindow.end} Israel, ` +
+      `and not Friday afternoon to Saturday evening) - will send at ` +
+      `${formatScheduleDateTime(opensAt.toISOString())}`;
     await logDispatchAttempt(supabase, scheduleId, 'held', reason);
     return { scheduleId, outcome: 'held', reason, deliveriesQueued: 0 };
   }
@@ -252,104 +210,15 @@ async function dispatchOne(
   }
 
   try {
-    // 4. Resolve what actually gets sent. The Schedule's own template is the
-    //    family anchor bound weeks ago, before seating was done or a gift
-    //    provider was added, so the body is resolved from the Event's current
-    //    configuration instead.
-    const anchor = schedule.template;
-    if (!anchor) return fail('No template assigned to schedule');
-
-    const resolution = await resolveTemplatesForEvent({
-      supabase,
-      anchor,
-      gifting: isGiftingEnabled(event.eventSettings),
-      tableNumbers: shouldSendTableNumbers(event.guestExperience),
-      note: Boolean(schedule.customText?.trim()),
+    // 4-6. Resolve the template family, expand the audience, reserve a
+    //      Delivery per Guest and render each message in full. Shared with the
+    //      Operator's manual send, which needs exactly the same work done for a
+    //      named handful of Guests.
+    const render = await renderScheduleDeliveries(supabase, scheduleId, {
+      prefetched: { schedule, event },
     });
-    if (!resolution.success) return fail(resolution.message);
-    const { withTable, withoutTable } = resolution.templates;
-
-    // Table numbers are per-guest: seating is routinely incomplete on the day,
-    // so a guest with no assignment gets the variant that does not mention a
-    // table rather than a message with a blank where the number should be.
-    const templateForGuest = (guest: GuestApp): MessageTemplateApp =>
-      withTable && guest.tableId ? withTable : withoutTable;
-
-    const { data: rawGuests, error: guestsError } = await supabase
-      .from('guests')
-      .select('*')
-      .eq('event_id', schedule.eventId);
-    if (guestsError) return fail(`Could not load guests: ${guestsError.message}`);
-    if (!rawGuests?.length) return fail('No guests found for event');
-
-    const targeted = filterGuestsByTarget(
-      rawGuests.map((g: Record<string, unknown>) => DbToAppTransformerSchema.parse(g)),
-      schedule.targetStatus,
-    );
-    if (targeted.length === 0) return fail('No eligible guests after applying filters');
-
-    const reachable = targeted.filter((guest) => validatePhoneNumber(guest.phone));
-    const unreachable = targeted.filter((guest) => !validatePhoneNumber(guest.phone));
-
-    // Guests with no usable number are a fact the Owner needs to see ("never
-    // got it - no phone number"), not just a number in a summary.
-    if (unreachable.length > 0) {
-      try {
-        await recordNotSent(supabase, scheduleId, unreachable.map((g) => g.id), 'scheduled');
-      } catch (error) {
-        console.error('[dispatch] Could not record not-sent deliveries:', error);
-      }
-    }
-
-    if (reachable.length === 0) return fail('No guests with valid phone numbers');
-
-    // 5. Reserve the Deliveries before rendering: the RSVP token is part of
-    //    the message, and a guest who already has a Delivery for this Schedule
-    //    keeps theirs (ADR 0011).
-    const reserved = await reserveDeliveries(
-      supabase,
-      scheduleId,
-      reachable.map((guest) => guest.id),
-      'scheduled',
-    );
-
-    const { groups, tables } = await loadAudienceContext(
-      supabase,
-      reachable,
-      Boolean(withTable),
-    );
-
-    // 6. Render every message in full, before queueing any of them. A content
-    //    error is the whole Schedule's problem, so it fails here as one logged
-    //    row rather than as 274 per-guest attempt failures.
-    const queued: { deliveryId: string; templateId: string; payload: SendPayload }[] = [];
-    for (const guest of reachable) {
-      const delivery = reserved.get(guest.id);
-      if (!delivery) continue; // no token reserved - nothing to link back to
-
-      const template = templateForGuest(guest);
-      const context: ParameterResolutionContext = {
-        guest,
-        event,
-        group: guest.groupId ? (groups.get(guest.groupId) ?? null) : null,
-        table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-        schedule,
-        confirmationToken: delivery.confirmationToken,
-      };
-
-      const rendered = renderSendPayload({ template, context, phone: guest.phone });
-      if (!rendered.ok) {
-        return fail(`Could not render the message for ${guest.name}: ${rendered.reason}`);
-      }
-      queued.push({
-        deliveryId: delivery.id,
-        templateId: template.id,
-        payload: rendered.payload,
-      });
-    }
-
-    if (queued.length === 0) return fail('No deliveries could be prepared');
-
+    if (!render.ok) return fail(render.reason);
+    const queued = render.rendered;
     // 7. Queue. next_attempt_at is the whole of "waiting to be sent"; the
     //    Worker claims on it and nulls it in the same statement.
     const queuedAt = new Date().toISOString();
@@ -439,7 +308,11 @@ export async function dispatchDueSchedules(
     console.error('[dispatch] Could not load due schedules:', error);
     return summary;
   }
-  if (!due?.length) return summary;
+  if (!due?.length) {
+    console.log('[dispatch] Nothing due');
+    return summary;
+  }
+  console.log(`[dispatch] ${due.length} schedule(s) due`);
 
   for (const row of due) {
     // dispatchOne is written not to throw, but the loop guards anyway: one
@@ -457,6 +330,16 @@ export async function dispatchDueSchedules(
       };
       console.error('[dispatch] Unhandled failure for', result.scheduleId, error);
     }
+    // One line per Schedule, on every outcome and not just failures. A cron
+    // whose healthy runs are silent is a cron nobody can tell is alive, and
+    // "held" or "expired" is exactly what an Operator is looking for when they
+    // ask why a message has not gone out.
+    console.log(
+      `[dispatch] ${result.scheduleId}: ${result.outcome}` +
+        (result.deliveriesQueued ? ` (${result.deliveriesQueued} queued)` : '') +
+        (result.reason ? ` - ${result.reason}` : ''),
+    );
+
     summary.considered += 1;
     summary.results.push(result);
     summary.deliveriesQueued += result.deliveriesQueued;
@@ -465,6 +348,12 @@ export async function dispatchDueSchedules(
     else if (result.outcome === 'expired') summary.expired += 1;
     else summary.failed += 1;
   }
+
+  console.log(
+    `[dispatch] Done: ${summary.dispatched} dispatched, ${summary.held} held, ` +
+      `${summary.expired} expired, ${summary.failed} failed, ` +
+      `${summary.deliveriesQueued} deliveries queued`,
+  );
 
   return summary;
 }

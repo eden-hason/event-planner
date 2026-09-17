@@ -32,5 +32,11 @@ export async function GET(request: Request) {
   const reaped = await reapStrandedAttempts(supabase);
   const fallback = await sweepSmsFallback(supabase);
 
+  console.log(
+    `[sweep] Done: ${webhooks.processed}/${webhooks.picked} webhook(s) processed, ` +
+      `${reaped.reaped} attempt(s) reaped, ` +
+      `${fallback.considered} schedule(s) considered for SMS fallback, ${fallback.sent} sent`,
+  );
+
   return NextResponse.json({ success: true, webhooks, reaped, fallback });
 }

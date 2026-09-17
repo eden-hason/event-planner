@@ -98,6 +98,10 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
           'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(name, execution_kind), message_templates(channel)',
         )
         .is('status', null)
+        // Not yet handed to the queue. A dispatched Schedule is done as far as
+        // planned work goes - what happens next is per-Delivery (ADR 0013) and
+        // shows up as Failed Delivery signals, not as work to do.
+        .is('dispatched_at', null)
         .eq('events.status', 'published')
         .eq('events.can_create_schedules', true)
         .order('scheduled_date', { ascending: true }),

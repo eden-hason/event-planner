@@ -20,6 +20,7 @@ nothing reaches for `process.env` inline:
 | Variable | Default | Used by |
 |---|---|---|
 | `WHATSAPP_MAX_MPS` | `50` | Worker governor |
+| `WHATSAPP_MAX_IN_FLIGHT` | `20` | Worker governor (added during the build: the governor bounds concurrency as well as rate, and the ceiling needed a name) |
 | `SEND_WINDOW_START` / `SEND_WINDOW_END` | `09:00` / `21:00` | Dispatcher |
 | `SMS_FALLBACK_SETTLE_MINUTES` | `10` | Sweeper |
 | `SMS_FALLBACK_FREEZE_PCT` / `SMS_FALLBACK_FREEZE_MIN` | `30` / `10` | Sweeper |

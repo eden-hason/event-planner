@@ -248,5 +248,12 @@ export async function sweepSmsFallback(
     }
   }
 
+  for (const result of results) {
+    console.log(
+      `[sms-fallback-sweep] ${result.scheduleId}: ${result.outcome}` +
+        (result.reason ? ` - ${result.reason}` : ''),
+    );
+  }
+
   return { considered: results.length, sent, results };
 }

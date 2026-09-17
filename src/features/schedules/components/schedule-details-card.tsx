@@ -83,7 +83,15 @@ export function ScheduleDetailsCard({
     });
   }, [scheduledDate]);
 
-  const isLocked = schedule?.status === 'sent' || schedule?.status === 'cancelled';
+  // Dispatched counts as locked. The messages are rendered and queued by then,
+  // so moving the Due Time would change nothing except what the page claims -
+  // and a Schedule is no longer marked 'sent' as a unit (ADR 0013), which makes
+  // dispatched_at the fact to read.
+  const isLocked =
+    schedule?.status === 'sent' ||
+    schedule?.status === 'cancelled' ||
+    schedule?.status === 'expired' ||
+    schedule?.dispatchedAt != null;
   const isDirty = !isLocked && scheduledDate !== savedDate;
 
   // Both handlers rebuild the instant from an Israel calendar date and an

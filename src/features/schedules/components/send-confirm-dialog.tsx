@@ -71,9 +71,14 @@ export function SendConfirmDialog({
 
       toast.promise(promise, {
         loading: t('sendDialog.toast.sending'),
-        // The action's own message already says whether it queued or was held
-        // outside the send window, which a fixed "sent N" string cannot.
-        success: (data) => data.message,
+        // Two outcomes, both successes: queued now, or held until the send
+        // window opens. Translated rather than passing through the action's own
+        // English message - and never "sent N", because at this point nothing
+        // has been sent; the Worker drains the queue afterwards (ADR 0013).
+        success: (data) =>
+          data.heldReason
+            ? t('sendDialog.toast.held')
+            : t('sendDialog.toast.queued', { count: data.queuedCount ?? 0 }),
         error: (err) => (err instanceof Error ? err.message : t('sendDialog.toast.failed')),
       });
 

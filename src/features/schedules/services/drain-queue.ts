@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { postWhatsAppTemplate } from '../actions/whatsapp';
+import { postWhatsAppTemplate } from './post-whatsapp';
 import { sendSmsMessage } from '../actions/sms';
 import { createGovernor } from '../utils/governor';
 import { isTransient, nextRetryDelayMinutes } from '../utils/whatsapp-failures';
@@ -54,7 +54,13 @@ type ClaimedRow = {
 
 type SendOutcome =
   | { kind: 'sent'; messageId: string | null }
-  | { kind: 'failed'; message: string; errorCode: number | null; retryable: boolean }
+  | {
+      kind: 'failed';
+      message: string;
+      errorCode: number | null;
+      httpStatus: number;
+      retryable: boolean;
+    }
   | { kind: 'unknown'; message: string };
 
 /**
@@ -70,7 +76,13 @@ async function sendPayload(payload: SendPayload): Promise<SendOutcome> {
     const result = await sendSmsMessage({ to: payload.to, body: payload.body });
     return result.success
       ? { kind: 'sent', messageId: result.messageId ?? null }
-      : { kind: 'failed', message: result.message, errorCode: null, retryable: false };
+      : {
+          kind: 'failed',
+          message: result.message,
+          errorCode: null,
+          httpStatus: 0,
+          retryable: false,
+        };
   }
 
   const result = await postWhatsAppTemplate(payload);
@@ -84,6 +96,7 @@ async function sendPayload(payload: SendPayload): Promise<SendOutcome> {
     kind: 'failed',
     message: result.message,
     errorCode: result.errorCode,
+    httpStatus: result.httpStatus,
     retryable: isTransient(result.errorCode, result.httpStatus),
   };
 }
@@ -125,6 +138,10 @@ export async function drainQueue(
     return { ...result, skipped: true };
   }
   if (acquired !== true) {
+    // Expected and healthy: the crons overlap by design, and the lease is what
+    // keeps one Worker at one pace. Logged so a run that did nothing is still
+    // distinguishable from a run that never happened.
+    console.log('[worker] Another worker holds the lease, skipping');
     return { ...result, skipped: true };
   }
 
@@ -148,6 +165,7 @@ export async function drainQueue(
       const batch = (data ?? []) as ClaimedRow[];
       if (batch.length === 0) break;
       result.claimed += batch.length;
+      console.log(`[worker] Claimed ${batch.length} delivery(ies)`);
 
       await Promise.all(
         batch.map((row) =>
@@ -163,6 +181,7 @@ export async function drainQueue(
                 kind: 'failed',
                 message: 'Send payload could not be read',
                 errorCode: null,
+                httpStatus: 0,
                 retryable: false,
               });
               result.failed += 1;
@@ -176,8 +195,14 @@ export async function drainQueue(
               if (delay !== null) {
                 // Back off the whole pipe, not just this guest: a 429 is the
                 // account's budget answering, and every other message in flight
-                // is competing for the same budget.
-                if (outcome.errorCode === 130429 || outcome.errorCode === 131056) {
+                // is competing for the same budget. Triggered on the HTTP status
+                // as well as the Meta code - a 429 carrying a code we do not
+                // recognise is still Meta telling us to slow down.
+                if (
+                  outcome.httpStatus === 429 ||
+                  outcome.errorCode === 130429 ||
+                  outcome.errorCode === 131056
+                ) {
                   governor.halve();
                 }
                 await resolveAttempt(supabase, row, outcome, delay);
@@ -214,6 +239,16 @@ export async function drainQueue(
     // backstop when this process does not get to run its finally block at all.
     await supabase.rpc('release_pipeline_lock', { p_name: LOCK_NAME });
   }
+
+  // Always, including the empty drain: this line is how the Worker proves it
+  // ran. `unknown` is called out separately from `failed` because it is the one
+  // number that means a guest may have been written to without us knowing.
+  console.log(
+    `[worker] Done: claimed ${result.claimed}, sent ${result.sent}, ` +
+      `failed ${result.failed}, retrying ${result.retrying}, unknown ${result.unknown}` +
+      (result.timedOut ? ' (stopped on time budget, queue not empty)' : '') +
+      ` at ${governor.ratePerSecond}/s`,
+  );
 
   return result;
 }

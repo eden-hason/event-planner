@@ -7,7 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` - Start Next.js dev server on localhost:3000
 - `npm run build` - Build production bundle
 - `npm run lint` - Run ESLint (flat config, v9)
-No test framework is currently configured.
+- `npm test` - Run the unit tests (Node's built-in runner through `tsx`, so the
+  `@/*` alias resolves): `node --import tsx --test 'src/**/*.test.ts'`
+
+Tests are colocated as `*.test.ts` beside what they cover, and are for pure,
+I/O-free logic only - there is no database or network fixture. Run a single file
+with `node --import tsx --test <path>`.
 
 ## Tech Stack
 
