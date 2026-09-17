@@ -131,7 +131,7 @@ export function LocationCard({ event }: LocationCardProps) {
                 </FormItem>
               )}
             />
-            <GoogleMap coords={location?.coords} height="300px" />
+            <GoogleMap coords={location?.coords} className="h-[200px] sm:h-[300px]" />
             <Alert variant={location?.coords ? 'success' : 'warning'}>
               {location?.coords ? <CheckCircle2 /> : <AlertTriangle />}
               <AlertTitle>

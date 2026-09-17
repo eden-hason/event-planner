@@ -108,6 +108,12 @@ const vibrantMapStyle: google.maps.MapTypeStyle[] = [
 interface GoogleMapProps {
   coords?: LocationCoords | null;
   zoom?: number;
+  /**
+   * Fixed height as a CSS length. It is applied inline, so it beats any
+   * height in `className` - leave it off and pass a Tailwind height instead
+   * when the map has to change size across breakpoints. Without either, the
+   * map falls back to the `h-50` below.
+   */
   height?: string;
   className?: string;
   showMarker?: boolean;
@@ -143,7 +149,7 @@ const createMarkerIcon = () => {
 export function GoogleMap({
   coords,
   zoom = 15,
-  height = '200px',
+  height,
   className,
   showMarker = true,
   emptyStateText = 'Search for a location to see it on the map',
@@ -229,10 +235,10 @@ export function GoogleMap({
     return (
       <div
         className={cn(
-          'relative w-full overflow-hidden rounded-lg border',
+          'relative h-50 w-full overflow-hidden rounded-lg border',
           className,
         )}
-        style={{ height }}
+        style={height ? { height } : undefined}
       >
         {/* Gray gradient background with pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200">
@@ -263,8 +269,8 @@ export function GoogleMap({
   return (
     <div
       ref={mapContainerRef}
-      className={cn('w-full overflow-hidden rounded-lg border', className)}
-      style={{ height }}
+      className={cn('h-50 w-full overflow-hidden rounded-lg border', className)}
+      style={height ? { height } : undefined}
     />
   );
 }
