@@ -223,12 +223,18 @@ export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutPro
 // A message schedule is done when it is 'sent'; a call round when it is
 // 'completed'. Both read as a green dot - the distinction that matters in the
 // nav is done / in flight / abandoned, not which kind produced it.
+//
+// 'expired' reads as abandoned rather than as a failure: nothing went wrong
+// with the message, its moment simply passed (ADR 0015). It shares the muted
+// dot with 'cancelled' because the outcome for the guest is the same - no
+// message - and the difference is in why, which the label carries.
 const STATUS_DOT: Record<OutreachItem['status'], string> = {
   sent: 'bg-success',
   completed: 'bg-success',
   pending: 'bg-warning',
   in_progress: 'bg-warning',
   cancelled: 'bg-muted-foreground/40',
+  expired: 'bg-muted-foreground/40',
 };
 
 const STATUS_LABEL_KEY: Record<OutreachItem['status'], string> = {
@@ -237,6 +243,7 @@ const STATUS_LABEL_KEY: Record<OutreachItem['status'], string> = {
   pending: 'status.label.pending',
   in_progress: 'status.label.inProgress',
   cancelled: 'status.label.cancelled',
+  expired: 'status.label.expired',
 };
 
 function StatusDot({ status }: { status: OutreachItem['status'] }) {

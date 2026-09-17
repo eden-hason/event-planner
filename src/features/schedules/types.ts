@@ -8,6 +8,8 @@ export type OutreachItemStatus =
   | 'pending'
   | 'sent'
   | 'cancelled'
+  // The Dispatcher decided this one's moment had passed (ADR 0015)
+  | 'expired'
   // Call rounds: a plan that has been started, and one that is finished
   | 'in_progress'
   | 'completed';

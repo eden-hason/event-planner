@@ -186,7 +186,8 @@ export type EventTimelineRow = {
   title: string;
   status: 'planned' | 'sent' | 'cancelled' | 'in_progress' | 'completed';
   scheduledDate: string;
-  scheduledTime: string | null;
+  /** Israel wall clock of the Due Time, derived - there is no stored clock face. */
+  scheduledTime: string;
   sentAt: string | null;
   targetStatus: string | null;
   channel: string | null;
@@ -222,7 +223,8 @@ export type PlannedWorkRow = {
   detail: string;
   scheduledDate: string;
   /** `HH:MM:SS` from its own column, or null. Never parsed out of scheduledDate. */
-  scheduledTime: string | null;
+  /** Israel wall clock of the Due Time, derived - there is no stored clock face. */
+  scheduledTime: string;
   /**
    * How late, in the Overview's own vocabulary ("7 days late", "3 hours late",
    * "Overdue" under the hour), or null when the row is not overdue. A row that

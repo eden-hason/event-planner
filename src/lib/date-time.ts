@@ -113,3 +113,29 @@ export function israelWallClockToIso(date: string, time: string): string | null 
   const result = new Date(guess);
   return Number.isNaN(result.getTime()) ? null : result.toISOString();
 }
+
+/**
+ * The Israel wall clock of an instant, split for an editor that shows a date
+ * and a time separately.
+ *
+ * The inverse of `israelWallClockToIso`. A Schedule stores one instant - its
+ * Due Time - and any UI that offers "10:00" has to read and write it in the
+ * timezone the Operator means, or it reintroduces exactly the bug ADR 0015
+ * removed: `setHours` on a Vercel server means 10:00 UTC, which is 13:00 in
+ * Israel.
+ */
+export function israelWallClockParts(iso: string): { date: string; time: string } {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: ADMIN_TIME_ZONE,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    })
+      .formatToParts(new Date(iso))
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  };
+}

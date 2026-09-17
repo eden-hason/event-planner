@@ -237,7 +237,6 @@ export async function SchedulesPage({
             ) : (
               <CallPlanCard
                 scheduledDate={schedule.scheduledDate}
-                scheduledTime={schedule.scheduledTime}
                 targetStatus={schedule.targetStatus}
                 eventDate={eventDate}
                 cancelled={cancelled}

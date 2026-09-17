@@ -4,8 +4,16 @@
   "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/cron/process-messages",
-      "schedule": "5 7 * * *"
+      "path": "/api/cron/dispatch",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/send",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/sweep",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

@@ -19,7 +19,8 @@ import {
 import { AdminDialogContent } from './admin-dialog';
 import { QueueRowAction, type QueueActionRow } from './queue-row-action';
 import { SmsFallbackDialog } from './sms-fallback-dialog';
-import { resendScheduleToSelected } from '@/features/schedules';
+import { sendSelectedDeliveriesAdmin } from '@/features/schedules';
+import { MAX_MANUAL_RECIPIENTS } from '../utils/manual-send';
 import type { EventGuestSummary, EventTimelineRow, EventWorkspaceSignal } from '../types';
 import { formatScheduleDateTime } from '@/lib/date-time';
 import { formatPhone } from '@/lib/phone';
@@ -164,12 +165,12 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
         : 'border-l-border';
   const dateLabel = row.status === 'cancelled'
     ? null
-    : formatScheduleDateTime(row.scheduledDate, row.scheduledTime).split(',')[0];
+    : formatScheduleDateTime(row.scheduledDate).split(',')[0];
   return (
     <div id={`schedule-${row.id}`} className="grid scroll-mt-20 grid-cols-[86px_minmax(0,1fr)] gap-3.5">
       <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-right text-[11.5px] tabular-nums">
         {dateLabel && <span className="text-foreground text-[12.5px] font-medium whitespace-nowrap">{dateLabel}</span>}
-        {dateLabel && <span>{row.scheduledTime?.slice(0, 5) ?? 'No time'}</span>}
+        {dateLabel && <span>{row.scheduledTime}</span>}
       </div>
       <div className={cn('bg-card min-w-0 overflow-hidden rounded-lg border border-l-[3px] shadow-xs', rail)}>
         <div className="flex flex-wrap items-center gap-3 px-3.5 py-3">
@@ -258,7 +259,7 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
   }
   function resend() {
     startTransition(async () => {
-      const promise = resendScheduleToSelected(scheduleId, [...selected]).then((result) => {
+      const promise = sendSelectedDeliveriesAdmin(scheduleId, [...selected]).then((result) => {
         if (!result.success) throw new Error(result.message);
         return result;
       });
@@ -267,7 +268,7 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
         success: (result) => {
           setOpen(false);
           router.refresh();
-          return `${result.sentCount ?? 0} deliveries sent`;
+          return result.message;
         },
         error: (error) => error instanceof Error ? error.message : 'Resend failed',
       });
@@ -308,8 +309,10 @@ function DeliveryPanel({ scheduleId, failed, successful, attempted, embedded = f
             </CollapsibleContent>
           </Collapsible>
         )}
-        <p className="text-muted-foreground mt-3 text-[11.5px]">Resends use the event&apos;s current template and configuration</p>
-        <Button type="button" size="sm" className="mt-3" disabled={!selected.size} onClick={() => setOpen(true)}>Resend selected ({selected.size})</Button>
+        <p className="text-muted-foreground mt-3 text-[11.5px]">
+          Resends use the event&apos;s current template and configuration. At most {MAX_MANUAL_RECIPIENTS} records at a time - a larger send belongs to a schedule
+        </p>
+        <Button type="button" size="sm" className="mt-3" disabled={!selected.size || selected.size > MAX_MANUAL_RECIPIENTS} onClick={() => setOpen(true)}>Resend selected ({selected.size})</Button>
         <SmsFallbackDialog scheduleId={scheduleId} />
       </CollapsibleContent>
 

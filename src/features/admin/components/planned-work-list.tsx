@@ -18,7 +18,7 @@ function PlannedWorkItem({ row }: { row: PlannedWorkRow }) {
   const isCall = row.kind === 'call';
   const Icon = isCall ? Phone : MessageSquare;
   const late = row.lateBy !== null;
-  const when = row.lateBy ?? row.scheduledTime?.slice(0, 5) ?? 'All day';
+  const when = row.lateBy ?? row.scheduledTime;
 
   return (
     // Hover lives on the row, not on the link inside it. The link used to own

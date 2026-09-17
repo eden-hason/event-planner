@@ -10,11 +10,8 @@ export {
 } from './schedules';
 export {
   sendWhatsAppTemplateMessage,
-  type SendWhatsAppTemplateResult,
+  postWhatsAppTemplate,
+  type WhatsAppSendResult,
 } from './whatsapp';
-export {
-  executeSchedule,
-  type ExecuteScheduleResult,
-  type ExecuteScheduleSummary,
-} from './execute-schedule';
-export { resendScheduleToSelected, type ResendScheduleResult } from './resend-schedule';
+export { executeSchedule, type ExecuteScheduleResult } from './execute-schedule';
+export { sendSelectedDeliveriesAdmin, type ManualSendResult } from './manual-send';

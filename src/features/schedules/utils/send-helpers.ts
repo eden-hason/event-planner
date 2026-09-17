@@ -84,24 +84,28 @@ export async function sendToGuest(params: {
     buttonParameters,
   });
 
-  if (waResult.success) {
+  if (waResult.outcome === 'accepted') {
     return {
       guest,
       success: true,
-      messageId: waResult.messageId,
-      message: waResult.message,
+      messageId: waResult.messageId ?? undefined,
+      message: 'Message sent successfully',
       channel: 'whatsapp',
       confirmationToken,
       templateId,
     };
   }
 
+  // This path has no Delivery and no retry - it is a one-off test message an
+  // Owner sent themselves - so a rejection and an unknown outcome are reported
+  // the same way. The pipeline, where the difference decides whether a guest
+  // can be written to twice, handles them separately in the Worker.
   return {
     guest,
     success: false,
     message: waResult.message,
     channel: 'whatsapp',
-    errorCode: waResult.errorCode,
+    errorCode: waResult.outcome === 'rejected' ? (waResult.errorCode ?? undefined) : undefined,
     confirmationToken,
     templateId,
   };

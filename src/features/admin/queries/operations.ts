@@ -4,7 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
-import { ADMIN_TIME_ZONE } from '@/lib/date-time';
+import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
 
 const DAY_MS = 86_400_000;
 
@@ -65,7 +65,6 @@ type ScheduleRow = {
   id: string;
   event_id: string;
   scheduled_date: string;
-  scheduled_time: string | null;
   target_status: string | null;
   schedule_type_id: string;
   events: { title: string | null } | null;
@@ -96,7 +95,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       supabase
         .from('schedules')
         .select(
-          'id, event_id, scheduled_date, scheduled_time, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(name, execution_kind), message_templates(channel)',
+          'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(name, execution_kind), message_templates(channel)',
         )
         .is('status', null)
         .eq('events.status', 'published')
@@ -167,7 +166,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
           ? counts.confirmed
           : counts.total;
 
-    const time = row.scheduled_time?.slice(0, 5) ?? null;
+    const time = israelWallClockParts(row.scheduled_date).time;
     const audience_label = audienceLabel(row.target_status, audienceCount);
     const channel = isCall ? null : channelLabel(row.message_templates?.channel ?? null);
 
@@ -196,7 +195,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       title,
       detail,
       scheduledDate: row.scheduled_date,
-      scheduledTime: row.scheduled_time,
+      scheduledTime: israelWallClockParts(row.scheduled_date).time,
       lateBy,
       audienceCount,
       audienceLabel: audience_label,

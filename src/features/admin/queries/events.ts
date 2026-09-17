@@ -14,7 +14,7 @@ import type {
   EventTimelineRow,
   EventWorkspaceSignal,
 } from '../types';
-import { eventDaysFromToday } from '@/lib/date-time';
+import { eventDaysFromToday, israelWallClockParts } from '@/lib/date-time';
 import { getTestScope } from './test-accounts';
 
 const PAGE_SIZE = 50;
@@ -327,7 +327,6 @@ type ScheduleJoinRow = {
   event_id: string;
   schedule_type_id: string;
   scheduled_date: string;
-  scheduled_time: string | null;
   sent_at: string | null;
   status: string | null;
   target_status: string | null;
@@ -341,7 +340,7 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
   const schedules = unwrap(
     await supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id, scheduled_date, scheduled_time, sent_at, status, target_status, schedule_types(name, execution_kind), message_templates(channel)')
+      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, status, target_status, schedule_types(name, execution_kind), message_templates(channel)')
       .eq('event_id', eventId)
       .order('scheduled_date', { ascending: true }),
   ) as unknown as ScheduleJoinRow[];
@@ -397,7 +396,7 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
       title,
       status,
       scheduledDate: schedule.scheduled_date,
-      scheduledTime: schedule.scheduled_time,
+      scheduledTime: israelWallClockParts(schedule.scheduled_date).time,
       sentAt: schedule.sent_at,
       targetStatus: schedule.target_status,
       channel: template?.channel ?? null,

@@ -23,8 +23,11 @@ export type GuestStats = {
 // ENUM TYPES
 // =====================================================
 
-// Schedule completion status (set after execution)
-export const SCHEDULE_STATUSES = ['sent', 'cancelled'] as const;
+// Schedule completion status (set after execution). 'expired' is the Dispatcher
+// deciding a Schedule's moment has passed - the Event already happened, or the
+// Due Time is too far back to send now. Not 'cancelled': nobody cancelled it.
+// See docs/adr/0015.
+export const SCHEDULE_STATUSES = ['sent', 'cancelled', 'expired'] as const;
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
 
 // Delivery methods
@@ -70,13 +73,24 @@ export type CustomContent = z.infer<typeof CustomContentSchema>;
 export const SCHEDULE_SELECT =
   '*, schedule_types (key, name, execution_kind), message_templates (*)';
 
+// The same columns, but joining schedule_types inner so a filter on
+// execution_kind actually excludes rows. Spelled out rather than derived from
+// SCHEDULE_SELECT at runtime: PostgREST's types are parsed from the string
+// literal, and a computed one loses every column type. Embedding the relation
+// twice does not work either - PostgREST then ignores the filter and returns
+// nothing.
+export const DISPATCH_SCHEDULE_SELECT =
+  '*, schedule_types!inner (key, name, execution_kind), message_templates (*)';
+
 // --- DB-Level Schema (snake_case, with catalog joins) ---
 export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
+  // The Due Time: one instant, authored as Israel wall clock (ADR 0015).
   scheduled_date: z.string(),
-  scheduled_time: z.string().nullable().optional(),
   status: z.enum(SCHEDULE_STATUSES).nullable(),
+  // When the Dispatcher claimed this Schedule and queued its Deliveries.
+  dispatched_at: z.string().nullable().optional(),
   sent_at: z.string().nullable(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   schedule_type_id: z.uuid(),
@@ -102,8 +116,8 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   id: db.id,
   eventId: db.event_id,
   scheduledDate: db.scheduled_date,
-  scheduledTime: db.scheduled_time ?? null,
   status: db.status,
+  dispatchedAt: db.dispatched_at ?? null,
   sentAt: db.sent_at ?? undefined,
   targetStatus: db.target_status ?? null,
   scheduleTypeId: db.schedule_type_id,
@@ -128,8 +142,8 @@ export const ScheduleSelectionItemSchema = z.object({
   scheduleTypeId: z.uuid(),
   // Null for non-message types - a call round is planned without a template.
   templateId: z.uuid().nullable(),
+  // An instant, already folded from the Operator's date and wall clock.
   scheduledDate: z.string(),
-  scheduledTime: z.string(),
   targetStatus: z.enum(['pending', 'confirmed']).nullable(),
   // null = active; 'cancelled' = created but disabled (user opted out in the wizard)
   status: z.enum(SCHEDULE_STATUSES).nullable(),

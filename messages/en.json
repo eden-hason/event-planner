@@ -1309,13 +1309,15 @@
         "sent": "Sent",
         "pending": "Pending",
         "cancelled": "Cancelled",
+        "expired": "Expired",
         "inProgress": "In progress",
         "completed": "Completed"
       },
       "description": {
         "sent": "Messages have been sent to eligible guests.",
         "pending": "Messages will be sent on the scheduled date.",
-        "cancelled": "This schedule has been cancelled."
+        "cancelled": "This schedule has been cancelled.",
+        "expired": "This schedule was not sent in time and will not send now."
       },
       "toggle": {
         "enabled": "Active",

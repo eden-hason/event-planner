@@ -47,3 +47,58 @@ export function describeGuestLevelFailure(
 ): string | null {
   return errorCode != null ? (GUEST_LEVEL_CODES.get(errorCode) ?? null) : null;
 }
+
+/**
+ * Whether a rejection Meta actually answered with is worth trying again.
+ *
+ * The line that matters is drawn elsewhere - in `sendWhatsAppTemplateMessage`,
+ * between a rejection and an unknown outcome. Only a rejection reaches this
+ * function, and only a rejection may ever be retried: the message provably did
+ * not go out, so there is no duplicate to create. A thrown fetch may well have
+ * reached Meta and is never retried at all (ADR 0014).
+ *
+ * Transient means "the same message, sent again shortly, may succeed":
+ * throughput and capacity, not content and not the recipient. Everything else
+ * is false, including codes this build has never seen - an unrecognised failure
+ * of unknown cause is exactly where a retry could duplicate.
+ *
+ * Note these codes stay System-level for `classifyWhatsAppFailure`, which is
+ * what keeps a throughput failure out of the automatic SMS Fallback. The two
+ * classifications answer different questions and are deliberately independent.
+ */
+const TRANSIENT_CODES = new Set([
+  // Throughput budget exceeded for the phone number.
+  130429,
+  // Business account rate-limit hit.
+  131056,
+  // Service overloaded / temporary Meta capacity problem.
+  133016,
+]);
+
+export function isTransient(
+  errorCode: number | null | undefined,
+  httpStatus?: number | null,
+): boolean {
+  if (httpStatus === 429) return true;
+  if (httpStatus != null && httpStatus >= 500 && httpStatus < 600) return true;
+  return errorCode != null && TRANSIENT_CODES.has(errorCode);
+}
+
+/**
+ * Three attempts at one, five and fifteen minutes. Short enough that a
+ * throughput dip is ridden out inside the Send Window, long enough that the
+ * third try is not simply the first one again.
+ */
+export const RETRY_BACKOFF_MINUTES = [1, 5, 15] as const;
+
+/**
+ * How long to wait before the next attempt, or null when the ladder is spent
+ * and the Delivery should be left failed for an Operator.
+ *
+ * `attemptCount` is how many attempts have already been made, so 1 asks for the
+ * delay after the first failure.
+ */
+export function nextRetryDelayMinutes(attemptCount: number): number | null {
+  const index = Math.max(1, Math.floor(attemptCount)) - 1;
+  return RETRY_BACKOFF_MINUTES[index] ?? null;
+}

@@ -61,7 +61,9 @@ export function SendConfirmDialog({
           posthog.capture('schedule_sent', {
             schedule_id: scheduleId,
             target_status: targetStatus,
-            recipient_count: result.summary?.sentCount ?? 0,
+            // Queued, not delivered: the Worker sends afterwards, so this is
+            // how many messages were put on the queue (ADR 0013).
+            recipient_count: result.queuedCount ?? 0,
           });
         }
         return result;
@@ -69,8 +71,9 @@ export function SendConfirmDialog({
 
       toast.promise(promise, {
         loading: t('sendDialog.toast.sending'),
-        success: (data) =>
-          t('sendDialog.toast.sent', { count: data.summary?.sentCount ?? 0 }),
+        // The action's own message already says whether it queued or was held
+        // outside the send window, which a fixed "sent N" string cannot.
+        success: (data) => data.message,
         error: (err) => (err instanceof Error ? err.message : t('sendDialog.toast.failed')),
       });
 

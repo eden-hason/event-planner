@@ -271,3 +271,40 @@ same invitation twice.
 
 Then create one Schedule on the 3-Guest test Event, let the Dispatcher find it, and watch
 it through. Do that before 2026-10-05.
+
+---
+
+## As built - deviations from the plan above
+
+Two things changed during implementation. Both are recorded here rather than
+quietly absorbed, because the plan is what the next person will read.
+
+**The Worker's mutex is a lease, not `pg_try_advisory_lock`.** Step 4 called for
+a session advisory lock. A session advisory lock is held by the Postgres
+*session*, and every call from the application arrives over a pooled PostgREST
+connection - the lock would be taken on one connection and released on another,
+leaking a lock nothing can clear until the pool recycles. A lock that can
+permanently wedge the entire send pipeline is worse than the concurrency it
+prevents. `public.pipeline_locks` holds a short lease per named worker instead:
+a Worker extends it while draining and clears it on the way out, and a Worker
+that dies simply stops extending, which is the self-healing backstop step 4
+wanted from connection teardown. Verified: two simultaneous Workers, and the
+second returns `{skipped: true}`.
+
+**There are five migrations, not four.** The fifth is that lock table, plus the
+Heartbeat. It also seeds a `dispatcher` row, because step 6's Heartbeat cannot
+read `schedule_dispatch_attempts` alone: the Dispatcher writes a row only when
+it *considers* a Schedule, so a quiet week with nothing due is indistinguishable
+from a dead cron - which is the single failure the Heartbeat exists to catch.
+Both crons now record a heartbeat on every run, whether or not they found work,
+and `/api/health/pipeline` requires both to be fresh.
+
+**Two things step 8 could not verify locally, and why.** No seeded Event has
+`host_details` or `invitations`, so the WhatsApp templates resolve their body
+parameters to empty strings and Meta rejects the payload with `131008`. That is
+seed data, not the pipeline - the renderer produces exactly what the old engine
+produced - but it means a genuinely successful send cannot be observed against
+the seed. The SMS Fallback reaches `sendSmsFallback` correctly and stops at "No
+SMS version of invitation_casual", for the same reason. Everything either
+side of the provider call is verified: dispatch, hold, expire, claim, retry
+classification, the reaper, the settle gate and the lease.

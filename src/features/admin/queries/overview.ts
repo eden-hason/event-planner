@@ -155,7 +155,7 @@ export async function getSignals(): Promise<Signal[]> {
       supabase
         .from('schedules')
         .select(
-          'id, scheduled_date, scheduled_time, event_id, events(title), schedule_types(name)',
+          'id, scheduled_date, event_id, events(title), schedule_types(name)',
         )
         .is('status', null)
         .lt('scheduled_date', nowIso),
@@ -195,7 +195,7 @@ export async function getSignals(): Promise<Signal[]> {
       eventId: row.event_id,
       eventTitle: event?.title ?? 'Untitled event',
       headline: `${stage} send overdue ${duration(row.scheduled_date)}`,
-      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date, row.scheduled_time)}, never sent`,
+      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date)}, never sent`,
       occurredAt: row.scheduled_date,
       href: `/admin/events/${row.event_id}#schedule-${row.id}`,
     });

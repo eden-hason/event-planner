@@ -1,5 +1,6 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import { isValidPhone } from '@/lib/phone';
+import { israelWallClockToIso } from '@/lib/date-time';
 
 // Re-export parameter resolution utilities
 export {
@@ -94,26 +95,32 @@ export function formatRelativeTime(dateStr: string): RelativeTimeResult {
 }
 
 /**
- * Calculates the scheduled date/time based on the event date and offset.
+ * The Due Time a catalog default implies: the event date shifted by the
+ * offset, at the catalog's clock face, in Israel.
+ *
+ * The catalog's "10:00" is a wall clock and has to be applied as one. This
+ * used to call `setHours`, which on a Vercel server means 10:00 UTC and so
+ * 13:00 in Israel - the bug that put the two old columns out of step on most
+ * rows (ADR 0015).
  *
  * @param eventDate - The event date in ISO format (YYYY-MM-DD)
  * @param daysOffset - Number of days before (negative) or after (positive) the event
- * @param time - Time in HH:mm format
- * @returns ISO 8601 timestamp string
+ * @param time - Israel wall clock in HH:mm format
+ * @returns ISO 8601 instant
  */
 export function calculateScheduledDate(
   eventDate: string,
   daysOffset: number,
   time: string,
 ): string {
-  const date = new Date(eventDate);
-  date.setDate(date.getDate() + daysOffset);
+  // event_date is a calendar date at 00:00 UTC, so the day is shifted in UTC
+  // and only the clock face is interpreted in Israel.
+  const day = new Date(eventDate);
+  day.setUTCDate(day.getUTCDate() + daysOffset);
 
-  // Parse time and set it
-  const [hours, minutes] = time.split(':').map(Number);
-  date.setHours(hours, minutes, 0, 0);
-
-  return date.toISOString();
+  return (
+    israelWallClockToIso(day.toISOString().slice(0, 10), time) ?? day.toISOString()
+  );
 }
 
 /**

@@ -10,7 +10,7 @@ import {
   type SmsFallbackPlan,
 } from '@/features/schedules/services/send-sms-fallback';
 import { gateScheduleForSend } from '../services/schedule-send-gate';
-import { MAX_BATCH_SIZE } from '../utils/batch-send';
+import { MAX_BATCH_SIZE } from '../utils/sms-fallback';
 
 export type {
   SmsFallbackPlan,

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 import { type EventApp } from '@/features/events/schemas';
 import { createSchedulesFromSelection } from '../actions';
+import { israelWallClockToIso } from '@/lib/date-time';
 import { type ScheduleSelectionItem, type WhatsAppTemplateApp } from '../schemas';
 import { type SuggestedSchedule } from '../utils/suggested-schedules';
 import { WizardInvitationStep } from './wizard/wizard-invitation-step';
@@ -39,13 +40,23 @@ interface ScheduleSetupWizardProps {
 type Step = 'invitation' | 'timeline';
 type InvitationDecision = 'send' | 'skip';
 
+/**
+ * The Due Time an Owner is authoring: their chosen day, at their chosen clock
+ * face, in Israel (ADR 0015).
+ *
+ * The date picker yields a Date at the browser's local midnight, so the
+ * calendar day is read off local components; the hour is then applied in
+ * Asia/Jerusalem rather than in whatever timezone the browser happens to be
+ * in, so an Owner setting 10:00 from abroad still means 10:00 where the guests
+ * are.
+ */
 function combineDateTime(date: Date, time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  // The date picker yields a Date at local midnight, so combine using local
-  // components — setUTCHours would shift to the previous day in +UTC zones.
-  const result = new Date(date);
-  result.setHours(hours, minutes, 0, 0);
-  return result.toISOString();
+  const day = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+  return israelWallClockToIso(day, time) ?? date.toISOString();
 }
 
 export function ScheduleSetupWizard({
@@ -132,7 +143,6 @@ export function ScheduleSetupWizard({
           invitationDate,
           invitationSuggestion.defaultTime,
         ),
-        scheduledTime: invitationSuggestion.defaultTime,
         targetStatus: invitationSuggestion.targetStatus,
         status: invitationDecision === 'send' ? null : 'cancelled',
       });
@@ -143,7 +153,6 @@ export function ScheduleSetupWizard({
         scheduleTypeId: row.scheduleTypeId,
         templateId: row.templateId,
         scheduledDate: combineDateTime(row.date, row.time),
-        scheduledTime: row.time,
         targetStatus: row.targetStatus,
         status: row.enabled ? null : 'cancelled',
       });

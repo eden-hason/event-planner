@@ -18,6 +18,11 @@ const eslintConfig = [
       'out/**',
       'build/**',
       'next-env.d.ts',
+      // Agent worktrees are whole checkouts of this repo living inside it,
+      // build output and dependencies included. Without this, `npm run lint`
+      // reports thousands of errors from vendored code in a sibling checkout
+      // and is useless for finding anything in src/.
+      '.claude/**',
     ],
   },
 ];

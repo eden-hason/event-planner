@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, MessageSquare, TriangleAlert } from '@/components/icons';
 import { getSmsFallbackPlan, launchSmsFallback } from '../actions/sms-fallback';
 import type { SmsFallbackPlan, SmsFallbackRecipient } from '../actions/sms-fallback';
-import { MAX_BATCH_SIZE } from '../utils/batch-send';
+import { MAX_BATCH_SIZE } from '../utils/sms-fallback';
 import { formatPhone } from '@/lib/phone';
 
 function RecipientRow({ recipient }: { recipient: SmsFallbackRecipient }) {

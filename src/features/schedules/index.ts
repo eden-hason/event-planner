@@ -11,16 +11,14 @@ export {
   type CreateSchedulesFromSelectionState,
   executeSchedule,
   type ExecuteScheduleResult,
-  type ExecuteScheduleSummary,
   sendWhatsAppTemplateMessage,
-  type SendWhatsAppTemplateResult,
-  resendScheduleToSelected,
-  type ResendScheduleResult,
+  type WhatsAppSendResult,
+  sendSelectedDeliveriesAdmin,
+  type ManualSendResult,
 } from './actions';
 
 // Utils
 export {
-  calculateScheduledDate,
   filterGuestsByTarget,
   isMessageSchedule,
   validatePhoneNumber,

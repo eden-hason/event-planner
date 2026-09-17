@@ -85,7 +85,7 @@ on conflict (id) do nothing;
 -- record covers, so count(*) and sum(amount) are different numbers on purpose.
 insert into guests (id, event_id, name, phone_number, rsvp_status, amount)
 select
-  ('00000000-0000-4000-c000-' || lpad((e.seq * 1000 + g)::text, 12, '0'))::uuid,
+  ('00000000-0000-4000-8c00-' || lpad((e.seq * 1000 + g)::text, 12, '0'))::uuid,
   e.id,
   'Guest ' || g || ' (' || e.title || ')',
   '+9725' || lpad((e.seq * 1000 + g)::text, 8, '0'),
@@ -116,44 +116,52 @@ on conflict (id) do nothing;
 -- sent_at is set here rather than in a follow-up UPDATE: the
 -- prevent_sent_schedule_mutation trigger (migration 20260506000000) rejects any
 -- update to a row already marked sent, which is exactly what makes a send final.
-insert into schedules (id, event_id, schedule_type_id, template_id, scheduled_date, scheduled_time, target_status, status, sent_at)
+-- The Due Time is one instant (ADR 0015): the relative day below carries the
+-- date, the wall clock column carries the hour an Operator would have typed,
+-- and they are folded together in Israel time here rather than stored apart.
+insert into schedules (id, event_id, schedule_type_id, template_id, scheduled_date, target_status, status, sent_at, dispatched_at)
 select
   d.id::uuid,
   d.event_id::uuid,
   st.id,
   case when st.execution_kind = 'message' then mt.id end,
-  d.scheduled_date,
-  d.scheduled_time::time,
+  due.at,
   d.target_status,
   d.status::schedule_completion_status,
-  case when d.status = 'sent' then d.scheduled_date end
+  case when d.status = 'sent' then due.at end,
+  -- A sent Schedule was dispatched; an unsent one has never been claimed.
+  case when d.status = 'sent' then due.at end
 from (values
   -- overdue: a send that should have gone out, and a round nobody started
-  ('00000000-0000-4000-d000-000000000001', '00000000-0000-4000-b000-000000000003', 'initial_invitation', now() - interval '2 days',  '09:00', 'pending',   null),
-  ('00000000-0000-4000-d000-000000000002', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() - interval '7 days',  '11:00', 'pending',   null),
+  ('00000000-0000-4000-8d00-000000000001', '00000000-0000-4000-b000-000000000003', 'initial_invitation', now() - interval '2 days',  '09:00', 'pending',   null),
+  ('00000000-0000-4000-8d00-000000000002', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() - interval '7 days',  '11:00', 'pending',   null),
   -- near term
-  ('00000000-0000-4000-d000-000000000003', '00000000-0000-4000-b000-000000000002', 'event_reminder',     now() + interval '4 hours', '18:00', 'pending',   null),
-  ('00000000-0000-4000-d000-000000000004', '00000000-0000-4000-b000-000000000001', 'event_reminder',     now() + interval '1 day',   '09:00', 'pending',   null),
-  ('00000000-0000-4000-d000-000000000005', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() + interval '2 days',  '10:00', 'pending',   null),
+  ('00000000-0000-4000-8d00-000000000003', '00000000-0000-4000-b000-000000000002', 'event_reminder',     now() + interval '4 hours', '18:00', 'pending',   null),
+  ('00000000-0000-4000-8d00-000000000004', '00000000-0000-4000-b000-000000000001', 'event_reminder',     now() + interval '1 day',   '09:00', 'pending',   null),
+  ('00000000-0000-4000-8d00-000000000005', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() + interval '2 days',  '10:00', 'pending',   null),
   -- far out, to prove the queue has no horizon
-  ('00000000-0000-4000-d000-000000000006', '00000000-0000-4000-b000-000000000002', 'phone_call',         now() + interval '25 days', '16:30', 'confirmed', null),
-  ('00000000-0000-4000-d000-000000000007', '00000000-0000-4000-b000-000000000003', 'post_event',         now() + interval '80 days', '12:00', 'confirmed', null),
+  ('00000000-0000-4000-8d00-000000000006', '00000000-0000-4000-b000-000000000002', 'phone_call',         now() + interval '25 days', '16:30', 'confirmed', null),
+  ('00000000-0000-4000-8d00-000000000007', '00000000-0000-4000-b000-000000000003', 'post_event',         now() + interval '80 days', '12:00', 'confirmed', null),
   -- history, for the event timeline: one sent, one cancelled by the owner,
   -- and the plan whose round is running below
-  ('00000000-0000-4000-d000-000000000008', '00000000-0000-4000-b000-000000000001', 'initial_invitation', now() - interval '20 days', '09:00', 'pending',   'sent'),
-  ('00000000-0000-4000-d000-000000000009', '00000000-0000-4000-b000-000000000001', 'post_event',         now() - interval '15 days', '09:00', 'confirmed', 'cancelled'),
-  ('00000000-0000-4000-d000-00000000000a', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() - interval '3 days',  '10:00', 'pending',   'sent'),
+  ('00000000-0000-4000-8d00-000000000008', '00000000-0000-4000-b000-000000000001', 'initial_invitation', now() - interval '20 days', '09:00', 'pending',   'sent'),
+  ('00000000-0000-4000-8d00-000000000009', '00000000-0000-4000-b000-000000000001', 'post_event',         now() - interval '15 days', '09:00', 'confirmed', 'cancelled'),
+  ('00000000-0000-4000-8d00-00000000000a', '00000000-0000-4000-b000-000000000001', 'phone_call',         now() - interval '3 days',  '10:00', 'pending',   'sent'),
   -- sends already out the door on the other two events, so "sent" is not a
   -- Cohen-only state: the Sent filters, the per-event timelines and the
   -- delivery counts all have more than one event to draw from
-  ('00000000-0000-4000-d000-00000000000b', '00000000-0000-4000-b000-000000000002', 'initial_invitation', now() - interval '32 days', '09:00', 'pending',   'sent'),
-  ('00000000-0000-4000-d000-00000000000c', '00000000-0000-4000-b000-000000000002', 'confirmation',       now() - interval '10 days', '14:00', 'pending',   'sent'),
-  ('00000000-0000-4000-d000-00000000000d', '00000000-0000-4000-b000-000000000003', 'confirmation',       now() - interval '12 days', '15:00', 'pending',   'sent'),
+  ('00000000-0000-4000-8d00-00000000000b', '00000000-0000-4000-b000-000000000002', 'initial_invitation', now() - interval '32 days', '09:00', 'pending',   'sent'),
+  ('00000000-0000-4000-8d00-00000000000c', '00000000-0000-4000-b000-000000000002', 'confirmation',       now() - interval '10 days', '14:00', 'pending',   'sent'),
+  ('00000000-0000-4000-8d00-00000000000d', '00000000-0000-4000-b000-000000000003', 'confirmation',       now() - interval '12 days', '15:00', 'pending',   'sent'),
   -- a sent phone_call is a round that was started, never a bare row: the
   -- unique index on call_rounds.schedule_id is what pairs them, and the
   -- finished round for this one is below
-  ('00000000-0000-4000-d000-00000000000e', '00000000-0000-4000-b000-000000000003', 'phone_call',         now() - interval '9 days',  '11:00', 'pending',   'sent')
+  ('00000000-0000-4000-8d00-00000000000e', '00000000-0000-4000-b000-000000000003', 'phone_call',         now() - interval '9 days',  '11:00', 'pending',   'sent')
 ) as d(id, event_id, type_key, scheduled_date, scheduled_time, target_status, status)
+join lateral (
+  select ((d.scheduled_date at time zone 'Asia/Jerusalem')::date + d.scheduled_time::time)
+           at time zone 'Asia/Jerusalem' as at
+) due on true
 join schedule_types st on st.key = d.type_key
 left join lateral (
   select id from message_templates m where m.schedule_type_id = st.id order by m.key limit 1
@@ -170,14 +178,14 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------------------
 
 insert into call_rounds (id, event_id, schedule_id, round_number, started_by, created_at, completed_at)
-values ('00000000-0000-4000-e000-000000000001', '00000000-0000-4000-b000-000000000001',
-        '00000000-0000-4000-d000-00000000000a', null,
+values ('00000000-0000-4000-8e00-000000000001', '00000000-0000-4000-b000-000000000001',
+        '00000000-0000-4000-8d00-00000000000a', null,
         '00000000-0000-4000-a000-000000000001', now() - interval '3 days', null)
 on conflict (id) do nothing;
 
 insert into call_logs (round_id, guest_id, outcome, notes, called_by, called_at)
 select
-  '00000000-0000-4000-e000-000000000001',
+  '00000000-0000-4000-8e00-000000000001',
   g.id,
   case
     when g.rn % 4 = 0 then 'confirmed'::call_outcome
@@ -200,15 +208,15 @@ on conflict (round_id, guest_id) do nothing;
 -- every log carries an outcome, which is what separates "done" from the round
 -- above that is merely no longer being worked on.
 insert into call_rounds (id, event_id, schedule_id, round_number, started_by, created_at, completed_at)
-values ('00000000-0000-4000-e000-000000000002', '00000000-0000-4000-b000-000000000003',
-        '00000000-0000-4000-d000-00000000000e', null,
+values ('00000000-0000-4000-8e00-000000000002', '00000000-0000-4000-b000-000000000003',
+        '00000000-0000-4000-8d00-00000000000e', null,
         '00000000-0000-4000-a000-000000000001',
         now() - interval '9 days', now() - interval '9 days' + interval '4 hours')
 on conflict (id) do nothing;
 
 insert into call_logs (round_id, guest_id, outcome, notes, called_by, called_at)
 select
-  '00000000-0000-4000-e000-000000000002',
+  '00000000-0000-4000-8e00-000000000002',
   g.id,
   case
     when g.rn % 3 = 0 then 'confirmed'::call_outcome
@@ -246,7 +254,7 @@ select
   -- Failures are kept on the Cohen invitation alone. Sprinkling them over every
   -- send would leave no event that went out clean, and the failure surfaces are
   -- easier to read when they point somewhere specific.
-  case when s.id = '00000000-0000-4000-d000-000000000008'::uuid and g.rn <= 3
+  case when s.id = '00000000-0000-4000-8d00-000000000008'::uuid and g.rn <= 3
        then 'failed'::delivery_status
        else 'sent'::delivery_status end,
   s.sent_at,
@@ -254,9 +262,9 @@ select
   'scheduled',
   -- error_code is an integer: it holds the raw WhatsApp reason code, and the
   -- human label beside it in the UI is ours to supply, not the column's
-  case when s.id = '00000000-0000-4000-d000-000000000008'::uuid
+  case when s.id = '00000000-0000-4000-8d00-000000000008'::uuid
        then case when g.rn = 1 then 131049 when g.rn = 2 then 63016 when g.rn = 3 then 131049 end end,
-  case when s.id = '00000000-0000-4000-d000-000000000008'::uuid
+  case when s.id = '00000000-0000-4000-8d00-000000000008'::uuid
        then case when g.rn in (1, 3) then 'Rate limit hit' when g.rn = 2 then 'Outside the 24 hour window' end end,
   s.template_id
 from schedules s
