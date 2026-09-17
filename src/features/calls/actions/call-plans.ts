@@ -73,8 +73,9 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
       event_id: input.eventId,
       schedule_type_id: callType.id,
       template_id: null,
+      // One Due Time: the wall clock is already folded into the instant above
+      // by israelWallClockToIso (ADR 0015).
       scheduled_date: scheduledDate,
-      scheduled_time: `${input.scheduledTime}:00`,
       target_status: input.targetStatus,
       status: null,
     });

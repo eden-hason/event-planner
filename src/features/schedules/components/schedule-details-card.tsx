@@ -24,7 +24,11 @@ import {
 } from '@/components/ui/select';
 
 import { updateScheduledDate } from '../actions';
+import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
 import type { ScheduleApp } from '../schemas';
+
+/** Used when a schedule has no time yet - the middle of the send window. */
+const DEFAULT_SEND_TIME = '10:00';
 
 interface ScheduleDetailsCardProps {
   schedule: ScheduleApp | undefined;
@@ -59,8 +63,10 @@ export function ScheduleDetailsCard({
   const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
   const [scheduledDate, setScheduledDate] = useState(schedule?.scheduledDate ?? '');
 
-  const [scheduledTime, setScheduledTime] = useState(
-    schedule?.scheduledTime ? schedule.scheduledTime.slice(0, 5) : '',
+  // Read back out of the Due Time rather than stored beside it: there is one
+  // instant now, and the clock face is a view of it (ADR 0015).
+  const [scheduledTime, setScheduledTime] = useState(() =>
+    schedule?.scheduledDate ? israelWallClockParts(schedule.scheduledDate).time : '',
   );
 
   const daysBeforeEvent = useMemo(() => {
@@ -77,33 +83,43 @@ export function ScheduleDetailsCard({
     });
   }, [scheduledDate]);
 
-  const isLocked = schedule?.status === 'sent' || schedule?.status === 'cancelled';
+  // Dispatched counts as locked. The messages are rendered and queued by then,
+  // so moving the Due Time would change nothing except what the page claims -
+  // and a Schedule is no longer marked 'sent' as a unit (ADR 0013), which makes
+  // dispatched_at the fact to read.
+  const isLocked =
+    schedule?.status === 'sent' ||
+    schedule?.status === 'cancelled' ||
+    schedule?.status === 'expired' ||
+    schedule?.dispatchedAt != null;
   const isDirty = !isLocked && scheduledDate !== savedDate;
 
+  // Both handlers rebuild the instant from an Israel calendar date and an
+  // Israel wall clock, which is the only way to author a Due Time. Setting UTC
+  // hours here is what made "10:00" mean 13:00 in Israel on every schedule this
+  // card ever saved.
   const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseInt(e.target.value, 10);
     if (isNaN(parsed) || !eventDate) return;
 
     const event = new Date(eventDate);
-    const newDate = new Date(event);
-    newDate.setUTCDate(event.getUTCDate() - parsed);
+    const newDay = new Date(event);
+    newDay.setUTCDate(event.getUTCDate() - parsed);
 
-    // Preserve the time from the current scheduledDate
-    if (scheduledDate) {
-      const existing = new Date(scheduledDate);
-      newDate.setUTCHours(existing.getUTCHours(), existing.getUTCMinutes(), existing.getUTCSeconds());
-    }
-
-    setScheduledDate(newDate.toISOString());
+    const iso = israelWallClockToIso(
+      newDay.toISOString().slice(0, 10),
+      scheduledTime || DEFAULT_SEND_TIME,
+    );
+    if (iso) setScheduledDate(iso);
   };
 
   const handleTimeChange = (value: string) => {
-    const [hours, minutes] = value.split(':').map(Number);
     // The card returns null without an event date, so the last fallback is
     // unreachable; it is here because this runs before that guard.
-    const newDate = new Date(scheduledDate || eventDate || Date.now());
-    newDate.setUTCHours(hours, minutes, 0, 0);
-    setScheduledDate(newDate.toISOString());
+    const day = israelWallClockParts(scheduledDate || eventDate || new Date().toISOString()).date;
+    const iso = israelWallClockToIso(day, value);
+    if (!iso) return;
+    setScheduledDate(iso);
     setScheduledTime(value);
   };
 
@@ -111,7 +127,7 @@ export function ScheduleDetailsCard({
     if (!schedule || !isDirty) return;
 
     startSaveTransition(async () => {
-      const promise = updateScheduledDate(schedule.id, scheduledDate, scheduledTime).then((result) => {
+      const promise = updateScheduledDate(schedule.id, scheduledDate).then((result) => {
         if (!result.success)
           throw new Error(result.message ?? 'Failed to update scheduled date.');
         return result;

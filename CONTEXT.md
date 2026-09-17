@@ -90,7 +90,7 @@ in ordinary conversation - it is a Schedule.
 A planned outbound message send for an Event - who it goes to, over which channel, and
 when. Schedules are the mechanism behind every message a Guest receives.
 
-A Schedule always carries a template and a channel; a Call Round carries neither. Where
+A Schedule always carries a Template; a Call Round carries none. Where
 the two must be spoken of together, the word is **Outreach Item**.
 
 ## Schedule Type
@@ -106,6 +106,86 @@ order:
 
 "Reminder" without qualification means Event Reminder (stage 3), never a chase-up during
 the Confirmation stage. A repeat ask during stage 2 is a *second Confirmation round*.
+
+## Due Time
+
+The single moment a Schedule asks to be sent at. It is authored as Israel wall clock - an
+Operator or the Owner picks "10:00" - and stored as one instant. There is no separate date
+and time: a Schedule holding two answers to "when" will eventually give the wrong one.
+
+A Due Time is a request, not a promise. What becomes of it is decided by the **Send
+Window**.
+
+## Send Window
+
+The hours in which Kululu may put a message in front of a Guest: 09:00 to 21:00 Israel
+time, and never from Friday afternoon through Saturday evening.
+
+A Schedule whose **Due Time** falls outside the Send Window is held - it waits for the
+window to open and goes then. It is never sent late at night, and never dropped merely for
+having been due at the wrong hour.
+
+The window is judged when the message would go out, not when the Schedule was written.
+That is what makes it cover the case it exists for: Kululu being unavailable all evening
+and returning at midnight to a backlog of Schedules that all came due while it was away.
+
+## Expired Schedule
+
+A Schedule that will never be sent, because sending it now would be wrong rather than
+merely late. Two things expire one: its Event has already happened - except a Thank You,
+which is meant to land afterwards - or its **Due Time** is more than 48 hours past.
+
+An expiry is recorded with its reason and shown to an Operator. A Schedule that quietly
+stops mattering is the failure this replaces.
+
+## Variant
+
+The **editorial tone** a Schedule's message is written in - the same message, said
+differently (warm, formal, playful, wartime). It is the only axis of message choice the
+Owner ever sees.
+
+A Variant is *not* an event type: a bar mitzva confirmation reading differently from a
+wedding one is the two Event Types having different content, not a "bar mitzva" tone. Nor
+is it a version: a rewrite of the same tone supersedes it, and is not a new Variant.
+
+The Event carries one Variant and every Schedule on it inherits that tone; an Owner may
+override a single Schedule without disturbing the rest. Not every Schedule Type offers a
+choice - where only one Variant is authored, the Owner is shown no picker at all rather
+than a picker with one option.
+
+## Template
+
+The message a Schedule sends, as the Owner chooses and previews it: one Schedule Type, in
+one Variant, in one language. A Template carries no channel - it is the editorial thing,
+not the sendable artifact.
+
+The bare word "template" always means this. The visual skin of the guest-facing page is an
+**Invitation Design**, never a template, even though Meta and the Owner-facing UI have both
+used the word loosely in the past.
+
+## Rendition
+
+One channel's sendable form of a Template - its WhatsApp form or its SMS form. The
+Rendition is where channel-specific shape lives: buttons and their captions and
+destinations on WhatsApp, plain links on SMS.
+
+Every Template has both a WhatsApp Rendition and an SMS Rendition. A Template missing
+either is invalid and cannot be authored, because a Schedule that cannot fall back to SMS
+is a Schedule some Guests can never be reached by.
+
+Which Rendition a Guest actually receives is a delivery matter, not an authoring one:
+WhatsApp is always attempted first, and the SMS Rendition is what an **SMS Fallback**
+sends.
+
+## Invitation Design
+
+The visual skin of the guest-facing invitation and RSVP page - its palette, type and
+ornament. An Event has one.
+
+Entirely separate from a **Template**: a Design decides how the page looks, a Template
+decides what the message says. Neither constrains the other.
+
+_Avoid_: Landing template, template (for the skin)
 
 ## Delivery
 
@@ -141,21 +221,44 @@ One try at putting a Schedule's message in front of one Guest, over exactly one 
 (WhatsApp or SMS). A Delivery is made of one or more Delivery Attempts - a fallback, a
 resend - and each keeps its own result; a later attempt never rewrites an earlier one.
 
+An attempt is recorded before it is made, never after. An attempt whose outcome was never
+learned - Kululu stopped between sending and hearing back - counts as failed for a
+**System-level** reason and is never tried again, because WhatsApp offers no way to ask
+whether a message already went out.
+
 The Owner does not reason about attempts. Operators do.
 
 ## SMS Fallback
 
 A further Delivery Attempt over SMS, made to Guests whose WhatsApp attempt for a Schedule
 failed. It carries the same message intent and the same RSVP link as the WhatsApp attempt
-it stands in for. An SMS Fallback is launched by an Operator from the Back Office, for a
-Schedule's failed Deliveries in one batch. It is part of what the Owner already paid for and
-is never billed on its own.
+it stands in for. It is part of what the Owner already paid for and is never billed on its
+own.
+
+Only a Delivery that failed for a **Guest-level Failure** and has had no SMS attempt is
+eligible for an SMS Fallback.
+
+An SMS Fallback runs by itself once a Schedule has finished failing - every attempt
+resolved and every retry exhausted - unless a **Fallback Freeze** holds it. An Operator may
+also launch one by hand from the Back Office, for a Schedule's failed Deliveries in one
+batch, and doing so overrides a Freeze.
 
 Not to be confused with a Schedule whose own channel is SMS: that is a first attempt, not a
 fallback.
 
-Only a Delivery that failed for a **Guest-level Failure** and has had no SMS attempt is
-eligible for an SMS Fallback.
+## Fallback Freeze
+
+A Schedule's automatic **SMS Fallback** withheld because too much of its audience failed at
+once - more than 30% of its attempts, and at least ten of them.
+
+Two of the codes Kululu treats as **Guest-level Failures** are decisions WhatsApp makes
+about Kululu's account rather than about any one Guest, so a single bad day can look like
+hundreds of individually unreachable Guests. A Freeze stops Kululu buying hundreds of SMS
+at the moment its WhatsApp account is in trouble, when fixing the account and resending on
+WhatsApp may be the cheaper remedy.
+
+A Freeze withholds only the automatic batch. An Operator who has read the failures and
+decided to send anyway is the intended way past it.
 
 ## Guest-level Failure
 
@@ -168,6 +271,20 @@ messages from Kululu. Another channel is the right remedy in every one of these 
 A failed Delivery Attempt caused by Kululu's side - a template no longer usable, a
 restricted account, a throughput limit. It typically hits every Guest at once. Another
 channel is the wrong remedy: the cause is fixed and the message resent on the same channel.
+
+## Throughput Budget
+
+How many messages per second WhatsApp will accept on Kululu's number. It is the constraint
+that shapes how every Schedule is sent: one sender, one pace, shared by every Event at
+once. Exceeding it produces **System-level Failures**.
+
+Not the **Messaging Tier**. The two are confused easily and behave nothing alike.
+
+## Messaging Tier
+
+How many distinct Guests Kululu may open a conversation with in a rolling 24 hours. An
+account-level ceiling counted in people rather than messages - a Guest messaged three times
+in one day counts once.
 
 ## Call Round
 
@@ -196,6 +313,25 @@ act, not a consequence of every Guest having been reached - a round can legitima
 with Guests who never answered.
 
 "Complete" describes the round, never the Guest. A Guest is confirmed or declined.
+
+## Entitlement
+
+The commercial standing of one Schedule: whether it may be sent, and on what basis. Every
+Schedule carries exactly one - **Included** (covered by what the Owner paid at kick-off),
+**Purchased** (bought on its own, after the fact) or **Granted** (given by an Operator as
+good will, with a reason recorded against their name).
+
+An Entitlement is spent when the Schedule sends, not when it is added. A Schedule added
+and then removed before it goes out costs nothing, so exploring the timeline is always
+free.
+
+Distinct from the Event's billing status, which answers whether the Event may send *at
+all*. Entitlement answers whether *this Schedule* may. Both must be satisfied.
+
+## Added Schedule
+
+A Schedule the Owner created beyond what their Event Type includes. It is the only kind
+that is ever Purchased or Granted; an Included Schedule is neither.
 
 ## Owner
 
@@ -251,6 +387,16 @@ whether an Operator saw it. A Signal is therefore not a notification, and not an
 A **Failed Delivery** Signal holds while an Event has Failed Deliveries an Operator can still
 act on - those with no SMS attempt yet. A Guest unreachable on both channels no longer
 raises it.
+
+## Heartbeat
+
+Kululu's own answer to whether it is still sending. It is checked from outside, by
+something that is not Kululu, and reaches a person by whatever means that thing uses.
+
+A Heartbeat is deliberately not a **Signal**. A Signal says an Operator should look at an
+Event; a Heartbeat says the machinery that produces Signals has stopped - which nothing
+derived at read time can report, because the reason nobody noticed is that nobody was
+reading.
 
 ## Overview
 
@@ -326,7 +472,7 @@ are ignored. Never the same phone: an Event cannot hold two Guest Records with o
 ## Live Invite Preview Link
 
 A shareable link to the guest-facing invitation site exactly as a Guest would see it.
-Distinct from the admin **Templates** picker (which chooses the design skin) - this is
+Distinct from the **Invitation Design** picker (which chooses the design skin) - this is
 the artifact you'd hand to someone else to look at, not a tool for changing anything.
 
 It opens the RSVP page with a sample guest; every answer given there plays out on screen

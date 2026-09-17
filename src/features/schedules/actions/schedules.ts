@@ -27,17 +27,21 @@ export type UpdateScheduledDateState = {
 };
 
 /**
- * Updates the scheduled_date of a schedule.
+ * Updates a schedule's Due Time.
  * RLS ensures the user can only update their own schedules.
  *
+ * One column, one instant. The caller authors it as an Israel wall clock
+ * through `israelWallClockToIso`; this used to take a separate naive time and
+ * write both independently, which is how they came to disagree on most rows
+ * (ADR 0015).
+ *
  * @param scheduleId - The schedule ID to update
- * @param scheduledDate - The new scheduled date as an ISO 8601 string
+ * @param scheduledDate - The new Due Time as an ISO 8601 instant
  * @returns Result state with success status
  */
 export async function updateScheduledDate(
   scheduleId: string,
   scheduledDate: string,
-  scheduledTime: string,
 ): Promise<UpdateScheduledDateState> {
   const blocked = await assertNotImpersonating();
   if (blocked) return { success: false, message: blocked };
@@ -70,7 +74,7 @@ export async function updateScheduledDate(
 
     const { error } = await supabase
       .from('schedules')
-      .update({ scheduled_date: scheduledDate, scheduled_time: scheduledTime })
+      .update({ scheduled_date: scheduledDate })
       .eq('id', scheduleId);
 
     if (error) {
@@ -283,7 +287,6 @@ export async function createSchedulesFromSelection(
       schedule_type_id: s.scheduleTypeId,
       template_id: s.templateId,
       scheduled_date: s.scheduledDate,
-      scheduled_time: s.scheduledTime,
       target_status: s.targetStatus,
       status: s.status,
     }));

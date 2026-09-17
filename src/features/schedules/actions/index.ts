@@ -8,13 +8,9 @@ export {
   updateScheduleStatus,
   type UpdateScheduleStatusState,
 } from './schedules';
-export {
-  sendWhatsAppTemplateMessage,
-  type SendWhatsAppTemplateResult,
-} from './whatsapp';
-export {
-  executeSchedule,
-  type ExecuteScheduleResult,
-  type ExecuteScheduleSummary,
-} from './execute-schedule';
-export { resendScheduleToSelected, type ResendScheduleResult } from './resend-schedule';
+export { sendWhatsAppTemplateMessage } from './whatsapp';
+// Type-only, so it is erased at compile time and pulls no server module into a
+// client bundle - see the barrel rules in CLAUDE.md.
+export type { WhatsAppSendResult } from '../services/post-whatsapp';
+export { executeSchedule, type ExecuteScheduleResult } from './execute-schedule';
+export { sendSelectedDeliveriesAdmin, type ManualSendResult } from './manual-send';

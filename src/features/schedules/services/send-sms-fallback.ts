@@ -6,7 +6,7 @@ import {
 } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
 import { resolveTemplatesForEvent } from './resolve-reminder-templates';
-import { mapEventRow } from './send-schedule';
+import { mapEventRow } from './map-event-row';
 import {
   buildSmsBody,
   classifyWhatsAppFailure,

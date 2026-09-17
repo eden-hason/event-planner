@@ -33,3 +33,4 @@ in the diff, not here.
 | # | Item | Area | Status |
 |---|------|------|--------|
 | [0001](0001-sms-delivery-visibility.md) | SMS delivery is invisible after the provider accepts it | schedules / outreach | open |
+| [0002](0002-shabbat-and-chagim-send-window.md) | The Shabbat guard is a fixed weekly block, not a calendar | schedules / outreach | open |

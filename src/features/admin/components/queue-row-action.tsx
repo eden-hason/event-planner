@@ -12,9 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { startCallRound } from '@/features/calls/actions/call-rounds';
-import { triggerScheduleAdmin } from '@/features/schedules/actions/trigger-schedule';
 import type { PlannedWorkRow } from '../types';
 
 export type QueueActionRow = Pick<
@@ -23,24 +22,30 @@ export type QueueActionRow = Pick<
 >;
 
 /**
- * Start and Send now both get their own confirmed click, and both dialogs lead
- * with the number of Guest Records affected.
+ * Starting a call round: one confirmed click, leading with the number of Guest
+ * Records it affects.
  *
- * They are not the same kind of act and the copy says so: Start snapshots an
- * audience and is undoable by deleting the round, while Send now puts real
- * messages on real phones and cannot be taken back.
+ * A message row renders no action at all. It used to offer "Send now" for when
+ * cron did not run, and that button is gone with the cron it rescued: a
+ * Schedule sends itself when its Due Time comes, and an overdue one is held,
+ * expired or failed with a reason recorded on `schedule_dispatch_attempts`. The
+ * Operator's job there is to read why, not to press send - and the Heartbeat,
+ * not a person noticing a stale queue, is what catches the pipeline being down
+ * (ADR 0013).
+ *
+ * So the queue now holds exactly one kind of action, which is the distinction
+ * the list has always been trying to draw: work only a person can do.
  */
 export function QueueRowAction({ row }: { row: QueueActionRow }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const isCall = row.kind === 'call';
+
+  if (row.kind !== 'call') return null;
 
   function confirm() {
     startTransition(async () => {
-      const result = isCall
-        ? await startCallRound(row.id)
-        : await triggerScheduleAdmin(row.id);
+      const result = await startCallRound(row.id);
 
       if (!result.success) {
         toast.error(result.message);
@@ -66,46 +71,25 @@ export function QueueRowAction({ row }: { row: QueueActionRow }) {
       <Button
         type="button"
         size="sm"
-        variant={isCall ? 'default' : 'outline'}
         onClick={() => setOpen(true)}
         className="shrink-0 text-[13px] font-medium"
       >
-        {isCall ? 'Start round' : 'Send now'}
+        Start round
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <AdminDialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>{isCall ? 'Start this round?' : 'Send now?'}</DialogTitle>
+            <DialogTitle>Start this round?</DialogTitle>
             <DialogDescription>
-              {isCall ? (
-                <>
-                  {row.audienceLabel} will be snapshotted into the round. Guests who confirm later
-                  stay in the list with their current RSVP shown
-                </>
-              ) : (
-                <>
-                  {row.title} goes to {row.audienceLabel} over {row.channel ?? 'the message channel'}{' '}
-                  immediately, and the schedule is marked sent. This action cannot be undone
-                </>
-              )}
+              {row.audienceLabel} will be snapshotted into the round. Guests who confirm later stay
+              in the list with their current RSVP shown
             </DialogDescription>
           </DialogHeader>
 
           <p className="text-muted-foreground flex items-start gap-2 text-[12.5px]">
-            {isCall ? (
-              <>
-                <Info className="mt-px size-3.5 shrink-0" />
-                <span>Nobody is called yet. Deleting the round returns the plan to unstarted</span>
-              </>
-            ) : (
-              <>
-                <TriangleAlert className="text-destructive mt-px size-3.5 shrink-0" />
-                <span>
-                  Use this when cron did not run. Guests who already received this send are skipped
-                </span>
-              </>
-            )}
+            <Info className="mt-px size-3.5 shrink-0" />
+            <span>Nobody is called yet. Deleting the round returns the plan to unstarted</span>
           </p>
 
           <DialogFooter>
@@ -113,7 +97,7 @@ export function QueueRowAction({ row }: { row: QueueActionRow }) {
               Cancel
             </Button>
             <Button type="button" onClick={confirm} disabled={pending}>
-              {isCall ? 'Start round' : 'Send now'}
+              Start round
             </Button>
           </DialogFooter>
         </AdminDialogContent>

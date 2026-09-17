@@ -61,7 +61,9 @@ export function SendConfirmDialog({
           posthog.capture('schedule_sent', {
             schedule_id: scheduleId,
             target_status: targetStatus,
-            recipient_count: result.summary?.sentCount ?? 0,
+            // Queued, not delivered: the Worker sends afterwards, so this is
+            // how many messages were put on the queue (ADR 0013).
+            recipient_count: result.queuedCount ?? 0,
           });
         }
         return result;
@@ -69,8 +71,14 @@ export function SendConfirmDialog({
 
       toast.promise(promise, {
         loading: t('sendDialog.toast.sending'),
+        // Two outcomes, both successes: queued now, or held until the send
+        // window opens. Translated rather than passing through the action's own
+        // English message - and never "sent N", because at this point nothing
+        // has been sent; the Worker drains the queue afterwards (ADR 0013).
         success: (data) =>
-          t('sendDialog.toast.sent', { count: data.summary?.sentCount ?? 0 }),
+          data.heldReason
+            ? t('sendDialog.toast.held')
+            : t('sendDialog.toast.queued', { count: data.queuedCount ?? 0 }),
         error: (err) => (err instanceof Error ? err.message : t('sendDialog.toast.failed')),
       });
 

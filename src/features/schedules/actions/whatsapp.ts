@@ -1,25 +1,24 @@
 'use server';
 
-import type { MediaParameter } from '../utils';
-import type { ButtonComponent } from '../utils/parameter-resolvers';
+import type { MediaParameter, ButtonComponent } from '../utils/parameter-resolvers';
+import { buildWhatsAppComponents } from '../utils/send-payload';
+import { postWhatsAppTemplate, type WhatsAppSendResult } from '../services/post-whatsapp';
 
-export type SendWhatsAppTemplateResult = {
-  success: boolean;
-  message: string;
-  messageId?: string;
-  errorCode?: number;
-};
+// Deliberately not re-exported: a `'use server'` module turns every export into
+// a callable action endpoint, and the bundler treats even a type re-export as
+// one. The type is published from the barrel instead.
 
 /**
- * Sends a WhatsApp template message to a recipient using Meta's Graph API.
+ * Renders parameters into components and posts them.
  *
- * @param params - Message parameters
- * @param params.to - Recipient phone number in E.164 format (+972548129777)
- * @param params.templateName - Meta template name registered in WhatsApp Business
- * @param params.languageCode - Template language code (e.g., 'en_US', 'he')
- * @param params.parameters - Optional body parameters for template placeholders
- * @param params.headerParameters - Optional header parameters
- * @returns Result with success status and optional WhatsApp message ID
+ * Kept as a Server Action for the one path that builds a message and sends it
+ * in one breath - the test message an Owner sends themselves. The pipeline does
+ * not use it: the Dispatcher renders and the Worker posts, and the two are
+ * deliberately not one call.
+ *
+ * The transport itself lives in `services/post-whatsapp.ts` and is not exported
+ * from here, because everything a `'use server'` module exports is reachable
+ * over the network.
  */
 export async function sendWhatsAppTemplateMessage(params: {
   to: string;
@@ -28,105 +27,12 @@ export async function sendWhatsAppTemplateMessage(params: {
   parameters?: MediaParameter[];
   headerParameters?: MediaParameter[];
   buttonParameters?: ButtonComponent[];
-}): Promise<SendWhatsAppTemplateResult> {
-  try {
-    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-
-    if (!phoneNumberId || !accessToken) {
-      return {
-        success: false,
-        message: 'WhatsApp is not configured.',
-      };
-    }
-
-    // Build template components
-    const components = [];
-
-    // Add header parameters if provided
-    if (params.headerParameters && params.headerParameters.length > 0) {
-      components.push({
-        type: 'header',
-        parameters: params.headerParameters,
-      });
-    }
-
-    // Add body parameters if provided
-    if (params.parameters && params.parameters.length > 0) {
-      components.push({
-        type: 'body',
-        parameters: params.parameters,
-      });
-    }
-
-    // Add button parameters if provided (each button is a separate component)
-    if (params.buttonParameters?.length) {
-      components.push(...params.buttonParameters);
-    }
-
-    // Build request body
-    const requestBody = {
-      messaging_product: 'whatsapp',
-      to: params.to,
-      type: 'template',
-      template: {
-        name: params.templateName,
-        language: {
-          code: params.languageCode,
-        },
-        ...(components.length > 0 && { components }),
-      },
-    };
-
-    const response = await fetch(
-      `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('WhatsApp API error:', JSON.stringify({
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData,
-        to: params.to,
-        template: params.templateName,
-      }, null, 2));
-
-      const metaErrorCode =
-        typeof errorData?.error?.code === 'number'
-          ? errorData.error.code
-          : undefined;
-
-      return {
-        success: false,
-        message:
-          errorData?.error?.message ||
-          `WhatsApp API error: ${response.statusText}`,
-        errorCode: metaErrorCode,
-      };
-    }
-
-    const data = await response.json();
-    const messageId = data?.messages?.[0]?.id;
-
-    return {
-      success: true,
-      message: 'Message sent successfully',
-      messageId,
-    };
-  } catch (error) {
-    console.error('WhatsApp send error:', error);
-    return {
-      success: false,
-      message: 'Failed to send WhatsApp message',
-    };
-  }
+}): Promise<WhatsAppSendResult> {
+  return postWhatsAppTemplate({
+    channel: 'whatsapp',
+    to: params.to,
+    templateName: params.templateName,
+    languageCode: params.languageCode,
+    components: buildWhatsAppComponents(params),
+  });
 }

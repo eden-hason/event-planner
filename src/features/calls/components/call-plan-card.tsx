@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { IconCalendarEvent, IconClock, IconPhone } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import { israelWallClockParts } from '@/lib/date-time';
 import {
   Card,
   CardContent,
@@ -16,7 +17,6 @@ interface CallPlanCardProps {
   /** The planned call date, ISO 8601 */
   scheduledDate: string;
   /** HH:MM, or null when the plan predates the time column */
-  scheduledTime: string | null;
   targetStatus?: 'pending' | 'confirmed' | null;
   /** The event date, used to show how far ahead the calling sits */
   eventDate: string | null;
@@ -44,7 +44,6 @@ function dayOffset(scheduledDate: string, eventDate: string): number {
  */
 export async function CallPlanCard({
   scheduledDate,
-  scheduledTime,
   targetStatus,
   eventDate,
   cancelled,
@@ -101,12 +100,14 @@ export async function CallPlanCard({
                 </>
               )}
             </div>
-            {scheduledTime && (
-              <div className="flex items-center gap-2 text-sm">
-                <IconClock size={16} className="text-muted-foreground shrink-0" />
-                <span className="font-medium">{scheduledTime.slice(0, 5)}</span>
-              </div>
-            )}
+            {/* Read off the Due Time itself - there is no separate clock-face
+                column any more, and the instant is authored in Israel time. */}
+            <div className="flex items-center gap-2 text-sm">
+              <IconClock size={16} className="text-muted-foreground shrink-0" />
+              <span className="font-medium">
+                {israelWallClockParts(scheduledDate).time}
+              </span>
+            </div>
           </CardContent>
         </Card>
         <TargetAudienceCard targetStatus={targetStatus} disabled={cancelled} />

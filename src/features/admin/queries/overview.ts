@@ -148,16 +148,21 @@ export async function getSignals(): Promise<Signal[]> {
   const testEventIds = new Set(test.eventIds);
 
   const [overdue, failed, stale] = await Promise.all([
-    // Overdue Schedule: `schedules.status` only ever holds 'sent' or
-    // 'cancelled', so NULL is the only representation of "not completed".
-    // Overdue is therefore derived, never stored.
+    // Overdue Schedule: due, not finished, and never handed to the queue.
+    //
+    // `dispatched_at is null` is the load-bearing half. A Schedule is no longer
+    // marked 'sent' as a unit - sending is per-Delivery now (ADR 0013) - so
+    // status stays NULL for the whole of a successful send, and filtering on
+    // status alone would make every Schedule Kululu ever sent permanently
+    // overdue. Being dispatched is what "we did our part" means here.
     excludeIds(
       supabase
         .from('schedules')
         .select(
-          'id, scheduled_date, scheduled_time, event_id, events(title), schedule_types(name)',
+          'id, scheduled_date, event_id, events(title), schedule_types(name), schedule_dispatch_attempts(outcome, reason, attempted_at)',
         )
         .is('status', null)
+        .is('dispatched_at', null)
         .lt('scheduled_date', nowIso),
       'event_id',
       test.eventIds,
@@ -189,13 +194,32 @@ export async function getSignals(): Promise<Signal[]> {
     const event = row.events as unknown as { title: string | null } | null;
     const type = row.schedule_types as unknown as { name: string | null } | null;
     const stage = type?.name ?? 'Schedule';
+
+    // The Dispatcher records why every time it looks at a Schedule and decides
+    // not to send, so an Overdue Schedule can finally say what is holding it
+    // rather than only that it is late. No row at all means the Dispatcher has
+    // never reached it, which is its own answer.
+    const attempts = (row.schedule_dispatch_attempts ?? []) as unknown as {
+      outcome: string;
+      reason: string | null;
+      attempted_at: string;
+    }[];
+    const latest = attempts.reduce<(typeof attempts)[number] | null>(
+      (newest, attempt) =>
+        newest === null || attempt.attempted_at > newest.attempted_at ? attempt : newest,
+      null,
+    );
+    const why = latest
+      ? `last dispatch ${latest.outcome}${latest.reason ? ` - ${latest.reason}` : ''}`
+      : 'the dispatcher has not reached it yet';
+
     signals.push({
       id: `overdue_schedule:${row.id}`,
       kind: 'overdue_schedule',
       eventId: row.event_id,
       eventTitle: event?.title ?? 'Untitled event',
       headline: `${stage} send overdue ${duration(row.scheduled_date)}`,
-      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date, row.scheduled_time)}, never sent`,
+      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date)}, ${why}`,
       occurredAt: row.scheduled_date,
       href: `/admin/events/${row.event_id}#schedule-${row.id}`,
     });

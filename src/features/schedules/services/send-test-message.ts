@@ -11,7 +11,7 @@ import {
   type GuestSendResult,
   type ParameterResolutionContext,
 } from '../utils';
-import { mapEventRow } from './send-schedule';
+import { mapEventRow } from './map-event-row';
 import { resolveTemplatesForEvent } from './resolve-reminder-templates';
 
 /** Accepted Test Messages an event may send over its whole life. */
