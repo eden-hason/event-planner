@@ -169,13 +169,14 @@ export function GuestExperienceCard({ event }: GuestExperienceCardProps) {
                                   {t('specialMealsDescription')}
                                 </ItemDescription>
                               </ItemContent>
-                              <ItemActions>
+                              <ItemActions className="w-full sm:w-auto">
                                 <Popover>
                                   <PopoverTrigger asChild>
                                     <button
                                       type="button"
                                       className={cn(
-                                        'flex h-9 items-center gap-1.5 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm whitespace-nowrap',
+                                        'flex h-9 w-full items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm whitespace-nowrap',
+                                        'sm:w-auto sm:justify-start',
                                         'ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring',
                                         'hover:bg-accent hover:text-accent-foreground transition-colors',
                                         selected.length === 0 && 'text-muted-foreground',
