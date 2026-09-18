@@ -1,13 +1,15 @@
 import { z } from 'zod';
 import type { EventApp } from '@/features/events/schemas';
 import type { GuestApp } from '@/features/guests/schemas';
+import type { MealCounts } from '../utils/meal-counts';
 
 // --- Confirmation Form Schema ---
 export const ConfirmationFormSchema = z.object({
   token: z.string().min(1),
   rsvpStatus: z.enum(['confirmed', 'declined']),
   guestCount: z.coerce.number().int().min(1).optional(),
-  mealChoice: z.string().optional(),
+  /** JSON of a MealCounts map; parsed and normalised by the action. */
+  mealCounts: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -25,12 +27,10 @@ export type ConfirmationPageData = {
   respondedAt: string | null;
   responseData: {
     guestCount?: number;
-    mealChoice?: string;
   } | null;
-  guest: Pick<
-    GuestApp,
-    'id' | 'name' | 'amount' | 'rsvpStatus' | 'mealChoice' | 'guestNotes'
-  >;
+  guest: Pick<GuestApp, 'id' | 'name' | 'amount' | 'rsvpStatus' | 'guestNotes'> & {
+    mealCounts: MealCounts;
+  };
   event: Pick<
     EventApp,
     | 'id'
@@ -47,6 +47,8 @@ export type ConfirmationPageData = {
     titlePrefix: string | null;
     /** The host names on their own, so the page can set them apart. */
     hosts: string[];
+    /** False past the RSVP Cutoff - the answer is shown, no longer editable. */
+    rsvpOpen: boolean;
   };
   scheduleId: string | null;
 };

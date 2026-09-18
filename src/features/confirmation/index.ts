@@ -6,6 +6,14 @@ export { submitConfirmation, recordViewInteraction } from './actions';
 
 // Utils (pure)
 export { buildMealOptions, mealLabel, type MealOption } from './utils/meal-options';
+export {
+  formatMealCounts,
+  normalizeMealCounts,
+  parseMealCounts,
+  totalMeals,
+  type MealCounts,
+} from './utils/meal-counts';
+export { isRsvpOpen } from './utils/rsvp-cutoff';
 
 // Schemas/Types
 export {

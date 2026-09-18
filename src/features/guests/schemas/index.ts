@@ -1,6 +1,17 @@
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import { z } from 'zod';
 import { toE164 } from '@/lib/phone';
+import { MEAL_CHOICES } from '@/lib/meal-choices';
+
+/**
+ * Special Meals per type within the Guest Record: { vegan: 1 }. Empty = none.
+ * The total never exceeding `amount` is enforced by the writers - see
+ * normalizeMealCounts in the confirmation feature.
+ */
+export const MealCountsSchema = z.partialRecord(
+  z.enum(MEAL_CHOICES),
+  z.number().int().min(1),
+);
 
 function isIsraeliMobile(val: string): boolean {
   try {
@@ -48,7 +59,7 @@ export const GuestAppSchema = z.object({
       message: 'RSVP status must be pending, confirmed, or declined',
     })
     .default('pending'),
-  mealChoice: z.string().nullable().optional(),
+  mealCounts: MealCountsSchema.default({}),
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
   // Host-authored note, edited from the guest form
   notes: z.string().nullable().optional(),
@@ -103,7 +114,9 @@ export const GuestDbSchema = z.object({
   // Foreign key to groups table
   group_id: z.uuid().nullable(),
   rsvp_status: z.enum(['pending', 'confirmed', 'declined']).default('pending'),
-  meal_choice: z.string().nullable(),
+  // Read leniently: a stored map the app no longer recognises must not make the
+  // whole guest list unreadable. Unknown keys are dropped on the way in.
+  meal_counts: z.unknown().optional(),
   amount: z.number().int().default(1),
   notes: z.string().nullable(),
   guest_notes: z.string().nullable().optional(),
@@ -138,7 +151,15 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     phone: dbData.phone_number ?? undefined,
     groupId: dbData.group_id ?? undefined,
     rsvpStatus,
-    mealChoice: dbData.meal_choice ?? undefined,
+    mealCounts: MealCountsSchema.catch({}).parse(
+      Object.fromEntries(
+        Object.entries(
+          (dbData.meal_counts && typeof dbData.meal_counts === 'object'
+            ? dbData.meal_counts
+            : {}) as Record<string, unknown>,
+        ).filter(([key]) => (MEAL_CHOICES as readonly string[]).includes(key)),
+      ),
+    ),
     amount: dbData.amount,
     notes: dbData.notes ?? undefined,
     guestNotes: dbData.guest_notes ?? undefined,
@@ -175,7 +196,7 @@ export const GuestUpsertSchema = z.object({
       message: 'RSVP status must be pending, confirmed, or declined',
     })
     .optional(),
-  mealChoice: z.string().nullable().optional(),
+  mealCounts: MealCountsSchema.optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
@@ -212,8 +233,8 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     if (appData.rsvpStatus !== undefined) {
       dbData.rsvp_status = appData.rsvpStatus;
     }
-    if (appData.mealChoice !== undefined) {
-      dbData.meal_choice = appData.mealChoice ?? null;
+    if (appData.mealCounts !== undefined) {
+      dbData.meal_counts = appData.mealCounts;
     }
     if (appData.amount !== undefined) {
       dbData.amount = appData.amount;

@@ -24,8 +24,9 @@ import {
  * quietly sending a near-miss. The migration's guard exists to keep that branch
  * unreachable.
  *
- * Gifting is event-level and note is per schedule instance, so each selects a
- * single row. Table numbers are per-guest - the number lives on the guest's
+ * Gifting is event-level; note and follow-up are per schedule instance. Each
+ * selects a single row. Follow-up is the Confirmation round axis: a repeat
+ * round says "we haven't heard from you yet" (see isFollowUpConfirmation). Table numbers are per-guest - the number lives on the guest's
  * seating assignment, which is routinely incomplete on the day - so both
  * candidates come back and the caller picks per guest.
  */
@@ -62,8 +63,27 @@ export async function resolveTemplatesForEvent(params: {
    * resolve exactly as they did before it existed.
    */
   note?: boolean;
+  /**
+   * Per schedule instance: whether this is a repeat Confirmation round. Only a
+   * family that offers the axis reads it.
+   */
+  followUp?: boolean;
+  /**
+   * Event-level: whether an invitation image is uploaded to put in the header.
+   * A family that offers the axis gets its text-only row without one, so a
+   * send never goes to Meta missing the image its template was approved with.
+   */
+  invitationImage?: boolean;
 }): Promise<ResolveTemplatesResult> {
-  const { supabase, anchor, gifting, tableNumbers, note = false } = params;
+  const {
+    supabase,
+    anchor,
+    gifting,
+    tableNumbers,
+    note = false,
+    followUp = false,
+    invitationImage = false,
+  } = params;
 
   const family = `${anchor.key}/${anchor.channel}/${anchor.variant}/${anchor.languageCode}`;
 
@@ -101,24 +121,29 @@ export async function resolveTemplatesForEvent(params: {
     tableNumbers && candidates.some((t) => t.requiresTableNumbers);
   const wantNote = note && candidates.some((t) => t.requiresNote);
   const offersNote = candidates.some((t) => t.requiresNote);
+  const wantFollowUp = followUp && candidates.some((t) => t.requiresFollowUp);
+  const wantImage =
+    invitationImage && candidates.some((t) => t.requiresInvitationImage);
 
   const pick = (requiresTable: boolean) =>
     candidates.find(
       (t) =>
         t.requiresGifting === wantGifting &&
         t.requiresTableNumbers === requiresTable &&
-        t.requiresNote === wantNote,
+        t.requiresNote === wantNote &&
+        t.requiresFollowUp === wantFollowUp &&
+        t.requiresInvitationImage === wantImage,
     ) ?? null;
 
   const withoutTable = pick(false);
 
   if (!withoutTable) {
     console.error(
-      `[resolve-templates] No row in ${family} for gifting=${wantGifting}, tableNumbers=false, note=${wantNote}`,
+      `[resolve-templates] No row in ${family} for gifting=${wantGifting}, tableNumbers=false, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}`,
     );
     return {
       success: false,
-      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote})`,
+      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
     };
   }
 
@@ -133,11 +158,11 @@ export async function resolveTemplatesForEvent(params: {
 
   if (!withTable) {
     console.error(
-      `[resolve-templates] No table-number row in ${family} for gifting=${wantGifting}, note=${wantNote}`,
+      `[resolve-templates] No table-number row in ${family} for gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}`,
     );
     return {
       success: false,
-      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote})`,
+      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
     };
   }
 

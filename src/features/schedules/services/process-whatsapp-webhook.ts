@@ -1,16 +1,23 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { StoredWebhookEvent } from '@/lib/webhooks/inbox';
+import {
+  handleInboundWhatsAppMessage,
+  InboundClaimError,
+  type InboundWhatsAppMessage,
+} from '@/features/confirmation/services/confirmation-conversation';
 
 /**
  * Processes one stored Meta WhatsApp notification (a webhook_events row).
  *
- * Only delivery statuses change state, and they land on
+ * Two things change state. Delivery statuses land on
  * message_delivery_attempts - the Delivery above them is rolled up by the
- * database (ADR 0011). Everything else (template status, quality, opt-outs,
- * inbound replies) is stored in the inbox and logged, nothing more, for now.
+ * database (ADR 0011). Inbound messages from Guests drive the Confirmation
+ * Conversation (ADR 0017). Everything else (template status, quality,
+ * opt-outs) is stored in the inbox and logged, nothing more, for now.
  *
  * Throwing means "keep this row and try again later". It is safe to run twice:
- * a status is only written when it outranks what the attempt already holds.
+ * a status is only written when it outranks what the attempt already holds,
+ * and an inbound message is claimed by its id before it is acted on.
  */
 
 export const TAG = '[whatsapp-webhook]';
@@ -92,11 +99,7 @@ interface WhatsAppStatus {
   errors?: WhatsAppError[];
 }
 
-interface WhatsAppInboundMessage {
-  id: string;
-  from: string;
-  type: string;
-}
+type WhatsAppInboundMessage = InboundWhatsAppMessage;
 
 interface WhatsAppUserPreference {
   wa_id?: string;
@@ -149,6 +152,7 @@ export async function processWhatsAppWebhookEvent(
   }
 
   const statuses: WhatsAppStatus[] = [];
+  const inbound: WhatsAppInboundMessage[] = [];
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
@@ -157,12 +161,13 @@ export async function processWhatsAppWebhookEvent(
 
       statuses.push(...(value.statuses ?? []));
 
-      // Stored in the inbox for visibility, not acted on. Logged as well so the
-      // Vercel logs still tell the whole story on their own.
+      // Logged as well as acted on, so the Vercel logs still tell the whole
+      // story on their own.
       for (const message of value.messages ?? []) {
         console.log(
           `${TAG} Inbound ${message.type} message from ${maskPhone(message.from)} (${message.id})`,
         );
+        inbound.push(message);
       }
 
       for (const preference of value.user_preferences ?? []) {
@@ -179,9 +184,26 @@ export async function processWhatsAppWebhookEvent(
     }
   }
 
-  if (statuses.length === 0) return;
+  // One message failing must not stop the others, nor the statuses in the
+  // same payload. Each is claimed before it is acted on, so a failure after the
+  // claim is that Guest's one lost reply, not a reason to retry. A claim that
+  // could not be written means nothing happened, so that one asks for a retry
+  // - once the statuses have been applied, which are safe to apply twice.
+  let claimFailed: unknown = null;
+  for (const message of inbound) {
+    try {
+      await handleInboundWhatsAppMessage(supabase, message);
+    } catch (error) {
+      if (error instanceof InboundClaimError) claimFailed = error;
+      console.error(`${TAG} Could not handle inbound message ${message.id}:`, error);
+    }
+  }
 
-  await processStatusUpdates(supabase, statuses, event);
+  if (statuses.length > 0) {
+    await processStatusUpdates(supabase, statuses, event);
+  }
+
+  if (claimFailed) throw claimFailed;
 }
 
 // ---------------------------------------------------------------------------

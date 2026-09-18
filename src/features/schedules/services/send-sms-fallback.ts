@@ -6,12 +6,14 @@ import {
 } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
 import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { mapEventRow } from './map-event-row';
 import {
   buildSmsBody,
   classifyWhatsAppFailure,
   describeGuestLevelFailure,
   isGiftingEnabled,
+  hasInvitationImage,
   isMessageSchedule,
   sendSmsToGuest,
   shouldSendTableNumbers,
@@ -106,7 +108,7 @@ async function loadSchedule(
       `${SCHEDULE_SELECT},
        events (id, user_id, title, event_date, location, host_details,
                invitations, reception_time, short_code, event_settings,
-               guests_experience)`,
+               guests_experience, event_types (key))`,
     )
     .eq('id', scheduleId)
     .single();
@@ -156,6 +158,8 @@ async function resolveSmsTemplates(
     gifting: isGiftingEnabled(event.eventSettings),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: Boolean(schedule.customText?.trim()),
+    followUp: await loadIsFollowUpConfirmation(supabase, schedule),
+    invitationImage: hasInvitationImage(event.invitations),
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
   return {

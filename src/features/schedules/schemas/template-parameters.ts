@@ -13,6 +13,8 @@ export const TransformerTypeSchema = z.enum([
   'navShortUrl', // Build short nav redirect URL from event.shortCode
   'reminderUrl', // Build reminder landing page URL from event.shortCode
   'rsvpUrl', // Build RSVP confirmation URL from the confirmation token
+  'rsvpYesPayload', // Quick-reply payload for "Coming" - starts a Confirmation Conversation
+  'rsvpNoPayload', // Quick-reply payload for "Not coming"
 ]);
 
 export type TransformerType = z.infer<typeof TransformerTypeSchema>;

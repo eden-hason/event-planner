@@ -46,6 +46,12 @@ export const MessageTemplateDbSchema = z.object({
   // schedule instance from schedules.custom_text rather than per event - see
   // the resolver in services/resolve-reminder-templates.ts.
   requires_note: z.boolean(),
+  // Copy for a repeat Confirmation round, resolved per schedule from whether an
+  // earlier Confirmation Schedule exists - see isFollowUpConfirmation.
+  requires_follow_up: z.boolean(),
+  // Carries the Event's invitation image as an image header, resolved per event
+  // from whether one is uploaded - see hasInvitationImage.
+  requires_invitation_image: z.boolean(),
   payload: z.unknown(),
 });
 
@@ -64,6 +70,8 @@ type MessageTemplateBase = {
   requiresTableNumbers: boolean;
   requiresGifting: boolean;
   requiresNote: boolean;
+  requiresFollowUp: boolean;
+  requiresInvitationImage: boolean;
 };
 
 export type MessageTemplateApp =
@@ -93,6 +101,8 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       requiresTableNumbers: db.requires_table_numbers,
       requiresGifting: db.requires_gifting,
       requiresNote: db.requires_note,
+      requiresFollowUp: db.requires_follow_up,
+      requiresInvitationImage: db.requires_invitation_image,
     };
 
     if (db.channel === 'whatsapp') {

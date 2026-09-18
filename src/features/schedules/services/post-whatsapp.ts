@@ -6,8 +6,9 @@ import type { WhatsAppSendPayload } from '../utils/send-payload';
  * Deliberately NOT a Server Action. Every export of a `'use server'` module
  * becomes a callable endpoint, so having the raw transport there published an
  * unauthenticated "send this template to this number" route to the internet.
- * It is a service - the Worker and the manual send are its only callers, and
- * both already run behind their own authorisation.
+ * It is a service - the Worker, the manual send and the Confirmation
+ * Conversation's replies are its only callers, and all run behind their own
+ * authorisation (the last behind the webhook's signature check).
  */
 
 /**
@@ -41,6 +42,77 @@ const GRAPH_API_VERSION = 'v22.0';
 export async function postWhatsAppTemplate(
   payload: WhatsAppSendPayload,
 ): Promise<WhatsAppSendResult> {
+  return postToGraph(payload.to, {
+    type: 'template',
+    template: {
+      name: payload.templateName,
+      language: { code: payload.languageCode },
+      ...(payload.components.length > 0 && { components: payload.components }),
+    },
+  }, payload.templateName);
+}
+
+/**
+ * A free-form message inside the 24-hour window a Guest opens by writing to
+ * Kululu - the questions and summary of a Confirmation Conversation.
+ *
+ * Only valid as an answer: WhatsApp refuses a session message to someone who
+ * has not written in the last 24 hours, which is why the conversation only ever
+ * sends one in reply to a tap. Not a Delivery and not queued (ADR 0017).
+ */
+export type WhatsAppSessionMessage =
+  | { kind: 'text'; body: string }
+  | { kind: 'buttons'; body: string; buttons: { id: string; title: string }[] }
+  | {
+      kind: 'list';
+      body: string;
+      buttonLabel: string;
+      rows: { id: string; title: string }[];
+    };
+
+export async function postWhatsAppSessionMessage(
+  to: string,
+  message: WhatsAppSessionMessage,
+): Promise<WhatsAppSendResult> {
+  switch (message.kind) {
+    case 'text':
+      return postToGraph(to, { type: 'text', text: { body: message.body, preview_url: false } }, 'session:text');
+    case 'buttons':
+      return postToGraph(to, {
+        type: 'interactive',
+        interactive: {
+          type: 'button',
+          body: { text: message.body },
+          action: {
+            buttons: message.buttons.map((button) => ({
+              type: 'reply',
+              reply: { id: button.id, title: button.title },
+            })),
+          },
+        },
+      }, 'session:buttons');
+    case 'list':
+      return postToGraph(to, {
+        type: 'interactive',
+        interactive: {
+          type: 'list',
+          body: { text: message.body },
+          action: {
+            button: message.buttonLabel,
+            sections: [{ rows: message.rows.map((row) => ({ id: row.id, title: row.title })) }],
+          },
+        },
+      }, 'session:list');
+  }
+}
+
+/** The one POST to Meta's messages endpoint, and the three-way reading of its answer. */
+async function postToGraph(
+  to: string,
+  message: Record<string, unknown>,
+  /** What was being sent, for the rejection log line. */
+  label: string,
+): Promise<WhatsAppSendResult> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
@@ -55,16 +127,7 @@ export async function postWhatsAppTemplate(
     };
   }
 
-  const body = {
-    messaging_product: 'whatsapp',
-    to: payload.to,
-    type: 'template',
-    template: {
-      name: payload.templateName,
-      language: { code: payload.languageCode },
-      ...(payload.components.length > 0 && { components: payload.components }),
-    },
-  };
+  const body = { messaging_product: 'whatsapp', to, ...message };
 
   let response: Response;
   try {
@@ -101,7 +164,7 @@ export async function postWhatsAppTemplate(
       JSON.stringify({
         status: response.status,
         error: errorData?.error ?? null,
-        template: payload.templateName,
+        template: label,
       }),
     );
 

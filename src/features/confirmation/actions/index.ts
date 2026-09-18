@@ -6,6 +6,14 @@ import {
   type ConfirmationActionState,
 } from '../schemas';
 import { isGuestInvitationToken } from '../queries';
+import { recordGuestRsvp } from '../services/record-rsvp';
+import { buildMealOptions } from '../utils/meal-options';
+import {
+  normalizeMealCounts,
+  parseMealCounts,
+  type MealCounts,
+} from '../utils/meal-counts';
+import { isRsvpOpen, RSVP_CLOSED_MESSAGE } from '../utils/rsvp-cutoff';
 
 export async function submitConfirmation(
   _prevState: ConfirmationActionState | null,
@@ -15,7 +23,7 @@ export async function submitConfirmation(
     token: formData.get('token'),
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount') ?? undefined,
-    mealChoice: formData.get('mealChoice') ?? undefined,
+    mealCounts: formData.get('mealCounts') ?? undefined,
     notes: formData.get('notes') ?? undefined,
   };
 
@@ -24,98 +32,86 @@ export async function submitConfirmation(
     return { success: false, message: 'נתונים לא תקינים' };
   }
 
-  const { token, rsvpStatus, guestCount, mealChoice, notes } = parsed.data;
+  const { token, rsvpStatus, guestCount, mealCounts, notes } = parsed.data;
 
   const supabase = createServiceClient();
 
-  let guestId: string;
+  // The guest, the schedule the link came through (if any), and what the page
+  // needs to validate the answer against: the RSVP Cutoff and the meal types
+  // the Event offers.
+  const guestColumns = `id, amount, events!inner (event_date, guests_experience)`;
+
+  let guest: {
+    id: string;
+    amount: number | null;
+    events: {
+      event_date: string | null;
+      guests_experience: { dietary_options?: boolean; dietary_types?: string[] } | null;
+    };
+  };
   let scheduleId: string | null = null;
 
   if (isGuestInvitationToken(token)) {
-    // Direct invitation link — look up by guests.invitation_token
-    const { data: guest, error: guestLookupError } = await supabase
+    // Direct invitation link - look up by guests.invitation_token
+    const { data, error } = await supabase
       .from('guests')
-      .select('id')
+      .select(guestColumns)
       .eq('invitation_token', token)
       .single();
-
-    if (guestLookupError || !guest) {
-      return { success: false, message: 'הקישור אינו תקין' };
-    }
-
-    guestId = guest.id;
+    if (error || !data) return { success: false, message: 'הקישור אינו תקין' };
+    guest = data as unknown as typeof guest;
   } else {
-    // Schedule-based confirmation link — look up by message_deliveries.confirmation_token
-    const { data: delivery, error: lookupError } = await supabase
+    // Schedule-based confirmation link - look up by message_deliveries.confirmation_token
+    const { data, error } = await supabase
       .from('message_deliveries')
-      .select('id, guest_id, schedule_id')
+      .select(`schedule_id, guests!inner (${guestColumns})`)
       .eq('confirmation_token', token)
       .single();
-
-    if (lookupError || !delivery) {
-      return { success: false, message: 'הקישור אינו תקין' };
-    }
-
-    guestId = delivery.guest_id;
-    scheduleId = delivery.schedule_id;
+    if (error || !data) return { success: false, message: 'הקישור אינו תקין' };
+    guest = data.guests as unknown as typeof guest;
+    scheduleId = data.schedule_id;
   }
 
-  // Update guest record
-  const guestUpdate: Record<string, unknown> = {
-    rsvp_status: rsvpStatus,
-    rsvp_changed_by: null,
-    rsvp_changed_by_name: null,
-    rsvp_changed_at: new Date().toISOString(),
-    rsvp_change_source: 'guest',
-  };
-  if (rsvpStatus === 'confirmed' && guestCount) {
-    guestUpdate.amount = guestCount;
-  }
-  if (rsvpStatus === 'confirmed' && mealChoice) {
-    guestUpdate.meal_choice = mealChoice;
-  }
-  // Guest-authored text lands in guest_notes - notes belongs to the host
-  if (notes !== undefined) {
-    guestUpdate.guest_notes = notes;
+  if (!isRsvpOpen(guest.events.event_date)) {
+    return { success: false, message: RSVP_CLOSED_MESSAGE };
   }
 
-  const { error: guestError } = await supabase
-    .from('guests')
-    .update(guestUpdate)
-    .eq('id', guestId);
+  const confirmed = rsvpStatus === 'confirmed';
+  const amount = confirmed && guestCount ? guestCount : (guest.amount ?? 1);
 
-  if (guestError) {
-    console.error('Error updating guest:', guestError);
-    return { success: false, message: 'שגיאה בעדכון פרטי האורח' };
-  }
-
-  // Only record guest_interactions when there is a schedule context
-  if (scheduleId) {
-    const interactionType =
-      rsvpStatus === 'confirmed' ? 'rsvp_confirm' : 'rsvp_decline';
-
-    const metadata: Record<string, unknown> = {};
-    if (guestCount) metadata.guestCount = guestCount;
-    if (mealChoice) metadata.mealChoice = mealChoice;
-
-    const { error: interactionError } = await supabase
-      .from('guest_interactions')
-      .insert({
-        guest_id: guestId,
-        schedule_id: scheduleId,
-        interaction_type: interactionType,
-        metadata: Object.keys(metadata).length > 0 ? metadata : null,
+  let meals: MealCounts = {};
+  if (confirmed && mealCounts) {
+    try {
+      meals = normalizeMealCounts(parseMealCounts(JSON.parse(mealCounts)), {
+        amount,
+        allowed: buildMealOptions(
+          guest.events.guests_experience
+            ? {
+                dietaryOptions: guest.events.guests_experience.dietary_options,
+                dietaryTypes: guest.events.guests_experience.dietary_types,
+              }
+            : null,
+        ).map((option) => option.id),
       });
-
-    if (interactionError) {
-      console.error('Error inserting guest interaction:', interactionError);
-      return { success: false, message: 'שגיאה בשמירת התגובה' };
+    } catch {
+      return { success: false, message: 'נתונים לא תקינים' };
     }
   }
+
+  const result = await recordGuestRsvp(supabase, {
+    guestId: guest.id,
+    scheduleId,
+    rsvpStatus,
+    ...(confirmed && guestCount ? { amount: guestCount } : {}),
+    mealCounts: meals,
+    guestNotes: notes,
+    channel: 'page',
+  });
+  if (!result.ok) return { success: false, message: result.message };
 
   return {
     success: true,
-    message: rsvpStatus === 'confirmed' ? 'תודה! אישרת הגעה' : 'תודה על העדכון',
+    message: confirmed ? 'תודה! אישרת הגעה' : 'תודה על העדכון',
   };
 }
 

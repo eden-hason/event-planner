@@ -6,7 +6,18 @@
  * neither owns the other. It was previously a named export of the send engine,
  * which is exactly the kind of incidental coupling that made that engine
  * impossible to split.
+ *
+ * Callers select `event_types (key)` alongside the event columns, which is what
+ * the Occasion Phrase is built from.
  */
+
+// Deep import: the events barrel carries Server Actions, and this module runs in
+// the send path and its tests.
+import {
+  buildApproachingLine,
+  buildOccasionPhrase,
+  readEventTypeKey,
+} from '@/features/events/utils/event-title';
 
 export function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
@@ -20,10 +31,24 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
   const guestExperience = rawEvent.guests_experience as {
     send_table_numbers?: boolean;
   } | null;
+  const hostDetails =
+    (rawEvent.host_details as Record<string, unknown> | null) ?? undefined;
   return {
     id: rawEvent.id as string,
     userId: rawEvent.user_id as string,
     title: rawEvent.title as string,
+    // "חתונה של נועה ודורון" - the one placeholder that makes a Template fit
+    // every event type (see confirmation_1). Null when it cannot be built,
+    // which fails the render rather than sending "הוזמנתם ל" and nothing.
+    occasionPhrase: buildOccasionPhrase({
+      eventTypeKey: readEventTypeKey(rawEvent.event_types),
+      hostDetails,
+    }),
+    // "החתונה של נועה ודורון מתקרבת" - the follow-up round's opening line.
+    approachingLine: buildApproachingLine({
+      eventTypeKey: readEventTypeKey(rawEvent.event_types),
+      hostDetails,
+    }),
     // Null for an event with no date. Such an event cannot have schedules -
     // every offset is relative to the date - so this engine should never see
     // one, but the column is nullable and the type says so.
@@ -33,8 +58,7 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
         name: string;
         coords?: { lat: number; lng: number };
       } | null) ?? undefined,
-    hostDetails:
-      (rawEvent.host_details as Record<string, unknown> | null) ?? undefined,
+    hostDetails,
     invitations: invitations
       ? { imageUrl: invitations.image_url }
       : undefined,

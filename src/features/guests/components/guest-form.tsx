@@ -54,6 +54,11 @@ import {
   RSVP_STATUSES,
 } from '@/features/guests/utils';
 import type { MealChoice } from '@/lib/meal-choices';
+import {
+  normalizeMealCounts,
+  totalMeals,
+  type MealCounts,
+} from '@/features/confirmation';
 import posthog from 'posthog-js';
 
 
@@ -108,7 +113,7 @@ export function GuestForm({
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
-      mealChoice: guest?.mealChoice || '',
+      mealCounts: guest?.mealCounts ?? {},
       amount: guest?.amount || 1,
       notes: guest?.notes || '',
       side: guest?.side ?? null,
@@ -125,7 +130,7 @@ export function GuestForm({
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
-        mealChoice: guest.mealChoice || '',
+        mealCounts: guest.mealCounts ?? {},
         amount: guest.amount || 1,
         notes: guest.notes || '',
         side: guest.side ?? null,
@@ -221,7 +226,12 @@ export function GuestForm({
         formData.append(key, value ? String(value) : 'null');
         return;
       }
-      if (key === 'mealChoice' || key === 'notes') {
+      if (key === 'mealCounts') {
+        // Trimmed to the amount on screen, so what is saved is what was shown.
+        formData.append(key, JSON.stringify(normalizeMealCounts(mealCounts, { amount: amountValue })));
+        return;
+      }
+      if (key === 'notes') {
         if (value !== undefined && value !== null) {
           formData.append(key, String(value));
         }
@@ -239,12 +249,23 @@ export function GuestForm({
     });
   };
 
-  const rawDietary = form.watch('mealChoice') || '';
-  const selectedChips = rawDietary
-    .split(',')
-    .map((s: string) => s.trim())
-    .filter(Boolean);
   const amountValue = form.watch('amount') || 1;
+  // Special Meals never outnumber the Guests (see Special Meal), so a lowered
+  // amount trims what is shown - and saved - rather than failing the save.
+  const mealCounts = normalizeMealCounts(form.watch('mealCounts') ?? {}, {
+    amount: amountValue,
+  });
+  const mealsLeft = amountValue - totalMeals(mealCounts);
+
+  // Commit the trim when the amount drops, so raising it again does not quietly
+  // bring back meals that were already shown as removed.
+  React.useEffect(() => {
+    const current = form.getValues('mealCounts') ?? {};
+    const trimmed = normalizeMealCounts(current, { amount: amountValue });
+    if (totalMeals(trimmed) !== totalMeals(current)) {
+      form.setValue('mealCounts', trimmed, { shouldDirty: true });
+    }
+  }, [form, amountValue]);
 
   // A declined Guest Record has no Table Assignment (ADR-0008). The database
   // clears it on save whatever the form sends, so the field stays put and goes
@@ -259,9 +280,11 @@ export function GuestForm({
     }
   }, [form, isDeclined, tableIdValue]);
 
-  const toggleChip = (chip: string) => {
-    const next = selectedChips.includes(chip) ? '' : chip;
-    form.setValue('mealChoice', next, { shouldDirty: true });
+  const setMealCount = (type: MealChoice, next: number) => {
+    const updated: MealCounts = { ...mealCounts };
+    if (next > 0) updated[type] = next;
+    else delete updated[type];
+    form.setValue('mealCounts', updated, { shouldDirty: true });
   };
 
   return (
@@ -535,31 +558,80 @@ export function GuestForm({
             </h3>
             <FormField
               control={form.control}
-              name="mealChoice"
+              name="mealCounts"
               render={() => (
                 <FormItem>
                   <FormControl>
-                    <div className="flex flex-wrap gap-2">
-                      {DIETARY_PRESETS.map((preset) => {
-                        const isActive = selectedChips.includes(preset.value);
-                        return (
-                          <button
-                            key={preset.value}
-                            type="button"
-                            onClick={() => toggleChip(preset.value)}
-                            className={cn(
-                              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                              isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80',
-                            )}
-                          >
-                            {isActive && <IconCheck size={12} />}
-                            {dietaryLabels[preset.value] ?? preset.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {amountValue === 1 ? (
+                      // One Guest: a choice, not a count.
+                      <div className="flex flex-wrap gap-2">
+                        {DIETARY_PRESETS.map((preset) => {
+                          const isActive = Boolean(mealCounts[preset.value]);
+                          return (
+                            <button
+                              key={preset.value}
+                              type="button"
+                              onClick={() =>
+                                form.setValue(
+                                  'mealCounts',
+                                  isActive ? {} : { [preset.value]: 1 },
+                                  { shouldDirty: true },
+                                )
+                              }
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                              )}
+                            >
+                              {isActive && <IconCheck size={12} />}
+                              {dietaryLabels[preset.value] ?? preset.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      // Several Guests: how many of each type.
+                      <div className="divide-y rounded-md border">
+                        {DIETARY_PRESETS.map((preset) => {
+                          const value = mealCounts[preset.value] ?? 0;
+                          return (
+                            <div
+                              key={preset.value}
+                              className="flex items-center gap-2 px-3 py-1.5"
+                            >
+                              <span className="flex-1 text-sm">
+                                {dietaryLabels[preset.value] ?? preset.label}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                                disabled={value <= 0}
+                                onClick={() => setMealCount(preset.value, value - 1)}
+                              >
+                                <IconMinus size={14} />
+                              </Button>
+                              <span className="w-5 text-center text-sm font-semibold tabular-nums">
+                                {value}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                                disabled={mealsLeft <= 0}
+                                onClick={() => setMealCount(preset.value, value + 1)}
+                              >
+                                <IconPlus size={14} />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

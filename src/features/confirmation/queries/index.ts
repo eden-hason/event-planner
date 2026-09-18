@@ -6,6 +6,8 @@ import {
   EventTypeKeySchema,
 } from '@/features/events';
 import type { ConfirmationPageData } from '../schemas';
+import { parseMealCounts } from '../utils/meal-counts';
+import { isRsvpOpen } from '../utils/rsvp-cutoff';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -47,7 +49,7 @@ type GuestRow = {
   name: string;
   amount: number;
   rsvp_status: string;
-  meal_choice: string | null;
+  meal_counts: unknown;
   guest_notes: string | null;
 };
 
@@ -86,6 +88,7 @@ function toEventView(event: EventRow): ConfirmationPageData['event'] {
         }
       : undefined,
     eventType: eventType.success ? eventType.data : undefined,
+    rsvpOpen: isRsvpOpen(event.event_date),
   };
 }
 
@@ -95,7 +98,7 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
     name: guest.name,
     amount: guest.amount,
     rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
-    mealChoice: guest.meal_choice ?? undefined,
+    mealCounts: parseMealCounts(guest.meal_counts),
     guestNotes: guest.guest_notes ?? undefined,
   };
 }
@@ -117,7 +120,7 @@ export async function getConfirmationDataByToken(
       clicked_at,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, meal_choice, guest_notes
+        id, name, amount, rsvp_status, meal_counts, guest_notes
       ),
       schedules!inner (
         id,
@@ -157,7 +160,6 @@ export async function getConfirmationDataByToken(
 
   const interactionMetadata = interaction?.metadata as {
     guestCount?: number;
-    mealChoice?: string;
   } | null;
 
   return {
@@ -166,7 +168,6 @@ export async function getConfirmationDataByToken(
     responseData: interactionMetadata
       ? {
           guestCount: interactionMetadata.guestCount,
-          mealChoice: interactionMetadata.mealChoice,
         }
       : null,
     guest: toGuestView(guest),
@@ -188,7 +189,7 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, meal_choice, guest_notes,
+      id, name, amount, rsvp_status, meal_counts, guest_notes,
       events!inner (${EVENT_COLUMNS})
     `,
     )
@@ -241,7 +242,7 @@ export async function getConfirmationPreviewData(
       name: 'אורח לדוגמה',
       amount: 2,
       rsvpStatus: 'pending',
-      mealChoice: undefined,
+      mealCounts: {},
       guestNotes: undefined,
     },
     event: toEventView(data as unknown as EventRow),
