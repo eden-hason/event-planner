@@ -120,15 +120,20 @@ export const createGuestColumns = (
 
   if (options.showDietary) {
     cols.push({
-      accessorKey: 'mealChoice',
+      id: 'mealCounts',
       header: () => <div>{t('table.dietaryRestrictions')}</div>,
       cell: ({ row }) => {
-        const mealChoice = row.getValue('mealChoice') as
-          | string
-          | undefined;
-        return mealChoice ? (
+        const counts = Object.entries(row.original.mealCounts ?? {});
+        // "Vegan", or "Vegan ×2, Gluten free" once a record needs several.
+        return counts.length > 0 ? (
           <span className="text-foreground text-sm">
-            {dietaryLabelMap[mealChoice] ?? mealChoice}
+            {counts
+              .map(([type, n]) =>
+                n && n > 1
+                  ? `${dietaryLabelMap[type] ?? type} ×${n}`
+                  : (dietaryLabelMap[type] ?? type),
+              )
+              .join(', ')}
           </span>
         ) : (
           <span className="text-muted-foreground text-sm">{t('table.dietaryNone')}</span>

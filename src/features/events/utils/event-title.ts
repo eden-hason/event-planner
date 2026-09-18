@@ -1,4 +1,4 @@
-import { isCoupleEvent, type EventTypeKey } from '../schemas';
+import { EventTypeKeySchema, isCoupleEvent, type EventTypeKey } from '../schemas';
 
 /**
  * Names as the couple typed them on the names screen.
@@ -163,4 +163,70 @@ export function readHostNames(
     groomName: nameOf('groom'),
     childName: nameOf('child'),
   };
+}
+
+/**
+ * The Occasion Phrase frames, without the definite article: they follow a
+ * preposition in the message ("הוזמנתם ל" + "חתונה של נועה ודורון"), where
+ * the title's "החתונה של" would read "להחתונה". The mitzvas keep their ה on
+ * מצווה, which is where it belongs in both forms.
+ */
+const OCCASION = {
+  wedding: 'חתונה של',
+  henna: 'חינה של',
+  bar_mitzva: 'בר המצווה של',
+  bat_mitzva: 'בת המצווה של',
+} as const satisfies Record<EventTypeKey, string>;
+
+/**
+ * The Occasion Phrase (CONTEXT.md): how an Event is named inside a message sent
+ * for it - "חתונה של נועה ודורון", "בר המצווה של רועי". It is what lets one
+ * Template speak for every event type, the type-specific wording arriving in a
+ * placeholder rather than in the fixed text Meta approves.
+ *
+ * Always Hebrew, because the messages are, and built from the hosts rather than
+ * read off the stored title, which follows the Owner's locale and carries the
+ * article. Null when there is no phrase to build - an unknown type or no names
+ * yet - and deliberately no fallback: "הוזמנתם ל" followed by the title reads
+ * wrong, and a type without a frame gets a template of its own rather than a
+ * guess (see docs/backlog/0003-general-event-type.md).
+ */
+export function buildOccasionPhrase(params: {
+  eventTypeKey: string | undefined;
+  hostDetails: Record<string, unknown> | undefined;
+}): string | null {
+  const eventType = EventTypeKeySchema.safeParse(params.eventTypeKey);
+  if (!eventType.success) return null;
+  const hosts = resolveHosts(eventType.data, readHostNames(params.hostDetails));
+  if (hosts.length === 0) return null;
+  return `${OCCASION[eventType.data]} ${hosts.join(' ו')}`;
+}
+
+/**
+ * "Is coming up", agreeing with the occasion: a wedding, a henna and a bat
+ * mitzva take the feminine, a bar mitzva the masculine.
+ */
+const APPROACHING = {
+  wedding: 'מתקרבת',
+  henna: 'מתקרבת',
+  bar_mitzva: 'מתקרב',
+  bat_mitzva: 'מתקרבת',
+} as const satisfies Record<EventTypeKey, string>;
+
+/**
+ * The follow-up round's opening line - "החתונה של נועה ודורון מתקרבת",
+ * "בר המצווה של רועי מתקרב". The whole line is one placeholder because the
+ * verb agrees with the occasion, which no fixed text around a phrase can do.
+ * It stands at the start of its line, so it takes the title's frame, article
+ * and all. Null exactly when the Occasion Phrase is.
+ */
+export function buildApproachingLine(params: {
+  eventTypeKey: string | undefined;
+  hostDetails: Record<string, unknown> | undefined;
+}): string | null {
+  const eventType = EventTypeKeySchema.safeParse(params.eventTypeKey);
+  if (!eventType.success) return null;
+  const hosts = resolveHosts(eventType.data, readHostNames(params.hostDetails));
+  if (hosts.length === 0) return null;
+  return `${HE[eventType.data].prefix} ${hosts.join(' ו')} ${APPROACHING[eventType.data]}`;
 }

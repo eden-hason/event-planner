@@ -17,7 +17,9 @@ export {
 export {
   isGiftingEnabled,
   shouldSendTableNumbers,
+  hasInvitationImage,
   type GiftingSettings,
+  type InvitationSettings,
   type TableNumberSettings,
 } from './event-config';
 

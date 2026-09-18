@@ -14,6 +14,16 @@ import type {
   DateFormatOptions,
   CurrencyOptions,
 } from '@/features/schedules/schemas/template-parameters';
+// Deep import rather than the feature barrel: the barrel carries the RSVP
+// page's client component, and this module runs in the send path and its tests.
+import {
+  rsvpNoPayload,
+  rsvpYesPayload,
+} from '@/features/confirmation/utils/conversation-ids';
+import {
+  buildApproachingLine,
+  buildOccasionPhrase,
+} from '@/features/events/utils/event-title';
 export type MediaParameter =
   | { type: 'text'; text: string }
   | { type: 'image'; image: { link: string } }
@@ -164,6 +174,16 @@ const transformers: Record<TransformerType, TransformerFunction> = {
       process.env.NEXT_PUBLIC_VERCEL_URL ||
       'http://localhost:3000';
     return `${siteUrl}/c/${token}`;
+  },
+
+  rsvpYesPayload: (value: unknown) => {
+    const token = String(value ?? '').trim();
+    return token ? rsvpYesPayload(token) : '';
+  },
+
+  rsvpNoPayload: (value: unknown) => {
+    const token = String(value ?? '').trim();
+    return token ? rsvpNoPayload(token) : '';
   },
 
   phoneNumber: (value: unknown) => {
@@ -350,7 +370,12 @@ export interface ButtonComponent {
   type: 'button';
   sub_type: string;
   index: number;
-  parameters: Array<{ type: 'text'; text: string }>;
+  /**
+   * A URL button takes text (the suffix appended to its approved base); a
+   * quick reply takes a payload, which Meta hands back verbatim when the
+   * Guest taps it.
+   */
+  parameters: Array<{ type: 'text'; text: string } | { type: 'payload'; payload: string }>;
 }
 
 /**
@@ -373,7 +398,9 @@ export function buildDynamicButtonParameters(
     index: config.index,
     parameters: config.placeholders.map((placeholder, idx) => {
       const resolved = resolvePlaceholder(String(idx), placeholder, context);
-      return { type: 'text' as const, text: resolved };
+      return config.subType === 'quick_reply'
+        ? { type: 'payload' as const, payload: resolved }
+        : { type: 'text' as const, text: resolved };
     }),
   }));
 }
@@ -409,11 +436,32 @@ function isScheduleSource(source: string): boolean {
   return source.startsWith('schedule.');
 }
 
+/**
+ * The preview holds an EventApp, which has no Occasion Phrase (or follow-up
+ * opening line) of its own - the send path builds both in mapEventRow. Derived the same way here so the preview
+ * shows the phrase instead of reporting a missing event field.
+ */
+function withOccasionPhrase(event: EventApp | null): EventApp | null {
+  if (!event) return null;
+  return {
+    ...event,
+    occasionPhrase: buildOccasionPhrase({
+      eventTypeKey: event.eventType,
+      hostDetails: event.hostDetails as Record<string, unknown> | undefined,
+    }),
+    approachingLine: buildApproachingLine({
+      eventTypeKey: event.eventType,
+      hostDetails: event.hostDetails as Record<string, unknown> | undefined,
+    }),
+  } as EventApp;
+}
+
 export function resolveSmsBodyForPreview(
   smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
   customText?: string | null,
 ): { resolvedBody: string; hasMissingFields: boolean } {
+  event = withOccasionPhrase(event);
   const placeholders = smsConfig.parameters?.placeholders;
   if (!placeholders || placeholders.length === 0) {
     return { resolvedBody: smsConfig.bodyText, hasMissingFields: false };
@@ -458,6 +506,7 @@ export function resolveTemplateBodyForPreview(
   event: EventApp | null,
   customText?: string | null,
 ): { resolvedBody: string; hasMissingFields: boolean } {
+  event = withOccasionPhrase(event);
   const placeholders = template.parameters?.placeholders;
 
   if (!placeholders || placeholders.length === 0) {

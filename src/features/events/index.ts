@@ -11,6 +11,8 @@ export {
   buildEventTitle,
   buildEventTitleParts,
   buildHostDetails,
+  buildOccasionPhrase,
+  buildApproachingLine,
   readEventTypeKey,
   readHostNames,
   type EventHostNames,

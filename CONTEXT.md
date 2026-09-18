@@ -76,6 +76,46 @@ when that Guest Record declines or its Table is deleted, and is not restored aut
 A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; the act of
 collecting it is a **Confirmation** round (see Schedule Type).
 
+A confirmed RSVP carries how many Guests are coming and their **Special Meals**. It can be
+changed by the Guest until the **RSVP Cutoff**.
+
+## RSVP Cutoff
+
+The end of the day before the Event. Until then a Guest may change their RSVP, in the chat
+or on the RSVP page. After it, only the Owner or an Operator can.
+
+## Confirmation Conversation
+
+The guided exchange in WhatsApp that collects an RSVP without leaving the chat. It starts
+when a Guest taps "Coming" or "Not coming" on a Confirmation message, and continues
+with Kululu asking how many are coming and about Special Meals, then closes with a summary
+the Guest can reopen to change their answer.
+
+Every answer counts the moment it is given. A Guest who taps "Coming" and stops there is
+confirmed; the conversation being unfinished does not make the RSVP incomplete.
+
+A Confirmation Conversation is not a Schedule and its messages are not Deliveries: the
+Guest started it, it is never billed, and the **Send Window** does not apply to it.
+
+"Maybe" is never given in a Confirmation Conversation. A Guest who does not know yet simply
+does not answer, and stays in the audience for the next Confirmation round.
+
+## Special Meal
+
+A meal other than the standard one, of a type the Owner has switched on for the Event
+(vegetarian, vegan, gluten-free, strictly kosher). Counted per type within a Guest Record:
+a family of five may need one vegan and one gluten-free meal. The number of Special Meals
+never exceeds the number of Guests confirmed.
+
+## Occasion Phrase
+
+How an Event is named inside a message sent for it - "חתונה של נועה ודורון", "בר המצווה
+של רועי" - derived from its type and hosts, and read after "you are invited to". It is what
+lets one Template speak for every kind of Event.
+
+An Event with no hosts named has no Occasion Phrase, and a message that needs one is not
+sent. It is never stood in for by the Event's title.
+
 ## Outreach Item
 
 A deliberate attempt to reach Guests about the Event. There are exactly two kinds: a

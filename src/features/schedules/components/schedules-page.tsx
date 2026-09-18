@@ -22,11 +22,13 @@ import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
 import {
   filterGuestsByTarget,
   isGiftingEnabled,
+  hasInvitationImage,
   isMessageSchedule,
   shouldSendTableNumbers,
 } from '../utils';
 import { resolveTemplatesForPreview } from '../queries/resolve-templates';
 import { buildSuggestedSchedules } from '../utils/suggested-schedules';
+import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleTabContent } from './schedule-tab-content';
 import { SchedulesEmptyState } from './schedules-empty-state';
@@ -84,6 +86,7 @@ export async function SchedulesPage({
   // organiser approves is the message their guests receive.
   const gifting = isGiftingEnabled(event?.eventSettings);
   const tableNumbers = shouldSendTableNumbers(event?.guestExperience);
+  const invitationImage = hasInvitationImage(event?.invitations);
 
   const resolved = await Promise.all(
     schedules.map(async (schedule): Promise<ScheduleWithTemplate> => {
@@ -102,6 +105,8 @@ export async function SchedulesPage({
         gifting,
         tableNumbers,
         note: Boolean(schedule.customText?.trim()),
+        followUp: isFollowUpConfirmation(schedule, schedules),
+        invitationImage,
       });
 
       // A failed resolution is a seeding bug that will also fail the send.

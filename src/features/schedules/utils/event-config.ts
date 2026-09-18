@@ -50,3 +50,22 @@ export function shouldSendTableNumbers(
 ): boolean {
   return guestExperience?.sendTableNumbers === true;
 }
+
+export type InvitationSettings = { imageUrl?: string } | null | undefined;
+
+/**
+ * Whether the Event has an invitation image that can go in a template's image
+ * header. Judged the way the header builder judges it - a parseable URL - so
+ * the resolver never picks the image row for a value the header would drop,
+ * which Meta rejects for a template approved with an image header.
+ */
+export function hasInvitationImage(invitations: InvitationSettings): boolean {
+  const url = invitations?.imageUrl?.trim();
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}

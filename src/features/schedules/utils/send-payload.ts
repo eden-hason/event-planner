@@ -3,6 +3,7 @@ import type { MessageTemplateApp } from '../schemas/message-templates';
 import { toWhatsAppTemplate } from '../schemas/message-templates';
 import { buildSmsBody } from './send-helpers';
 import {
+  getValueByPath,
   buildDynamicTemplateParameters,
   buildDynamicButtonParameters,
   buildDynamicHeaderParameters,
@@ -100,6 +101,9 @@ export function renderSendPayload(params: {
     return { ok: false, reason: 'No usable phone number' };
   }
 
+  const missing = missingOccasionPhrase(template, context);
+  if (missing) return { ok: false, reason: missing };
+
   try {
     if (template.channel === 'sms') {
       return {
@@ -142,6 +146,30 @@ export function renderSendPayload(params: {
       reason: error instanceof Error ? error.message : 'Could not render the message',
     };
   }
+}
+
+/**
+ * A template that names the Event by its Occasion Phrase ("הוזמנתם ל{{1}}")
+ * cannot go out without one: the sentence would end at "ל", and Meta rejects an
+ * empty parameter anyway. The phrase is null for an unknown event type or an
+ * Event with no host names, and this says so once, for the whole Schedule,
+ * instead of a failed attempt per Guest.
+ */
+export function missingOccasionPhrase(
+  template: MessageTemplateApp,
+  context: ParameterResolutionContext,
+): string | null {
+  // The follow-up's opening line is built from the same hosts, so it is
+  // missing in exactly the same cases.
+  const missing = template.payload.parameters.placeholders.some((placeholder) => {
+    const source = placeholder.source ?? placeholder.name;
+    return (
+      (source === 'event.occasionPhrase' || source === 'event.approachingLine') &&
+      !getValueByPath(context as unknown as Record<string, unknown>, source)
+    );
+  });
+  if (!missing) return null;
+  return 'The event has no host names (or no event type) to name it by in this message';
 }
 
 /**

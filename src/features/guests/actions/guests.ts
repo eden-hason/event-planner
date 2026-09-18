@@ -13,6 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { toE164, phoneComparisonKey } from '@/lib/phone';
 import { getEventGuestPhones } from '@/features/guests/queries';
+import { normalizeMealCounts, parseMealCounts } from '@/features/confirmation';
 import { z } from 'zod';
 
 export type UpsertGuestState = {
@@ -59,6 +60,14 @@ export async function upsertGuest(
     if (parsedData.tableId === 'null') {
       parsedData.tableId = null;
     }
+    // Meal counts travel as JSON - a map does not fit a FormData field.
+    if (typeof parsedData.mealCounts === 'string') {
+      try {
+        parsedData.mealCounts = parseMealCounts(JSON.parse(parsedData.mealCounts));
+      } catch {
+        delete parsedData.mealCounts;
+      }
+    }
 
     const validationResult = GuestUpsertSchema.safeParse(parsedData);
     if (!validationResult.success) {
@@ -73,6 +82,23 @@ export async function upsertGuest(
     const dbData = AppToDbTransformerSchema.parse(validatedData);
 
     const supabase = await createClient();
+
+    // Special Meals never outnumber the Guests (see Special Meal). A lower
+    // amount on its own - the AI chat's partial updates - trims what is stored.
+    if (validatedData.mealCounts !== undefined || validatedData.amount !== undefined) {
+      let counts = validatedData.mealCounts;
+      let amount = validatedData.amount;
+      if (validatedData.id && (counts === undefined || amount === undefined)) {
+        const { data: existing } = await supabase
+          .from('guests')
+          .select('amount, meal_counts')
+          .eq('id', validatedData.id)
+          .maybeSingle();
+        counts ??= parseMealCounts(existing?.meal_counts);
+        amount ??= existing?.amount ?? 1;
+      }
+      dbData.meal_counts = normalizeMealCounts(counts ?? {}, { amount: amount ?? 1 });
+    }
 
     // Only update attribution when the RSVP status is actually changing.
     // For new guests (no id) there's no prior status, so skip.

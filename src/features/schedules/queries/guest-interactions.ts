@@ -43,7 +43,8 @@ export type GuestInteractionRow = {
   guestCount?: number;
   /** Headcount on the guest record now - one record can cover a whole family */
   amount: number;
-  mealChoice?: string;
+  /** Special Meals per type as answered at the time, e.g. { vegan: 1 } */
+  mealCounts?: Record<string, number>;
 };
 
 export type ScheduleInteractionData = {
@@ -178,7 +179,10 @@ export async function getScheduleInteractionData(
   for (const row of interactionsResult.data ?? []) {
     const guest = row.guests as unknown as { name: string; amount: number | null };
     const entry = rowFor(row.guest_id as string, guest);
-    const meta = row.metadata as { guestCount?: number; mealChoice?: string } | null;
+    const meta = row.metadata as {
+      guestCount?: number;
+      mealCounts?: Record<string, number>;
+    } | null;
 
     if (row.interaction_type === 'view' && !entry.viewed) {
       entry.viewed = true;
@@ -190,7 +194,7 @@ export async function getScheduleInteractionData(
       entry.response = row.interaction_type as 'rsvp_confirm' | 'rsvp_decline';
       entry.respondedAt = row.created_at;
       entry.guestCount = meta?.guestCount;
-      entry.mealChoice = meta?.mealChoice;
+      entry.mealCounts = meta?.mealCounts;
     }
   }
 

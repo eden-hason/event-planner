@@ -4,6 +4,7 @@ import { toWhatsAppTemplate, type MessageTemplateApp } from '../schemas/message-
 import type { GuestApp } from '@/features/guests/schemas';
 import {
   isGiftingEnabled,
+  hasInvitationImage,
   isMessageSchedule,
   sendSmsToGuest,
   sendToGuest,
@@ -13,6 +14,8 @@ import {
 } from '../utils';
 import { mapEventRow } from './map-event-row';
 import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import { missingOccasionPhrase } from '../utils/send-payload';
+import { loadIsFollowUpConfirmation } from './confirmation-round';
 
 /** Accepted Test Messages an event may send over its whole life. */
 export const TEST_MESSAGE_CAP = 3;
@@ -51,7 +54,7 @@ export async function sendTestMessage(params: {
       `${SCHEDULE_SELECT},
        events (id, user_id, title, event_date, location, host_details,
                invitations, reception_time, short_code, event_settings,
-               guests_experience, preview_token)`,
+               guests_experience, preview_token, event_types (key))`,
     )
     .eq('id', scheduleId)
     .single();
@@ -75,9 +78,21 @@ export async function sendTestMessage(params: {
     gifting: isGiftingEnabled(event.eventSettings),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: Boolean(schedule.customText?.trim()),
+    followUp: await loadIsFollowUpConfirmation(supabase, schedule),
+    invitationImage: hasInvitationImage(event.invitations),
   });
   if (!resolution.success) {
     return { success: false, reason: 'send-failed', message: resolution.message };
+  }
+
+  // Checked before a send is reserved, so a message that could never go out
+  // does not spend one of the Event's three Test Messages.
+  const missing = missingOccasionPhrase(resolution.templates.withoutTable, {
+    guest: { id: 'test' } as GuestApp,
+    event,
+  });
+  if (missing) {
+    return { success: false, reason: 'send-failed', message: missing };
   }
 
   const { data: reservationId, error: reserveError } = await supabase.rpc(
@@ -106,6 +121,7 @@ export async function sendTestMessage(params: {
     phone: recipient.phone,
     groupId: null,
     rsvpStatus: 'pending',
+    mealCounts: {},
     amount: 1,
     tableId: null,
     createdAt: now,
