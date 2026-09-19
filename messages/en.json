@@ -1669,7 +1669,6 @@
       "eventType": "Event Type",
       "receptionTime": "Reception Time",
       "ceremonyTime": "Canopy Time",
-      "ceremonyTimeBarMitzva": "Party & Dancing Time",
       "types": {
         "wedding": "Wedding",
         "henna": "Henna",
@@ -1690,7 +1689,16 @@
       "brideSide": "Bride's Side",
       "groomSide": "Groom's Side",
       "brideSidePlaceholder": "Enter bride's parents names",
-      "groomSidePlaceholder": "Enter groom's parents names"
+      "groomSidePlaceholder": "Enter groom's parents names",
+      "titleSingleMale": "The Bar Mitzva Boy",
+      "titleSingleFemale": "The Bat Mitzva Girl",
+      "celebrantMale": "Celebrant",
+      "celebrantFemale": "Celebrant",
+      "celebrantNameMale": "Name",
+      "celebrantNameFemale": "Name",
+      "celebrantNamePlaceholderMale": "Enter the celebrant's name",
+      "celebrantNamePlaceholderFemale": "Enter the celebrant's name",
+      "parentsPlaceholder": "Enter parents' names"
     },
     "location": {
       "title": "Location",
