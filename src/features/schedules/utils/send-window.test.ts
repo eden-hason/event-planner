@@ -58,45 +58,31 @@ test('after closing holds until the next morning', () => {
   assert.equal(israelClock(nextOpenSlot(at('2026-09-16T22:15'), WINDOW)), '2026-09-17T09:00');
 });
 
-// ─── The Shabbat block: Friday 15:00 to Saturday 20:00 ────────────────────────
+// ─── Weekends: no Shabbat block, the daily window applies (ADR 0018) ──────────
 
-test('Friday morning is open - the block starts at 15:00', () => {
-  const due = at('2026-09-18T10:00'); // Friday
+test('Friday afternoon is open', () => {
+  const due = at('2026-09-18T15:00'); // Friday
+  assert.equal(nextOpenSlot(due, WINDOW).getTime(), due.getTime());
+  assert.equal(isWithinSendWindow(at('2026-09-18T18:30'), WINDOW), true);
+});
+
+test('Saturday daytime is open', () => {
+  const due = at('2026-09-19T09:30');
   assert.equal(nextOpenSlot(due, WINDOW).getTime(), due.getTime());
 });
 
-test('Friday afternoon holds until Saturday evening', () => {
-  assert.equal(israelClock(nextOpenSlot(at('2026-09-18T15:00'), WINDOW)), '2026-09-19T20:00');
-  assert.equal(israelClock(nextOpenSlot(at('2026-09-18T18:30'), WINDOW)), '2026-09-19T20:00');
-});
-
-test('Friday night holds until Saturday evening, not Saturday morning', () => {
-  // 23:00 Friday is both outside the window and inside the block. The block is
-  // the longer wait and has to win.
-  assert.equal(israelClock(nextOpenSlot(at('2026-09-18T23:00'), WINDOW)), '2026-09-19T20:00');
-});
-
-test('Saturday daytime holds until Saturday evening', () => {
-  assert.equal(israelClock(nextOpenSlot(at('2026-09-19T09:30'), WINDOW)), '2026-09-19T20:00');
-});
-
-test('Saturday evening after the block is open', () => {
-  const due = at('2026-09-19T20:30');
-  assert.equal(nextOpenSlot(due, WINDOW).getTime(), due.getTime());
+test('Friday night holds until Saturday morning', () => {
+  assert.equal(israelClock(nextOpenSlot(at('2026-09-18T23:00'), WINDOW)), '2026-09-19T09:00');
 });
 
 test('Saturday after closing holds until Sunday morning', () => {
   assert.equal(israelClock(nextOpenSlot(at('2026-09-19T21:30'), WINDOW)), '2026-09-20T09:00');
 });
 
-test('the longest possible hold is Friday 15:00 to Saturday 20:00', () => {
-  const due = at('2026-09-18T15:00');
-  const held = nextOpenSlot(due, WINDOW);
-  const hours = (held.getTime() - due.getTime()) / 3_600_000;
-  assert.equal(hours, 29);
-  // ADR 0015 reads this together with SCHEDULE_MAX_LATENESS_HOURS: a 24-hour
-  // cutoff would expire the Schedules the guard itself held.
-  assert.ok(hours < 48);
+test('the longest possible hold is overnight, closing to opening', () => {
+  const due = at('2026-09-18T21:00');
+  const hours = (nextOpenSlot(due, WINDOW).getTime() - due.getTime()) / 3_600_000;
+  assert.equal(hours, 12);
 });
 
 // ─── DST ──────────────────────────────────────────────────────────────────────
@@ -108,8 +94,9 @@ test('the window is wall clock in winter too, not a fixed UTC offset', () => {
   assert.equal(held.toISOString(), '2026-12-16T07:00:00.000Z');
 });
 
-test('a winter Friday still blocks on Israel wall clock', () => {
-  assert.equal(israelClock(nextOpenSlot(winter('2026-12-18T16:00'), WINDOW)), '2026-12-19T20:00');
+test('a winter Friday is open on Israel wall clock', () => {
+  const due = winter('2026-12-18T16:00');
+  assert.equal(nextOpenSlot(due, WINDOW).getTime(), due.getTime());
 });
 
 // ─── Configurability ──────────────────────────────────────────────────────────

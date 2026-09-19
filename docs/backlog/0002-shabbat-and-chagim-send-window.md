@@ -1,6 +1,6 @@
 # The Shabbat guard is a fixed weekly block, not a calendar
 
-Status: open
+Status: dropped - the Shabbat block was removed outright rather than made accurate, see `docs/adr/0018-schedules-send-on-weekends.md`
 Area: schedules / outreach
 Related: `docs/adr/0015-a-due-time-is-a-request-not-an-instruction.md`, CONTEXT.md (Send Window)
 

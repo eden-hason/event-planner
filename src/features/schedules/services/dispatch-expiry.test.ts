@@ -38,10 +38,10 @@ test('a schedule past the lateness limit expires', () => {
   assert.match(reason ?? '', /48 hour limit/);
 });
 
-test('the lateness limit is larger than the longest possible Shabbat hold', () => {
-  // ADR 0015: the Shabbat guard can hold a Schedule about 29 hours, so a
-  // 24-hour cutoff would expire the Schedules the guard itself held. These two
-  // settings have to be read together.
+test('the lateness limit clears a long hold', () => {
+  // ADR 0015 sized the cutoff for a ~29-hour Shabbat hold. That block is gone
+  // (ADR 0018) and the longest hold is now overnight, but the cutoff was kept at
+  // 48 so a Dispatcher outage still has room. The two settings are read together.
   assert.equal(check({ scheduledDate: hoursAgo(29), eventDate: '2026-11-05' }), null);
 });
 

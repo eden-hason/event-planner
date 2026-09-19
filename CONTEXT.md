@@ -159,7 +159,7 @@ Window**.
 ## Send Window
 
 The hours in which Kululu may put a message in front of a Guest: 09:00 to 21:00 Israel
-time, and never from Friday afternoon through Saturday evening.
+time, every day of the week, weekends included.
 
 A Schedule whose **Due Time** falls outside the Send Window is held - it waits for the
 window to open and goes then. It is never sent late at night, and never dropped merely for
