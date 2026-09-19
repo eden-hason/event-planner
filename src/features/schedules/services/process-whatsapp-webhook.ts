@@ -292,7 +292,25 @@ async function processStatusUpdates(
 
   if (matched.length < byMessageId.size) {
     const found = new Set(matched.map((a) => a.external_message_id));
-    const missing = [...byMessageId.keys()].filter((id) => !found.has(id));
+    const unmatched = [...byMessageId.keys()].filter((id) => !found.has(id));
+
+    // A Confirmation Conversation reply is sent inline by this processor, not
+    // through the queue, so it never has an attempt (ADR 0017). Its statuses
+    // are expected and there is nothing to apply them to - without this, every
+    // tap costs three statuses retried for the whole window and then a warning.
+    // The reply id is written after the send returns, so Meta's `sent` can beat
+    // it; that case is just unmatched for now and drops out on the retry.
+    const { data: replies, error: replyError } = await supabase
+      .from('whatsapp_inbound_messages')
+      .select('reply_message_id')
+      .in('reply_message_id', unmatched);
+    if (replyError) {
+      throw new Error(`Conversation reply lookup failed: ${replyError.message}`);
+    }
+    const conversationReplies = new Set((replies ?? []).map((r) => r.reply_message_id));
+    const missing = unmatched.filter((id) => !conversationReplies.has(id));
+    if (missing.length === 0) return;
+
     const age = Date.now() - new Date(event.received_at).getTime();
 
     // Young: the send engine has probably not recorded the attempt yet - keep
