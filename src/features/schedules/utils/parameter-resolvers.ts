@@ -176,6 +176,16 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     return `${siteUrl}/r/${code}`;
   },
 
+  saveTheDateUrl: (value: unknown) => {
+    const code = String(value ?? '').trim();
+    if (!code) return '';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_VERCEL_URL ||
+      'http://localhost:3000';
+    return `${siteUrl}/s/${code}`;
+  },
+
   rsvpUrl: (value: unknown) => {
     const token = String(value ?? '').trim();
     if (!token) return '';
