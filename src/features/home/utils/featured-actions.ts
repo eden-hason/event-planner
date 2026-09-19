@@ -46,9 +46,15 @@ const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   budget: (f) => f.expenseCount === 0,
 };
 
-/** The event details an Owner is asked to finish: a ceremony time and a venue. */
+/**
+ * The event details an Owner is asked to finish: the main time and a venue. A
+ * wedding's main time is the ceremony; the other types have no ceremony input,
+ * so theirs is the reception.
+ */
 export function isDetailsComplete(event: EventApp): boolean {
-  return Boolean(event.ceremonyTime && event.location?.name);
+  const time =
+    event.eventType === 'wedding' ? event.ceremonyTime : event.receptionTime;
+  return Boolean(time && event.location?.name);
 }
 
 /**

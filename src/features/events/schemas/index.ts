@@ -74,23 +74,22 @@ export const EventSettingsAppSchema = z.object({
 export type EventSettingsApp = z.infer<typeof EventSettingsAppSchema>;
 
 // --- Host Details Sub-Schemas ---
-// Wedding host details structure
-export const WeddingHostDetailsSchema = z.object({
-  bride: z
-    .object({
-      name: z.string().optional(),
-      parents: z.string().optional(),
-    })
-    .optional(),
-  groom: z
-    .object({
-      name: z.string().optional(),
-      parents: z.string().optional(),
-    })
-    .optional(),
+// The people an event is named after: `bride`/`groom` for a couple event
+// (wedding, henna), `child` for a mitzva. See `isCoupleEvent`.
+const HostPersonSchema = z
+  .object({
+    name: z.string().optional(),
+    parents: z.string().optional(),
+  })
+  .optional();
+
+export const EventHostDetailsSchema = z.object({
+  bride: HostPersonSchema,
+  groom: HostPersonSchema,
+  child: HostPersonSchema,
 });
 
-export type WeddingHostDetails = z.infer<typeof WeddingHostDetailsSchema>;
+export type EventHostDetails = z.infer<typeof EventHostDetailsSchema>;
 
 // Generic host details schema (flexible for any event type)
 export const HostDetailsSchema = z.record(z.string(), z.unknown());
@@ -333,7 +332,7 @@ export const EventDetailsUpdateSchema = z.object({
   receptionTime: z.string().optional(),
   ceremonyTime: z.string().optional(),
   location: LocationSchema.optional(),
-  hostDetails: WeddingHostDetailsSchema.optional(),
+  hostDetails: EventHostDetailsSchema.optional(),
   eventSettings: z
     .object({
       payboxConfig: z

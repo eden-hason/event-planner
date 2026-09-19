@@ -24,19 +24,23 @@ import {
 import {
   EventApp,
   EventDetailsUpdateSchema,
+  EventHostDetails,
   UpdateEventDetailsState,
-  WeddingHostDetails,
+  isCoupleEvent,
+  type EventTypeKey,
 } from '../../schemas';
 import { updateEventDetails } from '../../actions';
 
-const CoupleCardSchema = EventDetailsUpdateSchema.pick({ id: true, hostDetails: true });
-type CoupleCardValues = z.infer<typeof CoupleCardSchema>;
+const HostsCardSchema = EventDetailsUpdateSchema.pick({ id: true, hostDetails: true });
+type HostsCardValues = z.infer<typeof HostsCardSchema>;
+
+type HostRole = 'bride' | 'groom' | 'child';
 
 interface PersonPanelProps {
   roleLabel: string;
   initial: string;
-  nameName: 'hostDetails.bride.name' | 'hostDetails.groom.name';
-  parentsName: 'hostDetails.bride.parents' | 'hostDetails.groom.parents';
+  nameName: `hostDetails.${HostRole}.name`;
+  parentsName: `hostDetails.${HostRole}.parents`;
   nameLabel: string;
   namePlaceholder: string;
   parentsLabel: string;
@@ -53,7 +57,7 @@ function PersonPanel({
   parentsLabel,
   parentsPlaceholder,
 }: PersonPanelProps) {
-  const form = useFormContext<CoupleCardValues>();
+  const form = useFormContext<HostsCardValues>();
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-xl bg-primary/5 p-4">
@@ -105,31 +109,38 @@ function PersonPanel({
   );
 }
 
-interface CoupleCardProps {
+interface HostsCardProps {
   event: EventApp;
 }
 
-export function CoupleCard({ event }: CoupleCardProps) {
+/**
+ * The people the event is named after, shaped by its type: a wedding or henna
+ * has a bride and a groom, a mitzva has the one child celebrating - the same
+ * split the onboarding names screen makes. A bat mitzva takes the feminine
+ * copy, which matters in Hebrew.
+ */
+export function HostsCard({ event }: HostsCardProps) {
   const t = useTranslations('eventDetails.couple');
   const tHeader = useTranslations('eventDetails.header');
   const tToast = useTranslations('eventDetails.toast');
 
-  const hostDetails = event.hostDetails as WeddingHostDetails | undefined;
+  const eventType = event.eventType as EventTypeKey | undefined;
+  const couple = !eventType || isCoupleEvent(eventType);
+  const female = eventType === 'bat_mitzva';
 
-  const form = useForm<CoupleCardValues>({
-    resolver: zodResolver(CoupleCardSchema),
+  const hostDetails = event.hostDetails as EventHostDetails | undefined;
+  const personDefaults = (role: HostRole) => ({
+    name: hostDetails?.[role]?.name || '',
+    parents: hostDetails?.[role]?.parents || '',
+  });
+
+  const form = useForm<HostsCardValues>({
+    resolver: zodResolver(HostsCardSchema),
     defaultValues: {
       id: event.id,
-      hostDetails: {
-        bride: {
-          name: hostDetails?.bride?.name || '',
-          parents: hostDetails?.bride?.parents || '',
-        },
-        groom: {
-          name: hostDetails?.groom?.name || '',
-          parents: hostDetails?.groom?.parents || '',
-        },
-      },
+      hostDetails: couple
+        ? { bride: personDefaults('bride'), groom: personDefaults('groom') }
+        : { child: personDefaults('child') },
     },
   });
 
@@ -137,9 +148,11 @@ export function CoupleCard({ event }: CoupleCardProps) {
 
   const brideName = form.watch('hostDetails.bride.name');
   const groomName = form.watch('hostDetails.groom.name');
+  const childName = form.watch('hostDetails.child.name');
 
   const brideInitial = brideName?.[0]?.toUpperCase() || '♀';
   const groomInitial = groomName?.[0]?.toUpperCase() || '♂';
+  const childInitial = childName?.[0]?.toUpperCase() || (female ? '♀' : '♂');
 
   const [, formAction, isPending] = useActionState(
     async (_prev: UpdateEventDetailsState | null, formData: FormData) => {
@@ -160,7 +173,7 @@ export function CoupleCard({ event }: CoupleCardProps) {
     null,
   );
 
-  const onSubmit = (values: CoupleCardValues) => {
+  const onSubmit = (values: HostsCardValues) => {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -178,7 +191,9 @@ export function CoupleCard({ event }: CoupleCardProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CoupleCardIcon className="size-4 shrink-0 text-primary" />
-              <CardTitle className="text-xl font-bold">{t('title')}</CardTitle>
+              <CardTitle className="text-xl font-bold">
+                {couple ? t('title') : female ? t('titleSingleFemale') : t('titleSingleMale')}
+              </CardTitle>
             </div>
             {isDirty && (
               <CardAction className="animate-in fade-in-0 zoom-in-95 duration-200">
@@ -190,45 +205,62 @@ export function CoupleCard({ event }: CoupleCardProps) {
             )}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_40px_1fr]">
-              <PersonPanel
-                roleLabel={t('bride')}
-                initial={brideInitial}
-                nameName="hostDetails.bride.name"
-                parentsName="hostDetails.bride.parents"
-                nameLabel={t('brideName')}
-                namePlaceholder={t('brideNamePlaceholder')}
-                parentsLabel={t('brideSide')}
-                parentsPlaceholder={t('brideSidePlaceholder')}
-              />
+            {couple ? (
+              <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_40px_1fr]">
+                <PersonPanel
+                  roleLabel={t('bride')}
+                  initial={brideInitial}
+                  nameName="hostDetails.bride.name"
+                  parentsName="hostDetails.bride.parents"
+                  nameLabel={t('brideName')}
+                  namePlaceholder={t('brideNamePlaceholder')}
+                  parentsLabel={t('brideSide')}
+                  parentsPlaceholder={t('brideSidePlaceholder')}
+                />
 
-              {/*
-                The divider runs between the two panels, so it turns with them:
-                a horizontal rule above the groom panel once the grid stacks on
-                mobile, the vertical column it has always been from `sm` up.
-                Below `sm` both halves fade out at both ends instead of into
-                the panel beside them - which end is the "outer" one flips in
-                RTL, and a symmetric fade reads the same either way.
-              */}
-              <div className="flex items-center gap-2 self-stretch py-1 sm:flex-col sm:gap-1 sm:py-6">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:to-border" />
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-card text-primary">
-                  <Ampersand className="size-4" />
+                {/*
+                  The divider runs between the two panels, so it turns with them:
+                  a horizontal rule above the groom panel once the grid stacks on
+                  mobile, the vertical column it has always been from `sm` up.
+                  Below `sm` both halves fade out at both ends instead of into
+                  the panel beside them - which end is the "outer" one flips in
+                  RTL, and a symmetric fade reads the same either way.
+                */}
+                <div className="flex items-center gap-2 self-stretch py-1 sm:flex-col sm:gap-1 sm:py-6">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:to-border" />
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-card text-primary">
+                    <Ampersand className="size-4" />
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:from-border" />
                 </div>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent sm:h-auto sm:w-px sm:bg-gradient-to-b sm:from-border" />
-              </div>
 
-              <PersonPanel
-                roleLabel={t('groom')}
-                initial={groomInitial}
-                nameName="hostDetails.groom.name"
-                parentsName="hostDetails.groom.parents"
-                nameLabel={t('groomName')}
-                namePlaceholder={t('groomNamePlaceholder')}
-                parentsLabel={t('groomSide')}
-                parentsPlaceholder={t('groomSidePlaceholder')}
-              />
-            </div>
+                <PersonPanel
+                  roleLabel={t('groom')}
+                  initial={groomInitial}
+                  nameName="hostDetails.groom.name"
+                  parentsName="hostDetails.groom.parents"
+                  nameLabel={t('groomName')}
+                  namePlaceholder={t('groomNamePlaceholder')}
+                  parentsLabel={t('groomSide')}
+                  parentsPlaceholder={t('groomSidePlaceholder')}
+                />
+              </div>
+            ) : (
+              <div className="mx-auto max-w-sm">
+                <PersonPanel
+                  roleLabel={female ? t('celebrantFemale') : t('celebrantMale')}
+                  initial={childInitial}
+                  nameName="hostDetails.child.name"
+                  parentsName="hostDetails.child.parents"
+                  nameLabel={female ? t('celebrantNameFemale') : t('celebrantNameMale')}
+                  namePlaceholder={
+                    female ? t('celebrantNamePlaceholderFemale') : t('celebrantNamePlaceholderMale')
+                  }
+                  parentsLabel={t('parentsNames')}
+                  parentsPlaceholder={t('parentsPlaceholder')}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </form>

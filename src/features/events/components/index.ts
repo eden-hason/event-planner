@@ -3,7 +3,7 @@ export {
   EventDetailsHeader,
   DateTimeCard,
   LocationCard,
-  CoupleCard,
+  HostsCard,
 } from './event-details';
 
 export { NewEventDialog } from './new-event-dialog';

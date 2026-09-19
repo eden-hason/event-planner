@@ -6,7 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { EventDetailsHeader } from './event-details-header';
 import { DateTimeCard } from './date-time-card';
 import { LocationCard } from './location-card';
-import { CoupleCard } from './couple-card';
+import { HostsCard } from './hosts-card';
 import { GuestExperienceCard } from './guest-experience-card';
 import { EventInvitationCard } from './event-invitation-card';
 import { EventApp } from '../../schemas';
@@ -56,7 +56,7 @@ export function EventDetailsWrapper({ event }: EventDetailsWrapperProps) {
 
       <div className="flex flex-col gap-4">
         <DateTimeCard event={event} />
-        <CoupleCard event={event} />
+        <HostsCard event={event} />
         <LocationCard event={event} />
         <EventInvitationCard
           eventId={event.id}

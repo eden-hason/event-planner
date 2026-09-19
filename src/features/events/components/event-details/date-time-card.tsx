@@ -109,9 +109,9 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
     ? (eventTypeLabels[event.eventType as EventType] ?? event.eventType)
     : null;
 
-  const isBarMitzva = event.eventType === 'bar_mitzva';
-  const receptionTimeLabel = t('receptionTime');
-  const ceremonyTimeLabel = isBarMitzva ? t('ceremonyTimeBarMitzva') : t('ceremonyTime');
+  // Only a wedding has a ceremony (the chuppah); every other type is a single
+  // reception time.
+  const hasCeremony = event.eventType === 'wedding';
 
   return (
     <Form {...form}>
@@ -145,7 +145,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className={cn('grid grid-cols-1 gap-3', hasCeremony && 'sm:grid-cols-2')}>
               <FormField
                 control={form.control}
                 name="receptionTime"
@@ -153,7 +153,7 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
                   <FormItem>
                     <div className="space-y-2 rounded-lg bg-muted/50 p-3">
                       <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {receptionTimeLabel}
+                        {t('receptionTime')}
                       </FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -180,40 +180,42 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="ceremonyTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-                      <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {ceremonyTimeLabel}
-                      </FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type="time"
-                            className={cn('bg-background', field.value && 'pe-8')}
-                            {...field}
-                          />
-                        </FormControl>
-                        {field.value && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-1/2 end-1 size-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            onClick={() => field.onChange('')}
-                          >
-                            <X className="size-3" />
-                          </Button>
-                        )}
+              {hasCeremony && (
+                <FormField
+                  control={form.control}
+                  name="ceremonyTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {t('ceremonyTime')}
+                        </FormLabel>
+                        <div className="relative">
+                          <FormControl>
+                            <Input
+                              type="time"
+                              className={cn('bg-background', field.value && 'pe-8')}
+                              {...field}
+                            />
+                          </FormControl>
+                          {field.value && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1/2 end-1 size-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              onClick={() => field.onChange('')}
+                            >
+                              <X className="size-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <FormMessage />
                       </div>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
           </CardContent>
         </Card>

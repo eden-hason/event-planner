@@ -1669,7 +1669,6 @@
       "eventType": "סוג האירוע",
       "receptionTime": "שעת קבלת פנים",
       "ceremonyTime": "שעת חופה",
-      "ceremonyTimeBarMitzva": "שעת מסיבה וריקודים",
       "types": {
         "wedding": "חתונה",
         "henna": "חינה",
@@ -1690,7 +1689,16 @@
       "brideSide": "צד הכלה",
       "groomSide": "צד החתן",
       "brideSidePlaceholder": "הזן שמות הורי הכלה",
-      "groomSidePlaceholder": "הזן שמות הורי החתן"
+      "groomSidePlaceholder": "הזן שמות הורי החתן",
+      "titleSingleMale": "חתן בר המצווה",
+      "titleSingleFemale": "כלת בת המצווה",
+      "celebrantMale": "החוגג",
+      "celebrantFemale": "החוגגת",
+      "celebrantNameMale": "שם החוגג",
+      "celebrantNameFemale": "שם החוגגת",
+      "celebrantNamePlaceholderMale": "הזן שם החוגג",
+      "celebrantNamePlaceholderFemale": "הזן שם החוגגת",
+      "parentsPlaceholder": "הזן שמות ההורים"
     },
     "location": {
       "title": "מיקום",
