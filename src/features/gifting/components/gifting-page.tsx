@@ -12,6 +12,7 @@ import { GiftingHero } from './gifting-hero';
 import { PayboxCard } from './paybox-card';
 import { BitCard } from './bit-card';
 import { PrivacyNote } from './privacy-note';
+import { GiftButtonsCard } from './gift-buttons-card';
 
 type Provider = 'paybox' | 'bit';
 
@@ -31,6 +32,10 @@ export function GiftingPage({ event }: { event: EventApp }) {
   );
   const [bit, setBit] = useState(() => readConfig(event.eventSettings?.bitConfig));
   const [pending, setPending] = useState<Provider | null>(null);
+  const [giftButtons, setGiftButtons] = useState<Partial<Record<string, boolean>>>(
+    () => event.eventSettings?.giftButtons ?? {},
+  );
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   /**
    * Persist one provider. Both blocks are always sent so the row keeps a
@@ -80,6 +85,43 @@ export function GiftingPage({ event }: { event: EventApp }) {
     [event.id, paybox, bit, tToast],
   );
 
+  /**
+   * Persist one message's gift button choice. Only that key is sent; the
+   * action merges it over the others. The switch flips once the save lands,
+   * so it never shows a choice the send path will not honour.
+   */
+  const toggleGiftButton = useCallback(
+    async (scheduleTypeKey: string, on: boolean) => {
+      const formData = new FormData();
+      formData.set('eventId', event.id);
+      formData.set('giftButtons', JSON.stringify({ [scheduleTypeKey]: on }));
+
+      setPendingMessage(scheduleTypeKey);
+      const promise = updateGiftingSettings(formData).then((result) => {
+        if (!result.success) {
+          throw new Error(result.message || tToast('error'));
+        }
+        return result;
+      });
+
+      toast.promise(promise, {
+        loading: tToast('saving'),
+        success: () => tToast('saved'),
+        error: (err) => (err instanceof Error ? err.message : tToast('error')),
+      });
+
+      try {
+        await promise;
+        setGiftButtons((prev) => ({ ...prev, [scheduleTypeKey]: on }));
+      } catch {
+        // The toast already reported it; the switch stays where it was.
+      } finally {
+        setPendingMessage(null);
+      }
+    },
+    [event.id, tToast],
+  );
+
   const connectedCount =
     (giftProviderStatus('paybox', paybox) === 'connected' ? 1 : 0) +
     (giftProviderStatus('bit', bit) === 'connected' ? 1 : 0);
@@ -119,6 +161,14 @@ export function GiftingPage({ event }: { event: EventApp }) {
             }
           />
         </div>
+
+        {connectedCount > 0 && (
+          <GiftButtonsCard
+            giftButtons={giftButtons}
+            pending={pendingMessage}
+            onToggle={toggleGiftButton}
+          />
+        )}
 
         <PrivacyNote />
       </section>

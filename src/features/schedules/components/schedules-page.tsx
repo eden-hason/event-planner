@@ -21,7 +21,7 @@ import { type OutreachItem, type OutreachNavGroup } from '../types';
 import { resolveSmsBodyForPreview } from '../utils/parameter-resolvers';
 import {
   filterGuestsByTarget,
-  isGiftingEnabled,
+  includesGiftButton,
   hasInvitationImage,
   isMessageSchedule,
   shouldSendTableNumbers,
@@ -84,7 +84,6 @@ export async function SchedulesPage({
   // schedule.template is only the family anchor. Resolve what would actually be
   // sent, using the same resolver the send engine runs, so the preview the
   // organiser approves is the message their guests receive.
-  const gifting = isGiftingEnabled(event?.eventSettings);
   const tableNumbers = shouldSendTableNumbers(event?.guestExperience);
   const invitationImage = hasInvitationImage(event?.invitations);
 
@@ -102,7 +101,10 @@ export async function SchedulesPage({
 
       const resolution = await resolveTemplatesForPreview({
         anchor: schedule.template,
-        gifting,
+        gifting: includesGiftButton(
+          event?.eventSettings,
+          schedule.scheduleTypeKey,
+        ),
         tableNumbers,
         note: Boolean(schedule.customText?.trim()),
         followUp: isFollowUpConfirmation(schedule, schedules),

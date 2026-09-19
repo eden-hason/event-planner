@@ -12,7 +12,7 @@ import {
   buildSmsBody,
   classifyWhatsAppFailure,
   describeGuestLevelFailure,
-  isGiftingEnabled,
+  includesGiftButton,
   hasInvitationImage,
   isMessageSchedule,
   sendSmsToGuest,
@@ -155,7 +155,7 @@ async function resolveSmsTemplates(
   const resolution = await resolveTemplatesForEvent({
     supabase,
     anchor: MessageTemplateDbToAppSchema.parse(data[0]),
-    gifting: isGiftingEnabled(event.eventSettings),
+    gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: Boolean(schedule.customText?.trim()),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),

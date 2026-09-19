@@ -28,6 +28,7 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
     // missing link as "not configured".
     paybox_config?: { enabled: boolean; link?: string };
     bit_config?: { enabled: boolean; link?: string };
+    gift_buttons?: Partial<Record<string, boolean>>;
   } | null;
   const guestExperience = rawEvent.guests_experience as {
     send_table_numbers?: boolean;
@@ -72,7 +73,11 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
     shortCode: (rawEvent.short_code as string | null) ?? undefined,
     // Read by the template resolver, not by any placeholder.
     eventSettings: settings
-      ? { payboxConfig: settings.paybox_config, bitConfig: settings.bit_config }
+      ? {
+          payboxConfig: settings.paybox_config,
+          bitConfig: settings.bit_config,
+          giftButtons: settings.gift_buttons,
+        }
       : undefined,
     guestExperience: guestExperience
       ? { sendTableNumbers: guestExperience.send_table_numbers }

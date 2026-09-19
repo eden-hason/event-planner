@@ -56,6 +56,10 @@ export type BitConfig = z.infer<typeof BitConfigSchema>;
 export const EventSettingsSchema = z.object({
   paybox_config: PayboxConfigSchema.optional(),
   bit_config: BitConfigSchema.optional(),
+  // Whether each message type carries the gift button, keyed by schedule type
+  // key. Set on the gifting page; a missing key means the type's default
+  // (GIFT_BUTTON_DEFAULTS in the schedules feature).
+  gift_buttons: z.record(z.string(), z.boolean()).optional(),
 });
 
 export type EventSettings = z.infer<typeof EventSettingsSchema>;
@@ -64,6 +68,7 @@ export type EventSettings = z.infer<typeof EventSettingsSchema>;
 export const EventSettingsAppSchema = z.object({
   payboxConfig: PayboxConfigSchema.optional(),
   bitConfig: BitConfigSchema.optional(),
+  giftButtons: z.record(z.string(), z.boolean()).optional(),
 });
 
 export type EventSettingsApp = z.infer<typeof EventSettingsAppSchema>;
@@ -265,6 +270,7 @@ export function dbToAppTransformer(dbData: {
     ? {
       payboxConfig: dbData.event_settings.paybox_config,
       bitConfig: dbData.event_settings.bit_config,
+      giftButtons: dbData.event_settings.gift_buttons,
     }
     : undefined;
 

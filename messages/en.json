@@ -1833,6 +1833,18 @@
       "saved": "Saved",
       "disconnected": "Disconnected",
       "error": "Something went wrong"
+    },
+    "messages": {
+      "heading": "Gift button in messages",
+      "subtitle": "Choose which messages to your guests include a \"Send a gift\" button. It opens a page with your Bit and PayBox links",
+      "event_reminder": {
+        "label": "Event day reminder",
+        "description": "Sent on the morning of the event"
+      },
+      "post_event": {
+        "label": "Thank-you message",
+        "description": "Sent the day after the event"
+      }
     }
   },
   "aiChat": {
