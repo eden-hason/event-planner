@@ -7,15 +7,15 @@ import {
 } from '@/features/events';
 
 /**
- * Loads the little an event reminder page needs, keyed by the event's public
- * short code.
+ * Loads the little the public per-event pages need - the reminder page (/r)
+ * and the save-the-date page (/s) - keyed by the event's public short code.
  *
  * Unauthenticated and service-role, exactly like /nav/[code]: a guest holding
  * the link has no session, and RLS scopes events to their owner. The defence
  * here is the column list - never `select('*')` - so a public page cannot leak
  * user_id, budget, guest counts, or anything else on the row.
  */
-export type ReminderPageEvent = {
+export type GuestEventPageEvent = {
   /** The "החתונה של" frame, printed above the names. Absent on an event whose
    *  type never resolved, where `title` carries the whole sentence instead. */
   titlePrefix: string | null;
@@ -28,17 +28,19 @@ export type ReminderPageEvent = {
   location: { name?: string; coords?: { lat: number; lng: number } } | null;
   paybox: { link: string } | null;
   bit: { link: string } | null;
+  /** The uploaded invitation, shown at the top of the save-the-date page. */
+  invitationImageUrl: string | null;
 };
 
-export async function getReminderPageEvent(
+export async function getGuestEventPageEvent(
   code: string,
-): Promise<ReminderPageEvent | null> {
+): Promise<GuestEventPageEvent | null> {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('events')
     .select(
-      'title, location, event_settings, event_date, reception_time, host_details, event_types (key)',
+      'title, location, event_settings, event_date, reception_time, host_details, invitations, event_types (key)',
     )
     .eq('short_code', code)
     .single();
@@ -82,5 +84,7 @@ export async function getReminderPageEvent(
     // empty link is worse than no button.
     paybox: paybox?.enabled && paybox.link?.trim() ? { link: paybox.link } : null,
     bit: bit?.enabled && bit.link?.trim() ? { link: bit.link } : null,
+    invitationImageUrl:
+      (data.invitations as { image_url?: string } | null)?.image_url?.trim() || null,
   };
 }

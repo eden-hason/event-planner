@@ -25,6 +25,10 @@ export {
   classifyWhatsAppFailure,
   describeGuestLevelFailure,
   type WhatsAppFailureSide,
+  buildCalendarEntry,
+  toIcs,
+  toGoogleCalendarUrl,
+  type CalendarEntry,
 } from './utils';
 
 // Schemas/Types

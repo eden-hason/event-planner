@@ -26,6 +26,14 @@ export {
   type TableNumberSettings,
 } from './event-config';
 
+// Re-export the save-the-date calendar entry builders
+export {
+  buildCalendarEntry,
+  toIcs,
+  toGoogleCalendarUrl,
+  type CalendarEntry,
+} from './calendar-entry';
+
 // Re-export send helpers
 export {
   sendToGuest,
