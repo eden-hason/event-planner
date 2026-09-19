@@ -1,3 +1,6 @@
+> **Partly superseded by ADR 0018:** the Shabbat block described below was removed. The
+> Send Window is now the daily 09:00 to 21:00 rule only.
+
 # A Due Time is a request, not an instruction
 
 A Schedule held two answers to "when": `scheduled_date`, a real instant, and

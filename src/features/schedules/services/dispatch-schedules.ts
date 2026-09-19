@@ -173,16 +173,16 @@ async function dispatchOne(
   }
 
   // 2. Hold? Nothing else happens - deliberately not even expanding the
-  //    audience, so a Schedule held over Shabbat sends to the audience as it
-  //    stands when it finally goes, not as it stood 29 hours earlier. An RSVP
-  //    that changes overnight is still respected.
+  //    audience, so a Schedule held overnight sends to the audience as it
+  //    stands when it finally goes, not as it stood the evening before. An
+  //    RSVP that changes overnight is still respected.
   if (!isWithinSendWindow(now, config.sendWindow)) {
     // Say when it will go, not just that it is waiting. "Held" with no time is
     // the same unanswered question the dispatch log exists to end.
     const opensAt = nextOpenSlot(now, config.sendWindow);
     const reason =
-      `Outside the send window (${config.sendWindow.start}-${config.sendWindow.end} Israel, ` +
-      `and not Friday afternoon to Saturday evening) - will send at ` +
+      `Outside the send window (${config.sendWindow.start}-${config.sendWindow.end} Israel) - ` +
+      `will send at ` +
       `${formatScheduleDateTime(opensAt.toISOString())}`;
     await logDispatchAttempt(supabase, scheduleId, 'held', reason);
     return { scheduleId, outcome: 'held', reason, deliveriesQueued: 0 };

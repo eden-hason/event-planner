@@ -9,15 +9,13 @@ import { ADMIN_TIME_ZONE, israelWallClockToIso } from '@/lib/date-time';
  * schedule rather than a rule. Honouring the instant removes that accident and
  * lets Kululu message a wedding guest at 3am, which is what this exists to stop.
  *
- * Two rules, both evaluated in Israel wall clock because that is where the
- * guests are and where the Operator authored the time:
+ * One rule, evaluated in Israel wall clock because that is where the guests are
+ * and where the Operator authored the time: a daily window, 09:00 to 21:00 by
+ * default, every day of the week.
  *
- *   1. a daily window, 09:00 to 21:00 by default
- *   2. a Shabbat block, Friday 15:00 through Saturday 20:00
- *
- * The block is deliberately crude - a fixed weekly span rather than real
- * candle-lighting times, so a Schedule can still go out on Yom Kippur. See
- * docs/backlog/0002 for what it approximates and why that was accepted.
+ * There used to be a second rule, a Friday 15:00 to Saturday 20:00 Shabbat
+ * block. It was removed on purpose so Schedules go out on weekends like any
+ * other day - see ADR 0018.
  *
  * Evaluated at dispatch rather than at authoring, because the case it exists
  * for is Kululu being down all evening and coming back at midnight to a queue
@@ -31,9 +29,6 @@ export type SendWindow = {
   end: string;
 };
 
-const SHABBAT_START = { weekday: 5, minutes: 15 * 60 }; // Friday 15:00
-const SHABBAT_END = { weekday: 6, minutes: 20 * 60 }; // Saturday 20:00
-
 const DAY_MS = 86_400_000;
 
 const PARTS = new Intl.DateTimeFormat('en-CA', {
@@ -44,18 +39,13 @@ const PARTS = new Intl.DateTimeFormat('en-CA', {
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
-  weekday: 'short',
 });
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type IsraelClock = {
   /** "YYYY-MM-DD" in Israel. */
   date: string;
   /** Minutes since Israel midnight. */
   minutes: number;
-  /** 0 = Sunday, matching Date.getDay. */
-  weekday: number;
 };
 
 function israelClock(instant: Date): IsraelClock {
@@ -65,7 +55,6 @@ function israelClock(instant: Date): IsraelClock {
   return {
     date: `${parts.year}-${parts.month}-${parts.day}`,
     minutes: Number(parts.hour) * 60 + Number(parts.minute),
-    weekday: WEEKDAYS.indexOf(parts.weekday),
   };
 }
 
@@ -91,22 +80,8 @@ function israelInstant(date: string, dayOffset: number, minutes: number): Date {
   return new Date(iso);
 }
 
-/** Where an instant sits in the Shabbat block, as minutes from Sunday 00:00. */
-function weekPosition(clock: IsraelClock): number {
-  return clock.weekday * 24 * 60 + clock.minutes;
-}
-
-const SHABBAT_START_POS = SHABBAT_START.weekday * 24 * 60 + SHABBAT_START.minutes;
-const SHABBAT_END_POS = SHABBAT_END.weekday * 24 * 60 + SHABBAT_END.minutes;
-
-function isShabbat(clock: IsraelClock): boolean {
-  const position = weekPosition(clock);
-  return position >= SHABBAT_START_POS && position < SHABBAT_END_POS;
-}
-
 export function isWithinSendWindow(instant: Date, window: SendWindow): boolean {
   const clock = israelClock(instant);
-  if (isShabbat(clock)) return false;
   const start = parseClock(window.start);
   const end = parseClock(window.end);
   return clock.minutes >= start && clock.minutes < end;
@@ -118,11 +93,9 @@ export function isWithinSendWindow(instant: Date, window: SendWindow): boolean {
  * Returns `instant` itself when it is already open, so an on-time Schedule is
  * dispatched at exactly its Due Time and nothing is nudged by rounding.
  *
- * The two rules can compound - Friday 23:00 is both after closing and inside
- * the block - so this loops until the answer is stable rather than applying
- * them once in a fixed order. Three passes is the worst case; the bound is
- * there so a misconfigured window (start >= end) fails loudly instead of
- * spinning.
+ * Loops until the answer is stable. Two passes is the worst case (after
+ * closing moves to the next morning, which is then open); the bound is there
+ * so a bug fails loudly instead of spinning.
  */
 export function nextOpenSlot(instant: Date, window: SendWindow): Date {
   const start = parseClock(window.start);
@@ -136,17 +109,6 @@ export function nextOpenSlot(instant: Date, window: SendWindow): Date {
   let candidate = instant;
   for (let pass = 0; pass < 8; pass += 1) {
     const clock = israelClock(candidate);
-
-    if (isShabbat(clock)) {
-      // Saturday 20:00 of this same week. The block never spans a Sunday, so
-      // the offset is always forward within the week.
-      candidate = israelInstant(
-        clock.date,
-        SHABBAT_END.weekday - clock.weekday,
-        SHABBAT_END.minutes,
-      );
-      continue;
-    }
 
     if (clock.minutes < start) {
       candidate = israelInstant(clock.date, 0, start);

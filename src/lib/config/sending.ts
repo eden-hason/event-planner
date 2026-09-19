@@ -41,8 +41,8 @@ export type SendingConfig = {
   sendWindow: { start: string; end: string };
   /**
    * How long a Schedule may be past its Due Time before it expires. Read
-   * together with the Shabbat guard, which can hold a Schedule ~29 hours: a
-   * 24-hour cutoff would expire the Schedules the guard itself held.
+   * together with the Send Window, which can hold a Schedule overnight (~12
+   * hours); 48 leaves room for a Dispatcher outage on top of that.
    */
   scheduleMaxLatenessHours: number;
   /** Quiet time on a Schedule's attempts before the SMS Fallback may run. */
