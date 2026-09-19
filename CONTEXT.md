@@ -26,7 +26,9 @@ other way out of the state, and no partial access along the way.
 
 The people planning the wedding. The buyer and the primary user. Used in
 market/positioning language, not as a system entity - in the system they are simply the
-Event's **Owner** and their partner.
+Event's **Owner** and their co-planner.
+
+Never "partner" for the other half of the Couple - **Partner** is a referring business.
 
 ## Guest
 
@@ -376,13 +378,13 @@ that is ever Purchased or Granted; an Included Schedule is neither.
 ## Owner
 
 The Event's creator, and any collaborator granted the `owner` role. Full access to
-everything on the Event. A partner invited to plan together is an Owner.
+everything on the Event. A spouse or co-planner invited to plan together is an Owner.
 
 ## Seating Manager
 
 A collaborator who can manage all Tables in an Event but can identify and assign only
 the Guest Records within their guest or group scope. Intended for a planner or venue
-contact, not for a partner. They cannot delete a Table when doing so would disturb an
+contact, not for a co-planner. They cannot delete a Table when doing so would disturb an
 out-of-scope Table Assignment.
 
 Owner and Seating Manager are the **only** two collaborator roles. There is no
@@ -527,3 +529,58 @@ the WhatsApp lifecycle and the Call Rounds.
 
 Phrased from the Couple's side: free means *you plan*; paid means *we run your RSVP
 campaign*.
+
+---
+
+## Partner
+
+An outside business - a DJ, a photographer, a venue - that sends Couples to Kululu in
+exchange for a fixed Commission. A Partner is invited by Kululu; nobody becomes one by
+signing up alone. The Partner works in Kululu Partners, never in an Event.
+
+Distinct from an **Owner** or a co-planner: a Partner never sees inside a referred Event.
+_Avoid_: Affiliate, vendor, supplier
+
+## Referral
+
+The link between a Partner and one Couple's account, made when the Couple arrives through
+that Partner. An account has at most one Referral, and it never moves to another Partner.
+
+A Referral is **registered** from the moment it is made, and **qualified** the first time
+one of the account's Events is paid for with real money. A comped Event does not qualify
+it. Only a qualified Referral earns a Commission, and it earns exactly one - Events paid
+after that earn nothing.
+
+## Partner Code
+
+A Partner's short, human-readable word that a Couple can type in, and that Kululu also
+puts in the Partner's link. The link and the typed code are the same thing, so there is
+only one way to be referred.
+
+A Partner Code can be applied until the account's first Event is paid. Once applied it is
+locked: the first code wins, and no code can be added after payment.
+_Avoid_: Coupon, promo code, referral link (as separate things)
+
+## Referral Gift
+
+What the Couple receives for arriving through a Partner: one extra WhatsApp Schedule on
+their first paid Event, carrying a **Granted** Entitlement. It is the Couple's reason to
+use a Partner Code, and it is always presented as a gift, not as a discount.
+
+## Commission
+
+The fixed amount a Partner earns for one qualified Referral. Fixed per Referral, never a
+share of what the Couple paid.
+
+Each Partner has their own rate. The rate in force when a Referral qualifies is the one it
+earns - a later change to the Partner's rate never alters a Commission already earned.
+
+## Payout Statement
+
+One Partner's Commissions for one calendar month, issued on the first of the following
+month. A Referral that qualifies in a month is on that month's Statement.
+
+A Payout Statement is paid only against the Partner's own tax invoice or receipt for its
+exact amount. It moves from **issued**, to **invoiced** once the Partner provides that
+document, to **paid** once Kululu has transferred the money.
+
