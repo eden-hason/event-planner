@@ -13,6 +13,7 @@ export {
   buildHostDetails,
   buildOccasionPhrase,
   buildApproachingLine,
+  buildTodayLine,
   readEventTypeKey,
   readHostNames,
   type EventHostNames,

@@ -230,3 +230,30 @@ export function buildApproachingLine(params: {
   if (hosts.length === 0) return null;
   return `${HE[eventType.data].prefix} ${hosts.join(' ו')} ${APPROACHING[eventType.data]}`;
 }
+
+/**
+ * "Is taking place", agreeing with the occasion like APPROACHING does.
+ */
+const TAKING_PLACE = {
+  wedding: 'מתקיימת',
+  henna: 'מתקיימת',
+  bar_mitzva: 'מתקיים',
+  bat_mitzva: 'מתקיימת',
+} as const satisfies Record<EventTypeKey, string>;
+
+/**
+ * The Event Reminder's opening line - "החתונה של נועה ודורון מתקיימת היום",
+ * "בר המצווה של רועי מתקיים היום". One placeholder for the whole line for the
+ * same reason as buildApproachingLine: the verb agrees with the occasion. Null
+ * exactly when the Occasion Phrase is.
+ */
+export function buildTodayLine(params: {
+  eventTypeKey: string | undefined;
+  hostDetails: Record<string, unknown> | undefined;
+}): string | null {
+  const eventType = EventTypeKeySchema.safeParse(params.eventTypeKey);
+  if (!eventType.success) return null;
+  const hosts = resolveHosts(eventType.data, readHostNames(params.hostDetails));
+  if (hosts.length === 0) return null;
+  return `${HE[eventType.data].prefix} ${hosts.join(' ו')} ${TAKING_PLACE[eventType.data]} היום`;
+}

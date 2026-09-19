@@ -159,12 +159,14 @@ export function missingOccasionPhrase(
   template: MessageTemplateApp,
   context: ParameterResolutionContext,
 ): string | null {
-  // The follow-up's opening line is built from the same hosts, so it is
+  // The follow-up's and the Event Reminder's opening lines are built from the same hosts, so it is
   // missing in exactly the same cases.
   const missing = template.payload.parameters.placeholders.some((placeholder) => {
     const source = placeholder.source ?? placeholder.name;
     return (
-      (source === 'event.occasionPhrase' || source === 'event.approachingLine') &&
+      (source === 'event.occasionPhrase' ||
+        source === 'event.approachingLine' ||
+        source === 'event.todayLine') &&
       !getValueByPath(context as unknown as Record<string, unknown>, source)
     );
   });

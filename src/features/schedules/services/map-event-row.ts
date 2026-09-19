@@ -16,6 +16,7 @@
 import {
   buildApproachingLine,
   buildOccasionPhrase,
+  buildTodayLine,
   readEventTypeKey,
 } from '@/features/events/utils/event-title';
 
@@ -46,6 +47,11 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
     }),
     // "החתונה של נועה ודורון מתקרבת" - the follow-up round's opening line.
     approachingLine: buildApproachingLine({
+      eventTypeKey: readEventTypeKey(rawEvent.event_types),
+      hostDetails,
+    }),
+    // "החתונה של נועה ודורון מתקיימת היום" - the Event Reminder's opening line.
+    todayLine: buildTodayLine({
       eventTypeKey: readEventTypeKey(rawEvent.event_types),
       hostDetails,
     }),
