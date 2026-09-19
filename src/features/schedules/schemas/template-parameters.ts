@@ -5,6 +5,7 @@ import { z } from 'zod';
  */
 export const TransformerTypeSchema = z.enum([
   'none', // No transformation
+  'singleLine', // Fold line breaks/tabs/space runs so Meta accepts it as a body parameter
   'formatDate', // Format date with locale and style
   'rsvpLabel', // Convert RSVP status to readable label
   'currency', // Format as currency

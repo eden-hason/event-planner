@@ -23,6 +23,7 @@ import {
 import {
   buildApproachingLine,
   buildOccasionPhrase,
+  buildTodayLine,
 } from '@/features/events/utils/event-title';
 export type MediaParameter =
   | { type: 'text'; text: string }
@@ -84,6 +85,15 @@ type TransformerFunction = (
 
 const transformers: Record<TransformerType, TransformerFunction> = {
   none: (value: unknown) => String(value ?? ''),
+
+  // Meta rejects a body parameter holding a line break, a tab or more than
+  // four spaces in a row (error 132018). Free text the Owner typed - the
+  // organiser's note - can hold all three, so it is folded onto one line.
+  singleLine: (value: unknown) =>
+    String(value ?? '')
+      .replace(/\s*[\r\n\t]+\s*/g, ' ')
+      .replace(/ {2,}/g, ' ')
+      .trim(),
 
   formatDate: (value: unknown, options?: Record<string, unknown>) => {
     if (!value) return '';
@@ -438,7 +448,7 @@ function isScheduleSource(source: string): boolean {
 
 /**
  * The preview holds an EventApp, which has no Occasion Phrase (or follow-up
- * opening line) of its own - the send path builds both in mapEventRow. Derived the same way here so the preview
+ * opening lines) of its own - the send path builds both in mapEventRow. Derived the same way here so the preview
  * shows the phrase instead of reporting a missing event field.
  */
 function withOccasionPhrase(event: EventApp | null): EventApp | null {
@@ -450,6 +460,10 @@ function withOccasionPhrase(event: EventApp | null): EventApp | null {
       hostDetails: event.hostDetails as Record<string, unknown> | undefined,
     }),
     approachingLine: buildApproachingLine({
+      eventTypeKey: event.eventType,
+      hostDetails: event.hostDetails as Record<string, unknown> | undefined,
+    }),
+    todayLine: buildTodayLine({
       eventTypeKey: event.eventType,
       hostDetails: event.hostDetails as Record<string, unknown> | undefined,
     }),
