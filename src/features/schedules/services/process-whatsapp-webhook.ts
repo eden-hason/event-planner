@@ -68,18 +68,6 @@ function statusesBelow(target: AttemptStatus): AttemptStatus[] {
   );
 }
 
-/**
- * How long an untagged status that matched no attempt is retried before it is
- * given up on. A tagged status never needs it. Untagged, a status can only be
- * matched by wamid, which the sender writes after the send call returns, so
- * Meta's `sent` can legitimately beat it by a few seconds. Past this window the
- * id belongs to something else (another environment sharing the number).
- *
- * Only messages sent before tags existed are untagged, so this goes when
- * resolveUntagged does.
- */
-const UNMATCHED_RETRY_WINDOW_MS = 15 * 60 * 1000;
-
 // ---------------------------------------------------------------------------
 // Payload shapes
 //
@@ -206,7 +194,7 @@ export async function processWhatsAppWebhookEvent(
   }
 
   if (statuses.length > 0) {
-    await processStatusUpdates(supabase, statuses, event);
+    await processStatusUpdates(supabase, statuses);
   }
 
   if (claimFailed) throw claimFailed;
@@ -218,7 +206,6 @@ export async function processWhatsAppWebhookEvent(
 async function processStatusUpdates(
   supabase: SupabaseClient,
   statuses: WhatsAppStatus[],
-  event: StoredWebhookEvent,
 ) {
   // One payload routinely carries several statuses for the same message, and
   // only the most advanced one changes anything. Collapsing first turns a
@@ -255,12 +242,12 @@ async function processStatusUpdates(
   // Conversation replies and Test Messages have nothing to apply to, and are
   // known to be ours, so they cost this one pass and nothing else.
   const byAttemptId = new Map<string, WhatsAppStatus>();
-  const untagged = new Map<string, WhatsAppStatus>();
+  const untagged: string[] = [];
   let untracked = 0;
 
   for (const [messageId, status] of byMessageId) {
     const tag = parseCallbackTag(status.biz_opaque_callback_data);
-    if (!tag) untagged.set(messageId, status);
+    if (!tag) untagged.push(messageId);
     else if (tag.kind === 'attempt') byAttemptId.set(tag.attemptId, status);
     else untracked++;
   }
@@ -284,18 +271,12 @@ async function processStatusUpdates(
     orphanedTags = [...byAttemptId.keys()].filter((id) => !found.has(id));
   }
 
-  // Untagged: sent before tags existed, or not sent by this Kululu at all.
-  // Matched the old way, by wamid - see resolveUntagged.
-  const untaggedMissing = untagged.size > 0
-    ? await resolveUntagged(supabase, untagged, counts)
-    : [];
-
   // The one line that says the endpoint is doing its job. Per-row logging would
   // be 1500 lines for a single 500-guest blast; this is one.
   console.log(
     `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ` +
       `${counts.matched} matched, ${counts.applied} applied, ${counts.skipped} already current, ` +
-      `${untracked} untracked by design, ${untagged.size} untagged, ${counts.failedWrites} write error(s)`,
+      `${untracked} untracked by design, ${untagged.length} untagged, ${counts.failedWrites} write error(s)`,
   );
 
   if (counts.failedWrites > 0) {
@@ -311,62 +292,15 @@ async function processStatusUpdates(
     );
   }
 
-  if (untaggedMissing.length > 0) {
-    const age = Date.now() - new Date(event.received_at).getTime();
-
-    // Young: possibly a message sent just before tags shipped whose wamid the
-    // sender has not written yet - keep the row and let a later sweep apply
-    // it. Old: a message Kululu did not tag - another environment or tool
-    // sharing the number, or a send path that bypassed the transport.
-    if (age < UNMATCHED_RETRY_WINDOW_MS) {
-      throw new Error(
-        `${untaggedMissing.length} untagged message id(s) not yet matched to an attempt`,
-      );
-    }
+  if (untagged.length > 0) {
+    // Every send path tags its messages, so an untagged status is one Kululu
+    // did not send: another environment or tool sharing the number, a send
+    // path that bypassed the transport, or a message from before tags existed.
+    // There is nothing to wait for, so it is reported on the first pass.
     console.warn(
-      `${TAG} ${untaggedMissing.length} of ${byMessageId.size} untagged message id(s) matched no attempt after ${Math.round(age / 60000)} min. First few: ${untaggedMissing.slice(0, 5).join(', ')}`,
+      `${TAG} ${untagged.length} of ${byMessageId.size} status message id(s) carried no Kululu tag. First few: ${untagged.slice(0, 5).join(', ')}`,
     );
   }
-}
-
-/**
- * The pre-tag path: find the attempt by the wamid its sender stored. Returns
- * the message ids that matched nothing.
- *
- * Only messages sent before tags existed should land here, so this and the
- * conversation-reply lookup inside it are removable once statuses for those
- * have stopped arriving (backlog 0005).
- */
-async function resolveUntagged(
-  supabase: SupabaseClient,
-  untagged: Map<string, WhatsAppStatus>,
-  counts: ApplyCounts,
-): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('message_delivery_attempts')
-    .select('id, status, delivered_at, read_at, external_message_id')
-    .eq('channel', 'whatsapp')
-    .in('external_message_id', [...untagged.keys()]);
-  if (error) throw new Error(`Attempt lookup failed: ${error.message}`);
-
-  const attempts = (data ?? []) as AttemptRow[];
-  await applyAll(supabase, attempts, (attempt) => untagged.get(attempt.external_message_id!), counts);
-
-  const found = new Set(attempts.map((a) => a.external_message_id));
-  const unmatched = [...untagged.keys()].filter((id) => !found.has(id));
-  if (unmatched.length === 0) return [];
-
-  // An untagged Confirmation Conversation reply (ADR 0017) has no attempt and
-  // needs none.
-  const { data: replies, error: replyError } = await supabase
-    .from('whatsapp_inbound_messages')
-    .select('reply_message_id')
-    .in('reply_message_id', unmatched);
-  if (replyError) {
-    throw new Error(`Conversation reply lookup failed: ${replyError.message}`);
-  }
-  const conversationReplies = new Set((replies ?? []).map((r) => r.reply_message_id));
-  return unmatched.filter((id) => !conversationReplies.has(id));
 }
 
 type ApplyCounts = { matched: number; applied: number; skipped: number; failedWrites: number };

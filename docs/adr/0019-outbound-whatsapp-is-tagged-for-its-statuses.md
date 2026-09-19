@@ -31,10 +31,12 @@ was rejected. It fixes the symptom once per sender and keeps the race. Prefixing
 an environment name was not needed: attempt ids are UUIDs, so a tag from another environment
 sharing the number matches nothing, and it is reported at once.
 
-**Consequences:** statuses without a tag are either for messages sent before tags shipped,
-or were not sent by Kululu. They still go through the old `wamid` search, the conversation
-reply lookup and the 15-minute retry window. That fallback, and the partial index
-`whatsapp_inbound_messages_reply_message_id_idx` behind it, can be removed once statuses for
-pre-tag messages have stopped arriving. "Matched no attempt" now means a message Kululu did
-not tag, and a tagged status whose attempt does not exist is warned about immediately
-instead of retried.
+**Consequences:** the `wamid` search, the conversation reply lookup, the 15-minute retry
+window and the partial index `whatsapp_inbound_messages_reply_message_id_idx` were removed in
+the same change instead of kept as a fallback. So statuses for messages sent before tags
+shipped were not applied, and their Deliveries kept the status the sender recorded. That was
+accepted as a one-time cost. Now a status either carries a Kululu tag or was not sent by this
+Kululu, and both a missing tag and a tag for an attempt this database does not have are
+warned about on the first pass, with no retry. If Meta ever stops echoing the tag on some
+message type, those statuses show up in the log as untagged rather than being silently
+dropped.

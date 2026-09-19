@@ -1,12 +1,7 @@
 # WhatsApp statuses are matched by searching, not by a tag
 
-Status: in progress - tags ship on `feat/tag-outbound-whatsapp`, decision in
-`docs/adr/0019-outbound-whatsapp-is-tagged-for-its-statuses.md`. What stays open: removing
-the untagged fallback (see below).
-Area: schedules / outreach
-Related: `docs/adr/0013-sending-is-one-queue-of-deliveries.md`,
-`docs/adr/0017-a-confirmation-conversation-is-not-sent-through-the-queue.md`,
-`src/features/schedules/services/process-whatsapp-webhook.ts`
+Status: done - `docs/adr/0019-outbound-whatsapp-is-tagged-for-its-statuses.md`,
+https://github.com/eden-hason/event-planner/pull/398
 
 ## The problem
 
@@ -89,19 +84,14 @@ tag.
    restriction by status type or message type. The changelog raised its maximum from 256 to
    512 characters, and our tags are at most 49. The docs never say in so many words that
    session (non-template) sends carry it, so this has not been treated as proven: an
-   untagged status still falls back to the `wamid` search. **Verify on the first real
-   conversation after deploy** that reply statuses arrive with a `conversation:` tag. If
-   they do not, the log line's `untagged` count shows it and nothing breaks.
-2. **Fallback.** Yes. Untagged statuses go through the old path unchanged (`resolveUntagged`
-   in `process-whatsapp-webhook.ts`).
-3. **Retry window.** Kept, but only the untagged path uses it. A tagged status is matched
-   by an id that exists before the send, so it never waits.
-4. **Reply lookup and its index.** Left in place as part of the fallback, for now.
-
-## Still to do
-
-Remove `resolveUntagged`, `UNMATCHED_RETRY_WINDOW_MS`, and the partial index
-`whatsapp_inbound_messages_reply_message_id_idx` once pre-tag statuses have stopped. Read
-receipts can arrive long after a send, so give it about 30 days after the production deploy,
-and first confirm in the logs that the `untagged` count has stayed at zero. After that,
-every untagged status gets warned about on its first pass.
+   untagged status is logged on its first pass. **Verify on the first real conversation
+   after deploy** that reply statuses arrive with a `conversation:` tag. If they do not,
+   they show up as untagged warnings.
+2. **Fallback.** Considered and then dropped in the same change. Keeping the `wamid`
+   search for about 30 days would have applied statuses for messages sent before the
+   deploy. Instead that was accepted as a one-time loss: those Deliveries keep the status
+   their sender recorded.
+3. **Retry window.** Removed. A tagged status is matched by an id that exists before the
+   send, and an untagged one has nothing to wait for.
+4. **Reply lookup and its index.** Both removed. The index is dropped by
+   `20260919000001_drop_inbound_reply_message_id_index.sql`.

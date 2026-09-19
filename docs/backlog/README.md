@@ -36,4 +36,4 @@ in the diff, not here.
 | [0002](0002-shabbat-and-chagim-send-window.md) | The Shabbat guard is a fixed weekly block, not a calendar | schedules / outreach | dropped |
 | [0003](0003-general-event-type.md) | There is no event type for anything that is not a wedding, henna or mitzva | events / onboarding | open |
 | [0004](0004-drop-guests-meal-choice.md) | Drop the superseded guests.meal_choice column | guests | open |
-| [0005](0005-tag-outbound-whatsapp-for-status-correlation.md) | WhatsApp statuses are matched by searching, not by a tag | schedules / outreach | in progress |
+| [0005](0005-tag-outbound-whatsapp-for-status-correlation.md) | WhatsApp statuses are matched by searching, not by a tag | schedules / outreach | done |
