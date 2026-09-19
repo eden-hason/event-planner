@@ -3,6 +3,7 @@ import {
   postWhatsAppSessionMessage,
   type WhatsAppSendResult,
 } from '@/features/schedules/services/post-whatsapp';
+import { conversationTag } from '@/features/schedules/utils/whatsapp-callback-tag';
 import { buildOccasionPhrase, readEventTypeKey } from '@/features/events/utils/event-title';
 import {
   conversationStep,
@@ -136,8 +137,13 @@ async function finish(
   if (error) console.error(`${TAG} Could not record the outcome:`, error);
 }
 
-async function reply(to: string, message: OutgoingMessage): Promise<WhatsAppSendResult> {
-  const result = await postWhatsAppSessionMessage(to, message);
+/** `claimId` is the inbound row being answered, which tags the reply for its statuses. */
+async function reply(
+  to: string,
+  message: OutgoingMessage,
+  claimId: string,
+): Promise<WhatsAppSendResult> {
+  const result = await postWhatsAppSessionMessage(to, message, conversationTag(claimId));
   if (result.outcome !== 'accepted') {
     console.error(`${TAG} Reply not sent (${result.outcome}): ${result.message}`);
   }
@@ -217,7 +223,7 @@ async function handleTap(
       guest: sample,
       event: toConversationEvent(event as unknown as EventRow, parsed.token),
     });
-    const result = await reply(message.from, step.reply);
+    const result = await reply(message.from, step.reply, claimId);
     await finish(supabase, claimId, { eventId: (event as { id: string }).id, action, result });
     return;
   }
@@ -276,7 +282,7 @@ async function handleTap(
     }
   }
 
-  const result = await reply(message.from, outgoing);
+  const result = await reply(message.from, outgoing, claimId);
   await finish(supabase, claimId, {
     deliveryId: delivery.id as string,
     action,
@@ -345,7 +351,7 @@ async function handleTypedText(
     .not('reply_message_id', 'is', null)
     .gte('received_at', since);
 
-  const result = count ? null : await reply(message.from, { kind: 'text', body: TYPED_TEXT_REPLY });
+  const result = count ? null : await reply(message.from, { kind: 'text', body: TYPED_TEXT_REPLY }, claimId);
   await finish(supabase, claimId, { deliveryId: latest.id as string, result });
 }
 

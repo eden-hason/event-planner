@@ -1,10 +1,7 @@
 # WhatsApp statuses are matched by searching, not by a tag
 
-Status: open
-Area: schedules / outreach
-Related: `docs/adr/0013-sending-is-one-queue-of-deliveries.md`,
-`docs/adr/0017-a-confirmation-conversation-is-not-sent-through-the-queue.md`,
-`src/features/schedules/services/process-whatsapp-webhook.ts`
+Status: done - `docs/adr/0019-outbound-whatsapp-is-tagged-for-its-statuses.md`,
+https://github.com/eden-hason/event-planner/pull/398
 
 ## The problem
 
@@ -79,3 +76,22 @@ Every outbound WhatsApp message is tagged at send time. The status processor mat
 tag, with `wamid` only as a fallback for untagged messages. A conversation reply's statuses
 cost one pass and no warning. "Matched no attempt" fires only for messages Kululu did not
 tag.
+
+## What was found (2026-09-19)
+
+1. **Echo.** Meta's status webhook reference documents `biz_opaque_callback_data` as a
+   field of the status object, "only included if the business set" it on the send, with no
+   restriction by status type or message type. The changelog raised its maximum from 256 to
+   512 characters, and our tags are at most 49. The docs never say in so many words that
+   session (non-template) sends carry it, so this has not been treated as proven: an
+   untagged status is logged on its first pass. **Verify on the first real conversation
+   after deploy** that reply statuses arrive with a `conversation:` tag. If they do not,
+   they show up as untagged warnings.
+2. **Fallback.** Considered and then dropped in the same change. Keeping the `wamid`
+   search for about 30 days would have applied statuses for messages sent before the
+   deploy. Instead that was accepted as a one-time loss: those Deliveries keep the status
+   their sender recorded.
+3. **Retry window.** Removed. A tagged status is matched by an id that exists before the
+   send, and an untagged one has nothing to wait for.
+4. **Reply lookup and its index.** Both removed. The index is dropped by
+   `20260919000001_drop_inbound_reply_message_id_index.sql`.
