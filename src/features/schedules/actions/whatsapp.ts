@@ -3,6 +3,7 @@
 import type { MediaParameter, ButtonComponent } from '../utils/parameter-resolvers';
 import { buildWhatsAppComponents } from '../utils/send-payload';
 import { postWhatsAppTemplate, type WhatsAppSendResult } from '../services/post-whatsapp';
+import { TEST_MESSAGE_TAG } from '../utils/whatsapp-callback-tag';
 
 // Deliberately not re-exported: a `'use server'` module turns every export into
 // a callable action endpoint, and the bundler treats even a type re-export as
@@ -34,5 +35,5 @@ export async function sendWhatsAppTemplateMessage(params: {
     templateName: params.templateName,
     languageCode: params.languageCode,
     components: buildWhatsAppComponents(params),
-  });
+  }, TEST_MESSAGE_TAG);
 }

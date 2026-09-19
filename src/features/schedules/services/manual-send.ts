@@ -3,6 +3,8 @@ import { renderScheduleDeliveries } from './render-deliveries';
 import { postWhatsAppTemplate } from './post-whatsapp';
 import { sendSmsMessage } from '../actions/sms';
 import { parseSendPayload, type SendPayload } from '../utils/send-payload';
+import { attemptTag } from '../utils/whatsapp-callback-tag';
+import { recordAcceptedSend } from './drain-queue';
 
 /**
  * An Operator's send to a handful of named Guests.
@@ -39,7 +41,7 @@ type PostResult = {
   code: number | null;
 };
 
-async function postOne(payload: SendPayload): Promise<PostResult> {
+async function postOne(payload: SendPayload, attemptId: string): Promise<PostResult> {
   if (payload.channel === 'sms') {
     const result = await sendSmsMessage({ to: payload.to, body: payload.body });
     return {
@@ -50,7 +52,7 @@ async function postOne(payload: SendPayload): Promise<PostResult> {
     };
   }
 
-  const result = await postWhatsAppTemplate(payload);
+  const result = await postWhatsAppTemplate(payload, attemptTag(attemptId));
   if (result.outcome === 'accepted') {
     return { ok: true, messageId: result.messageId, error: null, code: null };
   }
@@ -132,20 +134,17 @@ export async function sendSelectedDeliveries(
       continue;
     }
 
-    const result = await postOne(payload);
+    const result = await postOne(payload, row.attempt_id);
 
-    await supabase
-      .from('message_delivery_attempts')
-      .update(
-        result.ok
-          ? {
-              status: 'sent',
-              sent_at: new Date().toISOString(),
-              external_message_id: result.messageId,
-            }
-          : { status: 'failed', error_message: result.error, error_code: result.code },
-      )
-      .eq('id', row.attempt_id);
+    if (result.ok) {
+      await recordAcceptedSend(supabase, row.attempt_id, result.messageId, new Date());
+    } else {
+      await supabase
+        .from('message_delivery_attempts')
+        .update({ status: 'failed', error_message: result.error, error_code: result.code })
+        .eq('id', row.attempt_id)
+        .eq('status', 'pending');
+    }
 
     // The payload carries the guest's phone number and name, and exists only
     // while a Delivery is in flight.

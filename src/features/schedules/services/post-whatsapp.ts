@@ -41,8 +41,10 @@ const GRAPH_API_VERSION = 'v22.0';
  */
 export async function postWhatsAppTemplate(
   payload: WhatsAppSendPayload,
+  /** The status-correlation tag - see utils/whatsapp-callback-tag.ts. */
+  callbackTag: string,
 ): Promise<WhatsAppSendResult> {
-  return postToGraph(payload.to, {
+  return postToGraph(payload.to, callbackTag, {
     type: 'template',
     template: {
       name: payload.templateName,
@@ -73,12 +75,14 @@ export type WhatsAppSessionMessage =
 export async function postWhatsAppSessionMessage(
   to: string,
   message: WhatsAppSessionMessage,
+  /** The status-correlation tag - see utils/whatsapp-callback-tag.ts. */
+  callbackTag: string,
 ): Promise<WhatsAppSendResult> {
   switch (message.kind) {
     case 'text':
-      return postToGraph(to, { type: 'text', text: { body: message.body, preview_url: false } }, 'session:text');
+      return postToGraph(to, callbackTag, { type: 'text', text: { body: message.body, preview_url: false } }, 'session:text');
     case 'buttons':
-      return postToGraph(to, {
+      return postToGraph(to, callbackTag, {
         type: 'interactive',
         interactive: {
           type: 'button',
@@ -92,7 +96,7 @@ export async function postWhatsAppSessionMessage(
         },
       }, 'session:buttons');
     case 'list':
-      return postToGraph(to, {
+      return postToGraph(to, callbackTag, {
         type: 'interactive',
         interactive: {
           type: 'list',
@@ -109,6 +113,12 @@ export async function postWhatsAppSessionMessage(
 /** The one POST to Meta's messages endpoint, and the three-way reading of its answer. */
 async function postToGraph(
   to: string,
+  /**
+   * Echoed by Meta on every status webhook for this message, which is how the
+   * processor matches a status without waiting for the wamid to be written.
+   * Required so that no send path can forget it.
+   */
+  callbackTag: string,
   message: Record<string, unknown>,
   /** What was being sent, for the rejection log line. */
   label: string,
@@ -127,7 +137,12 @@ async function postToGraph(
     };
   }
 
-  const body = { messaging_product: 'whatsapp', to, ...message };
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    biz_opaque_callback_data: callbackTag,
+    ...message,
+  };
 
   let response: Response;
   try {

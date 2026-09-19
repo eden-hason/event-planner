@@ -5,6 +5,7 @@ import {
   InboundClaimError,
   type InboundWhatsAppMessage,
 } from '@/features/confirmation/services/confirmation-conversation';
+import { parseCallbackTag } from '../utils/whatsapp-callback-tag';
 
 /**
  * Processes one stored Meta WhatsApp notification (a webhook_events row).
@@ -68,11 +69,14 @@ function statusesBelow(target: AttemptStatus): AttemptStatus[] {
 }
 
 /**
- * How long a status for a message id with no attempt row is retried before it
- * is given up on. The send engine records attempts once per chunk, after the
- * chunk's API calls return, so Meta's `sent` can legitimately beat the row by a
- * few seconds. Past this window the id belongs to something else (another
- * environment sharing the number, a test message).
+ * How long an untagged status that matched no attempt is retried before it is
+ * given up on. A tagged status never needs it. Untagged, a status can only be
+ * matched by wamid, which the sender writes after the send call returns, so
+ * Meta's `sent` can legitimately beat it by a few seconds. Past this window the
+ * id belongs to something else (another environment sharing the number).
+ *
+ * Only messages sent before tags existed are untagged, so this goes when
+ * resolveUntagged does.
  */
 const UNMATCHED_RETRY_WINDOW_MS = 15 * 60 * 1000;
 
@@ -96,6 +100,8 @@ interface WhatsAppStatus {
   /** Unix seconds. */
   timestamp: string;
   recipient_id?: string;
+  /** The tag set on the send (utils/whatsapp-callback-tag.ts), absent if none was. */
+  biz_opaque_callback_data?: string;
   errors?: WhatsAppError[];
 }
 
@@ -245,87 +251,148 @@ async function processStatusUpdates(
 
   if (byMessageId.size === 0) return;
 
-  const { data: attempts, error } = await supabase
-    .from('message_delivery_attempts')
-    .select('id, status, delivered_at, read_at, external_message_id')
-    .eq('channel', 'whatsapp')
-    .in('external_message_id', [...byMessageId.keys()]);
+  // Sort by the tag each message was sent with (utils/whatsapp-callback-tag.ts).
+  // Conversation replies and Test Messages have nothing to apply to, and are
+  // known to be ours, so they cost this one pass and nothing else.
+  const byAttemptId = new Map<string, WhatsAppStatus>();
+  const untagged = new Map<string, WhatsAppStatus>();
+  let untracked = 0;
 
-  if (error) {
-    throw new Error(`Attempt lookup failed: ${error.message}`);
+  for (const [messageId, status] of byMessageId) {
+    const tag = parseCallbackTag(status.biz_opaque_callback_data);
+    if (!tag) untagged.set(messageId, status);
+    else if (tag.kind === 'attempt') byAttemptId.set(tag.attemptId, status);
+    else untracked++;
   }
 
-  const matched = attempts ?? [];
+  const counts = { matched: 0, applied: 0, skipped: 0, failedWrites: 0 };
 
-  let applied = 0;
-  let skipped = 0;
-  let failedWrites = 0;
+  // Tagged: matched by the attempt's own id, which exists before the send, so
+  // there is no race with the Worker recording the wamid and nothing to retry.
+  let orphanedTags: string[] = [];
+  if (byAttemptId.size > 0) {
+    const { data, error } = await supabase
+      .from('message_delivery_attempts')
+      .select('id, status, delivered_at, read_at, external_message_id')
+      .eq('channel', 'whatsapp')
+      .in('id', [...byAttemptId.keys()]);
+    if (error) throw new Error(`Attempt lookup failed: ${error.message}`);
 
-  await Promise.all(
-    matched.map(async (attempt) => {
-      const status = byMessageId.get(attempt.external_message_id!);
-      if (!status) return;
-      try {
-        const outcome = await applyStatus(supabase, attempt, status);
-        if (outcome === 'applied') applied++;
-        else if (outcome === 'skipped') skipped++;
-        else failedWrites++;
-      } catch (err) {
-        failedWrites++;
-        console.error(
-          `${TAG} Failed to apply ${status.status} to ${status.id}:`,
-          err,
-        );
-      }
-    }),
-  );
+    const attempts = (data ?? []) as AttemptRow[];
+    await applyAll(supabase, attempts, (attempt) => byAttemptId.get(attempt.id), counts);
+    const found = new Set(attempts.map((a) => a.id));
+    orphanedTags = [...byAttemptId.keys()].filter((id) => !found.has(id));
+  }
+
+  // Untagged: sent before tags existed, or not sent by this Kululu at all.
+  // Matched the old way, by wamid - see resolveUntagged.
+  const untaggedMissing = untagged.size > 0
+    ? await resolveUntagged(supabase, untagged, counts)
+    : [];
 
   // The one line that says the endpoint is doing its job. Per-row logging would
   // be 1500 lines for a single 500-guest blast; this is one.
   console.log(
-    `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ${matched.length} matched, ${applied} applied, ${skipped} already current, ${failedWrites} write error(s)`,
+    `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ` +
+      `${counts.matched} matched, ${counts.applied} applied, ${counts.skipped} already current, ` +
+      `${untracked} untracked by design, ${untagged.size} untagged, ${counts.failedWrites} write error(s)`,
   );
 
-  if (failedWrites > 0) {
-    throw new Error(`${failedWrites} attempt write(s) failed`);
+  if (counts.failedWrites > 0) {
+    throw new Error(`${counts.failedWrites} attempt write(s) failed`);
   }
 
-  if (matched.length < byMessageId.size) {
-    const found = new Set(matched.map((a) => a.external_message_id));
-    const unmatched = [...byMessageId.keys()].filter((id) => !found.has(id));
+  if (orphanedTags.length > 0) {
+    // Tagged with an attempt id this database does not have: another
+    // environment sharing the phone number, or a deleted attempt. Retrying
+    // cannot help - the attempt row is written before the message is sent.
+    console.warn(
+      `${TAG} ${orphanedTags.length} status(es) tagged for an attempt this database does not have. First few: ${orphanedTags.slice(0, 5).join(', ')}`,
+    );
+  }
 
-    // A Confirmation Conversation reply is sent inline by this processor, not
-    // through the queue, so it never has an attempt (ADR 0017). Its statuses
-    // are expected and there is nothing to apply them to - without this, every
-    // tap costs three statuses retried for the whole window and then a warning.
-    // The reply id is written after the send returns, so Meta's `sent` can beat
-    // it; that case is just unmatched for now and drops out on the retry.
-    const { data: replies, error: replyError } = await supabase
-      .from('whatsapp_inbound_messages')
-      .select('reply_message_id')
-      .in('reply_message_id', unmatched);
-    if (replyError) {
-      throw new Error(`Conversation reply lookup failed: ${replyError.message}`);
-    }
-    const conversationReplies = new Set((replies ?? []).map((r) => r.reply_message_id));
-    const missing = unmatched.filter((id) => !conversationReplies.has(id));
-    if (missing.length === 0) return;
-
+  if (untaggedMissing.length > 0) {
     const age = Date.now() - new Date(event.received_at).getTime();
 
-    // Young: the send engine has probably not recorded the attempt yet - keep
-    // the row and let a later sweep apply it. Old: sending and tracking have
-    // come apart (a failed attempt insert, deleted rows, or another environment
-    // sharing this phone number). Silence here is how that goes unnoticed.
+    // Young: possibly a message sent just before tags shipped whose wamid the
+    // sender has not written yet - keep the row and let a later sweep apply
+    // it. Old: a message Kululu did not tag - another environment or tool
+    // sharing the number, or a send path that bypassed the transport.
     if (age < UNMATCHED_RETRY_WINDOW_MS) {
       throw new Error(
-        `${missing.length} message id(s) not yet matched to an attempt`,
+        `${untaggedMissing.length} untagged message id(s) not yet matched to an attempt`,
       );
     }
     console.warn(
-      `${TAG} ${missing.length} of ${byMessageId.size} message id(s) matched no attempt after ${Math.round(age / 60000)} min. First few: ${missing.slice(0, 5).join(', ')}`,
+      `${TAG} ${untaggedMissing.length} of ${byMessageId.size} untagged message id(s) matched no attempt after ${Math.round(age / 60000)} min. First few: ${untaggedMissing.slice(0, 5).join(', ')}`,
     );
   }
+}
+
+/**
+ * The pre-tag path: find the attempt by the wamid its sender stored. Returns
+ * the message ids that matched nothing.
+ *
+ * Only messages sent before tags existed should land here, so this and the
+ * conversation-reply lookup inside it are removable once statuses for those
+ * have stopped arriving (backlog 0005).
+ */
+async function resolveUntagged(
+  supabase: SupabaseClient,
+  untagged: Map<string, WhatsAppStatus>,
+  counts: ApplyCounts,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('message_delivery_attempts')
+    .select('id, status, delivered_at, read_at, external_message_id')
+    .eq('channel', 'whatsapp')
+    .in('external_message_id', [...untagged.keys()]);
+  if (error) throw new Error(`Attempt lookup failed: ${error.message}`);
+
+  const attempts = (data ?? []) as AttemptRow[];
+  await applyAll(supabase, attempts, (attempt) => untagged.get(attempt.external_message_id!), counts);
+
+  const found = new Set(attempts.map((a) => a.external_message_id));
+  const unmatched = [...untagged.keys()].filter((id) => !found.has(id));
+  if (unmatched.length === 0) return [];
+
+  // An untagged Confirmation Conversation reply (ADR 0017) has no attempt and
+  // needs none.
+  const { data: replies, error: replyError } = await supabase
+    .from('whatsapp_inbound_messages')
+    .select('reply_message_id')
+    .in('reply_message_id', unmatched);
+  if (replyError) {
+    throw new Error(`Conversation reply lookup failed: ${replyError.message}`);
+  }
+  const conversationReplies = new Set((replies ?? []).map((r) => r.reply_message_id));
+  return unmatched.filter((id) => !conversationReplies.has(id));
+}
+
+type ApplyCounts = { matched: number; applied: number; skipped: number; failedWrites: number };
+
+async function applyAll(
+  supabase: SupabaseClient,
+  attempts: AttemptRow[],
+  statusFor: (attempt: AttemptRow) => WhatsAppStatus | undefined,
+  counts: ApplyCounts,
+): Promise<void> {
+  await Promise.all(
+    attempts.map(async (attempt) => {
+      const status = statusFor(attempt);
+      if (!status) return;
+      counts.matched++;
+      try {
+        const outcome = await applyStatus(supabase, attempt, status);
+        if (outcome === 'applied') counts.applied++;
+        else if (outcome === 'skipped') counts.skipped++;
+        else counts.failedWrites++;
+      } catch (err) {
+        counts.failedWrites++;
+        console.error(`${TAG} Failed to apply ${status.status} to ${status.id}:`, err);
+      }
+    }),
+  );
 }
 
 function isKnownStatus(status: string): status is AttemptStatus {
@@ -365,6 +432,12 @@ async function applyStatus(
   const eventTimestamp = toIsoTimestamp(status.timestamp);
 
   const patch: Record<string, unknown> = { status: target };
+
+  // Matched by tag, a status can reach the attempt before its sender wrote the
+  // wamid - or instead of it, when the send call's answer was lost.
+  if (!attempt.external_message_id) {
+    patch.external_message_id = status.id;
+  }
 
   if (target === 'sent') {
     patch.sent_at = eventTimestamp;

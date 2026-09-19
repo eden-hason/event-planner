@@ -1,6 +1,8 @@
 # WhatsApp statuses are matched by searching, not by a tag
 
-Status: open
+Status: in progress - tags ship on `feat/tag-outbound-whatsapp`, decision in
+`docs/adr/0019-outbound-whatsapp-is-tagged-for-its-statuses.md`. What stays open: removing
+the untagged fallback (see below).
 Area: schedules / outreach
 Related: `docs/adr/0013-sending-is-one-queue-of-deliveries.md`,
 `docs/adr/0017-a-confirmation-conversation-is-not-sent-through-the-queue.md`,
@@ -79,3 +81,27 @@ Every outbound WhatsApp message is tagged at send time. The status processor mat
 tag, with `wamid` only as a fallback for untagged messages. A conversation reply's statuses
 cost one pass and no warning. "Matched no attempt" fires only for messages Kululu did not
 tag.
+
+## What was found (2026-09-19)
+
+1. **Echo.** Meta's status webhook reference documents `biz_opaque_callback_data` as a
+   field of the status object, "only included if the business set" it on the send, with no
+   restriction by status type or message type. The changelog raised its maximum from 256 to
+   512 characters, and our tags are at most 49. The docs never say in so many words that
+   session (non-template) sends carry it, so this has not been treated as proven: an
+   untagged status still falls back to the `wamid` search. **Verify on the first real
+   conversation after deploy** that reply statuses arrive with a `conversation:` tag. If
+   they do not, the log line's `untagged` count shows it and nothing breaks.
+2. **Fallback.** Yes. Untagged statuses go through the old path unchanged (`resolveUntagged`
+   in `process-whatsapp-webhook.ts`).
+3. **Retry window.** Kept, but only the untagged path uses it. A tagged status is matched
+   by an id that exists before the send, so it never waits.
+4. **Reply lookup and its index.** Left in place as part of the fallback, for now.
+
+## Still to do
+
+Remove `resolveUntagged`, `UNMATCHED_RETRY_WINDOW_MS`, and the partial index
+`whatsapp_inbound_messages_reply_message_id_idx` once pre-tag statuses have stopped. Read
+receipts can arrive long after a send, so give it about 30 days after the production deploy,
+and first confirm in the logs that the `untagged` count has stayed at zero. After that,
+every untagged status gets warned about on its first pass.

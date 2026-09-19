@@ -4,6 +4,7 @@ import { sendSmsMessage } from '../actions/sms';
 import { createGovernor } from '../utils/governor';
 import { isTransient, nextRetryDelayMinutes } from '../utils/whatsapp-failures';
 import { parseSendPayload, type SendPayload } from '../utils/send-payload';
+import { attemptTag } from '../utils/whatsapp-callback-tag';
 import { sendingConfig } from '@/lib/config/sending';
 
 /**
@@ -71,7 +72,7 @@ type SendOutcome =
  * never retryable - the message may already have gone out, and there is no
  * idempotency key to ask with.
  */
-async function sendPayload(payload: SendPayload): Promise<SendOutcome> {
+async function sendPayload(payload: SendPayload, attemptId: string): Promise<SendOutcome> {
   if (payload.channel === 'sms') {
     const result = await sendSmsMessage({ to: payload.to, body: payload.body });
     return result.success
@@ -85,7 +86,7 @@ async function sendPayload(payload: SendPayload): Promise<SendOutcome> {
         };
   }
 
-  const result = await postWhatsAppTemplate(payload);
+  const result = await postWhatsAppTemplate(payload, attemptTag(attemptId));
   if (result.outcome === 'accepted') {
     return { kind: 'sent', messageId: result.messageId };
   }
@@ -188,7 +189,7 @@ export async function drainQueue(
               return;
             }
 
-            const outcome = await sendPayload(payload);
+            const outcome = await sendPayload(payload, row.attempt_id);
 
             if (outcome.kind === 'failed' && outcome.retryable) {
               const delay = nextRetryDelayMinutes(await attemptCount(supabase, row.delivery_id));
@@ -269,26 +270,23 @@ async function resolveAttempt(
 ): Promise<void> {
   const now = new Date();
 
-  const attemptUpdate =
+  const { error: attemptError } =
     outcome.kind === 'sent'
-      ? {
-          status: 'sent' as const,
-          sent_at: now.toISOString(),
-          external_message_id: outcome.messageId,
-        }
-      : {
-          status: 'failed' as const,
-          error_message: outcome.message,
-          // An unknown outcome carries no code on purpose: classifyWhatsAppFailure
-          // reads a null code as System-level, which keeps a send that may
-          // already have gone out away from an automatic SMS to the same guest.
-          error_code: outcome.kind === 'failed' ? outcome.errorCode : null,
-        };
-
-  const { error: attemptError } = await supabase
-    .from('message_delivery_attempts')
-    .update(attemptUpdate)
-    .eq('id', row.attempt_id);
+      ? await recordAcceptedSend(supabase, row.attempt_id, outcome.messageId, now)
+      : await supabase
+          .from('message_delivery_attempts')
+          .update({
+            status: 'failed' as const,
+            error_message: outcome.message,
+            // An unknown outcome carries no code on purpose: classifyWhatsAppFailure
+            // reads a null code as System-level, which keeps a send that may
+            // already have gone out away from an automatic SMS to the same guest.
+            error_code: outcome.kind === 'failed' ? outcome.errorCode : null,
+          })
+          .eq('id', row.attempt_id)
+          // A tagged status that already landed is Meta's own word that the
+          // message went out, and outranks "no answer came back".
+          .eq('status', 'pending');
   if (attemptError) {
     console.error('[worker] Could not resolve attempt', row.attempt_id, attemptError);
   }
@@ -305,4 +303,33 @@ async function resolveAttempt(
   if (deliveryError) {
     console.error('[worker] Could not update delivery', row.delivery_id, deliveryError);
   }
+}
+
+/**
+ * Records Meta's acceptance on a claimed attempt. Shared with the manual send.
+ *
+ * Two writes, because they answer to different rules. The wamid is always
+ * stored - it is the only id Meta support can look up. The status only moves
+ * from `pending`: the attempt id rides on the message as its status tag, so a
+ * `delivered` or `failed` webhook can land on the row before this runs, and
+ * writing `sent` over it would roll the attempt backwards.
+ */
+export async function recordAcceptedSend(
+  supabase: SupabaseClient,
+  attemptId: string,
+  messageId: string | null,
+  now: Date,
+): Promise<{ error: { message: string } | null }> {
+  const { error: idError } = await supabase
+    .from('message_delivery_attempts')
+    .update({ external_message_id: messageId })
+    .eq('id', attemptId);
+  if (idError) return { error: idError };
+
+  const { error } = await supabase
+    .from('message_delivery_attempts')
+    .update({ status: 'sent', sent_at: now.toISOString() })
+    .eq('id', attemptId)
+    .eq('status', 'pending');
+  return { error };
 }
