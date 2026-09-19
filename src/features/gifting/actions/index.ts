@@ -12,10 +12,11 @@ export type GiftingActionState = {
 };
 
 /**
- * Save the PayBox and/or Bit connection for an event. Only the provider blocks
- * present in `formData` are written; the rest of `event_settings` (including
- * the other provider) is read back and preserved, so the two cards can save
- * independently without clobbering each other.
+ * Save the PayBox and/or Bit connection for an event, and which messages carry
+ * the gift button. Only the blocks present in `formData` are written; the rest
+ * of `event_settings` (including the other provider) is read back and
+ * preserved, so the cards and the toggles can save independently without
+ * clobbering each other. `giftButtons` merges per key for the same reason.
  *
  * RLS on `events` enforces that the caller owns / collaborates on the row - no
  * manual ownership check here (see CLAUDE.md).
@@ -41,6 +42,10 @@ export async function updateGiftingSettings(
           : undefined,
       bitConfig:
         typeof raw.bitConfig === 'string' ? safeJson(raw.bitConfig) : undefined,
+      giftButtons:
+        typeof raw.giftButtons === 'string'
+          ? safeJson(raw.giftButtons)
+          : undefined,
     };
 
     const validation = GiftingSettingsUpdateSchema.safeParse(parsed);
@@ -50,7 +55,7 @@ export async function updateGiftingSettings(
         message: validation.error.issues[0]?.message ?? 'Invalid data',
       };
     }
-    const { eventId, payboxConfig, bitConfig } = validation.data;
+    const { eventId, payboxConfig, bitConfig, giftButtons } = validation.data;
 
     const supabase = await createClient();
 
@@ -80,6 +85,13 @@ export async function updateGiftingSettings(
         link: bitConfig.link,
       };
     }
+    if (giftButtons) {
+      next.gift_buttons = {
+        ...((current.gift_buttons as Record<string, boolean> | undefined) ??
+          {}),
+        ...giftButtons,
+      };
+    }
 
     const { error } = await supabase
       .from('events')
@@ -93,6 +105,7 @@ export async function updateGiftingSettings(
 
     revalidatePath('/app');
     revalidatePath(`/app/${eventId}/gifting`);
+    revalidatePath(`/app/${eventId}/schedules`);
     return { success: true };
   } catch (error) {
     console.error('updateGiftingSettings error:', error);

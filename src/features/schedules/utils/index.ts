@@ -16,6 +16,9 @@ export {
 // Re-export event-configuration predicates
 export {
   isGiftingEnabled,
+  includesGiftButton,
+  GIFT_BUTTON_DEFAULTS,
+  GIFT_BUTTON_SCHEDULE_TYPES,
   shouldSendTableNumbers,
   hasInvitationImage,
   type GiftingSettings,

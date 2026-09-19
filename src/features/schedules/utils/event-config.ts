@@ -12,6 +12,9 @@ export type GiftingSettings =
       // configured" rather than crashing on `.trim()`.
       payboxConfig?: { enabled: boolean; link?: string };
       bitConfig?: { enabled: boolean; link?: string };
+      // Per-message gift button choice, keyed by schedule type. Absent keys
+      // fall back to GIFT_BUTTON_DEFAULTS.
+      giftButtons?: Partial<Record<string, boolean>>;
     }
   | null
   | undefined;
@@ -32,6 +35,38 @@ export function isGiftingEnabled(settings: GiftingSettings): boolean {
   return Boolean(
     (paybox?.enabled && paybox.link?.trim()) ||
       (bit?.enabled && bit.link?.trim()),
+  );
+}
+
+/**
+ * Whether each message type carries the gift button when gifting is set up
+ * and the Organiser has not chosen otherwise on the gifting page. The Event
+ * Reminder does, which keeps what every Event sent before the choice existed;
+ * the Thank You does not, because a gift request the day after is the one an
+ * Organiser is likely not to want. Types missing here have no gift variant.
+ */
+export const GIFT_BUTTON_DEFAULTS: Readonly<Record<string, boolean>> = {
+  event_reminder: true,
+  post_event: false,
+};
+
+/** The schedule types an Organiser can turn the gift button on or off for. */
+export const GIFT_BUTTON_SCHEDULE_TYPES = Object.keys(GIFT_BUTTON_DEFAULTS);
+
+/**
+ * Whether this schedule type's message carries the gift button: gifting must
+ * be set up (a button to a gifting page with no link on it goes nowhere), and
+ * the Organiser's choice for the type - or its default - must be on.
+ */
+export function includesGiftButton(
+  settings: GiftingSettings,
+  scheduleTypeKey: string,
+): boolean {
+  if (!isGiftingEnabled(settings)) return false;
+  return (
+    settings?.giftButtons?.[scheduleTypeKey] ??
+    GIFT_BUTTON_DEFAULTS[scheduleTypeKey] ??
+    false
   );
 }
 

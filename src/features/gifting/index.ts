@@ -8,6 +8,7 @@ export { updateGiftingSettings, type GiftingActionState } from './actions';
 export {
   GiftingSettingsUpdateSchema,
   GiftProviderConfigSchema,
+  GiftButtonsSchema,
   type GiftingSettingsUpdate,
   type GiftProviderConfigInput,
 } from './schemas';

@@ -3,7 +3,7 @@ import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '../schemas';
 import { toWhatsAppTemplate, type MessageTemplateApp } from '../schemas/message-templates';
 import type { GuestApp } from '@/features/guests/schemas';
 import {
-  isGiftingEnabled,
+  includesGiftButton,
   hasInvitationImage,
   isMessageSchedule,
   sendSmsToGuest,
@@ -75,7 +75,7 @@ export async function sendTestMessage(params: {
   const resolution = await resolveTemplatesForEvent({
     supabase,
     anchor: schedule.template,
-    gifting: isGiftingEnabled(event.eventSettings),
+    gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: Boolean(schedule.customText?.trim()),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),

@@ -16,7 +16,7 @@ import { mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
 import {
-  isGiftingEnabled,
+  includesGiftButton,
   hasInvitationImage,
   shouldSendTableNumbers,
   filterGuestsByTarget,
@@ -151,7 +151,7 @@ export async function renderScheduleDeliveries(
   const resolution = await resolveTemplatesForEvent({
     supabase,
     anchor,
-    gifting: isGiftingEnabled(event.eventSettings),
+    gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: Boolean(schedule.customText?.trim()),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),
