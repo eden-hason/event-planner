@@ -92,7 +92,7 @@ export function EstimateScreen({
       )}
     >
       {label}
-      {/* The unit sits under the rate rather than beside it: a bare "1.5 ₪"
+      {/* The unit sits under the rate rather than beside it: a bare "1.7 ₪"
           invites reading it as the price of the whole thing. */}
       <span className="flex flex-col items-center leading-[1.25] text-[var(--kt-ink-faint)]">
         <span dir="ltr" className="font-rubik text-xs">
