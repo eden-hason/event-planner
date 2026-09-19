@@ -56,5 +56,10 @@ A refund event maps to `toStatus: 'canceled'`, `provider` + a new
 
 The Back Office event workspace has a **Billing** control
 (`EventBillingStatusControl`) that sets `comped`, `payment_pending`, `canceled`,
-or `free` by hand, with a note. `paid` is deliberately not offered there - a
-confirmed payment only ever comes from this webhook.
+or `free` by hand, with a note. `paid` is not offered in that control.
+
+A payment taken outside the system is entered with the separate **Record payment**
+action (ADR 0021): amount, method and reference, applied through the same
+`applyBillingTransition` seam with `provider: 'manual'` and the reference as
+`providerRef`. Partner Referral qualification (ADR 0020) follows the transition to
+`paid` whatever the provider, so it works the same before and after this webhook.

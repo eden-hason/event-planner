@@ -37,3 +37,4 @@ in the diff, not here.
 | [0003](0003-general-event-type.md) | There is no event type for anything that is not a wedding, henna or mitzva | events / onboarding | open |
 | [0004](0004-drop-guests-meal-choice.md) | Drop the superseded guests.meal_choice column | guests | open |
 | [0005](0005-tag-outbound-whatsapp-for-status-correlation.md) | WhatsApp statuses are matched by searching, not by a tag | schedules / outreach | done |
+| [0006](0006-partner-commission-on-refund.md) | A refunded Event leaves its Partner Commission standing | partners / billing | open |
