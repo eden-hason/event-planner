@@ -50,6 +50,13 @@ export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
  */
 export const CUSTOM_TEXT_MAX_LENGTH = 160;
 
+export const CustomTextSchema = z
+  .string()
+  .max(
+    CUSTOM_TEXT_MAX_LENGTH,
+    `Keep the note under ${CUSTOM_TEXT_MAX_LENGTH} characters`,
+  );
+
 // Delivery methods
 export const DELIVERY_METHODS = ['whatsapp', 'sms'] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];

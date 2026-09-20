@@ -1,11 +1,13 @@
 import { getTranslations } from 'next-intl/server';
 
+import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import type { OutreachItemStatus } from '../types';
 import { MessageContentCard } from './message-content-card';
 import { MessageTypeCard } from './message-type-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
+import { ScheduleLockBadge } from './schedule-lock-badge';
 import { ScheduleLockedNotice } from './schedule-locked-notice';
 import { ScheduleStatusCard } from './schedule-status-card';
 import { TargetAudienceCard } from './target-audience-card';
@@ -43,6 +45,9 @@ export async function ScheduleTabContent({
   // so they are decided once here rather than re-derived in each card.
   const readOnly = locked || sent;
   const lockReason = locked ? ('locked' as const) : sent ? ('sent' as const) : null;
+  // The one Send Window, read where the Dispatcher's own config is readable and
+  // handed to the client card rather than duplicated inside it.
+  const { sendWindow } = sendingConfig();
 
   return (
     <div className="flex flex-col gap-4">
@@ -77,6 +82,8 @@ export async function ScheduleTabContent({
             schedule={schedule}
             eventDate={eventDate}
             locked={locked}
+            sendWindow={sendWindow}
+            lockBadge={<ScheduleLockBadge reason="locked" />}
           />
           <TargetAudienceCard
             targetStatus={schedule.targetStatus}

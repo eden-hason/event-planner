@@ -33,8 +33,6 @@ export type OutreachItem = {
   /** Card label, already localized and disambiguated server-side */
   label: string;
   status: OutreachItemStatus;
-  /** Anchors the relative-time text beside the status dot; omitted when there is nothing meaningful to date */
-  timestamp?: string;
   /** Which kind of outreach this is - it picks the icon and the channel line */
   kind: 'message' | 'call';
   /** The Schedule type key, for the icon lookup */

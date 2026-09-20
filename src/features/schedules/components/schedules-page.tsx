@@ -233,13 +233,7 @@ export async function SchedulesPage({
       // A call round is planned like a message but executed by a person, so it
       // reports the state of its round rather than of a send. The Owner is
       // view-only on a call plan (ADR 0004), so its pane carries no action.
-      const status = !isMessage
-        ? schedule.status === 'cancelled'
-          ? ('cancelled' as const)
-          : schedule.status === 'disabled'
-            ? ('locked' as const)
-            : (round?.status ?? ('pending' as const))
-        : timelineStatus(schedule);
+      const status = timelineStatus(schedule, isMessage ? null : round?.status);
 
       const stats = deliveryStats.get(schedule.id);
       // Only a sent send has a result to report, and only one that produced
@@ -262,12 +256,6 @@ export async function SchedulesPage({
         id: schedule.id,
         label,
         status,
-        timestamp:
-          status === 'sent'
-            ? (schedule.sentAt ?? schedule.scheduledDate)
-            : status === 'cancelled'
-              ? undefined
-              : schedule.scheduledDate,
         kind: isMessage ? ('message' as const) : ('call' as const),
         typeKey: schedule.scheduleTypeKey,
         offset: offsetDays(eventDate, schedule.scheduledDate),

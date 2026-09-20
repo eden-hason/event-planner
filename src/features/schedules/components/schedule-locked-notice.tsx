@@ -1,14 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { IconLock, IconSparkles } from '@tabler/icons-react';
 
-import {
-  EventBillingStatusSheet,
-  useEventBillingStatus,
-} from '@/features/billing';
-import { useCollaboration } from '@/components/feature-layout';
+import { useBillingSheet } from './use-billing-sheet';
 
 /**
  * What a locked Schedule says for itself.
@@ -24,9 +19,7 @@ import { useCollaboration } from '@/components/feature-layout';
  */
 export function ScheduleLockedNotice() {
   const t = useTranslations('schedules.locked');
-  const status = useEventBillingStatus();
-  const { isOwner } = useCollaboration();
-  const [open, setOpen] = React.useState(false);
+  const { canPrompt, openSheet, sheet } = useBillingSheet();
 
   return (
     <>
@@ -42,10 +35,10 @@ export function ScheduleLockedNotice() {
           <p className="text-warning/90 text-xs leading-relaxed">
             {t('description')}
           </p>
-          {status && isOwner && (
+          {canPrompt && (
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={openSheet}
               className="text-primary mt-1 inline-flex w-fit items-center gap-1.5 text-xs font-bold"
             >
               <IconSparkles size={14} />
@@ -55,13 +48,7 @@ export function ScheduleLockedNotice() {
         </div>
       </div>
 
-      {status && (
-        <EventBillingStatusSheet
-          open={open}
-          onOpenChange={setOpen}
-          status={status}
-        />
-      )}
+      {sheet}
     </>
   );
 }

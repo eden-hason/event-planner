@@ -1,11 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
-
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
-import { CUSTOM_TEXT_MAX_LENGTH } from '../schemas';
+import { CustomTextSchema } from '../schemas';
 
 /**
  * A Schedule the organiser is not allowed to change, and why.
@@ -18,10 +16,10 @@ import { CUSTOM_TEXT_MAX_LENGTH } from '../schemas';
  */
 function editRejection(status: string | null): string | null {
   if (status === 'sent') {
-    return 'Cannot modify a schedule that has already been sent.';
+    return 'Cannot modify a schedule that has already been sent';
   }
   if (status === 'disabled') {
-    return 'Sending is not enabled for this event yet.';
+    return 'Sending is not enabled for this event yet';
   }
   return null;
 }
@@ -124,13 +122,6 @@ export type UpdateCustomTextState = {
   message?: string | null;
 };
 
-const NoteSchema = z
-  .string()
-  .max(
-    CUSTOM_TEXT_MAX_LENGTH,
-    `Keep the note under ${CUSTOM_TEXT_MAX_LENGTH} characters`,
-  );
-
 /**
  * Updates the organiser-authored note (schedules.custom_text) for a schedule.
  * A blank value is stored as null so "no note" reads the same way whether the
@@ -173,7 +164,7 @@ export async function updateCustomText(
 
     // The note is appended to an already long WhatsApp body, and the textarea
     // caps it - but a cap only the UI enforces is not one.
-    const parsed = NoteSchema.safeParse(customText);
+    const parsed = CustomTextSchema.safeParse(customText);
     if (!parsed.success) {
       return { success: false, message: parsed.error.issues[0].message };
     }

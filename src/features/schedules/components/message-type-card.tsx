@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { IconLock, IconMessage } from '@tabler/icons-react';
+import { IconMessage } from '@tabler/icons-react';
 
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { ScheduleLockBadge } from './schedule-lock-badge';
 
 interface MessageTypeCardProps {
   /** Whether this schedule's family offers a note variant at all. */
@@ -49,40 +50,46 @@ export async function MessageTypeCard({
         </CardTitle>
         {lockReason && (
           <CardAction>
-            <span className="bg-warning/10 text-warning inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-bold">
-              <IconLock size={11} stroke={2.2} />
-              {t(`lockReason.${lockReason}`)}
-            </span>
+            <ScheduleLockBadge reason={lockReason} />
           </CardAction>
         )}
       </CardHeader>
       <CardContent>
-        <div
-          className="border-primary bg-primary/5 flex items-start gap-2.5 rounded-xl border-[1.5px] p-3"
-          role="radiogroup"
-          aria-label={t('cardTitle')}
-        >
-          <span
-            aria-hidden
-            className="border-primary mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full border-2"
+        <div role="radiogroup" aria-label={t('cardTitle')}>
+          {/* One option, and it is always the chosen one - so it is a checked,
+              disabled radio rather than a group with nothing selectable in it.
+              When a second Variant is approved this becomes a real choice
+              without the surrounding markup changing. */}
+          <div
+            role="radio"
+            aria-checked
+            aria-disabled
+            className="border-primary bg-primary/5 flex items-start gap-2.5 rounded-xl border-[1.5px] p-3"
           >
-            <span className="bg-primary size-[7px] rounded-full" />
-          </span>
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-sm font-semibold">{t('default.label')}</span>
-              {offersNote && (
-                <span className="bg-accent text-accent-foreground rounded-full px-2 py-0.5 text-[10.5px] font-bold">
-                  {t('supportsNote')}
+            <span
+              aria-hidden
+              className="border-primary mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full border-2"
+            >
+              <span className="bg-primary size-[7px] rounded-full" />
+            </span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-sm font-semibold">
+                  {t('default.label')}
                 </span>
-              )}
+                {offersNote && (
+                  <span className="bg-accent text-accent-foreground rounded-full px-2 py-0.5 text-[10.5px] font-bold">
+                    {t('supportsNote')}
+                  </span>
+                )}
+              </div>
+              {/* Deliberately not `message_templates.description`: that column
+                  is operator-facing English for the Back Office, and it would
+                  surface untranslated on a Hebrew page. */}
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {t('default.description')}
+              </p>
             </div>
-            {/* Deliberately not `message_templates.description`: that column is
-                operator-facing English for the Back Office, and it would surface
-                untranslated on a Hebrew page. */}
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {t('default.description')}
-            </p>
           </div>
         </div>
       </CardContent>

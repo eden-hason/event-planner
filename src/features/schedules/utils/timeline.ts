@@ -59,22 +59,72 @@ export function offsetDays(
  *   would be the one reading that is simply untrue. Its results can still be
  *   arriving, which the results tab shows honestly.
  */
-export function timelineStatus(schedule: {
-  status: string | null;
-  dispatchedAt: string | null;
-}): OutreachItemStatus {
-  switch (schedule.status) {
-    case 'disabled':
-      return 'locked';
-    case 'cancelled':
-      return 'cancelled';
-    case 'expired':
-      return 'expired';
-    case 'sent':
-      return 'sent';
-    default:
-      return schedule.dispatchedAt ? 'sent' : 'pending';
+export function timelineStatus(
+  schedule: { status: string | null; dispatchedAt: string | null },
+  /**
+   * A call plan's round, when one has been started. The plan's own status says
+   * only whether the work was asked for; the round says how it is going, and
+   * everything long-lived about it lives there rather than on the Schedule
+   * (ADR 0004). Omitted for a message Schedule, which has no round.
+   */
+  roundStatus?: OutreachItemStatus | null,
+): OutreachItemStatus {
+  // Two readings the plan always wins: it was never offered, or it was called
+  // off. Neither can be contradicted by work that happened anyway.
+  if (schedule.status === 'disabled') return 'locked';
+  if (schedule.status === 'cancelled') return 'cancelled';
+
+  // Otherwise the round supersedes the plan. A call plan is marked 'sent' the
+  // moment an Operator hits Start (ADR 0004), which says only that the work
+  // began - the round is what says how it is going, and reporting a round
+  // still being worked through as 'sent' would hide days of outcomes.
+  if (roundStatus) return roundStatus;
+
+  if (schedule.status === 'expired') return 'expired';
+  if (schedule.status === 'sent') return 'sent';
+  return schedule.dispatchedAt ? 'sent' : 'pending';
+}
+
+/**
+ * The shape of "how far this Schedule sits from the Event", without the words.
+ *
+ * Two places phrase this differently - a card has room for "30 days before",
+ * a detail pane for "30 days before the event" - but the branching is the same
+ * one, so it is decided here and worded by each caller's own message keys.
+ */
+export type OffsetPhrase = {
+  key: 'dayOf' | 'before' | 'after';
+  /** Always positive; the direction is in `key`. */
+  count: number;
+};
+
+export function offsetPhrase(offset: number | null): OffsetPhrase | null {
+  if (offset === null) return null;
+  if (offset === 0) return { key: 'dayOf', count: 0 };
+  return { key: offset < 0 ? 'before' : 'after', count: Math.abs(offset) };
+}
+
+/**
+ * The whole hours a Due Time may be authored for, inside a Send Window.
+ *
+ * The window's end is exclusive - 21:00 is already closed - so the last hour
+ * offered is the one before it. Derived rather than written out so the picker
+ * cannot drift from the rule the Dispatcher actually applies
+ * (utils/send-window.ts, and `sendingConfig().sendWindow` behind it).
+ */
+export function sendWindowHours(window: {
+  start: string;
+  end: string;
+}): string[] {
+  const hour = (clock: string) => Number(clock.slice(0, 2));
+  const first = hour(window.start);
+  const last = hour(window.end) - 1;
+  if (!Number.isFinite(first) || !Number.isFinite(last) || last < first) {
+    return [];
   }
+  return Array.from({ length: last - first + 1 }, (_, i) =>
+    `${String(first + i).padStart(2, '0')}:00`,
+  );
 }
 
 export type TimelineRow<T> =

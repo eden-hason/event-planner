@@ -1504,8 +1504,8 @@
         "cta": "Add the event date"
       },
       "unsupported": {
-        "title": "No plan for this event type yet",
-        "description": "Suggested schedules haven't been set up for this event type"
+        "title": "No automatic plan for this event yet",
+        "description": "Invitations and reminders are built from a default set that has not been configured for this event. The Kululu team can set one up"
       }
     }
   },

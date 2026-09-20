@@ -1,14 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { IconSparkles } from '@tabler/icons-react';
 
-import {
-  EventBillingStatusSheet,
-  useEventBillingStatus,
-} from '@/features/billing';
-import { useCollaboration } from '@/components/feature-layout';
+import { useBillingSheet } from './use-billing-sheet';
 
 /**
  * The one upsell on a locked timeline.
@@ -24,11 +19,9 @@ import { useCollaboration } from '@/components/feature-layout';
  */
 export function SchedulesUpsellBanner() {
   const t = useTranslations('schedules.upsell');
-  const status = useEventBillingStatus();
-  const { isOwner } = useCollaboration();
-  const [open, setOpen] = React.useState(false);
+  const { canPrompt, openSheet, sheet } = useBillingSheet();
 
-  if (!status || !isOwner) return null;
+  if (!canPrompt) return null;
 
   return (
     <>
@@ -50,14 +43,14 @@ export function SchedulesUpsellBanner() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openSheet}
             className="bg-primary-foreground text-primary h-11 flex-1 rounded-xl text-[15px] font-bold transition-opacity active:opacity-90"
           >
             {t('cta')}
           </button>
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openSheet}
             className="border-primary-foreground/30 h-11 rounded-xl border px-4 text-[13.5px] font-medium transition-opacity active:opacity-90"
           >
             {t('learnMore')}
@@ -65,11 +58,7 @@ export function SchedulesUpsellBanner() {
         </div>
       </div>
 
-      <EventBillingStatusSheet
-        open={open}
-        onOpenChange={setOpen}
-        status={status}
-      />
+      {sheet}
     </>
   );
 }

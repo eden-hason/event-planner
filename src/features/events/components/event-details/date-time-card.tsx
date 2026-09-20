@@ -150,9 +150,14 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
                     <FormControl>
                       <DatePicker
                         date={field.value ? new Date(field.value) : undefined}
-                        onDateChange={(next) =>
-                          field.onChange(next ? toUtcCalendarDate(next) : '')
-                        }
+                        // Deliberately ignores a cleared selection. A Schedule's
+                        // Due Time is computed from this date once and never
+                        // recomputed, so clearing it would leave the whole
+                        // seeded plan pointing at a date the Event no longer
+                        // has - see docs/backlog/0008.
+                        onDateChange={(next) => {
+                          if (next) field.onChange(toUtcCalendarDate(next));
+                        }}
                         placeholder={t('date')}
                       />
                     </FormControl>

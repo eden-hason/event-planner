@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'next-intl';
-import { IconCalendarClock, IconClock, IconLock } from '@tabler/icons-react';
+import { IconCalendarClock, IconClock } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,40 +25,46 @@ import {
 
 import { updateScheduledDate } from '../actions';
 import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
-import { offsetDays } from '../utils/timeline';
+import {
+  offsetDays as offsetDaysFrom,
+  offsetPhrase,
+  sendWindowHours,
+} from '../utils/timeline';
 import type { ScheduleApp } from '../schemas';
 
 /** Used when a schedule has no time yet - the middle of the send window. */
 const DEFAULT_SEND_TIME = '10:00';
-
-/**
- * The hours a Due Time may be authored for.
- *
- * The Send Window is 09:00-21:00 Israel and is evaluated at dispatch: a
- * Schedule due outside it is held until the window opens rather than dropped
- * (see utils/send-window.ts). Offering an hour outside it would therefore let
- * the organiser set 08:00, see 08:00 on the card forever, and have the message
- * arrive at 09:00 with nothing anywhere saying why. Whole hours only - the
- * minute a wedding invitation goes out is not a decision worth making.
- */
-const SEND_HOURS = Array.from({ length: 12 }, (_, i) =>
-  `${String(i + 9).padStart(2, '0')}:00`,
-);
 
 interface ScheduleDetailsCardProps {
   schedule: ScheduleApp | undefined;
   eventDate: string | null;
   /** The Event cannot send yet, so nothing here can be moved. */
   locked?: boolean;
+  /**
+   * The Send Window, read server-side from `sendingConfig()`.
+   *
+   * The picker offers whole hours inside it because the window is evaluated at
+   * dispatch, not at authoring: a Due Time outside it is held until the window
+   * opens (utils/send-window.ts). Offering 08:00 would let the organiser set a
+   * time, see it on the card forever, and have the message arrive at 09:00 with
+   * nothing saying why. Passed in rather than imported so there is one window,
+   * the one the Dispatcher actually uses, and not a second copy here.
+   */
+  sendWindow: { start: string; end: string };
+  /** Rendered server-side and passed in - see ScheduleLockBadge. */
+  lockBadge?: React.ReactNode;
 }
 
 export function ScheduleDetailsCard({
   schedule,
   eventDate,
   locked,
+  sendWindow,
+  lockBadge,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
   const locale = useLocale();
+  const hours = useMemo(() => sendWindowHours(sendWindow), [sendWindow]);
   const [isSaving, startSaveTransition] = useTransition();
 
   const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
@@ -74,8 +80,8 @@ export function ScheduleDetailsCard({
       : '',
   );
 
-  const daysBeforeEvent = useMemo(
-    () => (scheduledDate ? offsetDays(eventDate, scheduledDate) : null),
+  const relative = useMemo(
+    () => offsetPhrase(scheduledDate ? offsetDaysFrom(eventDate, scheduledDate) : null),
     [eventDate, scheduledDate],
   );
 
@@ -156,14 +162,9 @@ export function ScheduleDetailsCard({
 
   if (!schedule || !eventDate) return null;
 
-  const relativeNote =
-    daysBeforeEvent === null
-      ? null
-      : daysBeforeEvent === 0
-        ? t('relative.dayOf')
-        : daysBeforeEvent < 0
-          ? t('relative.before', { count: Math.abs(daysBeforeEvent) })
-          : t('relative.after', { count: daysBeforeEvent });
+  const relativeNote = relative
+    ? t(`relative.${relative.key}`, { count: relative.count })
+    : null;
 
   return (
     <Card>
@@ -176,10 +177,7 @@ export function ScheduleDetailsCard({
         </CardTitle>
         <CardAction>
           {locked ? (
-            <span className="bg-warning/10 text-warning inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-bold">
-              <IconLock size={11} stroke={2.2} />
-              {t('lockedBadge')}
-            </span>
+            lockBadge
           ) : (
             <Button
               onClick={handleSave}
@@ -227,14 +225,15 @@ export function ScheduleDetailsCard({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SEND_HOURS.map((hour) => (
+                  {hours.map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
                     </SelectItem>
                   ))}
-                  {/* A Due Time authored before this card restricted the hours
-                      would otherwise vanish from its own select. */}
-                  {scheduledTime && !SEND_HOURS.includes(scheduledTime) && (
+                  {/* A Due Time authored before this card restricted the hours,
+                      or under a wider window, would otherwise vanish from its
+                      own select. */}
+                  {scheduledTime && !hours.includes(scheduledTime) && (
                     <SelectItem value={scheduledTime}>{scheduledTime}</SelectItem>
                   )}
                 </SelectContent>
@@ -246,8 +245,8 @@ export function ScheduleDetailsCard({
             {relativeNote}
             {relativeNote ? ' · ' : ''}
             {t('sendWindowHelper', {
-              start: SEND_HOURS[0],
-              end: SEND_HOURS.at(-1) as string,
+              start: hours[0] ?? sendWindow.start,
+              end: hours.at(-1) ?? sendWindow.start,
             })}
           </p>
         </div>

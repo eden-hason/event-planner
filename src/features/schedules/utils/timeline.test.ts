@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { offsetDays, timelineStatus, withDayMarker } from './timeline.ts';
+import { offsetDays, offsetPhrase, sendWindowHours, timelineStatus, withDayMarker } from './timeline.ts';
 
 // The Event date is a calendar date pinned at 00:00 UTC; a Due Time is an
 // instant authored as an Israel wall clock. The offset between them is a count
@@ -110,4 +110,77 @@ test('an undated timeline gets no marker', () => {
   const rows = withDayMarker([{ offset: null }, { offset: null }]);
   assert.equal(rows.filter((r) => r.kind === 'dayMarker').length, 0);
   assert.equal(rows.length, 2);
+});
+
+// ─── sendWindowHours ──────────────────────────────────────────────────────────
+
+test('the hours offered stop before the window closes', () => {
+  // 21:00 is already closed, so 20:00 is the last authorable hour.
+  assert.deepEqual(sendWindowHours({ start: '09:00', end: '12:00' }), [
+    '09:00',
+    '10:00',
+    '11:00',
+  ]);
+});
+
+test('the hours follow a window the operator has narrowed', () => {
+  assert.deepEqual(sendWindowHours({ start: '10:00', end: '12:00' }), [
+    '10:00',
+    '11:00',
+  ]);
+});
+
+test('a window with no room offers nothing rather than a broken range', () => {
+  assert.deepEqual(sendWindowHours({ start: '10:00', end: '10:00' }), []);
+  assert.deepEqual(sendWindowHours({ start: '14:00', end: '09:00' }), []);
+});
+
+// ─── offsetPhrase ─────────────────────────────────────────────────────────────
+
+test('offsetPhrase names the direction and keeps the count positive', () => {
+  assert.deepEqual(offsetPhrase(-30), { key: 'before', count: 30 });
+  assert.deepEqual(offsetPhrase(0), { key: 'dayOf', count: 0 });
+  assert.deepEqual(offsetPhrase(2), { key: 'after', count: 2 });
+  assert.equal(offsetPhrase(null), null);
+});
+
+// ─── timelineStatus, for a call plan ─────────────────────────────────────────
+
+test('a call plan reports its round rather than its own claim', () => {
+  assert.equal(
+    timelineStatus({ status: null, dispatchedAt: null }, 'in_progress'),
+    'in_progress',
+  );
+  assert.equal(
+    timelineStatus({ status: null, dispatchedAt: null }, 'completed'),
+    'completed',
+  );
+});
+
+test('a started call plan reports its round, not its own start', () => {
+  // `status = 'sent'` on a call plan is the Operator hitting Start (ADR 0004).
+  // The round stays open for days after that, and is the honest reading.
+  assert.equal(
+    timelineStatus({ status: 'sent', dispatchedAt: null }, 'in_progress'),
+    'in_progress',
+  );
+  assert.equal(
+    timelineStatus({ status: 'sent', dispatchedAt: null }, 'completed'),
+    'completed',
+  );
+});
+
+test('a started call plan with no round left falls back to sent', () => {
+  // deleteCallRound exists to undo a misclicked Start, which can leave a
+  // 'sent' plan with nothing behind it.
+  assert.equal(timelineStatus({ status: 'sent', dispatchedAt: null }, null), 'sent');
+});
+
+test('a call plan with no round yet is pending', () => {
+  assert.equal(timelineStatus({ status: null, dispatchedAt: null }, null), 'pending');
+});
+
+test('a locked or cancelled plan ignores its round', () => {
+  assert.equal(timelineStatus({ status: 'disabled', dispatchedAt: null }, 'completed'), 'locked');
+  assert.equal(timelineStatus({ status: 'cancelled', dispatchedAt: null }, 'completed'), 'cancelled');
 });
