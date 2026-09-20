@@ -19,15 +19,26 @@ import type { ScheduleApp } from '../schemas';
 
 interface ScheduleStatusCardProps {
   schedule: ScheduleApp;
+  /**
+   * The Event cannot send yet, so this Schedule was seeded 'disabled' and the
+   * organiser has no switch to throw - paying enables the whole set at once.
+   */
+  locked?: boolean;
 }
 
-export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
+export function ScheduleStatusCard({
+  schedule,
+  locked,
+}: ScheduleStatusCardProps) {
   const t = useTranslations('schedules.status');
   const [isPending, startTransition] = useTransition();
 
   const key = schedule.status ?? 'pending';
   const isSent = schedule.status === 'sent';
-  const isEnabled = schedule.status !== 'cancelled';
+  // A seeded-but-never-enabled Schedule is not "off" - nobody turned it off.
+  // It reads as locked and the switch is inert, because the thing that turns
+  // it on is paying, not this control.
+  const isEnabled = schedule.status !== 'cancelled' && !locked;
 
   const handleToggle = (enabled: boolean) => {
     startTransition(async () => {
@@ -62,8 +73,10 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
 
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm">{t(`description.${key}`)}</p>
-        {!isSent && (
+        <p className="text-muted-foreground text-sm">
+          {t(`description.${locked ? 'disabled' : key}`)}
+        </p>
+        {!isSent && !locked && (
           <div className="mt-4">
             <Alert variant={isEnabled ? 'success' : 'default'}>
               <IconPower strokeWidth={2.2} />
@@ -77,7 +90,7 @@ export function ScheduleStatusCard({ schedule }: ScheduleStatusCardProps) {
                 <Switch
                   checked={isEnabled}
                   onCheckedChange={handleToggle}
-                  disabled={isPending}
+                  disabled={isPending || locked}
                 />
               </AlertAction>
             </Alert>

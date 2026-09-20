@@ -1,7 +1,12 @@
+import { getTranslations } from 'next-intl/server';
+
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
+import type { OutreachItemStatus } from '../types';
 import { MessageContentCard } from './message-content-card';
+import { MessageTypeCard } from './message-type-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
+import { ScheduleLockedNotice } from './schedule-locked-notice';
 import { ScheduleStatusCard } from './schedule-status-card';
 import { TargetAudienceCard } from './target-audience-card';
 
@@ -14,9 +19,12 @@ interface ScheduleTabContentProps {
   offersNote?: boolean;
   eventDate: string | null;
   event: EventApp | null;
+  status: OutreachItemStatus;
+  /** Size of the target audience as it stands today. */
+  audienceCount: number | null;
 }
 
-export function ScheduleTabContent({
+export async function ScheduleTabContent({
   schedule,
   template,
   smsBody,
@@ -24,34 +32,63 @@ export function ScheduleTabContent({
   offersNote,
   eventDate,
   event,
+  status,
+  audienceCount,
 }: ScheduleTabContentProps) {
+  const t = await getTranslations('schedules.detail');
+
+  const locked = status === 'locked';
+  const sent = status === 'sent';
+  // Everything the organiser could change is closed for the same two reasons,
+  // so they are decided once here rather than re-derived in each card.
+  const readOnly = locked || sent;
+  const lockReason = locked ? ('locked' as const) : sent ? ('sent' as const) : null;
+
   return (
-    // Single column until there is room for the message preview to sit beside
-    // the settings without squeezing either.
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="flex flex-col gap-4">
-        <ScheduleStatusCard schedule={schedule} />
-        <ScheduleDetailsCard key={schedule.id} schedule={schedule} eventDate={eventDate} />
-        <TargetAudienceCard
-          targetStatus={schedule.targetStatus}
-          disabled={schedule.status === 'cancelled'}
-        />
+    <div className="flex flex-col gap-4">
+      {locked && <ScheduleLockedNotice />}
+
+      {/* Single column until there is room for the message preview to sit
+          beside the settings without squeezing either. The preview leads on a
+          phone: it is the thing the organiser came to check. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4 lg:order-2">
+          <MessageContentCard
+            scheduleId={schedule.id}
+            template={template}
+            smsBody={smsBody}
+            channel={schedule.deliveryMethod}
+            seatingGap={seatingGap}
+            offersNote={offersNote}
+            customText={schedule.customText}
+            scheduleLocked={readOnly || schedule.status === 'cancelled'}
+            event={event}
+          />
+        </div>
+
+        <div className="flex flex-col gap-4 lg:order-1">
+          <MessageTypeCard
+            offersNote={Boolean(offersNote)}
+            lockReason={lockReason}
+          />
+          {!sent && <ScheduleStatusCard schedule={schedule} locked={locked} />}
+          <ScheduleDetailsCard
+            key={schedule.id}
+            schedule={schedule}
+            eventDate={eventDate}
+            locked={locked}
+          />
+          <TargetAudienceCard
+            targetStatus={schedule.targetStatus}
+            disabled={schedule.status === 'cancelled'}
+            count={audienceCount}
+          />
+        </div>
       </div>
-      <div className="h-full">
-        <MessageContentCard
-          scheduleId={schedule.id}
-          template={template}
-          smsBody={smsBody}
-          channel={schedule.deliveryMethod}
-          seatingGap={seatingGap}
-          offersNote={offersNote}
-          customText={schedule.customText}
-          scheduleLocked={
-            schedule.status === 'sent' || schedule.status === 'cancelled'
-          }
-          event={event}
-        />
-      </div>
+
+      <p className="text-muted-foreground px-1 text-center text-xs">
+        {t(lockReason ? `footNote.${lockReason}` : 'footNote.editable')}
+      </p>
     </div>
   );
 }

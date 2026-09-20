@@ -13,9 +13,19 @@ import { rsvpPresentation } from '@/features/guests';
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
   disabled?: boolean;
+  /**
+   * How many guest records that audience holds right now. A targeted audience
+   * is re-evaluated on the day of the send, so this is what it would be if the
+   * message went out today - which is the number worth showing beside it.
+   */
+  count?: number | null;
 }
 
-export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudienceCardProps) {
+export async function TargetAudienceCard({
+  targetStatus,
+  disabled,
+  count,
+}: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
 
   const audienceLabel =
@@ -48,14 +58,28 @@ export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudie
         {disabled ? (
           <p className="text-xs text-muted-foreground">{t('disabledNote')}</p>
         ) : (
-          <div
-            className={cn(
-              'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-fit',
-              statusClass,
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
+                  statusClass,
+                )}
+              >
+                <AudienceIcon size={16} />
+                {audienceLabel}
+              </div>
+              {count != null && (
+                <span className="ms-auto text-xl font-bold tabular-nums">
+                  {count}
+                </span>
+              )}
+            </div>
+            {targetStatus && (
+              <p className="text-muted-foreground text-xs">
+                {t('recomputedNote')}
+              </p>
             )}
-          >
-            <AudienceIcon size={16} />
-            {audienceLabel}
           </div>
         )}
       </CardContent>

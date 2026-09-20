@@ -34,7 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 import { type EventApp } from '@/features/events/schemas';
-import type { WhatsAppTemplateApp } from '../schemas';
+import { CUSTOM_TEXT_MAX_LENGTH, type WhatsAppTemplateApp } from '../schemas';
 import { updateCustomText } from '../actions';
 import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 
@@ -321,20 +321,30 @@ export function MessageContentCard({
               <Label className="text-xs text-muted-foreground tracking-wide">
                 {t('customNote.label')}
               </Label>
-              {isDirty && (
-                <Button
-                  onClick={handleSaveNote}
-                  disabled={isSaving}
-                  size="xs"
-                  variant="outline"
-                >
-                  {isSaving ? t('customNote.saving') : t('customNote.save')}
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-[11px] tabular-nums">
+                  {note.length}/{CUSTOM_TEXT_MAX_LENGTH}
+                </span>
+                {isDirty && (
+                  <Button
+                    onClick={handleSaveNote}
+                    disabled={isSaving}
+                    size="xs"
+                    variant="outline"
+                  >
+                    {isSaving ? t('customNote.saving') : t('customNote.save')}
+                  </Button>
+                )}
+              </div>
             </div>
             <Textarea
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              // Sliced rather than relying on maxLength alone, so a paste that
+              // overshoots is trimmed instead of silently rejected whole.
+              onChange={(e) =>
+                setNote(e.target.value.slice(0, CUSTOM_TEXT_MAX_LENGTH))
+              }
+              maxLength={CUSTOM_TEXT_MAX_LENGTH}
               placeholder={t('customNote.placeholder')}
               disabled={isSaving || !scheduleId || scheduleLocked}
               dir="rtl"

@@ -1,9 +1,7 @@
-'use client';
-
-import * as React from 'react';
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { IconCalendarPlus } from '@tabler/icons-react';
 
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -14,39 +12,40 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
-import { type EventApp } from '@/features/events/schemas';
-import { type WhatsAppTemplateApp } from '../schemas';
-import { type SuggestedSchedule } from '../utils/suggested-schedules';
-import { ScheduleSetupWizard } from './schedule-setup-wizard';
 import { SchedulesHeader } from './schedules-header';
 
 interface SchedulesEmptyStateProps {
   eventId: string;
-  event: EventApp | null;
-  suggestedSchedules: SuggestedSchedule[];
-  invitationTemplate: WhatsAppTemplateApp | null;
-  targetCounts: { all: number; pending: number; confirmed: number };
-  canCreateSchedules: boolean;
+  /**
+   * Why there is nothing to show. `noDate` is the ordinary case and the only
+   * one the organiser can fix: the plan is seeded from the Event type's
+   * defaults the moment a date exists, and every offset is relative to it.
+   * `unsupported` is an Event type the catalog has no defaults for.
+   */
+  reason: 'noDate' | 'unsupported';
 }
 
-export function SchedulesEmptyState({
+/**
+ * What the schedules page shows when an Event has no outreach at all.
+ *
+ * This used to be an onboarding prompt - a hero and a button that opened a
+ * setup wizard. The wizard is gone: a database trigger seeds the Event type's
+ * default set as soon as the Event has a type and a date, so the timeline is
+ * something the organiser lands on rather than something they build. What is
+ * left is the one case the trigger cannot cover, and the single action that
+ * resolves it.
+ */
+export async function SchedulesEmptyState({
   eventId,
-  event,
-  suggestedSchedules,
-  invitationTemplate,
-  targetCounts,
-  canCreateSchedules,
+  reason,
 }: SchedulesEmptyStateProps) {
-  const t = useTranslations('schedules.setupWizard');
-  const [wizardOpen, setWizardOpen] = React.useState(false);
-
-  const hasSuggestions = suggestedSchedules.length > 0;
+  const t = await getTranslations('schedules.empty');
 
   return (
     <>
       <SchedulesHeader />
 
-      <Empty className="min-h-[calc(100vh-220px)] border-none bg-card shadow-sm">
+      <Empty className="bg-card min-h-[calc(100vh-220px)] border-none shadow-sm">
         <EmptyMedia>
           <img
             src="/hero-schedules.svg"
@@ -56,34 +55,20 @@ export function SchedulesEmptyState({
           />
         </EmptyMedia>
         <EmptyHeader>
-          <EmptyTitle>{t('emptyTitle')}</EmptyTitle>
-          <EmptyDescription>{t('emptyDescription')}</EmptyDescription>
+          <EmptyTitle>{t(`${reason}.title`)}</EmptyTitle>
+          <EmptyDescription>{t(`${reason}.description`)}</EmptyDescription>
         </EmptyHeader>
-        <EmptyContent>
-          {hasSuggestions && canCreateSchedules ? (
-            <Button onClick={() => setWizardOpen(true)}>
-              <IconCalendarPlus className="h-5 w-5" />
-              {t('emptyCta')}
+        {reason === 'noDate' && (
+          <EmptyContent>
+            <Button asChild>
+              <Link href={`/app/${eventId}/details`}>
+                <IconCalendarPlus className="size-5" />
+                {t('noDate.cta')}
+              </Link>
             </Button>
-          ) : !hasSuggestions ? (
-            <p className="text-muted-foreground text-sm">
-              {t('emptyUnsupported')}
-            </p>
-          ) : null}
-        </EmptyContent>
+          </EmptyContent>
+        )}
       </Empty>
-
-      {hasSuggestions && canCreateSchedules && (
-        <ScheduleSetupWizard
-          open={wizardOpen}
-          onOpenChange={setWizardOpen}
-          eventId={eventId}
-          event={event}
-          suggestedSchedules={suggestedSchedules}
-          invitationTemplate={invitationTemplate}
-          targetCounts={targetCounts}
-        />
-      )}
     </>
   );
 }

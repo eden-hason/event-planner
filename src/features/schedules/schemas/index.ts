@@ -27,8 +27,28 @@ export type GuestStats = {
 // deciding a Schedule's moment has passed - the Event already happened, or the
 // Due Time is too far back to send now. Not 'cancelled': nobody cancelled it.
 // See docs/adr/0015.
-export const SCHEDULE_STATUSES = ['sent', 'cancelled', 'expired'] as const;
+//
+// 'disabled' is the one value nothing sets after execution: it is what the seed
+// trigger writes for an Event that cannot send yet, meaning "created but never
+// enabled". It is not 'cancelled' because the organiser never made that choice,
+// and the timeline shows the two differently - "off" is a decision, "locked" is
+// an offer not yet made. Paying flips every 'disabled' row to null in one move.
+export const SCHEDULE_STATUSES = [
+  'sent',
+  'cancelled',
+  'expired',
+  'disabled',
+] as const;
 export type ScheduleStatus = (typeof SCHEDULE_STATUSES)[number];
+
+/**
+ * How long an organiser's personal note on a Schedule may be.
+ *
+ * The note is appended to a WhatsApp body that is already near its own limits,
+ * so this is a kindness as much as a constraint. Enforced both in the textarea
+ * and in `updateCustomText`, because a cap only the UI knows about is not one.
+ */
+export const CUSTOM_TEXT_MAX_LENGTH = 160;
 
 // Delivery methods
 export const DELIVERY_METHODS = ['whatsapp', 'sms'] as const;
@@ -135,23 +155,6 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
 }));
 
 export type ScheduleApp = z.infer<typeof ScheduleDbToAppSchema>;
-
-// --- Setup Wizard Selection Schema ---
-// One user-customized schedule chosen in the schedule setup wizard.
-export const ScheduleSelectionItemSchema = z.object({
-  scheduleTypeId: z.uuid(),
-  // Null for non-message types - a call round is planned without a template.
-  templateId: z.uuid().nullable(),
-  // An instant, already folded from the Operator's date and wall clock.
-  scheduledDate: z.string(),
-  targetStatus: z.enum(['pending', 'confirmed']).nullable(),
-  // null = active; 'cancelled' = created but disabled (user opted out in the wizard)
-  status: z.enum(SCHEDULE_STATUSES).nullable(),
-});
-
-export type ScheduleSelectionItem = z.infer<typeof ScheduleSelectionItemSchema>;
-
-export const ScheduleSelectionSchema = z.array(ScheduleSelectionItemSchema);
 
 // =====================================================
 // MESSAGE DELIVERIES

@@ -41,7 +41,7 @@
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
     "seating": "הושבה",
-    "schedules": "תזמונים",
+    "schedules": "הודעות",
     "gifting": "מתנות דיגיטליות",
     "collaboration": "שיתוף",
     "settings": "הגדרות",
@@ -1256,11 +1256,9 @@
   },
   "schedules": {
     "header": {
-      "title": "תזמונים"
-    },
-    "nav": {
-      "messages": "הודעות",
-      "calls": "שיחות טלפון"
+      "title": "הודעות ושיחות",
+      "summary": "{sent} נשלחו · {pending} מתוזמנים",
+      "lockedSummary": "{count} תזמונים מוכנים · אף אחד לא פעיל"
     },
     "channel": {
       "whatsapp": "WhatsApp",
@@ -1311,13 +1309,16 @@
         "cancelled": "בוטל",
         "expired": "פג תוקף",
         "inProgress": "בתהליך",
-        "completed": "הושלם"
+        "completed": "הושלם",
+        "locked": "נעול",
+        "disabled": "נעול"
       },
       "description": {
         "sent": "ההודעות נשלחו לאורחים הזכאים.",
         "pending": "ההודעות יישלחו בתאריך המתוזמן.",
         "cancelled": "לוח הזמנים הזה בוטל.",
-        "expired": "לוח הזמנים הזה לא נשלח בזמן ולא יישלח כעת."
+        "expired": "לוח הזמנים הזה לא נשלח בזמן ולא יישלח כעת.",
+        "disabled": "ההודעה כתובה ומתוזמנת. היא תצא ברגע שהשליחה תופעל"
       },
       "toggle": {
         "enabled": "פעיל",
@@ -1348,6 +1349,13 @@
         "updated": "התאריך המתוזמן עודכן",
         "failed": "עדכון התאריך המתוזמן נכשל",
         "error": "משהו השתבש"
+      },
+      "lockedBadge": "פרימיום",
+      "sendWindowHelper": "ההודעות יוצאות בין {start} ל-{end}",
+      "relative": {
+        "dayOf": "ביום האירוע",
+        "before": "{count, plural, one {יום אחד לפני האירוע} other {# ימים לפני האירוע}}",
+        "after": "{count, plural, one {יום אחד אחרי האירוע} other {# ימים אחרי האירוע}}"
       }
     },
     "audience": {
@@ -1357,7 +1365,8 @@
       "confirmedGuests": "אורחים שאישרו",
       "pendingGuests": "אורחים ממתינים",
       "sentTo": "נשלח ל",
-      "calling": "מתקשרים אל"
+      "calling": "מתקשרים אל",
+      "recomputedNote": "הרשימה מתעדכנת אוטומטית ביום השליחה"
     },
     "messagePreview": {
       "cardTitle": "תצוגה מקדימה",
@@ -1404,46 +1413,6 @@
         "failed": "השליחה נכשלה"
       }
     },
-    "setupWizard": {
-      "emptyTitle": "תכננו את ציר הזמן לתקשורת עם האורחים",
-      "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי - הגדירו את ציר הזמן כדי להתחיל",
-      "emptyCta": "הגדרת תזמונים",
-      "emptyUnsupported": "הצעות תזמונים עדיין אינן זמינות לסוג אירוע זה",
-      "features": {
-        "plan": "שליחת הזמנות",
-        "planDesc": "שתפו את שמירת התאריך עם כל האורחים",
-        "automate": "אוטומציה לאישורי הגעה",
-        "automateDesc": "מעקב אוטומטי אחר אורחים שטרם אישרו",
-        "track": "להישאר על המסלול",
-        "trackDesc": "תזכורות ביום האירוע והודעות תודה"
-      },
-      "step1Title": "הזמנה ראשונית",
-      "step1Description": "בחרו אם לשלוח הודעת Save the Date כהודעה הראשונה בלוח הזמנים.",
-      "step2Title": "סקירת ציר הזמן",
-      "step2Description": "אשרו את התזמונים שתרצו לשלוח",
-      "invitationPreviewLabel": "תצוגה מקדימה של ההזמנה",
-      "sendDateLabel": "תאריך שליחה",
-      "callDateLabel": "תאריך השיחות",
-      "timeLabel": "שעה",
-      "sendDateHelper": "מתי ההזמנה תישלח לאורחים",
-      "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית - לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
-      "decisionSend": "כן, לשלוח",
-      "decisionSendDesc": "ההזמנה תישלח בתאריך שתבחרו",
-      "decisionSkip": "לדלג בינתיים",
-      "decisionSkipDesc": "תוכלו להפעיל אותו בכל עת",
-      "timelineHelper": "ניתן לכבות כל אחד מלוחות הזמנים המוצגים — הוא יישאר בציר הזמן, אך יהיה מושבת",
-      "recipientsCount": "{count} אורחים",
-      "continue": "המשך",
-      "back": "חזרה",
-      "submit": "יצירת תזמונים",
-      "submitting": "יוצר...",
-      "toast": {
-        "creating": "יוצר תזמונים...",
-        "created": "התזמונים נוצרו",
-        "failed": "יצירת התזמונים נכשלה",
-        "error": "משהו השתבש"
-      }
-    },
     "noSchedules": "לא הוגדרו תזמונים לאירוע זה.",
     "dayOffset": {
       "onEventDay": "ביום האירוע",
@@ -1479,6 +1448,65 @@
       "sms": "SMS",
       "emptyDescription": "התוצאות יופיעו כאן לאחר שההודעות יישלחו",
       "cancelledDescription": "לוח הזמנים הזה בוטל ולא נשלחו הודעות"
+    },
+    "kind": {
+      "message": "הודעת וואטסאפ",
+      "call": "שיחת טלפון"
+    },
+    "timeline": {
+      "dayOf": "ביום האירוע",
+      "daysBefore": "{count, plural, one {יום אחד לפני} other {# ימים לפני}}",
+      "daysAfter": "{count, plural, one {יום אחד אחרי} other {# ימים אחרי}}",
+      "eventDay": "יום האירוע · {date}",
+      "eventDayUndated": "יום האירוע",
+      "recipientCount": "{count, plural, one {נמען אחד} other {# נמענים}}",
+      "callCount": "{count, plural, one {שיחה אחת} other {# שיחות}}",
+      "readRate": "{percent}% נקראו",
+      "reachedRate": "{percent}% הגיעו",
+      "includedInPremium": "כלול בפרימיום",
+      "callsNote": "סבבי השיחות מבוצעים על ידי צוות Kululu, ומתוכננים כאן יחד עם ההודעות"
+    },
+    "detail": {
+      "back": "חזרה לציר הזמן",
+      "footNote": {
+        "editable": "השינויים נשמרים לתזמון הזה בלבד",
+        "locked": "התוכן והתאריכים נשמרים - ההפעלה רק מאשרת שליחה",
+        "sent": "התזמון נשלח ולכן נעול לעריכה"
+      }
+    },
+    "messageType": {
+      "cardTitle": "סוג ההודעה",
+      "supportsNote": "תומך בהערה",
+      "lockReason": {
+        "locked": "פרימיום",
+        "sent": "נשלח"
+      },
+      "default": {
+        "label": "ברירת מחדל",
+        "description": "הנוסח שנשלח לאורחים בתזמון הזה"
+      }
+    },
+    "locked": {
+      "title": "התזמון הזה נעול",
+      "description": "אפשר לראות בדיוק מה האורחים יקבלו. לשינוי תוכן, תאריך ושליחה נדרשת הפעלת השליחה",
+      "cta": "איך מפעילים שליחה"
+    },
+    "upsell": {
+      "title": "ההודעות מחכות לכם מוכנות",
+      "description": "כל ההודעות והשיחות כבר כתובות ומתוזמנות לפי התאריך שלכם. הפעלת השליחה מוציאה אותן לדרך",
+      "cta": "להפעלת השליחה",
+      "learnMore": "מה כלול"
+    },
+    "empty": {
+      "noDate": {
+        "title": "קודם נקבע תאריך לאירוע",
+        "description": "ההזמנות, התזכורות והתודות מתוזמנות ביחס ליום האירוע, אז ברגע שיש תאריך התוכנית נבנית כאן לבד",
+        "cta": "להוספת תאריך האירוע"
+      },
+      "unsupported": {
+        "title": "אין עדיין תוכנית לסוג האירוע הזה",
+        "description": "התזמונים המוצעים עדיין לא הוגדרו עבור סוג האירוע הזה"
+      }
     }
   },
   "newEventDialog": {

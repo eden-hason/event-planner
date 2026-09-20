@@ -1,6 +1,4 @@
 export {
-  createSchedulesFromSelection,
-  type CreateSchedulesFromSelectionState,
   updateScheduledDate,
   type UpdateScheduledDateState,
   updateCustomText,

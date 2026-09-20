@@ -1,10 +1,30 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
-import { ScheduleSelectionSchema, type ScheduleSelectionItem } from '../schemas';
+import { CUSTOM_TEXT_MAX_LENGTH } from '../schemas';
+
+/**
+ * A Schedule the organiser is not allowed to change, and why.
+ *
+ * 'disabled' is the whole locked timeline: the seed trigger writes it for every
+ * Schedule of an Event that cannot send, and paying flips the set to null in
+ * one move. So "this row is disabled" and "this Event has not paid" are the
+ * same fact, and rejecting the write here is what makes the lock real rather
+ * than a greyed-out input the API would happily accept anyway.
+ */
+function editRejection(status: string | null): string | null {
+  if (status === 'sent') {
+    return 'Cannot modify a schedule that has already been sent.';
+  }
+  if (status === 'disabled') {
+    return 'Sending is not enabled for this event yet.';
+  }
+  return null;
+}
 
 /**
  * Reads execution_kind off a raw `schedule_types` embed. PostgREST returns a
@@ -58,9 +78,8 @@ export async function updateScheduledDate(
       return { success: false, message: 'Schedule not found.' };
     }
 
-    if (existing.status === 'sent') {
-      return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
-    }
+    const rejection = editRejection(existing.status);
+    if (rejection) return { success: false, message: rejection };
 
     // A restrictive RLS policy already blocks this, but an UPDATE that matches
     // no rows returns no error - without this the caller would be told it
@@ -105,6 +124,13 @@ export type UpdateCustomTextState = {
   message?: string | null;
 };
 
+const NoteSchema = z
+  .string()
+  .max(
+    CUSTOM_TEXT_MAX_LENGTH,
+    `Keep the note under ${CUSTOM_TEXT_MAX_LENGTH} characters`,
+  );
+
 /**
  * Updates the organiser-authored note (schedules.custom_text) for a schedule.
  * A blank value is stored as null so "no note" reads the same way whether the
@@ -131,9 +157,12 @@ export async function updateCustomText(
       return { success: false, message: 'Schedule not found' };
     }
 
-    if (existing.status === 'sent' || existing.status === 'cancelled') {
-      return { success: false, message: 'Cannot modify a schedule that has already been sent' };
+    if (existing.status === 'cancelled') {
+      return { success: false, message: 'This schedule is turned off' };
     }
+
+    const rejection = editRejection(existing.status);
+    if (rejection) return { success: false, message: rejection };
 
     if (!isMessageScheduleRow(existing)) {
       return {
@@ -142,7 +171,14 @@ export async function updateCustomText(
       };
     }
 
-    const trimmed = customText.trim();
+    // The note is appended to an already long WhatsApp body, and the textarea
+    // caps it - but a cap only the UI enforces is not one.
+    const parsed = NoteSchema.safeParse(customText);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0].message };
+    }
+
+    const trimmed = parsed.data.trim();
     const { error } = await supabase
       .from('schedules')
       .update({ custom_text: trimmed === '' ? null : trimmed })
@@ -186,9 +222,8 @@ export async function updateScheduleStatus(
       return { success: false, message: 'Schedule not found.' };
     }
 
-    if (existing.status === 'sent') {
-      return { success: false, message: 'Cannot modify a schedule that has already been sent.' };
-    }
+    const rejection = editRejection(existing.status);
+    if (rejection) return { success: false, message: rejection };
 
     // See updateScheduledDate: RLS blocks the write, but silently.
     if (!isMessageScheduleRow(existing)) {
@@ -213,100 +248,6 @@ export async function updateScheduleStatus(
     return { success: true, message: enabled ? 'Schedule enabled.' : 'Schedule disabled.' };
   } catch (error) {
     console.error('Error in updateScheduleStatus:', error);
-    return { success: false, message: 'An unexpected error occurred.' };
-  }
-}
-
-export type CreateSchedulesFromSelectionState = {
-  success: boolean;
-  message?: string | null;
-  schedulesCreated?: number;
-};
-
-/**
- * Creates schedules from a user-customized selection made in the setup wizard.
- * Each selection carries a fully-resolved date/time decided by the user.
- * Idempotent - skips selections whose type|template|date already exists.
- * Referential integrity of schedule_type_id/template_id is enforced by FKs.
- *
- * @param eventId - The event ID to create schedules for
- * @param selections - The schedules the user chose to create, with custom dates/times
- * @returns Result state with success status and number of schedules created
- */
-export async function createSchedulesFromSelection(
-  eventId: string,
-  selections: ScheduleSelectionItem[],
-): Promise<CreateSchedulesFromSelectionState> {
-  const blocked = await assertNotImpersonating();
-  if (blocked) return { success: false, message: blocked };
-  try {
-    const parsed = ScheduleSelectionSchema.safeParse(selections);
-    if (!parsed.success) {
-      return { success: false, message: 'Invalid schedule selection.' };
-    }
-
-    if (parsed.data.length === 0) {
-      return { success: true, message: 'No schedules selected.', schedulesCreated: 0 };
-    }
-
-    const supabase = await createClient();
-
-    // Skip selections that already exist (guards against double-submit).
-    // Keyed on the schedule type as well as the template: a call round has no
-    // template, so a template-only key would collapse every call plan to
-    // 'null|<date>' and silently drop all but the first.
-    const { data: existingSchedules, error: fetchError } = await supabase
-      .from('schedules')
-      .select('schedule_type_id, template_id, scheduled_date')
-      .eq('event_id', eventId);
-
-    if (fetchError) {
-      console.error('Error fetching existing schedules:', fetchError);
-      return { success: false, message: 'Failed to check existing schedules.' };
-    }
-
-    const existingKeys = new Set(
-      existingSchedules?.map(
-        (s) => `${s.schedule_type_id}|${s.template_id ?? ''}|${s.scheduled_date}`,
-      ) ?? [],
-    );
-
-    const toCreate = parsed.data.filter(
-      (s) =>
-        !existingKeys.has(
-          `${s.scheduleTypeId}|${s.templateId ?? ''}|${s.scheduledDate}`,
-        ),
-    );
-
-    if (toCreate.length === 0) {
-      return { success: true, message: 'Schedules already exist.', schedulesCreated: 0 };
-    }
-
-    const records = toCreate.map((s) => ({
-      event_id: eventId,
-      schedule_type_id: s.scheduleTypeId,
-      template_id: s.templateId,
-      scheduled_date: s.scheduledDate,
-      target_status: s.targetStatus,
-      status: s.status,
-    }));
-
-    const { error: insertError } = await supabase.from('schedules').insert(records);
-
-    if (insertError) {
-      console.error('Error creating schedules:', insertError);
-      return { success: false, message: 'Failed to create schedules.' };
-    }
-
-    revalidatePath('/app');
-
-    return {
-      success: true,
-      message: 'Schedules created',
-      schedulesCreated: records.length,
-    };
-  } catch (error) {
-    console.error('Unexpected error in createSchedulesFromSelection:', error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
 }

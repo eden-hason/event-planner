@@ -41,7 +41,7 @@
     "eventDetails": "Event Details",
     "guests": "Guests",
     "seating": "Seating",
-    "schedules": "Schedules",
+    "schedules": "Messages",
     "gifting": "Digital Gifting",
     "collaboration": "Collaboration",
     "settings": "Settings",
@@ -1256,11 +1256,9 @@
   },
   "schedules": {
     "header": {
-      "title": "Schedules"
-    },
-    "nav": {
-      "messages": "Messages",
-      "calls": "Phone Calls"
+      "title": "Messages & calls",
+      "summary": "{sent} sent · {pending} scheduled",
+      "lockedSummary": "{count} schedules ready · none active"
     },
     "channel": {
       "whatsapp": "WhatsApp",
@@ -1311,13 +1309,16 @@
         "cancelled": "Cancelled",
         "expired": "Expired",
         "inProgress": "In progress",
-        "completed": "Completed"
+        "completed": "Completed",
+        "locked": "Locked",
+        "disabled": "Locked"
       },
       "description": {
         "sent": "Messages have been sent to eligible guests.",
         "pending": "Messages will be sent on the scheduled date.",
         "cancelled": "This schedule has been cancelled.",
-        "expired": "This schedule was not sent in time and will not send now."
+        "expired": "This schedule was not sent in time and will not send now.",
+        "disabled": "The message is written and timed. It goes out as soon as sending is enabled"
       },
       "toggle": {
         "enabled": "Active",
@@ -1348,6 +1349,13 @@
         "updated": "Scheduled date updated",
         "failed": "Failed to update scheduled date",
         "error": "Something went wrong"
+      },
+      "lockedBadge": "Premium",
+      "sendWindowHelper": "Messages go out between {start} and {end}",
+      "relative": {
+        "dayOf": "On the day of the event",
+        "before": "{count, plural, one {1 day before the event} other {# days before the event}}",
+        "after": "{count, plural, one {1 day after the event} other {# days after the event}}"
       }
     },
     "audience": {
@@ -1357,7 +1365,8 @@
       "confirmedGuests": "Confirmed Guests",
       "pendingGuests": "Pending Guests",
       "sentTo": "Sent to",
-      "calling": "Calling"
+      "calling": "Calling",
+      "recomputedNote": "Recalculated automatically on the day of the send"
     },
     "messagePreview": {
       "cardTitle": "Message Preview",
@@ -1404,46 +1413,6 @@
         "failed": "Failed to send"
       }
     },
-    "setupWizard": {
-      "emptyTitle": "Plan your guest communication timeline",
-      "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically - set up your timeline to get started",
-      "emptyCta": "Set up schedules",
-      "emptyUnsupported": "Schedule suggestions aren't available for this event type yet",
-      "features": {
-        "plan": "Send invitations",
-        "planDesc": "Share your save-the-date with all guests",
-        "automate": "Automate RSVPs",
-        "automateDesc": "Follow up with pending guests on autopilot",
-        "track": "Stay on track",
-        "trackDesc": "Day-of reminders and thank-you messages"
-      },
-      "step1Title": "Initial invitation",
-      "step1Description": "Choose whether to send a ‘Save the Date’ as the first scheduled message",
-      "step2Title": "Review your timeline",
-      "step2Description": "Approve the schedules you want to send",
-      "invitationPreviewLabel": "Invitation preview",
-      "sendDateLabel": "Send date",
-      "callDateLabel": "Call date",
-      "timeLabel": "Time",
-      "sendDateHelper": "When the invitation goes out to guests",
-      "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately - totally up to you. You can always adjust this later.",
-      "decisionSend": "Yes, send it",
-      "decisionSendDesc": "The invitation goes out on the date you pick",
-      "decisionSkip": "Skip for now",
-      "decisionSkipDesc": "It stays on your timeline as disabled - turn it on whenever you're ready",
-      "timelineHelper": "Toggle off any of the schedules shown—they’ll remain on the timeline but will be disabled",
-      "recipientsCount": "{count} guests",
-      "continue": "Continue",
-      "back": "Back",
-      "submit": "Create schedules",
-      "submitting": "Creating...",
-      "toast": {
-        "creating": "Creating schedules...",
-        "created": "Schedules created",
-        "failed": "Failed to create schedules",
-        "error": "Something went wrong"
-      }
-    },
     "noSchedules": "No schedules configured for this event.",
     "dayOffset": {
       "onEventDay": "on event day",
@@ -1479,6 +1448,65 @@
       "sms": "SMS",
       "emptyDescription": "Results will appear here once the schedule has been sent.",
       "cancelledDescription": "This schedule was cancelled and no messages were sent"
+    },
+    "kind": {
+      "message": "WhatsApp message",
+      "call": "Phone call"
+    },
+    "timeline": {
+      "dayOf": "On the day",
+      "daysBefore": "{count, plural, one {1 day before} other {# days before}}",
+      "daysAfter": "{count, plural, one {1 day after} other {# days after}}",
+      "eventDay": "Event day · {date}",
+      "eventDayUndated": "Event day",
+      "recipientCount": "{count, plural, one {1 recipient} other {# recipients}}",
+      "callCount": "{count, plural, one {1 call} other {# calls}}",
+      "readRate": "{percent}% read",
+      "reachedRate": "{percent}% reached",
+      "includedInPremium": "Included in premium",
+      "callsNote": "Call rounds are made by the Kululu team, and planned here alongside the messages"
+    },
+    "detail": {
+      "back": "Back to the timeline",
+      "footNote": {
+        "editable": "Changes are saved to this schedule only",
+        "locked": "The content and dates are saved - enabling only permits sending",
+        "sent": "This schedule has been sent, so it can no longer be edited"
+      }
+    },
+    "messageType": {
+      "cardTitle": "Message type",
+      "supportsNote": "Supports a note",
+      "lockReason": {
+        "locked": "Premium",
+        "sent": "Sent"
+      },
+      "default": {
+        "label": "Default",
+        "description": "The wording guests receive for this schedule"
+      }
+    },
+    "locked": {
+      "title": "This schedule is locked",
+      "description": "You can see exactly what your guests will receive. Changing the content or the date, and sending it, needs sending enabled",
+      "cta": "How to enable sending"
+    },
+    "upsell": {
+      "title": "Your messages are written and waiting",
+      "description": "Every message and call is already written and timed against your date. Enabling sending is what sets them going",
+      "cta": "Enable sending",
+      "learnMore": "What's included"
+    },
+    "empty": {
+      "noDate": {
+        "title": "Set an event date first",
+        "description": "Invitations, reminders and thank-yous are all timed against the day of the event, so the plan builds itself here as soon as there is a date",
+        "cta": "Add the event date"
+      },
+      "unsupported": {
+        "title": "No plan for this event type yet",
+        "description": "Suggested schedules haven't been set up for this event type"
+      }
     }
   },
   "newEventDialog": {
