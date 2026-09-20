@@ -7,8 +7,6 @@ export { SchedulesHeader } from './components/schedules-header';
 
 // Actions
 export {
-  createSchedulesFromSelection,
-  type CreateSchedulesFromSelectionState,
   executeSchedule,
   type ExecuteScheduleResult,
   sendWhatsAppTemplateMessage,

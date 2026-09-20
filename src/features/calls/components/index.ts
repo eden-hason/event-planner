@@ -1,6 +1,2 @@
-export { CallPlanCard } from './call-plan-card';
-export { CallRoundResultsCard } from './call-round-results-card';
-export {
-  CallRoundResultsTable,
-  type CallRoundResultsLabels,
-} from './call-round-results-table';
+export { CallProgressBar } from './call-progress-bar';
+export { CallRoundPane } from './call-round-pane';

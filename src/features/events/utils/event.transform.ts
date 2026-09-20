@@ -17,7 +17,7 @@ type GuestsExperienceDb = {
 // Type for event details update to DB
 type EventDetailsDbUpdate = {
   id: string;
-  event_date?: string;
+  event_date?: string | null;
   reception_time?: string | null;
   ceremony_time?: string | null;
   location?: Location | null;
@@ -36,7 +36,9 @@ export function eventDetailsUpdateToDb(
   };
 
   if (data.eventDate !== undefined) {
-    dbData.event_date = data.eventDate;
+    // An empty string is what a cleared date picker submits through FormData,
+    // and '' is not a timestamp - the column is nullable for exactly this.
+    dbData.event_date = data.eventDate || null;
   }
   if (data.receptionTime !== undefined) {
     dbData.reception_time = data.receptionTime || null;

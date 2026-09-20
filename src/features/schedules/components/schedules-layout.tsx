@@ -1,285 +1,195 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  IconBell,
-  IconCalendarEvent,
-  IconHeart,
-  IconMail,
-  IconPhone,
-  IconUserCheck,
-} from '@tabler/icons-react';
-import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Item,
-  ItemContent,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { useFeatureLayoutContext } from '@/components/feature-layout/feature-layout-context';
+import { ADMIN_TIME_ZONE } from '@/lib/date-time';
+import { Separator } from '@/components/ui/separator';
+import { useFeatureLayoutContext } from '@/components/feature-layout';
+import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-import { type ScheduleTypeKey } from '../schemas';
-import { type OutreachItem, type OutreachNavGroup } from '../types';
-import { formatRelativeTime } from '../utils';
+import type { OutreachItem } from '../types';
+import { ScheduleStatusChip } from './schedule-status-chip';
+import { ServiceNote } from './notice-banner';
+import { ScheduleTimeline } from './schedule-timeline';
+import { SchedulesUpsellBanner } from './schedules-upsell-banner';
 
-type ScheduleTypeIcon = React.ComponentType<{ size?: number | string; className?: string }>;
-
-const ACTION_TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
-  initial_invitation: IconMail,
-  confirmation: IconUserCheck,
-  event_reminder: IconBell,
-  post_event: IconHeart,
-  phone_call: IconPhone,
-};
-
-// Any schedule type outside the four known here (e.g. one added directly to
-// the schedule_types table) falls back to a generic icon rather than crashing.
-function getTypeIcon(type: string): ScheduleTypeIcon {
-  return (ACTION_TYPE_ICONS as Partial<Record<string, ScheduleTypeIcon>>)[type] ?? IconCalendarEvent;
-}
+/** The query parameter that addresses the open Schedule. */
+const PARAM = 'schedule';
 
 interface SchedulesLayoutProps {
-  navGroups: OutreachNavGroup[];
-  contentByType: Record<string, OutreachItem[]>;
+  items: OutreachItem[];
+  /** Whether this Event's whole plan is seeded but not yet enabled. */
+  locked: boolean;
+  /** Whether the Event type's set includes call rounds at all. */
+  hasCalls: boolean;
+  eventDate: string | null;
 }
 
-export function SchedulesLayout({ navGroups, contentByType }: SchedulesLayoutProps) {
+/**
+ * The schedules page: a timeline, and one Schedule open beside or over it.
+ *
+ * The open Schedule lives in `?schedule=<id>` rather than in component state.
+ * Below `md` the pane is the whole screen with a back arrow, and a fake back
+ * arrow is the reason: with the selection in `useState`, Android's hardware
+ * back button would leave the page entirely instead of returning to the
+ * timeline. In the URL, both back gestures do the obvious thing and a pane can
+ * be linked to.
+ *
+ * At `md` and up the timeline stays put and the pane renders beside it, so
+ * there is one information architecture at both sizes.
+ */
+export function SchedulesLayout({
+  items,
+  locked,
+  hasCalls,
+  eventDate,
+}: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
-  const [selectedType, setSelectedType] = useState<string>(
-    () => navGroups[0]?.types[0] ?? '',
-  );
-  const [selectedSubIndex, setSelectedSubIndex] = useState(0);
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
-  const activeItem =
-    (contentByType[selectedType] ?? [])[selectedSubIndex] ??
-    (contentByType[selectedType] ?? [])[0];
+  const openId = searchParams.get(PARAM);
+  // An id that no longer resolves (a stale link, a deleted Schedule) falls back
+  // to the timeline rather than to a blank pane.
+  const openItem = items.find((item) => item.id === openId) ?? null;
+  // The wide layout always has something in the pane; the narrow one shows the
+  // pane only when the organiser opened it.
+  const paneItem = openItem ?? items[0] ?? null;
 
+  // An open message is a full screen with its own Save at the bottom edge, so
+  // it takes over from the bottom nav. A call round has no Save - it is watched,
+  // not edited - and keeps the nav so the Owner can move on from it.
+  useHideBottomNav(openItem?.kind === 'message');
+
+  const summary = useMemo(() => {
+    if (locked) {
+      return t('header.lockedSummary', { count: items.length });
+    }
+    // A round being worked is the most current thing on the page, and "N sent,
+    // M scheduled" would not mention it at all.
+    const liveCall = items.find((item) => item.status === 'in_progress' && item.callProgress);
+    if (liveCall?.callProgress) {
+      const { total, awaiting } = liveCall.callProgress;
+      return t('header.callLive', {
+        label: liveCall.label,
+        handled: total - awaiting,
+        total,
+      });
+    }
+    const sent = items.filter((item) => item.status === 'sent').length;
+    const pending = items.filter((item) => item.status === 'pending').length;
+    return t('header.summary', { sent, pending });
+  }, [items, locked, t]);
+
+  const select = useCallback(
+    (id: string) => {
+      const next = new URLSearchParams(searchParams);
+      next.set(PARAM, id);
+      router.push(`${pathname}?${next}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const close = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(PARAM);
+    const query = next.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  // Below md an open Schedule is the whole screen, so the app header stops
+  // naming the page and names the Schedule instead - what it is, when, and how
+  // it stands - with the arrow back to the timeline. From md up the timeline
+  // stays beside the pane, so the header keeps naming the page and the pane
+  // carries its own title row.
+  const isMobile = useIsMobile();
+  const headerItem = isMobile ? openItem : null;
   useEffect(() => {
-    setHeader({
-      title: t('header.title'),
-    });
+    if (headerItem) {
+      setHeader({
+        title: headerItem.label,
+        subtitle: `${t(
+          headerItem.kind === 'call' ? 'kind.call' : 'kind.message',
+        )} · ${headerItem.whenDetailed}`,
+        action: <ScheduleStatusChip status={headerItem.status} size="md" />,
+        back: { label: t('detail.back'), onClick: close },
+      });
+    } else {
+      setHeader({ title: t('header.title'), subtitle: summary });
+    }
     return () => clearHeader();
-  }, [setHeader, clearHeader]);
+  }, [setHeader, clearHeader, t, summary, headerItem, close]);
 
-  // Flattened once and shared by both navs: the sidebar and the mobile picker
-  // are two renderings of the same list, so they must not drift apart.
-  const groups = navGroups.map((group) => ({
-    ...group,
-    items: group.types.flatMap((type) =>
-      (contentByType[type] ?? []).map((item, index) => ({ type, index, item })),
-    ),
-  }));
-
-  // The picker needs a single scalar value, but an entry is identified by the
-  // (type, index) pair - 'confirmation' can hold several schedules.
-  const toValue = (type: string, index: number) => `${type}::${index}`;
-  const selectValue = toValue(selectedType, selectedSubIndex);
-
-  const handleSelect = (value: string) => {
-    const separator = value.lastIndexOf('::');
-    setSelectedType(value.slice(0, separator));
-    setSelectedSubIndex(Number(value.slice(separator + 2)));
-  };
-
-  const ActiveIcon = getTypeIcon(selectedType);
+  const dayLabel = eventDate
+    ? t('timeline.eventDay', {
+        date: new Intl.DateTimeFormat(locale, {
+          timeZone: ADMIN_TIME_ZONE,
+          day: 'numeric',
+          month: 'short',
+        }).format(new Date(eventDate)),
+      })
+    : t('timeline.eventDayUndated');
 
   return (
-    // Below md the sidebar would leave the content pane too narrow to read, so
-    // the nav collapses into a picker above the content and the two panes stack.
-    <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-      {/* Mobile nav - the same entries as the sidebar, in a picker */}
-      <Select value={selectValue} onValueChange={handleSelect}>
-        {/* Below md the picker floats on the shell's gray - fill it so it reads
-            as an input, not a hole. */}
-        <SelectTrigger
-          className="w-full bg-background md:hidden"
-          aria-label={t('header.title')}
-        >
-          {/* One line only - the trigger clamps its value, so the status shows
-              as a bare dot here and spells itself out in the open list. */}
-          <SelectValue>
-            <span className="flex w-full min-w-0 items-center gap-2">
-              <ActiveIcon size={18} className="text-muted-foreground shrink-0" />
-              <span className="truncate font-medium">{activeItem?.label}</span>
-              {activeItem && <StatusDot status={activeItem.status} />}
-            </span>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {groups.map((group) => (
-            <SelectGroup key={group.key}>
-              <SelectLabel>{group.label}</SelectLabel>
-              {group.items.map(({ type, index, item }) => {
-                const Icon = getTypeIcon(type);
-
-                return (
-                  <SelectItem
-                    key={`${type}-${index}`}
-                    value={toValue(type, index)}
-                    textValue={item.label}
-                  >
-                    <Icon size={18} className="text-muted-foreground shrink-0" />
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate">{item.label}</span>
-                      <StatusRow item={item} />
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Left vertical menu - one list per kind of outreach */}
-      <nav
-        aria-label={t('header.title')}
-        className="hidden shrink-0 flex-col gap-6 md:flex md:w-52 lg:w-56"
+    <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+      {/* The timeline. Below md it yields the screen to an open pane. */}
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-4 md:w-80 md:shrink-0 lg:w-96',
+          openItem && 'hidden md:flex',
+        )}
       >
-        {groups.map((group) => (
-          <div key={group.key} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 px-2">
-              <h2 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                {group.label}
-              </h2>
-              <Badge variant="secondary" className="px-1.5 font-normal tabular-nums">
-                {group.items.length}
-              </Badge>
+        {locked && <SchedulesUpsellBanner />}
+
+        <ScheduleTimeline
+          items={items}
+          activeId={paneItem?.id ?? null}
+          onSelect={select}
+          dayLabel={dayLabel}
+        />
+
+        {hasCalls && (
+          <ServiceNote className="ms-10">{t('timeline.callsNote')}</ServiceNote>
+        )}
+      </div>
+
+      <Separator
+        orientation="vertical"
+        className="hidden h-auto self-stretch md:block"
+      />
+
+      {/* The open Schedule. Below md this is the whole screen. */}
+      <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
+        {paneItem && (
+          <div className="flex flex-col gap-4">
+            {/* Below md the app header says all of this (see above). */}
+            <div className="hidden items-center gap-2.5 md:flex">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-[17px] font-bold">
+                  {paneItem.label}
+                </span>
+                <span className="text-muted-foreground truncate text-xs">
+                  {t(
+                    paneItem.kind === 'call' ? 'kind.call' : 'kind.message',
+                  )}{' '}
+                  · {paneItem.whenDetailed}
+                </span>
+              </div>
+              <ScheduleStatusChip status={paneItem.status} size="md" />
             </div>
 
-            <ItemGroup className="gap-1">
-              {group.items.map(({ type, index, item }) => {
-                const Icon = getTypeIcon(type);
-                const isActive = selectedType === type && selectedSubIndex === index;
-
-                return (
-                  <Item
-                    key={`${type}-${index}`}
-                    asChild
-                    size="sm"
-                    className={cn(
-                      'w-full cursor-pointer text-start',
-                      isActive
-                        ? 'bg-background border-border shadow-xs'
-                        : 'hover:bg-background/60',
-                    )}
-                  >
-                    <button
-                      type="button"
-                      aria-current={isActive ? 'true' : undefined}
-                      onClick={() => {
-                        setSelectedType(type);
-                        setSelectedSubIndex(index);
-                      }}
-                    >
-                      <ItemMedia>
-                        <Icon
-                          size={18}
-                          className={cn(
-                            'shrink-0',
-                            isActive ? 'text-foreground' : 'text-muted-foreground',
-                          )}
-                        />
-                      </ItemMedia>
-                      <ItemContent className="gap-0.5">
-                        {/* Reuse the label already computed server-side (with the
-                            known/unknown-type fallback baked in) instead of
-                            recomputing it against the i18n catalog here. */}
-                        <ItemTitle className="w-full truncate">{item.label}</ItemTitle>
-                        <StatusRow item={item} />
-                      </ItemContent>
-                    </button>
-                  </Item>
-                );
-              })}
-            </ItemGroup>
+            {paneItem.details}
           </div>
-        ))}
-      </nav>
-
-      <Separator orientation="vertical" className="hidden h-auto self-stretch md:block" />
-
-      {/* Right content */}
-      <div className="min-w-0 flex-1">{activeItem?.details}</div>
+        )}
+      </div>
     </div>
-  );
-}
-
-// A message schedule is done when it is 'sent'; a call round when it is
-// 'completed'. Both read as a green dot - the distinction that matters in the
-// nav is done / in flight / abandoned, not which kind produced it.
-//
-// 'expired' reads as abandoned rather than as a failure: nothing went wrong
-// with the message, its moment simply passed (ADR 0015). It shares the muted
-// dot with 'cancelled' because the outcome for the guest is the same - no
-// message - and the difference is in why, which the label carries.
-const STATUS_DOT: Record<OutreachItem['status'], string> = {
-  sent: 'bg-success',
-  completed: 'bg-success',
-  pending: 'bg-warning',
-  in_progress: 'bg-warning',
-  cancelled: 'bg-muted-foreground/40',
-  expired: 'bg-muted-foreground/40',
-};
-
-const STATUS_LABEL_KEY: Record<OutreachItem['status'], string> = {
-  sent: 'status.label.sent',
-  completed: 'status.label.completed',
-  pending: 'status.label.pending',
-  in_progress: 'status.label.inProgress',
-  cancelled: 'status.label.cancelled',
-  expired: 'status.label.expired',
-};
-
-function StatusDot({ status }: { status: OutreachItem['status'] }) {
-  return (
-    <span
-      className={cn('inline-block size-1.5 shrink-0 rounded-full', STATUS_DOT[status])}
-    />
-  );
-}
-
-function StatusRow({ item }: { item: OutreachItem }) {
-  const t = useTranslations('schedules');
-
-  function formatTime(str: string): string {
-    const result = formatRelativeTime(str);
-    if (result.type === 'justNow') return t('relativeTime.justNow');
-    const time = t(`relativeTime.units.${result.unit}`, { count: result.count });
-    if (result.type === 'past') return t('relativeTime.past', { time });
-    return t('relativeTime.future', { time });
-  }
-
-  return (
-    // Carries the item-description slot so Item top-aligns the icon beside the
-    // two-line label, the same way a real ItemDescription would.
-    <span
-      data-slot="item-description"
-      className="text-muted-foreground flex items-center gap-1.5 text-xs"
-    >
-      <StatusDot status={item.status} />
-      {t(STATUS_LABEL_KEY[item.status] as 'status.label.sent')}
-      {item.timestamp && (
-        <>
-          <span>·</span>
-          {formatTime(item.timestamp)}
-        </>
-      )}
-    </span>
   );
 }

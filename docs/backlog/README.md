@@ -38,3 +38,8 @@ in the diff, not here.
 | [0004](0004-drop-guests-meal-choice.md) | Drop the superseded guests.meal_choice column | guests | open |
 | [0005](0005-tag-outbound-whatsapp-for-status-correlation.md) | WhatsApp statuses are matched by searching, not by a tag | schedules / outreach | done |
 | [0006](0006-partner-commission-on-refund.md) | A refunded Event leaves its Partner Commission standing | partners / billing | open |
+| [0007](0007-send-to-guests-added-after-a-send.md) | A guest added after a Schedule went out never receives it | schedules / outreach | open |
+| [0008](0008-changing-the-event-date-strands-the-plan.md) | Changing the Event date leaves the whole outreach plan behind | schedules / events | open |
+| [0009](0009-set-schedule-sent-at-never-fires.md) | The trigger that stamps `schedules.sent_at` never fires | schedules / database | open |
+| [0010](0010-no-way-to-turn-a-schedule-off.md) | There is no way to turn a Schedule off | schedules / outreach | open |
+| [0011](0011-owner-cannot-reschedule-a-call-round.md) | The Owner cannot reschedule a call round | schedules / calls | open |

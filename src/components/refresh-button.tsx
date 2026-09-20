@@ -13,20 +13,31 @@ import { cn } from '@/lib/utils';
  * (schedule interactions, call round outcomes) can drop this in with its own
  * accessible label.
  */
-export function RefreshButton({ label }: { label: string }) {
+export function RefreshButton({
+  label,
+  withLabel = false,
+}: {
+  label: string;
+  /** Show the label beside the icon, as a bordered button, rather than the bare icon. */
+  withLabel?: boolean;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground hover:text-foreground h-7 w-7"
+      variant={withLabel ? 'outline' : 'ghost'}
+      size={withLabel ? 'sm' : 'icon'}
+      className={cn(
+        'text-muted-foreground hover:text-foreground',
+        withLabel ? 'h-[34px] gap-1.5 rounded-[10px] px-3 text-[12.5px] font-semibold' : 'h-7 w-7',
+      )}
       onClick={() => startTransition(() => router.refresh())}
       disabled={isPending}
-      aria-label={label}
+      aria-label={withLabel ? undefined : label}
     >
       <IconRefresh size={15} className={cn(isPending && 'animate-spin')} />
+      {withLabel && label}
     </Button>
   );
 }

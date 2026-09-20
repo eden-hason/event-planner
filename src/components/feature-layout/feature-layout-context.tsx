@@ -13,14 +13,22 @@ interface FeatureLayoutContextType {
   title: string;
   subtitle: ReactNode | null;
   action: ReactNode | null;
+  back: FeatureHeaderBack | null;
   setHeader: (config: FeatureHeaderConfig) => void;
   clearHeader: () => void;
+}
+
+/** A back arrow at the start of the header, for a page that opens a view over itself. */
+interface FeatureHeaderBack {
+  label: string;
+  onClick: () => void;
 }
 
 interface FeatureHeaderConfig {
   title: string;
   subtitle?: ReactNode;
   action?: ReactNode;
+  back?: FeatureHeaderBack;
 }
 
 const FeatureLayoutContext = createContext<FeatureLayoutContextType | null>(
@@ -31,22 +39,25 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState<ReactNode | null>(null);
   const [action, setAction] = useState<ReactNode | null>(null);
+  const [back, setBack] = useState<FeatureHeaderBack | null>(null);
 
   const setHeader = useCallback((config: FeatureHeaderConfig) => {
     setTitle(config.title);
     setSubtitle(config.subtitle ?? null);
     setAction(config.action ?? null);
+    setBack(config.back ?? null);
   }, []);
 
   const clearHeader = useCallback(() => {
     setTitle('');
     setSubtitle(null);
     setAction(null);
+    setBack(null);
   }, []);
 
   return (
     <FeatureLayoutContext.Provider
-      value={{ title, subtitle, action, setHeader, clearHeader }}
+      value={{ title, subtitle, action, back, setHeader, clearHeader }}
     >
       {children}
     </FeatureLayoutContext.Provider>

@@ -1,21 +1,24 @@
 import { getTranslations } from 'next-intl/server';
-import { IconUsers, IconUserCheck, IconClock } from '@tabler/icons-react';
+import { IconUsers, IconUserCheck } from '@tabler/icons-react';
 
-import { cn } from '@/lib/utils';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { rsvpPresentation } from '@/features/guests';
+import { SettingsCard } from './settings-card';
 
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
   disabled?: boolean;
+  /**
+   * How many guest records that audience holds right now. A targeted audience
+   * is re-evaluated on the day of the send, so this is what it would be if the
+   * message went out today - which is the number worth showing beside it.
+   */
+  count?: number | null;
 }
 
-export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudienceCardProps) {
+export async function TargetAudienceCard({
+  targetStatus,
+  disabled,
+  count,
+}: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
 
   const audienceLabel =
@@ -25,40 +28,31 @@ export async function TargetAudienceCard({ targetStatus, disabled }: TargetAudie
         ? t('pendingGuests')
         : t('allGuests');
 
-  const AudienceIcon =
-    targetStatus === 'confirmed' ? IconUserCheck : targetStatus === 'pending' ? IconClock : IconUsers;
-
-  // 'all' is not an RSVP answer, so it is the one case the module does not own.
-  const statusClass =
-    targetStatus === 'confirmed' || targetStatus === 'pending'
-      ? rsvpPresentation(targetStatus).chip
-      : 'bg-primary/10 text-primary';
+  const AudienceIcon = targetStatus === 'confirmed' ? IconUserCheck : IconUsers;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconUsers size={16} className="text-primary" />
-          </div>
-          {t('cardTitle')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {disabled ? (
-          <p className="text-xs text-muted-foreground">{t('disabledNote')}</p>
-        ) : (
-          <div
-            className={cn(
-              'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-fit',
-              statusClass,
-            )}
+    <SettingsCard title={t('cardTitle')}>
+      {disabled ? (
+        <p className="text-muted-foreground text-xs">{t('disabledNote')}</p>
+      ) : (
+        <div className="bg-muted/60 flex items-center gap-3 rounded-xl p-3">
+          <span
+            aria-hidden
+            className="bg-violet-tint text-violet-strong flex size-[38px] shrink-0 items-center justify-center rounded-[10px]"
           >
-            <AudienceIcon size={16} />
-            {audienceLabel}
+            <AudienceIcon size={18} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[14.5px] font-semibold">{audienceLabel}</span>
+            {targetStatus && (
+              <span className="text-muted-foreground text-xs">{t('recomputedNote')}</span>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          {count != null && (
+            <span className="text-xl font-extrabold tabular-nums">{count}</span>
+          )}
+        </div>
+      )}
+    </SettingsCard>
   );
 }

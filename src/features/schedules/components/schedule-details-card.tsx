@@ -1,20 +1,12 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
-import { toast } from 'sonner';
-import { useTranslations, useLocale } from 'next-intl';
-import { IconCalendarClock, IconCalendarEvent, IconClock } from '@tabler/icons-react';
+import { useMemo } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -23,99 +15,78 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { updateScheduledDate } from '../actions';
-import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
-import type { ScheduleApp } from '../schemas';
+import {
+  offsetDays as offsetDaysFrom,
+  offsetPhrase,
+  sendWindowHours,
+} from '../utils/timeline';
+import { SettingsCard } from './settings-card';
+import { useScheduleSettings } from './schedule-settings-context';
 
 /** Used when a schedule has no time yet - the middle of the send window. */
 const DEFAULT_SEND_TIME = '10:00';
 
 interface ScheduleDetailsCardProps {
-  schedule: ScheduleApp | undefined;
   eventDate: string | null;
+  /**
+   * The Send Window, read server-side from `sendingConfig()`.
+   *
+   * The picker offers whole hours inside it because the window is evaluated at
+   * dispatch, not at authoring: a Due Time outside it is held until the window
+   * opens (utils/send-window.ts). Offering 08:00 would let the organiser set a
+   * time, see it on the card forever, and have the message arrive at 09:00 with
+   * nothing saying why. Passed in rather than imported so there is one window,
+   * the one the Dispatcher actually uses, and not a second copy here.
+   */
+  sendWindow: { start: string; end: string };
+  /** Rendered server-side and passed in - see ScheduleLockBadge. */
+  lockBadge?: React.ReactNode;
 }
 
-/**
- * Computes the number of days between two dates (eventDate - scheduledDate),
- * ignoring time components.
- */
-function computeDaysBefore(eventDate: string, scheduledDate: string): number {
-  const event = new Date(eventDate);
-  const scheduled = new Date(scheduledDate);
-  // Use UTC dates to avoid timezone issues
-  const eventDay = Date.UTC(event.getFullYear(), event.getMonth(), event.getDate());
-  const scheduledDay = Date.UTC(
-    scheduled.getFullYear(),
-    scheduled.getMonth(),
-    scheduled.getDate(),
-  );
-  return Math.round((eventDay - scheduledDay) / (1000 * 60 * 60 * 24));
-}
-
+/** When the message goes out: a date and a whole hour inside the Send Window. */
 export function ScheduleDetailsCard({
-  schedule,
   eventDate,
+  sendWindow,
+  lockBadge,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
   const locale = useLocale();
-  const [isSaving, startSaveTransition] = useTransition();
+  const hours = useMemo(() => sendWindowHours(sendWindow), [sendWindow]);
+  const { editable, scheduledDate, setScheduledDate, scheduledTime, setScheduledTime, isSaving } =
+    useScheduleSettings();
+  const disabled = !editable || isSaving;
 
-  const [savedDate, setSavedDate] = useState(schedule?.scheduledDate ?? '');
-  const [scheduledDate, setScheduledDate] = useState(schedule?.scheduledDate ?? '');
-
-  // Read back out of the Due Time rather than stored beside it: there is one
-  // instant now, and the clock face is a view of it (ADR 0015).
-  const [scheduledTime, setScheduledTime] = useState(() =>
-    schedule?.scheduledDate ? israelWallClockParts(schedule.scheduledDate).time : '',
+  const relative = useMemo(
+    () => offsetPhrase(scheduledDate ? offsetDaysFrom(eventDate, scheduledDate) : null),
+    [eventDate, scheduledDate],
   );
 
-  const daysBeforeEvent = useMemo(() => {
-    if (!eventDate || !scheduledDate) return 0;
-    return computeDaysBefore(eventDate, scheduledDate);
-  }, [eventDate, scheduledDate]);
-
-  const resolvedDateDisplay = useMemo(() => {
-    if (!scheduledDate) return '';
-    return new Date(scheduledDate).toLocaleDateString(locale, {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  // The Israel calendar day of the Due Time, as a Date the picker can show.
+  // Built from the wall-clock parts rather than from `new Date(iso)` so a Due
+  // Time just after midnight Israel is not shown as the previous day.
+  const pickerDate = useMemo(() => {
+    if (!scheduledDate) return undefined;
+    const { date } = israelWallClockParts(scheduledDate);
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }, [scheduledDate]);
-
-  // Dispatched counts as locked. The messages are rendered and queued by then,
-  // so moving the Due Time would change nothing except what the page claims -
-  // and a Schedule is no longer marked 'sent' as a unit (ADR 0013), which makes
-  // dispatched_at the fact to read.
-  const isLocked =
-    schedule?.status === 'sent' ||
-    schedule?.status === 'cancelled' ||
-    schedule?.status === 'expired' ||
-    schedule?.dispatchedAt != null;
-  const isDirty = !isLocked && scheduledDate !== savedDate;
 
   // Both handlers rebuild the instant from an Israel calendar date and an
   // Israel wall clock, which is the only way to author a Due Time. Setting UTC
   // hours here is what made "10:00" mean 13:00 in Israel on every schedule this
   // card ever saved.
-  const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseInt(e.target.value, 10);
-    if (isNaN(parsed) || !eventDate) return;
-
-    const event = new Date(eventDate);
-    const newDay = new Date(event);
-    newDay.setUTCDate(event.getUTCDate() - parsed);
-
-    const iso = israelWallClockToIso(
-      newDay.toISOString().slice(0, 10),
-      scheduledTime || DEFAULT_SEND_TIME,
-    );
+  const handleDateChange = (next: Date | undefined) => {
+    if (!next) return;
+    const day = [
+      next.getFullYear(),
+      String(next.getMonth() + 1).padStart(2, '0'),
+      String(next.getDate()).padStart(2, '0'),
+    ].join('-');
+    const iso = israelWallClockToIso(day, scheduledTime || DEFAULT_SEND_TIME);
     if (iso) setScheduledDate(iso);
   };
 
   const handleTimeChange = (value: string) => {
-    // The card returns null without an event date, so the last fallback is
-    // unreachable; it is here because this runs before that guard.
     const day = israelWallClockParts(scheduledDate || eventDate || new Date().toISOString()).date;
     const iso = israelWallClockToIso(day, value);
     if (!iso) return;
@@ -123,106 +94,78 @@ export function ScheduleDetailsCard({
     setScheduledTime(value);
   };
 
-  const handleSave = () => {
-    if (!schedule || !isDirty) return;
+  if (!scheduledDate || !eventDate) return null;
 
-    startSaveTransition(async () => {
-      const promise = updateScheduledDate(schedule.id, scheduledDate).then((result) => {
-        if (!result.success)
-          throw new Error(result.message ?? 'Failed to update scheduled date.');
-        return result;
-      });
-
-      toast.promise(promise, {
-        loading: t('toast.updating'),
-        success: () => t('toast.updated'),
-        error: (err) => (err instanceof Error ? err.message : t('toast.error')),
-      });
-
-      try {
-        await promise;
-        setSavedDate(scheduledDate);
-      } catch {
-        // error toast handled above
-      }
-    });
-  };
-
-  if (!schedule || !eventDate) return null;
+  const relativeNote = relative ? t(`relative.${relative.key}`, { count: relative.count }) : null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <IconCalendarClock size={16} className="text-primary" />
-          </div>
-          {t('cardTitle')}
-        </CardTitle>
-        <CardAction className={isDirty ? undefined : 'invisible'}>
-          <Button onClick={handleSave} disabled={isSaving || !isDirty} size="sm">
-            {isSaving ? t('saving') : t('save')}
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <Label className="text-xs text-muted-foreground tracking-wide">
-                {t('daysBeforeEvent')}
-              </Label>
-              <div className="relative mt-1">
-                <Input
-                  type="number"
-                  value={daysBeforeEvent}
-                  onChange={handleDaysChange}
-                  className="pr-12 rtl:pr-3 rtl:pl-12"
-                  disabled={isSaving || isLocked}
-                />
-                <span className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                  {t('days')}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{t('daysHelper')}</p>
-            </div>
-
-            <div>
-              <Label className="text-xs text-muted-foreground tracking-wide">
-                {t('scheduledDate')}
-              </Label>
-              <div className="bg-muted/50 mt-1 flex min-w-0 items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                <IconCalendarEvent size={16} className="text-muted-foreground shrink-0" />
-                <span className="truncate">{resolvedDateDisplay}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{t('scheduledDateHelper')}</p>
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground tracking-wide">
-              {t('scheduledTime')}
-            </Label>
-            <Select
-              value={scheduledTime}
-              onValueChange={handleTimeChange}
-              disabled={isSaving || isLocked}
-            >
-              <SelectTrigger className="mt-1 w-full">
-                <IconClock size={16} className="text-muted-foreground shrink-0" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10:00">10:00</SelectItem>
-                <SelectItem value="14:00">14:00</SelectItem>
-                <SelectItem value="18:00">18:00</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">{t('scheduledTimeHelper')}</p>
+    <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
+      <div className="grid grid-cols-[1.4fr_1fr] gap-2">
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-muted-foreground text-xs font-normal">{t('scheduledDate')}</Label>
+          <div
+            className={cn(
+              '[&_button]:h-[46px] [&_button]:rounded-[11px] [&_button]:text-[14.5px] [&_button]:font-semibold',
+              '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
+              !editable && '[&_button]:bg-muted/60',
+            )}
+          >
+            <DatePicker
+              date={pickerDate}
+              onDateChange={handleDateChange}
+              disabled={disabled}
+              placeholder={t('scheduledDate')}
+            />
           </div>
         </div>
-      </CardContent>
 
-    </Card>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-muted-foreground text-xs font-normal">{t('scheduledTime')}</Label>
+          <Select
+            value={scheduledTime}
+            onValueChange={handleTimeChange}
+            disabled={disabled}
+            // Radix infers direction from the DOM on the client and not on
+            // the server, which hydrates an RTL page with a mismatched
+            // trigger. Stating it fixes both renders to the same value.
+            dir={locale === 'he' ? 'rtl' : 'ltr'}
+          >
+            <SelectTrigger
+              className={cn(
+                // `data-[size=default]:h-9` on the trigger outranks a plain `h-*`, so the
+                // height has to be stated against the same variant.
+                'data-[size=default]:h-[46px] w-full rounded-[11px] text-[14.5px] font-semibold',
+                'disabled:opacity-100',
+                !editable && 'bg-muted/60',
+              )}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {hours.map((hour) => (
+                <SelectItem key={hour} value={hour}>
+                  {hour}
+                </SelectItem>
+              ))}
+              {/* A Due Time authored before this card restricted the hours,
+                  or under a wider window, would otherwise vanish from its
+                  own select. */}
+              {scheduledTime && !hours.includes(scheduledTime) && (
+                <SelectItem value={scheduledTime}>{scheduledTime}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <p className="text-muted-foreground text-xs">
+        {relativeNote}
+        {relativeNote ? ' · ' : ''}
+        {t('sendWindowHelper', {
+          start: hours[0] ?? sendWindow.start,
+          end: hours.at(-1) ?? sendWindow.start,
+        })}
+      </p>
+    </SettingsCard>
   );
 }

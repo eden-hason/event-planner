@@ -3,10 +3,11 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useActionState, startTransition } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { CalendarDays, X } from 'lucide-react';
+import { DatePicker } from '@/components/ui/date-picker';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
@@ -30,22 +31,24 @@ import { EventType } from '../../utils/event-types';
 
 const DateTimeCardSchema = EventDetailsUpdateSchema.pick({
   id: true,
+  eventDate: true,
   receptionTime: true,
   ceremonyTime: true,
 });
 type DateTimeCardValues = z.infer<typeof DateTimeCardSchema>;
 
-function formatEventDate(
-  dateStr: string | null | undefined,
-  locale: string,
-): string {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString(locale, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+/**
+ * The calendar day the picker shows, pinned at 00:00 UTC.
+ *
+ * `events.event_date` is a calendar date, not an instant, and the whole
+ * codebase reads its day in UTC - the outreach seed included. The picker hands
+ * back local midnight, so `toISOString()` would shift east-of-UTC dates into
+ * the previous day and silently move every schedule derived from it.
+ */
+function toUtcCalendarDate(date: Date): string {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  ).toISOString();
 }
 
 interface DateTimeCardProps {
@@ -56,12 +59,12 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
   const t = useTranslations('eventDetails.dateTime');
   const tHeader = useTranslations('eventDetails.header');
   const tToast = useTranslations('eventDetails.toast');
-  const locale = useLocale();
 
   const form = useForm<DateTimeCardValues>({
     resolver: zodResolver(DateTimeCardSchema),
     defaultValues: {
       id: event.id,
+      eventDate: event.eventDate || '',
       receptionTime: event.receptionTime || '',
       ceremonyTime: event.ceremonyTime || '',
     },
@@ -133,9 +136,35 @@ export function DateTimeCard({ event }: DateTimeCardProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary/5 px-4 py-3 ring-1 ring-primary/10">
-              <div className="flex items-center gap-2.5">
-                <span className="text-sm font-semibold">{formatEventDate(event.eventDate, locale)}</span>
-              </div>
+              {/*
+                The date was read-only here for a long time, settable only
+                during onboarding - so an event that skipped that screen had no
+                way to acquire one, and nothing downstream of the date (the
+                whole outreach plan, which is seeded from it) could ever exist.
+              */}
+              <FormField
+                control={form.control}
+                name="eventDate"
+                render={({ field }) => (
+                  <FormItem className="min-w-52 flex-1">
+                    <FormControl>
+                      <DatePicker
+                        date={field.value ? new Date(field.value) : undefined}
+                        // Deliberately ignores a cleared selection. A Schedule's
+                        // Due Time is computed from this date once and never
+                        // recomputed, so clearing it would leave the whole
+                        // seeded plan pointing at a date the Event no longer
+                        // has - see docs/backlog/0008.
+                        onDateChange={(next) => {
+                          if (next) field.onChange(toUtcCalendarDate(next));
+                        }}
+                        placeholder={t('date')}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {typeLabel ? (
                 <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium">
                   {typeLabel}

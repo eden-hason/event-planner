@@ -6,6 +6,7 @@ import type {
   CallRoundResults,
   CallRoundSummary,
 } from '../types';
+import { peopleByOutcome } from '../utils/round-results';
 
 type LogOutcomeRow = { round_id: string; outcome: CallOutcome | null };
 
@@ -119,7 +120,7 @@ export async function getCallRoundResults(
 
   const { data, error } = await supabase
     .from('call_logs')
-    .select('guest_id, outcome, notes, guests!inner(name, rsvp_status, amount)')
+    .select('guest_id, outcome, notes, updated_at, guests!inner(name, rsvp_status, amount)')
     .eq('round_id', roundId);
 
   const empty: CallRoundResults = {
@@ -130,8 +131,9 @@ export async function getCallRoundResults(
       declined: 0,
       noAnswer: 0,
       willUpdate: 0,
-      confirmedGuests: 0,
     },
+    people: { confirmed: 0, declined: 0, noAnswer: 0, willUpdate: 0, awaiting: 0 },
+    lastUpdatedAt: null,
     guests: [],
   };
 
@@ -170,9 +172,20 @@ export async function getCallRoundResults(
   // Headcount comes from the guest record rather than the log: a call round
   // records an outcome, not a number of seats, so guests.amount - which
   // recordCallOutcome writes on confirm - is the only place it lives.
-  const confirmedGuests = guests
-    .filter((g) => g.outcome === 'confirmed')
-    .reduce((sum, g) => sum + g.amount, 0);
+  //
+  // `updated_at` moves when an outcome or a remark is recorded, and a log row
+  // that has never been touched still carries its creation time, so only the
+  // rows that have an outcome say anything about freshness.
+  const lastUpdatedAt = data
+    .filter((log) => log.outcome)
+    .map((log) => log.updated_at as string)
+    .sort()
+    .at(-1) ?? null;
 
-  return { summary: { ...summarise(guests), confirmedGuests }, guests };
+  return {
+    summary: summarise(guests),
+    people: peopleByOutcome(guests),
+    lastUpdatedAt,
+    guests,
+  };
 }

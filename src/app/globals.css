@@ -44,6 +44,17 @@
   --color-rsvp-declined-strong: var(--rsvp-declined-strong);
   --color-rsvp-pending-tint: var(--rsvp-pending-tint);
   --color-rsvp-pending-strong: var(--rsvp-pending-strong);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-tint-border: var(--warning-tint-border);
+  --color-warning-solid: var(--warning-solid);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-strong: var(--warning-strong);
+  --color-violet-tint: var(--violet-tint);
+  --color-violet-strong: var(--violet-strong);
+  --color-info-tint: var(--info-tint);
+  --color-info-tint-border: var(--info-tint-border);
+  --color-info-solid: var(--info-solid);
+  --color-info-strong: var(--info-strong);
   --color-outcome-will-update: var(--outcome-will-update);
   --color-outcome-will-update-tint: var(--outcome-will-update-tint);
   --color-outcome-will-update-strong: var(--outcome-will-update-strong);
@@ -105,6 +116,36 @@
   --rsvp-declined-strong: oklch(0.444 0.177 26.899);
   --rsvp-pending-tint: oklch(0.962 0.059 95.617);
   --rsvp-pending-strong: oklch(0.473 0.137 46.201);
+  /*
+   * The amber of a locked Schedule, lifted from the Schedules design so a plan
+   * that is written but not yet enabled reads the same everywhere it appears:
+   * tint and border for the surface, solid for the icon chip, strong for text
+   * on the tint, ink for the smaller chip text (tint #FBF0CF, border #F2D889,
+   * solid #F2B21B, ink #A8730A, strong #7A5306).
+   */
+  --warning-tint: oklch(0.955 0.045 92);
+  --warning-tint-border: oklch(0.887 0.103 92);
+  --warning-solid: oklch(0.802 0.161 82);
+  --warning-ink: oklch(0.596 0.123 76);
+  --warning-strong: oklch(0.473 0.097 77);
+  /*
+   * The violet of a Schedule that is timed and waiting, lifted from the
+   * Schedules design (tint #E8E4F9, strong #5B47B8). A tint and a strong to
+   * pair, like the RSVP tokens: strong clears 4.5:1 on the tint.
+   */
+  --violet-tint: oklch(0.928 0.029 295);
+  --violet-strong: oklch(0.483 0.171 286);
+  /*
+   * The blue of a call round being worked and of the notes that explain the
+   * service, lifted from the Call Rounds design (tint #E8F1FB, border
+   * #CFE0F2, solid #3B82C4, strong #1C5FA0). Strong clears 4.5:1 on the tint.
+   * Not the 'will update' outcome blue below: that one colours a guest's
+   * answer, this one colours a state of the round.
+   */
+  --info-tint: oklch(0.954 0.017 251);
+  --info-tint-border: oklch(0.899 0.031 250);
+  --info-solid: oklch(0.592 0.124 249);
+  --info-strong: oklch(0.479 0.123 252);
   /*
    * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
    * because the RSVP trio has no word for it: amber already means "we could not
@@ -182,6 +223,21 @@
   --rsvp-declined-strong: oklch(0.808 0.114 19.571);
   --rsvp-pending-tint: oklch(0.29 0.06 75);
   --rsvp-pending-strong: oklch(0.879 0.169 91.605);
+  /* The design has no dark amber; these keep its hue and lift it the way the
+     RSVP tokens above are lifted. */
+  --warning-tint: oklch(0.29 0.05 85);
+  --warning-tint-border: oklch(0.42 0.08 85);
+  --warning-solid: oklch(0.802 0.161 82);
+  --warning-ink: oklch(0.82 0.13 85);
+  --warning-strong: oklch(0.89 0.1 85);
+  /* No dark violet in the design; same hue, lifted like the tokens around it. */
+  --violet-tint: oklch(0.29 0.06 285);
+  --violet-strong: oklch(0.82 0.11 285);
+  /* No dark blue in the design; same hue, lifted like the tokens around it. */
+  --info-tint: oklch(0.29 0.05 250);
+  --info-tint-border: oklch(0.42 0.08 250);
+  --info-solid: oklch(0.65 0.13 249);
+  --info-strong: oklch(0.8 0.1 250);
   --outcome-will-update: oklch(0.75 0.15 237.323);
   --outcome-will-update-tint: oklch(0.28 0.06 240);
   --outcome-will-update-strong: oklch(0.828 0.111 230.318);
@@ -261,6 +317,36 @@
   --rsvp-declined-strong: oklch(0.444 0.177 26.899);
   --rsvp-pending-tint: oklch(0.962 0.059 95.617);
   --rsvp-pending-strong: oklch(0.473 0.137 46.201);
+  /*
+   * The amber of a locked Schedule, lifted from the Schedules design so a plan
+   * that is written but not yet enabled reads the same everywhere it appears:
+   * tint and border for the surface, solid for the icon chip, strong for text
+   * on the tint, ink for the smaller chip text (tint #FBF0CF, border #F2D889,
+   * solid #F2B21B, ink #A8730A, strong #7A5306).
+   */
+  --warning-tint: oklch(0.955 0.045 92);
+  --warning-tint-border: oklch(0.887 0.103 92);
+  --warning-solid: oklch(0.802 0.161 82);
+  --warning-ink: oklch(0.596 0.123 76);
+  --warning-strong: oklch(0.473 0.097 77);
+  /*
+   * The violet of a Schedule that is timed and waiting, lifted from the
+   * Schedules design (tint #E8E4F9, strong #5B47B8). A tint and a strong to
+   * pair, like the RSVP tokens: strong clears 4.5:1 on the tint.
+   */
+  --violet-tint: oklch(0.928 0.029 295);
+  --violet-strong: oklch(0.483 0.171 286);
+  /*
+   * The blue of a call round being worked and of the notes that explain the
+   * service, lifted from the Call Rounds design (tint #E8F1FB, border
+   * #CFE0F2, solid #3B82C4, strong #1C5FA0). Strong clears 4.5:1 on the tint.
+   * Not the 'will update' outcome blue below: that one colours a guest's
+   * answer, this one colours a state of the round.
+   */
+  --info-tint: oklch(0.954 0.017 251);
+  --info-tint-border: oklch(0.899 0.031 250);
+  --info-solid: oklch(0.592 0.124 249);
+  --info-strong: oklch(0.479 0.123 252);
   /*
    * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
    * because the RSVP trio has no word for it: amber already means "we could not

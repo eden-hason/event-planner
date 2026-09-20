@@ -41,7 +41,7 @@
     "eventDetails": "Event Details",
     "guests": "Guests",
     "seating": "Seating",
-    "schedules": "Schedules",
+    "schedules": "Messages",
     "gifting": "Digital Gifting",
     "collaboration": "Collaboration",
     "settings": "Settings",
@@ -1256,11 +1256,10 @@
   },
   "schedules": {
     "header": {
-      "title": "Schedules"
-    },
-    "nav": {
-      "messages": "Messages",
-      "calls": "Phone Calls"
+      "title": "Messages & calls",
+      "summary": "{sent} sent · {pending} scheduled",
+      "lockedSummary": "{count} schedules ready · none active",
+      "callLive": "{label} is being called now · {handled} of {total} handled"
     },
     "channel": {
       "whatsapp": "WhatsApp",
@@ -1304,64 +1303,45 @@
       "filterAll": "Show all"
     },
     "status": {
-      "cardTitle": "Status",
       "label": {
         "sent": "Sent",
-        "pending": "Pending",
-        "cancelled": "Cancelled",
+        "pending": "Scheduled",
+        "cancelled": "Off",
         "expired": "Expired",
         "inProgress": "In progress",
-        "completed": "Completed"
-      },
-      "description": {
-        "sent": "Messages have been sent to eligible guests.",
-        "pending": "Messages will be sent on the scheduled date.",
-        "cancelled": "This schedule has been cancelled.",
-        "expired": "This schedule was not sent in time and will not send now."
-      },
-      "toggle": {
-        "enabled": "Active",
-        "enabledDescription": "Messages will be sent on the scheduled date.",
-        "disabled": "Disabled",
-        "disabledDescription": "This schedule is disabled and won't send."
-      },
-      "toast": {
-        "updating": "Updating schedule...",
-        "enabled": "Schedule enabled",
-        "disabled": "Schedule disabled",
-        "error": "Something went wrong"
+        "completed": "Finished",
+        "locked": "Locked",
+        "disabled": "Locked"
       }
     },
     "timing": {
-      "cardTitle": "Schedule Timing",
-      "save": "Save",
-      "saving": "Saving...",
+      "cardTitle": "When it's sent",
       "daysBeforeEvent": "Days before event",
       "days": "days",
       "daysHelper": "How many days before the event to send",
-      "scheduledDate": "Scheduled date",
+      "scheduledDate": "Date",
       "scheduledDateHelper": "Calculated automatically from the event date",
-      "scheduledTime": "Send time",
+      "scheduledTime": "Time",
       "scheduledTimeHelper": "The time this message goes out on the scheduled day",
-      "toast": {
-        "updating": "Updating scheduled date...",
-        "updated": "Scheduled date updated",
-        "failed": "Failed to update scheduled date",
-        "error": "Something went wrong"
+      "sendWindowHelper": "Messages go out between {start} and {end}",
+      "relative": {
+        "dayOf": "On the day of the event",
+        "before": "{count, plural, one {1 day before the event} other {# days before the event}}",
+        "after": "{count, plural, one {1 day after the event} other {# days after the event}}"
       }
     },
     "audience": {
-      "cardTitle": "Target Audience",
+      "cardTitle": "Who it's sent to",
       "disabledNote": "This schedule is disabled - no guests will receive this message",
       "allGuests": "All Guests",
-      "confirmedGuests": "Confirmed Guests",
-      "pendingGuests": "Pending Guests",
+      "confirmedGuests": "Confirmed",
+      "pendingGuests": "Not yet answered",
       "sentTo": "Sent to",
-      "calling": "Calling"
+      "calling": "Calling",
+      "recomputedNote": "Recalculated automatically on the day of the send"
     },
     "messagePreview": {
       "cardTitle": "Message Preview",
-      "cardDescription": "The message guests will receive for this schedule.",
       "noMessage": "No message configured yet.",
       "imagePlaceholder": "Image",
       "button": "Button {index}",
@@ -1375,17 +1355,8 @@
         "description": "{withoutTable} of {total} guests have no table yet. They will get the version of the message without a table number.",
         "link": "Seating"
       },
-      "customNote": {
-        "label": "Custom note (optional)",
-        "placeholder": "Add a note to include in this message",
-        "save": "Save",
-        "saving": "Saving...",
-        "toast": {
-          "updating": "Updating note...",
-          "updated": "Note updated",
-          "error": "Something went wrong"
-        }
-      }
+      "hint": "How it looks to your guest",
+      "business": "Business"
     },
     "sendDialog": {
       "sendNow": "Send Now",
@@ -1402,46 +1373,6 @@
         "queued": "Sending to {count, plural, one {# guest} other {# guests}}",
         "held": "Queued - it will send when the sending window opens",
         "failed": "Failed to send"
-      }
-    },
-    "setupWizard": {
-      "emptyTitle": "Plan your guest communication timeline",
-      "emptyDescription": "Schedules send invitations, RSVP reminders, and thank-you messages to your guests automatically - set up your timeline to get started",
-      "emptyCta": "Set up schedules",
-      "emptyUnsupported": "Schedule suggestions aren't available for this event type yet",
-      "features": {
-        "plan": "Send invitations",
-        "planDesc": "Share your save-the-date with all guests",
-        "automate": "Automate RSVPs",
-        "automateDesc": "Follow up with pending guests on autopilot",
-        "track": "Stay on track",
-        "trackDesc": "Day-of reminders and thank-you messages"
-      },
-      "step1Title": "Initial invitation",
-      "step1Description": "Choose whether to send a ‘Save the Date’ as the first scheduled message",
-      "step2Title": "Review your timeline",
-      "step2Description": "Approve the schedules you want to send",
-      "invitationPreviewLabel": "Invitation preview",
-      "sendDateLabel": "Send date",
-      "callDateLabel": "Call date",
-      "timeLabel": "Time",
-      "sendDateHelper": "When the invitation goes out to guests",
-      "invitationPrivacyNote": "Some couples prefer to send the initial invitation privately - totally up to you. You can always adjust this later.",
-      "decisionSend": "Yes, send it",
-      "decisionSendDesc": "The invitation goes out on the date you pick",
-      "decisionSkip": "Skip for now",
-      "decisionSkipDesc": "It stays on your timeline as disabled - turn it on whenever you're ready",
-      "timelineHelper": "Toggle off any of the schedules shown—they’ll remain on the timeline but will be disabled",
-      "recipientsCount": "{count} guests",
-      "continue": "Continue",
-      "back": "Back",
-      "submit": "Create schedules",
-      "submitting": "Creating...",
-      "toast": {
-        "creating": "Creating schedules...",
-        "created": "Schedules created",
-        "failed": "Failed to create schedules",
-        "error": "Something went wrong"
       }
     },
     "noSchedules": "No schedules configured for this event.",
@@ -1479,6 +1410,81 @@
       "sms": "SMS",
       "emptyDescription": "Results will appear here once the schedule has been sent.",
       "cancelledDescription": "This schedule was cancelled and no messages were sent"
+    },
+    "kind": {
+      "message": "WhatsApp message",
+      "call": "Phone call"
+    },
+    "timeline": {
+      "dayOf": "On the day",
+      "daysBefore": "{count, plural, one {1 day before} other {# days before}}",
+      "daysAfter": "{count, plural, one {1 day after} other {# days after}}",
+      "eventDay": "Event day · {date}",
+      "eventDayUndated": "Event day",
+      "recipientCount": "{count, plural, one {1 recipient} other {# recipients}}",
+      "callCount": "{count, plural, one {1 call} other {# calls}}",
+      "readRate": "{percent}% read",
+      "reachedRate": "{percent}% reached",
+      "callsNote": "Call rounds are made by the Kululu team, and planned here alongside the messages",
+      "callLiveStat": "{confirmed} confirmed · {awaiting} to go",
+      "callDoneStat": "{confirmed} confirmed · {noAnswer} no answer",
+      "callOff": "This round was switched off. Get in touch for details"
+    },
+    "detail": {
+      "back": "Back to the timeline",
+      "footNote": {
+        "editable": "Changes are saved to this schedule only",
+        "locked": "The content and dates are saved - enabling only permits sending",
+        "sent": "This schedule has been sent, so it can no longer be edited"
+      },
+      "save": {
+        "action": "Save",
+        "saving": "Saving",
+        "updated": "Changes saved",
+        "error": "Something went wrong"
+      },
+      "upgrade": "Upgrade to premium to enable"
+    },
+    "messageType": {
+      "cardTitle": "Message type",
+      "supportsNote": "Supports a note",
+      "lockReason": {
+        "sent": "Sent"
+      },
+      "default": {
+        "label": "Default",
+        "description": "The wording guests receive for this schedule"
+      }
+    },
+    "locked": {
+      "title": "This schedule is locked",
+      "description": "You can see exactly what your guests will receive. Changing the content or the date, and sending it, needs sending enabled"
+    },
+    "upsell": {
+      "title": "Your messages are written and waiting",
+      "description": "Every message and call is already written and timed against your date. Enabling sending is what sets them going",
+      "cta": "Enable sending",
+      "learnMore": "What's included"
+    },
+    "empty": {
+      "noDate": {
+        "title": "Set an event date first",
+        "description": "Invitations, reminders and thank-yous are all timed against the day of the event, so the plan builds itself here as soon as there is a date",
+        "cta": "Add the event date"
+      },
+      "unsupported": {
+        "title": "No automatic plan for this event yet",
+        "description": "Invitations and reminders are built from a default set that has not been configured for this event. The Kululu team can set one up"
+      }
+    },
+    "personalNote": {
+      "title": "Personal note",
+      "placeholder": "For example: free parking on site, shuttles leave at 18:30",
+      "help": {
+        "editable": "Added at the end of the message, above the reply buttons",
+        "locked": "The note is added at the end of the message. Available once sending is enabled",
+        "sent": "The message has already gone out, so the note is kept for the record"
+      }
     }
   },
   "newEventDialog": {
@@ -1958,24 +1964,43 @@
     "refresh": "Refresh",
     "startedOn": "Started {date}",
     "completedOn": "Finished {date}",
-    "plan": {
-      "title": "Planned call round",
-      "description": "Our team will phone these guests on this date",
-      "cancelledDescription": "This call round is switched off and will not run"
+    "dateTime": "{date} at {time}",
+    "hero": {
+      "title": "One of our team will phone everyone who has not answered",
+      "body": "They ask whether the guest is coming and how many, and update the answer on your list. You do not need to do anything",
+      "locked": {
+        "title": "{count, plural, one {1 call round is included in your package} other {# call rounds are included in your package}}",
+        "body": "One of our team will phone everyone who has not answered, ask whether they are coming and how many, and update your list. Rounds open once sending is enabled"
+      }
     },
-    "stats": {
-      "confirmed": "Confirmed",
-      "declined": "Declined",
-      "noAnswer": "No answer",
-      "willUpdate": "Will update",
-      "confirmedGuests": "{count, plural, one {# guest} other {# guests}}"
+    "banner": {
+      "live": {
+        "title": "The team is calling now",
+        "body": "Results appear here as soon as the team records a call. Refresh any time"
+      },
+      "done": {
+        "title": "The round is finished",
+        "body": "Started {start}, finished {end}",
+        "bodyOpen": "Started {start}"
+      },
+      "locked": {
+        "title": "This round is waiting",
+        "body": "The date and the list are ready. We only start calling once sending is enabled"
+      },
+      "off": "This round is switched off and will not run. Get in touch for details"
     },
-    "table": {
-      "guest": "Guest",
-      "outcome": "Call",
-      "rsvp": "RSVP now",
-      "amount": "Guests",
-      "note": "Guest remarks"
+    "results": {
+      "leadLabel": "People confirmed in this round",
+      "peopleUnit": "people",
+      "records": "{count, plural, one {1 record confirmed} other {# records confirmed}}",
+      "recordsFamilies": "{count, plural, one {1 record confirmed} other {# records confirmed}}, some of them whole families",
+      "progressLive": "Round progress",
+      "progressDone": "Round complete",
+      "progressValue": "{handled} of {total}",
+      "peopleHint": "{count, plural, one {1 person} other {# people}}",
+      "updatedAt": "Last updated at {time}",
+      "noResultsYet": "No results recorded yet",
+      "final": "Final results"
     },
     "outcome": {
       "confirmed": "Confirmed",
@@ -1988,7 +2013,84 @@
       "confirmed": "Confirmed",
       "declined": "Declined",
       "pending": "Pending"
-    }
+    },
+    "when": {
+      "title": "When we call",
+      "date": "Date",
+      "time": "Time",
+      "badge": {
+        "live": "Round started",
+        "done": "Round finished"
+      },
+      "note": {
+        "planned": "The date follows your event date, and our team makes the calls on it",
+        "locked": "The date is set automatically from your event date. The round runs once sending is enabled",
+        "live": "The round has started, so the date is locked. The guest list was locked at the same moment",
+        "done": "The date is kept for the record"
+      }
+    },
+    "audience": {
+      "title": "Who we call",
+      "label": {
+        "all": "All guests",
+        "pending": "Guests who have not answered yet",
+        "confirmed": "Guests who confirmed",
+        "live": "On the call list",
+        "done": "Were on the call list"
+      },
+      "detail": {
+        "planned": "Updates automatically until the round starts",
+        "live": "A snapshot of the list when the round started",
+        "done": "The list as it was on {date}"
+      },
+      "note": {
+        "planned": "Anyone who confirms or declines by {date} comes off the list and will not be called",
+        "live": "Guests added after the round started are not included"
+      }
+    },
+    "checklist": {
+      "title": "Worth checking first",
+      "noPhone": {
+        "title": "{count, plural, one {1 guest has no phone number} other {# guests have no phone number}}",
+        "body": "Without a number the team cannot call them"
+      },
+      "action": "Add numbers"
+    },
+    "guests": {
+      "title": "Results by guest",
+      "count": "{count, plural, one {1 guest} other {# guests}}",
+      "people": "{count, plural, one {1 person} other {# people}}",
+      "search": "Search by name",
+      "filters": {
+        "all": "All",
+        "awaiting": "Waiting for a call",
+        "confirmed": "Confirmed",
+        "declined": "Declined",
+        "noAnswer": "No answer",
+        "willUpdate": "Will update themselves",
+        "hasNote": "Has a remark"
+      },
+      "rsvpNow": "RSVP now",
+      "answeredFirst": "Answered on WhatsApp before we reached them",
+      "showMore": "{count, plural, one {Show 1 more} other {Show # more}}",
+      "none": "No guests found",
+      "pager": "{from}-{to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "columns": {
+        "guest": "Guest",
+        "amount": "People",
+        "outcome": "Call result",
+        "rsvp": "RSVP now",
+        "note": "Team remarks"
+      }
+    },
+    "footer": {
+      "live": "The round is run by the Kululu team. There is nothing for you to do",
+      "done": "Call round {position} of {total} in your package",
+      "locked": "{calls, plural, one {1 call round} other {# call rounds}} and {messages, plural, one {1 message} other {# messages}} open together"
+    },
+    "service": "Call rounds are made by the Kululu team. We do not show which team member made each call"
   },
   "onboarding": {
     "back": "Back",

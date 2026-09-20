@@ -6,3 +6,8 @@ export {
   getDeliveryMethodStats,
   type DeliveryMethodStats,
 } from './message-deliveries';
+
+export {
+  getDeliveryStatsByScheduleId,
+  type ScheduleDeliveryStats,
+} from './delivery-stats';

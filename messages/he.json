@@ -41,7 +41,7 @@
     "eventDetails": "פרטי האירוע",
     "guests": "אורחים",
     "seating": "הושבה",
-    "schedules": "תזמונים",
+    "schedules": "הודעות",
     "gifting": "מתנות דיגיטליות",
     "collaboration": "שיתוף",
     "settings": "הגדרות",
@@ -1256,11 +1256,10 @@
   },
   "schedules": {
     "header": {
-      "title": "תזמונים"
-    },
-    "nav": {
-      "messages": "הודעות",
-      "calls": "שיחות טלפון"
+      "title": "הודעות ושיחות",
+      "summary": "{sent} נשלחו · {pending} מתוזמנים",
+      "lockedSummary": "{count} תזמונים מוכנים · אף אחד לא פעיל",
+      "callLive": "{label} בעבודה כרגע · {handled} מתוך {total} טופלו"
     },
     "channel": {
       "whatsapp": "WhatsApp",
@@ -1304,64 +1303,45 @@
       "filterAll": "הצג הכל"
     },
     "status": {
-      "cardTitle": "סטטוס",
       "label": {
         "sent": "נשלח",
-        "pending": "ממתין",
-        "cancelled": "בוטל",
+        "pending": "מתוזמן",
+        "cancelled": "כבוי",
         "expired": "פג תוקף",
-        "inProgress": "בתהליך",
-        "completed": "הושלם"
-      },
-      "description": {
-        "sent": "ההודעות נשלחו לאורחים הזכאים.",
-        "pending": "ההודעות יישלחו בתאריך המתוזמן.",
-        "cancelled": "לוח הזמנים הזה בוטל.",
-        "expired": "לוח הזמנים הזה לא נשלח בזמן ולא יישלח כעת."
-      },
-      "toggle": {
-        "enabled": "פעיל",
-        "enabledDescription": "ההודעות יישלחו בתאריך המתוזמן.",
-        "disabled": "מושבת",
-        "disabledDescription": "לוח הזמנים מושבת ולא יישלחו הודעות."
-      },
-      "toast": {
-        "updating": "מעדכן לוח זמנים...",
-        "enabled": "לוח הזמנים הופעל",
-        "disabled": "לוח הזמנים הושבת",
-        "error": "משהו השתבש"
+        "inProgress": "בעבודה",
+        "completed": "הסתיים",
+        "locked": "נעול",
+        "disabled": "נעול"
       }
     },
     "timing": {
-      "cardTitle": "תזמון שליחה",
-      "save": "שמור",
-      "saving": "שומר...",
+      "cardTitle": "מתי נשלח",
       "daysBeforeEvent": "ימים לפני האירוע",
       "days": "ימים",
       "daysHelper": "כמה ימים לפני האירוע לשלוח",
-      "scheduledDate": "תאריך מתוזמן",
+      "scheduledDate": "תאריך",
       "scheduledDateHelper": "מחושב אוטומטית מתאריך האירוע",
-      "scheduledTime": "שעת שליחה",
+      "scheduledTime": "שעה",
       "scheduledTimeHelper": "השעה שבה ההודעה תצא ביום המתוזמן",
-      "toast": {
-        "updating": "מעדכן תאריך מתוזמן...",
-        "updated": "התאריך המתוזמן עודכן",
-        "failed": "עדכון התאריך המתוזמן נכשל",
-        "error": "משהו השתבש"
+      "sendWindowHelper": "ההודעות יוצאות בין {start} ל-{end}",
+      "relative": {
+        "dayOf": "ביום האירוע",
+        "before": "{count, plural, one {יום אחד לפני האירוע} other {# ימים לפני האירוע}}",
+        "after": "{count, plural, one {יום אחד אחרי האירוע} other {# ימים אחרי האירוע}}"
       }
     },
     "audience": {
-      "cardTitle": "קהל יעד",
+      "cardTitle": "למי זה נשלח",
       "disabledNote": "התזמון כבוי - אף אורח לא יקבל הודעה זו",
       "allGuests": "כל האורחים",
-      "confirmedGuests": "אורחים שאישרו",
-      "pendingGuests": "אורחים ממתינים",
+      "confirmedGuests": "אישרו הגעה",
+      "pendingGuests": "מי שלא ענה",
       "sentTo": "נשלח ל",
-      "calling": "מתקשרים אל"
+      "calling": "מתקשרים אל",
+      "recomputedNote": "הרשימה מתעדכנת אוטומטית ביום השליחה"
     },
     "messagePreview": {
       "cardTitle": "תצוגה מקדימה",
-      "cardDescription": "ההודעה שהאורחים יקבלו עבור לוח הזמנים הזה.",
       "noMessage": "לא הוגדרה הודעה עדיין.",
       "imagePlaceholder": "תמונה",
       "button": "כפתור {index}",
@@ -1375,17 +1355,8 @@
         "description": "{withoutTable} מתוך {total} אורחים עדיין ללא שולחן. הם יקבלו את גרסת ההודעה ללא מספר שולחן.",
         "link": "סידור הושבה"
       },
-      "customNote": {
-        "label": "הערה מותאמת (אופציונלי)",
-        "placeholder": "הוסיפו הערה שתופיע בהודעה זו",
-        "save": "שמירה",
-        "saving": "שומר...",
-        "toast": {
-          "updating": "מעדכן הערה...",
-          "updated": "ההערה עודכנה",
-          "error": "משהו השתבש"
-        }
-      }
+      "hint": "כך זה נראה אצל האורח",
+      "business": "עסקי"
     },
     "sendDialog": {
       "sendNow": "שלח עכשיו",
@@ -1402,46 +1373,6 @@
         "queued": "שולח {count, plural, one {לאורח אחד} two {ל-# אורחים} other {ל-# אורחים}}",
         "held": "בתור - יישלח כשחלון השליחה ייפתח",
         "failed": "השליחה נכשלה"
-      }
-    },
-    "setupWizard": {
-      "emptyTitle": "תכננו את ציר הזמן לתקשורת עם האורחים",
-      "emptyDescription": "התזמונים שולחים הזמנות, תזכורות לאישור הגעה והודעות תודה לאורחים באופן אוטומטי - הגדירו את ציר הזמן כדי להתחיל",
-      "emptyCta": "הגדרת תזמונים",
-      "emptyUnsupported": "הצעות תזמונים עדיין אינן זמינות לסוג אירוע זה",
-      "features": {
-        "plan": "שליחת הזמנות",
-        "planDesc": "שתפו את שמירת התאריך עם כל האורחים",
-        "automate": "אוטומציה לאישורי הגעה",
-        "automateDesc": "מעקב אוטומטי אחר אורחים שטרם אישרו",
-        "track": "להישאר על המסלול",
-        "trackDesc": "תזכורות ביום האירוע והודעות תודה"
-      },
-      "step1Title": "הזמנה ראשונית",
-      "step1Description": "בחרו אם לשלוח הודעת Save the Date כהודעה הראשונה בלוח הזמנים.",
-      "step2Title": "סקירת ציר הזמן",
-      "step2Description": "אשרו את התזמונים שתרצו לשלוח",
-      "invitationPreviewLabel": "תצוגה מקדימה של ההזמנה",
-      "sendDateLabel": "תאריך שליחה",
-      "callDateLabel": "תאריך השיחות",
-      "timeLabel": "שעה",
-      "sendDateHelper": "מתי ההזמנה תישלח לאורחים",
-      "invitationPrivacyNote": "יש זוגות שמעדיפים לשלוח את ההזמנה הראשונית בצורה פרטית - לגמרי תלוי בכם. אפשר לשנות את זה בכל שלב.",
-      "decisionSend": "כן, לשלוח",
-      "decisionSendDesc": "ההזמנה תישלח בתאריך שתבחרו",
-      "decisionSkip": "לדלג בינתיים",
-      "decisionSkipDesc": "תוכלו להפעיל אותו בכל עת",
-      "timelineHelper": "ניתן לכבות כל אחד מלוחות הזמנים המוצגים — הוא יישאר בציר הזמן, אך יהיה מושבת",
-      "recipientsCount": "{count} אורחים",
-      "continue": "המשך",
-      "back": "חזרה",
-      "submit": "יצירת תזמונים",
-      "submitting": "יוצר...",
-      "toast": {
-        "creating": "יוצר תזמונים...",
-        "created": "התזמונים נוצרו",
-        "failed": "יצירת התזמונים נכשלה",
-        "error": "משהו השתבש"
       }
     },
     "noSchedules": "לא הוגדרו תזמונים לאירוע זה.",
@@ -1479,6 +1410,81 @@
       "sms": "SMS",
       "emptyDescription": "התוצאות יופיעו כאן לאחר שההודעות יישלחו",
       "cancelledDescription": "לוח הזמנים הזה בוטל ולא נשלחו הודעות"
+    },
+    "kind": {
+      "message": "הודעת וואטסאפ",
+      "call": "שיחת טלפון"
+    },
+    "timeline": {
+      "dayOf": "ביום האירוע",
+      "daysBefore": "{count, plural, one {יום אחד לפני} other {# ימים לפני}}",
+      "daysAfter": "{count, plural, one {יום אחד אחרי} other {# ימים אחרי}}",
+      "eventDay": "יום האירוע · {date}",
+      "eventDayUndated": "יום האירוע",
+      "recipientCount": "{count, plural, one {נמען אחד} other {# נמענים}}",
+      "callCount": "{count, plural, one {שיחה אחת} other {# שיחות}}",
+      "readRate": "{percent}% נקראו",
+      "reachedRate": "{percent}% הגיעו",
+      "callsNote": "סבבי השיחות מבוצעים על ידי צוות Kululu, ומתוכננים כאן לצד ההודעות",
+      "callLiveStat": "{confirmed} אישרו · {awaiting} נותרו",
+      "callDoneStat": "{confirmed} אישרו · {noAnswer} לא ענו",
+      "callOff": "הסבב בוטל. לפרטים אפשר לפנות אלינו"
+    },
+    "detail": {
+      "back": "חזרה לציר הזמן",
+      "footNote": {
+        "editable": "השינויים נשמרים לתזמון הזה בלבד",
+        "locked": "התוכן והתאריכים נשמרים - ההפעלה רק מאשרת שליחה",
+        "sent": "התזמון נשלח ולכן נעול לעריכה"
+      },
+      "save": {
+        "action": "שמירה",
+        "saving": "שומר",
+        "updated": "השינויים נשמרו",
+        "error": "משהו השתבש"
+      },
+      "upgrade": "שדרוג לפרימיום כדי להפעיל"
+    },
+    "messageType": {
+      "cardTitle": "סוג ההודעה",
+      "supportsNote": "תומך בהערה",
+      "lockReason": {
+        "sent": "נשלח"
+      },
+      "default": {
+        "label": "ברירת מחדל",
+        "description": "הנוסח שנשלח לאורחים בתזמון הזה"
+      }
+    },
+    "locked": {
+      "title": "התזמון הזה נעול",
+      "description": "אפשר לראות בדיוק מה האורחים יקבלו. לשינוי תוכן, תאריך ושליחה נדרשת הפעלת השליחה"
+    },
+    "upsell": {
+      "title": "ההודעות מחכות לכם מוכנות",
+      "description": "כל ההודעות והשיחות כבר כתובות ומתוזמנות לפי התאריך שלכם. הפעלת השליחה מוציאה אותן לדרך",
+      "cta": "להפעלת השליחה",
+      "learnMore": "מה כלול"
+    },
+    "empty": {
+      "noDate": {
+        "title": "קודם נקבע תאריך לאירוע",
+        "description": "ההזמנות, התזכורות והתודות מתוזמנות ביחס ליום האירוע, אז ברגע שיש תאריך התוכנית נבנית כאן לבד",
+        "cta": "להוספת תאריך האירוע"
+      },
+      "unsupported": {
+        "title": "אין עדיין תוכנית אוטומטית לאירוע הזה",
+        "description": "ההזמנות והתזכורות נבנות מסט ברירת מחדל שעדיין לא הוגדר עבור האירוע הזה. צוות Kululu יכול להגדיר אותו"
+      }
+    },
+    "personalNote": {
+      "title": "הערה אישית",
+      "placeholder": "למשל: חניה חינם במקום, הסעות יוצאות מכיכר רבין ב-18:30",
+      "help": {
+        "editable": "תתווסף בסוף ההודעה, מעל כפתורי האישור",
+        "locked": "ההערה תתווסף לסוף ההודעה. זמינה עם הפעלת השליחה",
+        "sent": "ההודעה כבר נשלחה, ההערה נשמרת לתיעוד"
+      }
     }
   },
   "newEventDialog": {
@@ -1955,40 +1961,136 @@
   },
   "calls": {
     "round": "סבב {number}",
-    "refresh": "רענן",
+    "refresh": "רענון",
     "startedOn": "התחיל ב-{date}",
     "completedOn": "הסתיים ב-{date}",
-    "plan": {
-      "title": "סבב שיחות מתוכנן",
-      "description": "הצוות שלנו יתקשר לאורחים האלה בתאריך הזה",
-      "cancelledDescription": "סבב השיחות הזה כבוי ולא יתבצע"
+    "dateTime": "{date} בשעה {time}",
+    "hero": {
+      "title": "נציג מהצוות שלנו יתקשר לכל מי שלא ענה",
+      "body": "שואל אם מגיעים וכמה אנשים, ומעדכן את התשובה ברשימה שלכם. לא נדרשת מכם שום פעולה",
+      "locked": {
+        "title": "{count, plural, one {סבב שיחות אחד כלול בחבילה} other {# סבבי שיחות כלולים בחבילה}}",
+        "body": "נציג מהצוות שלנו יתקשר לכל מי שלא ענה, ישאל אם מגיעים וכמה, ויעדכן את הרשימה. הסבבים נפתחים עם הפעלת השליחה"
+      }
     },
-    "stats": {
-      "confirmed": "אישרו",
-      "declined": "סירבו",
-      "noAnswer": "לא ענו",
-      "willUpdate": "יעדכנו בעצמם",
-      "confirmedGuests": "{count, plural, one {אורח אחד} two {# אורחים} other {# אורחים}}"
+    "banner": {
+      "live": {
+        "title": "הצוות מתקשר עכשיו",
+        "body": "התוצאות מתווספות כאן ברגע שהצוות מתעד שיחה. אפשר לרענן בכל עת"
+      },
+      "done": {
+        "title": "הסבב הסתיים",
+        "body": "התחיל ב-{start}, הסתיים ב-{end}",
+        "bodyOpen": "התחיל ב-{start}"
+      },
+      "locked": {
+        "title": "הסבב מחכה להפעלה",
+        "body": "המועד והרשימה כבר מוכנים. אנחנו מתחילים להתקשר רק אחרי ההפעלה"
+      },
+      "off": "הסבב הזה כבוי ולא יתבצע. לפרטים אפשר לפנות אלינו"
     },
-    "table": {
-      "guest": "אורח",
-      "outcome": "שיחה",
-      "rsvp": "סטטוס נוכחי",
-      "amount": "כמות",
-      "note": "הערות המוזמן"
+    "results": {
+      "leadLabel": "אנשים שאושרו בסבב הזה",
+      "peopleUnit": "אנשים",
+      "records": "{count, plural, one {רשומה אחת אישרה} other {# רשומות אישרו}}",
+      "recordsFamilies": "{count, plural, one {רשומה אחת אישרה} other {# רשומות אישרו}}, חלקן משפחות שלמות",
+      "progressLive": "התקדמות הסבב",
+      "progressDone": "הסבב הושלם",
+      "progressValue": "{handled} מתוך {total}",
+      "peopleHint": "{count, plural, one {אדם אחד} other {# אנשים}}",
+      "updatedAt": "עודכן לאחרונה ב-{time}",
+      "noResultsYet": "עדיין לא נרשמו תוצאות",
+      "final": "תוצאות סופיות"
     },
     "outcome": {
-      "confirmed": "אישר",
-      "declined": "סירב",
-      "noAnswer": "לא ענה",
-      "willUpdate": "יעדכן בעצמו",
+      "confirmed": "אישרו הגעה",
+      "declined": "לא יגיעו",
+      "noAnswer": "לא ענו",
+      "willUpdate": "יעדכנו בעצמם",
       "notCalled": "טרם התקשרנו"
     },
     "rsvp": {
-      "confirmed": "אישר",
-      "declined": "סירב",
+      "confirmed": "אישרו",
+      "declined": "לא יגיעו",
       "pending": "ממתין"
-    }
+    },
+    "when": {
+      "title": "מתי מתקשרים",
+      "date": "תאריך",
+      "time": "שעה",
+      "badge": {
+        "live": "הסבב התחיל",
+        "done": "הסבב הסתיים"
+      },
+      "note": {
+        "planned": "המועד נקבע לפי תאריך האירוע, והצוות שלנו מבצע את השיחות בו",
+        "locked": "המועד נקבע אוטומטית לפי תאריך האירוע. הסבב יתחיל להתבצע אחרי ההפעלה",
+        "live": "הסבב כבר התחיל ולכן המועד נעול. רשימת האורחים ננעלה גם היא ברגע ההתחלה",
+        "done": "המועד נשמר לתיעוד"
+      }
+    },
+    "audience": {
+      "title": "למי מתקשרים",
+      "label": {
+        "all": "כל האורחים",
+        "pending": "מי שעדיין לא ענה",
+        "confirmed": "מי שאישרו הגעה",
+        "live": "ברשימת השיחות",
+        "done": "היו ברשימת השיחות"
+      },
+      "detail": {
+        "planned": "מתעדכן אוטומטית עד תחילת הסבב",
+        "live": "צילום של הרשימה ברגע ההתחלה",
+        "done": "הרשימה כפי שהייתה ב-{date}"
+      },
+      "note": {
+        "planned": "כל מי שיאשר או יסרב עד {date} יורד מהרשימה ולא יקבל שיחה",
+        "live": "אורחים שנוספו אחרי תחילת הסבב לא נכללים בו"
+      }
+    },
+    "checklist": {
+      "title": "מה כדאי לבדוק לפני",
+      "noPhone": {
+        "title": "{count, plural, one {אורח אחד ללא מספר טלפון} other {# אורחים ללא מספר טלפון}}",
+        "body": "בלי מספר הצוות לא יוכל להתקשר אליהם"
+      },
+      "action": "השלמה"
+    },
+    "guests": {
+      "title": "תוצאות לפי אורח",
+      "count": "{count, plural, one {אורח אחד} other {# אורחים}}",
+      "people": "{count, plural, one {אדם אחד} other {# אנשים}}",
+      "search": "חיפוש לפי שם",
+      "filters": {
+        "all": "הכל",
+        "awaiting": "ממתינים לשיחה",
+        "confirmed": "אישרו",
+        "declined": "לא יגיעו",
+        "noAnswer": "לא ענו",
+        "willUpdate": "יעדכנו בעצמם",
+        "hasNote": "יש הערה"
+      },
+      "rsvpNow": "RSVP עכשיו",
+      "answeredFirst": "ענו בוואטסאפ לפני שהגענו אליהם",
+      "showMore": "{count, plural, one {הצגת עוד אחד} other {הצגת עוד #}}",
+      "none": "לא נמצאו אורחים",
+      "pager": "{from}-{to} מתוך {total}",
+      "previous": "הקודם",
+      "next": "הבא",
+      "columns": {
+        "guest": "אורח",
+        "amount": "כמות",
+        "outcome": "תוצאת השיחה",
+        "rsvp": "RSVP עכשיו",
+        "note": "הערות הצוות"
+      }
+    },
+    "footer": {
+      "live": "הסבב מבוצע על ידי צוות Kululu. אין צורך לעשות דבר",
+      "done": "סבב שיחות {position} מתוך {total} בחבילה שלכם",
+      "locked": "{calls, plural, one {סבב שיחות אחד} other {# סבבי שיחות}} ו{messages, plural, one {הודעה אחת} other {-# הודעות}} נפתחים יחד"
+    },
+    "service": "סבבי השיחות מבוצעים על ידי צוות Kululu. אנחנו לא מציגים מי מהצוות ביצע כל שיחה"
   },
   "onboarding": {
     "back": "חזרה",

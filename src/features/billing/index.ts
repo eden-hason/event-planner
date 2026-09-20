@@ -20,3 +20,7 @@ export {
 export { EventBillingStatusPill } from './components/event-billing-status-pill';
 export { EventPlanCard } from './components/event-plan-card';
 export { EventBillingStatusControl } from './components/event-billing-status-control';
+// The one place the plan is explained. Exported so surfaces outside this
+// feature (the schedules timeline's upsell) open the same sheet the header
+// pill does, rather than inventing a second billing story.
+export { EventBillingStatusSheet } from './components/event-billing-status-sheet';
