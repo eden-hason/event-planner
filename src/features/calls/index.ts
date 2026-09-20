@@ -1,21 +1,19 @@
 // Public API for the calls feature.
 //
-// Queries and CallRoundResultsCard are NOT re-exported here: both pull in
+// Queries and CallRoundPane are NOT re-exported here: both pull in
 // getEffectiveClient -> next/headers, which would leak server-only code into
 // any client bundle importing this barrel. Import those from
 // '@/features/calls/queries' and '@/features/calls/components' directly.
 
 // Components (client-safe)
-export {
-  CallRoundResultsTable,
-  type CallRoundResultsLabels,
-} from './components/call-round-results-table';
+export { CallProgressBar } from './components/call-progress-bar';
 
 // Types
 export {
   CALL_OUTCOMES,
   type CallOutcome,
   type CallRoundGuestRow,
+  type CallRoundPeople,
   type CallRoundResults,
   type CallRoundStatus,
   type CallRoundSummary,
@@ -24,5 +22,7 @@ export {
 // Presentation (pure)
 export {
   callOutcomePresentation,
+  callPaneState,
   type CallOutcomePresentation,
+  type CallPaneState,
 } from './utils';

@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import {
   IconBell,
   IconCalendarEvent,
-  IconGift,
   IconHeart,
   IconMail,
   IconPhone,
@@ -14,6 +13,7 @@ import {
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import { CallProgressBar } from '@/features/calls';
 import type { ScheduleTypeKey } from '../schemas';
 import type { OutreachItem } from '../types';
 import { withDayMarker } from '../utils/timeline';
@@ -122,6 +122,7 @@ function TimelineCard({
   const t = useTranslations('schedules');
   const Icon = typeIcon(item.typeKey);
   const done = item.status === 'sent' || item.status === 'completed';
+  const live = item.status === 'in_progress';
   const muted =
     item.status === 'locked' ||
     item.status === 'cancelled' ||
@@ -146,9 +147,11 @@ function TimelineCard({
             'border-card relative z-10 flex size-[30px] items-center justify-center rounded-full border-2',
             done
               ? 'bg-success text-success-foreground'
-              : muted
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-primary/10 text-primary',
+              : live
+                ? 'bg-info-solid text-white'
+                : muted
+                  ? 'bg-muted text-muted-foreground'
+                  : 'bg-primary/10 text-primary',
           )}
         >
           <Icon className="size-[15px]" />
@@ -164,6 +167,7 @@ function TimelineCard({
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
           isActive ? 'border-primary shadow-xs' : 'hover:bg-accent/40',
           done && !isActive && 'border-success/25',
+          live && !isActive && 'border-info-tint-border',
         )}
       >
         <div className="flex w-full items-start justify-between gap-2">
@@ -199,6 +203,24 @@ function TimelineCard({
               )}
             </span>
           )}
+          {item.callProgress && (
+            <span
+              className={cn(
+                'ms-auto text-[11.5px] font-bold',
+                live ? 'text-info-strong' : 'text-success',
+              )}
+            >
+              {live
+                ? t('timeline.callLiveStat', {
+                    confirmed: item.callProgress.confirmed,
+                    awaiting: item.callProgress.awaiting,
+                  })
+                : t('timeline.callDoneStat', {
+                    confirmed: item.callProgress.confirmed,
+                    noAnswer: item.callProgress.noAnswer,
+                  })}
+            </span>
+          )}
           {item.miniStat && (
             <span className="text-success ms-auto text-[11.5px] font-bold">
               {t(
@@ -209,13 +231,14 @@ function TimelineCard({
               )}
             </span>
           )}
-          {item.status === 'locked' && (
-            <span className="bg-warning/10 text-warning ms-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11.5px] font-bold">
-              <IconGift className="size-3" />
-              {t('timeline.includedInPremium')}
-            </span>
-          )}
         </div>
+
+        {item.callProgress && <CallProgressBar counts={item.callProgress} />}
+
+        {/* A switched-off call has nothing to report in the row above. */}
+        {item.kind === 'call' && item.status === 'cancelled' && (
+          <p className="text-muted-foreground text-xs leading-relaxed">{t('timeline.callOff')}</p>
+        )}
       </button>
     </li>
   );

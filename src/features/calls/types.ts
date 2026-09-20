@@ -70,17 +70,30 @@ export type CallRoundGuestRow = {
   notes: string | null;
 };
 
+/**
+ * People a round's records cover, per outcome, as opposed to the records
+ * themselves. The round confirming 8 records can mean 20 people through the
+ * door, and that is the number the Owner is actually planning against.
+ */
+export type CallRoundPeople = {
+  confirmed: number;
+  declined: number;
+  noAnswer: number;
+  willUpdate: number;
+  awaiting: number;
+};
+
 export type CallRoundResults = {
   summary: Pick<
     CallRoundSummary,
     'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate'
-  > & {
-    /**
-     * People the confirmed records cover, not the number of records. The
-     * round confirming 8 records can mean 20 people through the door, and
-     * that is the number the owner is actually planning against.
-     */
-    confirmedGuests: number;
-  };
+  >;
+  people: CallRoundPeople;
+  /**
+   * When an Operator last recorded an outcome. The Owner has no live push, so
+   * this is the honest answer to "how fresh is this" - null before the first
+   * outcome lands.
+   */
+  lastUpdatedAt: string | null;
   guests: CallRoundGuestRow[];
 };

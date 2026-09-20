@@ -8,6 +8,7 @@ import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { AppShell, HiddenOnFullTakeoverRoute } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { BottomNavProvider } from '@/components/layout/bottom-nav-context';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { LayoutContentWrapper } from '@/components/layout/layout-content-wrapper';
 import { PageCard } from '@/components/layout/page-card';
@@ -88,21 +89,23 @@ export default async function EventLayout({
         />
         <SidebarInset className="bg-transparent">
           <ImpersonationBanner />
-          <LayoutContentWrapper>
-            <CollaborationProvider role={role} isCreator={isCreator}>
-              <FeatureLayoutProvider>
-                <EventBillingStatusProvider
-                  value={deriveHeaderStatus(event.billingStatus)}
-                >
-                  <PageCard>{children}</PageCard>
-                </EventBillingStatusProvider>
-                <HiddenOnFullTakeoverRoute>
-                  <AiAssistant eventId={eventId} />
-                </HiddenOnFullTakeoverRoute>
-              </FeatureLayoutProvider>
-            </CollaborationProvider>
-          </LayoutContentWrapper>
-          <MobileBottomNav />
+          <BottomNavProvider>
+            <LayoutContentWrapper>
+              <CollaborationProvider role={role} isCreator={isCreator}>
+                <FeatureLayoutProvider>
+                  <EventBillingStatusProvider
+                    value={deriveHeaderStatus(event.billingStatus)}
+                  >
+                    <PageCard>{children}</PageCard>
+                  </EventBillingStatusProvider>
+                  <HiddenOnFullTakeoverRoute>
+                    <AiAssistant eventId={eventId} />
+                  </HiddenOnFullTakeoverRoute>
+                </FeatureLayoutProvider>
+              </CollaborationProvider>
+            </LayoutContentWrapper>
+            <MobileBottomNav />
+          </BottomNavProvider>
         </SidebarInset>
       </div>
     </AppShell>

@@ -10,18 +10,12 @@ export type MobileTabBarHref = ComponentProps<typeof Link>['href'];
 
 type NavHref = MobileTabBarHref;
 
-// Tabler icons carry an invisible `<path fill="none">` bounding box, and a plain
-// `fill-current` would paint it solid because CSS outranks that attribute. Filling
-// only the shapes that do not opt out keeps both icon sets looking right.
-const FILL_ACTIVE_ICON = '[&_:not([fill=none])]:fill-current';
-
 export type MobileTabBarItem = {
   /** Stable id for the tab, used to track and report the active one. */
   value: string;
   label: string;
+  /** Drawn the same in every state: the active tab reads through colour and label weight. */
   icon: ElementType;
-  /** Filled variant rendered while the tab is active. Falls back to `icon`. */
-  activeIcon?: ElementType;
   /** Renders the tab as a link. Omit it for tabs that only run `onClick`. */
   href?: NavHref;
   onClick?: () => void;
@@ -92,7 +86,7 @@ function tabClassName(isActive: boolean, disabled?: boolean) {
     'text-muted-foreground transition-colors outline-none',
     'focus-visible:ring-ring focus-visible:ring-2',
     'active:opacity-70',
-    isActive && 'text-foreground',
+    isActive && 'text-primary',
     disabled && 'pointer-events-none opacity-50',
   );
 }
@@ -130,18 +124,12 @@ function TabContent({
   isActive: boolean;
   showLabels: boolean;
 }) {
-  const Icon = isActive ? (item.activeIcon ?? item.icon) : item.icon;
-  // Without a dedicated filled variant, filling the outline icon is what gives
-  // the active tab the solid look native tab bars have.
-  const fillIcon = isActive && !item.activeIcon;
+  const Icon = item.icon;
 
   return (
     <>
       <span className="relative inline-flex">
-        <Icon
-          aria-hidden
-          className={cn('size-[22px] shrink-0', fillIcon && FILL_ACTIVE_ICON)}
-        />
+        <Icon aria-hidden className="size-[22px] shrink-0" />
         {hasBadge(item.badge) ? <TabBadge badge={item.badge} /> : null}
       </span>
       {showLabels ? (

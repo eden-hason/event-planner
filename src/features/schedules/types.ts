@@ -57,5 +57,18 @@ export type OutreachItem = {
    * deliveries to score.
    */
   miniStat: { percent: number; kind: 'read' | 'reached' } | null;
+  /**
+   * How a started call round is going, in records. Null for a message and for
+   * a call plan that has not started - the card has nothing to report until
+   * the Operator presses Start.
+   */
+  callProgress: {
+    total: number;
+    awaiting: number;
+    confirmed: number;
+    declined: number;
+    noAnswer: number;
+    willUpdate: number;
+  } | null;
   details: ReactNode;
 };

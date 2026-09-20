@@ -7,7 +7,7 @@ import {
   IconHome,
   IconUsers,
   IconUsersGroup,
-  IconCalendar,
+  IconSend,
   IconCoins,
   IconGift,
   IconListDetails,
@@ -124,7 +124,7 @@ export function AppSidebar({
       id: 'schedules',
       title: tNav('schedules'),
       url: '/app/schedules',
-      icon: IconCalendar,
+      icon: IconSend,
     },
     {
       id: 'gifting',

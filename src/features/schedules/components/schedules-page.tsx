@@ -2,10 +2,8 @@ import { getLocale, getTranslations } from 'next-intl/server';
 
 import { type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
-import {
-  CallPlanCard,
-  CallRoundResultsCard,
-} from '@/features/calls/components';
+import { callPaneState } from '@/features/calls';
+import { CallRoundPane } from '@/features/calls/components';
 import { getCallRoundsByScheduleId } from '@/features/calls/queries';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import {
@@ -63,6 +61,7 @@ export async function SchedulesPage({
   event,
 }: SchedulesPageProps) {
   const t = await getTranslations('schedules');
+  const tCalls = await getTranslations('calls');
   const locale = await getLocale();
 
   // Nothing to plan yet. Since the seed trigger fires the moment an Event has
@@ -203,6 +202,11 @@ export async function SchedulesPage({
         ? t('audience.pendingGuests')
         : t('audience.allGuests');
 
+  // A call round's place among the Event's rounds, and the size of the plan it
+  // belongs to - the pane's footer says "round 2 of 2 in your package".
+  const callSchedules = resolved.filter(({ schedule }) => !isMessageSchedule(schedule));
+  const messageCount = resolved.length - callSchedules.length;
+
   const items: OutreachItem[] = resolved.map(
     ({ schedule, template, smsBody, seatingGap, offersNote }) => {
       // Known types use the translated i18n label; anything else (a schedule
@@ -224,11 +228,9 @@ export async function SchedulesPage({
           : baseLabel;
 
       const isMessage = isMessageSchedule(schedule);
-      const audienceCount = filterGuestsByTarget(
-        guests,
-        schedule.targetStatus,
-      ).length;
-      const round = roundsBySchedule.get(schedule.id);
+      const targeted = filterGuestsByTarget(guests, schedule.targetStatus);
+      const audienceCount = targeted.length;
+      const round = isMessage ? undefined : roundsBySchedule.get(schedule.id);
 
       // A call round is planned like a message but executed by a person, so it
       // reports the state of its round rather than of a send. The Owner is
@@ -252,6 +254,15 @@ export async function SchedulesPage({
               }
           : null;
 
+      // Once a round has started its audience is the frozen call list, not the
+      // live count, and the header line says how the round stands rather than
+      // when it was planned for.
+      const whenDetailed = round
+        ? round.completedAt
+          ? tCalls('completedOn', { date: formatWhen(round.completedAt) })
+          : tCalls('startedOn', { date: formatWhen(round.createdAt) })
+        : formatWhenDetailed(schedule.scheduledDate);
+
       return {
         id: schedule.id,
         label,
@@ -260,10 +271,20 @@ export async function SchedulesPage({
         typeKey: schedule.scheduleTypeKey,
         offset: offsetDays(eventDate, schedule.scheduledDate),
         when: formatWhen(schedule.scheduledDate),
-        whenDetailed: formatWhenDetailed(schedule.scheduledDate),
+        whenDetailed,
         audience: audienceLabel(schedule.targetStatus),
-        audienceCount,
+        audienceCount: round ? round.total : audienceCount,
         miniStat,
+        callProgress: round
+          ? {
+              total: round.total,
+              awaiting: round.awaiting,
+              confirmed: round.confirmed,
+              declined: round.declined,
+              noAnswer: round.noAnswer,
+              willUpdate: round.willUpdate,
+            }
+          : null,
         details: isMessage ? (
           <ScheduleDetailPane
             schedule={schedule}
@@ -276,14 +297,20 @@ export async function SchedulesPage({
             status={status}
             audienceCount={audienceCount}
           />
-        ) : round ? (
-          <CallRoundResultsCard round={round} label={label} />
         ) : (
-          <CallPlanCard
+          <CallRoundPane
+            eventId={eventId}
+            state={callPaneState(status)}
             scheduledDate={schedule.scheduledDate}
             targetStatus={schedule.targetStatus}
-            eventDate={eventDate}
-            cancelled={schedule.status === 'cancelled'}
+            round={round ?? null}
+            audienceCount={audienceCount}
+            withoutPhone={targeted.filter((guest) => !guest.phone).length}
+            position={
+              callSchedules.findIndex((entry) => entry.schedule.id === schedule.id) + 1
+            }
+            callRounds={callSchedules.length}
+            messageCount={messageCount}
           />
         ),
       };

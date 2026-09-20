@@ -3,17 +3,18 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { IconChevronRight, IconPhone } from '@tabler/icons-react';
 
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { Separator } from '@/components/ui/separator';
-import { EventBillingStatusPill } from '@/features/billing';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
+import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import type { OutreachItem } from '../types';
 import { ScheduleStatusChip } from './schedule-status-chip';
+import { ServiceNote } from './notice-banner';
 import { ScheduleTimeline } from './schedule-timeline';
 import { SchedulesUpsellBanner } from './schedules-upsell-banner';
 
@@ -63,30 +64,30 @@ export function SchedulesLayout({
   // pane only when the organiser opened it.
   const paneItem = openItem ?? items[0] ?? null;
 
+  // An open message is a full screen with its own Save at the bottom edge, so
+  // it takes over from the bottom nav. A call round has no Save - it is watched,
+  // not edited - and keeps the nav so the Owner can move on from it.
+  useHideBottomNav(openItem?.kind === 'message');
+
   const summary = useMemo(() => {
     if (locked) {
       return t('header.lockedSummary', { count: items.length });
+    }
+    // A round being worked is the most current thing on the page, and "N sent,
+    // M scheduled" would not mention it at all.
+    const liveCall = items.find((item) => item.status === 'in_progress' && item.callProgress);
+    if (liveCall?.callProgress) {
+      const { total, awaiting } = liveCall.callProgress;
+      return t('header.callLive', {
+        label: liveCall.label,
+        handled: total - awaiting,
+        total,
+      });
     }
     const sent = items.filter((item) => item.status === 'sent').length;
     const pending = items.filter((item) => item.status === 'pending').length;
     return t('header.summary', { sent, pending });
   }, [items, locked, t]);
-
-  useEffect(() => {
-    setHeader({
-      title: t('header.title'),
-      subtitle: summary,
-      // The app header only shows the billing pill at `md` and up, so below
-      // that this page carries its own - the locked timeline is exactly where
-      // the plan matters most.
-      action: (
-        <span className="md:hidden">
-          <EventBillingStatusPill />
-        </span>
-      ),
-    });
-    return () => clearHeader();
-  }, [setHeader, clearHeader, t, summary]);
 
   const select = useCallback(
     (id: string) => {
@@ -103,6 +104,29 @@ export function SchedulesLayout({
     const query = next.toString();
     router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [pathname, router, searchParams]);
+
+  // Below md an open Schedule is the whole screen, so the app header stops
+  // naming the page and names the Schedule instead - what it is, when, and how
+  // it stands - with the arrow back to the timeline. From md up the timeline
+  // stays beside the pane, so the header keeps naming the page and the pane
+  // carries its own title row.
+  const isMobile = useIsMobile();
+  const headerItem = isMobile ? openItem : null;
+  useEffect(() => {
+    if (headerItem) {
+      setHeader({
+        title: headerItem.label,
+        subtitle: `${t(
+          headerItem.kind === 'call' ? 'kind.call' : 'kind.message',
+        )} · ${headerItem.whenDetailed}`,
+        action: <ScheduleStatusChip status={headerItem.status} size="md" />,
+        back: { label: t('detail.back'), onClick: close },
+      });
+    } else {
+      setHeader({ title: t('header.title'), subtitle: summary });
+    }
+    return () => clearHeader();
+  }, [setHeader, clearHeader, t, summary, headerItem, close]);
 
   const dayLabel = eventDate
     ? t('timeline.eventDay', {
@@ -133,10 +157,7 @@ export function SchedulesLayout({
         />
 
         {hasCalls && (
-          <p className="bg-muted/60 text-muted-foreground flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-relaxed">
-            <IconPhone className="text-primary mt-0.5 size-4 shrink-0" />
-            {t('timeline.callsNote')}
-          </p>
+          <ServiceNote className="ms-10">{t('timeline.callsNote')}</ServiceNote>
         )}
       </div>
 
@@ -149,15 +170,8 @@ export function SchedulesLayout({
       <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
         {paneItem && (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={close}
-                aria-label={t('detail.back')}
-                className="bg-muted text-foreground hover:bg-accent flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors md:hidden"
-              >
-                <IconChevronRight className="size-5 rtl:rotate-0 ltr:rotate-180" />
-              </button>
+            {/* Below md the app header says all of this (see above). */}
+            <div className="hidden items-center gap-2.5 md:flex">
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-[17px] font-bold">
                   {paneItem.label}
@@ -169,7 +183,7 @@ export function SchedulesLayout({
                   · {paneItem.whenDetailed}
                 </span>
               </div>
-              <ScheduleStatusChip status={paneItem.status} />
+              <ScheduleStatusChip status={paneItem.status} size="md" />
             </div>
 
             {paneItem.details}

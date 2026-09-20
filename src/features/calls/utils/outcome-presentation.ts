@@ -43,16 +43,11 @@ const PRESENTATION: Record<CallOutcome, CallOutcomePresentation> = {
     text: rsvpPresentation('declined').text,
   },
   /*
-   * No answer takes the pending hue because on the Owner's results table it is
-   * one outcome among several. The Back Office deliberately overrides it to
-   * neutral - there it is the absence of a result, not one of them.
+   * No answer is neutral: it is the absence of an answer, not a fourth kind of
+   * answer, and amber is what the RSVP column already uses for a guest who is
+   * still pending - the two sit side by side in the Owner's results list.
    */
-  no_answer: {
-    chip: rsvpPresentation('pending').chip,
-    filled: 'bg-rsvp-pending-strong text-background',
-    accent: rsvpPresentation('pending').accent,
-    text: rsvpPresentation('pending').text,
-  },
+  no_answer: NEUTRAL,
   guest_will_update: {
     chip: 'bg-outcome-will-update-tint text-outcome-will-update-strong',
     filled: 'bg-outcome-will-update-strong text-background',

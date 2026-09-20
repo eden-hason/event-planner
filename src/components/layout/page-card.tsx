@@ -11,6 +11,7 @@ import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 import { isSeatingRoute, isGuestImportRoute, isHomeRoute } from './app-shell';
+import { useBottomNavHidden } from './bottom-nav-context';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
@@ -39,6 +40,7 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
  */
 export function PageCard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const bottomNavHidden = useBottomNavHidden();
   const seating = isSeatingRoute(pathname);
   // Home's mobile Hero is its own header: it opens with the event title and the
   // countdown against a full-bleed wash that has to start at the top edge of
@@ -46,7 +48,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   // stays from `md` up, where Home is the desktop layout and the Hero is one
   // card in a grid rather than the top of the page.
   const hideChromeRowOnMobile = isHomeRoute(pathname);
-  const { title, subtitle, action } = useFeatureLayoutContext();
+  const { title, subtitle, action, back } = useFeatureLayoutContext();
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -97,7 +99,11 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               // sits over the bottom of the viewport. The nav publishes its own
               // height as `--app-bottom-nav-height`; it adds the device
               // safe-area inset below itself, so the gap has to clear both.
-              'mb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-2',
+              // A page that hides the nav (see `useHideBottomNav`) needs no
+              // clearance for it.
+              bottomNavHidden
+                ? 'mb-0 md:mb-2'
+                : 'mb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-2',
               // `mt-2`/`me-2` (8px), matching the floating sidebar's own
               // outer gap so the two sit level. `me-2` (not `mx-2`): the
               // sidebar-facing side already gets its 8px from the sidebar's
@@ -157,6 +163,16 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             >
               <ChevronLeft className="size-5 rtl:rotate-180" />
             </Link>
+          )}
+          {back && (
+            <button
+              type="button"
+              onClick={back.onClick}
+              aria-label={back.label}
+              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground -ms-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors"
+            >
+              <ChevronLeft className="size-5 rtl:rotate-180" />
+            </button>
           )}
           {title && (
             <div className="min-w-0">
