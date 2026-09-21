@@ -6,10 +6,13 @@ import { SettingsCard } from './settings-card';
 interface TargetAudienceCardProps {
   targetStatus?: 'pending' | 'confirmed' | null;
   disabled?: boolean;
+  /** The message has gone out, so `count` is who it went to, not who matches now. */
+  sent?: boolean;
   /**
-   * How many guest records that audience holds right now. A targeted audience
-   * is re-evaluated on the day of the send, so this is what it would be if the
-   * message went out today - which is the number worth showing beside it.
+   * Before the send, how many guest records that audience holds right now. A
+   * targeted audience is re-evaluated on the day of the send, so this is what
+   * it would be if the message went out today. After the send, how many guest
+   * records the message actually went to.
    */
   count?: number | null;
 }
@@ -17,6 +20,7 @@ interface TargetAudienceCardProps {
 export async function TargetAudienceCard({
   targetStatus,
   disabled,
+  sent,
   count,
 }: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
@@ -29,6 +33,11 @@ export async function TargetAudienceCard({
         : t('allGuests');
 
   const AudienceIcon = targetStatus === 'confirmed' ? IconUserCheck : IconUsers;
+  const note = sent
+    ? t('sentTo', { target: targetStatus ?? 'all' })
+    : targetStatus
+      ? t('recomputedNote')
+      : null;
 
   return (
     <SettingsCard title={t('cardTitle')}>
@@ -44,9 +53,7 @@ export async function TargetAudienceCard({
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-[14.5px] font-semibold">{audienceLabel}</span>
-            {targetStatus && (
-              <span className="text-muted-foreground text-xs">{t('recomputedNote')}</span>
-            )}
+            {note && <span className="text-muted-foreground text-xs">{note}</span>}
           </div>
           {count != null && (
             <span className="text-xl font-extrabold tabular-nums">{count}</span>

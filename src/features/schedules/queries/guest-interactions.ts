@@ -51,8 +51,7 @@ export type GuestInteractionRow = {
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**
-   * WhatsApp read receipt - the guest opened the message itself, which is not
-   * the same as `viewed` (that one means they opened the RSVP page). SMS never
+   * WhatsApp read receipt - the guest opened the message itself. SMS never
    * reports past accepted, so an SMS guest stays false here forever and the UI
    * shows those as not-applicable rather than unseen.
    */
@@ -60,8 +59,6 @@ export type GuestInteractionRow = {
   seenAt?: string;
   /** When the message left us - the only timestamp a guest who did nothing has */
   sentAt?: string;
-  viewed: boolean;
-  viewedAt?: string;
   response?: 'rsvp_confirm' | 'rsvp_decline';
   respondedAt?: string;
   /** What the guest entered on the RSVP form at the time they responded */
@@ -98,7 +95,6 @@ export type ScheduleInteractionData = {
      * out of the whole audience would score every SMS guest as unseen.
      */
     seenCapable: number;
-    views: number;
     /** Guest records that confirmed */
     confirmed: number;
     /** People those records cover - the number that actually seats and bills */
@@ -185,7 +181,6 @@ export async function getScheduleInteractionData(
       excludedNoPhone: 0,
       seen: 0,
       seenCapable: 0,
-      views: 0,
       confirmed: 0,
       confirmedGuests: 0,
       declined: 0,
@@ -215,7 +210,6 @@ export async function getScheduleInteractionData(
         viaFallback: false,
         delivery: null,
         seen: false,
-        viewed: false,
         amount: guest.amount ?? 1,
       };
       guestMap.set(guestId, entry);
@@ -261,10 +255,7 @@ export async function getScheduleInteractionData(
       mealCounts?: Record<string, number>;
     } | null;
 
-    if (row.interaction_type === 'view' && !entry.viewed) {
-      entry.viewed = true;
-      entry.viewedAt = row.created_at;
-    } else if (
+    if (
       (row.interaction_type === 'rsvp_confirm' ||
         row.interaction_type === 'rsvp_decline') &&
       !entry.response
@@ -300,7 +291,6 @@ export async function getScheduleInteractionData(
     excludedNoPhone: noPhone,
     seen: guests.filter((g) => g.seen).length,
     seenCapable,
-    views: guests.filter((g) => g.viewed).length,
     confirmed: confirmedGuestRecords.length,
     confirmedGuests: confirmedGuestRecords.reduce(
       (sum, g) => sum + g.amount,
@@ -309,18 +299,16 @@ export async function getScheduleInteractionData(
     declined: guests.filter((g) => g.response === 'rsvp_decline').length,
   };
 
-  // Responded first, then viewed, then seen, then reached, then not reached
+  // Responded first, then seen, then reached, then not reached
   guests.sort((a, b) => {
     const rank = (g: GuestInteractionRow) =>
       g.response
         ? 0
-        : g.viewed
+        : g.seen
           ? 1
-          : g.seen
+          : g.delivery === 'whatsapp' || g.delivery === 'sms'
             ? 2
-            : g.delivery === 'whatsapp' || g.delivery === 'sms'
-              ? 3
-              : 4;
+            : 3;
     return rank(a) - rank(b);
   });
 

@@ -1,36 +1,19 @@
 import { cache } from 'react';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getImpersonation } from './impersonation';
+import { createClient } from './server';
+import { createServiceClient } from './service';
+import { createSessionClient } from './session';
 
-type ImpersonationContext = { userId: string } | null;
-
-// Wrapped with React cache() so the auth + profile calls are deduplicated
-// across the layout and page queries within a single render.
-export const getImpersonation = cache(async function getImpersonation(): Promise<ImpersonationContext> {
-  const cookieStore = await cookies();
-  const impersonateId = cookieStore.get('impersonate_user_id')?.value;
-  if (!impersonateId) return null;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single();
-
-  return profile?.is_admin ? { userId: impersonateId } : null;
-});
+export { getImpersonation, isLocalDatabase } from './impersonation';
 
 export async function getEffectiveClient() {
   const impersonation = await getImpersonation();
-  const supabase = impersonation ? createServiceClient() : await createClient();
+  // Locally the impersonated Owner has a real session (see createClient), so
+  // reads go through RLS as them; on production the service client stands in.
+  const supabase = impersonation?.readOnly
+    ? createServiceClient()
+    : await createClient();
   return { supabase, impersonation };
 }
 
@@ -56,7 +39,7 @@ type OperatorProfile = {
  * asking for the email together cost what asking for either used to.
  */
 const readOperator = cache(async function readOperator(): Promise<OperatorProfile> {
-  const supabase = await createClient();
+  const supabase = await createSessionClient();
 
   // getClaims rather than getUser, for the reason updateSession already spells
   // out in ./middleware.ts: getUser is a blocking round trip to /auth/v1/user,
@@ -107,7 +90,12 @@ export async function getOperatorEmail(): Promise<string | null> {
   return email;
 }
 
+/**
+ * Refuses a write while impersonating on production. Locally the Operator acts
+ * with a real session as the Owner (see createClient), so the write goes
+ * through as theirs, under their RLS, and needs no refusal.
+ */
 export async function assertNotImpersonating(): Promise<string | null> {
   const impersonation = await getImpersonation();
-  return impersonation ? 'Read-only mode (impersonation)' : null;
+  return impersonation?.readOnly ? 'Read-only mode (impersonation)' : null;
 }

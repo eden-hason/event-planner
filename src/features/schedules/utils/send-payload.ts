@@ -1,6 +1,7 @@
 import { toE164 } from '@/lib/phone';
 import type { MessageTemplateApp } from '../schemas/message-templates';
 import { toWhatsAppTemplate } from '../schemas/message-templates';
+import { DERIVED_FROM_HOSTS } from './missing-details';
 import { buildSmsBody } from './send-helpers';
 import {
   getValueByPath,
@@ -164,9 +165,7 @@ export function missingOccasionPhrase(
   const missing = template.payload.parameters.placeholders.some((placeholder) => {
     const source = placeholder.source ?? placeholder.name;
     return (
-      (source === 'event.occasionPhrase' ||
-        source === 'event.approachingLine' ||
-        source === 'event.todayLine') &&
+      DERIVED_FROM_HOSTS.includes(source) &&
       !getValueByPath(context as unknown as Record<string, unknown>, source)
     );
   });

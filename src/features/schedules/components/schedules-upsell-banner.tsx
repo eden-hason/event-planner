@@ -1,23 +1,25 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { IconSparkles } from '@tabler/icons-react';
+import { Crown } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from '@/features/billing';
+import { cn } from '@/lib/utils';
 
 import { useBillingSheet } from './use-billing-sheet';
 
 /**
  * The one upsell on a locked timeline.
  *
- * Both actions open `EventBillingStatusSheet` - the single place the plan is
+ * The action opens `EventBillingStatusSheet` - the single place the plan is
  * explained, and the only place a real call to action exists, since checkout
- * is a WhatsApp conversation rather than a payment button. Two buttons rather
- * than one because they answer different questions ("how do I start" and
- * "what do I get"), but they lead to the same page of the same sheet.
+ * is a WhatsApp conversation rather than a payment button.
  *
  * Owner-only and silent until the provider supplies a status, matching
  * `EventBillingStatusPill`.
  */
-export function SchedulesUpsellBanner() {
+export function SchedulesUpsellBanner({ count }: { count: number }) {
   const t = useTranslations('schedules.upsell');
   const { canPrompt, openSheet, sheet } = useBillingSheet();
 
@@ -25,37 +27,35 @@ export function SchedulesUpsellBanner() {
 
   return (
     <>
-      <div className="from-primary to-primary/80 text-primary-foreground flex flex-col gap-3 rounded-2xl bg-linear-150 p-4 shadow-lg">
+      <div
+        className={cn(
+          UPSELL_SURFACE_CLASS,
+          'flex flex-col gap-3 rounded-[18px] p-4',
+        )}
+      >
         <div className="flex items-start gap-3">
           <span
             aria-hidden
-            className="bg-primary-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-xl"
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/15"
           >
-            <IconSparkles className="size-5" />
+            <Crown className="size-5" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="text-base leading-tight font-bold">{t('title')}</p>
-            <p className="text-primary-foreground/80 text-[13px] leading-relaxed">
-              {t('description')}
+            <p className="text-[16.5px] leading-tight font-extrabold">
+              {t('title')}
+            </p>
+            <p className="text-[13px] leading-normal text-white/80">
+              {t('description', { count })}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openSheet}
-            className="bg-primary-foreground text-primary h-11 flex-1 rounded-xl text-[15px] font-bold transition-opacity active:opacity-90"
-          >
-            {t('cta')}
-          </button>
-          <button
-            type="button"
-            onClick={openSheet}
-            className="border-primary-foreground/30 h-11 rounded-xl border px-4 text-[13.5px] font-medium transition-opacity active:opacity-90"
-          >
-            {t('learnMore')}
-          </button>
-        </div>
+        <Button
+          type="button"
+          onClick={openSheet}
+          className={cn('font-bold hover:bg-white/90', UPSELL_CTA_CLASS)}
+        >
+          {t('cta')}
+        </Button>
       </div>
 
       {sheet}

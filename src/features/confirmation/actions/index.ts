@@ -114,18 +114,3 @@ export async function submitConfirmation(
     message: confirmed ? 'תודה! אישרת הגעה' : 'תודה על העדכון',
   };
 }
-
-export async function recordViewInteraction(
-  guestId: string,
-  scheduleId: string,
-): Promise<void> {
-  const supabase = createServiceClient();
-  const { error } = await supabase
-    .from('guest_interactions')
-    .insert({ guest_id: guestId, schedule_id: scheduleId, interaction_type: 'view' });
-
-  // 23505 = unique_violation: guest already viewed this schedule, ignore
-  if (error && error.code !== '23505') {
-    console.error('Error recording view interaction:', error);
-  }
-}

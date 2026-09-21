@@ -1,6 +1,13 @@
 'use client';
 
-import { IconArrowBack, IconExternalLink, IconInfoCircle, IconPhoto } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconArrowBack,
+  IconExternalLink,
+  IconInfoCircle,
+  IconListDetails,
+  IconPhoto,
+} from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
@@ -10,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { type EventApp } from '@/features/events/schemas';
 
 import { type WhatsAppTemplateApp } from '../schemas';
+import { missingDetails } from '../utils/missing-details';
 import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 import { useScheduleSettings } from './schedule-settings-context';
 
@@ -70,9 +78,9 @@ export function MessagePreview({
   const t = useTranslations('schedules.messagePreview');
   const { note } = useScheduleSettings();
 
-  const { resolvedBody, hasMissingFields } = template
+  const { resolvedBody, missingSources } = template
     ? resolveTemplateBodyForPreview(template, event, note)
-    : { resolvedBody: '', hasMissingFields: false };
+    : { resolvedBody: '', missingSources: [] };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];
   const imageUrl = headerPlaceholder?.source
@@ -202,6 +210,9 @@ export function MessagePreview({
             </>
           )}
         </div>
+        {missingSources.length > 0 && event && (
+          <MissingDetailsNotice sources={missingSources} eventId={event.id} />
+        )}
       </div>
       {seatingGap && event && (
         <Alert className="mt-3">
@@ -223,21 +234,59 @@ export function MessagePreview({
           </AlertDescription>
         </Alert>
       )}
-      {hasMissingFields && event && (
-        <Alert className="mt-3">
-          <IconInfoCircle />
-          <AlertTitle>{t('missingFields.title')}</AlertTitle>
-          <AlertDescription>
-            <p>{t('missingFields.description')}</p>
-            <Button size="xs" variant="link" className="mt-1 px-0" asChild>
-              <Link href={`/app/${event.id}/details`}>
-                {t('missingFields.link')}
-                <IconExternalLink />
-              </Link>
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
     </section>
+  );
+}
+
+/**
+ * Event details the message shows that the event does not have yet. Attached
+ * to the foot of the preview rather than floating beside it: it is about the
+ * gaps in the message right above it, which is where the Owner is looking.
+ */
+function MissingDetailsNotice({
+  sources,
+  eventId,
+}: {
+  sources: string[];
+  eventId: string;
+}) {
+  const t = useTranslations('schedules.messagePreview.missingFields');
+  const details = missingDetails(sources);
+  // A source with no detail to name still counts, so the title never says zero
+  const count = details.length || sources.length;
+
+  return (
+    <div className="border-warning-tint-border bg-warning-tint text-warning-strong flex flex-col gap-2.5 border-t px-3 py-3">
+      <div className="flex items-start gap-2.5">
+        <span className="bg-warning-tint-border flex size-[26px] shrink-0 items-center justify-center rounded-[9px]">
+          <IconAlertTriangle size={15} stroke={2.1} />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-[13.5px] font-bold">{t('title')}</span>
+          <span className="text-xs leading-normal">
+            {t('description', { count })}
+          </span>
+        </div>
+      </div>
+      {details.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {details.map((detail) => (
+            <li
+              key={detail}
+              className="border-warning-tint-border bg-card rounded-full border px-2.5 py-1 text-[11.5px] font-semibold"
+            >
+              {t(`fields.${detail}`)}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link
+        href={`/app/${eventId}/details`}
+        className="bg-warning-strong text-warning-tint flex h-9 items-center justify-center gap-1.5 rounded-[11px] text-[13.5px] font-bold transition-opacity hover:opacity-90"
+      >
+        <IconListDetails size={15} stroke={2.1} />
+        {t('link')}
+      </Link>
+    </div>
   );
 }

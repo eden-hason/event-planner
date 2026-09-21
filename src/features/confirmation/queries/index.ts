@@ -105,7 +105,6 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
 
 /**
  * Fetches confirmation page data by token using the service role client.
- * Also updates clicked_at on first visit.
  */
 export async function getConfirmationDataByToken(
   token: string,
@@ -117,7 +116,6 @@ export async function getConfirmationDataByToken(
     .select(
       `
       id,
-      clicked_at,
       schedule_id,
       guests!inner (
         id, name, amount, rsvp_status, meal_counts, guest_notes
@@ -133,14 +131,6 @@ export async function getConfirmationDataByToken(
 
   if (error || !data) {
     return null;
-  }
-
-  // Update clicked_at on first visit
-  if (!data.clicked_at) {
-    await supabase
-      .from('message_deliveries')
-      .update({ clicked_at: new Date().toISOString() })
-      .eq('id', data.id);
   }
 
   // Extract nested data — Supabase returns !inner joins as objects

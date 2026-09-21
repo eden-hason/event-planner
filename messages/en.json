@@ -42,6 +42,7 @@
     "guests": "Guests",
     "seating": "Seating",
     "schedules": "Messages",
+    "schedulesDesktop": "Messages and Calls",
     "gifting": "Digital Gifting",
     "collaboration": "Collaboration",
     "settings": "Settings",
@@ -1303,7 +1304,7 @@
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed",
       "pendingGuests": "Not yet answered",
-      "sentTo": "Sent to",
+      "sentTo": "{target, select, pending {Sent to guests who had not answered by the send day} confirmed {Sent to guests who had confirmed by the send day} other {Sent to every guest with a phone number}}",
       "calling": "Calling",
       "recomputedNote": "Recalculated automatically on the day of the send"
     },
@@ -1313,9 +1314,18 @@
       "imagePlaceholder": "Image",
       "button": "Button {index}",
       "missingFields": {
-        "title": "Missing event details",
-        "description": "Some required fields aren't filled in yet. Complete them to see the full message preview.",
-        "link": "Event Details"
+        "title": "Missing details for this message",
+        "description": "{count, plural, one {One detail this message shows isn't filled in on the event details page yet, so it will appear blank to your guests} other {# details this message shows aren't filled in on the event details page yet, so they will appear blank to your guests}}",
+        "link": "Complete event details",
+        "fields": {
+          "eventDate": "Event date",
+          "venue": "Venue",
+          "receptionTime": "Reception time",
+          "brideName": "Bride's name",
+          "groomName": "Groom's name",
+          "childName": "Celebrant's name",
+          "hosts": "Hosts' names"
+        }
       },
       "seatingGap": {
         "title": "Some guests are not seated yet",
@@ -1392,7 +1402,6 @@
       "callCount": "{count, plural, one {1 call} other {# calls}}",
       "readRate": "{percent}% read",
       "reachedRate": "{percent}% reached",
-      "callsNote": "Call rounds are made by the Kululu team, and planned here alongside the messages",
       "callLiveStat": "{confirmed} confirmed · {awaiting} to go",
       "callDoneStat": "{confirmed} confirmed · {noAnswer} no answer",
       "callOff": "This round was switched off. Get in touch for details"
@@ -1437,9 +1446,8 @@
     },
     "upsell": {
       "title": "Your messages are written and waiting",
-      "description": "Every message and call is already written and timed against your date. Enabling sending is what sets them going",
-      "cta": "Enable sending",
-      "learnMore": "What's included"
+      "description": "All {count} of your event's messages and calls are already written and timed against your date. Premium turns on sending",
+      "cta": "Upgrade to Premium"
     },
     "empty": {
       "noDate": {
@@ -1484,7 +1492,6 @@
         "ofAudience": "{percent}% of the audience",
         "seen": "Seen",
         "seenHint": "of {count} WhatsApp deliveries",
-        "opened": "Opened the page",
         "answered": "Responded",
         "answeredHint": "{confirmed} confirmed · {declined} declined"
       },
@@ -1520,21 +1527,6 @@
         "noPhone": "No phone number",
         "noPhoneWhy": "Not sent · add a number"
       },
-      "feed": {
-        "title": "What's happening",
-        "empty": "No activity yet. Answers and page visits show up here",
-        "lastAt": "Last update {when}",
-        "confirmed": "confirmed",
-        "declined": "declined",
-        "opened": "opened the page",
-        "seen": "read the message",
-        "sms": "got an SMS",
-        "smsMeta": "WhatsApp couldn't reach them",
-        "notDelivered": "wasn't reached",
-        "notDeliveredWhatsapp": "WhatsApp couldn't reach them",
-        "notDeliveredSms": "The SMS couldn't reach them",
-        "whatsapp": "WhatsApp"
-      },
       "guests": {
         "title": "Guests",
         "count": "{count, plural, one {# record} other {# records}}",
@@ -1555,7 +1547,6 @@
           "guest": "Guest",
           "delivery": "Delivery",
           "seen": "Seen",
-          "opened": "Opened page",
           "answer": "Answer",
           "lastUpdate": "Last update"
         },
@@ -1602,7 +1593,6 @@
         "onItsWayMeta": "The phone hasn't confirmed it yet",
         "noPhone": "No phone number",
         "noPhoneMeta": "Nothing was sent. Add a number in the guest list",
-        "opened": "Opened the page",
         "confirmed": "Confirmed",
         "declined": "Declined",
         "call": "Call guest",

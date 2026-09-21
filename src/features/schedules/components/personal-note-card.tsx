@@ -37,7 +37,7 @@ export function PersonalNoteCard({ lockReason }: { lockReason: 'locked' | 'sent'
         readOnly={!editable}
         dir="rtl"
         rows={3}
-        className="read-only:bg-muted/60 min-h-[78px] resize-none rounded-[11px]"
+        className="read-only:bg-muted/60 resize-none"
       />
       <p className="text-muted-foreground text-xs">{t(`help.${lockReason ?? 'editable'}`)}</p>
     </SettingsCard>

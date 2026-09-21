@@ -56,7 +56,6 @@ interface ScheduleResultsGuestsProps {
   guests: GuestInteractionRow[];
   collectsRsvp: boolean;
   showSeen: boolean;
-  showViews: boolean;
   filter: GuestFilter;
   onFilterChange: (filter: GuestFilter) => void;
   selectedId: string | null;
@@ -80,7 +79,6 @@ export function ScheduleResultsGuests({
   guests,
   collectsRsvp,
   showSeen,
-  showViews,
   filter,
   onFilterChange,
   selectedId,
@@ -183,12 +181,11 @@ export function ScheduleResultsGuests({
 
   const Chevron = isRTL ? IconChevronLeft : IconChevronRight;
 
-  // Guest, delivery, [seen], [opened], [answer], last update
+  // Guest, delivery, [seen], [answer], last update
   const columns = [
     'minmax(120px,1.4fr)',
     '110px',
     ...(showSeen ? ['84px'] : []),
-    ...(showViews ? ['80px'] : []),
     ...(collectsRsvp ? ['128px'] : []),
     '96px',
   ].join(' ');
@@ -216,7 +213,7 @@ export function ScheduleResultsGuests({
             onChange={(e) => narrow(() => setQuery(e.target.value))}
             placeholder={t('search')}
             aria-label={t('search')}
-            className="bg-background h-10 rounded-[11px] ps-9 text-[13px] @3xl:h-9"
+            className="bg-background ps-9"
           />
         </div>
 
@@ -311,7 +308,6 @@ export function ScheduleResultsGuests({
             <span>{t('columns.guest')}</span>
             <span>{t('columns.delivery')}</span>
             {showSeen && <span>{t('columns.seen')}</span>}
-            {showViews && <span>{t('columns.opened')}</span>}
             {collectsRsvp && <span>{t('columns.answer')}</span>}
             <span className="text-end">{t('columns.lastUpdate')}</span>
           </div>
@@ -340,20 +336,6 @@ export function ScheduleResultsGuests({
               {showSeen && (
                 <span className={cn('text-[12.5px]', seen.className)}>
                   {seen.text}
-                </span>
-              )}
-              {showViews && (
-                <span
-                  className={cn(
-                    'text-[12.5px] tabular-nums',
-                    row.viewedAt
-                      ? 'text-muted-foreground'
-                      : 'text-muted-foreground/60',
-                  )}
-                >
-                  {row.viewedAt
-                    ? formatMoment(row.viewedAt, { now, locale })
-                    : '-'}
                 </span>
               )}
               {collectsRsvp && (

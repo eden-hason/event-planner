@@ -16,6 +16,13 @@ import { getEffectiveClient } from '@/lib/supabase/admin';
 export type ScheduleDeliveryStats = {
   /** Deliveries created for this Schedule, over both channels. */
   total: number;
+  /**
+   * Guest records the message actually went out to: every Delivery but the
+   * ones recorded as not sent (no usable phone at send time). This is the
+   * audience of a sent Schedule - the live target count keeps moving as
+   * guests answer, this does not.
+   */
+  sent: number;
   /** Deliveries that got to the guest - delivered or read, or accepted over SMS. */
   reached: number;
   /** WhatsApp deliveries with a read receipt. */
@@ -29,7 +36,7 @@ export type ScheduleDeliveryStats = {
 };
 
 function empty(): ScheduleDeliveryStats {
-  return { total: 0, reached: 0, read: 0, readCapable: 0 };
+  return { total: 0, sent: 0, reached: 0, read: 0, readCapable: 0 };
 }
 
 /**
@@ -69,6 +76,7 @@ export async function getDeliveryStatsByScheduleId(
     }
 
     entry.total += 1;
+    if (status !== 'not_sent') entry.sent += 1;
 
     // Matches toOutcome in queries/guest-interactions.ts: SMS never reports
     // past accepted, so an accepted SMS counts as reached while an accepted

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, buildActivityFeed, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, seenState } from './schedule-results.ts';
+import { availableFilters, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, seenState } from './schedule-results.ts';
 
 type Row = Parameters<typeof guestStatus>[0];
 
@@ -13,7 +13,6 @@ const row = (over: Partial<Row>): Row => ({
   viaFallback: false,
   delivery: 'whatsapp',
   seen: false,
-  viewed: false,
   amount: 1,
   ...over,
 });
@@ -91,81 +90,6 @@ test('not seen yet is only reached WhatsApp guests without a receipt', () => {
   );
 });
 
-// ─── feed ─────────────────────────────────────────────────────────────────────
-
-test('the feed is newest first and leaves out plain sends', () => {
-  const feed = buildActivityFeed(
-    [
-      row({
-        guestName: 'a',
-        sentAt: '2026-09-20T15:00:00Z',
-        seen: true,
-        seenAt: '2026-09-20T15:07:00Z',
-        response: 'rsvp_confirm',
-        respondedAt: '2026-09-20T15:09:00Z',
-        guestCount: 4,
-      }),
-      row({ guestName: 'b', viewed: true, viewedAt: '2026-09-20T15:08:00Z' }),
-    ],
-    10,
-  );
-  assert.deepEqual(
-    feed.map((i: { kind: string }) => i.kind),
-    ['confirmed', 'opened', 'seen'],
-  );
-  assert.equal(feed[0].guestCount, 4);
-});
-
-test('the feed tells an SMS Fallback and a message that did not arrive', () => {
-  const feed = buildActivityFeed(
-    [
-      row({
-        guestName: 'fallback',
-        delivery: 'sms',
-        viaFallback: true,
-        steps: [
-          {
-            channel: 'whatsapp',
-            fallback: false,
-            sentAt: '2026-09-20T15:00:00Z',
-            failedAt: '2026-09-20T15:04:00Z',
-          },
-          { channel: 'sms', fallback: true, sentAt: '2026-09-21T08:30:00Z' },
-        ],
-      }),
-      row({
-        guestName: 'failed',
-        delivery: 'not_delivered',
-        steps: [
-          {
-            channel: 'whatsapp',
-            fallback: false,
-            sentAt: '2026-09-20T15:00:00Z',
-            failedAt: '2026-09-20T15:05:00Z',
-          },
-        ],
-      }),
-    ],
-    10,
-  );
-  assert.deepEqual(
-    feed.map((i: { kind: string }) => i.kind),
-    ['sms', 'not_delivered'],
-  );
-  assert.equal(feed[1].channel, 'whatsapp');
-});
-
-test('the feed is capped', () => {
-  const rows = Array.from({ length: 5 }, (_, i) =>
-    row({
-      guestName: `g${i}`,
-      viewed: true,
-      viewedAt: `2026-09-20T15:0${i}:00Z`,
-    }),
-  );
-  assert.equal(buildActivityFeed(rows, 3).length, 3);
-});
-
 // ─── journey ──────────────────────────────────────────────────────────────────
 
 test('a journey across WhatsApp and an SMS Fallback reads in time order', () => {
@@ -173,8 +97,6 @@ test('a journey across WhatsApp and an SMS Fallback reads in time order', () => 
     row({
       delivery: 'sms',
       viaFallback: true,
-      viewed: true,
-      viewedAt: '2026-09-21T08:52:00Z',
       response: 'rsvp_confirm',
       respondedAt: '2026-09-21T08:53:00Z',
       guestCount: 2,
@@ -198,7 +120,6 @@ test('a journey across WhatsApp and an SMS Fallback reads in time order', () => 
       'sent:whatsapp',
       'not_delivered:whatsapp',
       'sent:sms',
-      'opened',
       'confirmed',
     ],
   );
@@ -309,7 +230,7 @@ test('the latest activity is the newest timestamp on the row', () => {
             readAt: '2026-09-20T17:00:00Z',
           },
         ],
-        viewedAt: '2026-09-20T16:00:00Z',
+        respondedAt: '2026-09-20T16:00:00Z',
       }),
     ),
     '2026-09-20T17:00:00Z',
@@ -330,13 +251,5 @@ test('moments read as time today, yesterday with time, then a date', () => {
   assert.equal(
     formatMoment('2026-09-18T18:14:00Z', { now, locale: 'en' }),
     '9/18',
-  );
-  assert.equal(
-    formatMoment('2026-09-21T11:58:00Z', { now, locale: 'en', relative: true }),
-    '2 min. ago',
-  );
-  assert.equal(
-    formatMoment('2026-09-21T11:59:40Z', { now, locale: 'en', relative: true }),
-    'now',
   );
 });

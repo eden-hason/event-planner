@@ -11,7 +11,7 @@ import type {
  * The channel is not a rung: `sms` is here only because SMS stops at accepted
  * and has nothing further to say about delivery, so "reached by SMS" is its
  * final delivery state. `none` is a guest with no Delivery at all - someone who
- * opened a shared link.
+ * answered through a shared link.
  */
 export type GuestStatus =
   | 'seen'
@@ -112,7 +112,6 @@ export function lastActivityAt(row: GuestInteractionRow): string | undefined {
   const times = [
     row.sentAt,
     row.seenAt,
-    row.viewedAt,
     row.respondedAt,
     ...row.steps.flatMap((step) => [
       step.sentAt,
@@ -124,83 +123,6 @@ export function lastActivityAt(row: GuestInteractionRow): string | undefined {
   return times.length ? times.reduce((a, b) => (a > b ? a : b)) : undefined;
 }
 
-export type ActivityKind =
-  | 'confirmed'
-  | 'declined'
-  | 'opened'
-  | 'seen'
-  | 'sms'
-  | 'not_delivered';
-
-export type ActivityItem = {
-  key: string;
-  guestId: string;
-  guestName: string;
-  kind: ActivityKind;
-  at: string;
-  /** The channel a `not_delivered` item failed on */
-  channel?: 'whatsapp' | 'sms';
-  guestCount?: number;
-  mealCounts?: Record<string, number>;
-};
-
-/**
- * The schedule's movements, newest first: answers, page opens, read receipts,
- * SMS Fallbacks and messages that did not arrive.
- *
- * Sends and plain deliveries are left out on purpose. They arrive in one burst
- * a minute after sending, and would bury the answers the Owner is watching for.
- */
-export function buildActivityFeed(
-  rows: GuestInteractionRow[],
-  limit: number,
-): ActivityItem[] {
-  const items: ActivityItem[] = [];
-  const push = (
-    row: GuestInteractionRow,
-    kind: ActivityKind,
-    at: string | undefined,
-    extra?: Partial<ActivityItem>,
-  ) => {
-    if (!at) return;
-    items.push({
-      key: `${row.guestId}:${kind}`,
-      guestId: row.guestId,
-      guestName: row.guestName,
-      kind,
-      at,
-      ...extra,
-    });
-  };
-
-  for (const row of rows) {
-    if (row.response) {
-      push(
-        row,
-        row.response === 'rsvp_confirm' ? 'confirmed' : 'declined',
-        row.respondedAt,
-        {
-          guestCount: row.guestCount,
-          mealCounts: row.mealCounts,
-        },
-      );
-    }
-    if (row.viewed) push(row, 'opened', row.viewedAt);
-    if (row.seen && row.delivery === 'whatsapp') push(row, 'seen', row.seenAt);
-    if (row.viaFallback) {
-      push(row, 'sms', row.steps.find((step) => step.fallback)?.sentAt);
-    }
-    if (row.delivery === 'not_delivered') {
-      const failed = row.steps.filter((step) => step.failedAt).at(-1);
-      push(row, 'not_delivered', failed?.failedAt, {
-        channel: failed?.channel,
-      });
-    }
-  }
-
-  return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
-}
-
 export type JourneyStepKind =
   | 'sent'
   | 'delivered'
@@ -208,7 +130,6 @@ export type JourneyStepKind =
   | 'not_delivered'
   | 'on_its_way'
   | 'no_phone'
-  | 'opened'
   | 'confirmed'
   | 'declined';
 
@@ -265,7 +186,6 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
       channel: row.delivery === 'sms' ? 'sms' : 'whatsapp',
     });
   }
-  if (row.viewed) steps.push({ kind: 'opened', at: row.viewedAt });
   if (row.response) {
     steps.push({
       kind: row.response === 'rsvp_confirm' ? 'confirmed' : 'declined',
@@ -331,28 +251,18 @@ function israelDayKey(date: Date): string {
 
 /**
  * A moment on the results screen, the way a person says it: "18:08" today,
- * "yesterday 21:14", "23.9" before that. With `relative`, the last hour reads
- * as "2 min. ago" - what the activity feed wants and a table column does not.
+ * "yesterday 21:14", "23.9" before that.
  * Days are Israel days, where the events happen.
  */
 export function formatMoment(
   iso: string,
-  {
-    now,
-    locale,
-    relative = false,
-  }: { now: Date; locale: string; relative?: boolean },
+  { now, locale }: { now: Date; locale: string },
 ): string {
   const at = new Date(iso);
-  const ageMs = now.getTime() - at.getTime();
   const rtf = new Intl.RelativeTimeFormat(locale, {
     numeric: 'auto',
     style: 'short',
   });
-
-  if (relative && ageMs < 60_000) return rtf.format(0, 'second');
-  if (relative && ageMs < 3_600_000)
-    return rtf.format(-Math.floor(ageMs / 60_000), 'minute');
 
   const time = new Intl.DateTimeFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,

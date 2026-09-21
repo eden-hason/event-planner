@@ -2,7 +2,7 @@
 export { ConfirmationExperience } from './components/confirmation-experience';
 
 // Actions (server-only)
-export { submitConfirmation, recordViewInteraction } from './actions';
+export { submitConfirmation } from './actions';
 
 // Utils (pure)
 export { buildMealOptions, mealLabel, type MealOption } from './utils/meal-options';

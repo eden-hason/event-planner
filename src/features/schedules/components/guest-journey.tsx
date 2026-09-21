@@ -6,7 +6,6 @@ import {
   IconCheck,
   IconChecks,
   IconClock,
-  IconEye,
   IconHeart,
   IconMessage,
   IconPhone,
@@ -41,8 +40,6 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
       return { icon: IconCheck, tone: 'ok' };
     case 'seen':
       return { icon: IconChecks, tone: 'ok' };
-    case 'opened':
-      return { icon: IconEye, tone: 'violet' };
     case 'confirmed':
       return { icon: IconHeart, tone: 'ok' };
     case 'declined':
@@ -123,8 +120,6 @@ export function GuestJourney({
         };
       case 'no_phone':
         return { label: t('journey.noPhone'), meta: t('journey.noPhoneMeta') };
-      case 'opened':
-        return { label: t('journey.opened'), meta: '' };
       case 'confirmed':
         return {
           label: t('journey.confirmed'),

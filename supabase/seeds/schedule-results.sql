@@ -1,17 +1,14 @@
 -- Schedule Results showcase.
 --
--- Loaded after seed.sql by `npx supabase db reset` (config.toml, db.seed). Never
--- runs against production: `supabase db push` applies migrations only.
+-- Loaded after migrations by `npx supabase db reset` (config.toml, db.seed).
+-- Never runs against production: `supabase db push` applies migrations only.
 --
--- Why this exists: seed.sql is built for the Back Office queue, and every
--- Delivery it writes is one WhatsApp attempt at 'sent' - so every guest reads
--- "on its way", nobody has seen, opened or answered anything, and the results
--- screens render a single state. This file builds one event whose sent
--- schedules between them produce every state the Schedule Results and Call
--- Round screens have to handle.
+-- It builds one event whose sent schedules between them produce every state
+-- the Schedule Results and Call Round screens have to handle.
 --
 -- Signing in: the Owner is couple@kululu.test (OTP, read the code in Mailpit on
--- http://127.0.0.1:54324), or impersonate them from the Back Office.
+-- http://127.0.0.1:54324), or impersonate them as the Operator from
+-- seeds/operator.sql.
 --
 -- Re-run it whenever the "live" results have gone stale. Results stop being
 -- live 72 hours after sending, so a showcase seeded at the last reset quietly
@@ -42,15 +39,21 @@ set local client_min_messages = warning;
 -- The Owner
 -- ---------------------------------------------------------------------------
 
+-- The token columns are written as '' rather than left null: GoTrue scans them
+-- into plain strings and answers 500 for a user whose row carries a null there,
+-- which breaks both sign-in and every request made with that user's token.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
   email_confirmed_at, created_at, updated_at,
-  raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+  raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  phone_change, phone_change_token, email_change_token_current, reauthentication_token
 )
 values
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000004',
    'authenticated', 'authenticated', 'couple@kululu.test', crypt('kululu-local', gen_salt('bf')),
-   now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Maya Shalev"}', false, false)
+   now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Maya Shalev"}', false, false,
+   '', '', '', '', '', '', '', '')
 on conflict (id) do nothing;
 
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
@@ -301,10 +304,7 @@ timed as (
   select outcome.*,
          case when wa = 'failed' then sent_at + make_interval(secs => 20 + pg_temp.h(rn, 40 + k) * 40) end as failed_at,
          case when wa in ('delivered', 'read') then sent_at + make_interval(secs => 3 + pg_temp.h(rn, 50 + k) * 40) end as delivered_at,
-         case when wa_code in (131026, 131049) then case when sms_dead then 'failed' else 'sent' end end as sms,
-         -- A page answer is opened a few minutes before it is sent in
-         case when answered_here and channel = 'page'
-              then answer_at - (1 + pg_temp.h(rn, 70) * 3) * interval '1 minute' end as answer_view_at
+         case when wa_code in (131026, 131049) then case when sms_dead then 'failed' else 'sent' end end as sms
   from outcome
 ),
 seen as (
@@ -313,22 +313,15 @@ seen as (
          case when wa = 'read' then least(now() - interval '20 seconds', greatest(
            delivered_at + interval '20 seconds',
            case
-             when answered_here and channel = 'page' then answer_view_at - (1 + pg_temp.h(rn, 71) * 5) * interval '1 minute'
+             -- A page answer is read, then the page opened, a few minutes before it is sent in
+             when answered_here and channel = 'page'
+               then answer_at - (2 + pg_temp.h(rn, 70) * 3 + pg_temp.h(rn, 71) * 5) * interval '1 minute'
              when answered_here then answer_at - (1 + pg_temp.h(rn, 72) * 4) * interval '1 minute'
              else delivered_at + power(pg_temp.h(rn, 60 + k), 3) * read_horizon
            end)) end as read_at
   from timed
 )
-select seen.*,
-       case
-         when answer_view_at is not null then answer_view_at
-         -- Some who read it opened the page and did not answer
-         when not answered_here and wa = 'read' and pg_temp.h(rn, 30 + k) < 0.35
-           then least(now() - interval '10 seconds', read_at + (2 + pg_temp.h(rn, 32) * 20) * interval '1 minute')
-         when not answered_here and sms = 'sent' and pg_temp.h(rn, 33 + k) < 0.5
-           then least(now() - interval '10 seconds', sms_sent_at + (5 + pg_temp.h(rn, 34) * 30) * interval '1 minute')
-       end as view_at
-from seen;
+select * from seen;
 
 -- Deliveries start pending and are rolled up from their attempts by
 -- roll_up_message_delivery, the same path the webhook takes. A record with no
@@ -365,18 +358,6 @@ where sms is not null;
 -- ---------------------------------------------------------------------------
 -- Interactions and answers
 -- ---------------------------------------------------------------------------
-
-insert into guest_interactions (guest_id, schedule_id, interaction_type, metadata, created_at)
-select guest_id, schedule_id, 'view', '{}', view_at
-from _send
-where view_at is not null;
-
--- The shared-link guest opened the confirmation page without a Delivery
-insert into guest_interactions (guest_id, schedule_id, interaction_type, metadata, created_at)
-select g.id, s.id, 'view', '{}', g.answer_at - interval '2 minutes'
-from _g g
-join _s s on s.k = g.answered_on
-where g.late_add;
 
 -- Metadata as record-rsvp writes it
 insert into guest_interactions (guest_id, schedule_id, interaction_type, metadata, created_at)

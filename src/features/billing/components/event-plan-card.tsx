@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronRight, Clock, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BILLING_TONE_CLASS } from '../utils';
+import { BILLING_TONE_CLASS, UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from '../utils';
 import { useCollaboration } from '@/components/feature-layout';
 import { useEventBillingStatus } from './event-billing-status-provider';
 import { EventBillingStatusSheet } from './event-billing-status-sheet';
@@ -13,7 +13,7 @@ import { EventBillingStatusSheet } from './event-billing-status-sheet';
  * The "your plan" card on the mobile More page - the standalone surface for
  * "Free to Plan, Pay to Send", one level louder than the header pill.
  *
- * Free (or a lapsed event) gets a solid primary-colour upsell card with a
+ * Free (or a lapsed event) gets the plum upsell surface with a
  * single call to action; a sending event gets a quiet white card that states
  * the plan and offers "manage". Both open the same detail sheet the header
  * pill uses, so there is one place the billing story is told.
@@ -49,16 +49,21 @@ export function EventPlanCard() {
     </span>
   );
 
-  // Free / canceled: solid primary upsell card, no usage meter.
+  // Free / canceled: the plum upsell surface, no usage meter.
   if (status.tone === 'plain') {
     return (
       <section className="flex flex-col gap-1.5">
         {heading}
-        <div className="bg-primary text-primary-foreground flex flex-col gap-3 rounded-xl p-3.5">
+        <div
+          className={cn(
+            UPSELL_SURFACE_CLASS,
+            'flex flex-col gap-3 rounded-xl p-3.5',
+          )}
+        >
           <div className="flex items-center gap-3">
             <span
               aria-hidden
-              className="bg-primary-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-[10px]"
+              className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/15"
             >
               <Crown className="size-5" />
             </span>
@@ -66,7 +71,7 @@ export function EventPlanCard() {
               <p className="text-[15px] leading-tight font-semibold">
                 {t('planCard.free.title')}
               </p>
-              <p className="text-primary-foreground/80 mt-0.5 text-xs">
+              <p className="mt-0.5 text-xs text-white/80">
                 {t('planCard.free.description')}
               </p>
             </div>
@@ -74,7 +79,10 @@ export function EventPlanCard() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="bg-primary-foreground text-primary flex items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-sm font-semibold transition-opacity active:opacity-90"
+            className={cn(
+              'flex items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-sm font-semibold transition-opacity active:opacity-90',
+              UPSELL_CTA_CLASS,
+            )}
           >
             {t('planCard.free.cta')}
             <ChevronRight aria-hidden className="size-4 rtl:rotate-180" />

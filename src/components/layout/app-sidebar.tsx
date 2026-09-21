@@ -122,7 +122,7 @@ export function AppSidebar({
     },
     {
       id: 'schedules',
-      title: tNav('schedules'),
+      title: tNav('schedulesDesktop'),
       url: '/app/schedules',
       icon: IconSend,
     },

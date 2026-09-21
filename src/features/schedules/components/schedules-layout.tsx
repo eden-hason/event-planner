@@ -14,7 +14,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 import type { OutreachItem } from '../types';
 import { ScheduleStatusChip } from './schedule-status-chip';
-import { ServiceNote } from './notice-banner';
 import { ScheduleTimeline } from './schedule-timeline';
 import { SchedulesUpsellBanner } from './schedules-upsell-banner';
 
@@ -25,8 +24,6 @@ interface SchedulesLayoutProps {
   items: OutreachItem[];
   /** Whether this Event's whole plan is seeded but not yet enabled. */
   locked: boolean;
-  /** Whether the Event type's set includes call rounds at all. */
-  hasCalls: boolean;
   eventDate: string | null;
 }
 
@@ -46,7 +43,6 @@ interface SchedulesLayoutProps {
 export function SchedulesLayout({
   items,
   locked,
-  hasCalls,
   eventDate,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
@@ -140,14 +136,17 @@ export function SchedulesLayout({
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-      {/* The timeline. Below md it yields the screen to an open pane. */}
+      {/* The timeline. Below md it yields the screen to an open pane; at md and
+          up it stays in view while a long pane scrolls, and scrolls on its own
+          when it is taller than the viewport. */}
       <div
         className={cn(
           'flex min-w-0 flex-col gap-4 md:w-80 md:shrink-0 lg:w-96',
+          'md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto',
           openItem && 'hidden md:flex',
         )}
       >
-        {locked && <SchedulesUpsellBanner />}
+        {locked && <SchedulesUpsellBanner count={items.length} />}
 
         <ScheduleTimeline
           items={items}
@@ -155,10 +154,6 @@ export function SchedulesLayout({
           onSelect={select}
           dayLabel={dayLabel}
         />
-
-        {hasCalls && (
-          <ServiceNote className="ms-10">{t('timeline.callsNote')}</ServiceNote>
-        )}
       </div>
 
       <Separator
