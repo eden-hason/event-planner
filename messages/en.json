@@ -1269,39 +1269,6 @@
       "overview": "Overview",
       "results": "Schedule Results"
     },
-    "interactions": {
-      "cardTitle": "Guests Activity",
-      "views": "Views",
-      "seen": "Seen",
-      "seenOfWhatsapp": "of {whatsapp} on WhatsApp",
-      "emptyDescription": "No results yet - they appear once the schedule has been sent",
-      "columnGuest": "Guest",
-      "columnSeen": "Seen",
-      "columnViewed": "Viewed",
-      "columnResponse": "Response",
-      "columnDate": "Date",
-      "responseConfirmed": "Confirmed",
-      "responseDeclined": "Declined",
-      "responsePending": "No response",
-      "refresh": "Refresh",
-      "columnAmount": "Guests",
-      "audience": "In audience",
-      "audienceExcluded": "{count, plural, one {# record excluded - no phone number} other {# records excluded - no phone number}}",
-      "reached": "Reached",
-      "reachedChannels": "{whatsapp} WhatsApp · {sms} SMS",
-      "responded": "Responded",
-      "respondedBreakdown": "{confirmed, plural, one {# guest} other {# guests}} confirmed · {declined} declined",
-      "columnDelivery": "Delivery",
-      "delivery": {
-        "whatsapp": "WhatsApp",
-        "sms": "SMS",
-        "onItsWay": "On its way",
-        "notDelivered": "Not delivered",
-        "noPhone": "No phone number"
-      },
-      "notReached": "{count} not reached",
-      "filterAll": "Show all"
-    },
     "status": {
       "label": {
         "sent": "Sent",
@@ -1456,6 +1423,14 @@
         "description": "The wording guests receive for this schedule"
       }
     },
+    "deliveryInfo": {
+      "title": "How the message reaches your guests",
+      "points": {
+        "official": "Every message goes out through WhatsApp's official API, from a verified business account",
+        "fallback": "If WhatsApp cannot deliver - no account, a block or a Meta limit - we send an SMS after a few attempts",
+        "results": "Each guest's result is shown here openly: delivered, read or completed by SMS"
+      }
+    },
     "locked": {
       "title": "This schedule is locked",
       "description": "You can see exactly what your guests will receive. Changing the content or the date, and sending it, needs sending enabled"
@@ -1484,6 +1459,154 @@
         "editable": "Added at the end of the message, above the reply buttons",
         "locked": "The note is added at the end of the message. Available once sending is enabled",
         "sent": "The message has already gone out, so the note is kept for the record"
+      }
+    },
+    "results": {
+      "empty": {
+        "title": "No results yet",
+        "description": "They appear here once the messages start going out, and update as they land"
+      },
+      "live": {
+        "liveTitle": "Results are coming in",
+        "settledTitle": "Results have settled",
+        "sentAt": "Sent at {time}",
+        "onItsWay": "{count} still on the way",
+        "updatedAt": "Updated {time}",
+        "refresh": "Refresh"
+      },
+      "funnel": {
+        "title": "The message's journey",
+        "unit": "In guest records",
+        "audience": "Audience",
+        "audienceHint": "Every record with a phone",
+        "audienceExcluded": "{count, plural, one {# record without a phone excluded} other {# records without a phone excluded}}",
+        "reached": "Reached",
+        "ofAudience": "{percent}% of the audience",
+        "seen": "Seen",
+        "seenHint": "of {count} WhatsApp deliveries",
+        "opened": "Opened the page",
+        "answered": "Responded",
+        "answeredHint": "{confirmed} confirmed · {declined} declined"
+      },
+      "channels": {
+        "title": "How it arrived",
+        "whatsapp": "WhatsApp",
+        "whatsappSub": "Reached on WhatsApp",
+        "sms": "SMS",
+        "smsScheduleSub": "This schedule goes out by SMS",
+        "smsFallbackSub": "For guests WhatsApp couldn't reach",
+        "onItsWay": "On its way",
+        "onItsWaySub": "WhatsApp accepted it, the phone hasn't confirmed yet",
+        "notDelivered": "Not delivered",
+        "notDeliveredSub": "Couldn't reach them",
+        "fallbackNote": "{count, plural, one {WhatsApp couldn't reach # guest, so we sent them an SMS} other {WhatsApp couldn't reach # guests, so we sent them an SMS}}"
+      },
+      "rsvp": {
+        "title": "Who's coming",
+        "note": "{answered} of {reached} reached",
+        "heads": "guests coming",
+        "records": "{confirmed, plural, one {# record confirmed} other {# records confirmed}} · {declined} declined",
+        "confirmed": "Confirmed",
+        "declined": "Declined",
+        "noResponse": "No response yet"
+      },
+      "notReached": {
+        "title": "Not reached",
+        "total": "{count, plural, one {# record} other {# records}}",
+        "onItsWay": "On its way",
+        "onItsWayWhy": "WhatsApp accepted it, the phone hasn't confirmed yet",
+        "notDelivered": "Not delivered",
+        "notDeliveredWhy": "Worth giving them a call",
+        "noPhone": "No phone number",
+        "noPhoneWhy": "Not sent · add a number"
+      },
+      "feed": {
+        "title": "What's happening",
+        "empty": "No activity yet. Answers and page visits show up here",
+        "lastAt": "Last update {when}",
+        "confirmed": "confirmed",
+        "declined": "declined",
+        "opened": "opened the page",
+        "seen": "read the message",
+        "sms": "got an SMS",
+        "smsMeta": "WhatsApp couldn't reach them",
+        "notDelivered": "wasn't reached",
+        "notDeliveredWhatsapp": "WhatsApp couldn't reach them",
+        "notDeliveredSms": "The SMS couldn't reach them",
+        "whatsapp": "WhatsApp"
+      },
+      "guests": {
+        "title": "Guests",
+        "count": "{count, plural, one {# record} other {# records}}",
+        "search": "Search by name",
+        "none": "No guests match this filter",
+        "more": "{count} more guests",
+        "filters": {
+          "all": "All",
+          "notReached": "Not reached",
+          "noResponse": "No response",
+          "confirmed": "Confirmed",
+          "unseen": "Not seen yet",
+          "on_its_way": "On its way",
+          "not_delivered": "Not delivered",
+          "no_phone": "No phone number"
+        },
+        "columns": {
+          "guest": "Guest",
+          "delivery": "Delivery",
+          "seen": "Seen",
+          "opened": "Opened page",
+          "answer": "Answer",
+          "lastUpdate": "Last update"
+        },
+        "status": {
+          "seen": "Seen",
+          "delivered": "Delivered",
+          "sms": "Reached by SMS",
+          "on_its_way": "On its way",
+          "not_delivered": "Not delivered",
+          "no_phone": "No phone number",
+          "none": "No message"
+        },
+        "channel": {
+          "whatsapp": "WhatsApp",
+          "sms": "SMS",
+          "fallback": "SMS after WhatsApp",
+          "notSent": "Not sent"
+        },
+        "seenState": {
+          "seen": "Seen",
+          "unseen": "Not seen yet",
+          "sms": "Not available on SMS"
+        },
+        "answer": {
+          "confirmed": "Confirmed",
+          "declined": "Declined",
+          "pending": "No response"
+        }
+      },
+      "people": "{count, plural, one {# guest} other {# guests}}",
+      "journey": {
+        "sentWhatsapp": "Sent on WhatsApp",
+        "sentSms": "Sent by SMS",
+        "sentFallbackMeta": "Because WhatsApp couldn't reach them",
+        "smsMeta": "SMS doesn't report delivery or reading",
+        "delivered": "Delivered",
+        "deliveredMeta": "The phone confirmed it",
+        "seen": "Seen",
+        "seenMeta": "WhatsApp read receipt",
+        "notDelivered": "Not delivered",
+        "notDeliveredWhatsapp": "WhatsApp couldn't reach them",
+        "notDeliveredSms": "The SMS couldn't reach them",
+        "onItsWay": "On its way",
+        "onItsWayMeta": "The phone hasn't confirmed it yet",
+        "noPhone": "No phone number",
+        "noPhoneMeta": "Nothing was sent. Add a number in the guest list",
+        "opened": "Opened the page",
+        "confirmed": "Confirmed",
+        "declined": "Declined",
+        "call": "Call guest",
+        "close": "Close"
       }
     }
   },
@@ -1967,7 +2090,11 @@
     "dateTime": "{date} at {time}",
     "hero": {
       "title": "One of our team will phone everyone who has not answered",
-      "body": "They ask whether the guest is coming and how many, and update the answer on your list. You do not need to do anything",
+      "points": {
+        "audience": "We only phone people who have not answered yet - the list updates until the round starts",
+        "answer": "The team member asks whether they are coming and how many, and updates the answer straight on your guest list",
+        "retry": "Anyone who does not pick up gets another try later the same day"
+      },
       "locked": {
         "title": "{count, plural, one {1 call round is included in your package} other {# call rounds are included in your package}}",
         "body": "One of our team will phone everyone who has not answered, ask whether they are coming and how many, and update your list. Rounds open once sending is enabled"
@@ -1976,7 +2103,7 @@
     "banner": {
       "live": {
         "title": "The team is calling now",
-        "body": "Results appear here as soon as the team records a call. Refresh any time"
+        "body": "Call results update here automatically"
       },
       "done": {
         "title": "The round is finished",

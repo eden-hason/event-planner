@@ -58,6 +58,8 @@
   --color-outcome-will-update: var(--outcome-will-update);
   --color-outcome-will-update-tint: var(--outcome-will-update-tint);
   --color-outcome-will-update-strong: var(--outcome-will-update-strong);
+  --color-channel-whatsapp: var(--channel-whatsapp);
+  --color-channel-sms: var(--channel-sms);
   --color-home-violet: var(--home-violet);
   --color-home-violet-tint: var(--home-violet-tint);
   --color-accent-foreground: var(--accent-foreground);
@@ -155,6 +157,13 @@
   --outcome-will-update-tint: oklch(0.951 0.026 236.824);
   --outcome-will-update-strong: oklch(0.443 0.11 240.79);
   /*
+   * The two message channels, lifted from the Schedule Results design (WhatsApp
+   * #25D366, SMS #2F80ED). Channel is an attribute of a Delivery, never a state,
+   * so these only ever mark a bar segment or a swatch, not a status chip.
+   */
+  --channel-whatsapp: oklch(0.766 0.2 149);
+  --channel-sms: oklch(0.614 0.168 257);
+  /*
    * Home's second accent, beside the magenta: the no-date state, the venue row,
    * and the far end of the countdown gradient. `--home-wash` is the pink-violet-
    * peach field the Hero sits on.
@@ -178,7 +187,7 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.592 0.249 333);
-  --app-shell: oklch(97.7% 0.014 308.299);
+  --app-shell: oklch(98.3% 0.006 317.8);
   /*
    * The mobile bottom nav's height. A token rather than a local constant
    * because the nav is `fixed`: PageCard and the Seating workspace have to
@@ -241,6 +250,9 @@
   --outcome-will-update: oklch(0.75 0.15 237.323);
   --outcome-will-update-tint: oklch(0.28 0.06 240);
   --outcome-will-update-strong: oklch(0.828 0.111 230.318);
+  /* No dark channel colours in the design; same hues, lifted slightly. */
+  --channel-whatsapp: oklch(0.8 0.19 149);
+  --channel-sms: oklch(0.68 0.15 257);
   --home-violet: oklch(0.72 0.14 293);
   --home-violet-tint: oklch(0.72 0.14 293 / 14%);
   --home-wash: linear-gradient(135deg, oklch(0.59 0.25 333 / 28%) 0%, oklch(0.58 0.2 288 / 22%) 55%, oklch(0.72 0.17 40 / 18%) 100%);
@@ -355,6 +367,13 @@
   --outcome-will-update: oklch(0.685 0.169 237.323);
   --outcome-will-update-tint: oklch(0.951 0.026 236.824);
   --outcome-will-update-strong: oklch(0.443 0.11 240.79);
+  /*
+   * The two message channels, lifted from the Schedule Results design (WhatsApp
+   * #25D366, SMS #2F80ED). Channel is an attribute of a Delivery, never a state,
+   * so these only ever mark a bar segment or a swatch, not a status chip.
+   */
+  --channel-whatsapp: oklch(0.766 0.2 149);
+  --channel-sms: oklch(0.614 0.168 257);
   --home-violet: oklch(0.58 0.2 288);
   --home-violet-tint: oklch(0.58 0.2 288 / 10%);
   --home-wash: linear-gradient(135deg, oklch(0.95 0.04 340) 0%, oklch(0.95 0.03 300) 55%, oklch(0.95 0.035 40) 100%);
@@ -374,7 +393,7 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.592 0.249 333);
-  --app-shell: oklch(97.7% 0.014 308.299);
+  --app-shell: oklch(98.3% 0.006 317.8);
   color-scheme: light;
 }
 
@@ -503,6 +522,25 @@
 
 .row-updated {
   animation: row-updated 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* A results bar growing from the inline start to its value on first paint */
+@keyframes fill-in {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-fill-in {
+  animation: fill-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: left center;
+}
+
+[dir="rtl"] .animate-fill-in {
+  transform-origin: right center;
 }
 
 /* Smooth scrolling */

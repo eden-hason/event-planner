@@ -2,6 +2,7 @@ import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import type { OutreachItemStatus } from '../types';
+import { DeliveryInfoCard } from './delivery-info-card';
 import { MessagePreview } from './message-preview';
 import { MessageTypeCard } from './message-type-card';
 import { PersonalNoteCard } from './personal-note-card';
@@ -59,6 +60,7 @@ export async function ScheduleTabContent({
   return (
     <ScheduleSettingsProvider key={schedule.id} schedule={schedule} editable={editable}>
       <div className="flex flex-col gap-4">
+        {status === 'pending' && schedule.deliveryMethod === 'whatsapp' && <DeliveryInfoCard />}
         {locked && <ScheduleLockedNotice />}
 
         {/* Single column until there is room for the message preview to sit

@@ -2,6 +2,8 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { IconCheck, IconLock, IconPhone } from '@tabler/icons-react';
 
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
+import { AutoRefresh } from '@/components/auto-refresh';
+import { CheckList } from '@/features/schedules/components/check-list';
 import { NoticeBanner, ServiceNote } from '@/features/schedules/components/notice-banner';
 import { ScheduleFooter } from '@/features/schedules/components/schedule-footer';
 
@@ -13,6 +15,9 @@ import { CallChecklistCard } from './call-checklist-card';
 import { CallRoundGuestList } from './call-round-guest-list';
 import { CallRoundResultsCard } from './call-round-results-card';
 import { CallWhenCard } from './call-when-card';
+
+/** What a planned round promises the Owner, in the order the hero lists it. */
+const HERO_POINTS = ['audience', 'answer', 'retry'] as const;
 
 interface CallRoundPaneProps {
   eventId: string;
@@ -121,9 +126,13 @@ export async function CallRoundPane({
                 ? t('hero.locked.title', { count: callRounds })
                 : t('hero.title')}
             </span>
-            <span className="text-muted-foreground text-[13px] leading-relaxed text-pretty">
-              {state === 'locked' ? t('hero.locked.body') : t('hero.body')}
-            </span>
+            {state === 'locked' ? (
+              <span className="text-muted-foreground text-[13px] leading-relaxed text-pretty">
+                {t('hero.locked.body')}
+              </span>
+            ) : (
+              <CheckList items={HERO_POINTS.map((point) => t(`hero.points.${point}`))} />
+            )}
           </div>
         </div>
         {state === 'locked' && (
@@ -175,6 +184,8 @@ export async function CallRoundPane({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Outcomes land as the team logs each call; no push, so a live round polls */}
+      {state === 'live' && <AutoRefresh />}
       {body}
       {footNote && <ScheduleFooter note={footNote} upgrade={state === 'locked'} aboveNav />}
     </div>

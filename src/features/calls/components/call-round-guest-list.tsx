@@ -33,6 +33,7 @@ import {
   availableFilters,
   filterGuestRows,
   isAlreadyAnswered,
+  pageWindow,
   type GuestFilter,
 } from '../utils/round-results';
 
@@ -293,6 +294,23 @@ export function CallRoundGuestList({ guests }: { guests: CallRoundGuestRow[] }) 
               >
                 {isRTL ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
               </Button>
+              {pageWindow(safePage, totalPages).map((index) => (
+                <Button
+                  key={index}
+                  variant={index === safePage ? 'default' : 'outline'}
+                  size="icon"
+                  className={cn(
+                    'size-8 rounded-[9px] text-[13px] tabular-nums',
+                    index === safePage
+                      ? 'bg-foreground text-background hover:bg-foreground/90 font-bold'
+                      : 'text-muted-foreground font-semibold',
+                  )}
+                  aria-current={index === safePage ? 'page' : undefined}
+                  onClick={() => setPage(index)}
+                >
+                  {index + 1}
+                </Button>
+              ))}
               <Button
                 variant="outline"
                 size="icon"

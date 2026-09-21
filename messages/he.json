@@ -1269,39 +1269,6 @@
       "overview": "סקירה",
       "results": "תוצאות שליחה"
     },
-    "interactions": {
-      "cardTitle": "פעילות אורחים",
-      "views": "צפיות",
-      "seen": "נקרא",
-      "seenOfWhatsapp": "מתוך {whatsapp} בוואטסאפ",
-      "emptyDescription": "אין תוצאות עדיין - הן יופיעו לאחר שהתזמון יישלח",
-      "columnGuest": "אורח",
-      "columnSeen": "נקרא",
-      "columnViewed": "צפה",
-      "columnResponse": "תגובה",
-      "columnDate": "תאריך",
-      "responseConfirmed": "אישר",
-      "responseDeclined": "סירב",
-      "responsePending": "לא הגיב",
-      "refresh": "רענן",
-      "columnAmount": "כמות",
-      "audience": "קהל יעד",
-      "audienceExcluded": "{count, plural, one {רשומה אחת לא נכללת - אין מספר טלפון} other {# רשומות לא נכללות - אין מספר טלפון}}",
-      "reached": "הגיעו",
-      "reachedChannels": "{whatsapp} וואטסאפ · {sms} SMS",
-      "responded": "הגיבו",
-      "respondedBreakdown": "{confirmed, plural, one {אורח אחד אישר} other {# אורחים אישרו}} · {declined} סירבו",
-      "columnDelivery": "משלוח",
-      "delivery": {
-        "whatsapp": "וואטסאפ",
-        "sms": "SMS",
-        "onItsWay": "בדרך",
-        "notDelivered": "לא נמסר",
-        "noPhone": "אין מספר טלפון"
-      },
-      "notReached": "{count} לא קיבלו",
-      "filterAll": "הצג הכל"
-    },
     "status": {
       "label": {
         "sent": "נשלח",
@@ -1456,6 +1423,14 @@
         "description": "הנוסח שנשלח לאורחים בתזמון הזה"
       }
     },
+    "deliveryInfo": {
+      "title": "איך ההודעה מגיעה לאורחים",
+      "points": {
+        "official": "כל ההודעות נשלחות דרך ה-API הרשמי של וואטסאפ, מחשבון עסקי מאומת",
+        "fallback": "אם וואטסאפ לא מצליח למסור - אין חשבון, חסימה או מגבלת Meta - נשלח SMS אחרי מספר ניסיונות",
+        "results": "התוצאה של כל אורח מוצגת כאן בשקיפות: נמסר, נקרא או הושלם ב-SMS"
+      }
+    },
     "locked": {
       "title": "התזמון הזה נעול",
       "description": "אפשר לראות בדיוק מה האורחים יקבלו. לשינוי תוכן, תאריך ושליחה נדרשת הפעלת השליחה"
@@ -1484,6 +1459,154 @@
         "editable": "תתווסף בסוף ההודעה, מעל כפתורי האישור",
         "locked": "ההערה תתווסף לסוף ההודעה. זמינה עם הפעלת השליחה",
         "sent": "ההודעה כבר נשלחה, ההערה נשמרת לתיעוד"
+      }
+    },
+    "results": {
+      "empty": {
+        "title": "אין תוצאות עדיין",
+        "description": "הן יופיעו כאן לאחר שההודעות יתחילו לצאת, ויתעדכנו בזמן שהן נוחתות"
+      },
+      "live": {
+        "liveTitle": "התוצאות מתעדכנות",
+        "settledTitle": "התוצאות התייצבו",
+        "sentAt": "נשלח ב-{time}",
+        "onItsWay": "{count} עוד בדרך",
+        "updatedAt": "עודכן ב-{time}",
+        "refresh": "רענון"
+      },
+      "funnel": {
+        "title": "המסע של ההודעה",
+        "unit": "ברשומות אורח",
+        "audience": "קהל היעד",
+        "audienceHint": "כל הרשומות עם טלפון",
+        "audienceExcluded": "{count, plural, one {רשומה אחת בלי טלפון לא נכללת} other {# רשומות בלי טלפון לא נכללות}}",
+        "reached": "הגיעו",
+        "ofAudience": "{percent}% מקהל היעד",
+        "seen": "נקרא",
+        "seenHint": "מתוך {count} מסירות בוואטסאפ",
+        "opened": "נכנסו לדף",
+        "answered": "הגיבו",
+        "answeredHint": "{confirmed} אישרו · {declined} סירבו"
+      },
+      "channels": {
+        "title": "איך זה הגיע",
+        "whatsapp": "וואטסאפ",
+        "whatsappSub": "ההודעה הגיעה בוואטסאפ",
+        "sms": "SMS",
+        "smsScheduleSub": "התזמון נשלח ב-SMS",
+        "smsFallbackSub": "השלמה למי שוואטסאפ לא הגיע אליו",
+        "onItsWay": "בדרך",
+        "onItsWaySub": "וואטסאפ קיבל, הטלפון עוד לא אישר",
+        "notDelivered": "לא נמסר",
+        "notDeliveredSub": "לא הצליח להגיע",
+        "fallbackNote": "{count, plural, one {וואטסאפ לא הגיע לאורח אחד, אז שלחנו לו SMS} other {וואטסאפ לא הגיע ל-# אורחים, אז שלחנו להם SMS}}"
+      },
+      "rsvp": {
+        "title": "מי מגיע",
+        "note": "{answered} מתוך {reached} שהגיעו",
+        "heads": "אורחים מגיעים",
+        "records": "{confirmed, plural, one {רשומה אחת אישרה} other {# רשומות אישרו}} · {declined} סירבו",
+        "confirmed": "אישרו",
+        "declined": "סירבו",
+        "noResponse": "טרם הגיבו"
+      },
+      "notReached": {
+        "title": "מי לא קיבל",
+        "total": "{count, plural, one {רשומה אחת} other {# רשומות}}",
+        "onItsWay": "בדרך",
+        "onItsWayWhy": "וואטסאפ קיבל, הטלפון עוד לא אישר",
+        "notDelivered": "לא נמסר",
+        "notDeliveredWhy": "כדאי להתקשר אליהם",
+        "noPhone": "אין מספר טלפון",
+        "noPhoneWhy": "לא נשלח · אפשר להשלים מספר"
+      },
+      "feed": {
+        "title": "מה קורה עכשיו",
+        "empty": "עוד אין פעילות. תשובות וכניסות לדף יופיעו כאן",
+        "lastAt": "העדכון האחרון {when}",
+        "confirmed": "אישר הגעה",
+        "declined": "סירב",
+        "opened": "נכנס לדף",
+        "seen": "קרא את ההודעה",
+        "sms": "קיבל SMS",
+        "smsMeta": "וואטסאפ לא הגיע אליו",
+        "notDelivered": "ההודעה לא נמסרה",
+        "notDeliveredWhatsapp": "וואטסאפ לא הצליח להגיע",
+        "notDeliveredSms": "ה-SMS לא הצליח להגיע",
+        "whatsapp": "וואטסאפ"
+      },
+      "guests": {
+        "title": "אורחים",
+        "count": "{count, plural, one {רשומה אחת} other {# רשומות}}",
+        "search": "חיפוש לפי שם",
+        "none": "אין אורחים שמתאימים לסינון",
+        "more": "עוד {count} אורחים",
+        "filters": {
+          "all": "הכל",
+          "notReached": "לא קיבלו",
+          "noResponse": "לא הגיבו",
+          "confirmed": "אישרו",
+          "unseen": "טרם נקרא",
+          "on_its_way": "בדרך",
+          "not_delivered": "לא נמסר",
+          "no_phone": "אין מספר טלפון"
+        },
+        "columns": {
+          "guest": "אורח",
+          "delivery": "מסירה",
+          "seen": "נקרא",
+          "opened": "נכנס לדף",
+          "answer": "תשובה",
+          "lastUpdate": "עדכון אחרון"
+        },
+        "status": {
+          "seen": "נקרא",
+          "delivered": "נמסר",
+          "sms": "הגיע ב-SMS",
+          "on_its_way": "בדרך",
+          "not_delivered": "לא נמסר",
+          "no_phone": "אין מספר טלפון",
+          "none": "בלי הודעה"
+        },
+        "channel": {
+          "whatsapp": "וואטסאפ",
+          "sms": "SMS",
+          "fallback": "SMS אחרי וואטסאפ",
+          "notSent": "לא נשלח"
+        },
+        "seenState": {
+          "seen": "נקרא",
+          "unseen": "טרם נקרא",
+          "sms": "לא זמין ב-SMS"
+        },
+        "answer": {
+          "confirmed": "אישר",
+          "declined": "סירב",
+          "pending": "לא הגיב"
+        }
+      },
+      "people": "{count, plural, one {אורח אחד} other {# אורחים}}",
+      "journey": {
+        "sentWhatsapp": "נשלח בוואטסאפ",
+        "sentSms": "נשלח ב-SMS",
+        "sentFallbackMeta": "כי וואטסאפ לא הגיע",
+        "smsMeta": "SMS לא מדווח על מסירה או קריאה",
+        "delivered": "נמסר",
+        "deliveredMeta": "הטלפון אישר קבלה",
+        "seen": "נקרא",
+        "seenMeta": "דיווח קריאה בוואטסאפ",
+        "notDelivered": "לא נמסר",
+        "notDeliveredWhatsapp": "וואטסאפ לא הצליח להגיע",
+        "notDeliveredSms": "ה-SMS לא הצליח להגיע",
+        "onItsWay": "בדרך",
+        "onItsWayMeta": "הטלפון עוד לא אישר קבלה",
+        "noPhone": "אין מספר טלפון",
+        "noPhoneMeta": "ההודעה לא נשלחה. אפשר להשלים מספר ברשימת האורחים",
+        "opened": "נכנס לדף",
+        "confirmed": "אישר הגעה",
+        "declined": "סירב",
+        "call": "התקשרות לאורח",
+        "close": "סגירה"
       }
     }
   },
@@ -1967,7 +2090,11 @@
     "dateTime": "{date} בשעה {time}",
     "hero": {
       "title": "נציג מהצוות שלנו יתקשר לכל מי שלא ענה",
-      "body": "שואל אם מגיעים וכמה אנשים, ומעדכן את התשובה ברשימה שלכם. לא נדרשת מכם שום פעולה",
+      "points": {
+        "audience": "מתקשרים רק למי שעדיין לא ענה - הרשימה מתעדכנת עד רגע תחילת הסבב",
+        "answer": "הנציג שואל אם מגיעים וכמה אנשים, ומעדכן את התשובה ישירות ברשימת האורחים",
+        "retry": "מי שלא עונה מקבל ניסיון חוזר מאוחר יותר באותו יום"
+      },
       "locked": {
         "title": "{count, plural, one {סבב שיחות אחד כלול בחבילה} other {# סבבי שיחות כלולים בחבילה}}",
         "body": "נציג מהצוות שלנו יתקשר לכל מי שלא ענה, ישאל אם מגיעים וכמה, ויעדכן את הרשימה. הסבבים נפתחים עם הפעלת השליחה"
@@ -1976,7 +2103,7 @@
     "banner": {
       "live": {
         "title": "הצוות מתקשר עכשיו",
-        "body": "התוצאות מתווספות כאן ברגע שהצוות מתעד שיחה. אפשר לרענן בכל עת"
+        "body": "תוצאות השיחות מתעדכנות כאן אוטומטית"
       },
       "done": {
         "title": "הסבב הסתיים",

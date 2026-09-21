@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, filterGuestRows, isAlreadyAnswered, peopleByOutcome, roundProgress } from './round-results.ts';
+import { availableFilters, filterGuestRows, isAlreadyAnswered, pageWindow, peopleByOutcome, roundProgress } from './round-results.ts';
 
 type Row = Parameters<typeof filterGuestRows>[0][number];
 
@@ -132,4 +132,16 @@ test('a round with nobody left to call does not offer the waiting filter', () =>
 test('will-update is offered only once a call ended that way', () => {
   assert.ok(!availableFilters(rows).includes('willUpdate'));
   assert.ok(availableFilters([...rows, row({ outcome: 'guest_will_update' })]).includes('willUpdate'));
+});
+
+// ─── pageWindow ───────────────────────────────────────────────────────────────
+
+test('a pager shows every page when there are few', () => {
+  assert.deepEqual(pageWindow(0, 4), [0, 1, 2, 3]);
+});
+
+test('a pager window centres on the current page and stays inside the range', () => {
+  assert.deepEqual(pageWindow(5, 10), [3, 4, 5, 6, 7]);
+  assert.deepEqual(pageWindow(0, 10), [0, 1, 2, 3, 4]);
+  assert.deepEqual(pageWindow(9, 10), [5, 6, 7, 8, 9]);
 });

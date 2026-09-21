@@ -25,6 +25,13 @@ function resolveSourcePath(source: string, event: EventApp | null): string | nul
   return typeof current === 'string' ? current : null;
 }
 
+/**
+ * The name on Kululu's WhatsApp Business profile. Every guest sees this sender
+ * whichever Event the message is about, so the preview shows it as-is rather
+ * than deriving a name from the Event.
+ */
+const SENDER_NAME = 'Kululu אישורי הגעה';
+
 const chatBgStyle: React.CSSProperties = {
   backgroundImage: `linear-gradient(rgba(229, 221, 213, 0.55), rgba(229, 221, 213, 0.55)), url('/whatsapp-background.png')`,
   backgroundSize: '300px',
@@ -74,8 +81,6 @@ export function MessagePreview({
 
   const buttons = template?.parameters?.buttonPlaceholders ?? [];
 
-  const sender = event?.title ? `${event.title} · Kululu` : 'Kululu';
-
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -88,14 +93,15 @@ export function MessagePreview({
       <div className="overflow-hidden rounded-2xl border">
         {channel !== 'sms' && (
           <div className="flex items-center gap-2.5 bg-[#075E54] px-3 py-2.5">
-            <span
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/kululu-logo-mark.svg"
+              alt=""
               aria-hidden
-              className="bg-primary text-primary-foreground flex size-[30px] shrink-0 items-center justify-center rounded-full text-xs font-bold"
-            >
-              {sender.charAt(0)}
-            </span>
+              className="size-[30px] shrink-0 rounded-full"
+            />
             <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[13.5px] font-semibold text-white">{sender}</span>
+              <span className="truncate text-[13.5px] font-semibold text-white">{SENDER_NAME}</span>
               <span className="text-[11px] text-white/70">{t('business')}</span>
             </div>
           </div>

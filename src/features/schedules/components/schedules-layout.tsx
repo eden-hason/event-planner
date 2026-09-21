@@ -109,7 +109,7 @@ export function SchedulesLayout({
   // naming the page and names the Schedule instead - what it is, when, and how
   // it stands - with the arrow back to the timeline. From md up the timeline
   // stays beside the pane, so the header keeps naming the page and the pane
-  // carries its own title row.
+  // has no title row - the selected card in the timeline already names it.
   const isMobile = useIsMobile();
   const headerItem = isMobile ? openItem : null;
   useEffect(() => {
@@ -170,22 +170,6 @@ export function SchedulesLayout({
       <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
         {paneItem && (
           <div className="flex flex-col gap-4">
-            {/* Below md the app header says all of this (see above). */}
-            <div className="hidden items-center gap-2.5 md:flex">
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-[17px] font-bold">
-                  {paneItem.label}
-                </span>
-                <span className="text-muted-foreground truncate text-xs">
-                  {t(
-                    paneItem.kind === 'call' ? 'kind.call' : 'kind.message',
-                  )}{' '}
-                  · {paneItem.whenDetailed}
-                </span>
-              </div>
-              <ScheduleStatusChip status={paneItem.status} size="md" />
-            </div>
-
             {paneItem.details}
           </div>
         )}
