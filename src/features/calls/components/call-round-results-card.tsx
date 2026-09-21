@@ -85,8 +85,8 @@ export async function CallRoundResultsCard({
       }).format(new Date(results.lastUpdatedAt))
     : null;
   // No live push: this is the time of the newest outcome on the page, not a
-  // promise that nothing has happened since. The Refresh button is the answer
-  // to "is this current".
+  // promise that nothing has happened since. A live round re-renders every 30
+  // seconds (the pane's AutoRefresh), and the Refresh button is there between.
   const updatedNote = done
     ? t('results.final')
     : time

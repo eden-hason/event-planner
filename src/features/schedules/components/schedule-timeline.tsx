@@ -13,6 +13,12 @@ import {
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import {
+  Timeline,
+  TimelineIndicator,
+  TimelineItem,
+  TimelineSeparator,
+} from '@/components/ui/timeline';
 import { CallProgressBar } from '@/features/calls';
 import type { ScheduleTypeKey } from '../schemas';
 import type { OutreachItem } from '../types';
@@ -64,36 +70,64 @@ export function ScheduleTimeline({
   const t = useTranslations('schedules');
   const rows = withDayMarker(items);
 
+  // The Timeline lights its rail up to the last step it is told is reached, so
+  // that is the last row that has gone out.
+  const reached = rows.reduce(
+    (last, row, index) =>
+      row.kind === 'item' && isDone(row.item.status) ? index + 1 : last,
+    0,
+  );
+
   return (
-    <ol className="flex flex-col">
+    <Timeline value={reached} role="list">
       {rows.map((row, index) =>
         row.kind === 'dayMarker' ? (
-          <li
+          <TimelineItem
             key="day-marker"
-            className="flex items-center gap-2.5 py-1 pb-3.5"
+            step={index + 1}
+            role="listitem"
             aria-hidden
+            className={RAIL_ITEM}
           >
-            <span className="flex w-[30px] justify-center">
-              <span className="bg-primary ring-primary/15 size-3.5 rounded-full ring-4" />
-            </span>
-            <span className="border-primary/30 h-0 flex-1 border-t-2 border-dashed" />
-            <span className="text-primary text-xs font-bold whitespace-nowrap">
-              {dayLabel}
-            </span>
-          </li>
+            <TimelineIndicator className="bg-primary ring-primary/15 top-0.5 size-3.5 border-0 ring-4" />
+            <div className="flex items-center gap-2.5 pt-0.5">
+              <span className="border-primary/30 h-0 flex-1 border-t-2 border-dashed" />
+              <span className="text-primary text-xs font-bold whitespace-nowrap">
+                {dayLabel}
+              </span>
+            </div>
+          </TimelineItem>
         ) : (
           <TimelineCard
             key={row.item.id}
+            step={index + 1}
             item={row.item}
             isActive={row.item.id === activeId}
-            isLast={index === rows.length - 1}
             onSelect={onSelect}
             offsetLabel={offsetLabel(t, row.item.offset)}
           />
         ),
       )}
-    </ol>
+    </Timeline>
   );
+}
+
+/**
+ * The rail's geometry, where the design's differs from the Timeline's own: the
+ * node is a 30px icon circle in a 40px column rather than a 16px dot in a 32px
+ * one, and the line runs from just under the node to the next one. The
+ * `has-[+[data-completed]]` line is the Timeline's "reached" colour, kept for
+ * the same idea in the design's green.
+ */
+const RAIL_ITEM =
+  'group-data-[orientation=vertical]/timeline:ms-10 group-data-[orientation=vertical]/timeline:not-last:pb-3 has-[+[data-completed]]:**:data-[slot=timeline-separator]:bg-success/30';
+const RAIL_NODE =
+  'border-card group-data-completed/timeline-item:border-card flex size-[30px] items-center justify-center group-data-[orientation=vertical]/timeline:-start-10';
+const RAIL_LINE =
+  'bg-border group-data-[orientation=vertical]/timeline:-start-[26px] group-data-[orientation=vertical]/timeline:h-[calc(100%-34px)] group-data-[orientation=vertical]/timeline:translate-y-[34px]';
+
+function isDone(status: OutreachItem['status']) {
+  return status === 'sent' || status === 'completed';
 }
 
 function offsetLabel(
@@ -107,21 +141,21 @@ function offsetLabel(
 }
 
 function TimelineCard({
+  step,
   item,
   isActive,
-  isLast,
   onSelect,
   offsetLabel,
 }: {
+  step: number;
   item: OutreachItem;
   isActive: boolean;
-  isLast: boolean;
   onSelect: (id: string) => void;
   offsetLabel: string | null;
 }) {
   const t = useTranslations('schedules');
   const Icon = typeIcon(item.typeKey);
-  const done = item.status === 'sent' || item.status === 'completed';
+  const done = isDone(item.status);
   const live = item.status === 'in_progress';
   const muted =
     item.status === 'locked' ||
@@ -129,41 +163,30 @@ function TimelineCard({
     item.status === 'expired';
 
   return (
-    <li className="relative flex gap-2.5 pb-3">
-      {/* The rail: a node per card, joined by a line that stops at the last one */}
-      <div className="relative flex w-[30px] shrink-0 justify-center">
-        {!isLast && (
-          <span
-            aria-hidden
-            className={cn(
-              'absolute top-[34px] -bottom-3 w-0.5',
-              done ? 'bg-success/30' : 'bg-border',
-            )}
-          />
+    <TimelineItem step={step} role="listitem" className={RAIL_ITEM}>
+      {/* The rail: a node per card, joined to the next by a line */}
+      <TimelineIndicator
+        className={cn(
+          RAIL_NODE,
+          done
+            ? 'bg-success text-success-foreground'
+            : live
+              ? 'bg-info-solid text-white'
+              : muted
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-primary/10 text-primary',
         )}
-        <span
-          aria-hidden
-          className={cn(
-            'border-card relative z-10 flex size-[30px] items-center justify-center rounded-full border-2',
-            done
-              ? 'bg-success text-success-foreground'
-              : live
-                ? 'bg-info-solid text-white'
-                : muted
-                  ? 'bg-muted text-muted-foreground'
-                  : 'bg-primary/10 text-primary',
-          )}
-        >
-          <Icon className="size-[15px]" />
-        </span>
-      </div>
+      >
+        <Icon className="size-[15px]" />
+      </TimelineIndicator>
+      <TimelineSeparator className={RAIL_LINE} />
 
       <button
         type="button"
         onClick={() => onSelect(item.id)}
         aria-current={isActive ? 'true' : undefined}
         className={cn(
-          'bg-card flex min-w-0 flex-1 cursor-pointer flex-col gap-2 rounded-xl border p-3 text-start transition-colors',
+          'bg-card flex min-w-0 cursor-pointer flex-col gap-2 rounded-xl border p-3 text-start transition-colors',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
           isActive ? 'border-primary shadow-xs' : 'hover:bg-accent/40',
           done && !isActive && 'border-success/25',
@@ -240,6 +263,6 @@ function TimelineCard({
           <p className="text-muted-foreground text-xs leading-relaxed">{t('timeline.callOff')}</p>
         )}
       </button>
-    </li>
+    </TimelineItem>
   );
 }

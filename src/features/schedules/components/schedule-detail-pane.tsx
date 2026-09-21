@@ -25,8 +25,6 @@ interface ScheduleDetailPaneProps {
  *
  * A Schedule that has gone out grows a results tab; one that has not is only
  * its settings, because a funnel of zeroes is noise rather than information.
- * The results view is unchanged from before the timeline rebuild - it has its
- * own design coming.
  */
 export async function ScheduleDetailPane({
   schedule,
@@ -77,6 +75,7 @@ export async function ScheduleDetailPane({
           scheduleId={schedule.id}
           collectsRsvp={schedule.scheduleTypeKey === 'confirmation'}
           channel={schedule.deliveryMethod}
+          sentAt={schedule.sentAt}
         />
       </TabsContent>
     </Tabs>

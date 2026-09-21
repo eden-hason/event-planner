@@ -122,3 +122,14 @@ export function availableFilters(rows: CallRoundGuestRow[]): GuestFilter[] {
 
   return offered;
 }
+
+/**
+ * The page numbers a pager shows: all of them when there are few, otherwise a
+ * window of `max` around the current page (zero-based in and out), kept inside
+ * the range so the window does not shrink at either end.
+ */
+export function pageWindow(current: number, total: number, max = 5): number[] {
+  const size = Math.min(max, total);
+  const start = Math.min(Math.max(current - Math.floor(size / 2), 0), total - size);
+  return Array.from({ length: size }, (_, i) => start + i);
+}
