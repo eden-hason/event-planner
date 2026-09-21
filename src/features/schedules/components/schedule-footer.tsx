@@ -17,7 +17,7 @@ import { useBillingSheet } from './use-billing-sheet';
  * to the nav that already carries it.
  *
  * `upgrade` adds the one action a locked Schedule has - opening the plan sheet,
- * for the Owner who would pay. Children are the Schedule's own action, if it
+ * for the Owner who would pay. Phone only: from md up the bar is hidden. Children are the Schedule's own action, if it
  * has one (Save on a message, nothing on a call round).
  */
 export function ScheduleFooter({
@@ -41,6 +41,9 @@ export function ScheduleFooter({
         aboveNav
           ? 'bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] pb-3'
           : 'bottom-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+        // A locked Schedule's bar is only the upgrade and its line. At md the
+        // upgrade banner above the timeline stays in view, so the bar goes.
+        upgrade && 'md:hidden',
       )}
     >
       {children}
@@ -48,7 +51,7 @@ export function ScheduleFooter({
         <Button
           type="button"
           onClick={openSheet}
-          className="h-[50px] w-full rounded-xl text-base font-bold"
+          className="w-full rounded-xl text-base font-bold"
         >
           <IconSparkles stroke={2.2} />
           {t('upgrade')}

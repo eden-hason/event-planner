@@ -27,7 +27,7 @@ export function ScheduleSaveBar({ note }: { note: 'editable' | 'locked' | 'sent'
           type="button"
           onClick={save}
           disabled={!dirty || isSaving}
-          className="h-[50px] w-full rounded-xl text-base font-bold"
+          className="w-full rounded-xl text-base font-bold"
         >
           <IconCheck stroke={2.4} />
           {isSaving ? t('save.saving') : t('save.action')}

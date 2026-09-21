@@ -58,12 +58,12 @@ export async function ScheduleDetailPane({
 
   return (
     <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      <TabsList className="border-border mb-4 h-[42px] w-full rounded-none border-b bg-transparent p-0">
+      <TabsList className="border-border mb-4 h-[42px] w-full rounded-none border-b bg-transparent p-0 md:justify-start md:gap-6">
         {(['overview', 'results'] as const).map((tab) => (
           <TabsTrigger
             key={tab}
             value={tab}
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 text-[14.5px] font-semibold shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 md:flex-none text-[14.5px] font-semibold shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             {t(`tabs.${tab}`)}
           </TabsTrigger>

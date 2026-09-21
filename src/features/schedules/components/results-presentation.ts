@@ -11,14 +11,13 @@ export const RESULT_TONE = {
   bad: 'bg-rsvp-declined-tint text-rsvp-declined-strong',
   pending: 'bg-warning-tint text-warning-strong',
   info: 'bg-info-tint text-info-strong',
-  violet: 'bg-violet-tint text-violet-strong',
   neutral: 'bg-muted text-muted-foreground',
 } as const;
 
 export type ResultTone = keyof typeof RESULT_TONE;
 
 /**
- * "4 guests · 1 vegetarian": what an answer carried, for the feed and the
+ * "4 guests · 1 vegetarian": what an answer carried, for the list and the
  * journey. Meal keys the catalog has no word for are left out rather than
  * shown raw.
  */

@@ -88,6 +88,7 @@ export async function ScheduleTabContent({
             <TargetAudienceCard
               targetStatus={schedule.targetStatus}
               disabled={schedule.status === 'cancelled'}
+              sent={sent}
               count={audienceCount}
             />
           </div>

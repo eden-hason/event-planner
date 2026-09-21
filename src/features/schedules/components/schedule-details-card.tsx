@@ -105,7 +105,6 @@ export function ScheduleDetailsCard({
           <Label className="text-muted-foreground text-xs font-normal">{t('scheduledDate')}</Label>
           <div
             className={cn(
-              '[&_button]:h-[46px] [&_button]:rounded-[11px] [&_button]:text-[14.5px] [&_button]:font-semibold',
               '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
               !editable && '[&_button]:bg-muted/60',
             )}
@@ -132,9 +131,7 @@ export function ScheduleDetailsCard({
           >
             <SelectTrigger
               className={cn(
-                // `data-[size=default]:h-9` on the trigger outranks a plain `h-*`, so the
-                // height has to be stated against the same variant.
-                'data-[size=default]:h-[46px] w-full rounded-[11px] text-[14.5px] font-semibold',
+                'w-full',
                 'disabled:opacity-100',
                 !editable && 'bg-muted/60',
               )}

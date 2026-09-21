@@ -16,6 +16,6 @@ minutes apart.
 
 Once the deploy that reads `meal_counts` is live in production, a migration drops
 `meal_choice`. Before writing it, confirm nothing references the column:
-`grep -rn meal_choice src supabase/seed.sql` should find only old migrations, and
+`grep -rn meal_choice src supabase/seeds` should find only old migrations, and
 `guest_interactions.metadata` rows written before the change still carry a `mealChoice`
 key, which nothing reads.

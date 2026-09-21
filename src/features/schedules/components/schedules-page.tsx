@@ -228,8 +228,6 @@ export async function SchedulesPage({
           : baseLabel;
 
       const isMessage = isMessageSchedule(schedule);
-      const targeted = filterGuestsByTarget(guests, schedule.targetStatus);
-      const audienceCount = targeted.length;
       const round = isMessage ? undefined : roundsBySchedule.get(schedule.id);
 
       // A call round is planned like a message but executed by a person, so it
@@ -238,6 +236,14 @@ export async function SchedulesPage({
       const status = timelineStatus(schedule, isMessage ? null : round?.status);
 
       const stats = deliveryStats.get(schedule.id);
+      // Before the send the audience is whoever matches the target today. Once
+      // it has gone out, that live count drifts as guests answer - "Not yet
+      // answered" shrinks to nothing - so a sent Schedule reports the guest
+      // records it actually went to instead.
+      // (A call round freezes its own list; see round.total below.)
+      const targeted = filterGuestsByTarget(guests, schedule.targetStatus);
+      const audienceCount =
+        isMessage && status === 'sent' ? (stats?.sent ?? 0) : targeted.length;
       // Only a sent send has a result to report, and only one that produced
       // deliveries can be scored. Read rate where WhatsApp can report it,
       // reached rate otherwise - an SMS schedule never reports a read receipt.
@@ -326,7 +332,6 @@ export async function SchedulesPage({
     <SchedulesLayout
       items={items}
       locked={locked}
-      hasCalls={items.some((item) => item.kind === 'call')}
       eventDate={eventDate}
     />
   );

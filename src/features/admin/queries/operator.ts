@@ -1,6 +1,6 @@
 'use server';
 
-import { assertAdmin, getOperatorEmail } from '@/lib/supabase/admin';
+import { assertAdmin, getOperatorEmail, isLocalDatabase } from '@/lib/supabase/admin';
 
 export type OperatorIdentity = {
   email: string;
@@ -18,10 +18,7 @@ export async function getOperatorIdentity(): Promise<OperatorIdentity> {
 
   // A Back Office that does not say which database it is reading is one
   // mis-click away from an Operator acting on the wrong data.
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const environment = url.includes('127.0.0.1') || url.includes('localhost')
-    ? 'Local'
-    : 'Production';
+  const environment = isLocalDatabase() ? 'Local' : 'Production';
 
   return { email: email ?? 'Unknown operator', environment };
 }

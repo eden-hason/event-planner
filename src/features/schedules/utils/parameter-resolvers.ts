@@ -480,18 +480,27 @@ function withOccasionPhrase(event: EventApp | null): EventApp | null {
   } as EventApp;
 }
 
+export type PreviewResolution = {
+  resolvedBody: string;
+  /**
+   * The event sources the message shows but the event has no value for, in
+   * placeholder order and without repeats, so the preview can name them.
+   */
+  missingSources: string[];
+};
+
 export function resolveSmsBodyForPreview(
   smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
   customText?: string | null,
-): { resolvedBody: string; hasMissingFields: boolean } {
+): PreviewResolution {
   event = withOccasionPhrase(event);
   const placeholders = smsConfig.parameters?.placeholders;
   if (!placeholders || placeholders.length === 0) {
-    return { resolvedBody: smsConfig.bodyText, hasMissingFields: false };
+    return { resolvedBody: smsConfig.bodyText, missingSources: [] };
   }
 
-  let hasMissingFields = false;
+  const missingSources: string[] = [];
   const resolvedValues: string[] = [];
   const mockContext = {
     event: event ?? {},
@@ -509,7 +518,7 @@ export function resolveSmsBodyForPreview(
     } else {
       const rawValue = event ? getValueByPath({ event }, source) : undefined;
       if (!rawValue) {
-        hasMissingFields = true;
+        if (!missingSources.includes(source)) missingSources.push(source);
         resolvedValues.push('…');
       } else {
         resolvedValues.push(resolvePlaceholder(config.name, config, mockContext) || '…');
@@ -522,22 +531,25 @@ export function resolveSmsBodyForPreview(
     resolvedBody = resolvedBody.replaceAll(`{{${index + 1}}}`, value);
   });
 
-  return { resolvedBody, hasMissingFields };
+  return {
+    resolvedBody,
+    missingSources,
+  };
 }
 
 export function resolveTemplateBodyForPreview(
   template: WhatsAppTemplateApp,
   event: EventApp | null,
   customText?: string | null,
-): { resolvedBody: string; hasMissingFields: boolean } {
+): PreviewResolution {
   event = withOccasionPhrase(event);
   const placeholders = template.parameters?.placeholders;
 
   if (!placeholders || placeholders.length === 0) {
-    return { resolvedBody: template.bodyText, hasMissingFields: false };
+    return { resolvedBody: template.bodyText, missingSources: [] };
   }
 
-  let hasMissingFields = false;
+  const missingSources: string[] = [];
   const resolvedValues: string[] = [];
   const mockContext = {
     event: event ?? {},
@@ -559,7 +571,7 @@ export function resolveTemplateBodyForPreview(
       const rawValue = event ? getValueByPath({ event }, source) : undefined;
 
       if (!rawValue) {
-        hasMissingFields = true;
+        if (!missingSources.includes(source)) missingSources.push(source);
         resolvedValues.push('…');
       } else {
         const resolved = resolvePlaceholder(config.name, config, mockContext);
@@ -573,5 +585,8 @@ export function resolveTemplateBodyForPreview(
     resolvedBody = resolvedBody.replaceAll(`{{${index + 1}}}`, value);
   });
 
-  return { resolvedBody, hasMissingFields };
+  return {
+    resolvedBody,
+    missingSources,
+  };
 }

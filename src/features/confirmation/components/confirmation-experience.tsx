@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import {
   Calendar,
@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { recordViewInteraction, submitConfirmation } from '../actions';
+import { submitConfirmation } from '../actions';
 import { buildMealOptions } from '../utils/meal-options';
 import {
   formatMealCounts,
@@ -106,11 +106,11 @@ export function ConfirmationExperience({
   data: ConfirmationPageData;
   /**
    * Opened through an event's preview token rather than a Guest's: the page
-   * plays out in full, but no view or answer ever reaches the server.
+   * plays out in full, but no answer ever reaches the server.
    */
   preview?: boolean;
 }) {
-  const { guest, event, scheduleId } = data;
+  const { guest, event } = data;
 
   const mealOptions = buildMealOptions(event.guestExperience);
   const lockGuestCount = event.guestExperience?.lockGuestCount ?? false;
@@ -160,13 +160,6 @@ export function ConfirmationExperience({
   const [done, setDone] = useState(guest.rsvpStatus !== 'pending');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (scheduleId && !preview) {
-      recordViewInteraction(guest.id, scheduleId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const isCouple = event.eventType === 'wedding' || event.eventType === 'henna';
   const detailsOpen = choice === 'confirmed';

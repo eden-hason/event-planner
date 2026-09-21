@@ -2,18 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  IconAlertTriangle,
-  IconChecks,
-  IconChevronLeft,
-  IconChevronRight,
-  IconClock,
-  IconEye,
-  IconHeart,
-  IconMessage,
-  IconX,
-  type Icon,
-} from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight, IconClock } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
 import { AutoRefresh } from '@/components/auto-refresh';
@@ -22,25 +11,16 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
 import type { ScheduleInteractionData } from '../queries/guest-interactions';
 import {
-  buildActivityFeed,
   formatMoment,
   percent,
   resultsLiveness,
-  type ActivityItem,
   type GuestFilter,
   type NotReachedFilter,
 } from '../utils/schedule-results';
 import { GuestJourney } from './guest-journey';
-import {
-  RESULT_TONE,
-  useAnswerMeta,
-  type ResultTone,
-} from './results-presentation';
+import { RESULT_TONE } from './results-presentation';
 import { ScheduleResultsGuests } from './schedule-results-guests';
 
-/** Feed entries younger than this arrive highlighted. */
-const FRESH_MS = 2 * 60_000;
-const FEED_LIMIT = 8;
 /** The results container width (px) at which the side rail appears - Tailwind's `@4xl`. */
 const RAIL_MIN_WIDTH = 896;
 
@@ -94,9 +74,6 @@ export function ScheduleResults({
   const isSms = channel === 'sms';
   // Scored against WhatsApp deliveries only, so shown only when there are some.
   const showSeen = !isSms && summary.seenCapable > 0;
-  // A page view comes from the link in the message. A Confirmation always
-  // carries one; other types show it only once someone has actually opened it.
-  const showViews = collectsRsvp || summary.views > 0;
 
   const liveness = resultsLiveness({
     sentAt,
@@ -106,7 +83,6 @@ export function ScheduleResults({
   });
 
   const selected = guests.find((g) => g.guestId === selectedId) ?? null;
-  const feed = useMemo(() => buildActivityFeed(guests, FEED_LIMIT), [guests]);
 
   const pickReason = (reason: NotReachedFilter) => {
     setFilter(reason);
@@ -148,14 +124,6 @@ export function ScheduleResults({
       isRTL={isRTL}
     />
   );
-  const activity = (
-    <ActivityFeed
-      items={feed}
-      now={now}
-      locale={locale}
-      onSelect={setSelectedId}
-    />
-  );
 
   return (
     <div ref={rootRef} className="@container">
@@ -168,7 +136,6 @@ export function ScheduleResults({
               <Funnel
                 summary={summary}
                 showSeen={showSeen}
-                showViews={showViews}
                 collectsRsvp={collectsRsvp}
               />
               <div className="flex min-w-0 flex-col gap-3.5">
@@ -180,7 +147,6 @@ export function ScheduleResults({
             {/* Below the rail's width, what the rail holds sits here, above the list */}
             <div className="flex flex-col gap-3.5 @4xl:hidden">
               {notReached}
-              {activity}
             </div>
 
             <ScheduleResultsGuests
@@ -188,7 +154,6 @@ export function ScheduleResults({
               guests={guests}
               collectsRsvp={collectsRsvp}
               showSeen={showSeen}
-              showViews={showViews}
               filter={filter}
               onFilterChange={setFilter}
               selectedId={selectedId}
@@ -211,7 +176,6 @@ export function ScheduleResults({
               </section>
             )}
             {notReached}
-            {activity}
           </div>
         </div>
       </div>
@@ -353,19 +317,17 @@ function Bar({ value, className }: { value: number; className: string }) {
 type Summary = ScheduleInteractionData['summary'];
 
 /**
- * Audience, reached, seen, opened, answered. Seen is drawn as a share of the
+ * Audience, reached, seen, answered. Seen is drawn as a share of the
  * WhatsApp deliveries rather than of the audience, so its bar is a ratio that
  * can move either way as late failures leave that denominator.
  */
 function Funnel({
   summary,
   showSeen,
-  showViews,
   collectsRsvp,
 }: {
   summary: Summary;
   showSeen: boolean;
-  showViews: boolean;
   collectsRsvp: boolean;
 }) {
   const t = useTranslations('schedules.results.funnel');
@@ -406,21 +368,6 @@ function Funnel({
             value: percent(summary.seen, summary.seenCapable),
             bar: 'bg-primary/60',
             num: 'text-primary',
-          },
-        ]
-      : []),
-    ...(showViews
-      ? [
-          {
-            key: 'opened',
-            label: t('opened'),
-            hint: t('ofAudience', {
-              percent: percent(summary.views, summary.audience),
-            }),
-            n: summary.views,
-            value: percent(summary.views, summary.audience),
-            bar: 'bg-home-violet',
-            num: 'text-violet-strong',
           },
         ]
       : []),
@@ -694,131 +641,6 @@ function NotReachedCard({
           <Chevron size={15} className="text-muted-foreground/50 shrink-0" />
         </button>
       ))}
-    </section>
-  );
-}
-
-const FEED_LOOK: Record<
-  ActivityItem['kind'],
-  { icon: Icon; tone: ResultTone }
-> = {
-  confirmed: { icon: IconHeart, tone: 'ok' },
-  declined: { icon: IconX, tone: 'bad' },
-  opened: { icon: IconEye, tone: 'violet' },
-  seen: { icon: IconChecks, tone: 'info' },
-  sms: { icon: IconMessage, tone: 'info' },
-  not_delivered: { icon: IconAlertTriangle, tone: 'bad' },
-};
-
-/** The newest movements across the schedule. Tapping one opens that guest. */
-function ActivityFeed({
-  items,
-  now,
-  locale,
-  onSelect,
-}: {
-  items: ActivityItem[];
-  now: Date;
-  locale: string;
-  onSelect: (guestId: string) => void;
-}) {
-  const t = useTranslations('schedules.results.feed');
-  const answerMeta = useAnswerMeta();
-
-  const meta = (item: ActivityItem) => {
-    switch (item.kind) {
-      case 'confirmed':
-        return answerMeta(item.guestCount, item.mealCounts);
-      case 'seen':
-        return t('whatsapp');
-      case 'sms':
-        return t('smsMeta');
-      case 'not_delivered':
-        return item.channel === 'sms'
-          ? t('notDeliveredSms')
-          : t('notDeliveredWhatsapp');
-      default:
-        return '';
-    }
-  };
-
-  const what = {
-    confirmed: t('confirmed'),
-    declined: t('declined'),
-    opened: t('opened'),
-    seen: t('seen'),
-    sms: t('sms'),
-    not_delivered: t('notDelivered'),
-  };
-
-  return (
-    <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4">
-      <CardTitle
-        title={t('title')}
-        note={
-          items[0]
-            ? t('lastAt', {
-                when: formatMoment(items[0].at, {
-                  now,
-                  locale,
-                  relative: true,
-                }),
-              })
-            : undefined
-        }
-      />
-      {items.length === 0 ? (
-        <p className="text-muted-foreground text-[13px]">{t('empty')}</p>
-      ) : (
-        <ol className="flex flex-col">
-          {items.map((item, index) => {
-            const { icon: ItemIcon, tone } = FEED_LOOK[item.kind];
-            const fresh =
-              now.getTime() - new Date(item.at).getTime() < FRESH_MS;
-            const line = meta(item);
-            return (
-              <li key={item.key}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(item.guestId)}
-                  className={cn(
-                    'hover:bg-muted/40 -mx-1.5 flex w-[calc(100%+0.75rem)] gap-2.5 rounded-lg px-1.5 pb-3 text-start',
-                    fresh && 'row-updated motion-reduce:animate-none',
-                  )}
-                >
-                  <div className="relative flex w-[26px] shrink-0 justify-center">
-                    {index < items.length - 1 && (
-                      <span className="bg-muted absolute top-7 -bottom-0 w-0.5" />
-                    )}
-                    <span
-                      className={cn(
-                        'z-[1] flex size-[26px] items-center justify-center rounded-full',
-                        RESULT_TONE[tone],
-                      )}
-                    >
-                      <ItemIcon size={13} stroke={2.1} />
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-px">
-                    <span className="text-[13px] leading-snug">
-                      <strong className="font-bold">{item.guestName}</strong>{' '}
-                      {what[item.kind]}
-                    </span>
-                    {line && (
-                      <span className="text-muted-foreground text-[11.5px]">
-                        {line}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-muted-foreground shrink-0 text-[11.5px] whitespace-nowrap">
-                    {formatMoment(item.at, { now, locale, relative: true })}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      )}
     </section>
   );
 }

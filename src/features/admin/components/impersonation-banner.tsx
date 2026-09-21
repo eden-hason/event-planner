@@ -21,7 +21,10 @@ export async function ImpersonationBanner() {
         <span className="inline-block h-2 w-2 rounded-full bg-warning" />
         <span>
           Viewing as <span className="font-semibold">{displayName}</span>
-          <span className="ml-2 opacity-70">· Read-only</span>
+          {/* Locally the Operator gets a real session as the Owner; see createClient */}
+          <span className="ml-2 opacity-70">
+            · {impersonation.readOnly ? 'Read-only' : 'Editing as owner'}
+          </span>
         </span>
       </div>
       <form action={stopImpersonation}>

@@ -7,7 +7,12 @@
 export type { EventBillingStatus } from './types';
 
 // Pure utils
-export { deriveHeaderStatus, BILLING_STATUS_LABELS } from './utils';
+export {
+  deriveHeaderStatus,
+  BILLING_STATUS_LABELS,
+  UPSELL_CTA_CLASS,
+  UPSELL_SURFACE_CLASS,
+} from './utils';
 
 // Server Actions
 export { setEventBillingStatus } from './actions';
