@@ -1,10 +1,20 @@
-// Main wrapper - the primary export for the event details page
+// The page itself - one form, one save, the sections below it.
 export { EventDetailsWrapper } from './event-details-wrapper';
 
-// Sub-components - exported for flexibility and testing
-export { EventDetailsHeader } from './event-details-header';
-export { DateTimeCard } from './date-time-card';
-export { LocationCard } from './location-card';
-export { HostsCard } from './hosts-card';
-export { GuestExperienceCard } from './guest-experience-card';
-export { EventInvitationCard } from './event-invitation-card';
+// Sections, exported for composition and for tests.
+export { ReadinessSummary } from './readiness-summary';
+export { HostsSection } from './hosts-section';
+export { HostsEditorDrawer } from './hosts-editor-drawer';
+export { DateTimeSection } from './date-time-section';
+export { LocationSection } from './location-section';
+export { InvitationSection } from './invitation-section';
+export { GuestExperienceSection } from './guest-experience-section';
+export { SaveBar } from './save-bar';
+export { SectionCard, SectionStatus, type SectionStatusTone } from './section-card';
+export {
+  EventDetailsProvider,
+  useEventDetails,
+  SECTION_IDS,
+  READINESS_FOCUS_ATTR,
+  type DateChangeImpact,
+} from './event-details-context';

@@ -52,7 +52,7 @@ export function NavEvents({ events, currentUserId, disabled }: NavEventsProps) {
   const router = useRouter();
   const t = useTranslations('sidebar');
   const tCommon = useTranslations('common');
-  const tEventTypes = useTranslations('eventDetails.dateTime.types');
+  const tEventTypes = useTranslations('eventDetails.types');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
   const eventTypeLabels: Record<string, string> = {

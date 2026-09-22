@@ -27,9 +27,17 @@ the safest default was to touch nothing the organiser had not asked to be touche
 - A shift must skip `sent`, `expired` and dispatched rows: `prevent_sent_schedule_mutation`
   raises on any update to a row with `status = 'sent'` or `dispatched_at` set, so a naive
   `update ... where event_id = ...` would fail the whole transaction.
-- The date is now editable from `DateTimeCard` on the event details page, which before this
-  change it was not. So the scenario went from "essentially unreachable outside onboarding"
-  to "one tap away".
+- The date is editable from the event details page, which it once was not. So the scenario
+  went from "essentially unreachable outside onboarding" to "one tap away".
+- **The silence is fixed; the dates are not.** The redesigned details page now warns while a
+  date change is still unsaved: `DateTimeSection` compares the picked date against the stored
+  one and, when they differ, says how many Schedules stay behind and whether the day-of
+  reminder is one of them, with a link to the messages page. The count comes from
+  `summariseOutstandingPlan` (`src/features/schedules/utils/outstanding-plan.ts`), which
+  treats a Schedule as outstanding when its status is `null` or `disabled` - `sent`,
+  `cancelled` and `expired` rows would not move anyway. This is the third option below, and
+  it is only half of it: the Owner is told plainly, but the "one action that would fix it" is
+  still seven rows edited by hand on the messages page.
 
 ## Options already considered
 
@@ -41,7 +49,8 @@ the safest default was to touch nothing the organiser had not asked to be touche
   lets an organiser do.
 - **Leave the dates and flag the mismatch on the timeline.** No surprise writes, but it
   leaves the organiser to fix seven rows by hand, which is the work the seed exists to
-  avoid.
+  avoid. Partly taken: the details page now flags it at the moment of the change (see above).
+  The timeline itself still says nothing once the change is saved.
 
 ## Still unknown
 
@@ -55,3 +64,7 @@ the safest default was to touch nothing the organiser had not asked to be touche
 
 Changing an Event's date either moves its outstanding Schedules with it, or tells the
 organiser plainly that it has not, with the one action that would.
+
+The telling exists now. What is left is either the shift itself, or a single action on the
+messages page that re-dates every outstanding Schedule from the new Event date - and a
+mismatch shown on the timeline, not only on the details page at the moment of the edit.

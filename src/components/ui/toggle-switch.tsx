@@ -16,14 +16,21 @@ import { cn } from '@/lib/utils';
 interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement> {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
+  /**
+   * `lg` is the 44x26 track settings lists use. Not `size`: that name is taken
+   * by the input attribute this component forwards.
+   */
+  switchSize?: 'default' | 'lg';
 }
 
 const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ className, checked, onCheckedChange, ...props }, ref) => {
+  ({ className, checked, onCheckedChange, switchSize = 'default', ...props }, ref) => {
+    const large = switchSize === 'lg';
     return (
       <label
         className={cn(
-          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors',
+          'relative inline-flex shrink-0 cursor-pointer items-center rounded-full transition-colors',
+          large ? 'h-[26px] w-11' : 'h-5 w-9',
           'focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2',
           checked ? 'bg-primary' : 'bg-input',
           props.disabled && 'cursor-not-allowed opacity-50',
@@ -40,8 +47,15 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
         />
         <span
           className={cn(
-            'bg-background pointer-events-none block h-4 w-4 rounded-full shadow-lg ring-0 transition-transform',
-            checked ? 'translate-x-4 rtl:-translate-x-4' : 'translate-x-0.5 rtl:-translate-x-0.5',
+            'bg-background pointer-events-none block rounded-full shadow-lg ring-0 transition-transform',
+            large ? 'size-5' : 'size-4',
+            large
+              ? checked
+                ? 'translate-x-[21px] rtl:-translate-x-[21px]'
+                : 'translate-x-[3px] rtl:-translate-x-[3px]'
+              : checked
+                ? 'translate-x-4 rtl:-translate-x-4'
+                : 'translate-x-0.5 rtl:-translate-x-0.5',
           )}
         />
       </label>

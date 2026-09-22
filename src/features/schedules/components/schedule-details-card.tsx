@@ -100,8 +100,14 @@ export function ScheduleDetailsCard({
 
   return (
     <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
-      <div className="grid grid-cols-[1.4fr_1fr] gap-2">
-        <div className="flex flex-col gap-1.5">
+      {/*
+        As many columns as fit at 10.5rem each - the width a full date needs -
+        so a narrow card stacks the date over the time instead of pushing both
+        fields out of it. A bare `fr` track never shrinks below its content,
+        which is what overflowed before.
+      */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))] gap-2">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <Label className="text-muted-foreground text-xs font-normal">{t('scheduledDate')}</Label>
           <div
             className={cn(
@@ -118,7 +124,7 @@ export function ScheduleDetailsCard({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <Label className="text-muted-foreground text-xs font-normal">{t('scheduledTime')}</Label>
           <Select
             value={scheduledTime}

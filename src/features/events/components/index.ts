@@ -1,10 +1,4 @@
-export {
-  EventDetailsWrapper,
-  EventDetailsHeader,
-  DateTimeCard,
-  LocationCard,
-  HostsCard,
-} from './event-details';
+export { EventDetailsWrapper } from './event-details';
 
 export { NewEventDialog } from './new-event-dialog';
 

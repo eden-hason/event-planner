@@ -1763,117 +1763,155 @@
       "saved": "השינויים נשמרו",
       "error": "משהו השתבש"
     },
-    "statusAlert": {
-      "success": {
-        "title": "האירוע שלך מוכן לחלוטין",
-        "description": "כל הפרטים הנדרשים מוגדרים והאורחים יקבלו את כל ההודעות"
-      },
-      "warning": {
-        "title": "חסרים פרטים מסוימים",
-        "description": "השלם את הפרטים הבאים כדי לוודא שהאורחים יקבלו את כל ההודעות"
-      },
-      "items": {
-        "venueLocation": "מיקום האולם (נדרש לקישור ניווט בהודעת התזכורת)",
-        "invitationImage": "תמונת הזמנה (נדרשת להודעת ההזמנה הראשונית)"
-      }
-    },
     "header": {
       "title": "פרטי האירוע",
-      "save": "שמור",
-      "saving": "שומר..."
+      "subtitle": "הפרטים שהאורחים רואים בהזמנה ובהודעות",
+      "save": "שמירה",
+      "saving": "שומר...",
+      "cancel": "ביטול"
     },
-    "dateTime": {
-      "title": "תאריך ושעה",
-      "date": "תאריך",
-      "eventType": "סוג האירוע",
-      "receptionTime": "שעת קבלת פנים",
-      "ceremonyTime": "שעת חופה",
-      "types": {
-        "wedding": "חתונה",
-        "henna": "חינה",
-        "bar_mitzva": "בר מצווה",
-        "bat_mitzva": "בת מצווה"
+    "types": {
+      "wedding": "חתונה",
+      "henna": "חינה",
+      "bar_mitzva": "בר מצווה",
+      "bat_mitzva": "בת מצווה"
+    },
+    "readiness": {
+      "missingTitle": "{count, plural, one {דבר אחד חסר לאורחים} two {שני דברים חסרים לאורחים} other {# דברים חסרים לאורחים}}",
+      "missingHint": "אפשר להשלים עכשיו או לחזור לזה אחר כך",
+      "venue": {
+        "title": "מקום האירוע",
+        "consequence": "בלי כתובת אין קישור לניווט בתזכורת ליום האירוע",
+        "action": "הוספה"
+      },
+      "invitation": {
+        "title": "תמונת הזמנה",
+        "consequence": "ההודעה הראשונה תישלח בלי תמונה",
+        "action": "העלאה"
       }
     },
-    "couple": {
-      "title": "הזוג",
-      "bride": "כלה",
-      "groom": "חתן",
-      "coupleNames": "שמות הזוג",
-      "brideName": "שם הכלה",
-      "groomName": "שם החתן",
-      "brideNamePlaceholder": "הזן שם כלה",
-      "groomNamePlaceholder": "הזן שם חתן",
-      "parentsNames": "שמות ההורים",
-      "brideSide": "צד הכלה",
-      "groomSide": "צד החתן",
-      "brideSidePlaceholder": "הזן שמות הורי הכלה",
-      "groomSidePlaceholder": "הזן שמות הורי החתן",
+    "hosts": {
+      "titleCouple": "הזוג",
       "titleSingleMale": "חתן בר המצווה",
       "titleSingleFemale": "כלת בת המצווה",
+      "editCouple": "עריכת שמות וצדדים",
+      "editSingleMale": "עריכת שם החוגג ושמות ההורים",
+      "editSingleFemale": "עריכת שם החוגגת ושמות ההורים",
+      "bride": "כלה",
+      "groom": "חתן",
       "celebrantMale": "החוגג",
       "celebrantFemale": "החוגגת",
-      "celebrantNameMale": "שם החוגג",
-      "celebrantNameFemale": "שם החוגגת",
-      "celebrantNamePlaceholderMale": "הזן שם החוגג",
-      "celebrantNamePlaceholderFemale": "הזן שם החוגגת",
-      "parentsPlaceholder": "הזן שמות ההורים"
+      "drawerTitle": "שמות וצדדים",
+      "drawerDescription": "השמות מופיעים בכותרת האירוע ובהודעות שהאורחים מקבלים",
+      "nameLabel": "שם מלא",
+      "brideNamePlaceholder": "שם הכלה",
+      "groomNamePlaceholder": "שם החתן",
+      "celebrantNamePlaceholderMale": "שם החוגג",
+      "celebrantNamePlaceholderFemale": "שם החוגגת",
+      "parentsLabel": "שמות ההורים",
+      "parentsOptional": "שמות ההורים, לא חובה",
+      "parentsPlaceholderBride": "לדוגמה: בת של רותי ואבי לוי",
+      "parentsPlaceholderGroom": "לדוגמה: בן של מיכל ודוד ברק",
+      "parentsPlaceholderCelebrant": "לדוגמה: שירה ואיתי כהן",
+      "sideLabel": "שם הצד",
+      "sideNote": "שמות הצדדים קבועים. הקבוצות ברשימת האורחים הן שמשויכות לצד הכלה או לצד החתן",
+      "noNames": "עדיין לא הוזנו שמות",
+      "momentLabel": "מועד האירוע"
     },
-    "location": {
-      "title": "מיקום",
-      "label": "שם האולם",
-      "placeholder": "חפש כתובת אולם...",
-      "status": {
-        "set": {
-          "title": "הכל מוכן!",
-          "description": "האורחים יקבלו קישור ניווט לאולם בהודעת התזכורת שלהם"
-        },
-        "notSet": {
-          "title": "טרם נוסף אולם",
-          "description": "האורחים לא יקבלו קישור ניווט בתזכורת יום האירוע"
-        }
+    "when": {
+      "title": "מתי",
+      "dateLabel": "תאריך האירוע",
+      "noDateTitle": "עדיין אין תאריך",
+      "noDateDescription": "בלי תאריך אין תזמון להודעות ולשיחות, אפשר להוסיף אורחים ולחזור לכאן",
+      "pickDate": "בחירת תאריך",
+      "receptionTime": "שעת קבלת פנים",
+      "ceremonyTime": "שעת חופה",
+      "receptionTimeShort": "קבלת פנים",
+      "ceremonyTimeShort": "חופה",
+      "addTime": "להוסיף שעה",
+      "clearTime": "ניקוי שעה",
+      "timeNeedsDate": "אחרי בחירת תאריך",
+      "derivedFromDate": "התזמון של כל ההודעות והשיחות נגזר מהתאריך הזה",
+      "dateChange": {
+        "title": "ההודעות לא יזוזו לבד",
+        "description": "{count, plural, one {הודעה מתוזמנת אחת נשארת} two {שתי הודעות מתוזמנות נשארות} other {# הודעות מתוזמנות נשארות}} על התאריכים שנקבעו לפי {date}",
+        "descriptionWithReminder": "{count, plural, one {הודעה מתוזמנת אחת נשארת} two {שתי הודעות מתוזמנות נשארות} other {# הודעות מתוזמנות נשארות}} על התאריכים שנקבעו לפי {date}, כולל התזכורת ליום האירוע",
+        "link": "מעבר להודעות ועדכון התאריכים"
       }
+    },
+    "where": {
+      "title": "איפה",
+      "statusSet": "יש ניווט",
+      "statusSetLong": "יש קישור ניווט בתזכורת",
+      "statusMissing": "חסר",
+      "placeholder": "חיפוש אולם, גן או כתובת",
+      "hint": "הכתובת הופכת לקישור ניווט בתזכורת שהאורחים מקבלים ביום האירוע",
+      "hintPicked": "הכתובת נבחרת מתוך גוגל כדי שהניווט של האורחים יגיע למקום הנכון",
+      "mapLabel": "תצוגת מפה",
+      "clear": "ניקוי הכתובת"
     },
     "invitation": {
-      "title": "הזמנת האירוע",
-      "description": "תמונה זו תישלח לאורחים בהודעה הראשונה שהם יקבלו",
-      "dropImage": "שחרר תמונה כאן",
-      "clickToBrowse": "או לחץ לבחירה",
-      "upload": "העלה",
-      "uploading": "מעלה...",
-      "removeImage": "הסר תמונה",
-      "enlargeImage": "הגדל תמונה",
-      "failedUpload": "העלאת התמונה נכשלה",
-      "status": {
-        "set": {
-          "title": "הכל מוכן!",
-          "description": "האורחים יקבלו את תמונת ההזמנה בהודעה הראשונה שלהם"
-        },
-        "notSet": {
-          "title": "טרם הועלתה תמונת הזמנה",
-          "description": "האורחים לא יקבלו תמונת הזמנה בהודעה הראשונה שלהם"
-        }
-      }
+      "title": "תמונת ההזמנה",
+      "statusSet": "מוגדרת",
+      "statusMissing": "חסר",
+      "statusUploading": "מעלה",
+      "statusError": "ההעלאה נכשלה",
+      "upload": "העלאת תמונת ההזמנה",
+      "hint": "התמונה נשלחת עם ההודעה הראשונה שהאורחים מקבלים · עד {max}",
+      "hintShort": "התמונה נשלחת עם ההודעה הראשונה שהאורחים מקבלים",
+      "uploading": "מעלה את התמונה",
+      "fileMeta": "{name} · {size}",
+      "replace": "החלפת תמונה",
+      "remove": "הסרה",
+      "enlarge": "הגדלת התמונה",
+      "failed": "העלאת התמונה נכשלה",
+      "tooLargeTitle": "הקובץ גדול מדי",
+      "tooLarge": "{name} במשקל {size}, הגודל המרבי הוא {max}",
+      "wrongTypeTitle": "סוג הקובץ לא נתמך",
+      "wrongType": "{name} אינו קובץ תמונה",
+      "pickAnother": "בחירת תמונה אחרת"
     },
     "guestExperience": {
-      "title": "חוויית האורח",
-      "lockGuestCount": "נעל מספר מוזמנים",
-      "lockGuestCountDescription": "האורחים לא יוכלו לשנות את מספר המקומות שנקבע להם בהזמנה",
-      "sendTableNumbers": "שליחת מספר שולחן",
-      "sendTableNumbersDescription": "המוזמנים יקבלו את מספר השולחן שלהם בתזכורת לאירוע",
-      "specialMealSelection": "בחירת מנה מיוחדת",
-      "specialMealSelectionDescription": "בקש מהאורחים לבחור מנה",
-      "specialMealsLabel": "מנות מיוחדות לבחירה",
-      "specialMealsDescription": "בחר אילו מנות יוצגו לאורח",
-      "mealPlaceholder": "בחר מנה",
-      "allMeals": "כל המנות",
-      "mealsSelected": "{count} מנות נבחרו",
+      "title": "מה האורחים נשאלים",
+      "description": "שלוש הגדרות שמשנות את תוכן השיחה עם האורחים",
+      "specialMeal": "בחירת מנה מיוחדת",
+      "specialMealDescription": "האורחים נשאלים אם הם צריכים מנה מיוחדת בשיחת אישור ההגעה",
+      "mealsLabel": "אילו מנות להציע",
+      "mealsEmpty": "צריך לבחור לפחות מנה אחת",
+      "lockGuestCount": "נעילת מספר המוזמנים",
+      "lockGuestCountDescription": "האורחים לא יכולים לשנות את מספר המוזמנים שהוקצה להם",
+      "sendTableNumbers": "שליחת מספרי שולחן",
+      "sendTableNumbersDescription": "בתזכורת ליום האירוע כל אורח מקבל את מספר השולחן שלו",
       "meal": {
-        "regular": "רגילה",
-        "vegetarian": "צמחונית",
-        "vegan": "טבעונית",
+        "vegetarian": "צמחוני",
+        "vegan": "טבעוני",
         "glutenFree": "ללא גלוטן",
         "strictlyKosher": "כשר למהדרין"
+      }
+    },
+    "saveBar": {
+      "pending": "{count, plural, one {שינוי אחד לא נשמר} two {שני שינויים לא נשמרו} other {# שינויים לא נשמרו}}",
+      "pendingSingle": "שינוי אחד לא נשמר · {field}",
+      "save": "שמירת השינויים",
+      "saving": "שומר...",
+      "cancel": "ביטול",
+      "fields": {
+        "eventDate": "תאריך האירוע",
+        "receptionTime": "שעת קבלת פנים",
+        "ceremonyTime": "שעת חופה",
+        "location": "מקום האירוע",
+        "invitation": "תמונת ההזמנה",
+        "brideName": "שם הכלה",
+        "brideParents": "שמות הורי הכלה",
+        "groomName": "שם החתן",
+        "groomParents": "שמות הורי החתן",
+        "childName": "שם החוגג",
+        "childNameFemale": "שם החוגגת",
+        "childParents": "שמות ההורים",
+        "specialMeal": "בחירת מנה מיוחדת",
+        "meals": "אילו מנות להציע",
+        "lockGuestCount": "נעילת מספר המוזמנים",
+        "sendTableNumbers": "שליחת מספרי שולחן"
       }
     }
   },
