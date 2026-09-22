@@ -2,7 +2,8 @@
 
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { CircleCheck, MapPin, Navigation } from 'lucide-react';
+import { Check, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { LocationInput } from '@/features/events/components/location-input';
 import { GoogleMap } from '@/features/events/components/google-map';
@@ -37,67 +38,79 @@ export function LocationSection() {
   return (
     <SectionCard
       id={SECTION_IDS.where}
-      icon={<MapPin className="text-primary size-4 shrink-0" />}
+      icon={<MapPin className="text-home-violet" />}
       title={t('title')}
       status={
-        <SectionStatus
-          tone={hasCoords ? 'ready' : 'missing'}
-          label={hasCoords ? t('statusSet') : t('statusMissing')}
-          icon={hasCoords ? <Navigation className="size-3" /> : undefined}
-        />
+        hasCoords ? (
+          // Desktop has room beside the title to say what the venue buys.
+          <>
+            <SectionStatus
+              tone="ready"
+              label={t('statusSet')}
+              icon={<Check className="size-3" strokeWidth={2.6} />}
+              className="lg:hidden"
+            />
+            <SectionStatus
+              tone="ready"
+              label={t('statusSetLong')}
+              icon={<Check className="size-3" strokeWidth={2.6} />}
+              className="hidden lg:inline-flex"
+            />
+          </>
+        ) : (
+          <SectionStatus tone="missing" label={t('statusMissing')} />
+        )
       }
     >
-      <div className="flex flex-col gap-3">
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              {/*
-                The wrapper carries the marker rather than the input: the
-                readiness summary's "add a venue" resolves it to the first
-                focusable control inside, and `LocationInput` owns its own field.
-              */}
-              <FormControl>
-                <div data-readiness-focus>
-                  <LocationInput
-                    placeholder={t('placeholder')}
-                    value={field.value?.name || ''}
-                    onChange={handleChange}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="flex flex-col gap-3 lg:flex-row lg:gap-3.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                {/*
+                  The wrapper carries the marker rather than the input: the
+                  readiness summary's "add a venue" resolves it to the first
+                  focusable control inside, and `LocationInput` owns its own field.
+                */}
+                <FormControl>
+                  <div data-readiness-focus>
+                    <LocationInput
+                      placeholder={t('placeholder')}
+                      value={field.value?.name || ''}
+                      onChange={handleChange}
+                      className={cn(
+                        hasCoords &&
+                          '[&_[data-slot=input-group-addon]]:text-home-violet',
+                      )}
+                      inputClassName="h-9 rounded-xl font-semibold lg:rounded-[11px]"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          {hasCoords ? t('hintPicked') : t('hint')}
-        </p>
-
-        {hasCoords ? (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-xs font-semibold">
-              {t('mapLabel')}
-            </span>
-            <GoogleMap
-              coords={location?.coords}
-              className="h-[180px] rounded-lg sm:h-[240px]"
-            />
-          </div>
-        ) : (
-          <div className="bg-muted/50 text-muted-foreground flex h-[120px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-4 text-center text-xs">
-            <MapPin className="size-4" />
-            {t('mapPending')}
-          </div>
-        )}
+          <p
+            className={cn(
+              'text-muted-foreground text-xs leading-relaxed',
+              // Once a place is picked the map says it better on a phone.
+              hasCoords && 'hidden lg:block',
+            )}
+          >
+            {hasCoords ? t('hintPicked') : t('hint')}
+          </p>
+        </div>
 
         {hasCoords && (
-          <p className="text-success flex items-center gap-1.5 text-xs font-medium">
-            <CircleCheck className="size-3.5 shrink-0" />
-            {t('statusSetLong')}
-          </p>
+          <div className="relative h-32 shrink-0 overflow-hidden rounded-[13px] border lg:h-[132px] lg:w-[236px] lg:rounded-xl">
+            <GoogleMap coords={location?.coords} className="size-full rounded-none border-0" />
+            <span className="bg-background/90 text-muted-foreground pointer-events-none absolute start-2.5 bottom-2 rounded-lg px-2 py-1 text-[11px] font-semibold">
+              {t('mapLabel')}
+            </span>
+          </div>
         )}
       </div>
     </SectionCard>

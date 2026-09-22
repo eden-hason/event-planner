@@ -48,15 +48,16 @@ export async function CallWhenCard({
         ) : undefined
       }
     >
-      <div className="grid grid-cols-[1.4fr_1fr] gap-2">
-        <div className="flex flex-col gap-1.5">
+      {/* Stacks when the card is too narrow for the pair - see ScheduleDetailsCard. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))] gap-2">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-muted-foreground text-xs">{t('date')}</span>
           <div className="bg-muted/60 text-muted-foreground flex h-[46px] items-center gap-2 rounded-[11px] border px-3">
             <IconCalendar size={16} className="shrink-0" />
-            <span className="text-[14.5px] font-semibold">{date}</span>
+            <span className="truncate text-[14.5px] font-semibold">{date}</span>
           </div>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-muted-foreground text-xs">{t('time')}</span>
           <div className="bg-muted/60 text-muted-foreground flex h-[46px] items-center rounded-[11px] border px-3">
             <span dir="ltr" className="text-[14.5px] font-semibold">

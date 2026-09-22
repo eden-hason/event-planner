@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,11 +11,12 @@ import { cn } from '@/lib/utils';
  */
 export type SectionStatusTone = 'ready' | 'missing' | 'pending' | 'error';
 
+// Tint + strong pairs, so the chip text clears 4.5:1 on its own surface.
 const TONE_CLASSES: Record<SectionStatusTone, string> = {
-  ready: 'border-success/20 bg-success/10 text-success',
-  missing: 'border-warning/20 bg-warning/10 text-warning',
-  pending: 'border-primary/20 bg-primary/5 text-primary',
-  error: 'border-destructive/20 bg-destructive/10 text-destructive',
+  ready: 'bg-rsvp-confirmed-tint text-rsvp-confirmed-strong',
+  missing: 'bg-warning-tint text-warning-ink',
+  pending: 'bg-info-tint text-info-strong',
+  error: 'bg-destructive/15 text-destructive',
 };
 
 export function SectionStatus({
@@ -33,7 +33,7 @@ export function SectionStatus({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold',
+        'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold lg:px-2.5 lg:text-[11.5px]',
         TONE_CLASSES[tone],
         className,
       )}
@@ -70,23 +70,43 @@ export function SectionCard({
   contentClassName?: string;
   children: React.ReactNode;
 }) {
+  const titleId = id ? `${id}-title` : undefined;
+
   return (
-    <Card id={id} className={cn('gap-4 py-5 scroll-mt-20', className)}>
-      <CardHeader className="gap-1 px-4 sm:px-5">
-        <div className="flex items-center gap-2">
-          {icon}
-          <CardTitle className="text-base font-bold">{title}</CardTitle>
+    <section
+      id={id}
+      aria-labelledby={titleId}
+      className={cn(
+        'bg-card text-card-foreground flex scroll-mt-20 flex-col gap-3 rounded-[18px] border p-3.5 lg:gap-3.5 lg:p-[18px]',
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-2">
+          <h2
+            id={titleId}
+            className="flex items-center gap-2 text-[15px] font-bold lg:text-base [&_svg]:size-[17px] [&_svg]:shrink-0 lg:[&_svg]:size-[18px]"
+          >
+            {icon}
+            {title}
+          </h2>
+          {status}
         </div>
         {description && (
-          <p className="text-muted-foreground text-xs leading-relaxed">
+          <p className="text-muted-foreground text-xs leading-relaxed lg:text-[12.5px]">
             {description}
           </p>
         )}
-        {status && <CardAction className="self-center">{status}</CardAction>}
-      </CardHeader>
-      <CardContent className={cn('px-4 sm:px-5', contentClassName)}>
-        {children}
-      </CardContent>
-    </Card>
+      </div>
+      <div className={contentClassName}>{children}</div>
+    </section>
   );
 }
+
+/**
+ * The look of a single-line field on this page - a 36px box with the value at
+ * the start and its icon at the end - shared by the date, time and venue
+ * controls so a filled field reads the same whichever widget sits behind it.
+ */
+export const FIELD_BOX_CLASSES =
+  'border-input bg-background flex h-9 w-full items-center justify-between gap-2 rounded-xl border px-3 text-sm font-semibold lg:rounded-[11px]';

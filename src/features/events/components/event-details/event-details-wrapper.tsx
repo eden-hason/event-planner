@@ -34,7 +34,6 @@ import { DateTimeSection } from './date-time-section';
 import { LocationSection } from './location-section';
 import { InvitationSection } from './invitation-section';
 import { GuestExperienceSection } from './guest-experience-section';
-import { FixedDetailsSection } from './fixed-details-section';
 import { SaveBar } from './save-bar';
 
 /**
@@ -99,7 +98,10 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
 
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const changes = changedKeys(form.formState.dirtyFields, { couple, hasCeremony });
+  const changes = changedKeys(form.formState.dirtyFields, {
+    couple,
+    hasCeremony,
+  });
 
   const liveLocation = form.watch('location');
   const liveImageUrl = form.watch('invitations.imageUrl');
@@ -125,7 +127,9 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
       const values = form.getValues();
       const fields = buildUpdateFields(values, keys, { couple });
       const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+      Object.entries(fields).forEach(([key, value]) =>
+        formData.append(key, value),
+      );
 
       setIsSaving(true);
       try {
@@ -170,10 +174,9 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
 
     const marker = section.querySelector<HTMLElement>('[data-readiness-focus]');
     if (!marker) return;
-    const control =
-      marker.matches('input, button, [tabindex]')
-        ? marker
-        : marker.querySelector<HTMLElement>('input, button, [tabindex]');
+    const control = marker.matches('input, button, [tabindex]')
+      ? marker
+      : marker.querySelector<HTMLElement>('input, button, [tabindex]');
     control?.focus({ preventScroll: true });
   }, []);
 
@@ -214,25 +217,36 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
           onSubmit={form.handleSubmit(() => {
             void save(changes);
           })}
-          className="mx-auto flex max-w-6xl flex-col gap-4"
+          className="flex flex-col gap-3.5 lg:gap-[18px]"
         >
-          <ReadinessSummary missing={missing} />
-
           {/*
-            Two columns from `lg`: the things that describe the Event on one side,
-            the invitation image and what cannot be changed on the other. Below
-            that it is one stack in the same order.
+            The width cap is on the content, not the form, so the save bar below
+            can still run the full width of the page.
           */}
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-            <div className="flex flex-col gap-4">
-              <HostsSection />
-              <DateTimeSection />
-              <LocationSection />
-              <GuestExperienceSection />
-            </div>
-            <div className="flex flex-col gap-4">
-              <InvitationSection />
-              <FixedDetailsSection eventTitle={event.title} typeLabel={typeLabel} />
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3.5 lg:gap-[18px]">
+            <ReadinessSummary missing={missing} />
+
+            {/* The hero: who the Event is for, across both columns. */}
+            <HostsSection />
+
+            {/*
+            Two columns from `lg`: the things that describe the Event on one side,
+            the invitation image beside them. On a phone it is one stack, with the
+            invitation between the venue and the questions.
+          */}
+            <div className="grid items-start gap-3.5 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-[18px] lg:gap-y-[18px]">
+              <div className="lg:col-start-1">
+                <DateTimeSection />
+              </div>
+              <div className="lg:col-start-1">
+                <LocationSection />
+              </div>
+              <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
+                <InvitationSection />
+              </div>
+              <div className="lg:col-start-1">
+                <GuestExperienceSection />
+              </div>
             </div>
           </div>
 

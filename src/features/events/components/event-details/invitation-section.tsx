@@ -5,12 +5,11 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import {
   IconArrowsMaximize,
-  IconLoader2,
   IconPhoto,
   IconTrash,
   IconUpload,
 } from '@tabler/icons-react';
-import { Mail, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import {
   FileUpload,
   FileUploadDropzone,
@@ -147,7 +146,7 @@ export function InvitationSection() {
   return (
     <SectionCard
       id={SECTION_IDS.invitation}
-      icon={<Mail className="text-primary size-4 shrink-0" />}
+      icon={<IconPhoto className="text-primary" stroke={2} />}
       title={t('title')}
       status={<SectionStatus tone={tone} label={statusLabel} />}
     >
@@ -161,151 +160,141 @@ export function InvitationSection() {
         disabled={isUploading}
         className="contents"
       >
-        <div className="flex flex-col gap-3">
-          {rejected ? (
-            <div className="border-destructive/30 bg-destructive/5 flex flex-col gap-2 rounded-lg border p-3">
-              <div className="flex items-start gap-2">
-                <TriangleAlert className="text-destructive mt-0.5 size-4 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-destructive text-sm font-bold">
-                    {rejected.reason === 'tooLarge'
-                      ? t('tooLargeTitle')
-                      : rejected.reason === 'wrongType'
-                        ? t('wrongTypeTitle')
-                        : t('failed')}
-                  </p>
-                  <p className="text-destructive/90 text-xs leading-relaxed">
-                    {rejected.reason === 'tooLarge'
-                      ? t('tooLarge', {
+        {rejected ? (
+          <div className="border-destructive/40 bg-destructive/10 flex flex-col gap-2.5 rounded-[14px] border p-3.5">
+            <div className="flex items-start gap-2.5">
+              <TriangleAlert className="text-destructive mt-0.5 size-4 shrink-0" />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p className="text-[13.5px] font-bold">
+                  {rejected.reason === 'tooLarge'
+                    ? t('tooLargeTitle')
+                    : rejected.reason === 'wrongType'
+                      ? t('wrongTypeTitle')
+                      : t('failed')}
+                </p>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {rejected.reason === 'tooLarge'
+                    ? t('tooLarge', {
+                      name: rejected.name,
+                      size: formatMegabytes(rejected.size),
+                      max: maxLabel,
+                    })
+                    : rejected.reason === 'wrongType'
+                      ? t('wrongType', { name: rejected.name })
+                      : t('fileMeta', {
                         name: rejected.name,
                         size: formatMegabytes(rejected.size),
-                        max: maxLabel,
-                      })
-                      : rejected.reason === 'wrongType'
-                        ? t('wrongType', { name: rejected.name })
-                        : t('fileMeta', {
-                          name: rejected.name,
-                          size: formatMegabytes(rejected.size),
-                        })}
-                  </p>
-                </div>
+                      })}
+                </p>
               </div>
-              <FileUploadTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="self-start">
-                  <IconUpload size={15} />
-                  {t('pickAnother')}
-                </Button>
-              </FileUploadTrigger>
             </div>
-          ) : preview ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-              <div className="group relative mx-auto aspect-[3/4] w-40 shrink-0 overflow-hidden rounded-lg border sm:mx-0">
-                {isUploading && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/55 text-white">
-                    <IconLoader2 size={26} className="animate-spin" />
-                    <span className="text-xs font-medium">{t('uploading')}</span>
-                  </div>
-                )}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="icon"
-                      aria-label={t('enlarge')}
-                      className="absolute start-2 top-2 z-20 size-8 shadow-lg transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-                      disabled={isUploading}
-                    >
-                      <IconArrowsMaximize size={16} />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-auto max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
-                    <DialogTitle className="sr-only">{t('title')}</DialogTitle>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={preview}
-                      alt={t('title')}
-                      className="max-h-[85vh] w-full rounded-lg object-contain"
-                    />
-                  </DialogContent>
-                </Dialog>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt={t('title')} className="size-full object-cover" />
-              </div>
+            <FileUploadTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-primary hover:text-primary h-9 rounded-[10px] font-bold"
+              >
+                {t('pickAnother')}
+              </Button>
+            </FileUploadTrigger>
+          </div>
+        ) : isUploading ? (
+          // No byte-level progress comes back from storage, so the bar says
+          // "working" rather than pretending to a percentage.
+          <div className="bg-muted flex h-[120px] flex-col items-center justify-center gap-2.5 overflow-hidden rounded-[14px] border">
+            <span className="text-muted-foreground text-[13px] font-bold">
+              {t('uploading')}
+            </span>
+            <span className="bg-border block h-1.5 w-[180px] overflow-hidden rounded-full">
+              <span className="bg-primary block h-full w-2/3 animate-pulse rounded-full" />
+            </span>
+            {pendingName && (
+              <span className="text-muted-foreground max-w-full truncate px-4 text-[11.5px]">
+                {t('fileMeta', {
+                  name: pendingName,
+                  size: formatMegabytes(pendingSize),
+                })}
+              </span>
+            )}
+          </div>
+        ) : preview ? (
+          // A thumbnail beside its actions on a phone; the narrow desktop
+          // column shows the image at full width with the actions under it.
+          <div className="flex gap-3 lg:flex-col">
+            <div className="relative h-36 w-[108px] shrink-0 overflow-hidden rounded-xl border lg:aspect-[3/4] lg:h-auto lg:w-full lg:rounded-[13px]">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t('enlarge')}
+                    className="absolute end-1.5 top-1.5 z-10 flex size-[26px] items-center justify-center rounded-lg bg-black/55 text-white transition-colors hover:bg-black/70 lg:end-2 lg:top-2 lg:size-[30px] lg:rounded-[9px]"
+                  >
+                    <IconArrowsMaximize size={14} />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="w-auto max-w-[calc(100%-2rem)] border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
+                  <DialogTitle className="sr-only">{t('title')}</DialogTitle>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={preview}
+                    alt={t('title')}
+                    className="max-h-[85vh] w-full rounded-lg object-contain"
+                  />
+                </DialogContent>
+              </Dialog>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt={t('title')} className="size-full object-cover" />
+            </div>
 
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                {isUploading && pendingName ? (
-                  <p className="text-muted-foreground text-xs">
-                    {t('fileMeta', {
-                      name: pendingName,
-                      size: formatMegabytes(pendingSize),
-                    })}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground text-xs leading-relaxed">
-                    {t('hint', { max: maxLabel })}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <FileUploadTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      disabled={isUploading}
-                    >
-                      <IconUpload size={15} />
-                      {t('replace')}
-                    </Button>
-                  </FileUploadTrigger>
+            <div className="flex min-w-0 flex-1 flex-col gap-2 lg:gap-3.5">
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                <span className="lg:hidden">{t('hintShort')}</span>
+                <span className="hidden lg:inline">{t('hint', { max: maxLabel })}</span>
+              </p>
+              <div className="flex flex-col gap-2 lg:flex-row">
+                <FileUploadTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={handleRemove}
-                    disabled={isUploading}
+                    className="h-9 rounded-[10px] font-semibold lg:flex-1"
                   >
-                    <IconTrash size={15} />
-                    {t('remove')}
+                    {t('replace')}
                   </Button>
-                </div>
+                </FileUploadTrigger>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-destructive/25 text-destructive hover:text-destructive hover:bg-destructive/5 h-9 rounded-[10px] font-semibold"
+                  onClick={handleRemove}
+                >
+                  <IconTrash size={15} />
+                  {t('remove')}
+                </Button>
               </div>
             </div>
-          ) : (
-            <div data-readiness-focus>
-              <FileUploadDropzone
-                className={cn(
-                  'cursor-pointer rounded-lg border-2 border-dashed px-4 py-6',
-                  'from-muted/40 to-muted bg-gradient-to-br',
-                  'transition-colors duration-200',
-                  'hover:border-primary/40 hover:bg-primary/5',
-                  'data-[dragging]:border-primary data-[dragging]:bg-primary/10',
-                )}
-              >
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="bg-muted rounded-full p-2.5">
-                    <IconPhoto size={22} className="text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-semibold">{t('dropzoneTitle')}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {t('dropzoneHint', { max: maxLabel })}
-                  </p>
-                  <FileUploadTrigger asChild>
-                    <Button type="button" variant="outline" size="sm" className="mt-1">
-                      <IconUpload size={15} />
-                      {t('upload')}
-                    </Button>
-                  </FileUploadTrigger>
-                </div>
-              </FileUploadDropzone>
-              <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-                {t('hintShort')}
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div data-readiness-focus>
+            <FileUploadDropzone
+              className={cn(
+                'border-primary/40 bg-primary/5 cursor-pointer rounded-[14px] border-[1.5px] border-dashed px-3.5 py-[22px]',
+                'transition-colors duration-200',
+                'hover:bg-primary/10',
+                'data-[dragging]:border-primary data-[dragging]:bg-primary/10',
+              )}
+            >
+              <div className="flex flex-col items-center gap-2 text-center">
+                <span className="bg-primary/10 text-primary flex size-[42px] items-center justify-center rounded-xl">
+                  <IconUpload size={20} />
+                </span>
+                <p className="text-[14.5px] font-bold">{t('upload')}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {t('hint', { max: maxLabel })}
+                </p>
+              </div>
+            </FileUploadDropzone>
+          </div>
+        )}
       </FileUpload>
     </SectionCard>
   );

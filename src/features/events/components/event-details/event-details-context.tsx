@@ -16,7 +16,6 @@ export const SECTION_IDS = {
   where: 'event-details-where',
   invitation: 'event-details-invitation',
   experience: 'event-details-experience',
-  fixed: 'event-details-fixed',
 } as const;
 
 /**

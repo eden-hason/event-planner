@@ -3,16 +3,25 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslations, useLocale } from 'next-intl';
-import { CalendarDays, CalendarPlus, Clock, TriangleAlert, X } from 'lucide-react';
+import { he, enUS } from 'date-fns/locale';
+import {
+  CalendarDays,
+  CalendarPlus,
+  Clock,
+  ClockPlus,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import { Link } from '@/i18n/navigation';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import type { EventDetailsFormValues } from '../../schemas';
 import { SECTION_IDS, useEventDetails } from './event-details-context';
-import { SectionCard } from './section-card';
+import { FIELD_BOX_CLASSES, SectionCard } from './section-card';
 
 /**
  * The calendar day the picker submits, pinned at 00:00 UTC.
@@ -28,6 +37,104 @@ function toUtcCalendarDate(date: Date): string {
   ).toISOString();
 }
 
+const LABEL_CLASSES = 'text-muted-foreground text-xs font-semibold';
+
+/**
+ * The day of the Event, as a field when there is one and as an invitation to
+ * pick one when there is not.
+ *
+ * A cleared selection is deliberately ignored: a Schedule's Due Time is derived
+ * from this date once, so clearing it would leave the seeded plan pointing at a
+ * date the Event no longer has.
+ */
+function DateField({
+  value,
+  onChange,
+  changed,
+}: {
+  value: string | null | undefined;
+  onChange: (value: string) => void;
+  /** A pending change is outlined, because it moves more than this field. */
+  changed: boolean;
+}) {
+  const t = useTranslations('eventDetails.when');
+  const locale = useLocale();
+  const [open, setOpen] = useState(false);
+
+  const selected = value ? new Date(value) : undefined;
+  const dateText = selected
+    ? new Intl.DateTimeFormat(locale === 'he' ? 'he-IL' : 'en-GB', {
+      dateStyle: 'full',
+      timeZone: 'UTC',
+    }).format(selected)
+    : null;
+
+  // The calendar shows local days; the stored day is UTC midnight.
+  const calendarSelected = selected
+    ? new Date(selected.getUTCFullYear(), selected.getUTCMonth(), selected.getUTCDate())
+    : undefined;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      {dateText ? (
+        <div className="flex flex-col gap-1.5">
+          <span className={LABEL_CLASSES}>{t('dateLabel')}</span>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <button
+                type="button"
+                className={cn(
+                  FIELD_BOX_CLASSES,
+                  'focus-visible:ring-ring/50 text-start outline-none focus-visible:ring-[3px] lg:text-sm',
+                  'text-[14.5px]',
+                  changed && 'border-primary border-[1.5px] font-bold',
+                )}
+              >
+                <span className="truncate">{dateText}</span>
+                <CalendarDays
+                  className={cn(
+                    'size-4 shrink-0',
+                    changed ? 'text-primary' : 'text-muted-foreground',
+                  )}
+                />
+              </button>
+            </FormControl>
+          </PopoverTrigger>
+        </div>
+      ) : (
+        <div className="border-primary/40 bg-primary/5 flex flex-col items-start gap-2.5 rounded-[14px] border-[1.5px] border-dashed px-3.5 py-4">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-[15px] font-extrabold">{t('noDateTitle')}</p>
+            <p className="text-muted-foreground text-[12.5px] leading-relaxed">
+              {t('noDateDescription')}
+            </p>
+          </div>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button type="button" className="h-9 rounded-[11px] px-4 font-bold">
+                <CalendarPlus className="size-4" />
+                {t('pickDate')}
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+        </div>
+      )}
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={calendarSelected}
+          defaultMonth={calendarSelected}
+          onSelect={(next) => {
+            if (next) onChange(toUtcCalendarDate(next));
+            setOpen(false);
+          }}
+          locale={locale === 'he' ? he : enUS}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /**
  * One time, which is either set or offered.
  *
@@ -40,11 +147,13 @@ function TimeField({
   label,
   disabled,
   disabledHint,
+  className,
 }: {
   name: 'receptionTime' | 'ceremonyTime';
   label: string;
   disabled: boolean;
   disabledHint: string;
+  className?: string;
 }) {
   const t = useTranslations('eventDetails.when');
   const form = useFormContext<EventDetailsFormValues>();
@@ -55,33 +164,38 @@ function TimeField({
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem className="bg-muted/50 gap-2 rounded-lg p-3">
-          <span className="text-muted-foreground text-xs font-semibold">
-            {label}
-          </span>
+        <FormItem className={cn('min-w-0 gap-1.5', className)}>
+          <span className={LABEL_CLASSES}>{label}</span>
 
           {disabled ? (
-            <p className="text-muted-foreground flex h-9 items-center text-sm">
-              {disabledHint}
-            </p>
+            <div className={cn(FIELD_BOX_CLASSES, 'bg-muted text-muted-foreground font-normal')}>
+              <span className="truncate">{disabledHint}</span>
+              <Clock className="size-4 shrink-0" />
+            </div>
           ) : !field.value && !editing ? (
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="text-muted-foreground w-full justify-start font-normal"
+              className={cn(
+                FIELD_BOX_CLASSES,
+                'border-primary/40 bg-primary/5 text-primary justify-start border-dashed text-[13.5px] font-bold',
+                'hover:bg-primary/10 focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]',
+              )}
               onClick={() => setEditing(true)}
             >
-              <Clock className="size-4" />
+              <ClockPlus className="size-[15px] shrink-0" />
               {t('addTime')}
-            </Button>
+            </button>
           ) : (
             <div className="relative">
               <FormControl>
                 <Input
                   type="time"
                   autoFocus={editing && !field.value}
-                  className={cn('bg-background', field.value && 'pe-8')}
+                  className={cn(
+                    FIELD_BOX_CLASSES,
+                    'text-[14.5px] shadow-none lg:text-sm',
+                    field.value && 'pe-8',
+                  )}
                   {...field}
                 />
               </FormControl>
@@ -142,83 +256,72 @@ export function DateTimeSection() {
   return (
     <SectionCard
       id={SECTION_IDS.when}
-      icon={<CalendarDays className="text-primary size-4 shrink-0" />}
+      icon={<CalendarDays className="text-primary" />}
       title={t('title')}
     >
       <div className="flex flex-col gap-3">
-        <FormField
-          control={form.control}
-          name="eventDate"
-          render={({ field }) => (
-            <FormItem className="gap-2">
-              {hasDate ? (
-                <>
-                  <span className="text-muted-foreground text-xs font-semibold">
-                    {t('dateLabel')}
-                  </span>
-                  <FormControl>
-                    <DatePicker
-                      date={field.value ? new Date(field.value) : undefined}
-                      // A cleared selection is deliberately ignored: a Schedule's
-                      // Due Time is derived from this date once, so clearing it
-                      // would leave the seeded plan pointing at a date the Event
-                      // no longer has.
-                      onDateChange={(next) => {
-                        if (next) field.onChange(toUtcCalendarDate(next));
-                      }}
-                      placeholder={t('dateLabel')}
-                    />
-                  </FormControl>
-                </>
-              ) : (
-                <div className="border-primary/20 bg-primary/5 flex flex-col gap-2.5 rounded-lg border p-3">
-                  <div>
-                    <p className="text-sm font-bold">{t('noDateTitle')}</p>
-                    <p className="text-muted-foreground text-xs leading-relaxed">
-                      {t('noDateDescription')}
-                    </p>
-                  </div>
-                  <FormControl>
-                    <DatePicker
-                      date={undefined}
-                      onDateChange={(next) => {
-                        if (next) field.onChange(toUtcCalendarDate(next));
-                      }}
-                      placeholder={t('pickDate')}
-                    />
-                  </FormControl>
-                </div>
-              )}
-              <FormMessage />
-            </FormItem>
+        {/*
+          Phone: the date on its own row with the times paired under it. From
+          `lg` the date and the times share one row, the date twice as wide.
+          The date-change warning belongs to the date, so on a phone it sits
+          right under it and on desktop it drops below the row.
+        */}
+        <div
+          className={cn(
+            'grid gap-x-2.5 gap-y-3 lg:gap-x-3',
+            // Without a date the prompt takes the whole row and the times
+            // wait under it at equal widths.
+            hasCeremony ? 'grid-cols-2' : 'grid-cols-1',
+            hasDate &&
+              (hasCeremony ? 'lg:grid-cols-[2fr_1fr_1fr]' : 'lg:grid-cols-[2fr_1fr]'),
           )}
-        />
+        >
+          <FormField
+            control={form.control}
+            name="eventDate"
+            render={({ field }) => (
+              <FormItem
+                className={cn(
+                  'col-span-full min-w-0 gap-2',
+                  hasDate && 'lg:col-span-1',
+                )}
+              >
+                <DateField
+                  value={field.value}
+                  onChange={field.onChange}
+                  changed={dateMoved}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {showPlanWarning && (
-          <div className="border-warning/20 bg-warning/10 flex flex-col gap-2 rounded-lg border p-3">
-            <div className="flex items-start gap-2">
-              <TriangleAlert className="text-warning mt-0.5 size-4 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-warning text-sm font-bold">
-                  {t('dateChange.title')}
-                </p>
-                <p className="text-warning/90 text-xs leading-relaxed">
-                  {t(
-                    plan.includesEventReminder
-                      ? 'dateChange.descriptionWithReminder'
-                      : 'dateChange.description',
-                    { count: plan.messageCount, date: previousDateText },
-                  )}
-                </p>
+          {showPlanWarning && (
+            <div className="border-warning-tint-border bg-warning-tint/60 col-span-full flex flex-col gap-2.5 rounded-xl border p-3 lg:order-last">
+              <div className="flex items-start gap-2.5">
+                <TriangleAlert className="text-warning-ink mt-0.5 size-4 shrink-0" />
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <p className="text-[13.5px] font-bold">{t('dateChange.title')}</p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t(
+                      plan.includesEventReminder
+                        ? 'dateChange.descriptionWithReminder'
+                        : 'dateChange.description',
+                      { count: plan.messageCount, date: previousDateText },
+                    )}
+                  </p>
+                </div>
               </div>
+              <Button
+                asChild
+                variant="outline"
+                className="text-primary hover:text-primary h-9 rounded-[10px] text-[12.5px] font-bold lg:self-start"
+              >
+                <Link href={schedulesHref}>{t('dateChange.link')}</Link>
+              </Button>
             </div>
-            <Button asChild variant="outline" size="sm" className="self-start">
-              <Link href={schedulesHref}>{t('dateChange.link')}</Link>
-            </Button>
-          </div>
-        )}
+          )}
 
-        <div className={cn('grid gap-3', hasCeremony && 'sm:grid-cols-2')}>
           <TimeField
             name="receptionTime"
             label={t('receptionTime')}
@@ -236,8 +339,7 @@ export function DateTimeSection() {
         </div>
 
         {hasDate && (
-          <p className="text-muted-foreground hidden items-center gap-1.5 text-xs lg:flex">
-            <CalendarPlus className="size-3.5 shrink-0" />
+          <p className="text-muted-foreground hidden text-xs leading-relaxed lg:block">
             {t('derivedFromDate')}
           </p>
         )}

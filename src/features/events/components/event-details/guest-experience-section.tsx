@@ -2,18 +2,8 @@
 
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, MessageCircleQuestion } from 'lucide-react';
+import { MessageSquareText } from 'lucide-react';
 import { Switch } from '@/components/ui/toggle-switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { FormControl, FormField } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import type { MealChoice } from '@/lib/meal-choices';
@@ -36,39 +26,86 @@ const MEAL_OPTIONS: readonly { value: MealChoice; labelKey: string }[] = [
  * question - so each description says what changes in the conversation rather
  * than what the setting is called.
  */
+type ToggleName =
+  | 'guestExperience.dietaryOptions'
+  | 'guestExperience.lockGuestCount'
+  | 'guestExperience.sendTableNumbers';
+
+/** One setting: what it is, what it changes for a Guest, and its switch. */
+function ToggleRow({
+  name,
+  title,
+  description,
+}: {
+  name: ToggleName;
+  title: string;
+  description: string;
+}) {
+  const form = useFormContext<EventDetailsFormValues>();
+
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <div className="flex items-start gap-3 lg:items-center lg:gap-3.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-sm font-bold lg:text-[14.5px]">{title}</span>
+            <span className="text-muted-foreground text-xs leading-snug lg:text-[12.5px]">
+              {description}
+            </span>
+          </div>
+          <FormControl>
+            <Switch
+              switchSize="lg"
+              aria-label={title}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </FormControl>
+        </div>
+      )}
+    />
+  );
+}
+
+/**
+ * The three switches that change what a Guest is asked or told.
+ *
+ * None of them touch what the product can do - seating works whether or not
+ * table numbers are sent, and the RSVP conversation runs without the meal
+ * question - so each description says what changes in the conversation rather
+ * than what the setting is called.
+ */
 export function GuestExperienceSection() {
   const t = useTranslations('eventDetails.guestExperience');
   const form = useFormContext<EventDetailsFormValues>();
 
   const mealsEnabled = form.watch('guestExperience.dietaryOptions');
 
+  const rowClasses = 'border-t py-[11px] lg:py-[13px]';
+
   return (
     <SectionCard
       id={SECTION_IDS.experience}
-      icon={<MessageCircleQuestion className="text-primary size-4 shrink-0" />}
+      icon={<MessageSquareText className="text-success" />}
       title={t('title')}
       description={t('description')}
-      contentClassName="px-0"
+      className="gap-1.5 lg:gap-1"
+      contentClassName="pt-1.5 lg:pt-2"
     >
-      <ItemGroup>
-        <FormField
-          control={form.control}
+      <div className={cn('flex flex-col gap-2.5 lg:gap-3', rowClasses)}>
+        <ToggleRow
           name="guestExperience.dietaryOptions"
-          render={({ field }) => (
-            <Item>
-              <ItemContent>
-                <ItemTitle>{t('specialMeal')}</ItemTitle>
-                <ItemDescription>{t('specialMealDescription')}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </ItemActions>
-            </Item>
-          )}
+          title={t('specialMeal')}
+          description={t('specialMealDescription')}
         />
 
+        {/*
+          Which meals to offer lives inside the setting it belongs to, and only
+          while that setting is on. Every option is visible as a chip - four is
+          few enough that a dropdown only hides the answer.
+        */}
         {mealsEnabled && (
           <FormField
             control={form.control}
@@ -85,105 +122,60 @@ export function GuestExperienceSection() {
               };
 
               return (
-                <Item className="animate-in slide-in-from-top-1 fade-in-0 duration-200">
-                  <ItemContent>
-                    <ItemTitle>{t('mealsLabel')}</ItemTitle>
+                <div className="border-primary/15 bg-primary/5 animate-in fade-in-0 slide-in-from-top-1 flex flex-col gap-2.5 rounded-xl border p-[11px] duration-200 lg:flex-row lg:items-center lg:gap-3 lg:p-3">
+                  <span className="text-muted-foreground shrink-0 text-xs font-bold lg:text-[12.5px]">
+                    {t('mealsLabel')}
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-wrap gap-[7px]" role="group" aria-label={t('mealsLabel')}>
+                      {MEAL_OPTIONS.map((meal) => {
+                        const on = selected.includes(meal.value);
+                        return (
+                          <button
+                            key={meal.value}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => toggleMeal(meal.value)}
+                            className={cn(
+                              // Same border, weight and content in both states, so
+                              // picking a meal recolours the chip without resizing it.
+                              'focus-visible:ring-ring/50 inline-flex items-center rounded-full border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors outline-none focus-visible:ring-[3px] lg:px-[11px]',
+                              on
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'bg-card text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            {t(meal.labelKey)}
+                          </button>
+                        );
+                      })}
+                    </div>
                     {selected.length === 0 && (
-                      <ItemDescription className="text-warning">
-                        {t('mealsEmpty')}
-                      </ItemDescription>
+                      <span className="text-warning-ink text-xs">{t('mealsEmpty')}</span>
                     )}
-                  </ItemContent>
-                  <ItemActions className="w-full sm:w-auto">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className={cn(
-                            'border-input flex h-9 w-full items-center justify-between gap-1.5 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm',
-                            'hover:bg-accent hover:text-accent-foreground transition-colors',
-                            'focus:ring-ring focus:ring-1 focus:outline-none',
-                            'sm:w-auto sm:justify-start',
-                            selected.length === 0 && 'text-muted-foreground',
-                          )}
-                        >
-                          <span>
-                            {selected.length === 0
-                              ? t('mealsLabel')
-                              : selected
-                                .map((value) => {
-                                  const option = MEAL_OPTIONS.find(
-                                    (meal) => meal.value === value,
-                                  );
-                                  return option ? t(option.labelKey) : value;
-                                })
-                                .join(' · ')}
-                          </span>
-                          <ChevronDown className="size-4 shrink-0 opacity-50" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-52 p-1">
-                        <div className="space-y-0.5">
-                          {MEAL_OPTIONS.map((meal) => (
-                            <label
-                              key={meal.value}
-                              className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5"
-                            >
-                              <Checkbox
-                                checked={selected.includes(meal.value)}
-                                onCheckedChange={() => toggleMeal(meal.value)}
-                              />
-                              <span className="flex-1 text-sm select-none">
-                                {t(meal.labelKey)}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </ItemActions>
-                </Item>
+                  </div>
+                </div>
               );
             }}
           />
         )}
+      </div>
 
-        <FormField
-          control={form.control}
+      <div className={rowClasses}>
+        <ToggleRow
           name="guestExperience.lockGuestCount"
-          render={({ field }) => (
-            <Item>
-              <ItemContent>
-                <ItemTitle>{t('lockGuestCount')}</ItemTitle>
-                <ItemDescription>{t('lockGuestCountDescription')}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </ItemActions>
-            </Item>
-          )}
+          title={t('lockGuestCount')}
+          description={t('lockGuestCountDescription')}
         />
+      </div>
 
-        <FormField
-          control={form.control}
+      <div className={rowClasses}>
+        <ToggleRow
           name="guestExperience.sendTableNumbers"
-          render={({ field }) => (
-            <Item>
-              <ItemContent>
-                <ItemTitle>{t('sendTableNumbers')}</ItemTitle>
-                <ItemDescription>{t('sendTableNumbersDescription')}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </ItemActions>
-            </Item>
-          )}
+          title={t('sendTableNumbers')}
+          description={t('sendTableNumbersDescription')}
         />
-      </ItemGroup>
+      </div>
     </SectionCard>
   );
 }

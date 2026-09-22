@@ -1777,10 +1777,6 @@
       "bat_mitzva": "Bat Mitzva"
     },
     "readiness": {
-      "pillReady": "All set",
-      "pillMissing": "{count, plural, one {one thing missing} other {# things missing}}",
-      "readyTitle": "Everything is ready for your guests",
-      "readyDescription": "The venue and the invitation image are both set",
       "missingTitle": "{count, plural, one {One thing is missing for your guests} other {# things are missing for your guests}}",
       "missingHint": "Finish it now or come back to it later",
       "venue": {
@@ -1819,7 +1815,8 @@
       "parentsPlaceholderCelebrant": "For example: Shira and Itai Cohen",
       "sideLabel": "Side",
       "sideNote": "Side names are fixed. It is the groups in the guest list that are assigned to the bride's or the groom's side",
-      "noNames": "No names yet"
+      "noNames": "No names yet",
+      "momentLabel": "When"
     },
     "when": {
       "title": "When",
@@ -1850,7 +1847,6 @@
       "placeholder": "Search for a venue, garden or address",
       "hint": "The address becomes the navigation link in the reminder guests get on the day",
       "hintPicked": "The address is picked from Google so your guests' navigation lands in the right place",
-      "mapPending": "The map appears once you pick an address from the list",
       "mapLabel": "Map preview",
       "clear": "Clear the address"
     },
@@ -1861,8 +1857,6 @@
       "statusUploading": "Uploading",
       "statusError": "Upload failed",
       "upload": "Upload the invitation image",
-      "dropzoneTitle": "Drag an image here",
-      "dropzoneHint": "or click to pick one from your computer · up to {max}",
       "hint": "The image is sent with the first message guests receive · up to {max}",
       "hintShort": "The image is sent with the first message guests receive",
       "uploading": "Uploading the image",
@@ -1894,14 +1888,6 @@
         "glutenFree": "Gluten free",
         "strictlyKosher": "Strictly kosher"
       }
-    },
-    "fixed": {
-      "title": "What stays fixed",
-      "eventType": "Event type",
-      "eventTypeHint": "Set during onboarding",
-      "eventTitle": "Event title",
-      "eventTitleHint": "Appears in messages and on the event page",
-      "noTitle": "No title yet"
     },
     "saveBar": {
       "pending": "{count, plural, one {One unsaved change} other {# unsaved changes}}",

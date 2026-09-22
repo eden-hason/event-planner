@@ -9,7 +9,6 @@ export { DateTimeSection } from './date-time-section';
 export { LocationSection } from './location-section';
 export { InvitationSection } from './invitation-section';
 export { GuestExperienceSection } from './guest-experience-section';
-export { FixedDetailsSection } from './fixed-details-section';
 export { SaveBar } from './save-bar';
 export { SectionCard, SectionStatus, type SectionStatusTone } from './section-card';
 export {
