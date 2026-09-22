@@ -43,3 +43,4 @@ in the diff, not here.
 | [0009](0009-set-schedule-sent-at-never-fires.md) | The trigger that stamps `schedules.sent_at` never fires | schedules / database | open |
 | [0010](0010-no-way-to-turn-a-schedule-off.md) | There is no way to turn a Schedule off | schedules / outreach | open |
 | [0011](0011-owner-cannot-reschedule-a-call-round.md) | The Owner cannot reschedule a call round | schedules / calls | open |
+| [0012](0012-a-side-is-an-enum-not-a-nameable-group.md) | A Side is a fixed enum, so it cannot be renamed from the event details page | guests / events | open |

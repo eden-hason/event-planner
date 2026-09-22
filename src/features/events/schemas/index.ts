@@ -355,6 +355,46 @@ export const EventDetailsUpdateSchema = z.object({
 
 export type EventDetailsUpdate = z.infer<typeof EventDetailsUpdateSchema>;
 
+// --- 4b. Event Details Page Form Schema ---
+// The shape the whole details page edits as one form. It is deliberately
+// "total" where `EventDetailsUpdateSchema` is partial: every field is present
+// and non-optional so React Hook Form has a defined value to diff against, and
+// so `formState.dirtyFields` marks exactly what the Owner touched. What gets
+// sent to `updateEventDetails` is then narrowed back down to the dirty keys -
+// see `buildUpdateFields` in `utils/event-details-form.ts`.
+//
+// `child` is carried even for a couple event (and `bride`/`groom` for a mitzva)
+// so the form's shape does not change with the event type. Only the fields the
+// type actually shows can ever go dirty, so the unused half is never submitted.
+export const EventDetailsFormPersonSchema = z.object({
+  name: z.string(),
+  parents: z.string(),
+});
+
+export const EventDetailsFormSchema = z.object({
+  id: z.uuid(),
+  // '' means "no date". A date can be set and moved, never cleared - see
+  // docs/backlog/0008.
+  eventDate: z.string(),
+  receptionTime: z.string(),
+  ceremonyTime: z.string(),
+  location: LocationSchema.nullable(),
+  invitations: z.object({ imageUrl: z.string() }),
+  hostDetails: z.object({
+    bride: EventDetailsFormPersonSchema,
+    groom: EventDetailsFormPersonSchema,
+    child: EventDetailsFormPersonSchema,
+  }),
+  guestExperience: z.object({
+    dietaryOptions: z.boolean(),
+    dietaryTypes: z.array(z.string()),
+    lockGuestCount: z.boolean(),
+    sendTableNumbers: z.boolean(),
+  }),
+});
+
+export type EventDetailsFormValues = z.infer<typeof EventDetailsFormSchema>;
+
 export type UpdateEventDetailsState = {
   success: boolean;
   message?: string | null;

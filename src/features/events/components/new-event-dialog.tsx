@@ -64,7 +64,7 @@ export function NewEventDialog({
     : setInternalOpen;
   const router = useRouter();
   const t = useTranslations('newEventDialog');
-  const tEventDetails = useTranslations('eventDetails.dateTime.types');
+  const tEventDetails = useTranslations('eventDetails.types');
 
   const form = useForm({
     resolver: zodResolver(EventCreateSchema),

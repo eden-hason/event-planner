@@ -1763,117 +1763,169 @@
       "saved": "Changes saved",
       "error": "Something went wrong"
     },
-    "statusAlert": {
-      "success": {
-        "title": "Your event is ready to go",
-        "description": "All required details are set and guests will receive all messages"
-      },
-      "warning": {
-        "title": "Some details are missing",
-        "description": "Complete the following to ensure guests receive all messages"
-      },
-      "items": {
-        "venueLocation": "Venue location (needed for the reminder message navigation link)",
-        "invitationImage": "Invitation image (needed for the initial invitation message)"
-      }
-    },
     "header": {
       "title": "Event Details",
+      "subtitle": "The details guests see in the invitation and the messages",
       "save": "Save",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "cancel": "Cancel"
     },
-    "dateTime": {
-      "title": "Date & Time",
-      "date": "Date",
-      "eventType": "Event Type",
-      "receptionTime": "Reception Time",
-      "ceremonyTime": "Canopy Time",
-      "types": {
-        "wedding": "Wedding",
-        "henna": "Henna",
-        "bar_mitzva": "Bar Mitzva",
-        "bat_mitzva": "Bat Mitzva"
+    "types": {
+      "wedding": "Wedding",
+      "henna": "Henna",
+      "bar_mitzva": "Bar Mitzva",
+      "bat_mitzva": "Bat Mitzva"
+    },
+    "readiness": {
+      "pillReady": "All set",
+      "pillMissing": "{count, plural, one {one thing missing} other {# things missing}}",
+      "readyTitle": "Everything is ready for your guests",
+      "readyDescription": "The venue and the invitation image are both set",
+      "missingTitle": "{count, plural, one {One thing is missing for your guests} other {# things are missing for your guests}}",
+      "missingHint": "Finish it now or come back to it later",
+      "venue": {
+        "title": "Venue",
+        "consequence": "Without an address there is no navigation link in the day-of reminder",
+        "action": "Add"
+      },
+      "invitation": {
+        "title": "Invitation image",
+        "consequence": "The first message goes out without an image",
+        "action": "Upload"
       }
     },
-    "couple": {
-      "title": "The Couple",
+    "hosts": {
+      "titleCouple": "The couple",
+      "titleSingleMale": "The bar mitzva boy",
+      "titleSingleFemale": "The bat mitzva girl",
+      "editCouple": "Edit names and sides",
+      "editSingleMale": "Edit his name and his parents' names",
+      "editSingleFemale": "Edit her name and her parents' names",
       "bride": "Bride",
       "groom": "Groom",
-      "coupleNames": "Couple Names",
-      "brideName": "Bride Name",
-      "groomName": "Groom Name",
-      "brideNamePlaceholder": "Enter bride's name",
-      "groomNamePlaceholder": "Enter groom's name",
-      "parentsNames": "Parents' Names",
-      "brideSide": "Bride's Side",
-      "groomSide": "Groom's Side",
-      "brideSidePlaceholder": "Enter bride's parents names",
-      "groomSidePlaceholder": "Enter groom's parents names",
-      "titleSingleMale": "The Bar Mitzva Boy",
-      "titleSingleFemale": "The Bat Mitzva Girl",
       "celebrantMale": "Celebrant",
       "celebrantFemale": "Celebrant",
-      "celebrantNameMale": "Name",
-      "celebrantNameFemale": "Name",
-      "celebrantNamePlaceholderMale": "Enter the celebrant's name",
-      "celebrantNamePlaceholderFemale": "Enter the celebrant's name",
-      "parentsPlaceholder": "Enter parents' names"
+      "drawerTitle": "Names and sides",
+      "drawerDescription": "These names appear in the event title and in the messages guests receive",
+      "nameLabel": "Full name",
+      "brideNamePlaceholder": "Bride's name",
+      "groomNamePlaceholder": "Groom's name",
+      "celebrantNamePlaceholderMale": "His name",
+      "celebrantNamePlaceholderFemale": "Her name",
+      "parentsLabel": "Parents' names",
+      "parentsOptional": "Parents' names, optional",
+      "parentsPlaceholderBride": "For example: daughter of Ruti and Avi Levi",
+      "parentsPlaceholderGroom": "For example: son of Michal and David Barak",
+      "parentsPlaceholderCelebrant": "For example: Shira and Itai Cohen",
+      "sideLabel": "Side",
+      "sideNote": "Side names are fixed. It is the groups in the guest list that are assigned to the bride's or the groom's side",
+      "noNames": "No names yet"
     },
-    "location": {
-      "title": "Location",
-      "label": "Venue Name",
-      "placeholder": "Search for venue address...",
-      "status": {
-        "set": {
-          "title": "You're all set!",
-          "description": "Guests will receive a navigation link to the venue in their reminder message"
-        },
-        "notSet": {
-          "title": "No venue added yet",
-          "description": "Guests won't get a navigation link in their day-of reminder"
-        }
+    "when": {
+      "title": "When",
+      "dateLabel": "Event date",
+      "noDateTitle": "No date yet",
+      "noDateDescription": "Without a date there is no timing for messages or calls, you can add guests and come back here",
+      "pickDate": "Pick a date",
+      "receptionTime": "Reception time",
+      "ceremonyTime": "Canopy time",
+      "receptionTimeShort": "Reception",
+      "ceremonyTimeShort": "Canopy",
+      "addTime": "Add a time",
+      "clearTime": "Clear the time",
+      "timeNeedsDate": "After you pick a date",
+      "derivedFromDate": "The timing of every message and call is derived from this date",
+      "dateChange": {
+        "title": "The messages will not move by themselves",
+        "description": "{count, plural, one {One scheduled message stays} other {# scheduled messages stay}} on the dates set from {date}",
+        "descriptionWithReminder": "{count, plural, one {One scheduled message stays} other {# scheduled messages stay}} on the dates set from {date}, the day-of reminder included",
+        "link": "Go to messages and update the dates"
       }
+    },
+    "where": {
+      "title": "Where",
+      "statusSet": "Navigation ready",
+      "statusSetLong": "The reminder carries a navigation link",
+      "statusMissing": "Missing",
+      "placeholder": "Search for a venue, garden or address",
+      "hint": "The address becomes the navigation link in the reminder guests get on the day",
+      "hintPicked": "The address is picked from Google so your guests' navigation lands in the right place",
+      "mapPending": "The map appears once you pick an address from the list",
+      "mapLabel": "Map preview",
+      "clear": "Clear the address"
     },
     "invitation": {
-      "title": "Event Invitation",
-      "description": "This image will be sent to guests in the first message they receive",
-      "dropImage": "Drop image here",
-      "clickToBrowse": "or click to browse",
-      "upload": "Upload",
-      "uploading": "Uploading...",
-      "removeImage": "Remove image",
-      "enlargeImage": "Enlarge image",
-      "failedUpload": "Failed to upload image",
-      "status": {
-        "set": {
-          "title": "You're all set!",
-          "description": "Guests will receive this invitation image in their first message"
-        },
-        "notSet": {
-          "title": "No invitation image yet",
-          "description": "Guests won't receive an invitation image in their first message"
-        }
-      }
+      "title": "Invitation image",
+      "statusSet": "Set",
+      "statusMissing": "Missing",
+      "statusUploading": "Uploading",
+      "statusError": "Upload failed",
+      "upload": "Upload the invitation image",
+      "dropzoneTitle": "Drag an image here",
+      "dropzoneHint": "or click to pick one from your computer · up to {max}",
+      "hint": "The image is sent with the first message guests receive · up to {max}",
+      "hintShort": "The image is sent with the first message guests receive",
+      "uploading": "Uploading the image",
+      "fileMeta": "{name} · {size}",
+      "replace": "Replace image",
+      "remove": "Remove",
+      "enlarge": "Enlarge the image",
+      "failed": "The upload failed",
+      "tooLargeTitle": "The file is too large",
+      "tooLarge": "{name} weighs {size}, the maximum is {max}",
+      "wrongTypeTitle": "Unsupported file type",
+      "wrongType": "{name} is not an image file",
+      "pickAnother": "Pick another image"
     },
     "guestExperience": {
-      "title": "Guest Experience",
-      "lockGuestCount": "Lock Attendance Count",
-      "lockGuestCountDescription": "Guests won't be able to change the number of seats assigned to their invitation",
+      "title": "What guests are asked",
+      "description": "Three settings that change the conversation guests have with you",
+      "specialMeal": "Special meal selection",
+      "specialMealDescription": "Guests are asked whether they need a special meal in the RSVP conversation",
+      "mealsLabel": "Which meals to offer",
+      "mealsEmpty": "Pick at least one meal",
+      "lockGuestCount": "Lock the invited count",
+      "lockGuestCountDescription": "Guests cannot change the number of seats allocated to them",
       "sendTableNumbers": "Send table numbers",
-      "sendTableNumbersDescription": "Guests will receive their table number in the event reminder",
-      "specialMealSelection": "Special Meal Selection",
-      "specialMealSelectionDescription": "Ask guests to choose a meal option",
-      "specialMealsLabel": "Special Meal Options",
-      "specialMealsDescription": "Choose which options guests can pick from",
-      "mealPlaceholder": "Choose a meal",
-      "allMeals": "All meals",
-      "mealsSelected": "{count} meals selected",
+      "sendTableNumbersDescription": "In the day-of reminder each guest gets their table number",
       "meal": {
-        "regular": "Regular",
         "vegetarian": "Vegetarian",
         "vegan": "Vegan",
-        "glutenFree": "Gluten-Free",
-        "strictlyKosher": "Strictly Kosher"
+        "glutenFree": "Gluten free",
+        "strictlyKosher": "Strictly kosher"
+      }
+    },
+    "fixed": {
+      "title": "What stays fixed",
+      "eventType": "Event type",
+      "eventTypeHint": "Set during onboarding",
+      "eventTitle": "Event title",
+      "eventTitleHint": "Appears in messages and on the event page",
+      "noTitle": "No title yet"
+    },
+    "saveBar": {
+      "pending": "{count, plural, one {One unsaved change} other {# unsaved changes}}",
+      "pendingSingle": "One unsaved change · {field}",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "fields": {
+        "eventDate": "Event date",
+        "receptionTime": "Reception time",
+        "ceremonyTime": "Canopy time",
+        "location": "Venue",
+        "invitation": "Invitation image",
+        "brideName": "Bride's name",
+        "brideParents": "Bride's parents",
+        "groomName": "Groom's name",
+        "groomParents": "Groom's parents",
+        "childName": "His name",
+        "childNameFemale": "Her name",
+        "childParents": "Parents' names",
+        "specialMeal": "Special meal selection",
+        "meals": "Which meals to offer",
+        "lockGuestCount": "Lock the invited count",
+        "sendTableNumbers": "Send table numbers"
       }
     }
   },
