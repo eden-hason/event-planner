@@ -17,9 +17,11 @@ Each reply identifies itself. Every button or list option Kululu sends carries t
 token and the step it answers, so a tap is processed on its own with no stored notion of
 "where the Guest is" in the conversation. This is what makes a phone number that belongs to
 Guests of two Events at once, an old summary tapped weeks later, or taps arriving out of
-order all work without special cases. Text a Guest types is not interpreted; it is kept as a
-guest note on the Guest Record the phone was last messaged about, and answered with a fixed
-prompt at most once every 12 hours, so a chatty Guest is not answered by a bot line by line.
+order all work without special cases. Text a Guest types is neither interpreted nor passed to the
+hosts; it is answered with a fixed prompt pointing back to the buttons, at most once every 12 hours, so a
+chatty Guest is not answered by a bot line by line. (Typed text was first kept as a guest
+note for the hosts; guest notes were removed from the product on 2026-09-23, from the RSVP page as
+well.)
 
 Each reply is sent at most once. The inbound message id is claimed in
 `whatsapp_inbound_messages` before anything is acted on, so Meta's at-least-once redelivery

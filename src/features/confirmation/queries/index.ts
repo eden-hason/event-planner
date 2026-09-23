@@ -50,7 +50,6 @@ type GuestRow = {
   amount: number;
   rsvp_status: string;
   meal_counts: unknown;
-  guest_notes: string | null;
 };
 
 /**
@@ -99,7 +98,6 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
     amount: guest.amount,
     rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
     mealCounts: parseMealCounts(guest.meal_counts),
-    guestNotes: guest.guest_notes ?? undefined,
   };
 }
 
@@ -118,7 +116,7 @@ export async function getConfirmationDataByToken(
       id,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, meal_counts, guest_notes
+        id, name, amount, rsvp_status, meal_counts
       ),
       schedules!inner (
         id,
@@ -179,7 +177,7 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, meal_counts, guest_notes,
+      id, name, amount, rsvp_status, meal_counts,
       events!inner (${EVENT_COLUMNS})
     `,
     )
@@ -233,7 +231,6 @@ export async function getConfirmationPreviewData(
       amount: 2,
       rsvpStatus: 'pending',
       mealCounts: {},
-      guestNotes: undefined,
     },
     event: toEventView(data as unknown as EventRow),
     scheduleId: null,

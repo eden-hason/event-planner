@@ -64,7 +64,6 @@ export const GuestAppSchema = z.object({
   // Host-authored note, edited from the guest form
   notes: z.string().nullable().optional(),
   // Guest-authored comment from the RSVP landing page - read-only in the app
-  guestNotes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
   // Foreign key to tables table (seating assignment)
   tableId: z.uuid().nullable().optional(),
@@ -119,7 +118,6 @@ export const GuestDbSchema = z.object({
   meal_counts: z.unknown().optional(),
   amount: z.number().int().default(1),
   notes: z.string().nullable(),
-  guest_notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable(),
   // Foreign key to tables table (seating assignment)
   table_id: z.uuid().nullable().optional(),
@@ -162,7 +160,6 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
     ),
     amount: dbData.amount,
     notes: dbData.notes ?? undefined,
-    guestNotes: dbData.guest_notes ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,
     invitationToken: dbData.invitation_token,

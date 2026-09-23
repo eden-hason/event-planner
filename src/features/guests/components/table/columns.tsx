@@ -3,11 +3,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { RsvpPill } from '../rsvp-pill';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
@@ -164,27 +159,6 @@ export const createGuestColumns = (
           <span className="text-foreground block max-w-xs truncate text-sm">
             {notes}
           </span>
-        ) : (
-          <span className="text-muted-foreground text-sm">-</span>
-        );
-      },
-    },
-    {
-      accessorKey: 'guestNotes',
-      header: () => <div>{t('table.guestNotes')}</div>,
-      cell: ({ row }) => {
-        const guestNotes = row.getValue('guestNotes') as string | undefined;
-        return guestNotes ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-foreground block max-w-xs truncate text-sm">
-                {guestNotes}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-64 whitespace-pre-wrap">
-              {guestNotes}
-            </TooltipContent>
-          </Tooltip>
         ) : (
           <span className="text-muted-foreground text-sm">-</span>
         );

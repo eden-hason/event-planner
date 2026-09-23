@@ -25,8 +25,6 @@ export type RecordRsvpInput = {
   rsvpStatus?: 'confirmed' | 'declined';
   amount?: number;
   mealCounts?: MealCounts;
-  /** Replaces guest_notes. */
-  guestNotes?: string;
   channel: RsvpChannel;
 };
 
@@ -47,8 +45,6 @@ export async function recordGuestRsvp(
   }
   if (input.amount !== undefined) update.amount = input.amount;
   if (input.mealCounts !== undefined) update.meal_counts = input.mealCounts;
-  // Guest-authored text lands in guest_notes - notes belongs to the host.
-  if (input.guestNotes !== undefined) update.guest_notes = input.guestNotes;
 
   if (Object.keys(update).length === 0) return { ok: true };
 

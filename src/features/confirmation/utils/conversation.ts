@@ -343,7 +343,7 @@ export function conversationStep(params: {
 
 /**
  * The fixed answer to text a Guest types instead of tapping. Typed text is not
- * interpreted (ADR 0017); it is kept for the hosts as a guest note.
+ * interpreted or passed to the hosts (ADR 0017), so the answer only points back to the buttons.
  */
 export const TYPED_TEXT_REPLY =
-  'תודה! העברנו את ההודעה למארחים 🙏🏼\nכדי לאשר או לעדכן הגעה, לחצו על אחד הכפתורים בהודעה שקיבלתם.';
+  'כדי לאשר או לעדכן הגעה, לחצו על אחד הכפתורים בהודעה שקיבלתם 🙏🏼';

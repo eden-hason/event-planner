@@ -131,7 +131,6 @@ export function ConfirmationExperience({
   );
   const [count, setCount] = useState(() => clampCount(guest.amount));
   const [meals, setMeals] = useState<MealCounts>(guest.mealCounts);
-  const [note, setNote] = useState(guest.guestNotes ?? '');
   // The meal list is optional and long enough to bury the submit button, so it
   // opens only for guests who care - or who already picked something.
   const [mealOpen, setMealOpen] = useState(totalMeals(guest.mealCounts) > 0);
@@ -161,7 +160,6 @@ export function ConfirmationExperience({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
 
-  const isCouple = event.eventType === 'wedding' || event.eventType === 'henna';
   const detailsOpen = choice === 'confirmed';
   const mealVisible = mealOptions.length > 0;
 
@@ -183,7 +181,6 @@ export function ConfirmationExperience({
       formData.set('guestCount', String(count));
       formData.set('mealCounts', JSON.stringify(visibleMeals));
     }
-    formData.set('notes', note);
 
     try {
       const result = await submitConfirmation(null, formData);
@@ -362,11 +359,6 @@ export function ConfirmationExperience({
                     </DetailRow>
                   ) : null}
                 </>
-              ) : null}
-              {note.trim() ? (
-                <DetailRow label={isCouple ? 'הערה לזוג' : 'הערה למארחים'}>
-                  <span className="text-pretty">{note.trim()}</span>
-                </DetailRow>
               ) : null}
             </div>
 
@@ -594,28 +586,6 @@ export function ConfirmationExperience({
                     </div>
                   </div>
                 ) : null}
-
-                <div className="px-1 pt-[22px]">
-                  <div className="flex items-baseline gap-2">
-                    <label
-                      htmlFor="rsvp-note"
-                      className="text-[15px] font-medium"
-                    >
-                      {isCouple ? 'הערה לזוג' : 'הערה למארחים'}
-                    </label>
-                    <span className="text-muted-foreground text-[13px]">
-                      אופציונלי
-                    </span>
-                  </div>
-                  <input
-                    id="rsvp-note"
-                    type="text"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="משהו שכדאי שנדע?"
-                    className="border-border focus:border-primary mt-3 box-border min-h-[54px] w-full rounded-xl border bg-white px-4 text-base transition-colors outline-none"
-                  />
-                </div>
               </div>
             </div>
 
