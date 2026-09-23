@@ -2115,7 +2115,6 @@
     "refresh": "Refresh",
     "startedOn": "Started {date}",
     "completedOn": "Finished {date}",
-    "dateTime": "{date} at {time}",
     "hero": {
       "title": "One of our team will phone everyone who has not answered",
       "points": {
@@ -2172,7 +2171,6 @@
     "when": {
       "title": "When we call",
       "date": "Date",
-      "time": "Time",
       "badge": {
         "live": "Round started",
         "done": "Round finished"

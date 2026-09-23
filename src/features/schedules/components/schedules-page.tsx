@@ -267,7 +267,9 @@ export async function SchedulesPage({
         ? round.completedAt
           ? tCalls('completedOn', { date: formatWhen(round.completedAt) })
           : tCalls('startedOn', { date: formatWhen(round.createdAt) })
-        : formatWhenDetailed(schedule.scheduledDate);
+        : isMessage
+          ? formatWhenDetailed(schedule.scheduledDate)
+          : formatWhen(schedule.scheduledDate);
 
       return {
         id: schedule.id,

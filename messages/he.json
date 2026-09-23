@@ -2115,7 +2115,6 @@
     "refresh": "רענון",
     "startedOn": "התחיל ב-{date}",
     "completedOn": "הסתיים ב-{date}",
-    "dateTime": "{date} בשעה {time}",
     "hero": {
       "title": "נציג מהצוות שלנו יתקשר לכל מי שלא ענה",
       "points": {
@@ -2172,7 +2171,6 @@
     "when": {
       "title": "מתי מתקשרים",
       "date": "תאריך",
-      "time": "שעה",
       "badge": {
         "live": "הסבב התחיל",
         "done": "הסבב הסתיים"
