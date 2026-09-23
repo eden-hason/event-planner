@@ -71,17 +71,7 @@ export async function CallRoundPane({
     day: 'numeric',
     month: 'numeric',
   });
-  const clock = new Intl.DateTimeFormat(locale, {
-    timeZone: ADMIN_TIME_ZONE,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
-  const dateAndTime = (iso: string) =>
-    t('dateTime', {
-      date: dayMonth.format(new Date(iso)),
-      time: clock.format(new Date(iso)),
-    });
+  const date = (iso: string) => dayMonth.format(new Date(iso));
 
   // A planned round has nothing to add to what the pane already says, so it has
   // no footer: the bar is for the one action a locked plan has, and for the
@@ -104,10 +94,10 @@ export async function CallRoundPane({
       <NoticeBanner tone="success" icon={IconCheck} title={t('banner.done.title')}>
         {round.completedAt
           ? t('banner.done.body', {
-              start: dateAndTime(round.createdAt),
-              end: dateAndTime(round.completedAt),
+              start: date(round.createdAt),
+              end: date(round.completedAt),
             })
-          : t('banner.done.bodyOpen', { start: dateAndTime(round.createdAt) })}
+          : t('banner.done.bodyOpen', { start: date(round.createdAt) })}
       </NoticeBanner>
     ) : state === 'off' ? (
       <ServiceNote>{t('banner.off')}</ServiceNote>
