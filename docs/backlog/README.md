@@ -44,3 +44,5 @@ in the diff, not here.
 | [0010](0010-no-way-to-turn-a-schedule-off.md) | There is no way to turn a Schedule off | schedules / outreach | open |
 | [0011](0011-owner-cannot-reschedule-a-call-round.md) | The Owner cannot reschedule a call round | schedules / calls | open |
 | [0012](0012-a-side-is-an-enum-not-a-nameable-group.md) | A Side is a fixed enum, so it cannot be renamed from the event details page | guests / events | open |
+| [0013](0013-retry-media-download-failures.md) | A WhatsApp that failed on a media download is never retried | schedules / outreach | open |
+| [0014](0014-due-time-edit-guards.md) | Editing a Due Time has no guard for the past or for after the Event | schedules / outreach | open |
