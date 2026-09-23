@@ -156,8 +156,7 @@ export function MessagePreview({
                       <img
                         src={imageUrl}
                         alt="Header"
-                        className="w-full rounded-t-xl object-cover p-1.5 pb-0"
-                        style={{ maxHeight: 120 }}
+                        className="h-auto w-full rounded-t-xl p-1.5 pb-0"
                       />
                     ) : (
                       <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
