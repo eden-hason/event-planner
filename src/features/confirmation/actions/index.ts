@@ -24,7 +24,6 @@ export async function submitConfirmation(
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount') ?? undefined,
     mealCounts: formData.get('mealCounts') ?? undefined,
-    notes: formData.get('notes') ?? undefined,
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
@@ -32,7 +31,7 @@ export async function submitConfirmation(
     return { success: false, message: 'נתונים לא תקינים' };
   }
 
-  const { token, rsvpStatus, guestCount, mealCounts, notes } = parsed.data;
+  const { token, rsvpStatus, guestCount, mealCounts } = parsed.data;
 
   const supabase = createServiceClient();
 
@@ -104,7 +103,6 @@ export async function submitConfirmation(
     rsvpStatus,
     ...(confirmed && guestCount ? { amount: guestCount } : {}),
     mealCounts: meals,
-    guestNotes: notes,
     channel: 'page',
   });
   if (!result.ok) return { success: false, message: result.message };

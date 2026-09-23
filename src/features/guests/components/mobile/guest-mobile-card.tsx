@@ -5,7 +5,6 @@ import {
   IconCheck,
   IconDotsVertical,
   IconEdit,
-  IconMessage,
   IconTrash,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
@@ -111,13 +110,6 @@ export function GuestMobileCard({
           </div>
         )}
 
-        {/* Guest-written comment from the RSVP page */}
-        {guest.guestNotes && (
-          <div className="text-muted-foreground flex items-start gap-1.5 text-xs">
-            <IconMessage size={14} className="mt-0.5 shrink-0" />
-            <span className="line-clamp-2">{guest.guestNotes}</span>
-          </div>
-        )}
       </div>
 
       {/* Status pill */}

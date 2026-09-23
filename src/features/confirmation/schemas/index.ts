@@ -10,7 +10,6 @@ export const ConfirmationFormSchema = z.object({
   guestCount: z.coerce.number().int().min(1).optional(),
   /** JSON of a MealCounts map; parsed and normalised by the action. */
   mealCounts: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 export type ConfirmationFormData = z.infer<typeof ConfirmationFormSchema>;
@@ -28,7 +27,7 @@ export type ConfirmationPageData = {
   responseData: {
     guestCount?: number;
   } | null;
-  guest: Pick<GuestApp, 'id' | 'name' | 'amount' | 'rsvpStatus' | 'guestNotes'> & {
+  guest: Pick<GuestApp, 'id' | 'name' | 'amount' | 'rsvpStatus'> & {
     mealCounts: MealCounts;
   };
   event: Pick<

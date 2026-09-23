@@ -57,8 +57,6 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 /** Typed text gets the fixed answer at most this often per Guest Record. */
 const TYPED_TEXT_REPLY_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
-const GUEST_NOTES_MAX = 2000;
-
 function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -293,22 +291,20 @@ async function handleTap(
 // --- Typed text --------------------------------------------------------------
 
 /**
- * Typed text is not interpreted (ADR 0017). It is kept for the hosts on the
- * Guest Record the phone was most recently messaged about, and answered with a
- * fixed prompt - at most once every 12 hours, so a chatty Guest is not
- * answered by a bot after every line.
+ * Typed text is not interpreted or passed to the hosts (ADR 0017). It is answered with a
+ * fixed prompt pointing back to the buttons - at most once every 12 hours, so a
+ * chatty Guest is not answered by a bot after every line.
  */
 async function handleTypedText(
   supabase: SupabaseClient,
   message: InboundWhatsAppMessage,
   claimId: string,
-  text: string,
 ): Promise<void> {
   const { data: latest } = await supabase
     .from('message_deliveries')
     .select(
       `id, guest_id, created_at,
-       guests!inner (id, phone_number, guest_notes, events!inner (event_date))`,
+       guests!inner (id, phone_number, events!inner (event_date))`,
     )
     .eq('guests.phone_number', `+${message.from}`)
     .order('created_at', { ascending: false })
@@ -317,30 +313,15 @@ async function handleTypedText(
 
   const guest = latest?.guests as unknown as {
     id: string;
-    guest_notes: string | null;
     events: { event_date: string | null };
   } | undefined;
 
   // Nothing Kululu sent this phone, or only for an Event already over: not a
-  // conversation we are part of, so no note and no answer.
+  // conversation we are part of, so no answer.
   if (!latest || !guest || !isRsvpOpen(guest.events.event_date)) {
     await finish(supabase, claimId, { error: 'Typed text with no open conversation' });
     return;
   }
-
-  const dated = `(${new Intl.DateTimeFormat('he-IL', {
-    day: 'numeric',
-    month: 'numeric',
-    timeZone: 'Asia/Jerusalem',
-  }).format(new Date())}) ${text.trim()}`;
-  const notes = (guest.guest_notes ? `${guest.guest_notes}\n${dated}` : dated).slice(
-    -GUEST_NOTES_MAX,
-  );
-  const { error: noteError } = await supabase
-    .from('guests')
-    .update({ guest_notes: notes })
-    .eq('id', guest.id);
-  if (noteError) console.error(`${TAG} Could not keep typed text as a note:`, noteError);
 
   const since = new Date(Date.now() - TYPED_TEXT_REPLY_INTERVAL_MS).toISOString();
   const { count } = await supabase
@@ -383,5 +364,5 @@ export async function handleInboundWhatsAppMessage(
     return;
   }
 
-  await handleTypedText(supabase, message, claimed.id, text);
+  await handleTypedText(supabase, message, claimed.id);
 }
