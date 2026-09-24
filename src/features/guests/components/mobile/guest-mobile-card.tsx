@@ -18,6 +18,7 @@ import {
 import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RsvpPill } from '../rsvp-pill';
+import { AboveInvitedBadge } from '../above-invited-badge';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
 
@@ -95,6 +96,7 @@ export function GuestMobileCard({
             </>
           )}
           <span>{t('mobile.seats', { count: guest.amount })}</span>
+          <AboveInvitedBadge amount={guest.amount} invitedAmount={guest.invitedAmount} />
         </div>
 
         {(guest.side || tableNumber !== undefined) && (

@@ -7,6 +7,7 @@ import { formatPhone } from '@/lib/phone';
 import { GuestWithGroupApp } from '@/features/guests/schemas';
 import { RowActions } from './row-actions';
 import { GroupIcon } from '../groups';
+import { AboveInvitedBadge } from '../above-invited-badge';
 
 type TFn = (key: string, values?: Record<string, string | number>) => string;
 
@@ -144,8 +145,9 @@ export const createGuestColumns = (
       cell: ({ row }) => {
         const amount = row.getValue('amount') as number;
         return (
-          <div className="text-sm">
+          <div className="flex items-center gap-2 text-sm">
             <div className="text-foreground">{amount}</div>
+            <AboveInvitedBadge amount={amount} invitedAmount={row.original.invitedAmount} />
           </div>
         );
       },

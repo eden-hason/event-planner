@@ -13,7 +13,8 @@ Deliveries - which reads to the Guest as a conversation that broke. Their volume
 by human tapping speed, far below the budget, the same argument that already lets a Back
 Office single send bypass the governor.
 
-Each reply identifies itself. Every button or list option Kululu sends carries the Delivery
+Each reply identifies itself (with one exception since ADR 0023: the Guest count is
+typed, and read against the question that asked for it). Every button or list option Kululu sends carries the Delivery
 token and the step it answers, so a tap is processed on its own with no stored notion of
 "where the Guest is" in the conversation. This is what makes a phone number that belongs to
 Guests of two Events at once, an old summary tapped weeks later, or taps arriving out of

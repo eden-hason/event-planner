@@ -129,7 +129,12 @@ export function ConfirmationExperience({
   const [choice, setChoice] = useState<'confirmed' | 'declined' | null>(
     guest.rsvpStatus === 'pending' ? null : guest.rsvpStatus,
   );
-  const [count, setCount] = useState(() => clampCount(guest.amount));
+  // The invited amount is not offered as the answer (ADR 0023) - the guest says
+  // how many are coming, as in the chat. It shows only where it is not a
+  // suggestion: the guest's own earlier answer, or a count the host locked.
+  const [count, setCount] = useState(() =>
+    lockGuestCount || guest.rsvpStatus === 'confirmed' ? clampCount(guest.amount) : 1,
+  );
   const [meals, setMeals] = useState<MealCounts>(guest.mealCounts);
   // The meal list is optional and long enough to bury the submit button, so it
   // opens only for guests who care - or who already picked something.
