@@ -84,8 +84,8 @@ changed by the Guest until the **RSVP Cutoff**.
 
 ## RSVP Cutoff
 
-The end of the day before the Event. Until then a Guest may change their RSVP, in the chat
-or on the RSVP page. After it, only the Owner or an Operator can.
+The end of the Event day. Until then a Guest may change their RSVP, in the chat or on the
+RSVP page. After it, only the Owner or an Operator can.
 
 ## Confirmation Conversation
 

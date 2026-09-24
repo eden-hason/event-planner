@@ -42,8 +42,6 @@ export type ConversationEvent = {
   mealOptions: MealOption[];
   /** False past the RSVP Cutoff. */
   rsvpOpen: boolean;
-  /** The Guest's RSVP page, offered in the summary. */
-  rsvpUrl: string;
 };
 
 export type RsvpUpdate = {
@@ -123,6 +121,9 @@ function askComing(ctx: Ctx, body: string): OutgoingMessage {
 }
 
 /**
+ * The conversation never links to the RSVP page: a Guest changes their answer
+ * here, from the summary's button (ADR 0023).
+ *
  * Asked as plain text, answered by typing. The invited amount is deliberately
  * not offered: the Guest says how many are coming, and an answer above the
  * invitation is flagged to the Owner rather than steered away (ADR 0023).
@@ -141,10 +142,10 @@ function askCountAgain(): OutgoingMessage {
   };
 }
 
-function tooManyToType(ctx: Ctx): OutgoingMessage {
+function tooManyToType(): OutgoingMessage {
   return {
     kind: 'text',
-    body: `לקבוצה של יותר מ-${MAX_TYPED_COUNT} אורחים אפשר לעדכן באתר:\n${ctx.event.rsvpUrl}\n\nאו לכתוב כאן מספר קטן יותר`,
+    body: `אפשר לאשר כאן עד ${MAX_TYPED_COUNT} אורחים. כתבו מספר קטן יותר, או פנו ישירות למארחים 🙏🏼`,
   };
 }
 
@@ -155,7 +156,7 @@ function tooManyToType(ctx: Ctx): OutgoingMessage {
 function askCountList(ctx: Ctx): OutgoingMessage {
   return {
     kind: 'list',
-    body: `כמה תגיעו בסך הכול?\n\nיותר מ-${MAX_LIST_ROWS}? אפשר לעדכן באתר:\n${ctx.event.rsvpUrl}`,
+    body: `כמה תגיעו בסך הכול?\n\nיותר מ-${MAX_LIST_ROWS}? כתבו את המספר כאן`,
     buttonLabel: 'בחירת מספר',
     rows: Array.from({ length: MAX_LIST_ROWS }, (_, i) => ({
       id: id(ctx, { type: 'count', count: i + 1 }),
@@ -249,12 +250,11 @@ function askMoreMeals(ctx: Ctx): OutgoingMessage {
 function summary(ctx: Ctx): OutgoingMessage {
   const { guest, event } = ctx;
   const change = { id: id(ctx, { type: 'change' }), title: 'שינוי התשובה' };
-  const footer = `אפשר לעדכן עד יום לפני האירוע, כאן או באתר:\n${event.rsvpUrl}`;
 
   if (guest.rsvpStatus === 'declined') {
     return {
       kind: 'buttons',
-      body: `תודה שעדכנתם 🙏🏼\nרשמנו שלא תוכלו להגיע.\n\n${footer}`,
+      body: 'תודה שעדכנתם 🙏🏼\nרשמנו שלא תוכלו להגיע.',
       buttons: [change],
     };
   }
@@ -270,7 +270,6 @@ function summary(ctx: Ctx): OutgoingMessage {
     const meals = formatMealCounts(guest.mealCounts);
     lines.push(`מנות מיוחדות: ${meals || 'ללא'}`);
   }
-  lines.push('', footer);
 
   return { kind: 'buttons', body: lines.join('\n'), buttons: [change] };
 }
@@ -300,7 +299,8 @@ export function conversationStep(params: {
     return {
       update,
       reply: next(ctx),
-      awaits: next === askCount ? { question: 'count', attempt: 0 } : null,
+      // The list is waited on too: "more than ten? type it" is part of it.
+      awaits: next === askCount || next === askCountList ? { question: 'count', attempt: 0 } : null,
     };
   };
 
@@ -313,8 +313,9 @@ export function conversationStep(params: {
           allowed,
         }),
       };
-      const askAmount = !event.lockGuestCount && before.guest.amount > 1;
-      return respond(update, askAmount ? askCount : mealStepOrSummary);
+      // Asked of every Guest, a party of one included: the invited amount is
+      // not a hint the Guest sees, so it cannot decide who is asked (ADR 0023).
+      return respond(update, event.lockGuestCount ? mealStepOrSummary : askCount);
     }
 
     case 'no':
@@ -416,7 +417,7 @@ export function typedCountStep(params: {
 
   if (parsed.kind === 'count') {
     // Not an unreadable answer, so it does not use up an attempt.
-    return { update: null, reply: tooManyToType(ctx), awaits: { question: 'count', attempt } };
+    return { update: null, reply: tooManyToType(), awaits: { question: 'count', attempt } };
   }
 
   if (parsed.kind === 'zero') {
