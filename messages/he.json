@@ -603,6 +603,8 @@
       "dietaryRestrictions": "הגבלות תזונה",
       "dietaryNone": "ללא",
       "amount": "כמות",
+      "aboveInvited": "הוזמנו {count}",
+      "aboveInvitedHint": "ענו יותר מהכמות שהוזמנה. שינוי הכמות יסיר את הסימון",
       "notes": "הערה",
       "openMenu": "פתח תפריט",
       "deleteGuest": "מחק אורח",

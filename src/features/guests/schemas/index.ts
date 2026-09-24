@@ -61,6 +61,9 @@ export const GuestAppSchema = z.object({
     .default('pending'),
   mealCounts: MealCountsSchema.default({}),
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
+  // How many the Owner invited. `amount` is how many are coming; a Guest who
+  // answers above this is flagged (ADR 0023). Read-only here - see upsertGuest.
+  invitedAmount: z.number().int().optional(),
   // Host-authored note, edited from the guest form
   notes: z.string().nullable().optional(),
   // Guest-authored comment from the RSVP landing page - read-only in the app
@@ -117,6 +120,7 @@ export const GuestDbSchema = z.object({
   // whole guest list unreadable. Unknown keys are dropped on the way in.
   meal_counts: z.unknown().optional(),
   amount: z.number().int().default(1),
+  invited_amount: z.number().int().nullable().optional(),
   notes: z.string().nullable(),
   side: z.enum(['bride', 'groom']).nullable(),
   // Foreign key to tables table (seating assignment)
@@ -159,6 +163,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
       ),
     ),
     amount: dbData.amount,
+    invitedAmount: dbData.invited_amount ?? dbData.amount,
     notes: dbData.notes ?? undefined,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,

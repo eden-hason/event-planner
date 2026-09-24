@@ -78,7 +78,8 @@ when that Guest Record declines or its Table is deleted, and is not restored aut
 A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; the act of
 collecting it is a **Confirmation** round (see Schedule Type).
 
-A confirmed RSVP carries how many Guests are coming and their **Special Meals**. It can be
+A confirmed RSVP carries how many Guests are coming and their **Special Meals**. How many
+are coming may be more than the Guest Record was invited for; the Owner sees that flagged. It can be
 changed by the Guest until the **RSVP Cutoff**.
 
 ## RSVP Cutoff
@@ -90,8 +91,8 @@ or on the RSVP page. After it, only the Owner or an Operator can.
 
 The guided exchange in WhatsApp that collects an RSVP without leaving the chat. It starts
 when a Guest taps "Coming" or "Not coming" on a Confirmation message, and continues
-with Kululu asking how many are coming and about Special Meals, then closes with a summary
-the Guest can reopen to change their answer.
+with Kululu asking how many are coming (typed, never showing the invited amount) and about
+Special Meals, then closes with a summary the Guest can reopen to change their answer.
 
 Every answer counts the moment it is given. A Guest who taps "Coming" and stops there is
 confirmed; the conversation being unfinished does not make the RSVP incomplete.

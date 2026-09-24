@@ -603,6 +603,8 @@
       "dietaryRestrictions": "Dietary Restrictions",
       "dietaryNone": "None",
       "amount": "Amount",
+      "aboveInvited": "Invited {count}",
+      "aboveInvitedHint": "Answered more than invited. Changing the count clears this",
       "notes": "Note",
       "openMenu": "Open menu",
       "deleteGuest": "Delete guest",

@@ -7,9 +7,12 @@ import { conversationTag } from '@/features/schedules/utils/whatsapp-callback-ta
 import { buildOccasionPhrase, readEventTypeKey } from '@/features/events/utils/event-title';
 import {
   conversationStep,
+  typedCountStep,
   TYPED_TEXT_REPLY,
+  type AwaitedAnswer,
   type ConversationEvent,
   type ConversationGuest,
+  type ConversationStep,
   type OutgoingMessage,
 } from '../utils/conversation';
 import { parseConversationId, type ParsedConversationId } from '../utils/conversation-ids';
@@ -22,7 +25,9 @@ import { recordGuestRsvp } from './record-rsvp';
  * The Confirmation Conversation's I/O: one inbound WhatsApp message in, at most
  * one RSVP write and one reply out (CONTEXT.md, ADR 0017).
  *
- * Called by the WhatsApp webhook processor for every inbound message. Replies
+ * Called by the WhatsApp webhook processor for every inbound message: a tap, or
+ * text - which is read as a Guest count when the latest reply to that phone
+ * asked for one (ADR 0023), and otherwise gets the fixed prompt. Replies
  * are posted inline, not queued - they answer something the Guest did seconds
  * ago - and are free, because the Guest's own message opened the 24-hour window.
  *
@@ -56,6 +61,18 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 /** Typed text gets the fixed answer at most this often per Guest Record. */
 const TYPED_TEXT_REPLY_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * How long a question waits for its typed answer - WhatsApp's own session
+ * window. A number typed a day later is not read as an answer to it.
+ */
+const AWAITED_ANSWER_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** The action recorded for a typed answer to the count question. */
+const TYPED_COUNT_ACTION = 'typedCount';
+
+/** The count a Test Message's sample Guest starts from - nothing is stored to read. */
+const SAMPLE_AMOUNT = 2;
 
 function siteUrl(): string {
   return (
@@ -96,7 +113,12 @@ async function claim(
 ): Promise<ClaimRow | null> {
   const { data, error } = await supabase
     .from('whatsapp_inbound_messages')
-    .insert({ wa_message_id: message.id, message_type: message.type, body })
+    .insert({
+      wa_message_id: message.id,
+      message_type: message.type,
+      body,
+      from_phone: message.from,
+    })
     .select('id')
     .maybeSingle();
 
@@ -117,9 +139,12 @@ async function finish(
     action?: string | null;
     result?: WhatsAppSendResult | null;
     error?: string;
+    /** What the reply asked the Guest to type - kept only if the reply went out. */
+    awaits?: AwaitedAnswer | null;
   },
 ): Promise<void> {
   const { result } = fields;
+  const awaits = result?.outcome === 'accepted' ? fields.awaits : null;
   const { error } = await supabase
     .from('whatsapp_inbound_messages')
     .update({
@@ -129,6 +154,8 @@ async function finish(
       reply_message_id: result?.outcome === 'accepted' ? result.messageId : null,
       reply_error:
         fields.error ?? (result && result.outcome !== 'accepted' ? result.message : null),
+      awaiting: awaits?.question ?? null,
+      awaiting_attempt: awaits?.attempt ?? 0,
       processed_at: new Date().toISOString(),
     })
     .eq('id', claimId);
@@ -185,6 +212,108 @@ function toConversationEvent(event: EventRow, token: string): ConversationEvent 
   };
 }
 
+// --- Steps -----------------------------------------------------------------
+
+/** Rebuilds a Test Message's sample Guest: nothing is stored, so it comes from the step itself. */
+function sampleGuest(confirmed: boolean, amount: number | null): ConversationGuest {
+  return {
+    rsvpStatus: confirmed ? 'confirmed' : 'pending',
+    amount: amount ?? SAMPLE_AMOUNT,
+    mealCounts: {},
+  };
+}
+
+async function loadPreviewEvent(
+  supabase: SupabaseClient,
+  filter: { column: 'preview_token' | 'id'; value: string },
+): Promise<(EventRow & { preview_token: string }) | null> {
+  const { data } = await supabase
+    .from('events')
+    .select(`${EVENT_COLUMNS}, preview_token`)
+    .eq(filter.column, filter.value)
+    .maybeSingle();
+  return data as unknown as (EventRow & { preview_token: string }) | null;
+}
+
+type DeliveryContext = {
+  deliveryId: string;
+  scheduleId: string;
+  token: string;
+  guestId: string;
+  guest: ConversationGuest;
+  event: ConversationEvent;
+};
+
+async function loadDelivery(
+  supabase: SupabaseClient,
+  filter: { column: 'confirmation_token' | 'id'; value: string },
+): Promise<DeliveryContext | null> {
+  const { data: delivery } = await supabase
+    .from('message_deliveries')
+    .select(
+      `id, schedule_id, confirmation_token,
+       guests!inner (id, rsvp_status, amount, meal_counts),
+       schedules!inner (events!inner (${EVENT_COLUMNS}))`,
+    )
+    .eq(filter.column, filter.value)
+    .maybeSingle();
+  if (!delivery?.confirmation_token) return null;
+
+  const guestRow = delivery.guests as unknown as {
+    id: string;
+    rsvp_status: 'pending' | 'confirmed' | 'declined';
+    amount: number | null;
+    meal_counts: unknown;
+  };
+  const eventRow = (delivery.schedules as unknown as { events: EventRow }).events;
+  const token = delivery.confirmation_token as string;
+
+  return {
+    deliveryId: delivery.id as string,
+    scheduleId: delivery.schedule_id as string,
+    token,
+    guestId: guestRow.id,
+    guest: {
+      rsvpStatus: guestRow.rsvp_status ?? 'pending',
+      amount: guestRow.amount ?? 1,
+      mealCounts: parseMealCounts(guestRow.meal_counts),
+    },
+    event: toConversationEvent(eventRow, token),
+  };
+}
+
+/** Writes the step's update, if any, sends its reply and records the outcome. */
+async function applyStep(
+  supabase: SupabaseClient,
+  message: InboundWhatsAppMessage,
+  claimId: string,
+  action: string,
+  context: DeliveryContext,
+  step: ConversationStep,
+): Promise<void> {
+  let outgoing = step.reply;
+  let awaits = step.awaits;
+  if (step.update) {
+    const recorded = await recordGuestRsvp(supabase, {
+      guestId: context.guestId,
+      scheduleId: context.scheduleId,
+      ...step.update,
+      channel: 'whatsapp',
+    });
+    if (!recorded.ok) {
+      // The answer did not land, so the next question would be a lie.
+      outgoing = {
+        kind: 'text',
+        body: `משהו השתבש ולא הצלחנו לשמור את התשובה 😕\nאפשר לנסות שוב, או לעדכן באתר:\n${context.event.rsvpUrl}`,
+      };
+      awaits = null;
+    }
+  }
+
+  const result = await reply(message.from, outgoing, claimId);
+  await finish(supabase, claimId, { deliveryId: context.deliveryId, action, result, awaits });
+}
+
 // --- Taps ------------------------------------------------------------------
 
 async function handleTap(
@@ -198,101 +327,140 @@ async function handleTap(
   // A Test Message carries the Event's preview token: the conversation plays out
   // in full on the Owner's phone and writes nothing (see Test Message).
   if (UUID_REGEX.test(parsed.token)) {
-    const { data: event } = await supabase
-      .from('events')
-      .select(EVENT_COLUMNS)
-      .eq('preview_token', parsed.token)
-      .maybeSingle();
+    const event = await loadPreviewEvent(supabase, { column: 'preview_token', value: parsed.token });
     if (!event) {
       await finish(supabase, claimId, { action, error: 'Unknown preview token' });
       return;
     }
 
-    // Nothing is stored, so the sample Guest is rebuilt from the tap itself:
-    // any answer past "Coming" implies Coming, and the count rides in the id.
-    const sample: ConversationGuest = {
-      rsvpStatus: action === 'yes' || action === 'no' || action === 'change' ? 'pending' : 'confirmed',
-      amount: parsed.amount ?? 2,
-      mealCounts: {},
-    };
+    // Any answer past "Coming" implies Coming, and the count rides in the id.
     const step = conversationStep({
       token: parsed.token,
       action: parsed.action,
-      guest: sample,
-      event: toConversationEvent(event as unknown as EventRow, parsed.token),
+      guest: sampleGuest(!(action === 'yes' || action === 'no' || action === 'change'), parsed.amount),
+      event: toConversationEvent(event, parsed.token),
     });
     const result = await reply(message.from, step.reply, claimId);
-    await finish(supabase, claimId, { eventId: (event as { id: string }).id, action, result });
+    await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
     return;
   }
 
-  const { data: delivery } = await supabase
-    .from('message_deliveries')
-    .select(
-      `id, schedule_id,
-       guests!inner (id, rsvp_status, amount, meal_counts),
-       schedules!inner (events!inner (${EVENT_COLUMNS}))`,
-    )
-    .eq('confirmation_token', parsed.token)
-    .maybeSingle();
-
-  if (!delivery) {
+  const context = await loadDelivery(supabase, { column: 'confirmation_token', value: parsed.token });
+  if (!context) {
     // A token from another environment sharing the number, or a deleted guest.
     console.warn(`${TAG} No delivery for a tapped token`);
     await finish(supabase, claimId, { action, error: 'Unknown confirmation token' });
     return;
   }
 
-  const guestRow = delivery.guests as unknown as {
-    id: string;
-    rsvp_status: 'pending' | 'confirmed' | 'declined';
-    amount: number | null;
-    meal_counts: unknown;
-  };
-  const eventRow = (delivery.schedules as unknown as { events: EventRow }).events;
-  const event = toConversationEvent(eventRow, parsed.token);
-
   const step = conversationStep({
     token: parsed.token,
     action: parsed.action,
-    guest: {
-      rsvpStatus: guestRow.rsvp_status ?? 'pending',
-      amount: guestRow.amount ?? 1,
-      mealCounts: parseMealCounts(guestRow.meal_counts),
-    },
-    event,
+    guest: context.guest,
+    event: context.event,
   });
+  await applyStep(supabase, message, claimId, action, context, step);
+}
 
-  let outgoing = step.reply;
-  if (step.update) {
-    const recorded = await recordGuestRsvp(supabase, {
-      guestId: guestRow.id,
-      scheduleId: delivery.schedule_id as string,
-      ...step.update,
-      channel: 'whatsapp',
-    });
-    if (!recorded.ok) {
-      // The answer did not land, so the next question would be a lie.
-      outgoing = {
-        kind: 'text',
-        body: `משהו השתבש ולא הצלחנו לשמור את התשובה 😕\nאפשר לנסות שוב, או לעדכן באתר:\n${event.rsvpUrl}`,
-      };
+// --- Typed count -------------------------------------------------------------
+
+type AwaitingRow = {
+  id: string;
+  delivery_id: string | null;
+  event_id: string | null;
+  awaiting: 'count' | null;
+  awaiting_attempt: number;
+  received_at: string;
+};
+
+/**
+ * The question this phone's text answers, if any: the latest reply Kululu sent
+ * it, when that reply asked for a count, is recent, and no Delivery has reached
+ * the phone since. "Latest question wins" is what settles two Events on one
+ * phone - the Guest is answering the last thing they were asked.
+ */
+async function findAwaitedAnswer(
+  supabase: SupabaseClient,
+  message: InboundWhatsAppMessage,
+  claimId: string,
+): Promise<AwaitingRow | null> {
+  const { data: latest } = await supabase
+    .from('whatsapp_inbound_messages')
+    .select('id, delivery_id, event_id, awaiting, awaiting_attempt, received_at')
+    .eq('from_phone', message.from)
+    .neq('id', claimId)
+    .not('reply_message_id', 'is', null)
+    .order('received_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const row = latest as AwaitingRow | null;
+  if (!row?.awaiting) return null;
+  if (Date.now() - new Date(row.received_at).getTime() > AWAITED_ANSWER_TTL_MS) return null;
+
+  // A newer message from Kululu - another Event's invitation, a reminder - is
+  // now the thing the Guest is replying to, not the count question.
+  const { count } = await supabase
+    .from('message_deliveries')
+    .select('id, guests!inner (phone_number)', { count: 'exact', head: true })
+    .eq('guests.phone_number', `+${message.from}`)
+    .gt('sent_at', row.received_at);
+  if (count) return null;
+
+  return row;
+}
+
+async function handleTypedCount(
+  supabase: SupabaseClient,
+  message: InboundWhatsAppMessage,
+  claimId: string,
+  text: string,
+  awaited: AwaitingRow,
+): Promise<void> {
+  const action = TYPED_COUNT_ACTION;
+  const attempt = awaited.awaiting_attempt;
+
+  if (awaited.event_id && !awaited.delivery_id) {
+    const event = await loadPreviewEvent(supabase, { column: 'id', value: awaited.event_id });
+    if (!event) {
+      await finish(supabase, claimId, { action, error: 'Unknown Test Message event' });
+      return;
     }
+    const step = typedCountStep({
+      token: event.preview_token,
+      text,
+      attempt,
+      guest: sampleGuest(true, null),
+      event: toConversationEvent(event, event.preview_token),
+    });
+    const result = await reply(message.from, step.reply, claimId);
+    await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
+    return;
   }
 
-  const result = await reply(message.from, outgoing, claimId);
-  await finish(supabase, claimId, {
-    deliveryId: delivery.id as string,
-    action,
-    result,
+  const context = awaited.delivery_id
+    ? await loadDelivery(supabase, { column: 'id', value: awaited.delivery_id })
+    : null;
+  if (!context) {
+    await finish(supabase, claimId, { action, error: 'Awaited answer lost its delivery' });
+    return;
+  }
+
+  const step = typedCountStep({
+    token: context.token,
+    text,
+    attempt,
+    guest: context.guest,
+    event: context.event,
   });
+  await applyStep(supabase, message, claimId, action, context, step);
 }
 
 // --- Typed text --------------------------------------------------------------
 
 /**
- * Typed text is not interpreted or passed to the hosts (ADR 0017). It is answered with a
- * fixed prompt pointing back to the buttons - at most once every 12 hours, so a
+ * Typed text that answers no question is not interpreted or passed to the hosts
+ * (ADR 0017). It is answered with a fixed prompt pointing back to the buttons - at most once every 12 hours, so a
  * chatty Guest is not answered by a bot after every line.
  */
 async function handleTypedText(
@@ -329,6 +497,7 @@ async function handleTypedText(
     .select('id', { count: 'exact', head: true })
     .eq('delivery_id', latest.id)
     .eq('message_type', 'text')
+    .is('action', null)
     .not('reply_message_id', 'is', null)
     .gte('received_at', since);
 
@@ -361,6 +530,12 @@ export async function handleInboundWhatsAppMessage(
       return;
     }
     await handleTap(supabase, message, claimed.id, parsed);
+    return;
+  }
+
+  const awaited = await findAwaitedAnswer(supabase, message, claimed.id);
+  if (awaited) {
+    await handleTypedCount(supabase, message, claimed.id, text, awaited);
     return;
   }
 

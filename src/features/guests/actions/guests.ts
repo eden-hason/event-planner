@@ -88,12 +88,19 @@ export async function upsertGuest(
     if (validatedData.mealCounts !== undefined || validatedData.amount !== undefined) {
       let counts = validatedData.mealCounts;
       let amount = validatedData.amount;
-      if (validatedData.id && (counts === undefined || amount === undefined)) {
+      if (validatedData.id) {
         const { data: existing } = await supabase
           .from('guests')
           .select('amount, meal_counts')
           .eq('id', validatedData.id)
           .maybeSingle();
+        // The Owner changing the count is a new invitation: it moves
+        // invited_amount with it, which also clears an "above invited" flag.
+        // Saving the form untouched does not, so a flag is not dismissed by
+        // editing a name (ADR 0023). New guests get it from the insert trigger.
+        if (amount !== undefined && existing && amount !== existing.amount) {
+          dbData.invited_amount = amount;
+        }
         counts ??= parseMealCounts(existing?.meal_counts);
         amount ??= existing?.amount ?? 1;
       }

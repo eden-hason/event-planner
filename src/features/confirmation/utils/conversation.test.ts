@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   conversationStep,
+  MAX_TYPED_COUNT,
+  typedCountStep,
   type ConversationEvent,
   type ConversationGuest,
   type OutgoingMessage,
@@ -12,6 +14,7 @@ import {
   rsvpYesPayload,
   type ConversationAction,
 } from './conversation-ids';
+import { parseGuestCount } from './guest-count';
 import { buildMealOptions } from './meal-options';
 import { normalizeMealCounts, parseMealCounts, formatMealCounts } from './meal-counts';
 import { isRsvpOpen } from './rsvp-cutoff';
@@ -84,14 +87,20 @@ describe('conversation ids', () => {
 });
 
 describe('conversationStep', () => {
-  it('confirms at once on "Coming" and asks how many', () => {
-    const { update, reply } = step({ type: 'yes' });
+  it('confirms at once on "Coming" and asks how many, without saying the invited amount', () => {
+    const { update, reply, awaits } = step({ type: 'yes' });
     assert.equal(update?.rsvpStatus, 'confirmed');
-    assert.equal(update?.amount, undefined, 'the invited amount stands');
-    assert.deepEqual(offered(reply), [
-      { type: 'count', count: 3 },
-      { type: 'count', count: 'other' },
-    ]);
+    assert.equal(update?.amount, undefined, 'the invited amount stands until answered');
+    assert.equal(reply.kind, 'text');
+    assert.match(reply.body, /כמה תגיעו/);
+    assert.doesNotMatch(reply.body, /3/);
+    assert.deepEqual(awaits, { question: 'count', attempt: 0 });
+  });
+
+  it('awaits nothing after any other step', () => {
+    assert.equal(step({ type: 'no' }).awaits, null);
+    assert.equal(step({ type: 'count', count: 2 }, guest({ rsvpStatus: 'confirmed' })).awaits, null);
+    assert.equal(step({ type: 'yes' }, guest(), event({ lockGuestCount: true })).awaits, null);
   });
 
   it('skips the count question when the count is locked', () => {
@@ -222,6 +231,99 @@ describe('conversationStep', () => {
           assert.ok(r.id.length <= 200);
         }
       }
+    }
+  });
+});
+
+describe('typedCountStep', () => {
+  const confirmed = guest({ rsvpStatus: 'confirmed', amount: 3 });
+  const typed = (text: string, attempt = 0, g = confirmed, e = event()) =>
+    typedCountStep({ token: TOKEN, text, attempt, guest: g, event: e });
+
+  it('records a readable count, above the invitation too, and moves on to meals', () => {
+    const { update, reply, awaits } = typed('5 אנשים');
+    assert.equal(update?.amount, 5);
+    assert.equal(awaits, null);
+    assert.deepEqual(offered(reply)[0], { type: 'mealQuestion', answer: true });
+  });
+
+  it('re-asks an unreadable answer once, then offers the list, then stops', () => {
+    const first = typed('נראה לי שנגיע');
+    assert.equal(first.update, null);
+    assert.equal(first.reply.kind, 'text');
+    assert.match(first.reply.body, /לא הצלחנו להבין/);
+    assert.deepEqual(first.awaits, { question: 'count', attempt: 1 });
+
+    const second = typed('2 או 3', 1);
+    assert.equal(second.update, null);
+    assert.equal(second.reply.kind, 'list');
+    assert.equal(offered(second.reply).length, 10);
+    assert.deepEqual(second.awaits, { question: 'count', attempt: 2 }, 'a typed number still counts');
+
+    assert.equal(typed('4', 2).update?.amount, 4);
+
+    const third = typed('???', 2);
+    assert.equal(third.reply.kind, 'text');
+    assert.equal(third.awaits, null);
+  });
+
+  it('sends a party above the chat limit to the page, keeping the question open', () => {
+    const { update, reply, awaits } = typed(String(MAX_TYPED_COUNT + 1), 1);
+    assert.equal(update, null);
+    assert.match(reply.body, /kululu\.test/);
+    assert.deepEqual(awaits, { question: 'count', attempt: 1 }, 'not counted as unreadable');
+  });
+
+  it('answers zero by asking whether they are coming', () => {
+    const { update, reply, awaits } = typed('0');
+    assert.equal(update, null);
+    assert.deepEqual(offered(reply), [{ type: 'yes' }, { type: 'no' }]);
+    assert.equal(awaits, null);
+  });
+
+  it('does not let a typed count change a declined record', () => {
+    const { update, reply } = typed('4', 0, guest({ rsvpStatus: 'declined' }));
+    assert.equal(update, null);
+    assert.deepEqual(offered(reply), [{ type: 'yes' }, { type: 'no' }]);
+  });
+
+  it('refuses past the RSVP Cutoff, whatever was typed', () => {
+    const { update, reply } = typed('blah', 0, confirmed, event({ rsvpOpen: false }));
+    assert.equal(update, null);
+    assert.match(reply.body, /נסגרו/);
+  });
+});
+
+describe('parseGuestCount', () => {
+  const count = (text: string) => {
+    const parsed = parseGuestCount(text);
+    return parsed.kind === 'count' ? parsed.count : parsed.kind;
+  };
+
+  it('reads a number wherever it sits', () => {
+    assert.equal(count('3'), 3);
+    assert.equal(count(' 4 '), 4);
+    assert.equal(count('3 אנשים'), 3);
+    assert.equal(count('אנחנו 12'), 12);
+    assert.equal(count('٣'), 3);
+  });
+
+  it('reads Hebrew number words, with a prefix too', () => {
+    assert.equal(count('שלושה'), 3);
+    assert.equal(count('אנחנו שתיים'), 2);
+    assert.equal(count('נגיע בשניים'), 2);
+    assert.equal(count('זוג'), 2);
+    assert.equal(count('לבד'), 1);
+  });
+
+  it('treats zero as its own answer', () => {
+    assert.equal(count('0'), 'zero');
+    assert.equal(count('אפס'), 'zero');
+  });
+
+  it('refuses anything ambiguous or number-less', () => {
+    for (const text of ['2 או 3', '2-3', '2+1', '3.5', 'שניים או שלושה', 'כן', '', '👍']) {
+      assert.equal(count(text), 'invalid', text);
     }
   });
 });
