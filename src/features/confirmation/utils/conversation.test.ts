@@ -26,7 +26,6 @@ const event = (overrides: Partial<ConversationEvent> = {}): ConversationEvent =>
   lockGuestCount: false,
   mealOptions: buildMealOptions({ dietaryOptions: true, dietaryTypes: ['vegetarian', 'vegan'] }),
   rsvpOpen: true,
-  rsvpUrl: 'https://kululu.test/c/AbCdEf123456',
   ...overrides,
 });
 
@@ -108,14 +107,34 @@ describe('conversationStep', () => {
     assert.deepEqual(offered(reply)[0], { type: 'mealQuestion', answer: true });
   });
 
-  it('skips the count question for a party of one, going to the single meal list', () => {
-    const { reply } = step({ type: 'yes' }, guest({ amount: 1 }));
+  it('asks a party of one how many are coming too', () => {
+    const { reply, awaits } = step({ type: 'yes' }, guest({ amount: 1 }));
+    assert.match(reply.body, /כמה תגיעו/);
+    assert.deepEqual(awaits, { question: 'count', attempt: 0 });
+  });
+
+  it('goes to the single meal list once one is the answer', () => {
+    const { reply } = step({ type: 'count', count: 1 }, guest({ rsvpStatus: 'confirmed', amount: 1 }));
     assert.equal(reply.kind, 'list');
     assert.deepEqual(offered(reply), [
       { type: 'mealType', meal: 'none' },
       { type: 'mealType', meal: 'vegetarian' },
       { type: 'mealType', meal: 'vegan' },
     ]);
+  });
+
+  it('never links to the RSVP page', () => {
+    const replies = [
+      step({ type: 'count', count: 2 }, guest({ rsvpStatus: 'confirmed' }), event({ mealOptions: [] })).reply,
+      step({ type: 'no' }).reply,
+      step({ type: 'count', count: 'other' }, guest({ rsvpStatus: 'confirmed' })).reply,
+    ];
+    for (const reply of replies) assert.doesNotMatch(reply.body, /https?:|באתר/);
+  });
+
+  it('waits for a typed number under the list too', () => {
+    const { awaits } = step({ type: 'count', count: 'other' }, guest({ rsvpStatus: 'confirmed' }));
+    assert.deepEqual(awaits, { question: 'count', attempt: 0 });
   });
 
   it('goes straight to the summary when the Event has no Special Meals', () => {
@@ -267,10 +286,10 @@ describe('typedCountStep', () => {
     assert.equal(third.awaits, null);
   });
 
-  it('sends a party above the chat limit to the page, keeping the question open', () => {
+  it('asks a party above the chat limit for a smaller number, keeping the question open', () => {
     const { update, reply, awaits } = typed(String(MAX_TYPED_COUNT + 1), 1);
     assert.equal(update, null);
-    assert.match(reply.body, /kululu\.test/);
+    assert.match(reply.body, /מספר קטן יותר/);
     assert.deepEqual(awaits, { question: 'count', attempt: 1 }, 'not counted as unreadable');
   });
 
@@ -350,11 +369,11 @@ describe('meal counts', () => {
 describe('isRsvpOpen', () => {
   const eventDate = '2026-10-20T00:00:00+00:00';
 
-  it('is open until the end of the day before, Israel time', () => {
-    // 23:30 Israel on the 19th (UTC+3 in October).
-    assert.equal(isRsvpOpen(eventDate, new Date('2026-10-19T20:30:00Z')), true);
-    // 00:30 Israel on the 20th, still the 19th in UTC.
-    assert.equal(isRsvpOpen(eventDate, new Date('2026-10-19T21:30:00Z')), false);
+  it('is open until the end of the Event day, Israel time', () => {
+    // 23:30 Israel on the 20th (UTC+3 in October).
+    assert.equal(isRsvpOpen(eventDate, new Date('2026-10-20T20:30:00Z')), true);
+    // 00:30 Israel on the 21st, still the 20th in UTC.
+    assert.equal(isRsvpOpen(eventDate, new Date('2026-10-20T21:30:00Z')), false);
   });
 
   it('has no cutoff without a date', () => {

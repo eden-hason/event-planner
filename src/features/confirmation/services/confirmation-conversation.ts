@@ -74,18 +74,6 @@ const TYPED_COUNT_ACTION = 'typedCount';
 /** The count a Test Message's sample Guest starts from - nothing is stored to read. */
 const SAMPLE_AMOUNT = 2;
 
-function siteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
-    'http://localhost:3000'
-  );
-}
-
-function rsvpUrl(token: string): string {
-  return `${siteUrl()}/c/${token}`;
-}
-
 /** The hidden id and visible label of whatever was tapped, or null for anything else. */
 function readTap(message: InboundWhatsAppMessage): { id: string; title: string } | null {
   if (message.type === 'button' && message.button?.payload) {
@@ -192,7 +180,7 @@ type EventRow = {
 
 const EVENT_COLUMNS = 'id, title, event_date, host_details, guests_experience, event_types (key)';
 
-function toConversationEvent(event: EventRow, token: string): ConversationEvent {
+function toConversationEvent(event: EventRow): ConversationEvent {
   return {
     occasionPhrase: buildOccasionPhrase({
       eventTypeKey: readEventTypeKey(event.event_types),
@@ -208,7 +196,6 @@ function toConversationEvent(event: EventRow, token: string): ConversationEvent 
         : null,
     ),
     rsvpOpen: isRsvpOpen(event.event_date),
-    rsvpUrl: rsvpUrl(token),
   };
 }
 
@@ -278,7 +265,7 @@ async function loadDelivery(
       amount: guestRow.amount ?? 1,
       mealCounts: parseMealCounts(guestRow.meal_counts),
     },
-    event: toConversationEvent(eventRow, token),
+    event: toConversationEvent(eventRow),
   };
 }
 
@@ -304,7 +291,7 @@ async function applyStep(
       // The answer did not land, so the next question would be a lie.
       outgoing = {
         kind: 'text',
-        body: `משהו השתבש ולא הצלחנו לשמור את התשובה 😕\nאפשר לנסות שוב, או לעדכן באתר:\n${context.event.rsvpUrl}`,
+        body: 'משהו השתבש ולא הצלחנו לשמור את התשובה 😕\nאפשר לנסות שוב',
       };
       awaits = null;
     }
@@ -338,7 +325,7 @@ async function handleTap(
       token: parsed.token,
       action: parsed.action,
       guest: sampleGuest(!(action === 'yes' || action === 'no' || action === 'change'), parsed.amount),
-      event: toConversationEvent(event, parsed.token),
+      event: toConversationEvent(event),
     });
     const result = await reply(message.from, step.reply, claimId);
     await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
@@ -431,7 +418,7 @@ async function handleTypedCount(
       text,
       attempt,
       guest: sampleGuest(true, null),
-      event: toConversationEvent(event, event.preview_token),
+      event: toConversationEvent(event),
     });
     const result = await reply(message.from, step.reply, claimId);
     await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
