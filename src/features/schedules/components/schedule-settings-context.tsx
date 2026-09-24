@@ -16,6 +16,13 @@ import { israelWallClockParts } from '@/lib/date-time';
 
 import { updateCustomText, updateScheduledDate } from '../actions';
 import type { ScheduleApp } from '../schemas';
+import {
+  dueTimeIssue as findDueTimeIssue,
+  pastDueTime,
+  type DueTimeIssue,
+  type DueTimeRules,
+  type PastDueTime,
+} from '../utils/due-time-guards';
 
 interface ScheduleSettings {
   /** False once nothing about this Schedule can be changed any more. */
@@ -28,9 +35,22 @@ interface ScheduleSettings {
   /** The Israel wall clock of the Due Time, `HH:mm`. */
   scheduledTime: string;
   setScheduledTime: (time: string) => void;
+  /**
+   * The moment the Due Time was last edited. The guards compare against it
+   * rather than reading the clock during render, and it moves with every edit
+   * so a page left open for an hour is not judged against when it loaded.
+   */
+  now: Date;
+  /** Why the edited Due Time cannot be saved, or null. Never set while unedited. */
+  dueTimeIssue: DueTimeIssue | null;
   dirty: boolean;
   isSaving: boolean;
+  /** Saves, first asking to confirm when the edited Due Time has already passed. */
   save: () => void;
+  /** The past Due Time waiting on the organiser's confirmation, or null. */
+  pendingPastDueTime: PastDueTime | null;
+  confirmPastDueTime: () => void;
+  cancelPastDueTime: () => void;
 }
 
 const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
@@ -51,10 +71,15 @@ const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
 export function ScheduleSettingsProvider({
   schedule,
   editable,
+  eventDate,
+  dueTimeRules,
   children,
 }: {
   schedule: ScheduleApp;
   editable: boolean;
+  eventDate: string | null;
+  /** The Dispatcher's own Send Window and lateness limit, read server-side. */
+  dueTimeRules: DueTimeRules;
   children: React.ReactNode;
 }) {
   const t = useTranslations('schedules.detail.save');
@@ -63,7 +88,15 @@ export function ScheduleSettingsProvider({
   const [savedNote, setSavedNote] = useState(schedule.customText ?? '');
   const [note, setNote] = useState(schedule.customText ?? '');
   const [savedDate, setSavedDate] = useState(schedule.scheduledDate ?? '');
-  const [scheduledDate, setScheduledDate] = useState(schedule.scheduledDate ?? '');
+  const [scheduledDate, setScheduledDateState] = useState(schedule.scheduledDate ?? '');
+  const [now, setNow] = useState(() => new Date());
+  const [pendingPastDueTime, setPendingPastDueTime] = useState<PastDueTime | null>(null);
+
+  const setScheduledDate = useCallback((iso: string) => {
+    setScheduledDateState(iso);
+    setNow(new Date());
+  }, []);
+
   // Read back out of the Due Time rather than stored beside it: there is one
   // instant, and the clock face is a view of it (ADR 0015).
   const [scheduledTime, setScheduledTime] = useState(() =>
@@ -82,7 +115,24 @@ export function ScheduleSettingsProvider({
   const dateDirty = editable && scheduledDate !== savedDate;
   const dirty = noteDirty || dateDirty;
 
-  const save = useCallback(() => {
+  // Only an edited Due Time is judged: one the organiser did not touch is not
+  // theirs to fix here (a moved Event date is backlog 0008), and the note must
+  // stay saveable beside it.
+  const dueTimeIssue = useMemo(
+    () =>
+      dateDirty
+        ? findDueTimeIssue({
+            eventDate,
+            scheduleTypeKey: schedule.scheduleTypeKey,
+            scheduledDate,
+            now,
+            rules: dueTimeRules,
+          })
+        : null,
+    [dateDirty, eventDate, schedule.scheduleTypeKey, scheduledDate, now, dueTimeRules],
+  );
+
+  const commit = useCallback(() => {
     if (!dirty) return;
 
     const write = async (
@@ -120,6 +170,34 @@ export function ScheduleSettingsProvider({
     });
   }, [dirty, noteDirty, dateDirty, note, scheduledDate, schedule.id, t]);
 
+  // The past-time check belongs here, at Save, and not on each field: date and
+  // time are picked separately, so the Due Time is only final when saved. The
+  // clock is read afresh, because "past" is about the moment it is saved.
+  const save = useCallback(() => {
+    if (!dirty || dueTimeIssue) return;
+    if (dateDirty) {
+      const past = pastDueTime(scheduledDate, new Date(), dueTimeRules);
+      if (past) {
+        // 'expires' is a block, not a question; it only reaches here if the
+        // clock moved on since the last edit. The server refuses it as well.
+        if (past.kind === 'expires') {
+          setNow(new Date());
+          return;
+        }
+        setPendingPastDueTime(past);
+        return;
+      }
+    }
+    commit();
+  }, [dirty, dueTimeIssue, dateDirty, scheduledDate, dueTimeRules, commit]);
+
+  const confirmPastDueTime = useCallback(() => {
+    setPendingPastDueTime(null);
+    commit();
+  }, [commit]);
+
+  const cancelPastDueTime = useCallback(() => setPendingPastDueTime(null), []);
+
   const value = useMemo(
     () => ({
       editable,
@@ -129,11 +207,30 @@ export function ScheduleSettingsProvider({
       setScheduledDate,
       scheduledTime,
       setScheduledTime,
+      now,
+      dueTimeIssue,
       dirty,
       isSaving,
       save,
+      pendingPastDueTime,
+      confirmPastDueTime,
+      cancelPastDueTime,
     }),
-    [editable, note, scheduledDate, scheduledTime, dirty, isSaving, save],
+    [
+      editable,
+      note,
+      scheduledDate,
+      setScheduledDate,
+      scheduledTime,
+      now,
+      dueTimeIssue,
+      dirty,
+      isSaving,
+      save,
+      pendingPastDueTime,
+      confirmPastDueTime,
+      cancelPastDueTime,
+    ],
   );
 
   return (

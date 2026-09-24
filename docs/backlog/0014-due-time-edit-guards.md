@@ -1,6 +1,6 @@
 # Editing a Due Time has no guard for the past or for after the Event
 
-Status: open
+Status: done - see [ADR 0022](../adr/0022-a-due-time-edit-is-guarded.md)
 
 ## The problem
 

@@ -5,6 +5,7 @@ import type { OutreachItemStatus } from '../types';
 import { DeliveryInfoCard } from './delivery-info-card';
 import { MessagePreview } from './message-preview';
 import { MessageTypeCard } from './message-type-card';
+import { PastDueTimeDialog } from './past-due-time-dialog';
 import { PersonalNoteCard } from './personal-note-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { ScheduleLockBadge } from './schedule-lock-badge';
@@ -55,10 +56,16 @@ export async function ScheduleTabContent({
     schedule.dispatchedAt == null;
   // The one Send Window, read where the Dispatcher's own config is readable and
   // handed to the client card rather than duplicated inside it.
-  const { sendWindow } = sendingConfig();
+  const { sendWindow, scheduleMaxLatenessHours } = sendingConfig();
 
   return (
-    <ScheduleSettingsProvider key={schedule.id} schedule={schedule} editable={editable}>
+    <ScheduleSettingsProvider
+      key={schedule.id}
+      schedule={schedule}
+      editable={editable}
+      eventDate={eventDate}
+      dueTimeRules={{ sendWindow, maxLatenessHours: scheduleMaxLatenessHours }}
+    >
       <div className="flex flex-col gap-4">
         {status === 'pending' && schedule.deliveryMethod === 'whatsapp' && <DeliveryInfoCard />}
         {locked && <ScheduleLockedNotice />}
@@ -82,6 +89,8 @@ export async function ScheduleTabContent({
             {offersNote && <PersonalNoteCard lockReason={lockReason} />}
             <ScheduleDetailsCard
               eventDate={eventDate}
+              scheduleTypeKey={schedule.scheduleTypeKey}
+              maxLatenessHours={scheduleMaxLatenessHours}
               sendWindow={sendWindow}
               lockBadge={sent ? <ScheduleLockBadge /> : undefined}
             />
@@ -95,6 +104,13 @@ export async function ScheduleTabContent({
         </div>
 
         <ScheduleSaveBar note={lockReason ?? 'editable'} />
+        {editable && (
+          <PastDueTimeDialog
+            targetStatus={schedule.targetStatus}
+            audienceCount={audienceCount}
+            sendWindow={sendWindow}
+          />
+        )}
       </div>
     </ScheduleSettingsProvider>
   );

@@ -1293,6 +1293,10 @@
         "dayOf": "On the day of the event",
         "before": "{count, plural, one {1 day before the event} other {# days before the event}}",
         "after": "{count, plural, one {1 day after the event} other {# days after the event}}"
+      },
+      "invalid": {
+        "afterEvent": "Pick a date on or before the event day",
+        "expires": "This time is more than {hours} hours ago, so the message would expire instead of sending - pick a later time"
       }
     },
     "audience": {
@@ -1595,6 +1599,13 @@
         "call": "Call guest",
         "close": "Close"
       }
+    },
+    "pastDueDialog": {
+      "title": "This time has already passed",
+      "sendsNow": "Saving will send this message right away, not at {time}",
+      "heldUntil": "Messages only go out between {start} and {end}, so saving will send this message on {when}",
+      "cancel": "Pick another time",
+      "confirm": "Save and send"
     }
   },
   "newEventDialog": {
