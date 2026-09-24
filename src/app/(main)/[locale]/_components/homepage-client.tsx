@@ -618,7 +618,7 @@ export function HomepageClient() {
             <div className="wo-pricing">
               <span className="wo-badge">🎊 מבצע חתונות - לזמן מוגבל</span>
               <div className="wo-price">
-                <span className="amt"><span dir="ltr">1.5</span> ₪</span>
+                <span className="amt"><span dir="ltr">2</span> ₪</span>
                 <span className="per">לרשומה</span>
               </div>
               <p className="wo-note">תשלום חד פעמי לפי כמות המוזמנים – רק בעת שליחת ההזמנות. עד אז, הכל בחינם.</p>

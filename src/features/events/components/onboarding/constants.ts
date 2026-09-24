@@ -38,7 +38,7 @@ export const TAKEOVER_WASH =
  * the channel is re-chosen at payment time.
  */
 export const CHANNEL_RATES = {
-  whatsapp: 1.7,
+  whatsapp: 2,
   sms: 1.2,
 } as const;
 
