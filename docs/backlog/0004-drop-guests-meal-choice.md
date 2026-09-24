@@ -1,6 +1,6 @@
 # Drop the superseded guests.meal_choice column
 
-Status: open
+Status: done - see `supabase/migrations/20260924000000_drop_guests_meal_choice.sql`
 Area: guests
 Related: `supabase/migrations/20260918000000_guest_meal_counts.sql`, CONTEXT.md (Special Meal)
 

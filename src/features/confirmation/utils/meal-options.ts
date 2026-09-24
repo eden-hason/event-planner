@@ -35,7 +35,7 @@ export function buildMealOptions(guestExperience: GuestExperience): MealOption[]
   return types.map((id) => ({ id, label: mealLabel(id) }));
 }
 
-/** The label for a stored `meal_choice`, falling back to the raw value. */
+/** The label for a stored meal id, falling back to the raw value. */
 export function mealLabel(id: string): string {
   return MEAL_LABELS[id as MealChoice] ?? id;
 }

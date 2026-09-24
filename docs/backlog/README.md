@@ -35,7 +35,7 @@ in the diff, not here.
 | [0001](0001-sms-delivery-visibility.md) | SMS delivery is invisible after the provider accepts it | schedules / outreach | open |
 | [0002](0002-shabbat-and-chagim-send-window.md) | The Shabbat guard is a fixed weekly block, not a calendar | schedules / outreach | dropped |
 | [0003](0003-general-event-type.md) | There is no event type for anything that is not a wedding, henna or mitzva | events / onboarding | open |
-| [0004](0004-drop-guests-meal-choice.md) | Drop the superseded guests.meal_choice column | guests | open |
+| [0004](0004-drop-guests-meal-choice.md) | Drop the superseded guests.meal_choice column | guests | done |
 | [0005](0005-tag-outbound-whatsapp-for-status-correlation.md) | WhatsApp statuses are matched by searching, not by a tag | schedules / outreach | done |
 | [0006](0006-partner-commission-on-refund.md) | A refunded Event leaves its Partner Commission standing | partners / billing | open |
 | [0007](0007-send-to-guests-added-after-a-send.md) | A guest added after a Schedule went out never receives it | schedules / outreach | open |

@@ -1,9 +1,9 @@
 /**
  * The meal options an event can offer, and the only values that ever land in
- * `guests.meal_choice` or `events.guests_experience.dietary_types`.
+ * the keys of `guests.meal_counts` or `events.guests_experience.dietary_types`.
  *
  * One list, in `lib` rather than in a feature, because three surfaces write
- * this column and none of them owns it: the event-details card that configures
+ * these values and none of them owns them: the event-details card that configures
  * which options exist, the guest drawer where a host records an answer taken by
  * phone, and the RSVP page where the guest answers for themselves. Each labels
  * these ids for its own audience - two of them through next-intl, the guest
