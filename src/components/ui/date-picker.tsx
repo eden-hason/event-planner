@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { he, enUS } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useLocale } from 'next-intl';
+import type { Matcher } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,8 @@ interface DatePickerProps {
   onDateChange?: (date: Date | undefined) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Days that cannot be picked, e.g. `{ after: lastDay }`. */
+  disabledDays?: Matcher | Matcher[];
 }
 
 export function DatePicker({
@@ -27,6 +30,7 @@ export function DatePicker({
   onDateChange,
   placeholder = 'Pick a date',
   disabled = false,
+  disabledDays,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const locale = useLocale();
@@ -51,6 +55,8 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
+          defaultMonth={date}
+          disabled={disabledDays}
           onSelect={(d) => {
             onDateChange?.(d);
             setOpen(false);

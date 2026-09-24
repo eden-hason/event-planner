@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
+import { sendingConfig } from '@/lib/config/sending';
 import { CustomTextSchema } from '../schemas';
+import { dueTimeIssue } from '../utils/due-time-guards';
 
 /**
  * A Schedule the organiser is not allowed to change, and why.
@@ -48,6 +50,12 @@ export type UpdateScheduledDateState = {
  * Updates a schedule's Due Time.
  * RLS ensures the user can only update their own schedules.
  *
+ * Refuses a Due Time after the Event (except for the Thank You) and one so far
+ * in the past that the Dispatcher would expire it instead of sending it - the
+ * same `dueTimeIssue` the page checks, because this action is callable without
+ * the page (backlog 0014). A Due Time only a little in the past is accepted:
+ * the page has already asked the organiser to confirm it sends right away.
+ *
  * One column, one instant. The caller authors it as an Israel wall clock
  * through `israelWallClockToIso`; this used to take a separate naive time and
  * write both independently, which is how they came to disagree on most rows
@@ -66,9 +74,13 @@ export async function updateScheduledDate(
   try {
     const supabase = await createClient();
 
+    if (!Number.isFinite(Date.parse(scheduledDate))) {
+      return { success: false, message: 'That is not a valid date' };
+    }
+
     const { data: existing, error: fetchError } = await supabase
       .from('schedules')
-      .select('status, schedule_types (execution_kind)')
+      .select('status, schedule_types (execution_kind, key), events (event_date)')
       .eq('id', scheduleId)
       .single();
 
@@ -86,6 +98,31 @@ export async function updateScheduledDate(
       return {
         success: false,
         message: 'A call round can only be rescheduled from the back office.',
+      };
+    }
+
+    const types = Array.isArray(existing.schedule_types)
+      ? existing.schedule_types[0]
+      : existing.schedule_types;
+    const event = Array.isArray(existing.events) ? existing.events[0] : existing.events;
+    const config = sendingConfig();
+    const issue = dueTimeIssue({
+      eventDate: event?.event_date ?? null,
+      scheduleTypeKey: types?.key ?? '',
+      scheduledDate,
+      now: new Date(),
+      rules: {
+        sendWindow: config.sendWindow,
+        maxLatenessHours: config.scheduleMaxLatenessHours,
+      },
+    });
+    if (issue === 'afterEvent') {
+      return { success: false, message: 'Pick a date on or before the event day' };
+    }
+    if (issue === 'expires') {
+      return {
+        success: false,
+        message: 'That time is too far in the past to send - pick a later time',
       };
     }
 

@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { IconAlertCircle } from '@tabler/icons-react';
+import type { Matcher } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
@@ -20,14 +22,29 @@ import {
   offsetPhrase,
   sendWindowHours,
 } from '../utils/timeline';
+import { firstSendableDay, lastDueDay } from '../utils/due-time-guards';
 import { SettingsCard } from './settings-card';
 import { useScheduleSettings } from './schedule-settings-context';
 
 /** Used when a schedule has no time yet - the middle of the send window. */
 const DEFAULT_SEND_TIME = '10:00';
 
+/**
+ * An Israel calendar day, "YYYY-MM-DD", as a local Date the picker can show.
+ * The picker works in the browser's zone; building the Date from the parts
+ * keeps the day the same whatever that zone is.
+ */
+function pickerDay(day: string): Date {
+  const [year, month, day_] = day.split('-').map(Number);
+  return new Date(year, month - 1, day_);
+}
+
 interface ScheduleDetailsCardProps {
   eventDate: string | null;
+  /** The catalog key, so the Thank You can be let past the Event day. */
+  scheduleTypeKey: string;
+  /** How long past its Due Time the Dispatcher will still send it. */
+  maxLatenessHours: number;
   /**
    * The Send Window, read server-side from `sendingConfig()`.
    *
@@ -46,15 +63,38 @@ interface ScheduleDetailsCardProps {
 /** When the message goes out: a date and a whole hour inside the Send Window. */
 export function ScheduleDetailsCard({
   eventDate,
+  scheduleTypeKey,
+  maxLatenessHours,
   sendWindow,
   lockBadge,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
   const locale = useLocale();
   const hours = useMemo(() => sendWindowHours(sendWindow), [sendWindow]);
-  const { editable, scheduledDate, setScheduledDate, scheduledTime, setScheduledTime, isSaving } =
-    useScheduleSettings();
+  const {
+    editable,
+    scheduledDate,
+    setScheduledDate,
+    scheduledTime,
+    setScheduledTime,
+    isSaving,
+    now,
+    dueTimeIssue,
+  } = useScheduleSettings();
   const disabled = !editable || isSaving;
+
+  // Days that could never hold a valid Due Time are not offered at all: after
+  // the Event day (the Thank You aside), and so far back that the Dispatcher
+  // would expire the message rather than send it. A day that is only partly
+  // past stays pickable - an earlier hour on it asks to confirm at Save.
+  const disabledDays = useMemo(() => {
+    const matchers: Matcher[] = [
+      { before: pickerDay(firstSendableDay(now, maxLatenessHours)) },
+    ];
+    const lastDay = lastDueDay(eventDate, scheduleTypeKey);
+    if (lastDay) matchers.push({ after: pickerDay(lastDay) });
+    return matchers;
+  }, [now, maxLatenessHours, eventDate, scheduleTypeKey]);
 
   const relative = useMemo(
     () => offsetPhrase(scheduledDate ? offsetDaysFrom(eventDate, scheduledDate) : null),
@@ -64,12 +104,10 @@ export function ScheduleDetailsCard({
   // The Israel calendar day of the Due Time, as a Date the picker can show.
   // Built from the wall-clock parts rather than from `new Date(iso)` so a Due
   // Time just after midnight Israel is not shown as the previous day.
-  const pickerDate = useMemo(() => {
-    if (!scheduledDate) return undefined;
-    const { date } = israelWallClockParts(scheduledDate);
-    const [year, month, day] = date.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  }, [scheduledDate]);
+  const pickerDate = useMemo(
+    () => (scheduledDate ? pickerDay(israelWallClockParts(scheduledDate).date) : undefined),
+    [scheduledDate],
+  );
 
   // Both handlers rebuild the instant from an Israel calendar date and an
   // Israel wall clock, which is the only way to author a Due Time. Setting UTC
@@ -97,6 +135,7 @@ export function ScheduleDetailsCard({
   if (!scheduledDate || !eventDate) return null;
 
   const relativeNote = relative ? t(`relative.${relative.key}`, { count: relative.count }) : null;
+  const invalid = dueTimeIssue !== null;
 
   return (
     <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
@@ -113,12 +152,14 @@ export function ScheduleDetailsCard({
             className={cn(
               '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
               !editable && '[&_button]:bg-muted/60',
+              dueTimeIssue === 'afterEvent' && '[&_button]:border-destructive',
             )}
           >
             <DatePicker
               date={pickerDate}
               onDateChange={handleDateChange}
               disabled={disabled}
+              disabledDays={disabledDays}
               placeholder={t('scheduledDate')}
             />
           </div>
@@ -140,7 +181,10 @@ export function ScheduleDetailsCard({
                 'w-full',
                 'disabled:opacity-100',
                 !editable && 'bg-muted/60',
+                dueTimeIssue === 'expires' && 'border-destructive',
               )}
+              aria-invalid={dueTimeIssue === 'expires' || undefined}
+              aria-describedby={invalid ? 'due-time-error' : undefined}
             >
               <SelectValue />
             </SelectTrigger>
@@ -160,6 +204,17 @@ export function ScheduleDetailsCard({
           </Select>
         </div>
       </div>
+
+      {invalid && (
+        <p
+          id="due-time-error"
+          role="alert"
+          className="text-destructive flex items-start gap-1.5 text-xs"
+        >
+          <IconAlertCircle className="mt-px size-3.5 shrink-0" />
+          {t(`invalid.${dueTimeIssue}`, { hours: maxLatenessHours })}
+        </p>
+      )}
 
       <p className="text-muted-foreground text-xs">
         {relativeNote}
