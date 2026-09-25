@@ -131,14 +131,14 @@ function askComing(ctx: Ctx, body: string): OutgoingMessage {
 function askCount(): OutgoingMessage {
   return {
     kind: 'text',
-    body: 'איזה כיף! 🎉\nכמה תגיעו בסך הכול?\nהשיבו במספר בלבד',
+    body: 'איזה כיף! 🎉\nכמה תגיעו?\nהשיבו במספר בלבד',
   };
 }
 
 function askCountAgain(): OutgoingMessage {
   return {
     kind: 'text',
-    body: 'לא הצלחנו להבין 🙈\nכמה תגיעו בסך הכול? כתבו מספר אחד בספרות, למשל 3',
+    body: 'לא הצלחנו להבין 🙈\nכמה תגיעו? כתבו מספר אחד בספרות, למשל 3',
   };
 }
 
@@ -156,7 +156,7 @@ function tooManyToType(): OutgoingMessage {
 function askCountList(ctx: Ctx): OutgoingMessage {
   return {
     kind: 'list',
-    body: `כמה תגיעו בסך הכול?\n\nיותר מ-${MAX_LIST_ROWS}? כתבו את המספר כאן`,
+    body: `כמה תגיעו?\n\nיותר מ-${MAX_LIST_ROWS}? כתבו את המספר כאן`,
     buttonLabel: 'בחירת מספר',
     rows: Array.from({ length: MAX_LIST_ROWS }, (_, i) => ({
       id: id(ctx, { type: 'count', count: i + 1 }),
@@ -170,24 +170,9 @@ function mealStepOrSummary(ctx: Ctx): OutgoingMessage {
   const options = ctx.event.mealOptions;
   if (options.length === 0) return summary(ctx);
 
-  if (ctx.guest.amount === 1) {
-    return {
-      kind: 'list',
-      body: 'צריך מנה מיוחדת?',
-      buttonLabel: 'בחירת מנה',
-      rows: [
-        { id: id(ctx, { type: 'mealType', meal: 'none' }), title: 'ללא מנה מיוחדת' },
-        ...options.map((option) => ({
-          id: id(ctx, { type: 'mealType', meal: option.id as MealChoice }),
-          title: option.label,
-        })),
-      ],
-    };
-  }
-
   return {
     kind: 'buttons',
-    body: 'האם מישהו מכם צריך מנה מיוחדת?',
+    body: ctx.guest.amount === 1 ? 'צריך מנה מיוחדת?' : 'האם מישהו מכם צריך מנה מיוחדת?',
     buttons: [
       { id: id(ctx, { type: 'mealQuestion', answer: true }), title: 'כן' },
       { id: id(ctx, { type: 'mealQuestion', answer: false }), title: 'לא, תודה' },
@@ -360,6 +345,7 @@ export function conversationStep(params: {
       return respond({ mealCounts: {} }, action.answer ? askMealType : summary);
 
     case 'mealType': {
+      // No longer offered, but still tappable in lists already sitting in chats.
       if (action.meal === 'none') return respond({ mealCounts: {} }, summary);
       if (!allowed.includes(action.meal)) return respond(null, mealStepOrSummary);
       if (before.guest.amount === 1) {
