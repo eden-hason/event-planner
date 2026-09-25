@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { usePathname, useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
+import { setSearchParams } from '@/lib/shallow-navigation';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { Separator } from '@/components/ui/separator';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
@@ -47,8 +47,6 @@ export function SchedulesLayout({
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { setHeader, clearHeader } = useFeatureLayoutContext();
 
@@ -85,21 +83,15 @@ export function SchedulesLayout({
     return t('header.summary', { sent, pending });
   }, [items, locked, t]);
 
-  const select = useCallback(
-    (id: string) => {
-      const next = new URLSearchParams(searchParams);
-      next.set(PARAM, id);
-      router.push(`${pathname}?${next}`, { scroll: false });
-    },
-    [pathname, router, searchParams],
-  );
+  // Shallow: every pane is already in `items`, and the server never reads the
+  // param, so a router navigation would only wait for an identical payload.
+  const select = useCallback((id: string) => {
+    setSearchParams((params) => params.set(PARAM, id));
+  }, []);
 
   const close = useCallback(() => {
-    const next = new URLSearchParams(searchParams);
-    next.delete(PARAM);
-    const query = next.toString();
-    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
+    setSearchParams((params) => params.delete(PARAM));
+  }, []);
 
   // Below md an open Schedule is the whole screen, so the app header stops
   // naming the page and names the Schedule instead - what it is, when, and how

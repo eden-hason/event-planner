@@ -11,7 +11,8 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { usePathname, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { setSearchParams } from '@/lib/shallow-navigation';
 import { GuestDirectory } from './guest-directory';
 import { GuestForm } from './guest-form';
 import { GuestStats } from './guest-stats';
@@ -55,6 +56,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { avatarTintFor } from '@/lib/avatar-tint';
 
+/** The query parameter that addresses the open guest drawer. */
+const GUEST_PARAM = 'guest';
+/** `?guest=new` opens the drawer on an empty add-guest form. */
+const NEW_GUEST = 'new';
+
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
   eventId: string;
@@ -96,13 +102,9 @@ export function GuestsPage({
     setHasMounted(true);
   }, []);
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [assignSheetOpen, setAssignSheetOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
-  const [selectedGuest, setSelectedGuest] = useState<GuestWithGroupApp | null>(
-    null,
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
@@ -216,36 +218,56 @@ export function GuestsPage({
     setAssignSheetOpen(true);
   };
 
-  const handleAddGuest = () => {
-    setSelectedGuest(null);
-    setIsDrawerOpen(true);
+  // The guest drawer lives in `?guest=<id>` (or `?guest=new` to add one)
+  // rather than in component state, like the open Schedule does: the back
+  // button closes it instead of leaving the page, and a guest can be linked
+  // to. The update is shallow - every guest is already in `guests`.
+  const searchParams = useSearchParams();
+  const guestParam = searchParams.get(GUEST_PARAM);
+  // An id that no longer resolves (a deleted guest, a stale link) leaves the
+  // drawer closed rather than opening an empty edit form.
+  const openGuest =
+    guestParam && guestParam !== NEW_GUEST
+      ? (guests.find((guest) => guest.id === guestParam) ?? null)
+      : null;
+  const isDrawerOpen = guestParam === NEW_GUEST || openGuest !== null;
+
+  // What the drawer shows. It follows the URL while the drawer is open and
+  // holds its last value once it closes, so the sheet slides out still showing
+  // the guest instead of flipping to the empty "new guest" form.
+  const [selectedGuest, setSelectedGuest] = useState(openGuest);
+  if (isDrawerOpen && openGuest !== selectedGuest) {
+    setSelectedGuest(openGuest);
+  }
+
+  const openGuestDrawer = (id: string, mode: 'push' | 'replace' = 'push') => {
+    setSearchParams((params) => params.set(GUEST_PARAM, id), mode);
   };
+
+  const handleAddGuest = () => openGuestDrawer(NEW_GUEST);
 
   // Home's Featured Actions deep-link here: `?tab=groups` lands on the groups
   // tab, `?add=1` opens the same add-guest entry point as the header button
   // (the source sheet on a phone, the drawer on desktop) once, then drops the
   // flag so a refresh or a back navigation does not open it again. It waits
   // for mount, which is when `isMobile` is first known.
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   useEffect(() => {
     if (!hasMounted || searchParams.get('add') !== '1') return;
     if (isMobile) setSourceSheetOpen(true);
-    else handleAddGuest();
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete('add');
-    const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    // One replace, so the flag never survives in history for back to replay.
+    setSearchParams((params) => {
+      params.delete('add');
+      if (!isMobile) params.set(GUEST_PARAM, NEW_GUEST);
+    }, 'replace');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, hasMounted]);
 
   const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
-    setSelectedGuest(guest);
-    setIsDrawerOpen(true);
+    openGuestDrawer(guest?.id ?? NEW_GUEST);
   };
 
   const handleDrawerClose = (open: boolean) => {
-    setIsDrawerOpen(open);
+    if (!open) setSearchParams((params) => params.delete(GUEST_PARAM));
   };
 
   const handleDeleteGuest = () => {
@@ -592,6 +614,7 @@ export function GuestsPage({
 
           <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/30 flex flex-col gap-4">
             <GuestForm
+              key={selectedGuest?.id ?? NEW_GUEST}
               formId="guest-form"
               eventId={eventId}
               guest={selectedGuest}

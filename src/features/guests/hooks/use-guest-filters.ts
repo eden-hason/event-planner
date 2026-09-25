@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { usePathname, useRouter } from '@/i18n/navigation';
+import { setSearchParams } from '@/lib/shallow-navigation';
 import { GroupInfo, GroupSide, GROUP_SIDES } from '@/features/guests/schemas';
 import { NO_PHONE_ISSUE, parseGuestIssue } from '@/features/guests/utils/guest-health';
 
@@ -14,21 +14,15 @@ export function useGuestFilters(groups: GroupInfo[]) {
   // and `all` scope the list until cleared, sorted by name so likely
   // duplicates sit side by side.
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const issueParam = searchParams.get('issue');
   const issue = parseGuestIssue(issueParam);
 
   const clearIssue = () => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete('issue');
-    const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    setSearchParams((params) => params.delete('issue'), 'replace');
   };
 
   useEffect(() => {
     if (issueParam === NO_PHONE_ISSUE) clearIssue();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issueParam]);
 
   const [searchTerm, setSearchTerm] = useState('');
