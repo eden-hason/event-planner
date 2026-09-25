@@ -113,14 +113,35 @@ describe('conversationStep', () => {
     assert.deepEqual(awaits, { question: 'count', attempt: 0 });
   });
 
-  it('goes to the single meal list once one is the answer', () => {
-    const { reply } = step({ type: 'count', count: 1 }, guest({ rsvpStatus: 'confirmed', amount: 1 }));
-    assert.equal(reply.kind, 'list');
+  it('asks a party of one whether they need a special meal before the list', () => {
+    const one = guest({ rsvpStatus: 'confirmed', amount: 1 });
+    const { reply } = step({ type: 'count', count: 1 }, one);
+    assert.equal(reply.kind, 'buttons');
+    assert.equal(reply.body, 'צריך מנה מיוחדת?');
     assert.deepEqual(offered(reply), [
-      { type: 'mealType', meal: 'none' },
+      { type: 'mealQuestion', answer: true },
+      { type: 'mealQuestion', answer: false },
+    ]);
+
+    const list = step({ type: 'mealQuestion', answer: true }, one).reply;
+    assert.equal(list.kind, 'list');
+    assert.deepEqual(offered(list), [
       { type: 'mealType', meal: 'vegetarian' },
       { type: 'mealType', meal: 'vegan' },
     ]);
+
+    const { update, reply: done } = step({ type: 'mealType', meal: 'vegan' }, one);
+    assert.deepEqual(update?.mealCounts, { vegan: 1 });
+    assert.match(done.body, /מנות מיוחדות/);
+  });
+
+  it('still answers a "none" tapped in an old single meal list', () => {
+    const { update, reply } = step(
+      { type: 'mealType', meal: 'none' },
+      guest({ rsvpStatus: 'confirmed', amount: 1 }),
+    );
+    assert.deepEqual(update?.mealCounts, {});
+    assert.match(reply.body, /תודה/);
   });
 
   it('never links to the RSVP page', () => {
