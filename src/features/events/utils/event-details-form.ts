@@ -16,30 +16,6 @@ export const DEFAULT_MEAL_CHOICES: readonly string[] = [
   'strictly_kosher',
 ];
 
-/**
- * A readiness criterion the page reports on, in the order it reports them.
- *
- * Both are derived, never stored, and each is named after the one thing a Guest
- * loses without it: a venue with coordinates becomes the navigation link in the
- * day-of reminder, and the invitation image rides the first message. Nothing
- * else on this page changes whether a Guest can be reached, so nothing else
- * belongs in the summary.
- */
-export type ReadinessKey = 'venue' | 'invitation';
-
-/**
- * Coordinates, not a name: the reminder builds a navigation link, and a venue
- * typed by hand rather than picked from Google has no point to navigate to.
- */
-export function missingReadinessItems(
-  event: Pick<EventApp, 'location' | 'invitations'>,
-): ReadinessKey[] {
-  const missing: ReadinessKey[] = [];
-  if (!event.location?.coords) missing.push('venue');
-  if (!event.invitations?.imageUrl) missing.push('invitation');
-  return missing;
-}
-
 export function buildDefaultValues(event: EventApp): EventDetailsFormValues {
   const hostDetails = event.hostDetails as EventHostDetails | undefined;
   const person = (role: 'bride' | 'groom' | 'child') => ({

@@ -69,13 +69,8 @@ export function LocationSection() {
             name="location"
             render={({ field }) => (
               <FormItem>
-                {/*
-                  The wrapper carries the marker rather than the input: the
-                  readiness summary's "add a venue" resolves it to the first
-                  focusable control inside, and `LocationInput` owns its own field.
-                */}
                 <FormControl>
-                  <div data-readiness-focus>
+                  <div>
                     <LocationInput
                       placeholder={t('placeholder')}
                       value={field.value?.name || ''}

@@ -21,14 +21,12 @@ import {
   buildDefaultValues,
   buildUpdateFields,
   changedKeys,
-  missingReadinessItems,
   type ChangeKey,
 } from '../../utils/event-details-form';
 import {
   EventDetailsProvider,
   type DateChangeImpact,
 } from './event-details-context';
-import { ReadinessSummary } from './readiness-summary';
 import { HostsSection } from './hosts-section';
 import { DateTimeSection } from './date-time-section';
 import { LocationSection } from './location-section';
@@ -72,11 +70,10 @@ interface EventDetailsWrapperProps {
  * The Event details page: everything a Guest will be told, on one page with one
  * save.
  *
- * Three questions, in the order an Owner asks them - who the Event is for, what
- * is still missing before the first message, and what Guests get asked - rather
- * than one card per database column. Readiness is stated once at the top instead
- * of beside every field, and the whole page shares a single form so a sitting
- * that touches three sections is still one save.
+ * Three questions, in the order an Owner asks them - who the Event is for, when
+ * and where it happens, and what Guests get asked - rather than one card per
+ * database column. The whole page shares a single form so a sitting that touches
+ * three sections is still one save.
  */
 export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
   const t = useTranslations('eventDetails');
@@ -101,13 +98,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
   const changes = changedKeys(form.formState.dirtyFields, {
     couple,
     hasCeremony,
-  });
-
-  const liveLocation = form.watch('location');
-  const liveImageUrl = form.watch('invitations.imageUrl');
-  const missing = missingReadinessItems({
-    location: liveLocation ?? undefined,
-    invitations: { imageUrl: liveImageUrl },
   });
 
   useFeatureHeader({
@@ -166,20 +156,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
     [form],
   );
 
-  const focusSection = React.useCallback((id: string) => {
-    const section = document.getElementById(id);
-    if (!section) return;
-
-    section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    const marker = section.querySelector<HTMLElement>('[data-readiness-focus]');
-    if (!marker) return;
-    const control = marker.matches('input, button, [tabindex]')
-      ? marker
-      : marker.querySelector<HTMLElement>('input, button, [tabindex]');
-    control?.focus({ preventScroll: true });
-  }, []);
-
   const context = React.useMemo(
     () => ({
       eventId: event.id,
@@ -193,7 +169,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
       isSaving,
       save,
       revert,
-      focusSection,
     }),
     [
       couple,
@@ -201,7 +176,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
       event.id,
       eventType,
       female,
-      focusSection,
       hasCeremony,
       isSaving,
       plan,
@@ -224,8 +198,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
             can still run the full width of the page.
           */}
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-3.5 lg:gap-[18px]">
-            <ReadinessSummary missing={missing} />
-
             {/* The hero: who the Event is for, across both columns. */}
             <HostsSection />
 
