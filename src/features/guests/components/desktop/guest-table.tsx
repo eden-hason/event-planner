@@ -1,6 +1,12 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+} from 'react';
 import { useTranslations } from 'next-intl';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import type {
@@ -21,6 +27,29 @@ import { GuestRowMenu, type RowAction } from './guest-row-menu';
 
 /** Fixed row height: the list is virtualized, so rows must never grow. */
 const ROW_HEIGHT = 44;
+
+/**
+ * The columns follow the page's width (`@container/guests`), not the window's:
+ * narrower, the table and meals columns go first, then phone and group. Name,
+ * RSVP and the count always stay. Each set is a CSS variable, so the switch is
+ * pure CSS and a row never waits on a measurement.
+ */
+const GRID =
+  '[grid-template-columns:var(--cols)] @max-4xl/guests:[grid-template-columns:var(--cols-mid)] @max-2xl/guests:[grid-template-columns:var(--cols-narrow)]';
+/** Hidden once the page is narrower than 56rem. */
+const WIDE_ONLY = '@max-4xl/guests:hidden';
+/** Hidden once the page is narrower than 42rem. */
+const MID_UP = '@max-2xl/guests:hidden';
+
+function gridColumns(showMeals: boolean): CSSProperties {
+  return {
+    '--cols': showMeals
+      ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 150px 76px 56px minmax(0,1fr) 44px'
+      : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 56px 44px',
+    '--cols-mid': '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 44px',
+    '--cols-narrow': '44px minmax(0,1fr) 150px 76px 44px',
+  } as CSSProperties;
+}
 
 const MEAL_LABEL_KEY: Record<MealChoice, string> = {
   vegan: 'vegan',
@@ -83,32 +112,39 @@ export function GuestTable({
     scrollMargin,
   });
 
-  const grid = showMeals
-    ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 150px 76px 56px minmax(0,1fr) 44px'
-    : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 56px 44px';
-
   return (
-    <div className="bg-card rounded-t-xl border border-b-0">
-      <div
-        role="row"
-        style={{ gridTemplateColumns: grid }}
-        className="bg-card text-muted-foreground sticky top-[60px] z-10 grid h-[38px] items-center rounded-t-xl border-b text-xs font-semibold"
-      >
-        <span className="h-full">
-          <SelectBox
-            state={headerState}
-            label={t('list.columns.selectAll')}
-            onClick={onToggleAll}
-          />
-        </span>
-        <span>{t('list.columns.name')}</span>
-        <span>{t('list.columns.phone')}</span>
-        <span>{t('list.columns.group')}</span>
-        <span>{t('list.columns.rsvp')}</span>
-        <span>{t('list.columns.amount')}</span>
-        <span>{t('list.columns.table')}</span>
-        {showMeals && <span>{t('list.columns.meals')}</span>}
-        <span />
+    // The table's top edge - border and rounded corners - lives on the sticky
+    // header, not on this box, so it stays when the rows scroll under it. The
+    // header's square backing (`-mx-px` over the side borders) keeps rows from
+    // showing through its rounded corners. The column variables are set here
+    // once and inherited by the header and every row.
+    <div className="bg-card border-x" style={gridColumns(showMeals)}>
+      <div className="bg-card sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px)+var(--guest-count-h,0px))] z-10 -mx-px">
+        <div
+          role="row"
+          className={cn(
+            'bg-card text-muted-foreground grid h-[38px] items-center rounded-t-xl border text-xs font-semibold',
+            GRID,
+          )}
+        >
+          <span className="h-full">
+            <SelectBox
+              state={headerState}
+              label={t('list.columns.selectAll')}
+              onClick={onToggleAll}
+            />
+          </span>
+          <span>{t('list.columns.name')}</span>
+          <span className={MID_UP}>{t('list.columns.phone')}</span>
+          <span className={MID_UP}>{t('list.columns.group')}</span>
+          <span>{t('list.columns.rsvp')}</span>
+          <span>{t('list.columns.amount')}</span>
+          <span className={WIDE_ONLY}>{t('list.columns.table')}</span>
+          {showMeals && (
+            <span className={WIDE_ONLY}>{t('list.columns.meals')}</span>
+          )}
+          <span />
+        </div>
       </div>
 
       <div
@@ -124,7 +160,6 @@ export function GuestTable({
               key={guest.id}
               guest={guest}
               groups={groups}
-              grid={grid}
               top={item.start - virtualizer.options.scrollMargin}
               checked={selected.has(guest.id)}
               showMeals={showMeals}
@@ -146,7 +181,6 @@ export function GuestTable({
 function GuestRow({
   guest,
   groups,
-  grid,
   top,
   checked,
   showMeals,
@@ -158,7 +192,6 @@ function GuestRow({
 }: {
   guest: GuestWithGroupApp;
   groups: GroupWithGuestsApp[];
-  grid: string;
   top: number;
   checked: boolean;
   showMeals: boolean;
@@ -186,12 +219,12 @@ function GuestRow({
       aria-selected={checked}
       onClick={onOpen}
       style={{
-        gridTemplateColumns: grid,
         transform: `translateY(${top}px)`,
         height: ROW_HEIGHT,
       }}
       className={cn(
         'group/row absolute inset-x-0 top-0 grid cursor-pointer items-center border-b text-[13.5px] transition-colors',
+        GRID,
         checked ? 'bg-primary/6' : 'hover:bg-muted/60',
         flash && 'row-updated',
       )}
@@ -223,7 +256,7 @@ function GuestRow({
         </div>
       </div>
 
-      <span className="truncate text-[13px]">
+      <span className={cn('truncate text-[13px]', MID_UP)}>
         {guest.phone ? (
           <bdi dir="ltr" className="text-muted-foreground">
             {formatPhone(guest.phone)}
@@ -236,6 +269,7 @@ function GuestRow({
       <span
         className={cn(
           'flex min-w-0 items-center gap-[7px] pe-2.5 text-[13px]',
+          MID_UP,
           guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
         )}
       >
@@ -286,12 +320,22 @@ function GuestRow({
         )}
       </span>
 
-      <span className="text-muted-foreground text-[13px] font-semibold tabular-nums">
+      <span
+        className={cn(
+          'text-muted-foreground text-[13px] font-semibold tabular-nums',
+          WIDE_ONLY,
+        )}
+      >
         {tableNumber ?? ''}
       </span>
 
       {showMeals && (
-        <span className="text-muted-foreground flex min-w-0 items-center gap-[5px] text-[12.5px]">
+        <span
+          className={cn(
+            'text-muted-foreground flex min-w-0 items-center gap-[5px] text-[12.5px]',
+            WIDE_ONLY,
+          )}
+        >
           {meals.length > 0 && (
             <>
               <span className="truncate">

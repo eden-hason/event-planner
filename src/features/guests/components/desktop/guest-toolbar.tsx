@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   IconArrowsSort,
@@ -38,6 +38,7 @@ import {
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
 import { cn } from '@/lib/utils';
+import { usePublishedHeight } from '@/hooks/use-published-height';
 import { SelectBox } from './select-box';
 import { sideDotClass } from './side-dot';
 
@@ -57,8 +58,6 @@ interface GuestToolbarProps {
   /** Guest Records per status, over the whole list - the chip counts. */
   statusCounts: Record<RsvpStatus | 'all', number>;
   groups: GroupWithGuestsApp[];
-  /** The toolbar has scrolled into its sticky position - it grows a shadow. */
-  stuck: boolean;
   onAddGuest: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
@@ -70,7 +69,6 @@ export function GuestToolbar({
   onChange,
   statusCounts,
   groups,
-  stuck,
   onAddGuest,
   onImportFile,
   onImportDrive,
@@ -79,6 +77,40 @@ export function GuestToolbar({
   const t = useTranslations('guests');
   const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
   const filterCount = activeFilterCount(params);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // The toolbar wraps when the page is narrow, so its height is not fixed. The
+  // table's sticky header sits under it, and reads the height from this.
+  usePublishedHeight(ref, '--guest-toolbar-h');
+
+  // The toolbar grows a shadow once it is stuck. It sticks under the pinned
+  // title and tabs, not at the viewport's edge, so "stuck" is read off the
+  // toolbar itself: the page has scrolled and it has reached its own sticky
+  // `top`.
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const toolbar = ref.current;
+    if (!toolbar) return;
+    let frame = 0;
+    const check = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const pinnedAt = parseFloat(getComputedStyle(toolbar).top) || 0;
+        setStuck(
+          window.scrollY > 0 &&
+            toolbar.getBoundingClientRect().top <= pinnedAt + 0.5,
+        );
+      });
+    };
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, []);
 
   // The input keeps its own value so typing never waits on the URL; the URL
   // follows with `replace`, so back does not replay every keystroke.
@@ -93,14 +125,21 @@ export function GuestToolbar({
     });
 
   return (
+    // Sized by the page (`@container/guests`), not the window: the sidebar
+    // takes a share of the width too. Narrower, the buttons drop to icons and
+    // then the status chips move to a line of their own.
     <div
+      ref={ref}
       className={cn(
-        'bg-card sticky top-0 z-20 -mx-6 flex items-center gap-2.5 px-6 py-3 transition-shadow',
+        'bg-card sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px))] z-20 -mx-6 flex flex-wrap items-center gap-x-2.5 gap-y-2 px-6 py-3 transition-shadow',
+        // `box-shadow` directly, not a `shadow-*` utility: globals.css zeroes
+        // Tailwind's shadow variables app-wide for the flat look, and this
+        // one shadow is the design's cue that the list runs on underneath.
         stuck &&
-          'shadow-[0_1px_0_var(--border),0_8px_18px_-12px_rgba(26,11,46,0.35)]',
+          '[box-shadow:0_1px_0_var(--border),0_8px_18px_-12px_rgba(26,11,46,0.35)]',
       )}
     >
-      <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-9 w-[290px] shrink-0 items-center gap-2 rounded-[10px] border px-[11px] focus-within:ring-[3px]">
+      <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-9 max-w-[290px] min-w-40 grow basis-[200px] items-center gap-2 rounded-[10px] border px-[11px] focus-within:ring-[3px] @max-4xl/guests:max-w-none">
         <IconSearch size={16} className="text-muted-foreground shrink-0" />
         <input
           value={query}
@@ -115,7 +154,7 @@ export function GuestToolbar({
 
       <div
         role="radiogroup"
-        className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px]"
+        className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px] @max-4xl/guests:order-last @max-4xl/guests:w-full @max-4xl/guests:*:flex-1 @max-4xl/guests:*:justify-center"
       >
         {STATUS_CHIPS.map((status) => {
           const on = params.status === status;
@@ -152,19 +191,21 @@ export function GuestToolbar({
           <Button
             variant="outline"
             className={cn(
-              'h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold',
+              'h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold @max-5xl/guests:px-2.5',
               filterCount > 0 &&
                 'border-primary bg-primary/8 text-primary hover:bg-primary/12 hover:text-primary',
             )}
           >
             <IconFilter2 size={16} />
-            {t('list.filters.button')}
+            <span className="@max-5xl/guests:sr-only">
+              {t('list.filters.button')}
+            </span>
             {filterCount > 0 && (
               <span className="bg-primary text-primary-foreground flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-[5px] text-[11px] font-bold">
                 {filterCount}
               </span>
             )}
-            <IconChevronDown size={14} />
+            <IconChevronDown size={14} className="@max-5xl/guests:hidden" />
           </Button>
         </PopoverTrigger>
         {/* Popper's `align` is physical, not logical: "end" is the start side in RTL. */}
@@ -260,11 +301,11 @@ export function GuestToolbar({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold"
+            className="h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold @max-5xl/guests:px-2.5"
           >
             <IconArrowsSort size={16} />
-            {t('list.sort')}
-            <IconChevronDown size={14} />
+            <span className="@max-5xl/guests:sr-only">{t('list.sort')}</span>
+            <IconChevronDown size={14} className="@max-5xl/guests:hidden" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={dir === 'rtl' ? 'end' : 'start'}>
@@ -287,7 +328,7 @@ export function GuestToolbar({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="flex-1" />
+      <div className="flex-1 @max-4xl/guests:hidden" />
 
       <DropdownMenu dir={dir}>
         <DropdownMenuTrigger asChild>
@@ -335,10 +376,10 @@ export function GuestToolbar({
 
       <Button
         onClick={onAddGuest}
-        className="h-9 gap-1.5 rounded-[10px] px-3.5 text-[13.5px] font-bold"
+        className="h-9 gap-1.5 rounded-[10px] px-3.5 text-[13.5px] font-bold @max-5xl/guests:px-2.5"
       >
         <IconPlus size={16} stroke={2.4} />
-        {t('list.addGuest')}
+        <span className="@max-5xl/guests:sr-only">{t('list.addGuest')}</span>
       </Button>
     </div>
   );

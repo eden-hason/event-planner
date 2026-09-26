@@ -151,14 +151,16 @@ function DeleteConfirm({
   return (
     <>
       <AlertDialogHeader className="gap-3 text-start">
-        {strong && (
-          <span className="bg-destructive/10 text-destructive flex size-11 items-center justify-center rounded-xl">
-            <IconTrash size={22} />
-          </span>
-        )}
-        <AlertDialogTitle className="text-lg leading-snug font-extrabold">
-          {title}
-        </AlertDialogTitle>
+        <div className="flex items-center gap-3">
+          {strong && (
+            <span className="bg-destructive/10 text-destructive flex size-11 shrink-0 items-center justify-center rounded-xl">
+              <IconTrash size={22} />
+            </span>
+          )}
+          <AlertDialogTitle className="text-lg leading-snug font-extrabold">
+            {title}
+          </AlertDialogTitle>
+        </div>
         {body ? (
           <AlertDialogDescription className="text-sm leading-relaxed text-pretty">
             {body}

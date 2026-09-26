@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   useActionState,
   startTransition,
@@ -49,6 +50,7 @@ import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
 import { GuestActionsSection } from './guest-actions-section';
 import { GuestsMobile, AddGuestSourceSheet } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePublishedHeight } from '@/hooks/use-published-height';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { avatarTintFor } from '@/lib/avatar-tint';
@@ -96,6 +98,7 @@ export function GuestsPage({
   const router = useRouter();
   const isMobile = useIsMobile();
   const [hasMounted, setHasMounted] = useState(false);
+  const tabsRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -384,6 +387,9 @@ export function GuestsPage({
     title,
     subtitle,
     action: isMobile ? headerAction : undefined,
+    // Desktop keeps the title and tabs in view while the list scrolls, with
+    // the toolbar and the table header stacked under them (D13).
+    sticky: !isMobile,
   };
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {
@@ -396,6 +402,8 @@ export function GuestsPage({
     // the subtitle's group count the same way.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, isMobile, activeTab, guests, groups, eventName, setHeader]);
+
+  usePublishedHeight(tabsRowRef, '--guest-tabs-h', hasMounted && !isMobile);
 
   const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
   const guestGroup = selectedGuest?.group;
@@ -420,8 +428,13 @@ export function GuestsPage({
         dir={locale === 'he' ? 'rtl' : 'ltr'}
       >
         <div
+          ref={tabsRowRef}
           className={cn(
             'mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+            // Pinned under the page title on desktop; full-bleed so the list
+            // never shows past its edges while it scrolls beneath.
+            !isMobile &&
+              'bg-card sticky top-[var(--page-header-h,0px)] z-20 -mx-6 px-6',
             // On mobile the design keeps the tabs on the same white surface as
             // the title above, not the gray shell: bleed past `CardContent`'s
             // own inset and pull up through the Card's `gap-4` so the band
@@ -475,7 +488,6 @@ export function GuestsPage({
               messagedGuestIds={messagedGuestIds}
               showDietary={showDietary}
               tables={tables}
-              currentUserId={currentUserId}
               drawer={{
                 open: isDrawerOpen,
                 guest: selectedGuest,

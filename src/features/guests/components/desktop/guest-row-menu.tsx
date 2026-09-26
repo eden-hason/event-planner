@@ -91,7 +91,19 @@ export function GuestRowMenu({
             <IconFolder size={16} />
             {t('moveToGroup')}
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="max-h-72 w-56 overflow-y-auto">
+          {/* The trigger sits inside the menu's 5px padding and 1px border, so
+              the panel is pushed past the menu's edge rather than the trigger's. */}
+          <DropdownMenuSubContent
+            sideOffset={10}
+            alignOffset={-6}
+            className="max-h-72 w-56 overflow-y-auto"
+          >
+            {groups.length === 0 && !guest.groupId && (
+              <div className="text-muted-foreground flex flex-col items-center gap-1.5 px-3 py-4 text-center text-[13px]">
+                <IconFolder size={20} stroke={1.8} />
+                {t('noGroups')}
+              </div>
+            )}
             {groups.map((group) => (
               <DropdownMenuItem
                 key={group.id}

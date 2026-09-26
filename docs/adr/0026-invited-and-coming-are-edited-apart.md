@@ -29,7 +29,7 @@ answers "who" for one field and only for the latest change. The existing provena
 answers it for the RSVP as a whole, and the count is part of the RSVP.
 
 **Consequences:** an Owner who confirms a count on the Guest's behalf takes over the whole RSVP's
-provenance. The drawer header shows "updated by you", and the Guest's own answer survives only
-in the Activity timeline. The Back Office's guest editing (ADR 0007) is not built yet. When it
+provenance. The Activity timeline shows the change as theirs, and the Guest's own answer survives
+only there. The Back Office's guest editing (ADR 0007) is not built yet. When it
 is, an Operator changing a confirmed count should follow the same rule, attributed as
 `admin_edit` rather than `manual`.

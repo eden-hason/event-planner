@@ -87,7 +87,9 @@ export default async function EventLayout({
           currentUserId={effectiveUser?.id ?? auth.user.id}
           user={user}
         />
-        <SidebarInset className="bg-transparent">
+        {/* `min-w-0`: a flex item never shrinks below its content by default,
+            so a page wider than the room left would slide under the sidebar. */}
+        <SidebarInset className="min-w-0 bg-transparent">
           <ImpersonationBanner />
           <BottomNavProvider>
             <LayoutContentWrapper>

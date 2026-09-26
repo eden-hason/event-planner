@@ -97,6 +97,10 @@ export function GuestForm({
 }: GuestFormProps) {
   const t = useTranslations('guests');
   const isSections = layout === 'sections';
+  // The drawer words its placeholders its own way.
+  const placeholder = (
+    key: 'namePlaceholder' | 'phonePlaceholder' | 'groupPlaceholder',
+  ) => t(isSections ? `list.drawer.${key}` : `form.${key}`);
   const tCommon = useTranslations('common');
   const isEditMode = !!guest;
 
@@ -324,7 +328,11 @@ export function GuestForm({
         <FormItem>
           <FormLabel>{t('form.name')}</FormLabel>
           <FormControl>
-            <Input type="text" placeholder={t('form.namePlaceholder')} {...field} />
+            <Input
+              type="text"
+              placeholder={placeholder('namePlaceholder')}
+              {...field}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -343,7 +351,7 @@ export function GuestForm({
             <Input
               type="tel"
               dir="ltr"
-              placeholder={t('form.phonePlaceholder')}
+              placeholder={placeholder('phonePlaceholder')}
               className="rtl:text-right"
               {...field}
               value={field.value || ''}
@@ -446,7 +454,7 @@ export function GuestForm({
       control={form.control}
       name="rsvpStatus"
       render={({ field }) => (
-        <FormItem className="col-span-2">
+        <FormItem className={cn(!isSections && 'col-span-2')}>
           <FormLabel>{t('form.rsvpStatus')}</FormLabel>
           <FormControl>
             <div
@@ -580,7 +588,7 @@ export function GuestForm({
                 {/* `min-w-0` down the chain so a long group name ellipsizes
                     instead of pushing into the side control beside it. */}
                 <SelectTrigger className="w-full min-w-0 *:data-[slot=select-value]:min-w-0">
-                  <SelectValue placeholder={t('form.groupPlaceholder')}>
+                  <SelectValue placeholder={placeholder('groupPlaceholder')}>
                     {selectedGroup ? (
                       <span className="flex min-w-0 items-center gap-2">
                         <GroupIcon iconName={selectedGroup.icon} size="sm" />
@@ -825,6 +833,11 @@ export function GuestForm({
   );
 
   if (isSections) {
+    const comingField = countField(
+      'amount',
+      t('list.drawer.coming'),
+      !isConfirmed,
+    );
     // The desktop drawer: flat sections under small muted titles, grouped the
     // way the Owner thinks about a record - who, invited how, answered what,
     // seated where.
@@ -849,12 +862,23 @@ export function GuestForm({
             </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.rsvp')}>
-            <div className="grid grid-cols-2 gap-2.5">{rsvpField}</div>
-            {/* "Coming" is the Guest's answer - only a confirmed record has one. */}
-            <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
-              {countField('amount', t('list.drawer.coming'), !isConfirmed)}
-              {showDietary && mealChipsField}
-            </div>
+            {/* "Coming" is the Guest's answer - only a confirmed record has one.
+                With no Special Meals it shares the status row; otherwise it
+                heads the meals row. */}
+            {showDietary ? (
+              <>
+                {rsvpField}
+                <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+                  {comingField}
+                  {mealChipsField}
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-[minmax(0,1fr)_78px] gap-2.5">
+                {rsvpField}
+                {comingField}
+              </div>
+            )}
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
             {/* One row, per the design: a narrow table picker beside a one-line note. */}

@@ -1064,6 +1064,7 @@
         "markConfirmed": "סימון כמאושרים",
         "markDeclined": "סימון כלא מגיעים",
         "moveToGroup": "העברה לקבוצה",
+        "noGroups": "עוד אין קבוצות באירוע",
         "removeFromGroup": "הוצאה מהקבוצה",
         "open": "פתיחה",
         "delete": "מחיקה"
@@ -1144,19 +1145,11 @@
       "drawer": {
         "close": "סגירה",
         "newGuest": "אורח חדש",
-        "provenance": "עודכן · {who} · {date}",
-        "who": {
-          "guest": "האורח",
-          "you": "על ידך",
-          "operator": "נציג",
-          "organizer": "המארגן"
-        },
         "save": "שמירה",
         "add": "הוספת אורח",
         "delete": "מחיקה",
         "cancel": "ביטול",
         "activity": "פעילות",
-        "newestFirst": "מהחדש לישן",
         "activityEmpty": "עוד אין הודעות או שיחות",
         "activityFailed": "לא הצלחנו לטעון את הפעילות",
         "link": "הקישור האישי להזמנה",
@@ -1164,6 +1157,9 @@
         "copied": "הועתק",
         "preview": "תצוגה",
         "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה",
+        "namePlaceholder": "שם האורח או המשפחה",
+        "phonePlaceholder": "050-000-0000",
+        "groupPlaceholder": "בחירת קבוצה",
         "invited": "מוזמנים",
         "coming": "מגיעים",
         "noMeals": "אין",

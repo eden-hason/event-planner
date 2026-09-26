@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePublishedHeight } from '@/hooks/use-published-height';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -66,7 +67,6 @@ interface GuestsDesktopProps {
   messagedGuestIds: string[];
   showDietary: boolean;
   tables: TableOption[];
-  currentUserId: string | null;
   drawer: {
     open: boolean;
     guest: GuestWithGroupApp | null;
@@ -91,7 +91,6 @@ export function GuestsDesktop({
   messagedGuestIds,
   showDietary,
   tables,
-  currentUserId,
   drawer,
   onOpenGuest,
   onAddGuest,
@@ -170,19 +169,13 @@ export function GuestsDesktop({
     [allGuests],
   );
 
-  // The toolbar grows a shadow once it is stuck to the top of the viewport.
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [stuck, setStuck] = useState(false);
-  const isEmpty = allGuests.length === 0;
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(([entry]) =>
-      setStuck(!entry.isIntersecting),
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [isEmpty]);
+  const countRef = useRef<HTMLParagraphElement>(null);
+  // Only there while the list has rows; gone, it counts as zero.
+  usePublishedHeight(
+    countRef,
+    '--guest-count-h',
+    allGuests.length > 0 && rows.length > 0,
+  );
 
   // Escape clears the selection, unless a dialog or menu has claimed it.
   useEffect(() => {
@@ -358,7 +351,6 @@ export function GuestsDesktop({
       groups={groups}
       tables={tables}
       showDietary={showDietary}
-      currentUserId={currentUserId}
       onOpenChange={drawer.onOpenChange}
       onSaved={(guestId) => {
         drawer.onOpenChange(false);
@@ -384,7 +376,8 @@ export function GuestsDesktop({
   if (allGuests.length === 0) {
     return (
       <>
-        <div className="flex min-h-[520px] items-center justify-center p-10">
+        {/* Fills what is left of the page below the tabs, per the design. */}
+        <div className="flex min-h-[max(520px,calc(100svh-14rem))] items-center justify-center p-10">
           <div className="flex max-w-[520px] flex-col items-center gap-3.5 text-center">
             <span className="bg-primary/10 text-primary flex size-16 items-center justify-center rounded-[20px]">
               <IconUsers size={30} stroke={1.8} />
@@ -440,15 +433,13 @@ export function GuestsDesktop({
     !!params.issue;
 
   return (
-    <div className="flex flex-col">
+    <div className="@container/guests flex flex-col">
       <RsvpMeter guests={guests} />
-      <div ref={sentinelRef} className="h-px" aria-hidden />
       <GuestToolbar
         params={params}
         onChange={handleFilterChange}
         statusCounts={statusCounts}
         groups={groups}
-        stuck={stuck}
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}
         onImportDrive={onImportDrive}
@@ -475,7 +466,7 @@ export function GuestsDesktop({
       )}
 
       {rows.length === 0 ? (
-        <div className="border-input my-1 flex min-h-[360px] items-center justify-center rounded-[14px] border border-dashed">
+        <div className="border-input my-1 flex min-h-[max(360px,calc(100svh-24rem))] items-center justify-center rounded-[14px] border border-dashed">
           <div className="flex max-w-[380px] flex-col items-center gap-2.5 text-center">
             <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
               <IconSearch size={22} />
@@ -497,7 +488,11 @@ export function GuestsDesktop({
         </div>
       ) : (
         <>
-          <p className="text-muted-foreground pt-1.5 pb-2 text-[12.5px]">
+          {/* Pinned under the toolbar, which casts its shadow over it (D13). */}
+          <p
+            ref={countRef}
+            className="bg-card text-muted-foreground sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-[15] -mx-6 px-6 pt-1.5 pb-2 text-[12.5px]"
+          >
             {filtered
               ? t('list.countFiltered', {
                   shown: rows.length.toLocaleString(),

@@ -1064,6 +1064,7 @@
         "markConfirmed": "Mark confirmed",
         "markDeclined": "Mark declined",
         "moveToGroup": "Move to group",
+        "noGroups": "No groups in this event yet",
         "removeFromGroup": "Remove from group",
         "open": "Open",
         "delete": "Delete"
@@ -1144,19 +1145,11 @@
       "drawer": {
         "close": "Close",
         "newGuest": "New guest",
-        "provenance": "Updated · {who} · {date}",
-        "who": {
-          "guest": "by the guest",
-          "you": "by you",
-          "operator": "by an operator",
-          "organizer": "by the organizer"
-        },
         "save": "Save",
         "add": "Add guest",
         "delete": "Delete",
         "cancel": "Cancel",
         "activity": "Activity",
-        "newestFirst": "Newest first",
         "activityEmpty": "No messages or calls yet",
         "activityFailed": "Could not load the activity",
         "link": "Personal invitation link",
@@ -1164,6 +1157,9 @@
         "copied": "Copied",
         "preview": "Preview",
         "notesPlaceholder": "Internal note, the guest never sees it",
+        "namePlaceholder": "Guest or family name",
+        "phonePlaceholder": "050-000-0000",
+        "groupPlaceholder": "Choose a group",
         "invited": "Invited",
         "coming": "Coming",
         "noMeals": "None",

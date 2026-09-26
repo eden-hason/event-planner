@@ -42,8 +42,8 @@ export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
             />
           ))}
         </div>
-        <div className="text-muted-foreground flex justify-between gap-3 text-[12.5px]">
-          <div className="flex gap-4">
+        <div className="text-muted-foreground flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12.5px]">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
             {RSVP_STATUSES.map((status) => (
               <span key={status} className="inline-flex items-center gap-1.5">
                 <span

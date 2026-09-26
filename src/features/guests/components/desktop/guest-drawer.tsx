@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { format } from 'date-fns';
 import {
   IconCheck,
   IconCopy,
@@ -35,7 +34,7 @@ const FORM_ID = 'guest-drawer-form';
 
 /**
  * The desktop `?guest=` drawer - the one editor of a Guest Record. A floating
- * sheet with the record's identity and provenance on top, the form in flat
+ * sheet with the record's identity on top, the form in flat
  * sections, then its read-only Activity and invitation link.
  */
 export function GuestDrawer({
@@ -45,7 +44,6 @@ export function GuestDrawer({
   groups,
   tables,
   showDietary,
-  currentUserId,
   onOpenChange,
   onSaved,
   onDelete,
@@ -57,7 +55,6 @@ export function GuestDrawer({
   groups: GroupWithGuestsApp[];
   tables: TableOption[];
   showDietary: boolean;
-  currentUserId: string | null;
   onOpenChange: (open: boolean) => void;
   onSaved: (guestId: string | null) => void;
   onDelete: (guest: GuestWithGroupApp) => void;
@@ -74,7 +71,7 @@ export function GuestDrawer({
           if (guest) event.preventDefault();
         }}
       >
-        <DrawerHeader guest={guest} currentUserId={currentUserId} />
+        <DrawerHeader guest={guest} />
 
         <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-5 pt-4 pb-5">
           <GuestForm
@@ -132,13 +129,7 @@ export function GuestDrawer({
   );
 }
 
-function DrawerHeader({
-  guest,
-  currentUserId,
-}: {
-  guest: GuestWithGroupApp | null;
-  currentUserId: string | null;
-}) {
+function DrawerHeader({ guest }: { guest: GuestWithGroupApp | null }) {
   const t = useTranslations('guests.list');
 
   const invited = guest ? (guest.invitedAmount ?? guest.amount) : 0;
@@ -146,15 +137,6 @@ function DrawerHeader({
   const count = guest ? amountDisplay(guest) : null;
   const above =
     count?.changedByGuest && count.value > invited ? count.value - invited : 0;
-  const who = !guest?.rsvpChangedAt
-    ? null
-    : guest.rsvpChangeSource === 'guest'
-      ? t('drawer.who.guest')
-      : guest.rsvpChangeSource === 'admin_call'
-        ? t('drawer.who.operator')
-        : guest.rsvpChangedBy && guest.rsvpChangedBy === currentUserId
-          ? t('drawer.who.you')
-          : (guest.rsvpChangedByName ?? t('drawer.who.organizer'));
 
   return (
     <div className="flex items-start gap-3 border-b px-5 pt-[18px] pb-4">
@@ -195,14 +177,6 @@ function DrawerHeader({
                 className="bg-violet-tint text-violet-strong inline-flex h-5 items-center rounded-md px-1.5 text-[11px] font-bold"
               >
                 +{above}
-              </span>
-            )}
-            {who && guest.rsvpChangedAt && (
-              <span className="bg-muted text-muted-foreground inline-flex h-[22px] items-center rounded-full px-[9px] text-[11.5px] font-medium">
-                {t('drawer.provenance', {
-                  who,
-                  date: format(new Date(guest.rsvpChangedAt), 'd.M'),
-                })}
               </span>
             )}
           </div>

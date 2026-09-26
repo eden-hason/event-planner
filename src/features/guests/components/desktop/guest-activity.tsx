@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import {
   IconCircleCheck,
@@ -26,11 +26,12 @@ type State = { guestId: string; items: GuestActivityItem[] | null } | null;
 
 /**
  * The drawer's read-only Activity: Deliveries, Call Outcomes and RSVP changes
- * for one Guest Record, newest first. Loaded after the drawer opens, so it
- * never holds the drawer up.
+ * for one Guest Record, newest first, under a header per day. Loaded after
+ * the drawer opens, so it never holds the drawer up.
  */
 export function GuestActivity({ guestId }: { guestId: string }) {
   const t = useTranslations('guests.list');
+  const locale = useLocale();
   const [state, setState] = useState<State>(null);
 
   useEffect(() => {
@@ -45,19 +46,19 @@ export function GuestActivity({ guestId }: { guestId: string }) {
 
   const loading = state?.guestId !== guestId;
   const items = loading ? null : state.items;
+  // Each item's day, once, so a row can compare against its neighbours.
+  const days = items?.map((item) => dayKey(item.at)) ?? [];
+  const dayLabel = new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  });
 
   return (
     <section className="flex flex-col gap-2.5 border-t pt-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-muted-foreground text-xs font-bold tracking-[0.02em]">
-          {t('drawer.activity')}
-        </h3>
-        {!loading && items && items.length > 0 && (
-          <span className="text-muted-foreground text-[11.5px]">
-            {t('drawer.newestFirst')}
-          </span>
-        )}
-      </div>
+      <h3 className="text-muted-foreground text-xs font-bold tracking-[0.02em]">
+        {t('drawer.activity')}
+      </h3>
 
       {loading ? (
         <div className="flex flex-col gap-3.5" aria-busy>
@@ -82,31 +83,47 @@ export function GuestActivity({ guestId }: { guestId: string }) {
         </div>
       ) : (
         <ol className="flex flex-col">
-          {items.map((item, index) => (
-            <ActivityRow
-              key={index}
-              item={item}
-              last={index === items.length - 1}
-            />
-          ))}
+          {items.map((item, index) => {
+            const day = days[index];
+            const prev = days[index - 1] ?? null;
+            const next = days[index + 1] ?? null;
+            return (
+              <li key={index} className="flex flex-col">
+                {day && day !== prev && (
+                  <div className="flex items-center gap-2 pt-0.5 pb-2.5">
+                    <span className="text-muted-foreground text-[12.5px] font-bold whitespace-nowrap">
+                      {dayLabel.format(new Date(item.at!))}
+                    </span>
+                    <span className="bg-border h-px flex-1" />
+                  </div>
+                )}
+                {/* The rail only joins items on the same day. */}
+                <ActivityRow item={item} joined={!!day && day === next} />
+              </li>
+            );
+          })}
         </ol>
       )}
     </section>
   );
 }
 
+function dayKey(at: string | null) {
+  return at ? format(new Date(at), 'yyyy-MM-dd') : null;
+}
+
 function ActivityRow({
   item,
-  last,
+  joined,
 }: {
   item: GuestActivityItem;
-  last: boolean;
+  joined: boolean;
 }) {
   const t = useTranslations('guests.list.activity');
   const { icon: Icon, tone, title, meta, sub } = describe(item, t);
 
   return (
-    <li className="flex gap-[11px]">
+    <div className="flex gap-[11px]">
       <div className="flex shrink-0 flex-col items-center">
         <span
           className={cn(
@@ -119,7 +136,7 @@ function ActivityRow({
         <span
           className={cn(
             'min-h-2.5 w-[1.5px] flex-1',
-            last ? 'bg-transparent' : 'bg-border',
+            joined ? 'bg-border' : 'bg-transparent',
           )}
         />
       </div>
@@ -129,8 +146,11 @@ function ActivityRow({
             {title}
           </span>
           {item.at && (
-            <span className="text-muted-foreground text-[11.5px] whitespace-nowrap tabular-nums">
-              <bdi>{format(new Date(item.at), 'd.M · HH:mm')}</bdi>
+            <span
+              dir="ltr"
+              className="bg-muted text-muted-foreground flex h-[22px] shrink-0 items-center rounded-md px-[7px] text-xs font-semibold tabular-nums"
+            >
+              {format(new Date(item.at), 'HH:mm')}
             </span>
           )}
         </div>
@@ -141,7 +161,7 @@ function ActivityRow({
           </span>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
