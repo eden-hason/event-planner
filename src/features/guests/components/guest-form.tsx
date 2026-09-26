@@ -59,6 +59,7 @@ import {
   type MealCounts,
 } from '@/features/confirmation';
 import posthog from 'posthog-js';
+import { formatPhone } from '@/lib/phone';
 
 
 interface GuestFormProps {
@@ -114,7 +115,9 @@ export function GuestForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: guest?.name || '',
-      phone: guest?.phone || '',
+      // Shown the way the Owner writes it (054-1234567), not as the stored
+      // E.164; the save path converts it back (AppToDbTransformerSchema).
+      phone: formatPhone(guest?.phone),
       groupId: guest?.groupId ?? null,
       rsvpStatus:
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
@@ -131,7 +134,7 @@ export function GuestForm({
     if (guest) {
       form.reset({
         name: guest.name || '',
-        phone: guest.phone || '',
+        phone: formatPhone(guest.phone),
         groupId: guest.groupId ?? null,
         rsvpStatus:
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
