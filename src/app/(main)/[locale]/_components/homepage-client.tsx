@@ -340,12 +340,6 @@ export function HomepageClient() {
         .ps-line .v.bold{font-weight:700}
         .ps-line-bonus{display:inline-flex;align-items:center;gap:6px}
         .ps-free{font-weight:700;color:#15803D}
-        .ps-more{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:#F6F2F9}
-        .ps-more-title{font-size:15px;font-weight:700;color:var(--ink)}
-        .ps-more-row{display:flex;gap:10px;align-items:flex-start}
-        .ps-more-ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;border-radius:8px;background:#fff}
-        .ps-more-text{font-size:14px;line-height:1.5;color:var(--ink-2)}
-        .ps-more-text strong{color:var(--ink)}
         .ps-cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;margin-top:auto;border-radius:14px;background:linear-gradient(90deg,#D23CC2,#8B3FF0);color:#fff;font-size:18px;font-weight:700;box-shadow:0 6px 16px rgba(210,60,194,0.28),inset 0 -2px 0 rgba(0,0,0,0.08);transition:filter .15s ease,transform .15s ease}
         .ps-cta:hover{filter:brightness(1.06);transform:translateY(-1px)}
         .ps-cta-note{font-size:13px;color:#6E5F85;text-align:center;margin-top:-12px}
@@ -395,11 +389,6 @@ export function HomepageClient() {
           .ps-total-row .cur{font-size:22px}
           .ps-total-note{font-size:13px}
           .ps-lines{padding:12px 0;gap:8px;font-size:14px}
-          .ps-more{padding:12px;gap:8px;border-radius:14px}
-          .ps-more-title{font-size:14px}
-          .ps-more-ic{width:24px;height:24px;border-radius:7px}
-          .ps-more-ic svg{width:14px;height:14px}
-          .ps-more-text{font-size:13px;line-height:1.45}
           .ps-cta{height:50px;font-size:16px;border-radius:12px}
           .ps-cta-note{margin-top:-6px;font-size:12px}
         }
@@ -656,8 +645,8 @@ export function HomepageClient() {
         <div className="wrap">
           <div className="section-head reveal">
             <div className="eyebrow">חבילות ומחירים</div>
-            <h2 className="section-title">כמה זה יעלה לכם? בדקו בשנייה</h2>
-            <p className="section-sub">בוחרים איך לפנות למוזמנים, כמה מוזמנים יש לכם - ורואים מחיר סופי. תשלום חד פעמי, בלי אותיות קטנות.</p>
+            <h2 className="section-title">כמה זה יעלה לכם?</h2>
+            <p className="section-sub">בוחרים איך לפנות למוזמנים, כמה מוזמנים יש לכם - ורואים מחיר סופי. תשלום חד פעמי.</p>
           </div>
 
           <PricingSimulator onCtaClick={handleCtaClick} />
