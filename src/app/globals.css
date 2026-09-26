@@ -609,27 +609,3 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* Range thumb for the estimate slider. The track is painted by an inline
-   gradient so the filled portion tracks the value; only the thumb needs CSS. */
-.kt-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: #fff;
-  border: 3px solid var(--kt-brand);
-  box-shadow: 0 4px 12px rgba(210, 60, 194, 0.35);
-  cursor: pointer;
-}
-
-.kt-range::-moz-range-thumb {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: #fff;
-  border: 3px solid var(--kt-brand);
-  box-shadow: 0 4px 12px rgba(210, 60, 194, 0.35);
-  cursor: pointer;
-}

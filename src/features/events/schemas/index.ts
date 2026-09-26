@@ -120,17 +120,11 @@ export const GuestExperienceDbSchema = z.object({
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
 
 // --- Guests Estimate Schema ---
-// Roughly how many guest records the owner expects, from the onboarding slider.
-// A guess, not a limit - nothing enforces it.
+// Roughly how many guest records the owner expects. A guess, not a limit -
+// nothing enforces it. The onboarding slider that set it is gone, so only
+// events created before its removal carry one.
 export const GuestsEstimateSchema = z.number().int().positive();
 export type GuestsEstimate = z.infer<typeof GuestsEstimateSchema>;
-
-// Bounds of the onboarding slider. Exported so the estimate screen and anything
-// clamping a stored value read the same numbers.
-export const GUESTS_ESTIMATE_MIN = 50;
-export const GUESTS_ESTIMATE_MAX = 800;
-export const GUESTS_ESTIMATE_STEP = 10;
-export const GUESTS_ESTIMATE_DEFAULT = 300;
 
 // --- 1. The "Canonical" App-Level Schema ---
 // This is the SINGLE SOURCE OF TRUTH for what an "Event" object
@@ -465,15 +459,6 @@ export const DraftDateSchema = z.object({
 export const DraftLocationSchema = z.object({
   eventId: z.uuid(),
   location: LocationSchema.optional(),
-});
-
-export const DraftEstimateSchema = z.object({
-  eventId: z.uuid(),
-  guestsEstimate: z
-    .number()
-    .int()
-    .min(GUESTS_ESTIMATE_MIN)
-    .max(GUESTS_ESTIMATE_MAX),
 });
 
 export type DraftStepState = {

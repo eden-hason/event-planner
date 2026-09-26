@@ -8,7 +8,6 @@ import {
   createDraftEvent,
   publishDraftEvent,
   setDraftDate,
-  setDraftEstimate,
   setDraftLocation,
   setDraftNames,
 } from '../../actions';
@@ -27,7 +26,6 @@ import { TypeScreen } from './screens/type-screen';
 import { NamesScreen } from './screens/names-screen';
 import { DateScreen } from './screens/date-screen';
 import { VenueScreen } from './screens/venue-screen';
-import { EstimateScreen } from './screens/estimate-screen';
 import { ProfileScreen } from './screens/profile-screen';
 import { WelcomeBackScreen } from './screens/welcome-back-screen';
 import { PayoffScreen } from './screens/payoff-screen';
@@ -50,7 +48,6 @@ const QUESTIONS: readonly OnboardingStep[] = [
   'names',
   'date',
   'venue',
-  'estimate',
 ] as const;
 
 type Screen = OnboardingStep | 'profile' | 'welcome' | 'payoff';
@@ -61,7 +58,6 @@ type Answers = {
   eventDate: string | null;
   noDate: boolean;
   location?: Location;
-  guestsEstimate?: number;
 };
 
 export function OnboardingTakeover({
@@ -95,7 +91,6 @@ export function OnboardingTakeover({
     eventDate: draft?.eventDate ?? null,
     noDate: !!draft?.answeredDate && !draft.eventDate,
     location: draft?.locationName ? { name: draft.locationName } : undefined,
-    guestsEstimate: draft?.guestsEstimate,
   });
 
   // A returning couple gets the welcome-back frame first, but only once they
@@ -163,7 +158,6 @@ export function OnboardingTakeover({
       'names',
       'date',
       'venue',
-      'estimate',
       'payoff',
     ];
     const index = order.indexOf(screen);
@@ -249,21 +243,13 @@ export function OnboardingTakeover({
     saveInBackground('venue', (id) =>
       setDraftLocation({ eventId: id, location }),
     );
-    window.setTimeout(() => go('estimate'), 350);
+    window.setTimeout(() => go('payoff'), 350);
   };
 
   const handleNoVenue = () => {
     setAnswers((a) => ({ ...a, location: undefined }));
     saveInBackground('venue', (id) =>
       setDraftLocation({ eventId: id, location: undefined }),
-    );
-    go('estimate');
-  };
-
-  const handleEstimate = (guestsEstimate: number) => {
-    setAnswers((a) => ({ ...a, guestsEstimate }));
-    saveInBackground('estimate', (id) =>
-      setDraftEstimate({ eventId: id, guestsEstimate }),
     );
     go('payoff');
   };
@@ -405,15 +391,6 @@ export function OnboardingTakeover({
           onChange={(location) => setAnswers((a) => ({ ...a, location }))}
         />
       )}
-      {screen === 'estimate' && (
-        <EstimateScreen
-          initial={answers.guestsEstimate}
-          onFinish={handleEstimate}
-          onChange={(guestsEstimate) =>
-            setAnswers((a) => ({ ...a, guestsEstimate }))
-          }
-        />
-      )}
     </>
   );
 
@@ -443,7 +420,7 @@ export function OnboardingTakeover({
       <main className="flex flex-1 flex-col px-6 pb-10 lg:grid lg:grid-cols-[minmax(0,520px)_420px] lg:items-center lg:justify-center lg:gap-10 lg:px-10 lg:py-6 xl:gap-14">
         {/* Mobile: the card is a compact strip above the question, gaining a
             line with each answer. It must never crowd the question, hence the
-            bottom margin - on a tall screen like the estimate the question
+            bottom margin - on a tall screen the question
             track has no slack left to centre itself in, so its heading would
             otherwise start right under the card. */}
         {answers.eventType && (

@@ -8,7 +8,7 @@
  * Stored on the event as the furthest step answered, where skipping a question
  * ("we don't have a date yet") counts as answering it.
  */
-export type OnboardingStep = 'type' | 'names' | 'date' | 'venue' | 'estimate';
+export type OnboardingStep = 'type' | 'names' | 'date' | 'venue';
 
 /**
  * What the takeover needs to resume a Draft Event: the answers already given,

@@ -29,21 +29,6 @@ export const TAKEOVER_TOKENS = {
 export const TAKEOVER_WASH =
   'radial-gradient(70% 40% at 15% 0%, rgba(255,200,238,0.5) 0%, transparent 60%), radial-gradient(60% 35% at 90% 8%, rgba(210,194,255,0.45) 0%, transparent 60%), radial-gradient(70% 40% at 50% 100%, rgba(255,216,203,0.4) 0%, transparent 60%)';
 
-/**
- * Guest-record rates, in shekels, used by the estimate screen.
- *
- * Parameters rather than literals in the layout: WhatsApp is what we advertise
- * publicly today and SMS is a starting figure, and both are expected to move.
- * Nothing here is charged or saved - the estimate screen is not a checkout, and
- * the channel is re-chosen at payment time.
- */
-export const CHANNEL_RATES = {
-  whatsapp: 2,
-  sms: 1.2,
-} as const;
-
-export type MessageChannel = keyof typeof CHANNEL_RATES;
-
 /** The four event types, in the order the type screen lays them out. */
 export const ONBOARDING_EVENT_TYPES = [
   'wedding',

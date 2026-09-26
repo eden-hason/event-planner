@@ -15,7 +15,6 @@ export {
   setDraftNames,
   setDraftDate,
   setDraftLocation,
-  setDraftEstimate,
   publishDraftEvent,
   discardDraftEvent,
 } from './draft-event';
