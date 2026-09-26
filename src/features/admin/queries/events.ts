@@ -328,6 +328,7 @@ type ScheduleJoinRow = {
   schedule_type_id: string;
   scheduled_date: string;
   sent_at: string | null;
+  dispatched_at: string | null;
   status: string | null;
   target_status: string | null;
   schedule_types: unknown;
@@ -340,7 +341,7 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
   const schedules = unwrap(
     await supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, status, target_status, schedule_types(name, execution_kind), message_templates(channel)')
+      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(name, execution_kind), message_templates(channel)')
       .eq('event_id', eventId)
       .order('scheduled_date', { ascending: true }),
   ) as unknown as ScheduleJoinRow[];
@@ -386,10 +387,12 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
     const target = guests.filter((guest) => !schedule.target_status || guest.rsvp_status === schedule.target_status);
     const scheduleDeliveries = deliveries.filter((delivery) => delivery.schedule_id === schedule.id);
     const template = schedule.message_templates as unknown as { channel: string | null } | null;
+    // The Dispatcher claims a Schedule by setting dispatched_at and never writes
+    // status = 'sent', so a claimed one reads as sent - same as timelineStatus.
     const status: EventTimelineRow['status'] = isCall && round
       ? round.completed_at ? 'completed' : 'in_progress'
       : schedule.status === 'cancelled' ? 'cancelled'
-        : schedule.status === 'sent' ? 'sent' : 'planned';
+        : schedule.status === 'sent' || schedule.dispatched_at ? 'sent' : 'planned';
     return {
       id: schedule.id,
       kind: isCall ? 'call' : 'message',
