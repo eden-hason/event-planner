@@ -274,7 +274,7 @@ export function InvitationSection() {
             </div>
           </div>
         ) : (
-          <div data-readiness-focus>
+          <div>
             <FileUploadDropzone
               className={cn(
                 'border-primary/40 bg-primary/5 cursor-pointer rounded-[14px] border-[1.5px] border-dashed px-3.5 py-[22px]',

@@ -47,9 +47,6 @@ export function SectionStatus({
 /**
  * The shell every section of the details page shares: an icon, a title, the
  * section's own status, and the fields.
- *
- * `id` is the anchor the readiness summary scrolls to, so it belongs on the
- * outer element rather than on the heading.
  */
 export function SectionCard({
   id,

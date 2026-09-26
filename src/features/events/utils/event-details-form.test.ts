@@ -4,7 +4,6 @@ import {
   buildDefaultValues,
   buildUpdateFields,
   changedKeys,
-  missingReadinessItems,
   DEFAULT_MEAL_CHOICES,
 } from './event-details-form';
 import type { EventApp } from '../schemas';
@@ -27,21 +26,6 @@ function makeEvent(overrides: Partial<EventApp> = {}): EventApp {
     ...overrides,
   } as EventApp;
 }
-
-test('readiness wants coordinates, not a typed venue name', () => {
-  assert.deepEqual(
-    missingReadinessItems(makeEvent({ location: { name: 'Gani HaTeva' } })),
-    ['venue', 'invitation'],
-  );
-});
-
-test('readiness is empty once the venue is picked and the image is up', () => {
-  const event = makeEvent({
-    location: { name: 'Gani HaTeva', coords: { lat: 31.9, lng: 34.8 } },
-    invitations: { imageUrl: 'https://example.test/invite.png' },
-  });
-  assert.deepEqual(missingReadinessItems(event), []);
-});
 
 test('defaults fill every field so nothing starts undefined', () => {
   const values = buildDefaultValues(makeEvent());

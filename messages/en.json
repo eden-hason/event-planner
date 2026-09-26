@@ -1786,20 +1786,6 @@
       "bar_mitzva": "Bar Mitzva",
       "bat_mitzva": "Bat Mitzva"
     },
-    "readiness": {
-      "missingTitle": "{count, plural, one {One thing is missing for your guests} other {# things are missing for your guests}}",
-      "missingHint": "Finish it now or come back to it later",
-      "venue": {
-        "title": "Venue",
-        "consequence": "Without an address there is no navigation link in the day-of reminder",
-        "action": "Add"
-      },
-      "invitation": {
-        "title": "Invitation image",
-        "consequence": "The first message goes out without an image",
-        "action": "Upload"
-      }
-    },
     "hosts": {
       "titleCouple": "The couple",
       "titleSingleMale": "The bar mitzva boy",

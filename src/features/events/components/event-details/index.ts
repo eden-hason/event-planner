@@ -2,7 +2,6 @@
 export { EventDetailsWrapper } from './event-details-wrapper';
 
 // Sections, exported for composition and for tests.
-export { ReadinessSummary } from './readiness-summary';
 export { HostsSection } from './hosts-section';
 export { HostsEditorDrawer } from './hosts-editor-drawer';
 export { DateTimeSection } from './date-time-section';
@@ -15,6 +14,5 @@ export {
   EventDetailsProvider,
   useEventDetails,
   SECTION_IDS,
-  READINESS_FOCUS_ATTR,
   type DateChangeImpact,
 } from './event-details-context';

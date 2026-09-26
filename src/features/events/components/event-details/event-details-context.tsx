@@ -5,11 +5,7 @@ import type { NavHref } from '@/components/layout/nav-urls';
 import type { EventTypeKey } from '../../schemas';
 import type { ChangeKey } from '../../utils/event-details-form';
 
-/**
- * The anchors the readiness summary points at. A missing detail is named at the
- * top of the page and fixed further down it, so the summary needs a way to send
- * the Owner to the field rather than describe where it is.
- */
+/** The anchor id of each section on the page. */
 export const SECTION_IDS = {
   hosts: 'event-details-hosts',
   when: 'event-details-when',
@@ -17,12 +13,6 @@ export const SECTION_IDS = {
   invitation: 'event-details-invitation',
   experience: 'event-details-experience',
 } as const;
-
-/**
- * Marks the one control in a section that the readiness summary should land on.
- * Put it on the field the Owner has to fill, not on the section wrapper.
- */
-export const READINESS_FOCUS_ATTR = 'data-readiness-focus';
 
 /** How much of the outreach plan a date change would leave behind. */
 export interface DateChangeImpact {
@@ -52,7 +42,6 @@ interface EventDetailsContextValue {
   save: (keys: readonly ChangeKey[]) => Promise<boolean>;
   /** Reverts the named changes to their last-saved values. */
   revert: (keys: readonly ChangeKey[]) => void;
-  focusSection: (id: string) => void;
 }
 
 const EventDetailsContext = React.createContext<EventDetailsContextValue | null>(
