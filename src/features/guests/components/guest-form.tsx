@@ -549,12 +549,14 @@ export function GuestForm({
               onValueChange={(value) => field.onChange(value === 'none' ? null : value)}
             >
               <FormControl>
-                <SelectTrigger className="w-full">
+                {/* `min-w-0` down the chain so a long group name ellipsizes
+                    instead of pushing into the side control beside it. */}
+                <SelectTrigger className="w-full min-w-0 *:data-[slot=select-value]:min-w-0">
                   <SelectValue placeholder={t('form.groupPlaceholder')}>
                     {selectedGroup ? (
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
                         <GroupIcon iconName={selectedGroup.icon} size="sm" />
-                        {selectedGroup.name}
+                        <span className="truncate">{selectedGroup.name}</span>
                       </span>
                     ) : (
                       t('form.noGroup')
