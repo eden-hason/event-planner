@@ -58,7 +58,7 @@ export function GuestRowMenu({
           onClick={(event) => event.stopPropagation()}
           className={cn(
             'text-muted-foreground flex size-7 items-center justify-center rounded-[7px] outline-none',
-            'data-[state=open]:bg-muted opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100',
+            'data-[state=open]:bg-muted opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 [@media(pointer:coarse)]:opacity-100',
             'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
           )}
         >

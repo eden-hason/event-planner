@@ -526,7 +526,7 @@ export function GuestsDesktop({
       <div className="pointer-events-none sticky bottom-6 z-30 mt-3 flex flex-col items-center gap-3">
         <UndoToast
           pending={deferred.pending}
-          failedCount={deferred.failure?.ids.length ?? 0}
+          failedCount={deferred.failure?.returned ?? 0}
           onUndo={deferred.undo}
           onRetry={deferred.retry}
           onDismissFailure={deferred.dismissFailure}

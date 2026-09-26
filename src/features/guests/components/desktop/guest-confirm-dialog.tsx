@@ -86,7 +86,7 @@ function RsvpConfirm({
     <>
       <AlertDialogHeader className="gap-3 text-start">
         <AlertDialogTitle className="text-lg leading-snug font-extrabold">
-          {t(`title.${status}`, { count: impact.total })}
+          {t(`title.${status}`, { count: impact.changing })}
         </AlertDialogTitle>
         <AlertDialogDescription asChild>
           <div className="flex flex-col gap-2">

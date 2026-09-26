@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
+import { cn } from '@/lib/utils';
 
 /**
  * The slim RSVP meter above the list: one stacked bar, the share confirmed, and
@@ -46,7 +47,10 @@ export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
             {RSVP_STATUSES.map((status) => (
               <span key={status} className="inline-flex items-center gap-1.5">
                 <span
-                  className={`size-[7px] rounded-full ${rsvpPresentation(status).solid}`}
+                  className={cn(
+                    'size-[7px] rounded-full',
+                    rsvpPresentation(status).solid,
+                  )}
                 />
                 {t(`status.${status}`)}
                 <b className="text-foreground font-bold tabular-nums">

@@ -11,7 +11,11 @@ export type PendingDelete = {
   expiresAt: number;
 };
 
-export type DeleteFailure = { ids: string[] };
+export type DeleteFailure = {
+  ids: string[];
+  /** Rows back on the list - fewer than `ids` when some chunks committed. */
+  returned: number;
+};
 
 /**
  * A deferred hard delete (ADR 0025). `start` hides the rows at once and holds
@@ -51,8 +55,14 @@ export function useDeferredDelete(eventId: string) {
     setPending(null);
     const result = await deleteGuests(eventId, current.ids).catch(() => null);
     if (!result?.success) {
+      // A delete runs in chunks, so a failure can come after some rows are
+      // already gone. Unhiding them all is safe - the revalidated list no
+      // longer has the deleted ones - but only the rest are "back".
       unhide(current.ids);
-      setFailure({ ids: current.ids });
+      setFailure({
+        ids: current.ids,
+        returned: current.ids.length - (result?.count ?? 0),
+      });
     }
   }, [eventId, unhide]);
 
@@ -95,6 +105,9 @@ export function useDeferredDelete(eventId: string) {
       if (!current) return;
       clearTimer();
       pendingRef.current = null;
+      // Cleared in state too: a page restored from the back-forward cache
+      // must not come back to an Undo toast whose delete has already gone.
+      setPending(null);
       void fetch(`/api/events/${eventId}/guests/delete`, {
         method: 'POST',
         keepalive: true,
