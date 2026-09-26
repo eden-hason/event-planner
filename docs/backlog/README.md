@@ -46,3 +46,4 @@ in the diff, not here.
 | [0012](0012-a-side-is-an-enum-not-a-nameable-group.md) | A Side is a fixed enum, so it cannot be renamed from the event details page | guests / events | open |
 | [0013](0013-retry-media-download-failures.md) | A WhatsApp that failed on a media download is never retried | schedules / outreach | open |
 | [0014](0014-due-time-edit-guards.md) | Editing a Due Time has no guard for the past or for after the Event | schedules / outreach | done |
+| [0015](0015-purge-webhook-events.md) | Raw webhook payloads are kept forever, guest phone numbers included | schedules / privacy | open |
