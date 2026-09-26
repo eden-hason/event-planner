@@ -335,6 +335,39 @@ export function GuestForm({
     />
   );
 
+  // The drawer's layout sits the amount beside group and side, so there it is
+  // a plain number input rather than the stepper, which needs a row of its own.
+  const compactAmountField = (
+    <FormField
+      control={form.control}
+      name="amount"
+      render={() => (
+        <FormItem>
+          <FormLabel>{t('form.amount')}</FormLabel>
+          <FormControl>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={amountValue}
+              // Selected on focus, so typing replaces the count instead of
+              // appending to it (an emptied field falls back to 1).
+              onFocus={(event) => event.target.select()}
+              onChange={(event) => {
+                const next = Math.floor(Number(event.target.value));
+                form.setValue('amount', Number.isFinite(next) && next >= 1 ? next : 1, {
+                  shouldDirty: true,
+                });
+              }}
+              className="text-center tabular-nums"
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
   const amountField = (
     <FormField
       control={form.control}
@@ -710,11 +743,11 @@ export function GuestForm({
             </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.invitation')}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_78px] gap-2.5">
               {groupField}
               {sideField}
+              {compactAmountField}
             </div>
-            {amountField}
           </FormSection>
           <FormSection title={t('list.drawerSections.rsvp')}>
             <div className="grid grid-cols-2 gap-2.5">{rsvpField}</div>
