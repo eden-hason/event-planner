@@ -2328,32 +2328,6 @@
       "continue": "Continue",
       "skip": "Haven't booked a venue yet"
     },
-    "estimate": {
-      "title": "What will this cost you?",
-      "subtitle": "You pay before the first message goes out - everything until then is free",
-      "sliderLabel": "Roughly how many guest records?",
-      "sliderHelp": "A record = a family / couple / single guest listed under one phone number",
-      "rate": "{rate} ₪",
-      "perRecord": "per record",
-      "channelTitle": "How should we message your guests?",
-      "channel": {
-        "whatsapp": "WhatsApp",
-        "sms": "SMS"
-      },
-      "includedTitle": "What the package includes",
-      "included": {
-        "invitation": "Sending the invitation",
-        "confirmations": "2 confirmation rounds",
-        "callRounds": "2 rounds of phone calls from our team",
-        "reminder": "An event-day reminder with directions, table number and gifting via Bit/Paybox",
-        "thankYou": "A thank-you message after the event"
-      },
-      "more": {
-        "title": "And that is not all",
-        "description": "Guest list, seating, budget and gifts - every planning tool is included"
-      },
-      "finish": "Let's go"
-    },
     "payoff": {
       "subtitle": "Your event exists. From here, everything starts falling into place",
       "cta": "Let's start planning",

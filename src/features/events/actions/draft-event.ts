@@ -7,7 +7,6 @@ import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import {
   DraftDateSchema,
-  DraftEstimateSchema,
   DraftLocationSchema,
   DraftNamesSchema,
   EventTypeKeySchema,
@@ -21,6 +20,7 @@ import {
   readEventTypeKey,
   readHostNames,
 } from '../utils/event-title';
+import { ONBOARDING_STEPS, answeredIndex } from '../utils/onboarding-progress';
 import type { OnboardingStep } from '../types';
 
 /**
@@ -36,21 +36,13 @@ import type { OnboardingStep } from '../types';
  */
 
 /** Records how far onboarding got, without ever moving the marker backwards. */
-const STEP_ORDER: readonly OnboardingStep[] = [
-  'type',
-  'names',
-  'date',
-  'venue',
-  'estimate',
-];
-
 function furthestStep(
   current: string | null | undefined,
   reached: OnboardingStep,
-): OnboardingStep {
-  const currentIdx = STEP_ORDER.indexOf(current as OnboardingStep);
-  const reachedIdx = STEP_ORDER.indexOf(reached);
-  return currentIdx > reachedIdx ? (current as OnboardingStep) : reached;
+): string {
+  return answeredIndex(current) > ONBOARDING_STEPS.indexOf(reached)
+    ? (current as string)
+    : reached;
 }
 
 /**
@@ -323,49 +315,6 @@ export async function setDraftLocation(
   } catch (error) {
     console.error('Set draft location error:', error);
     return { success: false, message: 'Failed to save the venue' };
-  }
-}
-
-/**
- * Saves the guest-record estimate from the slider.
- *
- * Only the count is stored. The channel the couple toyed with, and the price it
- * implied, are deliberately not saved - that choice is re-made at payment time
- * and is not a commitment here.
- */
-export async function setDraftEstimate(
-  input: unknown,
-): Promise<DraftStepState> {
-  const blocked = await assertNotImpersonating();
-  if (blocked) return { success: false, message: blocked };
-
-  const parsed = DraftEstimateSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, message: parsed.error.issues[0].message };
-  }
-  const { eventId, guestsEstimate } = parsed.data;
-
-  try {
-    const supabase = await createClient();
-    const { draft, message } = await loadDraft(supabase, eventId);
-    if (!draft) return { success: false, message };
-
-    const { error } = await supabase
-      .from('events')
-      .update({
-        guests_estimate: guestsEstimate,
-        onboarding_step: furthestStep(draft.onboarding_step, 'estimate'),
-      })
-      .eq('id', eventId);
-
-    if (error) {
-      console.error('Error saving draft estimate:', error);
-      return { success: false, message: 'Failed to save the estimate' };
-    }
-    return { success: true, message: null };
-  } catch (error) {
-    console.error('Set draft estimate error:', error);
-    return { success: false, message: 'Failed to save the estimate' };
   }
 }
 

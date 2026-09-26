@@ -94,7 +94,7 @@ export async function createEvent(formData: FormData): Promise<CreateEventState>
         // insert. 'draft' now means onboarding is unfinished, and such an event
         // has no workspace and is hidden from the event switcher.
         status: 'published',
-        onboarding_step: 'estimate',
+        onboarding_step: 'venue',
         is_default: true,
       })
       .select('id')

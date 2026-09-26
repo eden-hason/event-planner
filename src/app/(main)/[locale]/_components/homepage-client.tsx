@@ -14,6 +14,8 @@ import seatingShot from '@/assets/seating.png';
 import sharingShot from '@/assets/sharing.png';
 import whatsappShot from '@/assets/whatsapp.png';
 
+import { PricingSimulator } from './pricing-simulator';
+
 const WHATSAPP_NUMBER = '972552639234';
 const WHATSAPP_OPENING_MESSAGE = 'היי, אשמח לקבל פרטים נוספים על Kululu';
 
@@ -34,21 +36,6 @@ const FEATURES: Array<{
   { scene:'seating', image:seatingShot, imageAlt:'סידורי הושבה ומפת שולחנות', color:'lavender', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>, title:'סידורי הושבה', body:'סידורי הושבה מודרניים שמשנים את כל החוויה', bullets:['מסדרים את המוזמנים לשולחנות בצורה פשוטה ונוחה','מערכת AI שיוצרת סידורי הושבה לפי קבוצות וקטגוריות','משנים ומעדכנים את סידורי ההושבה בקלות באמצעות AI'] },
   { scene:'budget', image:budgetShot, imageAlt:'ניהול תקציב, הוצאות וספקים', color:'peach', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2z"/><path d="M20 12h-4a2 2 0 000 4h4V12z"/><path d="M4 6V5a2 2 0 012-2h12a2 2 0 012 2v1"/></svg>, title:'ניהול תקציב', body:'ניהול כל ההוצאות, הספקים והמתנות במקום אחד', bullets:['מעקב מסודר אחרי הוצאות, תשלומים וספקים','תיעוד מלא של מתנות האורחים וההכנסות מהאירוע','הגדרת תקציב ומעקב אחריו בזמן אמת בדשבורד חכם'] },
   { scene:'sharing', image:sharingShot, imageAlt:'שיתוף האירוע וניהול הרשאות לשותפים', color:'sun', icon:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>, title:'שיתוף', body:'תכנון אירוע טוב יותר מתחיל בשיתוף פעולה', bullets:['מצרפים שותף לניהול האירוע בכמה קליקים','מגדירים הרשאות צפייה או עריכה לכל שותף','עובדים יחד בצורה מסודרת ומסונכרנת','שקיפות מלאה ושיתוף פעולה נוח בתהליך תכנון האירוע'] },
-];
-
-const OFFER_DEADLINE = '2026-09-15T23:59:59';
-
-const OFFER_FEATURES: Array<{
-  title: string;
-  desc: string;
-  bg: string;
-  color: string;
-  icon: React.ReactNode;
-}> = [
-  { title:'אישורי הגעה בוואטסאפ', desc:'הודעות אוטומטיות למוזמנים והמערכת מרכזת את התשובות בזמן אמת', bg:'rgba(37,211,102,0.12)', color:'#16a34a', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> },
-  { title:'2 סבבי שיחות טלפון', desc:'נציג אנושי מתקשר למוזמנים שלא ענו - שני סבבים מלאים, בלי כאב ראש', bg:'rgba(59,130,246,0.12)', color:'#2563eb', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> },
-  { title:'סידורי הושבה דיגיטליים', desc:'בונים את מפת השולחנות בגרירה פשוטה, וה-AI מציע שיבוצים חכמים', bg:'rgba(139,92,246,0.12)', color:'#7c3aed', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg> },
-  { title:'ניהול הוצאות ומתנות', desc:'עוקבים אחרי כל הוצאה ומתנה ויודעים בדיוק לאן הולך כל שקל', bg:'rgba(251,113,133,0.14)', color:'#e11d48', icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
 ];
 
 export function HomepageClient() {
@@ -133,26 +120,6 @@ export function HomepageClient() {
   const [activeScene, setActiveScene] = useState<string>('guests');
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set([0]));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // null until mounted so server and first client render match (no countdown hydration mismatch)
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const remainingSeconds = Math.max(
-    0,
-    Math.floor(((new Date(OFFER_DEADLINE).getTime()) - (now ?? new Date(OFFER_DEADLINE).getTime())) / 1000)
-  );
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const countdownUnits = [
-    { value: pad(Math.floor(remainingSeconds / 86400)), label: 'ימים' },
-    { value: pad(Math.floor(remainingSeconds / 3600) % 24), label: 'שעות' },
-    { value: pad(Math.floor(remainingSeconds / 60) % 60), label: 'דקות' },
-    { value: pad(remainingSeconds % 60), label: 'שניות' },
-  ];
 
   function toggleFaq(i: number) {
     setOpenFaqs((prev) => {
@@ -310,47 +277,132 @@ export function HomepageClient() {
         @keyframes spin{to{transform:rotate(360deg)}}
         .step h3{font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.01em}
         .step p{font-size:15px;color:var(--ink-2);line-height:1.55;margin:0}
-        .pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:stretch}
-        .plan{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:28px 24px 26px;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;overflow:hidden}
-        .plan:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:rgba(26,11,46,0.14)}
-.plan-tagline{font-size:15px;color:var(--ink-2);margin:0 0 24px;line-height:1.4}
-        .plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
-        .plan-price .cur{font-size:22px;font-weight:700;color:var(--ink-2);letter-spacing:-0.01em}
-        .plan-price .amt{font-size:48px;font-weight:800;letter-spacing:-0.03em;color:var(--ink);line-height:1}
-        .plan-per{font-size:13px;color:var(--ink-3);font-weight:500;margin-bottom:22px}
-        .plan-meta{display:flex;flex-direction:column;gap:10px;padding:16px 0;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);margin-bottom:22px}
-        .plan-meta .row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)}
-        .plan-meta .row .ic{width:26px;height:26px;border-radius:8px;background:rgba(167,139,250,0.12);color:var(--lavender);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-        .plan-meta .row b{font-weight:700}
-        .plan-meta .row .reserve-ic{background:rgba(255,188,173,0.25);color:#c45a3e}
-        .plan-cta{margin-top:auto;width:100%;padding:13px 18px;border-radius:12px;background:#fff;border:1.5px solid var(--line);color:var(--ink);font-weight:700;font-size:14.5px;transition:all .15s ease;cursor:pointer}
-        .plan-cta:hover{border-color:var(--primary);color:var(--primary)}
-        .plan .pop-badge{position:absolute;top:18px;left:18px;background:rgba(210,60,194,0.08);color:var(--primary);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px}
-        .pricing-incl{margin-top:40px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 28px;display:flex;align-items:center;flex-wrap:wrap;gap:12px 28px}
-        .pricing-incl .lbl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary)}
-        .pricing-incl .item{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--ink);font-weight:500}
-        .pricing-incl .item svg{color:#25D366;flex-shrink:0}
-        .pricing-foot{text-align:center;margin-top:28px;font-size:14px;color:var(--ink-3)}
-        .pricing-foot a{color:var(--primary);font-weight:600}
-        .pricing-foot a:hover{text-decoration:underline}
-
-        .wo-card{width:100%;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));overflow:hidden}
-        .wo-pricing{padding:44px;display:flex;flex-direction:column;align-items:flex-start;gap:18px;background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06));border-inline-end:1px solid var(--line)}
-        .wo-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:linear-gradient(90deg,var(--primary),#8b3ff0);color:#fff;font-size:13px;font-weight:700;white-space:nowrap}
-        .wo-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-        .wo-price .amt{font-size:clamp(52px,6vw,76px);font-weight:800;letter-spacing:-0.03em;color:var(--ink);line-height:1;white-space:nowrap}
-        .wo-price .per{font-size:19px;font-weight:600;color:var(--ink-2);white-space:nowrap}
-        .wo-note{margin:0;font-size:14px;color:var(--ink-2);line-height:1.6}
-        .wo-cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
-        .wo-features{padding:44px;display:flex;flex-direction:column;gap:8px}
-        .wo-features-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:10px}
-        .wo-feature{display:flex;align-items:flex-start;gap:14px;padding:13px 14px;border-radius:14px;transition:background .15s ease}
-        .wo-feature:hover{background:rgba(26,11,46,0.03)}
-        .wo-feature-ic{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-        .wo-feature-text{display:flex;flex-direction:column;gap:2px}
-        .wo-feature-text .ft{font-size:15px;font-weight:700;color:var(--ink)}
-        .wo-feature-text .fd{font-size:13.5px;color:var(--ink-2);line-height:1.55}
-        @media(max-width:900px){.wo-pricing{border-inline-end:none;border-bottom:1px solid var(--line)}.wo-pricing,.wo-features{padding:32px}}
+        .pricing{background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06)),#FAFAFA}
+        .ps-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:stretch}
+        .ps-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md)}
+        .ps-config{display:flex;flex-direction:column;gap:36px;padding:40px}
+        .ps-block{display:flex;flex-direction:column;gap:16px}
+        .ps-block-records{gap:20px}
+        .ps-step-head{display:flex;align-items:flex-start;gap:10px}
+        .ps-step-num{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-size:14px;font-weight:700}
+        .ps-step-text{display:flex;flex-direction:column;gap:4px}
+        .ps-step-title{margin:0;font-size:20px;font-weight:700;line-height:28px}
+        .ps-step-sub{margin:0;font-size:14px;color:var(--ink-2);line-height:1.5;max-width:380px}
+        .ps-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+        .ps-chan{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px;text-align:right;color:var(--ink);border-radius:16px;border:2px solid rgba(26,11,46,0.1);background:#fff;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
+        .ps-chan:hover{border-color:rgba(210,60,194,0.5)}
+        .ps-chan.on{border-color:var(--primary);background:rgba(210,60,194,0.05);box-shadow:0 6px 16px rgba(210,60,194,0.16)}
+        .ps-chan:focus-visible,.ps-step-btn:focus-visible,.ps-cta:focus-visible{outline:3px solid rgba(139,63,240,0.45);outline-offset:2px}
+        .ps-chan-head{display:flex;align-items:center;gap:12px;width:100%}
+        .ps-chan-ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:12px}
+        .ps-chan-name{font-size:17px;font-weight:700;line-height:1.3}
+        .ps-chan-desc{font-size:14px;color:var(--ink-2);line-height:1.5}
+        .ps-chan-price{display:flex;align-items:baseline;gap:4px;margin-top:auto}
+        .ps-chan-price .amt{font-size:24px;font-weight:800}
+        .ps-chan-price .per{font-size:14px;color:#6E5F85}
+        .ps-records-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+        .ps-stepper{display:flex;align-items:center;gap:10px}
+        .ps-step-btn{width:44px;height:44px;border-radius:12px;border:1px solid rgba(26,11,46,0.12);background:#fff;color:var(--ink);font-size:22px;font-weight:600}
+        .ps-step-btn:hover{background:#F6EEF8}
+        .ps-count{min-width:128px;padding:8px 16px;border-radius:12px;background:#F6F2F9;text-align:center}
+        .ps-count .n{font-size:28px;font-weight:800}
+        .ps-count .u{font-size:14px;color:var(--ink-2);margin-inline-start:4px}
+        .ps-slider{display:flex;flex-direction:column;gap:10px;padding:8px 0}
+        .ps-range{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:999px;outline:none;margin:0;cursor:pointer;direction:rtl}
+        .ps-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--primary);box-shadow:0 4px 12px rgba(210,60,194,0.35);cursor:grab}
+        .ps-range::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--primary);box-shadow:0 4px 12px rgba(210,60,194,0.35);cursor:grab}
+        .ps-range:focus-visible::-webkit-slider-thumb{outline:3px solid rgba(139,63,240,0.45);outline-offset:2px}
+        .ps-ticks{position:relative;height:20px;font-size:13px;color:#6E5F85}
+        .ps-ticks span{position:absolute;top:0}
+        .ps-gift{display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:18px;border:1.5px solid rgba(210,60,194,0.35);background:linear-gradient(90deg,rgba(210,60,194,0.09),rgba(139,63,240,0.09))}
+        .ps-gift-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:72px;height:72px;border-radius:16px;background:linear-gradient(135deg,#D23CC2,#8B3FF0);color:#fff;box-shadow:0 6px 16px rgba(210,60,194,0.28)}
+        .ps-gift-badge .n{font-size:30px;font-weight:800;line-height:1}
+        .ps-gift-badge .u{font-size:11px;font-weight:600;opacity:.9}
+        .ps-gift-text{display:flex;flex-direction:column;gap:4px;flex-grow:1}
+        .ps-gift-text .t{font-size:18px;font-weight:700;color:var(--ink)}
+        .ps-gift-text .d{font-size:14px;color:var(--ink-2);line-height:1.5}
+        .ps-summary{display:flex;flex-direction:column;gap:24px;padding:32px}
+        .ps-sum-head{display:flex;flex-direction:column;gap:6px}
+        .ps-sum-label{font-size:15px;font-weight:600;color:var(--ink-2)}
+        .ps-sum-sel{display:flex;align-items:center;gap:8px}
+        .ps-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+        .ps-sum-rate{font-size:14px;color:#6E5F85}
+        .ps-total{display:flex;flex-direction:column;gap:4px}
+        .ps-total-row{display:flex;align-items:baseline;gap:6px}
+        .ps-total-row .amt{font-size:64px;font-weight:800;line-height:1;letter-spacing:-1px}
+        .ps-total-row .cur{font-size:28px;font-weight:700}
+        .ps-total-note{font-size:14px;color:#6E5F85}
+        .ps-lines{display:flex;flex-direction:column;gap:12px;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:15px}
+        .ps-line{display:flex;justify-content:space-between;align-items:center;gap:12px}
+        .ps-line .k{color:var(--ink-2)}
+        .ps-line .k.strong{color:var(--ink);font-weight:600}
+        .ps-line .v{font-weight:600}
+        .ps-line .v.bold{font-weight:700}
+        .ps-line-bonus{display:inline-flex;align-items:center;gap:6px}
+        .ps-free{font-weight:700;color:#15803D}
+        .ps-more{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;background:#F6F2F9}
+        .ps-more-title{font-size:15px;font-weight:700;color:var(--ink)}
+        .ps-more-row{display:flex;gap:10px;align-items:flex-start}
+        .ps-more-ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;border-radius:8px;background:#fff}
+        .ps-more-text{font-size:14px;line-height:1.5;color:var(--ink-2)}
+        .ps-more-text strong{color:var(--ink)}
+        .ps-cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;margin-top:auto;border-radius:14px;background:linear-gradient(90deg,#D23CC2,#8B3FF0);color:#fff;font-size:18px;font-weight:700;box-shadow:0 6px 16px rgba(210,60,194,0.28),inset 0 -2px 0 rgba(0,0,0,0.08);transition:filter .15s ease,transform .15s ease}
+        .ps-cta:hover{filter:brightness(1.06);transform:translateY(-1px)}
+        .ps-cta-note{font-size:13px;color:#6E5F85;text-align:center;margin-top:-12px}
+        @media(max-width:1080px){.ps-grid{grid-template-columns:1fr}}
+        .ps-chan-note{display:none}
+        @media(max-width:720px){
+          #pricing{padding:56px 0}
+          #pricing .section-head{margin-bottom:28px}
+          #pricing .section-sub{font-size:15px}
+          .ps-grid{gap:14px}
+          .ps-config{padding:18px 16px;gap:22px;border-radius:20px}
+          .ps-block{gap:10px}
+          .ps-block-records{gap:12px}
+          .ps-step-num{width:24px;height:24px;font-size:12px}
+          .ps-step-title{font-size:17px;line-height:24px}
+          .ps-step-sub{font-size:12.5px}
+          .ps-channels{gap:8px}
+          .ps-chan{align-items:center;gap:6px;padding:10px 6px;text-align:center;border-radius:14px}
+          .ps-chan-head{flex-direction:column;gap:6px}
+          .ps-chan-ic{width:32px;height:32px;border-radius:10px}
+          .ps-chan-ic svg{width:17px;height:17px}
+          .ps-chan-name{font-size:13.5px;line-height:1.25;min-height:34px;display:flex;align-items:center}
+          .ps-chan-desc{display:none}
+          .ps-chan-price{flex-direction:column;align-items:center;gap:0;margin-top:0}
+          .ps-chan-price .amt{font-size:18px}
+          .ps-chan-price .per{font-size:11.5px}
+          .ps-chan-note{display:block;margin:0;font-size:13px;color:var(--ink-2);line-height:1.45}
+          .ps-records-head{gap:10px}
+          .ps-stepper{width:100%;gap:8px}
+          .ps-step-btn{width:40px;height:40px;font-size:20px}
+          .ps-count{flex-grow:1;min-width:0;padding:6px 12px}
+          .ps-count .n{font-size:22px}
+          .ps-slider{padding:4px 0;gap:8px}
+          .ps-ticks{font-size:12px}
+          .ps-gift{padding:10px 12px;gap:12px;border-radius:14px}
+          .ps-gift-badge{width:44px;height:44px;border-radius:12px}
+          .ps-gift-badge .n{font-size:17px}
+          .ps-gift-badge .u{display:none}
+          .ps-gift-text{gap:2px}
+          .ps-gift-text .t{font-size:15px}
+          .ps-gift-text .d{font-size:12.5px;line-height:1.4}
+          .ps-summary{padding:18px 16px;gap:14px;border-radius:20px}
+          .ps-sum-head{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+          .ps-sum-label{font-size:14px}
+          .ps-total{flex-direction:row;align-items:baseline;justify-content:space-between;gap:8px}
+          .ps-total-row .amt{font-size:44px}
+          .ps-total-row .cur{font-size:22px}
+          .ps-total-note{font-size:13px}
+          .ps-lines{padding:12px 0;gap:8px;font-size:14px}
+          .ps-more{padding:12px;gap:8px;border-radius:14px}
+          .ps-more-title{font-size:14px}
+          .ps-more-ic{width:24px;height:24px;border-radius:7px}
+          .ps-more-ic svg{width:14px;height:14px}
+          .ps-more-text{font-size:13px;line-height:1.45}
+          .ps-cta{height:50px;font-size:16px;border-radius:12px}
+          .ps-cta-note{margin-top:-6px;font-size:12px}
+        }
         .cta-banner{margin:24px 0 0;border-radius:var(--r-xl);background:var(--grad-banner);padding:80px 64px;color:#fff;text-align:center;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(210,60,194,0.25)}
         .cta-banner h2{font-size:clamp(34px,4vw,52px);font-weight:800;letter-spacing:-0.025em;line-height:1.05;margin:0 0 16px;text-wrap:balance}
         .cta-banner p{font-size:18px;opacity:.92;margin:0 auto 32px;max-width:560px;line-height:1.5}
@@ -366,7 +418,6 @@ export function HomepageClient() {
         .reveal{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
         .reveal.in{opacity:1;transform:none}
         @media(max-width:1080px){
-          .pricing-grid{grid-template-columns:repeat(2,1fr)}
           .hero-grid{grid-template-columns:1fr;gap:64px}
           .hero-shot{max-width:560px;margin:0 auto}
           .features{grid-template-columns:repeat(2,1fr)}
@@ -387,11 +438,6 @@ export function HomepageClient() {
           .how{background:linear-gradient(160deg,#FFF0FC 0%,#F3EEFF 55%,#FFF4F0 100%)}
           #faq{background:linear-gradient(160deg,#FFF0FC 0%,#F3EEFF 55%,#FFF4F0 100%)}
           .faq-foot{background:#fff;border-color:rgba(210,60,194,0.14)}
-        }
-        @media(max-width:560px){
-          .pricing-grid{grid-template-columns:1fr}
-          .wo-pricing,.wo-features{padding:24px 20px}
-          .wo-feature{padding:12px 6px}
         }
         .hp-nav-hamburger{display:none;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:background .15s ease;flex-shrink:0}
         .hp-nav-hamburger:hover{background:rgba(26,11,46,0.06)}
@@ -605,56 +651,16 @@ export function HomepageClient() {
         </div>
       </section>
 
-      {/* WEDDING PRICING OFFER */}
-      <section className="section wo" id="pricing" style={{paddingTop:64}} dir="rtl">
+      {/* PRICING */}
+      <section className="section pricing" id="pricing" dir="rtl">
         <div className="wrap">
           <div className="section-head reveal">
-            <div className="eyebrow">מבצע לזמן מוגבל</div>
-            <h2 className="section-title">מסלול חתונות מיוחד</h2>
-            <p className="section-sub">כל מה שצריך כדי לנהל את המוזמנים לחתונה שלכם - במחיר אחד פשוט, לזמן מוגבל בלבד</p>
+            <div className="eyebrow">חבילות ומחירים</div>
+            <h2 className="section-title">כמה זה יעלה לכם? בדקו בשנייה</h2>
+            <p className="section-sub">בוחרים איך לפנות למוזמנים, כמה מוזמנים יש לכם - ורואים מחיר סופי. תשלום חד פעמי, בלי אותיות קטנות.</p>
           </div>
 
-          <div className="wo-card reveal">
-            <div className="wo-pricing">
-              <span className="wo-badge">🎊 מבצע חתונות - לזמן מוגבל</span>
-              <div className="wo-price">
-                <span className="amt"><span dir="ltr">2</span> ₪</span>
-                <span className="per">לרשומה</span>
-              </div>
-              <p className="wo-note">תשלום חד פעמי לפי כמות המוזמנים – רק בעת שליחת ההזמנות. עד אז, הכל בחינם.</p>
-              <div className="wo-cta-row">
-                <Link href="/start" className="btn btn-primary heb" onClick={handleCtaClick}>
-                  שריינו את המבצע
-                </Link>
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-ghost heb"
-                >
-                  <IconBrandWhatsapp size={17} stroke={1.75} />
-                  דברו איתנו
-                </a>
-              </div>
-            </div>
-
-            <div className="wo-features">
-              <span className="wo-features-title">מה כלול במסלול החתונות?</span>
-              {OFFER_FEATURES.map(({ title, desc, bg, color, icon }) => (
-                <div key={title} className="wo-feature">
-                  <span className="wo-feature-ic" style={{ background: bg, color }}>{icon}</span>
-                  <span className="wo-feature-text">
-                    <span className="ft">{title}</span>
-                    <span className="fd">{desc}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="pricing-foot reveal">
-            מתכננים בר/בת מצווה, ברית או אירוע עסקי? יש לנו מסלולים גמישים לכל סוגי האירועים - <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener noreferrer">דברו איתנו</a>
-          </p>
+          <PricingSimulator onCtaClick={handleCtaClick} />
         </div>
       </section>
 
@@ -671,7 +677,7 @@ export function HomepageClient() {
             <div className="faq-list reveal">
               {([
                 { q:'איך מתבצע החיוב ב Kululu?', a:'החיוב מתבצע לפי אירוע - תשלום חד פעמי לפי כמות רשומות המוזמנים שלכם' },
-                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>ניתן לשדרג לחבילה גדולה יותר בכל עת, בקיזוז החבילה ששולמה כבר.<br/>בנוסף, אנו מעניקים לכם 10% רשומות רזרבה שנועדו בדיוק לתוספות של הרגע האחרון.</> },
+                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>אין בעיה. כל חבילה כוללת רשומות נוספות במתנה בדיוק בשביל האורחים של הרגע האחרון.<br/>צריכים עוד? מוסיפים רשומות לתזמון באותו מחיר לרשומה, או רק מוסיפים אותם לרשימה ומעדכנים סטטוס בעצמכם או שולחים להם קישור אישור אישי.</> },
                 { q:'האם ניתן לנהל את האירוע יחד עם בן/בת הזוג או מפיק האירוע?', a:'בטח, ניתן לצרף שותפים לניהול האירוע עם הרשאות צפייה או עריכה.' },
                 { q:'איך עוזר ה-AI מסדר הושבה?', a:<>הוא משתמש בקבוצות ובהערות שהוספתם - &quot;חברים של הכלה&quot;, &quot;משפחה חתן&quot;, &quot;חברים צבא&quot; ומציע שיבוצים שתוכלו לאשר, לערוך או להתעלם מהם.<br/>עוזר ה-AI לא מזיז אף אחד ללא אישורכם.</> },
                 { q:'האם פרטי האורחים שלי מאובטחים?', a:<>בוודאי. רשימת האורחים שלכם שייכת לכם, אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק.<br/>הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.</> },
