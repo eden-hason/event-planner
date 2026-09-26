@@ -82,8 +82,9 @@ A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; th
 collecting it is a **Confirmation** round (see Schedule Type).
 
 A confirmed RSVP carries how many Guests are coming and their **Special Meals**. How many
-are coming may be more than the Guest Record was invited for; the Owner sees that flagged. It can be
-changed by the Guest until the **RSVP Cutoff**.
+are coming may differ from how many the Guest Record was invited for, fewer or more; the Owner sees a
+Guest's own change flagged. It can be changed by the Guest until the **RSVP Cutoff**. An Owner who
+changes it is overriding the Guest, and the RSVP becomes the Owner's.
 
 ## RSVP Cutoff
 
