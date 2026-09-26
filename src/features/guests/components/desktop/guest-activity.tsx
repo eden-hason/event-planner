@@ -197,7 +197,11 @@ function describe(item: GuestActivityItem, t: T) {
       return {
         icon: IconPencil,
         tone: TONE.neutral,
-        title: t('manual', { status: t(`manualStatus.${item.status}`) }),
+        title: item.countOnly
+          ? t('manualCount', { count: item.amount })
+          : item.status === 'confirmed'
+            ? t('manualConfirmed', { count: item.amount })
+            : t('manual', { status: t(`manualStatus.${item.status}`) }),
         meta: item.byCurrentUser ? t('manualByYou') : item.byName,
         sub: null,
       };

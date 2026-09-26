@@ -92,6 +92,7 @@ test('an RSVP the Owner typed in is its own entry', () => {
     ...empty,
     manualChange: {
       status: 'declined',
+      amount: 2,
       at: '2026-09-02T10:00:00Z',
       byName: 'דנה',
       byCurrentUser: true,
@@ -100,10 +101,100 @@ test('an RSVP the Owner typed in is its own entry', () => {
   assert.deepEqual(item, {
     kind: 'rsvp',
     status: 'declined',
+    amount: 2,
     at: '2026-09-02T10:00:00Z',
     byName: 'דנה',
     byCurrentUser: true,
+    countOnly: false,
   });
+});
+
+const ownerConfirms = (at: string) => ({
+  status: 'confirmed' as const,
+  amount: 4,
+  at,
+  byName: null,
+  byCurrentUser: true,
+});
+
+const rsvpItem = (input: Input) => {
+  const item = buildGuestActivity(input).find((entry) => entry.kind === 'rsvp');
+  assert.ok(item && item.kind === 'rsvp');
+  return item;
+};
+
+test('the Owner changing a confirmed Guest’s count is a count change, not a new answer', () => {
+  const item = rsvpItem({
+    ...empty,
+    answers: [
+      {
+        response: 'confirmed',
+        count: 1,
+        channel: 'web',
+        at: '2026-09-19T13:05:00Z',
+      },
+    ],
+    manualChange: ownerConfirms('2026-09-26T16:49:00Z'),
+  });
+  assert.equal(item.countOnly, true);
+  assert.equal(item.amount, 4);
+});
+
+test('a count confirmed on a call is the answer the Owner then changes', () => {
+  const item = rsvpItem({
+    ...empty,
+    calls: [
+      { roundNumber: 1, outcome: 'confirmed', at: '2026-09-19T13:05:00Z' },
+    ],
+    manualChange: ownerConfirms('2026-09-26T16:49:00Z'),
+  });
+  assert.equal(item.countOnly, true);
+});
+
+test('confirming a Guest who had declined is a new answer', () => {
+  const item = rsvpItem({
+    ...empty,
+    answers: [
+      {
+        response: 'confirmed',
+        count: 2,
+        channel: 'whatsapp',
+        at: '2026-09-10T10:00:00Z',
+      },
+      {
+        response: 'declined',
+        count: null,
+        channel: 'whatsapp',
+        at: '2026-09-19T13:05:00Z',
+      },
+    ],
+    manualChange: ownerConfirms('2026-09-26T16:49:00Z'),
+  });
+  assert.equal(item.countOnly, false);
+});
+
+test('confirming a Guest nobody heard from is a new answer', () => {
+  const item = rsvpItem({
+    ...empty,
+    manualChange: ownerConfirms('2026-09-26T16:49:00Z'),
+  });
+  assert.equal(item.countOnly, false);
+});
+
+test('an answer that came after the Owner’s change does not describe it', () => {
+  const item = rsvpItem({
+    ...empty,
+    answers: [
+      {
+        response: 'confirmed',
+        count: 1,
+        channel: 'web',
+        at: '2026-09-27T09:00:00Z',
+      },
+    ],
+    manualChange: ownerConfirms('2026-09-26T16:49:00Z'),
+  });
+  assert.equal(item.countOnly, false);
 });
 
 test('a Delivery with no time yet sorts after everything that has one', () => {

@@ -76,7 +76,7 @@ export async function getGuestActivityInput(
     supabase
       .from('guests')
       .select(
-        'rsvp_status, rsvp_change_source, rsvp_changed_at, rsvp_changed_by, rsvp_changed_by_name',
+        'rsvp_status, amount, rsvp_change_source, rsvp_changed_at, rsvp_changed_by, rsvp_changed_by_name',
       )
       .eq('id', guestId)
       .maybeSingle(),
@@ -114,6 +114,7 @@ export async function getGuestActivityInput(
     g.rsvp_change_source === 'manual' && g.rsvp_changed_at
       ? {
           status: g.rsvp_status,
+          amount: g.amount,
           at: g.rsvp_changed_at,
           byName: g.rsvp_changed_by_name ?? null,
           byCurrentUser: !!currentUserId && g.rsvp_changed_by === currentUserId,

@@ -1207,7 +1207,9 @@
           "confirmed": "confirmed",
           "pending": "pending",
           "declined": "not coming"
-        }
+        },
+        "manualCount": "Coming updated to {count}",
+        "manualConfirmed": "RSVP updated to confirmed, {count} coming"
       },
       "drawerSections": {
         "contact": "Contact",

@@ -55,6 +55,8 @@ export type ActivityAnswer = {
 /** The latest RSVP the Owner (or a collaborator) typed in, from the record's provenance. */
 export type ActivityManualChange = {
   status: 'confirmed' | 'declined' | 'pending';
+  /** How many are coming as of the change. */
+  amount: number;
   at: string;
   byName: string | null;
   byCurrentUser: boolean;
@@ -71,7 +73,14 @@ export type GuestActivityItem =
   | ({ kind: 'delivery'; outcome: DeliveryOutcome } & ActivityDelivery)
   | ({ kind: 'call' } & ActivityCall)
   | ({ kind: 'answer' } & ActivityAnswer)
-  | ({ kind: 'rsvp' } & ActivityManualChange);
+  | ({
+      kind: 'rsvp';
+      /**
+       * The Owner changed only how many are coming: the answer before was
+       * already "confirmed" (ADR 0026). Otherwise the change is a new answer.
+       */
+      countOnly: boolean;
+    } & ActivityManualChange);
 
 export function deliveryOutcome({
   status,
@@ -106,7 +115,13 @@ export function buildGuestActivity(
     ...input.calls.map((call) => ({ kind: 'call' as const, ...call })),
     ...input.answers.map((answer) => ({ kind: 'answer' as const, ...answer })),
     ...(input.manualChange
-      ? [{ kind: 'rsvp' as const, ...input.manualChange }]
+      ? [
+          {
+            kind: 'rsvp' as const,
+            ...input.manualChange,
+            countOnly: isCountOnlyChange(input, input.manualChange),
+          },
+        ]
       : []),
   ];
   // Newest first; a Delivery still waiting for its first attempt has no time and goes last.
@@ -115,4 +130,34 @@ export function buildGuestActivity(
     if (!b.at) return -1;
     return b.at.localeCompare(a.at);
   });
+}
+
+/**
+ * The record keeps only its latest change and who made it, not what changed.
+ * An Owner's change to "confirmed" that lands on a Guest whose last answer -
+ * their own, or given on a call - was already "confirmed" can only have
+ * changed the count.
+ */
+function isCountOnlyChange(
+  input: GuestActivityInput,
+  change: ActivityManualChange,
+): boolean {
+  if (change.status !== 'confirmed') return false;
+  const earlier = [
+    ...input.answers.map((answer) => ({
+      at: answer.at,
+      confirmed: answer.response === 'confirmed',
+    })),
+    ...input.calls
+      .filter(
+        (call) => call.outcome === 'confirmed' || call.outcome === 'declined',
+      )
+      .map((call) => ({
+        at: call.at,
+        confirmed: call.outcome === 'confirmed',
+      })),
+  ]
+    .filter((answer) => answer.at < change.at)
+    .sort((a, b) => b.at.localeCompare(a.at));
+  return earlier[0]?.confirmed ?? false;
 }

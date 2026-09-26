@@ -1207,7 +1207,9 @@
           "confirmed": "מאושר",
           "pending": "ממתין",
           "declined": "לא מגיע"
-        }
+        },
+        "manualCount": "מספר המגיעים עודכן ל-{count}",
+        "manualConfirmed": "אישור ההגעה עודכן למאושר, {count} מגיעים"
       },
       "drawerSections": {
         "contact": "פרטי קשר",
