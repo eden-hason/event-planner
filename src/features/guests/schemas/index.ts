@@ -200,6 +200,12 @@ export const GuestUpsertSchema = z.object({
     .optional(),
   mealCounts: MealCountsSchema.optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
+  /**
+   * How many the Owner invited, when the caller keeps it apart from `amount`
+   * (the drawer's "invited" and "coming"). Left out, an Owner edit of `amount`
+   * moves the invitation with it, as a new invitation (ADR 0023).
+   */
+  invitedAmount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   notes: z.string().nullable().optional(),
   side: z.enum(['bride', 'groom']).nullable().optional(),
   tableId: z.uuid().nullable().optional(),
@@ -240,6 +246,9 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     }
     if (appData.amount !== undefined) {
       dbData.amount = appData.amount;
+    }
+    if (appData.invitedAmount !== undefined) {
+      dbData.invited_amount = appData.invitedAmount;
     }
     if (appData.notes !== undefined) {
       dbData.notes = appData.notes ?? null;

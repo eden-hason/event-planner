@@ -1163,7 +1163,12 @@
         "copy": "העתקה",
         "copied": "הועתק",
         "preview": "תצוגה",
-        "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה"
+        "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה",
+        "invited": "מוזמנים",
+        "coming": "מגיעים",
+        "noMeals": "אין",
+        "addMeal": "הוספה",
+        "meals": "מנות מיוחדות"
       },
       "activity": {
         "schedule": {
@@ -1209,7 +1214,8 @@
         "invitation": "הזמנה",
         "rsvp": "אישור הגעה",
         "seating": "הושבה והערות"
-      }
+      },
+      "amountChangedHint": "האורח שינה את הכמות באישור ההגעה: הוזמנו {invited}, מגיעים {coming}"
     }
   },
   "home": {

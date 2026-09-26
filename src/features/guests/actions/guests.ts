@@ -49,6 +49,9 @@ export async function upsertGuest(
     if (parsedData.amount && typeof parsedData.amount === 'string') {
       parsedData.amount = Number(parsedData.amount);
     }
+    if (parsedData.invitedAmount && typeof parsedData.invitedAmount === 'string') {
+      parsedData.invitedAmount = Number(parsedData.invitedAmount);
+    }
     // Handle explicit null for groupId (remove from group)
     if (parsedData.groupId === 'null') {
       parsedData.groupId = null;
@@ -98,7 +101,13 @@ export async function upsertGuest(
         // invited_amount with it, which also clears an "above invited" flag.
         // Saving the form untouched does not, so a flag is not dismissed by
         // editing a name (ADR 0023). New guests get it from the insert trigger.
-        if (amount !== undefined && existing && amount !== existing.amount) {
+        // A caller that sends the invitation itself has already decided it.
+        if (
+          validatedData.invitedAmount === undefined &&
+          amount !== undefined &&
+          existing &&
+          amount !== existing.amount
+        ) {
           dbData.invited_amount = amount;
         }
         counts ??= parseMealCounts(existing?.meal_counts);

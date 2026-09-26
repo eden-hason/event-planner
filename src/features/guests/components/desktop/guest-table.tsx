@@ -8,6 +8,8 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
+import { amountDisplay } from '@/features/guests/utils/guest-amount';
+import { IconUserEdit } from '@tabler/icons-react';
 import type { HeaderState } from '@/features/guests/utils/guest-selection';
 import type { MealChoice } from '@/lib/meal-choices';
 import { formatPhone } from '@/lib/phone';
@@ -82,8 +84,8 @@ export function GuestTable({
   });
 
   const grid = showMeals
-    ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 150px 60px 56px minmax(0,1fr) 44px'
-    : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 60px 56px 44px';
+    ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 150px 76px 56px minmax(0,1fr) 44px'
+    : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 56px 44px';
 
   return (
     <div className="bg-card rounded-t-xl border border-b-0">
@@ -167,7 +169,8 @@ function GuestRow({
   onAction: (action: RowAction) => void;
 }) {
   const t = useTranslations('guests');
-  const invited = guest.invitedAmount ?? guest.amount;
+  const count = amountDisplay(guest);
+  const invited = count.invited;
   const confirmed = guest.rsvpStatus === 'confirmed';
   const above =
     confirmed && guest.amount > invited ? guest.amount - invited : 0;
@@ -264,10 +267,23 @@ function GuestRow({
         )}
       </span>
 
-      <span className="text-muted-foreground text-[13px] tabular-nums">
-        {confirmed && guest.amount !== invited
-          ? `${guest.amount}/${invited}`
-          : invited}
+      <span className="flex items-center">
+        {count.changedByGuest ? (
+          <span
+            title={t('list.amountChangedHint', {
+              invited: count.invited,
+              coming: count.value,
+            })}
+            className="inline-flex h-[22px] cursor-help items-center gap-[5px] rounded-[7px] bg-sky-100 ps-1.5 pe-[7px] text-[13px] font-bold text-sky-700 tabular-nums dark:bg-sky-400/15 dark:text-sky-300"
+          >
+            <IconUserEdit size={13} stroke={2.2} />
+            {count.value}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-[13px] tabular-nums">
+            {count.value}
+          </span>
+        )}
       </span>
 
       <span className="text-muted-foreground text-[13px] font-semibold tabular-nums">

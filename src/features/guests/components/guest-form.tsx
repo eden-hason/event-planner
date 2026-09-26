@@ -60,6 +60,8 @@ import {
 } from '@/features/confirmation';
 import posthog from 'posthog-js';
 import { formatPhone } from '@/lib/phone';
+import { resolveAmounts } from '@/features/guests/utils/guest-amount';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 interface GuestFormProps {
@@ -124,6 +126,7 @@ export function GuestForm({
         'pending',
       mealCounts: guest?.mealCounts ?? {},
       amount: guest?.amount || 1,
+      invitedAmount: guest?.invitedAmount ?? guest?.amount ?? 1,
       notes: guest?.notes || '',
       side: guest?.side ?? null,
       tableId: guest?.tableId ?? null,
@@ -141,6 +144,7 @@ export function GuestForm({
           'pending',
         mealCounts: guest.mealCounts ?? {},
         amount: guest.amount || 1,
+        invitedAmount: guest.invitedAmount ?? guest.amount ?? 1,
         notes: guest.notes || '',
         side: guest.side ?? null,
         tableId: guest.tableId ?? null,
@@ -223,8 +227,22 @@ export function GuestForm({
     onPendingChange?.(isPending);
   }, [isPending, onPendingChange]);
 
-  const onSubmit = (values: GuestUpsert) => {
+  const onSubmit = (submitted: GuestUpsert) => {
     const formData = new FormData();
+    // The drawer keeps the invitation and the answer apart; the card layout has
+    // one count and leaves the invitation to follow it on the server (ADR 0023).
+    const { invitedAmount: _invited, ...rest } = submitted;
+    const values: GuestUpsert = isSections
+      ? {
+          ...rest,
+          ...resolveAmounts({
+            rsvpStatus: submitted.rsvpStatus ?? 'pending',
+            invited: _invited ?? 1,
+            coming: submitted.amount ?? 1,
+          }),
+        }
+      : rest;
+    const savedAmount = values.amount ?? amountValue;
 
     if (isEditMode && guest?.id) {
       formData.append('id', guest.id);
@@ -237,7 +255,7 @@ export function GuestForm({
       }
       if (key === 'mealCounts') {
         // Trimmed to the amount on screen, so what is saved is what was shown.
-        formData.append(key, JSON.stringify(normalizeMealCounts(mealCounts, { amount: amountValue })));
+        formData.append(key, JSON.stringify(normalizeMealCounts(mealCounts, { amount: savedAmount })));
         return;
       }
       if (key === 'notes') {
@@ -281,6 +299,8 @@ export function GuestForm({
   // disabled rather than showing a value that is about to stop being true.
   const rsvpValue = form.watch('rsvpStatus');
   const isDeclined = rsvpValue === 'declined';
+  const isConfirmed = rsvpValue === 'confirmed';
+  const invitedValue = form.watch('invitedAmount') || 1;
   const tableIdValue = form.watch('tableId');
 
   React.useEffect(() => {
@@ -335,27 +355,35 @@ export function GuestForm({
     />
   );
 
-  // The drawer's layout sits the amount beside group and side, so there it is
-  // a plain number input rather than the stepper, which needs a row of its own.
-  const compactAmountField = (
+  // The drawer's counts are plain number inputs rather than the stepper, which
+  // needs a row of its own: "invited" sits beside group and side, "coming"
+  // beside the Special Meals, per the design.
+  const countField = (
+    name: 'amount' | 'invitedAmount',
+    label: string,
+    disabled = false,
+  ) => (
     <FormField
       control={form.control}
-      name="amount"
-      render={() => (
+      name={name}
+      render={({ field }) => (
         <FormItem>
-          <FormLabel>{t('form.amount')}</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <FormControl>
             <Input
               type="number"
               inputMode="numeric"
               min={1}
-              value={amountValue}
+              disabled={disabled}
+              // A record that is not coming has no answer to show.
+              value={disabled ? '' : (field.value ?? 1)}
+              placeholder="-"
               // Selected on focus, so typing replaces the count instead of
               // appending to it (an emptied field falls back to 1).
               onFocus={(event) => event.target.select()}
               onChange={(event) => {
                 const next = Math.floor(Number(event.target.value));
-                form.setValue('amount', Number.isFinite(next) && next >= 1 ? next : 1, {
+                form.setValue(name, Number.isFinite(next) && next >= 1 ? next : 1, {
                   shouldDirty: true,
                 });
               }}
@@ -708,6 +736,75 @@ export function GuestForm({
     />
   );
 
+  // The drawer's Special Meals: what is chosen, as chips, and one way to add or
+  // adjust them. Bounded by how many are coming (see Special Meal).
+  const chosenMeals = DIETARY_PRESETS.filter((preset) => (mealCounts[preset.value] ?? 0) > 0);
+  const mealChipsField = (
+    <FormItem>
+      <FormLabel>{t('list.drawer.meals')}</FormLabel>
+      <Popover>
+        <PopoverTrigger asChild disabled={!isConfirmed}>
+          <button
+            type="button"
+            className="border-input flex min-h-9 w-full flex-wrap items-center gap-[5px] rounded-[10px] border px-1.5 py-[5px] text-start outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {chosenMeals.length === 0 && (
+              <span className="text-muted-foreground px-1.5 text-sm">{t('list.drawer.noMeals')}</span>
+            )}
+            {chosenMeals.map((preset) => (
+              <span
+                key={preset.value}
+                className="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong inline-flex h-[26px] items-center gap-[5px] rounded-[7px] px-[9px] text-[12.5px] font-semibold"
+              >
+                {dietaryLabels[preset.value] ?? preset.label}
+                <span className="font-bold tabular-nums">×{mealCounts[preset.value]}</span>
+              </span>
+            ))}
+            {isConfirmed && (
+              <span className="text-primary ms-auto inline-flex h-[26px] items-center gap-1 rounded-[7px] px-2 text-[12.5px] font-semibold">
+                <IconPlus size={13} stroke={2.4} />
+                {t('list.drawer.addMeal')}
+              </span>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-64 p-1.5">
+          <div className="divide-y">
+            {DIETARY_PRESETS.map((preset) => {
+              const value = mealCounts[preset.value] ?? 0;
+              return (
+                <div key={preset.value} className="flex items-center gap-2 px-2 py-1.5">
+                  <span className="flex-1 text-sm">{dietaryLabels[preset.value] ?? preset.label}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    disabled={value <= 0}
+                    onClick={() => setMealCount(preset.value, value - 1)}
+                  >
+                    <IconMinus size={14} />
+                  </Button>
+                  <span className="w-5 text-center text-sm font-semibold tabular-nums">{value}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    disabled={mealsLeft <= 0}
+                    onClick={() => setMealCount(preset.value, value + 1)}
+                  >
+                    <IconPlus size={14} />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </FormItem>
+  );
+
   const actions = !hideActions && (
     <div className="flex gap-2">
       <Button type="submit" disabled={isPending}>
@@ -748,12 +845,16 @@ export function GuestForm({
             <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_78px] gap-2.5">
               {groupField}
               {sideField}
-              {compactAmountField}
+              {countField('invitedAmount', t('list.drawer.invited'))}
             </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.rsvp')}>
             <div className="grid grid-cols-2 gap-2.5">{rsvpField}</div>
-            {showDietary && mealsField}
+            {/* "Coming" is the Guest's answer - only a confirmed record has one. */}
+            <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+              {countField('amount', t('list.drawer.coming'), !isConfirmed)}
+              {showDietary && mealChipsField}
+            </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
             {/* One row, per the design: a narrow table picker beside a one-line note. */}
@@ -769,7 +870,7 @@ export function GuestForm({
                       tables={tables}
                       value={field.value ?? null}
                       onChange={field.onChange}
-                      partyHeads={amountValue}
+                      partyHeads={isConfirmed ? amountValue : invitedValue}
                       originalTableId={guest?.tableId ?? null}
                       originalPartyHeads={guest?.amount ?? 0}
                       guestName={form.watch('name')}
