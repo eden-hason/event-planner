@@ -14,6 +14,7 @@ interface FeatureLayoutContextType {
   subtitle: ReactNode | null;
   action: ReactNode | null;
   back: FeatureHeaderBack | null;
+  sticky: boolean;
   setHeader: (config: FeatureHeaderConfig) => void;
   clearHeader: () => void;
 }
@@ -29,6 +30,12 @@ interface FeatureHeaderConfig {
   subtitle?: ReactNode;
   action?: ReactNode;
   back?: FeatureHeaderBack;
+  /**
+   * Keep the header row pinned to the top while the page scrolls (`md` and
+   * up), for a page whose own sticky controls stack under it. Its height is
+   * published as `--page-header-h`.
+   */
+  sticky?: boolean;
 }
 
 const FeatureLayoutContext = createContext<FeatureLayoutContextType | null>(
@@ -40,12 +47,14 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
   const [subtitle, setSubtitle] = useState<ReactNode | null>(null);
   const [action, setAction] = useState<ReactNode | null>(null);
   const [back, setBack] = useState<FeatureHeaderBack | null>(null);
+  const [sticky, setSticky] = useState(false);
 
   const setHeader = useCallback((config: FeatureHeaderConfig) => {
     setTitle(config.title);
     setSubtitle(config.subtitle ?? null);
     setAction(config.action ?? null);
     setBack(config.back ?? null);
+    setSticky(config.sticky ?? false);
   }, []);
 
   const clearHeader = useCallback(() => {
@@ -53,11 +62,12 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
     setSubtitle(null);
     setAction(null);
     setBack(null);
+    setSticky(false);
   }, []);
 
   return (
     <FeatureLayoutContext.Provider
-      value={{ title, subtitle, action, back, setHeader, clearHeader }}
+      value={{ title, subtitle, action, back, sticky, setHeader, clearHeader }}
     >
       {children}
     </FeatureLayoutContext.Provider>

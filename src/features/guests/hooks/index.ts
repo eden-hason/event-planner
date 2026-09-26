@@ -1,3 +1,2 @@
 export { useGuestFilters } from './use-guest-filters';
 export type { GuestSortKey } from './use-guest-filters';
-export { useGuestsTable } from './use-guests-table';

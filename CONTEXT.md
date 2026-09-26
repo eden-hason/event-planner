@@ -48,6 +48,9 @@ quantity being counted is billable; say "guest" when talking about human beings 
 Both the Owner and an **Operator** can create and delete Guest Records. Because the row
 is the billing unit, either act changes what the Owner pays.
 
+Deleting a Guest Record deletes its Deliveries and Call Outcomes with it. There is no
+archive and no restoring it later.
+
 ## Seating Plan
 
 An Event's arrangement of Guest Records among Tables and of those Tables relative to one
@@ -79,8 +82,9 @@ A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; th
 collecting it is a **Confirmation** round (see Schedule Type).
 
 A confirmed RSVP carries how many Guests are coming and their **Special Meals**. How many
-are coming may be more than the Guest Record was invited for; the Owner sees that flagged. It can be
-changed by the Guest until the **RSVP Cutoff**.
+are coming may differ from how many the Guest Record was invited for, fewer or more; the Owner sees a
+Guest's own change flagged. It can be changed by the Guest until the **RSVP Cutoff**. An Owner who
+changes it is overriding the Guest, and the RSVP becomes the Owner's.
 
 ## RSVP Cutoff
 

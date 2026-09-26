@@ -39,6 +39,11 @@ interface GuestTableComboboxProps {
   originalPartyHeads?: number;
   guestName?: string;
   disabled?: boolean;
+  /**
+   * A narrow trigger for the drawer's one-row Seating section: just the table
+   * number, with the list opening wider than the trigger.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -62,6 +67,7 @@ export function GuestTableCombobox({
   originalPartyHeads = 0,
   guestName,
   disabled = false,
+  compact = false,
 }: GuestTableComboboxProps) {
   const t = useTranslations('guests.form.table');
   const [open, setOpen] = React.useState(false);
@@ -103,16 +109,27 @@ export function GuestTableCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className="w-full justify-between font-normal"
+          aria-label={compact ? t('label') : undefined}
+          className={cn(
+            'w-full justify-between font-normal',
+            compact && 'gap-1 px-2.5 tabular-nums',
+          )}
         >
-          <span className={cn(!selected && 'text-muted-foreground')}>
-            {selected ? displayName(selected) : t('placeholder')}
+          <span className={cn('truncate', !selected && 'text-muted-foreground')}>
+            {compact
+              ? (selected?.tableNumber ?? '-')
+              : selected
+                ? displayName(selected)
+                : t('placeholder')}
           </span>
           <IconChevronDown className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        className={cn(
+          'p-0',
+          compact ? 'w-72' : 'w-[var(--radix-popover-trigger-width)]',
+        )}
         align="start"
       >
         <Command shouldFilter={false}>

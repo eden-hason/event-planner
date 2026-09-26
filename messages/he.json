@@ -992,6 +992,228 @@
       "duplicates": "כפילויות אפשריות",
       "all": "לבדיקה",
       "clear": "הסרת הסינון"
+    },
+    "list": {
+      "count": "{total, plural, one {רשומת אורח אחת} other {# רשומות אורחים}}",
+      "countFiltered": "מוצגות {shown} מתוך {total}",
+      "meter": {
+        "confirmed": "אישרו",
+        "line": "{guests} אורחים · {records} רשומות אורחים"
+      },
+      "status": {
+        "all": "הכל",
+        "confirmed": "אישרו",
+        "pending": "ממתינים",
+        "declined": "לא מגיעים"
+      },
+      "searchPlaceholder": "חיפוש שם, טלפון, קבוצה או הערה",
+      "filters": {
+        "button": "סינון",
+        "group": "קבוצה",
+        "side": "צד",
+        "sideAll": "הכל",
+        "noPhoneOnly": "רק בלי מספר טלפון",
+        "noGroups": "עוד אין קבוצות"
+      },
+      "sort": "מיון",
+      "more": "עוד פעולות",
+      "importFile": "ייבוא מקובץ",
+      "importDrive": "ייבוא מ-Google Drive",
+      "exportHeading": "ייצוא ל-iPlan",
+      "addGuest": "הוספת אורח",
+      "chips": {
+        "group": "קבוצה: {name}",
+        "side": "צד: {side}",
+        "noPhone": "בלי טלפון",
+        "clearAll": "ניקוי הכל",
+        "remove": "הסרת {label}"
+      },
+      "sides": {
+        "bride": "כלה",
+        "groom": "חתן",
+        "none": "ללא"
+      },
+      "noMatch": {
+        "title": "אין רשומות אורחים שמתאימות",
+        "body": "נסו חיפוש אחר, או הסירו חלק מהמסננים",
+        "clear": "ניקוי מסננים"
+      },
+      "empty": {
+        "title": "עוד אין אורחים באירוע",
+        "body": "העלו את רשימת האורחים מקובץ Excel או CSV ונסדר אותה בשבילכם. אפשר גם להוסיף אורח אחד בכל פעם",
+        "upload": "העלאת קובץ",
+        "add": "הוספת אורח",
+        "drive": "Google Drive"
+      },
+      "columns": {
+        "name": "שם",
+        "phone": "טלפון",
+        "group": "קבוצה",
+        "rsvp": "אישור הגעה",
+        "amount": "כמות",
+        "table": "שולחן",
+        "meals": "מנות מיוחדות",
+        "selectAll": "בחירת כל הרשומות המוצגות",
+        "selectRow": "בחירת {name}"
+      },
+      "noPhone": "אין טלפון",
+      "noGroup": "ללא קבוצה",
+      "aboveInvitedHint": "ענו יותר מ-{invited} שהוזמנו. שינוי הכמות יסיר את הסימון",
+      "rowMenu": {
+        "trigger": "פעולות עבור {name}",
+        "markConfirmed": "סימון כמאושרים",
+        "markDeclined": "סימון כלא מגיעים",
+        "moveToGroup": "העברה לקבוצה",
+        "noGroups": "עוד אין קבוצות באירוע",
+        "removeFromGroup": "הוצאה מהקבוצה",
+        "open": "פתיחה",
+        "delete": "מחיקה"
+      },
+      "bar": {
+        "selected": "{count} נבחרו",
+        "hidden": "{count} לא מוצגים",
+        "clear": "ניקוי הבחירה",
+        "rsvp": "אישור הגעה",
+        "group": "קבוצה",
+        "side": "צד",
+        "export": "ייצוא",
+        "delete": "מחיקה",
+        "newGroup": "קבוצה חדשה",
+        "noGroups": "עוד אין קבוצות",
+        "markConfirmed": "אישרו",
+        "markPending": "ממתינים",
+        "markDeclined": "לא מגיעים"
+      },
+      "newGroup": {
+        "title": "קבוצה חדשה",
+        "description": "{count, plural, one {רשומת האורח שנבחרה תועבר אליה} other {# רשומות האורחים שנבחרו יועברו אליה}}",
+        "name": "שם הקבוצה",
+        "placeholder": "למשל: חברים מהעבודה",
+        "create": "יצירה והעברה",
+        "taken": "כבר יש קבוצה בשם הזה",
+        "failed": "יצירת הקבוצה נכשלה"
+      },
+      "confirmRsvp": {
+        "title": {
+          "confirmed": "לסמן {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}} כמאושרים?",
+          "pending": "לסמן {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}} כממתינים?",
+          "declined": "לסמן {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}} כלא מגיעים?"
+        },
+        "answeredDeclined": "{count, plural, one {אחת מהן ענתה בעצמה שלא תגיע, התשובה תוחלף} other {# ענו בעצמם שלא יגיעו, התשובה שלהם תוחלף}}",
+        "answered": "{count, plural, one {אחת מהן ענתה בעצמה, התשובה תוחלף} other {# ענו בעצמם, התשובה שלהם תוחלף}}",
+        "losingSeat": "{count, plural, one {אחת מהן מושבת בשולחן ותאבד את המקום} other {# מושבים בשולחן ויאבדו את המקום}}",
+        "confirm": {
+          "confirmed": "סימון כמאושרים",
+          "pending": "סימון כממתינים",
+          "declined": "סימון כלא מגיעים"
+        },
+        "cancel": "ביטול"
+      },
+      "confirmDelete": {
+        "title": "למחוק {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}}?",
+        "titleOne": "למחוק את {name}?",
+        "titleAll": "למחוק את כל {count} רשומות האורחים?",
+        "bodyBoth": "{messaged} כבר קיבלו הודעות ו-{answered} ענו בעצמם. גם היסטוריית ההודעות והשיחות שלהם תימחק.",
+        "bodyMessaged": "{messaged, plural, one {אחת מהן כבר קיבלה הודעות. גם היסטוריית ההודעות והשיחות שלה תימחק.} other {# כבר קיבלו הודעות. גם היסטוריית ההודעות והשיחות שלהם תימחק.}}",
+        "bodyAnswered": "{answered, plural, one {אחת מהן ענתה בעצמה. גם היסטוריית ההודעות והשיחות שלה תימחק.} other {# ענו בעצמם. גם היסטוריית ההודעות והשיחות שלהם תימחק.}}",
+        "bodyOneHistory": "גם היסטוריית ההודעות והשיחות תימחק.",
+        "confirm": "מחיקת {count}",
+        "confirmOne": "מחיקה",
+        "confirmAll": "מחיקת {count} רשומות אורחים",
+        "cancel": "ביטול"
+      },
+      "undo": {
+        "deleted": "{count, plural, one {רשומת אורח אחת נמחקה} other {# רשומות אורחים נמחקו}}",
+        "action": "בטל",
+        "failed": "המחיקה נכשלה, {count, plural, one {רשומת האורח חזרה לרשימה} other {# רשומות האורחים חזרו לרשימה}}",
+        "retry": "נסו שוב",
+        "dismiss": "סגירה"
+      },
+      "toast": {
+        "rsvp": {
+          "confirmed": "{count, plural, one {רשומת אורח אחת סומנה כמאושרת} other {# רשומות אורחים סומנו כמאושרות}}",
+          "pending": "{count, plural, one {רשומת אורח אחת סומנה כממתינה} other {# רשומות אורחים סומנו כממתינות}}",
+          "declined": "{count, plural, one {רשומת אורח אחת סומנה כלא מגיעה} other {# רשומות אורחים סומנו כלא מגיעות}}"
+        },
+        "nothingChanged": "כל הרשומות שנבחרו כבר במצב הזה",
+        "group": "{count, plural, one {רשומת אורח אחת הועברה ל{group}} other {# רשומות אורחים הועברו ל{group}}}",
+        "ungrouped": "{count, plural, one {רשומת אורח אחת הוצאה מהקבוצה} other {# רשומות אורחים הוצאו מהקבוצה}}",
+        "side": "{count, plural, one {הצד עודכן לרשומת אורח אחת} other {הצד עודכן ל-# רשומות אורחים}}",
+        "updating": "מעדכן",
+        "failed": "העדכון נכשל, נסו שוב"
+      },
+      "drawer": {
+        "close": "סגירה",
+        "newGuest": "אורח חדש",
+        "save": "שמירה",
+        "add": "הוספת אורח",
+        "delete": "מחיקה",
+        "cancel": "ביטול",
+        "activity": "פעילות",
+        "activityEmpty": "עוד אין הודעות או שיחות",
+        "activityFailed": "לא הצלחנו לטעון את הפעילות",
+        "link": "הקישור האישי להזמנה",
+        "copy": "העתקה",
+        "copied": "הועתק",
+        "preview": "תצוגה",
+        "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה",
+        "namePlaceholder": "שם האורח או המשפחה",
+        "phonePlaceholder": "050-000-0000",
+        "groupPlaceholder": "בחירת קבוצה",
+        "invited": "מוזמנים",
+        "coming": "מגיעים",
+        "noMeals": "אין",
+        "addMeal": "הוספה",
+        "meals": "מנות מיוחדות"
+      },
+      "activity": {
+        "schedule": {
+          "initial_invitation": "הזמנה לאירוע",
+          "confirmation": "בקשת אישור הגעה",
+          "event_reminder": "תזכורת לאירוע",
+          "post_event": "הודעת תודה",
+          "other": "הודעה"
+        },
+        "outcome": {
+          "seen": "נקראה",
+          "reached": "נמסרה",
+          "on_its_way": "בדרך",
+          "not_delivered": "לא נמסרה",
+          "no_phone": "לא נשלחה, אין טלפון"
+        },
+        "delivery": "{schedule} · {outcome}",
+        "viaWhatsapp": "ב-WhatsApp",
+        "viaSms": "ב-SMS",
+        "fallback": "WhatsApp לא נמסר, נשלח SMS במקום",
+        "call": "שיחה בסבב שיחות {round}",
+        "callOutcome": {
+          "no_answer": "לא ענו",
+          "confirmed": "אישרו הגעה",
+          "declined": "לא מגיעים",
+          "guest_will_update": "יעדכנו בעצמם"
+        },
+        "callBy": "נציג, בשיחה טלפונית",
+        "answerConfirmed": "{count, plural, =0 {אישרו הגעה} one {אישרו הגעה של אחד} other {אישרו הגעה של #}}",
+        "answerDeclined": "ענו שלא יגיעו",
+        "answerInChat": "האורח, בצ׳אט",
+        "answerOnPage": "האורח, בדף אישור ההגעה",
+        "manual": "אישור ההגעה עודכן ל{status}",
+        "manualByYou": "על ידך",
+        "manualStatus": {
+          "confirmed": "מאושר",
+          "pending": "ממתין",
+          "declined": "לא מגיע"
+        },
+        "manualCount": "מספר המגיעים עודכן ל-{count}",
+        "manualConfirmed": "אישור ההגעה עודכן למאושר, {count} מגיעים"
+      },
+      "drawerSections": {
+        "contact": "פרטי קשר",
+        "invitation": "הזמנה",
+        "rsvp": "אישור הגעה",
+        "seating": "הושבה והערות"
+      },
+      "amountChangedHint": "האורח שינה את הכמות באישור ההגעה: הוזמנו {invited}, מגיעים {coming}"
     }
   },
   "home": {

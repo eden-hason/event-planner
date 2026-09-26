@@ -992,6 +992,228 @@
       "duplicates": "Possible duplicates",
       "all": "Needs a look",
       "clear": "Clear filter"
+    },
+    "list": {
+      "count": "{total, plural, one {# guest record} other {# guest records}}",
+      "countFiltered": "Showing {shown} of {total}",
+      "meter": {
+        "confirmed": "confirmed",
+        "line": "{guests} guests · {records} guest records"
+      },
+      "status": {
+        "all": "All",
+        "confirmed": "Confirmed",
+        "pending": "Pending",
+        "declined": "Declined"
+      },
+      "searchPlaceholder": "Search name, phone, group or note",
+      "filters": {
+        "button": "Filters",
+        "group": "Group",
+        "side": "Side",
+        "sideAll": "All",
+        "noPhoneOnly": "Only without a phone number",
+        "noGroups": "No groups yet"
+      },
+      "sort": "Sort",
+      "more": "More actions",
+      "importFile": "Import from file",
+      "importDrive": "Import from Google Drive",
+      "exportHeading": "Export to iPlan",
+      "addGuest": "Add guest",
+      "chips": {
+        "group": "Group: {name}",
+        "side": "Side: {side}",
+        "noPhone": "No phone",
+        "clearAll": "Clear all",
+        "remove": "Remove {label}"
+      },
+      "sides": {
+        "bride": "Bride",
+        "groom": "Groom",
+        "none": "None"
+      },
+      "noMatch": {
+        "title": "No guest records match",
+        "body": "Try another search, or remove some filters",
+        "clear": "Clear filters"
+      },
+      "empty": {
+        "title": "No guests yet",
+        "body": "Upload your guest list from an Excel or CSV file and we will tidy it up for you. You can also add one guest at a time",
+        "upload": "Upload a file",
+        "add": "Add guest",
+        "drive": "Google Drive"
+      },
+      "columns": {
+        "name": "Name",
+        "phone": "Phone",
+        "group": "Group",
+        "rsvp": "RSVP",
+        "amount": "Amount",
+        "table": "Table",
+        "meals": "Special meals",
+        "selectAll": "Select all shown records",
+        "selectRow": "Select {name}"
+      },
+      "noPhone": "No phone",
+      "noGroup": "No group",
+      "aboveInvitedHint": "More are coming than the {invited} invited. Changing the amount clears the flag",
+      "rowMenu": {
+        "trigger": "Actions for {name}",
+        "markConfirmed": "Mark confirmed",
+        "markDeclined": "Mark declined",
+        "moveToGroup": "Move to group",
+        "noGroups": "No groups in this event yet",
+        "removeFromGroup": "Remove from group",
+        "open": "Open",
+        "delete": "Delete"
+      },
+      "bar": {
+        "selected": "{count} selected",
+        "hidden": "{count} not shown",
+        "clear": "Clear selection",
+        "rsvp": "RSVP",
+        "group": "Group",
+        "side": "Side",
+        "export": "Export",
+        "delete": "Delete",
+        "newGroup": "New group",
+        "noGroups": "No groups yet",
+        "markConfirmed": "Confirmed",
+        "markPending": "Pending",
+        "markDeclined": "Declined"
+      },
+      "newGroup": {
+        "title": "New group",
+        "description": "{count, plural, one {The selected guest record will move into it} other {The # selected guest records will move into it}}",
+        "name": "Group name",
+        "placeholder": "e.g. Friends from work",
+        "create": "Create and move",
+        "taken": "A group with this name already exists",
+        "failed": "Could not create the group"
+      },
+      "confirmRsvp": {
+        "title": {
+          "confirmed": "Mark {count, plural, one {# guest record} other {# guest records}} as confirmed?",
+          "pending": "Mark {count, plural, one {# guest record} other {# guest records}} as pending?",
+          "declined": "Mark {count, plural, one {# guest record} other {# guest records}} as declined?"
+        },
+        "answeredDeclined": "{count} answered for themselves that they are not coming - their answer will be replaced",
+        "answered": "{count} answered for themselves - their answer will be replaced",
+        "losingSeat": "{count} {count, plural, one {is} other {are}} seated at a table - they will lose their seat",
+        "confirm": {
+          "confirmed": "Mark confirmed",
+          "pending": "Mark pending",
+          "declined": "Mark declined"
+        },
+        "cancel": "Cancel"
+      },
+      "confirmDelete": {
+        "title": "Delete {count, plural, one {# guest record} other {# guest records}}?",
+        "titleOne": "Delete {name}?",
+        "titleAll": "Delete all {count} guest records?",
+        "bodyBoth": "{messaged} have already received messages and {answered} answered for themselves. Their message and call history will be deleted too.",
+        "bodyMessaged": "{messaged} {messaged, plural, one {has} other {have}} already received messages. Their message and call history will be deleted too.",
+        "bodyAnswered": "{answered} answered for themselves. Their message and call history will be deleted too.",
+        "bodyOneHistory": "Their message and call history will be deleted too.",
+        "confirm": "Delete {count}",
+        "confirmOne": "Delete",
+        "confirmAll": "Delete {count} guest records",
+        "cancel": "Cancel"
+      },
+      "undo": {
+        "deleted": "{count, plural, one {# guest record deleted} other {# guest records deleted}}",
+        "action": "Undo",
+        "failed": "The delete failed, {count, plural, one {the guest record is back} other {# guest records are back}} on the list",
+        "retry": "Try again",
+        "dismiss": "Dismiss"
+      },
+      "toast": {
+        "rsvp": {
+          "confirmed": "{count, plural, one {# guest record} other {# guest records}} marked confirmed",
+          "pending": "{count, plural, one {# guest record} other {# guest records}} marked pending",
+          "declined": "{count, plural, one {# guest record} other {# guest records}} marked declined"
+        },
+        "nothingChanged": "The selected records are already set that way",
+        "group": "{count, plural, one {# guest record} other {# guest records}} moved to {group}",
+        "ungrouped": "{count, plural, one {# guest record} other {# guest records}} removed from their group",
+        "side": "Side updated for {count, plural, one {# guest record} other {# guest records}}",
+        "updating": "Updating",
+        "failed": "The update failed, try again"
+      },
+      "drawer": {
+        "close": "Close",
+        "newGuest": "New guest",
+        "save": "Save",
+        "add": "Add guest",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "activity": "Activity",
+        "activityEmpty": "No messages or calls yet",
+        "activityFailed": "Could not load the activity",
+        "link": "Personal invitation link",
+        "copy": "Copy",
+        "copied": "Copied",
+        "preview": "Preview",
+        "notesPlaceholder": "Internal note, the guest never sees it",
+        "namePlaceholder": "Guest or family name",
+        "phonePlaceholder": "050-000-0000",
+        "groupPlaceholder": "Choose a group",
+        "invited": "Invited",
+        "coming": "Coming",
+        "noMeals": "None",
+        "addMeal": "Add",
+        "meals": "Special meals"
+      },
+      "activity": {
+        "schedule": {
+          "initial_invitation": "Invitation",
+          "confirmation": "RSVP request",
+          "event_reminder": "Event reminder",
+          "post_event": "Thank you message",
+          "other": "Message"
+        },
+        "outcome": {
+          "seen": "seen",
+          "reached": "reached",
+          "on_its_way": "on its way",
+          "not_delivered": "not delivered",
+          "no_phone": "not sent, no phone"
+        },
+        "delivery": "{schedule} · {outcome}",
+        "viaWhatsapp": "via WhatsApp",
+        "viaSms": "via SMS",
+        "fallback": "WhatsApp was not delivered, sent by SMS instead",
+        "call": "Call in call round {round}",
+        "callOutcome": {
+          "no_answer": "No answer",
+          "confirmed": "Confirmed",
+          "declined": "Not coming",
+          "guest_will_update": "Will update themselves"
+        },
+        "callBy": "Operator, on the phone",
+        "answerConfirmed": "{count, plural, =0 {Confirmed} other {Confirmed for #}}",
+        "answerDeclined": "Answered not coming",
+        "answerInChat": "The guest, in the chat",
+        "answerOnPage": "The guest, on the RSVP page",
+        "manual": "RSVP updated to {status}",
+        "manualByYou": "By you",
+        "manualStatus": {
+          "confirmed": "confirmed",
+          "pending": "pending",
+          "declined": "not coming"
+        },
+        "manualCount": "Coming updated to {count}",
+        "manualConfirmed": "RSVP updated to confirmed, {count} coming"
+      },
+      "drawerSections": {
+        "contact": "Contact",
+        "invitation": "Invitation",
+        "rsvp": "RSVP",
+        "seating": "Seating and notes"
+      },
+      "amountChangedHint": "The guest changed the count when confirming: {invited} invited, {coming} coming"
     }
   },
   "home": {

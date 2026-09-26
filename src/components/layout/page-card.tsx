@@ -9,7 +9,9 @@ import { NotificationsMenu } from '@/components/layout/notifications-menu';
 import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
+import { useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { usePublishedHeight } from '@/hooks/use-published-height';
 import { isSeatingRoute, isGuestImportRoute, isHomeRoute } from './app-shell';
 import { useBottomNavHidden } from './bottom-nav-context';
 import { useMoreNavItems } from './more-nav-items';
@@ -48,7 +50,10 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   // stays from `md` up, where Home is the desktop layout and the Hero is one
   // card in a grid rather than the top of the page.
   const hideChromeRowOnMobile = isHomeRoute(pathname);
-  const { title, subtitle, action, back } = useFeatureLayoutContext();
+  const { title, subtitle, action, back, sticky } = useFeatureLayoutContext();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const pinned = sticky && !seating;
+  usePublishedHeight(headerRef, '--page-header-h', pinned);
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -112,10 +117,12 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               // RTL.
               'md:me-2 md:mt-2 md:min-h-[calc(100svh-1rem)]',
               'md:bg-card md:rounded-xl md:border md:shadow-sm',
+              pinned && 'md:pt-0',
             ),
       )}
     >
       <div
+        ref={headerRef}
         className={cn(
           'flex items-center justify-between gap-4',
           // `hidden`, not just an unpainted band: gone from the flex flow, the
@@ -145,6 +152,12 @@ export function PageCard({ children }: { children: React.ReactNode }) {
                 // band covers it (see the Card's `pt-0` below `md`).
                 'bg-card pt-4 md:bg-transparent md:pt-0',
               ),
+          // A page that asked for it keeps this row in view (see `sticky` in
+          // the feature layout context), and its own sticky controls stack
+          // under it. The Card's top padding moves in here, so the row's
+          // surface covers it and nothing shows through above the title.
+          pinned &&
+            'md:bg-card md:sticky md:top-0 md:z-30 md:rounded-t-xl md:pt-3',
         )}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -178,7 +191,9 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             <div className="min-w-0">
               <h1 className="truncate text-xl font-semibold">{title}</h1>
               {subtitle && (
-                <p className="text-muted-foreground truncate text-xs">{subtitle}</p>
+                <p className="text-muted-foreground truncate text-xs">
+                  {subtitle}
+                </p>
               )}
             </div>
           )}

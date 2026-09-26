@@ -15,6 +15,7 @@ import { toE164, phoneComparisonKey } from '@/lib/phone';
 import { getEventGuestPhones } from '@/features/guests/queries';
 import { normalizeMealCounts, parseMealCounts } from '@/features/confirmation';
 import { z } from 'zod';
+import { isOwnerOverride } from '@/features/guests/utils/guest-amount';
 
 export type UpsertGuestState = {
   success: boolean;
@@ -48,6 +49,9 @@ export async function upsertGuest(
     const parsedData: Record<string, any> = { ...rawData };
     if (parsedData.amount && typeof parsedData.amount === 'string') {
       parsedData.amount = Number(parsedData.amount);
+    }
+    if (parsedData.invitedAmount && typeof parsedData.invitedAmount === 'string') {
+      parsedData.invitedAmount = Number(parsedData.invitedAmount);
     }
     // Handle explicit null for groupId (remove from group)
     if (parsedData.groupId === 'null') {
@@ -98,7 +102,13 @@ export async function upsertGuest(
         // invited_amount with it, which also clears an "above invited" flag.
         // Saving the form untouched does not, so a flag is not dismissed by
         // editing a name (ADR 0023). New guests get it from the insert trigger.
-        if (amount !== undefined && existing && amount !== existing.amount) {
+        // A caller that sends the invitation itself has already decided it.
+        if (
+          validatedData.invitedAmount === undefined &&
+          amount !== undefined &&
+          existing &&
+          amount !== existing.amount
+        ) {
           dbData.invited_amount = amount;
         }
         counts ??= parseMealCounts(existing?.meal_counts);
@@ -107,17 +117,27 @@ export async function upsertGuest(
       dbData.meal_counts = normalizeMealCounts(counts ?? {}, { amount: amount ?? 1 });
     }
 
-    // Only update attribution when the RSVP status is actually changing.
-    // For new guests (no id) there's no prior status, so skip.
-    // For updates, fetch the current value and compare.
-    if (dbData.rsvp_status !== undefined && validatedData.id) {
+    // Attribution moves to the Owner when the save is their answer for the
+    // Guest: a new status, or a new count on a confirmed record, which
+    // overrides the count the Guest gave (isOwnerOverride). New guests have no
+    // prior answer, so they are skipped.
+    if (
+      (validatedData.rsvpStatus !== undefined || validatedData.amount !== undefined) &&
+      validatedData.id
+    ) {
       const { data: existing } = await supabase
         .from('guests')
-        .select('rsvp_status')
+        .select('rsvp_status, amount')
         .eq('id', validatedData.id)
         .maybeSingle();
 
-      if (existing && dbData.rsvp_status !== existing.rsvp_status) {
+      if (
+        existing &&
+        isOwnerOverride({
+          before: { rsvpStatus: existing.rsvp_status, amount: existing.amount },
+          after: { rsvpStatus: validatedData.rsvpStatus, amount: validatedData.amount },
+        })
+      ) {
         dbData.rsvp_changed_by = currentUser.id;
         dbData.rsvp_changed_by_name = currentUser.displayName;
         dbData.rsvp_changed_at = new Date().toISOString();
