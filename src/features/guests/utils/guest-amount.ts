@@ -56,3 +56,31 @@ export function resolveAmounts({
       : invitedAmount;
   return { invitedAmount, amount };
 }
+
+type AnswerState = { rsvpStatus: GuestApp['rsvpStatus']; amount: number };
+
+/**
+ * Whether an Owner's save is their own answer for the Guest, to be recorded as
+ * theirs (`rsvp_change_source = 'manual'`): a new status, or a new count on a
+ * confirmed record. The count is the Guest's answer once confirmed, so the
+ * Owner changing it overrides them - and the list stops calling it the Guest's
+ * change. Fields the save leaves out (`undefined`) are unchanged.
+ */
+export function isOwnerOverride({
+  before,
+  after,
+}: {
+  before: AnswerState;
+  after: {
+    rsvpStatus: GuestApp['rsvpStatus'] | undefined;
+    amount: number | undefined;
+  };
+}): boolean {
+  const status = after.rsvpStatus ?? before.rsvpStatus;
+  if (status !== before.rsvpStatus) return true;
+  return (
+    status === 'confirmed' &&
+    after.amount !== undefined &&
+    after.amount !== before.amount
+  );
+}

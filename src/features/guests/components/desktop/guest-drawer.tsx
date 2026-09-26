@@ -25,6 +25,7 @@ import type {
 } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
 import { rsvpPresentation } from '@/features/guests/utils';
+import { amountDisplay } from '@/features/guests/utils/guest-amount';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { GuestForm } from '../guest-form';
@@ -141,10 +142,10 @@ function DrawerHeader({
   const t = useTranslations('guests.list');
 
   const invited = guest ? (guest.invitedAmount ?? guest.amount) : 0;
+  // Flagged only while it is the Guest's own answer: an Owner override is theirs.
+  const count = guest ? amountDisplay(guest) : null;
   const above =
-    guest && guest.rsvpStatus === 'confirmed' && guest.amount > invited
-      ? guest.amount - invited
-      : 0;
+    count?.changedByGuest && count.value > invited ? count.value - invited : 0;
   const who = !guest?.rsvpChangedAt
     ? null
     : guest.rsvpChangeSource === 'guest'

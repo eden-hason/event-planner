@@ -171,9 +171,9 @@ function GuestRow({
   const t = useTranslations('guests');
   const count = amountDisplay(guest);
   const invited = count.invited;
-  const confirmed = guest.rsvpStatus === 'confirmed';
+  // Flagged only while it is the Guest's own answer: an Owner override is theirs.
   const above =
-    confirmed && guest.amount > invited ? guest.amount - invited : 0;
+    count.changedByGuest && count.value > invited ? count.value - invited : 0;
   const side = guest.side ?? guest.group?.side ?? null;
   const meals = Object.entries(guest.mealCounts ?? {}).filter(
     ([, n]) => (n ?? 0) > 0,

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { amountDisplay, resolveAmounts } from './guest-amount.ts';
+import { amountDisplay, isOwnerOverride, resolveAmounts } from './guest-amount.ts';
 
 type Guest = Parameters<typeof amountDisplay>[0];
 
@@ -114,5 +114,52 @@ test('counts below one are lifted to one', () => {
       invitedAmount: 1,
       amount: 1,
     },
+  );
+});
+
+test('changing the status is the Owner’s answer', () => {
+  assert.equal(
+    isOwnerOverride({
+      before: { rsvpStatus: 'pending', amount: 2 },
+      after: { rsvpStatus: 'confirmed', amount: 2 },
+    }),
+    true,
+  );
+});
+
+test('changing how many are coming on a confirmed record overrides the Guest', () => {
+  assert.equal(
+    isOwnerOverride({
+      before: { rsvpStatus: 'confirmed', amount: 3 },
+      after: { rsvpStatus: 'confirmed', amount: 4 },
+    }),
+    true,
+  );
+});
+
+test('saving a confirmed record untouched leaves the Guest’s answer theirs', () => {
+  assert.equal(
+    isOwnerOverride({
+      before: { rsvpStatus: 'confirmed', amount: 3 },
+      after: { rsvpStatus: 'confirmed', amount: 3 },
+    }),
+    false,
+  );
+  assert.equal(
+    isOwnerOverride({
+      before: { rsvpStatus: 'confirmed', amount: 3 },
+      after: { rsvpStatus: undefined, amount: undefined },
+    }),
+    false,
+  );
+});
+
+test('re-inviting a record nobody has answered is not an answer', () => {
+  assert.equal(
+    isOwnerOverride({
+      before: { rsvpStatus: 'pending', amount: 2 },
+      after: { rsvpStatus: 'pending', amount: 4 },
+    }),
+    false,
   );
 });
