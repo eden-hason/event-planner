@@ -48,6 +48,9 @@ quantity being counted is billable; say "guest" when talking about human beings 
 Both the Owner and an **Operator** can create and delete Guest Records. Because the row
 is the billing unit, either act changes what the Owner pays.
 
+Deleting a Guest Record deletes its Deliveries and Call Outcomes with it. There is no
+archive and no restoring it later.
+
 ## Seating Plan
 
 An Event's arrangement of Guest Records among Tables and of those Tables relative to one

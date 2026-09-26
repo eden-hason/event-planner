@@ -2,12 +2,11 @@
 export {
   GuestsPage,
   GuestForm,
-  GuestDirectory,
   GuestSearch,
-  GuestStats,
   RsvpPill,
   RsvpDot,
   GuestImportFlow,
+  GuestsDesktop,
 } from './components';
 
 // Actions (server-only)
@@ -33,7 +32,6 @@ export {
 // Hooks (client)
 export {
   useGuestFilters,
-  useGuestsTable,
   type GuestSortKey,
 } from './hooks';
 

@@ -13,9 +13,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { setSearchParams } from '@/lib/shallow-navigation';
-import { GuestDirectory } from './guest-directory';
+import { GuestsDesktop } from './desktop/guests-desktop';
 import { GuestForm } from './guest-form';
-import { GuestStats } from './guest-stats';
 import {
   Sheet,
   SheetContent,
@@ -29,8 +28,6 @@ import {
   IconPlus,
   IconTrash,
   IconUserPlus,
-  IconUsers,
-  IconUsersGroup,
 } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
 import type { TableOption } from '@/features/seating';
@@ -70,6 +67,7 @@ interface GuestsPageProps {
   showDietary?: boolean;
   tables?: TableOption[];
   currentUserId?: string | null;
+  messagedGuestIds?: string[];
 }
 
 // The base `TabsTrigger` ships a border on every side (for the desktop pill),
@@ -78,8 +76,8 @@ interface GuestsPageProps {
 // as a boxed rectangle around the active tab instead of the design's plain
 // underline. `border-b-primary` (not `border-primary`) is what keeps the
 // active color off the top/left/right edges.
-const MOBILE_TAB_TRIGGER_CLASS =
-  'h-10 flex-1 rounded-none border-0 border-b-2 border-transparent bg-transparent text-[15px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
+const UNDERLINE_TAB_TRIGGER_CLASS =
+  'h-10 rounded-none border-0 border-b-2 border-transparent bg-transparent text-[15px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
 
 export function GuestsPage({
   guests,
@@ -90,6 +88,7 @@ export function GuestsPage({
   showDietary = false,
   tables = [],
   currentUserId = null,
+  messagedGuestIds = [],
 }: GuestsPageProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
@@ -107,7 +106,6 @@ export function GuestsPage({
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [recentlyUpdatedGuestId, setRecentlyUpdatedGuestId] = useState<string | null>(null);
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
 
   const goToImportRoute = () => router.push(`/app/${eventId}/guests/import`);
@@ -124,12 +122,6 @@ export function GuestsPage({
         prev.length === 1 && prev[0] === status ? [] : [status],
       );
     }
-  };
-
-  const handleStatusToggle = (status: string) => {
-    setSelectedStatuses((prev) =>
-      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
-    );
   };
 
   const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
@@ -441,32 +433,24 @@ export function GuestsPage({
         >
           <TabsList
             className={cn(
-              'w-full sm:w-fit',
-              // Mobile mirrors the design's full-width underline tabs, not
-              // the pill switch desktop keeps: no background or icons, an
-              // even split, and the active state reads through the border.
-              isMobile &&
-                'h-10 gap-0 rounded-none bg-transparent p-0',
+              // Underline tabs at every width, per the Guests designs: no pill,
+              // no icons, the active tab reads through its border.
+              'h-10 gap-0 rounded-none bg-transparent p-0',
+              isMobile ? 'w-full' : 'w-fit gap-6',
             )}
           >
-            <TabsTrigger value="guests" className={cn(isMobile && MOBILE_TAB_TRIGGER_CLASS)}>
-              {!isMobile && <IconUsers size={16} />}
+            <TabsTrigger value="guests" className={cn(UNDERLINE_TAB_TRIGGER_CLASS, isMobile ? 'flex-1' : 'flex-none px-0.5 text-[14.5px]')}>
               {t('tabGuests')}
             </TabsTrigger>
-            <TabsTrigger value="groups" className={cn(isMobile && MOBILE_TAB_TRIGGER_CLASS)}>
-              {!isMobile && <IconUsersGroup size={16} />}
+            <TabsTrigger value="groups" className={cn(UNDERLINE_TAB_TRIGGER_CLASS, isMobile ? 'flex-1' : 'flex-none px-0.5 text-[14.5px]')}>
               {t('tabGroups')}
             </TabsTrigger>
           </TabsList>
-          {!isMobile && <div className="flex justify-end">{headerAction}</div>}
+          {/* Desktop's add-guest button lives in the list's own toolbar. */}
+          {!isMobile && activeTab === 'groups' && (
+            <div className="flex justify-end">{headerAction}</div>
+          )}
         </div>
-        {!isMobile && (
-          <GuestStats
-            guests={guests}
-            selectedStatuses={selectedStatuses}
-            onStatClick={handleStatCardClick}
-          />
-        )}
         <TabsContent value="guests" className="mt-0">
           {isMobile ? (
             <GuestsMobile
@@ -482,18 +466,24 @@ export function GuestsPage({
               tables={tables}
             />
           ) : (
-            <GuestDirectory
+            <GuestsDesktop
               guests={guests}
               groups={groups}
               eventId={eventId}
               eventName={eventName}
               existingPhones={existingPhones}
-              onSelectGuest={handleSelectGuest}
+              messagedGuestIds={messagedGuestIds}
               showDietary={showDietary}
               tables={tables}
-              selectedStatuses={selectedStatuses}
-              onStatusToggle={handleStatusToggle}
-              recentlyUpdatedGuestId={recentlyUpdatedGuestId}
+              currentUserId={currentUserId}
+              drawer={{
+                open: isDrawerOpen,
+                guest: selectedGuest,
+                onOpenChange: handleDrawerClose,
+              }}
+              onOpenGuest={(guest) => openGuestDrawer(guest.id)}
+              onAddGuest={handleAddGuest}
+              onImportDrive={goToImportRouteViaDrive}
             />
           )}
         </TabsContent>
@@ -552,6 +542,7 @@ export function GuestsPage({
         />
       )}
 
+      {isMobile && (
       <Sheet open={isDrawerOpen} onOpenChange={handleDrawerClose}>
         <SheetContent
           side={isMobile ? 'bottom' : 'right'}
@@ -619,13 +610,7 @@ export function GuestsPage({
               eventId={eventId}
               guest={selectedGuest}
               groups={groups}
-              onSuccess={() => {
-                if (selectedGuest) {
-                  setRecentlyUpdatedGuestId(selectedGuest.id);
-                  setTimeout(() => setRecentlyUpdatedGuestId(null), 3400);
-                }
-                handleDrawerClose(false);
-              }}
+              onSuccess={() => handleDrawerClose(false)}
               onCancel={() => handleDrawerClose(false)}
               hideActions
               onPendingChange={setIsSubmitting}
@@ -661,6 +646,7 @@ export function GuestsPage({
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      )}
     </>
   );
 }
