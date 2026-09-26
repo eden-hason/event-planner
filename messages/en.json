@@ -1162,7 +1162,8 @@
         "link": "Personal invitation link",
         "copy": "Copy",
         "copied": "Copied",
-        "preview": "Preview"
+        "preview": "Preview",
+        "notesPlaceholder": "Internal note, the guest never sees it"
       },
       "activity": {
         "schedule": {

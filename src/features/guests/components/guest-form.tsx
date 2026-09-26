@@ -754,8 +754,51 @@ export function GuestForm({
             {showDietary && mealsField}
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
-            <div className="grid grid-cols-2 gap-2.5">{tableField}</div>
-            {notesField}
+            {/* One row, per the design: a narrow table picker beside a one-line note. */}
+            <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+              <FormField
+                control={form.control}
+                name="tableId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('form.table.label')}</FormLabel>
+                    <GuestTableCombobox
+                      compact
+                      tables={tables}
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      partyHeads={amountValue}
+                      originalTableId={guest?.tableId ?? null}
+                      originalPartyHeads={guest?.amount ?? 0}
+                      guestName={form.watch('name')}
+                      disabled={isDeclined}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('form.notes')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('list.drawer.notesPlaceholder')}
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* The declined hint needs the full width, not the 78px column. */}
+            {isDeclined && (
+              <p className="text-muted-foreground text-xs">{t('form.table.declinedHint')}</p>
+            )}
           </FormSection>
           {actions}
         </form>

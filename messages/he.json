@@ -1162,7 +1162,8 @@
         "link": "הקישור האישי להזמנה",
         "copy": "העתקה",
         "copied": "הועתק",
-        "preview": "תצוגה"
+        "preview": "תצוגה",
+        "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה"
       },
       "activity": {
         "schedule": {
