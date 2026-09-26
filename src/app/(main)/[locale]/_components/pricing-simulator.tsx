@@ -86,7 +86,7 @@ export function PricingSimulator({
             <div className="ps-step-head">
               <span className="ps-step-num">2</span>
               <div className="ps-step-text">
-                <h3 className="ps-step-title"><label htmlFor="ps-records">כמה רשומות תרצו?</label></h3>
+                <h3 className="ps-step-title"><label htmlFor="ps-records">כמה רשומות יש לכם?</label></h3>
                 <p className="ps-step-sub">רשומה = מספר טלפון - של יחיד, זוג או משפחה</p>
               </div>
             </div>
@@ -173,22 +173,6 @@ export function PricingSimulator({
           <div className="ps-line">
             <span className="k strong">סה״כ רשומות במערכת</span>
             <span className="v bold">{capacity}</span>
-          </div>
-        </div>
-
-        <div className="ps-more">
-          <span className="ps-more-title">צריכים עוד רשומות? אין בעיה</span>
-          <div className="ps-more-row">
-            <span className="ps-more-ic" style={{ color: '#D23CC2' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
-            </span>
-            <span className="ps-more-text"><strong>רוצים שנשלח גם להם?</strong> מוסיפים רשומות לתזמון ב-{rateLabel(channel)} לרשומה</span>
-          </div>
-          <div className="ps-more-row">
-            <span className="ps-more-ic" style={{ color: '#8B3FF0' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
-            </span>
-            <span className="ps-more-text"><strong>רק לרשום אותם?</strong> מוסיפים לרשימה, מעדכנים סטטוס בעצמכם או שולחים קישור אישור אישי</span>
           </div>
         </div>
 
