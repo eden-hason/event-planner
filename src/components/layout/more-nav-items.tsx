@@ -3,7 +3,12 @@
 import { type ComponentProps, type ElementType, useId } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
-import { IconArmchair, IconGift, IconUsersGroup } from '@tabler/icons-react';
+import {
+  IconArmchair,
+  IconCoins,
+  IconGift,
+  IconUsersGroup,
+} from '@tabler/icons-react';
 import { Bot } from 'lucide-react';
 import { useCollaboration } from '@/components/feature-layout';
 import { isSeatingRoute } from './app-shell';
@@ -106,6 +111,19 @@ export function useMoreNavItems(): MoreNavItem[] {
             icon: IconArmchair,
             tint: 'bg-violet-100 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300',
             href: buildNavUrl('/app/seating', eventId),
+          },
+        ]
+      : []),
+    // Same flag as the desktop sidebar, so the two navs never disagree.
+    ...(process.env.NEXT_PUBLIC_ENABLE_BUDGET === 'true'
+      ? [
+          {
+            value: 'budget',
+            label: tNav('budget'),
+            description: tMore('budget'),
+            icon: IconCoins,
+            tint: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
+            href: buildNavUrl('/app/budget', eventId),
           },
         ]
       : []),
