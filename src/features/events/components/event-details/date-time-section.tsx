@@ -186,7 +186,7 @@ function TimeField({
               {t('addTime')}
             </button>
           ) : (
-            <div className="relative">
+            <div className="relative min-w-0">
               <FormControl>
                 <Input
                   type="time"
@@ -194,6 +194,11 @@ function TimeField({
                   className={cn(
                     FIELD_BOX_CLASSES,
                     'text-[14.5px] shadow-none lg:text-sm',
+                    // iOS Safari gives a native time input an intrinsic width
+                    // and height that ignore `w-full`/`h-9`, so it spills out
+                    // of its grid cell. Dropping the native appearance lets it
+                    // size like any other field.
+                    'block min-w-0 appearance-none text-start [&::-webkit-date-and-time-value]:text-start',
                     field.value && 'pe-8',
                   )}
                   {...field}
