@@ -218,6 +218,7 @@ export async function getScheduleInteractionData(
   };
 
   let seenCapable = 0;
+  const seenCapableIds = new Set<string>();
 
   for (const row of deliveriesResult.data ?? []) {
     const guest = row.guests as unknown as {
@@ -236,7 +237,10 @@ export async function getScheduleInteractionData(
 
     // `read` is the only status carrying a receipt, and only WhatsApp reports it.
     if (row.delivery_method === 'whatsapp') {
-      if (row.status !== 'not_sent' && row.status !== 'failed') seenCapable++;
+      if (row.status !== 'not_sent' && row.status !== 'failed') {
+        seenCapable++;
+        seenCapableIds.add(entry.guestId);
+      }
       if (row.status === 'read') {
         entry.seen = true;
         entry.seenAt = (row.read_at as string | null) ?? undefined;
@@ -265,6 +269,15 @@ export async function getScheduleInteractionData(
       entry.guestCount = meta?.guestCount;
       entry.mealCounts = meta?.mealCounts;
     }
+  }
+
+  // A guest who answered opened the message, receipt or not: WhatsApp sends no
+  // read status for anyone with Read receipts turned off in their privacy
+  // settings. Left unseen, the table showed confirmed guests as never having
+  // read the invitation. `seenAt` stays empty - there is no read time to show.
+  for (const guestId of seenCapableIds) {
+    const entry = guestMap.get(guestId);
+    if (entry?.response && !entry.seen) entry.seen = true;
   }
 
   const guests = Array.from(guestMap.values());
