@@ -1,4 +1,5 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
+import { isSmsFallbackTrigger } from '@/features/schedules';
 import type {
   ActivityAnswer,
   ActivityCall,
@@ -132,8 +133,8 @@ export async function getGuestActivityInput(
             : row.delivery_method === 'whatsapp'
               ? 'whatsapp'
               : null,
-        viaFallback: (row.message_delivery_attempts ?? []).some(
-          (a) => a.triggered_by === 'fallback',
+        viaFallback: (row.message_delivery_attempts ?? []).some((a) =>
+          isSmsFallbackTrigger(a.triggered_by),
         ),
         at:
           row.delivered_at ??

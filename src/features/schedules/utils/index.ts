@@ -42,7 +42,9 @@ export {
   sendInChunks,
   buildAttemptRecord,
   generateConfirmationToken,
+  isSmsFallbackTrigger,
   type AttemptTrigger,
+  type SmsFallbackTrigger,
   type GuestSendResult,
 } from './send-helpers';
 

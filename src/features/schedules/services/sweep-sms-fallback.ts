@@ -13,11 +13,12 @@ import { sendingConfig } from '@/lib/config/sending';
  * engine, which is what keeps the button working as the override.
  *
  * "Finished failing" is judged on queue state rather than the clock: no
- * Delivery still queued, no attempt still pending, and no attempt activity for
- * the settle window. The first two conditions make the window self-adjusting -
- * a Schedule midway through the retry ladder simply is not ready - and the
- * settle minutes only cover webhook lag, which has been at most 122 seconds
- * across every failure observed.
+ * Delivery still queued, no attempt still pending, and no attempt made or
+ * failed for the settle window (receipts do not count, see
+ * `lastFailureActivityAt`). The first two conditions make the window
+ * self-adjusting - a Schedule midway through the retry ladder simply is not
+ * ready - and the settle minutes only cover webhook lag, which has been at
+ * most 122 seconds across every failure observed.
  */
 
 const MAX_SCHEDULES_PER_SWEEP = 5;
@@ -123,6 +124,33 @@ export function settleDecision(params: {
   return { settled: true, reason: null };
 }
 
+/**
+ * The last moment a Schedule's attempts did something that could still change
+ * who the Fallback should reach: an attempt being made, or one failing.
+ *
+ * Delivered and read receipts are deliberately left out. They also bump an
+ * attempt's `updated_at`, and on a real audience they trickle in for hours as
+ * guests open the message - counting them kept restarting the settle window,
+ * so a busy Schedule never went quiet long enough to fall back. A receipt can
+ * only ever say a message arrived, never that one failed, so it has nothing
+ * to settle.
+ *
+ * A failed attempt is not written to again, so its `updated_at` is when the
+ * failure landed.
+ */
+export function lastFailureActivityAt(
+  attempts: Pick<AttemptRow, 'status' | 'created_at' | 'updated_at'>[],
+): string | null {
+  let latest: string | null = null;
+  for (const attempt of attempts) {
+    const failing = attempt.status === 'failed' || attempt.status === 'pending';
+    const stamp =
+      failing && attempt.updated_at > attempt.created_at ? attempt.updated_at : attempt.created_at;
+    if (latest === null || stamp > latest) latest = stamp;
+  }
+  return latest;
+}
+
 /** Schedules that have at least one failed Delivery and might be ready. */
 async function candidateScheduleIds(supabase: SupabaseClient): Promise<string[]> {
   const { data, error } = await supabase
@@ -167,10 +195,7 @@ async function evaluateSchedule(
   const attempts = (attemptRows ?? []) as AttemptRow[];
 
   const pendingAttempts = attempts.filter((a) => a.status === 'pending').length;
-  const lastActivityAt = attempts.reduce<string | null>((latest, attempt) => {
-    const stamp = attempt.updated_at > attempt.created_at ? attempt.updated_at : attempt.created_at;
-    return latest === null || stamp > latest ? stamp : latest;
-  }, null);
+  const lastActivityAt = lastFailureActivityAt(attempts);
 
   const settle = settleDecision({
     queuedDeliveries: queuedDeliveries ?? 0,
@@ -204,6 +229,7 @@ async function evaluateSchedule(
   // an Operator pressing the button.
   const outcome = await sendSmsFallback(supabase, scheduleId, {
     limit: MAX_RECIPIENTS_PER_SCHEDULE,
+    triggeredBy: 'fallback_auto',
   });
 
   if (outcome.sentCount === 0) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { freezeDecision, settleDecision } from './sweep-sms-fallback.ts';
+import { freezeDecision, lastFailureActivityAt, settleDecision } from './sweep-sms-fallback.ts';
 
 const THRESHOLDS = { freezePct: 30, freezeMin: 10 };
 
@@ -154,4 +154,37 @@ test('a schedule with no attempts at all is not settled', () => {
     now,
   });
   assert.equal(decision.settled, false);
+});
+
+// ─── What counts as activity ──────────────────────────────────────────────────
+
+test('read receipts do not restart the settle window', () => {
+  // A real Schedule: failures landed at dispatch, then guests kept opening the
+  // message every few minutes. Counting those reads meant it never settled.
+  const attempts = [
+    { status: 'failed', created_at: minutesAgo(25), updated_at: minutesAgo(24) },
+    { status: 'read', created_at: minutesAgo(25), updated_at: minutesAgo(1) },
+    { status: 'delivered', created_at: minutesAgo(25), updated_at: minutesAgo(2) },
+  ];
+  assert.equal(lastFailureActivityAt(attempts), minutesAgo(24));
+});
+
+test('a late failure does restart it', () => {
+  const attempts = [
+    { status: 'failed', created_at: minutesAgo(25), updated_at: minutesAgo(3) },
+    { status: 'read', created_at: minutesAgo(25), updated_at: minutesAgo(1) },
+  ];
+  assert.equal(lastFailureActivityAt(attempts), minutesAgo(3));
+});
+
+test('a new attempt counts from when it was made', () => {
+  const attempts = [
+    { status: 'failed', created_at: minutesAgo(30), updated_at: minutesAgo(29) },
+    { status: 'sent', created_at: minutesAgo(4), updated_at: minutesAgo(4) },
+  ];
+  assert.equal(lastFailureActivityAt(attempts), minutesAgo(4));
+});
+
+test('no attempts means no activity', () => {
+  assert.equal(lastFailureActivityAt([]), null);
 });
