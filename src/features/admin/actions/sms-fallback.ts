@@ -59,7 +59,10 @@ export async function launchSmsFallback(scheduleId: string): Promise<SmsFallback
     const gate = await gateScheduleForSend(supabase, scheduleId);
     if (!gate.ok) return { success: false, message: gate.message, ...empty };
 
-    const outcome = await sendSmsFallback(supabase, scheduleId, { limit: MAX_BATCH_SIZE });
+    const outcome = await sendSmsFallback(supabase, scheduleId, {
+      limit: MAX_BATCH_SIZE,
+      triggeredBy: 'fallback',
+    });
     revalidateOutreach(gate.gate.eventId);
     return { ...outcome, plan: await buildSmsFallbackPlan(supabase, scheduleId) };
   } catch (error) {

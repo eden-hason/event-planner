@@ -23,6 +23,7 @@ export {
   classifyWhatsAppFailure,
   describeGuestLevelFailure,
   type WhatsAppFailureSide,
+  isSmsFallbackTrigger,
   buildCalendarEntry,
   toIcs,
   toGoogleCalendarUrl,

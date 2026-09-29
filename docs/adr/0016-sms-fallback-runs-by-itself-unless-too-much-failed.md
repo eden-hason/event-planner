@@ -9,8 +9,8 @@ sends by itself, waiting for an Operator to notice a failure is waiting for nobo
 
 A sweeper hands a Schedule to the existing `sendSmsFallback` engine, unchanged, once it has
 finished failing. "Finished" is judged on queue state rather than the clock: no Delivery
-still queued, no attempt still `pending`, no retry outstanding, and no attempt activity for
-ten minutes. Conditions one to three make the window self-adjusting, so a Schedule midway
+still queued, no attempt still `pending`, no retry outstanding, and no attempt made or failed
+for ten minutes. Conditions one to three make the window self-adjusting, so a Schedule midway
 through the retry ladder simply is not ready; the ten minutes is only there to cover webhook
 lag, which has been at most 122 seconds across every failure observed.
 
@@ -36,3 +36,10 @@ precisely the manual half ADR 0012 shipped. Silence is still not treated as fail
 attempt accepted but never confirmed delivered is not a fallback candidate, because zero of
 the 320 observed attempts ended up there and guessing that "not yet" means "never" is the
 trap `docs/backlog/0001` names for SMS.
+
+**Amended 2026-09-29:** "activity" originally meant any change to an attempt, which included
+delivered and read receipts. Those trickle in for hours as guests open the message, so on
+a real audience the ten quiet minutes rarely came and Operators pressed the button instead.
+Only an attempt being made or failing now counts. The sweeper's attempts are recorded as
+`fallback_auto` and the button's stay `fallback`, so the two can be told apart; both are
+still limited to one per Delivery.

@@ -215,7 +215,18 @@ export async function sendInChunks(
 
 // ─── Attempt record builder ───────────────────────────────────────────────────
 
-export type AttemptTrigger = 'scheduled' | 'manual' | 'fallback';
+/**
+ * Who started an attempt. The SMS Fallback has two: `fallback` is an Operator
+ * pressing the Back Office button, `fallback_auto` is the sweeper (ADR 0016).
+ */
+export type AttemptTrigger = 'scheduled' | 'manual' | 'fallback' | 'fallback_auto';
+
+export type SmsFallbackTrigger = Extract<AttemptTrigger, 'fallback' | 'fallback_auto'>;
+
+/** Whether an attempt is an SMS Fallback, however it was launched. */
+export function isSmsFallbackTrigger(triggeredBy: string | null | undefined): boolean {
+  return triggeredBy === 'fallback' || triggeredBy === 'fallback_auto';
+}
 
 /**
  * One message_delivery_attempts row. The parent message_deliveries row is

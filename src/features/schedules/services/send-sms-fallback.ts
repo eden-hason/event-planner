@@ -19,6 +19,7 @@ import {
   shouldSendTableNumbers,
   validatePhoneNumber,
   type ParameterResolutionContext,
+  type SmsFallbackTrigger,
 } from '../utils';
 
 /**
@@ -328,7 +329,7 @@ const SEND_CONCURRENCY = 10;
 export async function sendSmsFallback(
   supabase: SupabaseClient,
   scheduleId: string,
-  options: { limit: number },
+  options: { limit: number; triggeredBy: SmsFallbackTrigger },
 ): Promise<SmsFallbackOutcome> {
   const empty = { sentCount: 0, failedCount: 0, skippedCount: 0 };
 
@@ -371,7 +372,7 @@ export async function sendSmsFallback(
         channel: 'sms',
         status: 'pending',
         template_id: template.id,
-        triggered_by: 'fallback',
+        triggered_by: options.triggeredBy,
       })
       .select('id')
       .single();

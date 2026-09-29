@@ -1,6 +1,7 @@
 'use server';
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
+import { isSmsFallbackTrigger } from '../utils';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -141,7 +142,7 @@ function toSteps(attempts: AttemptRow[] | null): GuestDeliveryStep[] {
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map((attempt) => ({
       channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
-      fallback: attempt.triggered_by === 'fallback',
+      fallback: isSmsFallbackTrigger(attempt.triggered_by),
       sentAt: attempt.sent_at ?? undefined,
       deliveredAt: attempt.delivered_at ?? undefined,
       readAt: attempt.read_at ?? undefined,
