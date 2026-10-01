@@ -12,26 +12,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { RsvpStatus } from '@/features/guests/utils';
-import type {
-  DeleteImpact,
-  RsvpImpact,
-} from '@/features/guests/utils/bulk-impact';
+import type { ConfirmRequest } from '@/features/guests/hooks/use-guest-writes';
 import { cn } from '@/lib/utils';
 
-export type ConfirmRequest =
-  | {
-      kind: 'rsvp';
-      status: RsvpStatus;
-      impact: RsvpImpact;
-      onConfirm: () => void;
-    }
-  | {
-      kind: 'delete';
-      impact: DeleteImpact;
-      singleName?: string;
-      onConfirm: () => void;
-    };
+export type { ConfirmRequest };
 
 /**
  * Every confirm the guest list asks for. Each one names the fallout in plain

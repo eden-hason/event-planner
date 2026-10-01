@@ -23,6 +23,8 @@ interface FeatureLayoutContextType {
 interface FeatureHeaderBack {
   label: string;
   onClick: () => void;
+  /** `close` draws an X - for a mode the page leaves rather than a view it goes back from. */
+  icon?: 'back' | 'close';
 }
 
 interface FeatureHeaderConfig {

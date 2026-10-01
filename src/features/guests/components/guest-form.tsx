@@ -863,7 +863,7 @@ export function GuestForm({
             </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.invitation')}>
-            <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_78px] gap-2.5">
+            <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_var(--narrow-col,78px)] gap-2.5">
               {groupField}
               {sideField}
               {countField('invitedAmount', t('list.drawer.invited'))}
@@ -876,13 +876,13 @@ export function GuestForm({
             {showDietary ? (
               <>
                 {rsvpField}
-                <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+                <div className="grid grid-cols-[var(--narrow-col,78px)_minmax(0,1fr)] gap-2.5">
                   {comingField}
                   {mealChipsField}
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-[minmax(0,1fr)_78px] gap-2.5">
+              <div className="grid grid-cols-[minmax(0,1fr)_var(--narrow-col,78px)] gap-2.5">
                 {rsvpField}
                 {comingField}
               </div>
@@ -890,7 +890,7 @@ export function GuestForm({
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
             {/* One row, per the design: a narrow table picker beside a one-line note. */}
-            <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+            <div className="grid grid-cols-[var(--narrow-col,78px)_minmax(0,1fr)] gap-2.5">
               <FormField
                 control={form.control}
                 name="tableId"

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
 import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-commit';
 import type { PendingDelete } from '@/features/guests/hooks/use-deferred-delete';
+import { cn } from '@/lib/utils';
 
 const RING = 2 * Math.PI * 10;
 
@@ -19,7 +20,10 @@ export function UndoToast({
   onUndo,
   onRetry,
   onDismissFailure,
+  className,
 }: {
+  /** Where it sits: desktop centres it over the list, the phone pins it above the nav. */
+  className?: string;
   pending: PendingDelete | null;
   failedCount: number;
   onUndo: () => void;
@@ -44,7 +48,10 @@ export function UndoToast({
     <div
       role="status"
       aria-live="polite"
-      className="bg-foreground text-background animate-in fade-in slide-in-from-bottom-3 pointer-events-auto flex min-h-[52px] w-[440px] items-center gap-3 rounded-xl py-2.5 ps-3.5 pe-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200"
+      className={cn(
+        'bg-foreground text-background animate-in fade-in slide-in-from-bottom-3 pointer-events-auto flex min-h-[52px] items-center gap-3 rounded-xl py-2.5 ps-3.5 pe-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200',
+        className ?? 'w-[440px]',
+      )}
     >
       {pending ? (
         <>

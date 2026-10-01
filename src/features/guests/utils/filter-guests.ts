@@ -1,5 +1,5 @@
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
-import type { GuestSortKey } from '@/features/guests/hooks/use-guest-filters';
+import type { GuestSortKey } from './guest-list-params';
 
 const RSVP_ORDER: Record<string, number> = {
   confirmed: 0,

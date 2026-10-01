@@ -1,2 +1,1 @@
-export { useGuestFilters } from './use-guest-filters';
-export type { GuestSortKey } from './use-guest-filters';
+export type { GuestSortKey } from '../utils/guest-list-params';

@@ -33,9 +33,10 @@ import { GuestActivity } from './guest-activity';
 const FORM_ID = 'guest-drawer-form';
 
 /**
- * The desktop `?guest=` drawer - the one editor of a Guest Record. A floating
- * sheet with the record's identity on top, the form in flat
- * sections, then its read-only Activity and invitation link.
+ * The `?guest=` drawer - the one editor of a Guest Record. A sheet with the
+ * record's identity on top, the form in flat sections, then its read-only
+ * Activity and invitation link. On desktop it floats in from the side; on a
+ * phone it rises from the bottom to 92% of the screen (Guests Mobile design).
  */
 export function GuestDrawer({
   open,
@@ -47,7 +48,9 @@ export function GuestDrawer({
   onOpenChange,
   onSaved,
   onDelete,
+  variant = 'desktop',
 }: {
+  variant?: 'desktop' | 'mobile';
   open: boolean;
   /** `null` is the add-guest form. */
   guest: GuestWithGroupApp | null;
@@ -61,19 +64,34 @@ export function GuestDrawer({
 }) {
   const t = useTranslations('guests.list');
   const [submitting, setSubmitting] = useState(false);
+  const mobile = variant === 'mobile';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="right"
-        className="m-3 flex h-[calc(100dvh-1.5rem)] flex-col gap-0 overflow-hidden rounded-[18px] border p-0 sm:max-w-[480px] [&>button:last-child]:hidden"
+        side={mobile ? 'bottom' : 'right'}
+        className={cn(
+          'flex flex-col gap-0 overflow-hidden p-0 [&>button:last-child]:hidden',
+          mobile
+            ? // The form's narrow columns (invited, coming, table) shrink to fit 390px.
+              'h-[92dvh] rounded-t-[24px] border-0 [--narrow-col:64px]'
+            : 'm-3 h-[calc(100dvh-1.5rem)] rounded-[18px] border sm:max-w-[480px]',
+        )}
         onOpenAutoFocus={(event) => {
-          if (guest) event.preventDefault();
+          if (guest || mobile) event.preventDefault();
         }}
       >
-        <DrawerHeader guest={guest} />
+        {mobile && (
+          <span className="bg-input mx-auto mt-2 h-1 w-[38px] shrink-0 rounded-full" />
+        )}
+        <DrawerHeader guest={guest} compact={mobile} />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-5 pt-4 pb-5">
+        <div
+          className={cn(
+            'flex min-h-0 flex-1 flex-col overflow-y-auto',
+            mobile ? 'gap-4 px-4 pt-3.5 pb-4' : 'gap-[18px] px-5 pt-4 pb-5',
+          )}
+        >
           <GuestForm
             key={guest?.id ?? 'new'}
             formId={FORM_ID}
@@ -96,12 +114,19 @@ export function GuestDrawer({
           )}
         </div>
 
-        <div className="flex items-center gap-2 border-t px-5 py-3">
+        <div
+          className={cn(
+            'flex items-center gap-2 border-t',
+            mobile
+              ? 'px-4 pt-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] [&_button]:h-12 [&_button]:rounded-xl [&_button]:text-[15px]'
+              : 'px-5 py-3',
+          )}
+        >
           {guest && (
             <Button
               variant="ghost"
               onClick={() => onDelete(guest)}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive h-[38px] gap-1.5 rounded-[10px] px-3"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive h-[38px] gap-1.5 rounded-[10px] px-3 max-md:px-2"
             >
               <IconTrash size={16} />
               {t('drawer.delete')}
@@ -129,7 +154,13 @@ export function GuestDrawer({
   );
 }
 
-function DrawerHeader({ guest }: { guest: GuestWithGroupApp | null }) {
+function DrawerHeader({
+  guest,
+  compact,
+}: {
+  guest: GuestWithGroupApp | null;
+  compact?: boolean;
+}) {
   const t = useTranslations('guests.list');
 
   const invited = guest ? (guest.invitedAmount ?? guest.amount) : 0;
@@ -139,7 +170,12 @@ function DrawerHeader({ guest }: { guest: GuestWithGroupApp | null }) {
     count?.changedByGuest && count.value > invited ? count.value - invited : 0;
 
   return (
-    <div className="flex items-start gap-3 border-b px-5 pt-[18px] pb-4">
+    <div
+      className={cn(
+        'flex items-start border-b',
+        compact ? 'gap-[11px] px-4 pt-2.5 pb-3.5' : 'gap-3 px-5 pt-[18px] pb-4',
+      )}
+    >
       <span
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-full text-lg font-bold',
@@ -149,7 +185,12 @@ function DrawerHeader({ guest }: { guest: GuestWithGroupApp | null }) {
         {guest ? guest.name.charAt(0) : '+'}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-[7px]">
-        <SheetTitle className="text-[19px] leading-tight font-extrabold">
+        <SheetTitle
+          className={cn(
+            'leading-tight font-extrabold',
+            compact ? 'text-lg' : 'text-[19px]',
+          )}
+        >
           {guest ? guest.name : t('drawer.newGuest')}
         </SheetTitle>
         <SheetDescription className="sr-only">

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,28 +9,14 @@ import {
   useActionState,
   startTransition,
 } from 'react';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { setSearchParams } from '@/lib/shallow-navigation';
 import { GuestsDesktop } from './desktop/guests-desktop';
-import { GuestForm } from './guest-form';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import {
-  IconClock,
-  IconPlus,
-  IconTrash,
-  IconUserPlus,
-} from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp, GroupSide } from '../schemas';
 import type { TableOption } from '@/features/seating';
 import { useFeatureHeader } from '@/components/feature-layout';
@@ -45,15 +32,11 @@ import {
   type AssignTarget,
 } from '@/features/guests/components/groups/mobile';
 import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
-import { deleteGuest, upsertGuest } from '@/features/guests/actions';
-import { exportGuestsToIplan, type IplanScope } from '@/features/guests/utils';
-import { GuestActionsSection } from './guest-actions-section';
-import { GuestsMobile, AddGuestSourceSheet } from './mobile';
+import { GuestsMobile, AddGuestSourceSheet, type SelectionHeader } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { avatarTintFor } from '@/lib/avatar-tint';
 
 /** The query parameter that addresses the open guest drawer. */
 const GUEST_PARAM = 'guest';
@@ -68,7 +51,6 @@ interface GuestsPageProps {
   existingPhones: Map<string, string>;
   showDietary?: boolean;
   tables?: TableOption[];
-  currentUserId?: string | null;
   messagedGuestIds?: string[];
 }
 
@@ -89,11 +71,9 @@ export function GuestsPage({
   existingPhones,
   showDietary = false,
   tables = [],
-  currentUserId = null,
   messagedGuestIds = [],
 }: GuestsPageProps) {
   const t = useTranslations('guests');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -108,8 +88,6 @@ export function GuestsPage({
   const [assignSheetOpen, setAssignSheetOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GroupWithGuestsApp | null>(null);
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
   const unassignedGuests = useMemo(
     () => guests.filter((g) => !g.groupId),
@@ -121,16 +99,6 @@ export function GuestsPage({
   // instead of the plain upload screen - see `GuestImportFlow`.
   const goToImportRouteViaDrive = () =>
     router.push(`/app/${eventId}/guests/import?source=drive`);
-
-  const handleStatCardClick = (status: string | null) => {
-    if (status === null) {
-      setSelectedStatuses([]);
-    } else {
-      setSelectedStatuses((prev) =>
-        prev.length === 1 && prev[0] === status ? [] : [status],
-      );
-    }
-  };
 
   const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
     const errorMessages: Record<UpsertGroupErrorCode, string> = {
@@ -291,83 +259,8 @@ export function GuestsPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, hasMounted]);
 
-  const handleSelectGuest = (guest: GuestWithGroupApp | null) => {
-    openGuestDrawer(guest?.id ?? NEW_GUEST);
-  };
-
   const handleDrawerClose = (open: boolean) => {
     if (!open) setSearchParams((params) => params.delete(GUEST_PARAM));
-  };
-
-  const handleDeleteGuest = () => {
-    if (!selectedGuest) return;
-    const guestName = selectedGuest.name;
-    const guestId = selectedGuest.id;
-
-    handleDrawerClose(false);
-
-    const promise = deleteGuest(guestId).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('toast.guestDeleteFailed'));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.deletingGuest', { name: guestName }),
-      success: () => t('toast.guestDeleted'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
-    });
-  };
-
-  const handleDeleteGuestById = (guest: GuestWithGroupApp) => {
-    const promise = deleteGuest(guest.id).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('toast.guestDeleteFailed'));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.deletingGuest', { name: guest.name }),
-      success: () => t('toast.guestDeleted'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.guestDeleteFailed'),
-    });
-  };
-
-  const handleMarkConfirmed = (guest: GuestWithGroupApp) => {
-    if (guest.rsvpStatus === 'confirmed') return;
-
-    const formData = new FormData();
-    formData.append('id', guest.id);
-    formData.append('rsvpStatus', 'confirmed');
-
-    const promise = upsertGuest(eventId, formData).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('toast.markConfirmedFailed'));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.markingConfirmed', { name: guest.name }),
-      success: () => t('toast.markedConfirmed', { name: guest.name }),
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.markConfirmedFailed'),
-    });
-  };
-
-  const handleExport = (scope: IplanScope) => {
-    const fileName = eventName ? `${eventName}-iplan.xls` : 'iplan-guests.xls';
-    const promise = exportGuestsToIplan(guests, { scope, fileName, tables });
-    toast.promise(promise, {
-      loading: t('directory.exportingIplan'),
-      success: () => t('directory.exportIplanSuccess'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('directory.exportFailed'),
-    });
   };
 
   // Mobile routes the header button through a source sheet (single guest vs.
@@ -378,12 +271,25 @@ export function GuestsPage({
   // anymore, at the cost of one extra tap before adding a single guest.
   const guestsHeaderAction = useMemo(
     () => (
-      <Button onClick={isMobile ? () => setSourceSheetOpen(true) : handleAddGuest}>
-        <IconUserPlus size={16} />
-        {t('addGuest')}
+      <Button
+        onClick={() => setSourceSheetOpen(true)}
+        className="h-9 gap-[5px] rounded-[10px] px-[13px] font-bold"
+      >
+        <IconPlus size={16} stroke={2.4} />
+        {t('list.mobile.add')}
       </Button>
     ),
-    [isMobile, handleAddGuest],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // While the phone list is selecting, the header is the selection's: its
+  // count, an X that ends it, and "select all" where the add button was.
+  const [selectionHeader, setSelectionHeader] =
+    useState<SelectionHeader | null>(null);
+  const handleSelectionHeader = useCallback(
+    (header: SelectionHeader | null) => setSelectionHeader(header),
+    [],
   );
 
   const groupHeaderAction = useMemo(
@@ -413,19 +319,53 @@ export function GuestsPage({
   const title = t('title');
   const headerAction =
     activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction;
-  // Mobile-only: the desktop header relies on `GuestStats` below it for
-  // these same counts, so repeating them here would just be noise there.
-  const subtitle = isMobile
-    ? t('headerSubtitle', { total: guests.length, groupCount: groups.length })
-    : undefined;
-  const headerConfig = {
-    title,
-    subtitle,
-    action: isMobile ? headerAction : undefined,
-    // Desktop keeps the title and tabs in view while the list scrolls, with
-    // the toolbar and the table header stacked under them (D13).
-    sticky: !isMobile,
-  };
+  const selection =
+    isMobile && activeTab === 'guests' ? selectionHeader : null;
+  const headerConfig = selection
+    ? {
+        title:
+          selection.count > 0
+            ? t('list.bar.selected', { count: selection.count })
+            : t('list.mobile.selecting'),
+        back: {
+          label: t('list.bar.clear'),
+          onClick: selection.onClear,
+          icon: 'close' as const,
+        },
+        subtitle:
+          selection.hidden > 0 ? (
+            <button
+              type="button"
+              onClick={selection.onShowHidden}
+              className="underline underline-offset-[3px]"
+            >
+              {t('list.bar.hidden', { count: selection.hidden })}
+            </button>
+          ) : undefined,
+        action: (
+          <Button
+            variant="ghost"
+            onClick={selection.onSelectAll}
+            className="text-primary hover:text-primary h-10 px-2 font-bold"
+          >
+            {t('list.mobile.selectAll')}
+          </Button>
+        ),
+      }
+    : {
+        title,
+        // Mobile-only: desktop has the RSVP meter's counts right below it.
+        subtitle: isMobile
+          ? t('headerSubtitle', {
+              total: guests.length,
+              groupCount: groups.length,
+            })
+          : undefined,
+        action: isMobile ? headerAction : undefined,
+        // Desktop keeps the title and tabs in view while the list scrolls, with
+        // the toolbar and the table header stacked under them (D13).
+        sticky: !isMobile,
+      };
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {
     setHeader(headerConfig);
@@ -436,12 +376,9 @@ export function GuestsPage({
     // them and would otherwise keep exporting a stale list; `groups` feeds
     // the subtitle's group count the same way.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, isMobile, activeTab, guests, groups, eventName, setHeader]);
+  }, [title, isMobile, activeTab, guests, groups, eventName, setHeader, selection]);
 
   usePublishedHeight(tabsRowRef, '--guest-tabs-h', hasMounted && !isMobile);
-
-  const rsvpStatus = selectedGuest?.rsvpStatus || 'pending';
-  const guestGroup = selectedGuest?.group;
 
   if (!hasMounted) {
     return (
@@ -504,14 +441,21 @@ export function GuestsPage({
             <GuestsMobile
               guests={guests}
               groups={groups}
-              onSelectGuest={handleSelectGuest}
-              onDeleteGuest={handleDeleteGuestById}
-              onMarkConfirmed={handleMarkConfirmed}
-              onUploadFile={goToImportRoute}
-              onExport={handleExport}
-              selectedStatuses={selectedStatuses}
-              onStatusClick={handleStatCardClick}
+              eventId={eventId}
+              eventName={eventName}
+              messagedGuestIds={messagedGuestIds}
+              showDietary={showDietary}
               tables={tables}
+              drawer={{
+                open: isDrawerOpen,
+                guest: selectedGuest,
+                onOpenChange: handleDrawerClose,
+              }}
+              onOpenGuest={(guest) => openGuestDrawer(guest.id)}
+              onAddGuest={handleAddGuest}
+              onImportFile={goToImportRoute}
+              onImportDrive={goToImportRouteViaDrive}
+              onSelectionHeader={handleSelectionHeader}
             />
           ) : (
             <GuestsDesktop
@@ -594,111 +538,6 @@ export function GuestsPage({
         />
       )}
 
-      {isMobile && (
-      <Sheet open={isDrawerOpen} onOpenChange={handleDrawerClose}>
-        <SheetContent
-          side={isMobile ? 'bottom' : 'right'}
-          className={cn(
-            'flex flex-col gap-0 overflow-clip border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200',
-            isMobile
-              ? 'h-[92dvh] rounded-t-xl'
-              : 'm-3 h-[calc(100dvh-1.5rem)] rounded-xl data-[state=open]:slide-in-from-right-5 data-[state=closed]:slide-out-to-right-10 sm:max-w-[520px]',
-          )}
-          onOpenAutoFocus={(e) => {
-            if (selectedGuest) e.preventDefault();
-          }}
-        >
-          <SheetHeader className="border-b px-6 pt-5 pb-4">
-            {selectedGuest ? (
-              <div className="flex flex-col gap-0">
-                {/* Avatar + name row */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={`size-10 rounded-full shrink-0 flex items-center justify-center text-sm font-semibold ${avatarTintFor(selectedGuest.name)}`}
-                  >
-                    {selectedGuest.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <SheetTitle className="text-[19px] font-semibold leading-tight truncate">
-                      {selectedGuest.name}
-                    </SheetTitle>
-                  </div>
-                </div>
-
-                {/* Labeled data badges */}
-                <div className="flex flex-col gap-1.5 items-start">
-                  {/* RSVP Updated */}
-                  {selectedGuest.rsvpChangedAt && (
-                    <span className="inline-flex items-stretch w-fit rounded-full border bg-muted/40 text-sm overflow-hidden">
-                      <span className="px-2.5 py-1 flex items-center gap-1.5 text-muted-foreground">
-                        <IconClock size={12} className="shrink-0" />
-                        {t('sheet.updated')}
-                      </span>
-                      <span className="w-px bg-border" />
-                      <span className="px-2.5 py-1 text-muted-foreground">
-                        {selectedGuest.rsvpChangeSource === 'guest'
-                          ? `${t('sheet.viaGuest')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`
-                          : selectedGuest.rsvpChangeSource === 'admin_call'
-                            ? `${t('sheet.viaAdmin')} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`
-                            : `${selectedGuest.rsvpChangedBy === currentUserId ? t('sheet.viaYou') : (selectedGuest.rsvpChangedByName ?? t('sheet.viaOrganizer'))} · ${format(new Date(selectedGuest.rsvpChangedAt), 'd/M/yy · HH:mm')}`}
-                      </span>
-                    </span>
-                  )}
-                </div>
-
-              </div>
-            ) : (
-              <>
-                <SheetTitle className="text-xl">{t('sheet.newGuest')}</SheetTitle>
-                <p className="text-xs text-muted-foreground">{t('sheet.addGuestHint')}</p>
-              </>
-            )}
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/30 flex flex-col gap-4">
-            <GuestForm
-              key={selectedGuest?.id ?? NEW_GUEST}
-              formId="guest-form"
-              eventId={eventId}
-              guest={selectedGuest}
-              groups={groups}
-              onSuccess={() => handleDrawerClose(false)}
-              onCancel={() => handleDrawerClose(false)}
-              hideActions
-              onPendingChange={setIsSubmitting}
-              showDietary={showDietary}
-              tables={tables}
-            />
-            {selectedGuest && (
-              <GuestActionsSection invitationToken={selectedGuest.invitationToken} />
-            )}
-          </div>
-
-          <SheetFooter className="flex-row justify-between border-t px-6 py-4 sm:flex-row">
-            <div>
-              {selectedGuest && (
-                <Button
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleDeleteGuest}
-                >
-                  <IconTrash size={16} />
-                  {t('sheet.deleteGuest')}
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => handleDrawerClose(false)}>
-                {tCommon('cancel')}
-              </Button>
-              <Button type="submit" form="guest-form" disabled={isSubmitting}>
-                {selectedGuest ? t('sheet.updateGuest') : t('addGuest')}
-              </Button>
-            </div>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-      )}
     </>
   );
 }

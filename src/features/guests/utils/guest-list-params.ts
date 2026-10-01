@@ -1,4 +1,3 @@
-import type { GuestSortKey } from '@/features/guests/hooks/use-guest-filters';
 import type { GroupSide } from '@/features/guests/schemas';
 import type { RsvpStatus } from './rsvp-presentation';
 import {
@@ -6,6 +5,14 @@ import {
   parseGuestIssue,
   type GuestIssue,
 } from './guest-health';
+
+export type GuestSortKey =
+  | 'name_asc'
+  | 'name_desc'
+  | 'created_asc'
+  | 'created_desc'
+  | 'rsvp'
+  | 'amount_desc';
 
 /**
  * The guest list's view - search, filters and sort - as it lives in the URL, so

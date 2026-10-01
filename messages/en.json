@@ -1110,10 +1110,10 @@
       },
       "newGroup": {
         "title": "New group",
-        "description": "{count, plural, one {The selected guest record will move into it} other {The # selected guest records will move into it}}",
+        "description": "{count, plural, one {The selected guest record will be assigned to it} other {The # selected guest records will be assigned to it}}",
         "name": "Group name",
         "placeholder": "e.g. Friends from work",
-        "create": "Create and move",
+        "create": "Create and assign",
         "taken": "A group with this name already exists",
         "failed": "Could not create the group"
       },
@@ -1237,7 +1237,33 @@
         "rsvp": "RSVP",
         "seating": "Seating and notes"
       },
-      "amountChangedHint": "The guest changed the count when confirming: {invited} invited, {coming} coming"
+      "amountChangedHint": "The guest changed the count when confirming: {invited} invited, {coming} coming",
+      "mobile": {
+        "add": "Add",
+        "select": "Select",
+        "selectAll": "Select all",
+        "selecting": "Select records",
+        "table": "Table {number}",
+        "filters": {
+          "title": "Filter and sort",
+          "clear": "Clear",
+          "show": "{count, plural, =0 {No records to show} one {Show 1 record} other {Show # records}}"
+        },
+        "rsvpTitle": "RSVP for {count, plural, one {1 guest record} other {# guest records}}",
+        "groupTitle": "Assign {count, plural, one {1 guest record} other {# guest records}} to a group",
+        "groupRecords": "{count, plural, =0 {Empty} one {1 record} other {# records}}",
+        "removeFromGroup": "Remove from group",
+        "newGroupPlaceholder": "New group name",
+        "createGroup": "Create",
+        "sideTitle": "Side for {count, plural, one {1 guest record} other {# guest records}}",
+        "noSide": "No side",
+        "exportTitle": "Export {count, plural, one {1 guest record} other {# guest records}}",
+        "exportBody": "An iPlan file with the records you selected",
+        "exportBodyHidden": "An iPlan file with the records you selected, including {hidden, plural, one {1 that is} other {# that are}} hidden by the current filters",
+        "download": "Download the file",
+        "close": "Close",
+        "clearSearch": "Clear search"
+      }
     }
   },
   "home": {
