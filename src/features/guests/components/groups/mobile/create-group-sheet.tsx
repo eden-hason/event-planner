@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { IconArrowLeft, IconArrowRight, IconCheck, IconX } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { IconX } from '@tabler/icons-react';
 import {
   Sheet,
   SheetContent,
@@ -12,38 +12,69 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GROUP_ICONS, GROUP_SIDES, GroupSide } from '@/features/guests/schemas';
+import {
+  GROUP_ICONS,
+  GROUP_SIDES,
+  GroupSide,
+  GroupWithGuestsApp,
+} from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { cn } from '@/lib/utils';
+import { SideBadge } from '../../desktop/side-badge';
 
 interface CreateGroupSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateGroup: (formData: FormData) => void;
   onCreateAndAssign: (formData: FormData) => void;
+  /** Guest records with no group; the assign-right-away switch only shows when above zero. */
+  unassignedCount: number;
+  /** When set the sheet edits this group instead of creating one. */
+  group?: GroupWithGuestsApp | null;
+  onUpdateGroup?: (formData: FormData) => void;
 }
 
 // Same side -> tint mapping as GroupMobileCard/GroupCard, so the live
 // preview matches how the group will actually look in the list.
-const SIDE_TINT: Record<GroupSide, { bg: string; text: string; dot: string }> = {
-  bride: { bg: 'bg-primary/10', text: 'text-primary', dot: 'bg-primary' },
-  groom: { bg: 'bg-blue-100', text: 'text-blue-600', dot: 'bg-blue-500' },
-};
+const SIDE_TINT: Record<GroupSide, { bg: string; text: string; dot: string }> =
+  {
+    bride: { bg: 'bg-primary/10', text: 'text-primary', dot: 'bg-primary' },
+    groom: {
+      bg: 'bg-violet-tint',
+      text: 'text-violet-strong',
+      dot: 'bg-violet-strong',
+    },
+  };
 
 export function CreateGroupSheet({
   open,
   onOpenChange,
   onCreateGroup,
   onCreateAndAssign,
+  unassignedCount,
+  group = null,
+  onUpdateGroup,
 }: CreateGroupSheetProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
-  const isRTL = useLocale() === 'he';
 
   const [fName, setFName] = useState('');
   const [fDesc, setFDesc] = useState('');
   const [fSide, setFSide] = useState<GroupSide | null>(null);
+  const [fAssign, setFAssign] = useState(true);
   const [fIcon, setFIcon] = useState<(typeof GROUP_ICONS)[number]>('IconUsers');
+
+  const isEdit = group !== null;
+
+  // Seed the form from the group being edited each time the sheet opens on one.
+  useEffect(() => {
+    if (!open || !group) return;
+    setFName(group.name);
+    setFDesc(group.description ?? '');
+    setFSide(group.side);
+    setFIcon((group.icon as (typeof GROUP_ICONS)[number]) ?? 'IconUsers');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, group?.id]);
 
   const canCreate = fName.trim().length > 0;
   const tint = fSide ? SIDE_TINT[fSide] : null;
@@ -53,14 +84,23 @@ export function CreateGroupSheet({
     setFDesc('');
     setFSide(null);
     setFIcon('IconUsers');
+    setFAssign(true);
   };
 
   const buildFormData = () => {
     const formData = new FormData();
     formData.append('name', fName.trim());
-    if (fDesc.trim()) formData.append('description', fDesc.trim());
     formData.append('icon', fIcon);
-    if (fSide) formData.append('side', fSide);
+    if (isEdit) {
+      // An edit must be able to clear these, so they are always sent: an
+      // empty value is read as "none" by the action.
+      formData.append('id', group.id);
+      formData.append('description', fDesc.trim());
+      formData.append('side', fSide ?? '');
+    } else {
+      if (fDesc.trim()) formData.append('description', fDesc.trim());
+      if (fSide) formData.append('side', fSide);
+    }
     return formData;
   };
 
@@ -69,76 +109,66 @@ export function CreateGroupSheet({
     if (!isOpen) reset();
   };
 
-  const handleCreate = () => {
-    if (!canCreate) return;
-    const formData = buildFormData();
-    handleClose(false);
-    onCreateGroup(formData);
-  };
+  const assignAfter = !isEdit && fAssign && unassignedCount > 0;
 
-  const handleCreateAndAssign = () => {
+  const handleSubmit = () => {
     if (!canCreate) return;
     const formData = buildFormData();
     handleClose(false);
-    onCreateAndAssign(formData);
+    if (isEdit) onUpdateGroup?.(formData);
+    else if (assignAfter) onCreateAndAssign(formData);
+    else onCreateGroup(formData);
   };
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent
         side="bottom"
-        className="[&_[data-slot=sheet-close]]:hidden flex h-[92dvh] flex-col gap-0 overflow-clip rounded-t-xl border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200"
+        className="flex h-[92dvh] flex-col gap-0 overflow-clip rounded-t-[24px] border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 [&_[data-slot=sheet-close]]:hidden"
       >
-        <SheetHeader className="flex-row items-center gap-3 px-4 pt-5 pb-3">
-          <button
-            type="button"
-            onClick={() => handleClose(false)}
-            className="bg-muted text-muted-foreground flex size-[34px] shrink-0 items-center justify-center rounded-[9px]"
-            aria-label={tCommon('close')}
+        <SheetHeader className="flex-row items-center gap-3 border-b px-4 pt-5 pb-3.5">
+          <span
+            className={cn(
+              'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors',
+              tint ? cn(tint.bg, tint.text) : 'bg-muted text-muted-foreground',
+            )}
           >
-            <IconX size={18} />
-          </button>
-          <SheetTitle className="flex-1 text-[17px]">{t('groups.dialog.title')}</SheetTitle>
-        </SheetHeader>
-
-        <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-4">
-          {/* Live preview */}
-          <div className="bg-card flex items-center gap-3.5 rounded-[14px] border p-3.5">
-            <span
-              className={cn(
-                'flex size-14 shrink-0 items-center justify-center rounded-2xl transition-colors',
-                tint ? cn(tint.bg, tint.text) : 'bg-muted text-muted-foreground',
-              )}
-            >
-              <GroupIcon iconName={fIcon} size="lg" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span
+            <GroupIcon iconName={fIcon} size="lg" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <SheetTitle
                 className={cn(
-                  'truncate text-base font-bold',
-                  canCreate ? 'text-foreground' : 'text-muted-foreground/60',
+                  'truncate text-[18px] font-extrabold',
+                  !canCreate && 'text-muted-foreground',
                 )}
               >
                 {fName.trim() || t('groups.mobile.previewNamePlaceholder')}
-              </span>
-              <span className="text-muted-foreground truncate text-xs">
-                {fDesc.trim() ||
-                  (fSide
-                    ? t(`sides.${fSide}` as 'sides.bride' | 'sides.groom')
-                    : t('groups.mobile.previewNoSideNoDescription'))}
-              </span>
+              </SheetTitle>
+              <SideBadge side={fSide} />
             </div>
-            <div className="flex shrink-0 flex-col items-center">
-              <span className="text-muted-foreground/50 text-[17px] leading-none font-bold">0</span>
-              <span className="text-muted-foreground text-[10px]">
-                {t('groups.mobile.guestsLabel')}
-              </span>
-            </div>
+            <span className="text-muted-foreground text-[12.5px]">
+              {isEdit
+                ? t('groups.mobile.editSubtitle', { count: group.guestCount })
+                : t('groups.mobile.newGroupSubtitle')}
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={() => handleClose(false)}
+            className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-[9px]"
+            aria-label={tCommon('close')}
+          >
+            <IconX size={16} />
+          </button>
+        </SheetHeader>
 
-          {/* Name */}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-3.5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-muted-foreground text-xs font-semibold" htmlFor="group-name">
+            <label
+              className="text-muted-foreground text-xs font-semibold"
+              htmlFor="group-name"
+            >
               {t('groups.dialog.nameLabel')}
             </label>
             <Input
@@ -146,13 +176,15 @@ export function CreateGroupSheet({
               value={fName}
               onChange={(e) => setFName(e.target.value)}
               placeholder={t('groups.mobile.namePlaceholder')}
-              className="h-12"
+              className="h-[42px] text-[15px]"
             />
           </div>
 
-          {/* Description */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-muted-foreground text-xs font-semibold" htmlFor="group-desc">
+            <label
+              className="text-muted-foreground text-xs font-semibold"
+              htmlFor="group-desc"
+            >
               {t('groups.dialog.descriptionLabel')}
             </label>
             <Input
@@ -160,63 +192,45 @@ export function CreateGroupSheet({
               value={fDesc}
               onChange={(e) => setFDesc(e.target.value)}
               placeholder={t('groups.mobile.descriptionPlaceholder')}
-              className="h-12"
+              className="h-[42px] text-[15px]"
             />
           </div>
 
-          {/* Side */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-muted-foreground text-xs font-semibold">
-                {t('groups.dialog.sideLabel')}
-              </span>
-              {fSide && (
-                <button
-                  type="button"
-                  onClick={() => setFSide(null)}
-                  className="text-primary text-xs font-medium"
-                >
-                  {t('groups.mobile.noSide')}
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {GROUP_SIDES.map((side) => {
+          {/* Side: one segmented control, "no side" is a real option */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted-foreground text-xs font-semibold">
+              {t('groups.dialog.sideLabel')}
+            </span>
+            <div className="bg-muted flex h-[42px] gap-0.5 rounded-[11px] p-[3px]">
+              {([...GROUP_SIDES, null] as const).map((side) => {
                 const active = fSide === side;
-                const sideTint = SIDE_TINT[side];
                 return (
                   <button
-                    key={side}
+                    key={side ?? 'none'}
                     type="button"
-                    onClick={() => setFSide(active ? null : side)}
+                    onClick={() => setFSide(side)}
                     className={cn(
-                      'flex items-center gap-2.5 rounded-xl border-[1.5px] p-3 text-start transition-colors',
-                      active ? cn(sideTint.bg, 'border-current', sideTint.text) : 'border-border',
+                      'flex flex-1 items-center justify-center rounded-lg text-[13.5px] transition-colors',
+                      active
+                        ? 'bg-card text-foreground font-bold shadow-sm'
+                        : 'text-muted-foreground font-medium',
                     )}
                   >
-                    <span className={cn('size-2.5 shrink-0 rounded-full', sideTint.dot)} />
-                    <span
-                      className={cn(
-                        'flex-1 truncate text-sm font-semibold',
-                        active ? sideTint.text : 'text-foreground',
-                      )}
-                    >
-                      {t(`sides.${side}` as 'sides.bride' | 'sides.groom')}
-                    </span>
-                    {active && <IconCheck size={14} className={sideTint.text} />}
+                    {side ? t(`list.sides.${side}`) : t('groups.mobile.noSide')}
                   </button>
                 );
               })}
             </div>
-            <span className="text-muted-foreground text-[11px]">{t('groups.mobile.sideHint')}</span>
+            <span className="text-muted-foreground text-xs leading-normal">
+              {t('groups.mobile.sideHint')}
+            </span>
           </div>
 
-          {/* Icon */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <label className="text-muted-foreground text-xs font-semibold">
               {t('groups.dialog.iconLabel')}
             </label>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-6 gap-[7px]">
               {GROUP_ICONS.map((iconName) => {
                 const active = fIcon === iconName;
                 return (
@@ -225,7 +239,7 @@ export function CreateGroupSheet({
                     type="button"
                     onClick={() => setFIcon(iconName)}
                     className={cn(
-                      'flex h-12 items-center justify-center rounded-xl border-[1.5px] transition-colors',
+                      'flex h-[46px] items-center justify-center rounded-[11px] border-[1.5px] transition-colors',
                       active
                         ? tint
                           ? cn(tint.bg, tint.text, 'border-current')
@@ -239,20 +253,55 @@ export function CreateGroupSheet({
               })}
             </div>
           </div>
+
+          {!isEdit && unassignedCount > 0 && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={fAssign}
+              onClick={() => setFAssign((v) => !v)}
+              className="flex min-h-[50px] items-center gap-3 border-t pt-1.5 text-start"
+            >
+              <span className="flex min-w-0 flex-1 flex-col gap-px">
+                <span className="text-[15px] font-medium">
+                  {t('groups.mobile.assignRightAway')}
+                </span>
+                <span className="text-muted-foreground text-[12.5px]">
+                  {t('groups.mobile.stillUnassigned', {
+                    count: unassignedCount,
+                  })}
+                </span>
+              </span>
+              <span
+                className={cn(
+                  'flex h-6 w-10 shrink-0 rounded-full p-0.5 transition-colors',
+                  fAssign ? 'bg-primary justify-end' : 'bg-muted justify-start',
+                )}
+              >
+                <span className="size-5 rounded-full bg-white shadow-sm" />
+              </span>
+            </button>
+          )}
         </div>
 
-        <SheetFooter className="flex-col gap-2 border-t px-4 py-4">
-          <Button className="h-[50px]" disabled={!canCreate} onClick={handleCreate}>
-            {t('groups.dialog.create')}
+        <SheetFooter className="flex-row gap-2 border-t px-4 pt-2.5 pb-7">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => handleClose(false)}
+          >
+            {tCommon('cancel')}
           </Button>
           <Button
-            variant="ghost"
-            className="text-primary h-10"
+            className="flex-[1.4]"
             disabled={!canCreate}
-            onClick={handleCreateAndAssign}
+            onClick={handleSubmit}
           >
-            {t('groups.mobile.createAndAssign')}
-            {isRTL ? <IconArrowLeft size={16} /> : <IconArrowRight size={16} />}
+            {isEdit
+              ? t('groups.mobile.saveButton')
+              : assignAfter
+                ? t('groups.mobile.createAndAssignCta')
+                : t('groups.mobile.createButton')}
           </Button>
         </SheetFooter>
       </SheetContent>
