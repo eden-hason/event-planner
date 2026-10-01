@@ -3,14 +3,12 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  IconArmchair,
   IconBrandGoogleDrive,
   IconCircleCheck,
   IconEye,
   IconFileSpreadsheet,
   IconFolder,
   IconFolderOff,
-  IconMessage,
   IconPlus,
   IconTrash,
   IconUpload,
@@ -28,9 +26,14 @@ import {
   type IplanScope,
   type RsvpStatus,
 } from '@/features/guests/utils';
-import { upsertGroup } from '@/features/guests/actions/groups';
+import { useCreateGroup } from '@/features/guests/hooks/use-create-group';
 import type { ConfirmRequest } from '@/features/guests/hooks/use-guest-writes';
 import { cn } from '@/lib/utils';
+import { sideSolidClass } from '../side-badge';
+import {
+  useDeleteConfirmCopy,
+  useRsvpConfirmCopy,
+} from '../guest-confirm-copy';
 import { MobileSheet, SheetOption } from './mobile-sheet';
 
 const ICON = 18;
@@ -46,12 +49,16 @@ export function GuestRowSheet({
 }: {
   guest: GuestWithGroupApp | null;
   onClose: () => void;
-  onRsvp: (status: 'confirmed' | 'declined') => void;
-  onPickGroup: () => void;
-  onOpen: () => void;
-  onDelete: () => void;
+  onRsvp: (guest: GuestWithGroupApp, status: 'confirmed' | 'declined') => void;
+  onPickGroup: (guest: GuestWithGroupApp) => void;
+  onOpen: (guest: GuestWithGroupApp) => void;
+  onDelete: (guest: GuestWithGroupApp) => void;
 }) {
   const t = useTranslations('guests.list');
+  /** Options only exist while the sheet shows a guest. */
+  const run = (action: (guest: GuestWithGroupApp) => void) => () => {
+    if (guest) action(guest);
+  };
   const subtitle = guest
     ? `${t(`status.${guest.rsvpStatus}`)} · ${guest.group?.name ?? t('noGroup')}`
     : '';
@@ -59,7 +66,7 @@ export function GuestRowSheet({
   return (
     <MobileSheet
       open={guest !== null}
-      onOpenChange={(open) => !open && onClose()}
+      onClose={onClose}
       title={guest?.name ?? ''}
       subtitle={subtitle}
     >
@@ -68,31 +75,31 @@ export function GuestRowSheet({
           label={t('rowMenu.markConfirmed')}
           icon={<IconCircleCheck size={ICON} />}
           disabled={guest?.rsvpStatus === 'confirmed'}
-          onClick={() => onRsvp('confirmed')}
+          onClick={run((g) => onRsvp(g, 'confirmed'))}
         />
         <SheetOption
           label={t('rowMenu.markDeclined')}
           icon={<IconX size={ICON} />}
           disabled={guest?.rsvpStatus === 'declined'}
-          onClick={() => onRsvp('declined')}
+          onClick={run((g) => onRsvp(g, 'declined'))}
         />
         <SheetOption
           label={t('rowMenu.moveToGroup')}
           icon={<IconFolder size={ICON} />}
           chevron
-          onClick={onPickGroup}
+          onClick={run(onPickGroup)}
         />
         <SheetOption
           label={t('rowMenu.open')}
           icon={<IconEye size={ICON} />}
-          onClick={onOpen}
+          onClick={run(onOpen)}
         />
         <SheetOption
           label={t('rowMenu.delete')}
           icon={<IconTrash size={ICON} />}
           destructive
           separated
-          onClick={onDelete}
+          onClick={run(onDelete)}
         />
       </div>
     </MobileSheet>
@@ -114,7 +121,7 @@ export function RsvpSheet({
   return (
     <MobileSheet
       open={open}
-      onOpenChange={(next) => !next && onClose()}
+      onClose={onClose}
       title={t('mobile.rsvpTitle', { count })}
     >
       <div className="flex flex-col">
@@ -160,40 +167,26 @@ export function GroupSheet({
 }) {
   const t = useTranslations('guests.list');
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { create, error, clearError, pending } = useCreateGroup(eventId);
 
   const close = () => {
     setName('');
-    setError(null);
+    clearError();
     onClose();
   };
 
-  const create = async (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setPending(true);
-    const formData = new FormData();
-    formData.set('name', trimmed);
-    const result = await upsertGroup(eventId, formData).catch(() => null);
-    setPending(false);
-    if (!result?.success || !result.groupId) {
-      setError(
-        result?.errorCode === 'GROUP_NAME_TAKEN'
-          ? t('newGroup.taken')
-          : t('newGroup.failed'),
-      );
-      return;
-    }
-    onPick(result.groupId, trimmed);
+    const groupId = await create(name);
+    if (!groupId) return;
+    onPick(groupId, name.trim());
     close();
   };
 
   return (
     <MobileSheet
       open={open}
-      onOpenChange={(next) => !next && close()}
+      onClose={close}
       title={title}
       subtitle={subtitle}
     >
@@ -231,7 +224,7 @@ export function GroupSheet({
           />
         )}
       </div>
-      <form onSubmit={create} className="flex flex-col gap-1.5">
+      <form onSubmit={submit} className="flex flex-col gap-1.5">
         <div className="flex gap-2">
           <label className="border-input focus-within:border-primary focus-within:ring-ring/50 flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[11px] border px-3 focus-within:ring-[3px]">
             <IconPlus size={17} stroke={2.2} className="text-primary shrink-0" />
@@ -240,7 +233,7 @@ export function GroupSheet({
               maxLength={100}
               onChange={(event) => {
                 setName(event.target.value);
-                setError(null);
+                clearError();
               }}
               placeholder={t('mobile.newGroupPlaceholder')}
               aria-label={t('newGroup.name')}
@@ -262,11 +255,6 @@ export function GroupSheet({
   );
 }
 
-const SIDE_DOT: Record<GroupSide | 'none', string> = {
-  bride: 'bg-primary',
-  groom: 'bg-violet-strong',
-  none: 'bg-input',
-};
 
 export function SideSheet({
   count,
@@ -283,7 +271,7 @@ export function SideSheet({
   return (
     <MobileSheet
       open={open}
-      onOpenChange={(next) => !next && onClose()}
+      onClose={onClose}
       title={t('mobile.sideTitle', { count })}
     >
       <div className="flex flex-col">
@@ -291,7 +279,7 @@ export function SideSheet({
           <SheetOption
             key={side ?? 'none'}
             label={side ? t(`sides.${side}`) : t('mobile.noSide')}
-            dotClass={SIDE_DOT[side ?? 'none']}
+            dotClass={side ? sideSolidClass(side) : 'bg-input'}
             bold
             onClick={() => onPick(side)}
           />
@@ -319,7 +307,7 @@ export function ExportSheet({
   return (
     <MobileSheet
       open={open}
-      onOpenChange={(next) => !next && onClose()}
+      onClose={onClose}
       title={t('exportTitle', { count })}
     >
       <p className="text-muted-foreground text-[14.5px] leading-relaxed text-pretty">
@@ -357,7 +345,7 @@ export function MoreSheet({
   return (
     <MobileSheet
       open={open}
-      onOpenChange={(next) => !next && onClose()}
+      onClose={onClose}
       title={t('list.more')}
     >
       <div className="flex flex-col">
@@ -405,150 +393,120 @@ export function GuestConfirmSheet({
   request: ConfirmRequest | null;
   onClose: () => void;
 }) {
-  const tRsvp = useTranslations('guests.list.confirmRsvp');
-  const tDel = useTranslations('guests.list.confirmDelete');
+  if (!request) return null;
   const confirm = () => {
-    request?.onConfirm();
+    request.onConfirm();
     onClose();
   };
+  return request.kind === 'rsvp' ? (
+    <RsvpConfirmSheet request={request} onConfirm={confirm} onClose={onClose} />
+  ) : (
+    <DeleteConfirmSheet request={request} onConfirm={confirm} onClose={onClose} />
+  );
+}
 
-  if (request?.kind === 'rsvp') {
-    const { impact, status } = request;
-    const lines = [
-      impact.answeredThemselves > 0 && {
-        icon: IconMessage,
-        text: tRsvp(status === 'confirmed' ? 'answeredDeclined' : 'answered', {
-          count: impact.answeredThemselves,
-        }),
-      },
-      impact.losingSeat > 0 && {
-        icon: IconArmchair,
-        text: tRsvp('losingSeat', { count: impact.losingSeat }),
-      },
-    ].filter(Boolean) as { icon: typeof IconMessage; text: string }[];
+const SHEET_BUTTON = 'h-12 rounded-xl text-[15px] font-bold';
 
-    return (
-      <MobileSheet
-        open
-        onOpenChange={(open) => !open && onClose()}
-        title={tRsvp(`title.${status}`, { count: impact.changing })}
-      >
-        <div className="flex flex-col gap-[9px]">
-          {lines.map(({ icon: Icon, text }) => (
-            <div
-              key={text}
-              className="text-muted-foreground flex items-start gap-[9px] text-[14.5px] leading-normal"
-            >
-              <span className="bg-rsvp-pending-tint text-rsvp-pending-strong flex size-6 shrink-0 items-center justify-center rounded-[7px]">
-                <Icon size={14} stroke={2.2} />
-              </span>
-              {text}
-            </div>
-          ))}
+function RsvpConfirmSheet({
+  request,
+  onConfirm,
+  onClose,
+}: {
+  request: Extract<ConfirmRequest, { kind: 'rsvp' }>;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const copy = useRsvpConfirmCopy(request);
+  return (
+    <MobileSheet open onClose={onClose} title={copy.title}>
+      <div className="flex flex-col gap-[9px]">
+        {copy.lines.map(({ icon: Icon, text }) => (
+          <div
+            key={text}
+            className="text-muted-foreground flex items-start gap-[9px] text-[14.5px] leading-normal"
+          >
+            <span className="bg-rsvp-pending-tint text-rsvp-pending-strong flex size-6 shrink-0 items-center justify-center rounded-[7px]">
+              <Icon size={14} stroke={2.2} />
+            </span>
+            {text}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-2">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          className={cn(SHEET_BUTTON, 'flex-1')}
+        >
+          {copy.cancel}
+        </Button>
+        <Button
+          variant={request.status === 'declined' ? 'destructive' : 'default'}
+          onClick={onConfirm}
+          className={cn(SHEET_BUTTON, 'flex-[1.6]')}
+        >
+          {copy.confirm}
+        </Button>
+      </div>
+    </MobileSheet>
+  );
+}
+
+function DeleteConfirmSheet({
+  request,
+  onConfirm,
+  onClose,
+}: {
+  request: Extract<ConfirmRequest, { kind: 'delete' }>;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const { strong, title, body, confirm, cancel } =
+    useDeleteConfirmCopy(request);
+  return (
+    <MobileSheet open onClose={onClose} title={title}>
+      {strong && (
+        <span className="bg-destructive/10 text-destructive -mt-1 flex size-11 items-center justify-center rounded-xl">
+          <IconTrash size={22} />
+        </span>
+      )}
+      {body && (
+        <p className="text-muted-foreground text-[14.5px] leading-relaxed text-pretty">
+          {body}
+        </p>
+      )}
+      {strong ? (
+        <div className="mt-1 flex flex-col gap-2">
+          <Button variant="destructive" onClick={onConfirm} className={SHEET_BUTTON}>
+            {confirm}
+          </Button>
+          <Button
+            variant="outline"
+            autoFocus
+            onClick={onClose}
+            className={cn(SHEET_BUTTON, 'border-primary ring-ring/50 ring-[3px]')}
+          >
+            {cancel}
+          </Button>
         </div>
+      ) : (
         <div className="mt-1 flex gap-2">
           <Button
             variant="outline"
             onClick={onClose}
-            className="h-12 flex-1 rounded-xl text-[15px] font-bold"
+            className={cn(SHEET_BUTTON, 'flex-1')}
           >
-            {tRsvp('cancel')}
+            {cancel}
           </Button>
           <Button
-            variant={status === 'declined' ? 'destructive' : 'default'}
-            onClick={confirm}
-            className="h-12 flex-[1.6] rounded-xl text-[15px] font-bold"
+            variant="destructive"
+            onClick={onConfirm}
+            className={cn(SHEET_BUTTON, 'flex-[1.4]')}
           >
-            {tRsvp(`confirm.${status}`)}
+            {confirm}
           </Button>
         </div>
-      </MobileSheet>
-    );
-  }
-
-  if (request?.kind === 'delete') {
-    const { impact, singleName } = request;
-    const strong = impact.isWholeList && impact.total > 1;
-    const title = singleName
-      ? tDel('titleOne', { name: singleName })
-      : strong
-        ? tDel('titleAll', { count: impact.total })
-        : tDel('title', { count: impact.total });
-    const { messaged, answeredThemselves: answered } = impact;
-    const body = singleName
-      ? messaged + answered > 0
-        ? tDel('bodyOneHistory')
-        : null
-      : messaged > 0 && answered > 0
-        ? tDel('bodyBoth', { messaged, answered })
-        : messaged > 0
-          ? tDel('bodyMessaged', { messaged })
-          : answered > 0
-            ? tDel('bodyAnswered', { answered })
-            : null;
-    const label = singleName
-      ? tDel('confirmOne')
-      : strong
-        ? tDel('confirmAll', { count: impact.total })
-        : tDel('confirm', { count: impact.total });
-
-    return (
-      <MobileSheet
-        open
-        onOpenChange={(open) => !open && onClose()}
-        title={title}
-      >
-        {strong && (
-          <span className="bg-destructive/10 text-destructive -mt-1 flex size-11 items-center justify-center rounded-xl">
-            <IconTrash size={22} />
-          </span>
-        )}
-        {body && (
-          <p className="text-muted-foreground text-[14.5px] leading-relaxed text-pretty">
-            {body}
-          </p>
-        )}
-        <div className={cn('mt-1 flex gap-2', strong && 'flex-col')}>
-          {strong ? (
-            <>
-              <Button
-                variant="destructive"
-                onClick={confirm}
-                className="h-12 rounded-xl text-[15px] font-bold"
-              >
-                {label}
-              </Button>
-              <Button
-                variant="outline"
-                autoFocus
-                onClick={onClose}
-                className="border-primary ring-ring/50 h-12 rounded-xl text-[15px] font-bold ring-[3px]"
-              >
-                {tDel('cancel')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="h-12 flex-1 rounded-xl text-[15px] font-bold"
-              >
-                {tDel('cancel')}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirm}
-                className="h-12 flex-[1.4] rounded-xl text-[15px] font-bold"
-              >
-                {label}
-              </Button>
-            </>
-          )}
-        </div>
-      </MobileSheet>
-    );
-  }
-
-  return null;
+      )}
+    </MobileSheet>
+  );
 }

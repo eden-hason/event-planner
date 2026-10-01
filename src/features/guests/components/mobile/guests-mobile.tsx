@@ -10,7 +10,6 @@ import {
 import { useTranslations } from 'next-intl';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import {
-  IconAlertTriangle,
   IconBrandGoogleDrive,
   IconDots,
   IconFilter2,
@@ -27,29 +26,28 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
-import {
-  filterAndSortGuests,
-  rsvpPresentation,
-  scopeToGuestIssue,
-  type RsvpStatus,
-} from '@/features/guests/utils';
+import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
 import {
   activeFilterCount,
+  GUEST_STATUS_FILTERS,
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
 import {
+  headcountShare,
+  rsvpHeadcounts,
+} from '@/features/guests/utils/rsvp-headcounts';
+import {
   hiddenCount,
-  pruneSelection,
   toggleAllVisible,
   toggleOne,
 } from '@/features/guests/utils/guest-selection';
-import { useGuestListParams } from '@/features/guests/hooks/use-guest-list-params';
-import { useDeferredDelete } from '@/features/guests/hooks/use-deferred-delete';
+import { useGuestListView } from '@/features/guests/hooks/use-guest-list-view';
 import { useGuestWrites } from '@/features/guests/hooks/use-guest-writes';
 import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
 import { cn } from '@/lib/utils';
-import { GuestDrawer } from '../desktop/guest-drawer';
-import { UndoToast } from '../desktop/undo-toast';
+import { ActiveFilterChips } from '../active-filter-chips';
+import { GuestDrawer } from '../guest-drawer';
+import { UndoToast } from '../undo-toast';
 import { CARD_HEIGHT, GuestMobileCard } from './guest-mobile-card';
 import { GuestFiltersSheet } from './guest-filters-sheet';
 import { SelectionBar, type SelectionAction } from './selection-bar';
@@ -64,12 +62,6 @@ import {
 } from './guest-action-sheets';
 
 const CARD_GAP = 7;
-const STATUS_CHIPS: (RsvpStatus | null)[] = [
-  null,
-  'confirmed',
-  'pending',
-  'declined',
-];
 
 /** What the page header shows while selecting - it becomes the selection's. */
 export type SelectionHeader = {
@@ -131,32 +123,30 @@ export function GuestsMobile({
   onSelectionHeader,
 }: GuestsMobileProps) {
   const t = useTranslations('guests');
-  const { params, update, reset } = useGuestListParams();
-  const deferred = useDeferredDelete(eventId);
+  const {
+    params,
+    changeFilters,
+    resetFilters,
+    deferred,
+    startDelete,
+    guests,
+    scoped,
+    rows,
+    visibleIds,
+    statusCounts,
+    filtered,
+    countFor,
+    selected,
+    setSelected,
+    selectionOnly,
+    setSelectionOnly,
+  } = useGuestListView(allGuests, eventId);
 
   const [selecting, setSelecting] = useState(false);
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
-  const [selectionOnly, setSelectionOnly] = useState(false);
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const closeSheet = () => setSheet(null);
 
   useHideBottomNav(selecting);
-
-  // Rows waiting on the Undo toast are already gone as far as the Owner sees.
-  const guests = useMemo(
-    () => allGuests.filter((guest) => !deferred.hiddenIds.has(guest.id)),
-    [allGuests, deferred.hiddenIds],
-  );
-
-  // Records that stop existing drop out of the selection.
-  useEffect(() => {
-    setSelected((prev) =>
-      pruneSelection(
-        prev,
-        guests.map((guest) => guest.id),
-      ),
-    );
-  }, [guests]);
 
   const writes = useGuestWrites({
     eventId,
@@ -168,72 +158,35 @@ export function GuestsMobile({
     messagedGuestIds,
   });
 
-  const listFor = (view: GuestListParams) =>
-    filterAndSortGuests(
-      view.issue ? scopeToGuestIssue(guests, view.issue) : guests,
-      {
-        searchTerm: view.q,
-        groupIds: view.groups,
-        statuses: view.status ? [view.status] : [],
-        sides: view.side ? [view.side] : [],
-        noPhoneOnly: view.noPhone,
-        sortKey: view.sort,
-      },
-    );
-
-  const rows = useMemo(
-    () =>
-      selectionOnly
-        ? guests.filter((guest) => selected.has(guest.id))
-        : listFor(params),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectionOnly, guests, selected, params],
-  );
-  const visibleIds = useMemo(() => rows.map((guest) => guest.id), [rows]);
-  const issueCount = useMemo(
-    () => (params.issue ? scopeToGuestIssue(guests, params.issue).length : 0),
-    [guests, params.issue],
-  );
-
-  const statusCounts = useMemo(() => {
-    const counts = { all: guests.length, confirmed: 0, pending: 0, declined: 0 };
-    for (const guest of guests) counts[guest.rsvpStatus]++;
-    return counts;
-  }, [guests]);
-
   const exitSelection = () => {
     setSelecting(false);
     setSelected(new Set());
     setSelectionOnly(false);
   };
 
-  const handleFilterChange: typeof update = (patch, mode) => {
-    setSelectionOnly(false);
-    update(patch, mode);
-  };
-  const resetFilters = () => {
-    setSelectionOnly(false);
-    reset();
-  };
-
   const hidden = hiddenCount(selected, visibleIds);
 
-  // The page header turns into the selection's while it lasts.
+  // The page header turns into the selection's while it lasts. Its callbacks
+  // read the latest list through a ref, so the header only updates when what
+  // it shows changes - not on every keystroke or tap.
+  const latest = useRef({ visibleIds, exitSelection });
+  latest.current = { visibleIds, exitSelection };
   useEffect(() => {
     onSelectionHeader(
       selecting
         ? {
             count: selected.size,
             hidden,
-            onClear: exitSelection,
+            onClear: () => latest.current.exitSelection(),
             onSelectAll: () =>
-              setSelected((prev) => toggleAllVisible(prev, visibleIds)),
+              setSelected((prev) =>
+                toggleAllVisible(prev, latest.current.visibleIds),
+              ),
             onShowHidden: () => setSelectionOnly(true),
           }
         : null,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selecting, selected.size, hidden, visibleIds]);
+  }, [selecting, selected.size, hidden, onSelectionHeader, setSelected, setSelectionOnly]);
   useEffect(() => () => onSelectionHeader(null), [onSelectionHeader]);
 
   // --- the virtualized list -----------------------------------------------
@@ -266,12 +219,13 @@ export function GuestsMobile({
           drawer.onOpenChange(false);
         // A bulk delete empties the selection; the Undo toast takes over.
         if (!singleName) exitSelection();
-        deferred.start(ids);
+        startDelete(ids);
       },
       singleName,
     );
 
   const selectedIds = () => [...selected];
+  const rowGuest = sheet?.kind === 'rowGroup' ? sheet.guest : null;
 
   const drawerNode = (
     <GuestDrawer
@@ -335,13 +289,6 @@ export function GuestsMobile({
 
   const filterCount = activeFilterCount(params);
   const hasChipRow = filterCount > 0 || !!params.issue || selectionOnly;
-  const filtered =
-    selectionOnly ||
-    rows.length !== guests.length ||
-    !!params.q ||
-    !!params.status ||
-    hasChipRow;
-  const nameOf = new Map(groups.map((group) => [group.id, group.name]));
 
   return (
     <div className={cn('flex flex-col', selecting && 'pb-24')}>
@@ -351,7 +298,7 @@ export function GuestsMobile({
         params={params}
         filterCount={filterCount}
         selecting={selecting}
-        onSearch={(q) => handleFilterChange({ q }, 'replace')}
+        onSearch={(q) => changeFilters({ q }, 'replace')}
         onFilters={() => setSheet({ kind: 'filters' })}
         onMore={() => setSheet({ kind: 'more' })}
         onSelect={() => setSelecting(true)}
@@ -359,14 +306,14 @@ export function GuestsMobile({
 
       {/* All four share the width rather than scrolling past the page's edge. */}
       <div className="flex gap-1.5 pt-2.5">
-        {STATUS_CHIPS.map((status) => {
+        {GUEST_STATUS_FILTERS.map((status) => {
           const on = params.status === status;
           return (
             <button
               key={status ?? 'all'}
               type="button"
               aria-pressed={on}
-              onClick={() => handleFilterChange({ status })}
+              onClick={() => changeFilters({ status })}
               className={cn(
                 'flex h-8 min-w-0 flex-auto items-center justify-center gap-1 rounded-full border px-2 text-[13px] whitespace-nowrap',
                 on
@@ -391,50 +338,25 @@ export function GuestsMobile({
         })}
       </div>
 
-      {hasChipRow && (
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          {selectionOnly && (
-            <FilterChip
-              label={t('list.bar.selected', { count: selected.size })}
-              onRemove={() => setSelectionOnly(false)}
-            />
-          )}
-          {params.issue && (
-            <FilterChip
-              issue
-              label={`${t(`issues.${params.issue}`)} · ${issueCount}`}
-              onRemove={() => handleFilterChange({ issue: null })}
-            />
-          )}
-          {params.groups
-            .filter((id) => nameOf.has(id))
-            .map((id) => (
-              <FilterChip
-                key={id}
-                label={t('list.chips.group', { name: nameOf.get(id)! })}
-                onRemove={() =>
-                  handleFilterChange({
-                    groups: params.groups.filter((groupId) => groupId !== id),
-                  })
-                }
-              />
-            ))}
-          {params.side && (
-            <FilterChip
-              label={t('list.chips.side', {
-                side: t(`list.sides.${params.side}`),
-              })}
-              onRemove={() => handleFilterChange({ side: null })}
-            />
-          )}
-          {params.noPhone && (
-            <FilterChip
-              label={t('list.chips.noPhone')}
-              onRemove={() => handleFilterChange({ noPhone: false })}
-            />
-          )}
-        </div>
-      )}
+      <ActiveFilterChips
+        params={params}
+        groups={groups}
+        issueCount={scoped.length}
+        onChange={changeFilters}
+        className="gap-1.5 pt-2 pb-0"
+        leading={
+          selectionOnly && (
+            <button
+              type="button"
+              onClick={() => setSelectionOnly(false)}
+              className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
+            >
+              {t('list.bar.selected', { count: selected.size })}
+              <IconX size={13} stroke={2.4} />
+            </button>
+          )
+        }
+      />
 
       {rows.length === 0 ? (
         <div className="flex min-h-[calc(100svh-22rem)] flex-col items-center justify-center gap-2.5 px-3 py-10 text-center">
@@ -512,12 +434,11 @@ export function GuestsMobile({
       {selecting && (
         <SelectionBar
           disabled={selected.size === 0}
+          // Only the bar's own sheets share its action names.
           active={
             writes.confirm?.kind === 'delete'
               ? 'delete'
-              : sheet && BAR_SHEETS.includes(sheet.kind)
-                ? (sheet.kind as SelectionAction)
-                : null
+              : ((sheet?.kind as SelectionAction | undefined) ?? null)
           }
           onAction={(action) => {
             if (action === 'delete') deleteIds(selectedIds());
@@ -528,11 +449,11 @@ export function GuestsMobile({
 
       <GuestFiltersSheet
         open={sheet?.kind === 'filters'}
-        onOpenChange={(open) => !open && closeSheet()}
+        onClose={closeSheet}
         params={params}
         groups={groups}
-        countFor={(view) => listFor(view).length}
-        onApply={(patch) => handleFilterChange(patch)}
+        countFor={countFor}
+        onApply={(patch) => changeFilters(patch)}
       />
       <MoreSheet
         open={sheet?.kind === 'more'}
@@ -544,51 +465,36 @@ export function GuestsMobile({
       <GuestRowSheet
         guest={sheet?.kind === 'row' ? sheet.guest : null}
         onClose={closeSheet}
-        onRsvp={(status) => {
-          if (sheet?.kind !== 'row') return;
+        onRsvp={(guest, status) => {
           closeSheet();
-          writes.setRsvp([sheet.guest.id], status);
+          writes.setRsvp([guest.id], status);
         }}
-        onPickGroup={() =>
-          sheet?.kind === 'row' &&
-          setSheet({ kind: 'rowGroup', guest: sheet.guest })
-        }
-        onOpen={() => {
-          if (sheet?.kind !== 'row') return;
+        onPickGroup={(guest) => setSheet({ kind: 'rowGroup', guest })}
+        onOpen={(guest) => {
           closeSheet();
-          onOpenGuest(sheet.guest);
+          onOpenGuest(guest);
         }}
-        onDelete={() => {
-          if (sheet?.kind !== 'row') return;
+        onDelete={(guest) => {
           closeSheet();
-          deleteIds([sheet.guest.id], sheet.guest.name);
+          deleteIds([guest.id], guest.name);
         }}
       />
+      {/* One record's group from its menu, or the selection's from the bar. */}
       <GroupSheet
-        open={sheet?.kind === 'rowGroup'}
-        title={t('list.rowMenu.moveToGroup')}
-        subtitle={sheet?.kind === 'rowGroup' ? sheet.guest.name : undefined}
+        open={sheet?.kind === 'rowGroup' || sheet?.kind === 'group'}
+        title={
+          rowGuest
+            ? t('list.rowMenu.moveToGroup')
+            : t('list.mobile.groupTitle', { count: selected.size })
+        }
+        subtitle={rowGuest?.name}
         eventId={eventId}
         groups={groups}
-        currentGroupId={
-          sheet?.kind === 'rowGroup' ? sheet.guest.groupId : undefined
-        }
-        canRemove={sheet?.kind === 'rowGroup' && !!sheet.guest.groupId}
+        currentGroupId={rowGuest?.groupId}
+        canRemove={rowGuest ? !!rowGuest.groupId : true}
         onClose={closeSheet}
         onPick={(groupId, name) =>
-          sheet?.kind === 'rowGroup' &&
-          writes.setGroup([sheet.guest.id], groupId, name)
-        }
-      />
-      <GroupSheet
-        open={sheet?.kind === 'group'}
-        title={t('list.mobile.groupTitle', { count: selected.size })}
-        eventId={eventId}
-        groups={groups}
-        canRemove
-        onClose={closeSheet}
-        onPick={(groupId, name) =>
-          writes.setGroup(selectedIds(), groupId, name)
+          writes.setGroup(rowGuest ? [rowGuest.id] : selectedIds(), groupId, name)
         }
       />
       <RsvpSheet
@@ -631,8 +537,6 @@ export function GuestsMobile({
   );
 }
 
-/** The selection bar's actions that open a sheet; delete opens a confirm. */
-const BAR_SHEETS: string[] = ['rsvp', 'group', 'side', 'export'];
 
 /**
  * The RSVP meter at the top of the list. Counts are Guests (the sum of
@@ -641,19 +545,14 @@ const BAR_SHEETS: string[] = ['rsvp', 'group', 'side', 'export'];
  */
 function Meter({ guests }: { guests: GuestWithGroupApp[] }) {
   const t = useTranslations('guests.list');
-  const heads = (status?: RsvpStatus) =>
-    guests
-      .filter((guest) => !status || guest.rsvpStatus === status)
-      .reduce((sum, guest) => sum + (guest.amount ?? 1), 0);
-  const total = heads();
-  const share = (n: number) => (total ? (n / total) * 100 : 0);
+  const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
 
   return (
     <div className="bg-card flex flex-col gap-2 rounded-[14px] border px-3.5 py-3">
       <div className="flex items-baseline justify-between gap-3">
         <span className="flex items-baseline gap-[5px]">
           <b className="text-xl font-extrabold tabular-nums">
-            {Math.round(share(heads('confirmed')))}%
+            {Math.round(headcountShare(counts, 'confirmed'))}%
           </b>
           <span className="text-muted-foreground text-[12.5px]">
             {t('meter.confirmed')}
@@ -661,17 +560,17 @@ function Meter({ guests }: { guests: GuestWithGroupApp[] }) {
         </span>
         <span className="text-muted-foreground truncate text-xs">
           {t('meter.line', {
-            guests: total.toLocaleString(),
+            guests: counts.total.toLocaleString(),
             records: guests.length.toLocaleString(),
           })}
         </span>
       </div>
       <div className="bg-muted flex h-[7px] gap-0.5 overflow-hidden rounded-full">
-        {(['confirmed', 'pending', 'declined'] as const).map((status) => (
+        {RSVP_STATUSES.map((status) => (
           <div
             key={status}
             className={rsvpPresentation(status).solid}
-            style={{ width: `${share(heads(status))}%` }}
+            style={{ width: `${headcountShare(counts, status)}%` }}
           />
         ))}
       </div>
@@ -767,34 +666,5 @@ function Toolbar({
         </button>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  label,
-  issue,
-  onRemove,
-}: {
-  label: string;
-  issue?: boolean;
-  onRemove: () => void;
-}) {
-  const t = useTranslations('guests.list.chips');
-  return (
-    <button
-      type="button"
-      onClick={onRemove}
-      aria-label={t('remove', { label })}
-      className={cn(
-        'flex h-7 max-w-full items-center gap-[5px] rounded-full border ps-2.5 pe-2 text-[12.5px] font-semibold',
-        issue
-          ? 'bg-rsvp-pending-tint text-rsvp-pending-strong border-transparent'
-          : 'bg-primary/8 text-primary border-primary/40 border-dashed',
-      )}
-    >
-      {issue && <IconAlertTriangle size={14} className="shrink-0" />}
-      <span className="truncate">{label}</span>
-      <IconX size={13} stroke={2.4} className="shrink-0" />
-    </button>
   );
 }

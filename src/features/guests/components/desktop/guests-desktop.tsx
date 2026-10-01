@@ -17,17 +17,11 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
-import {
-  filterAndSortGuests,
-  scopeToGuestIssue,
-} from '@/features/guests/utils';
-import { useGuestListParams } from '@/features/guests/hooks/use-guest-list-params';
-import { useDeferredDelete } from '@/features/guests/hooks/use-deferred-delete';
+import { useGuestListView } from '@/features/guests/hooks/use-guest-list-view';
 import { useGuestWrites } from '@/features/guests/hooks/use-guest-writes';
 import {
   headerState,
   hiddenCount,
-  pruneSelection,
   selectRange,
   toggleAllVisible,
   toggleOne,
@@ -35,13 +29,13 @@ import {
 import { ImportGuestsDialog } from '../groups';
 import { RsvpMeter } from './rsvp-meter';
 import { GuestToolbar } from './guest-toolbar';
-import { ActiveFilterChips } from './active-filter-chips';
+import { ActiveFilterChips } from '../active-filter-chips';
 import { GuestTable } from './guest-table';
 import { BulkActionBar, type BulkAction } from './bulk-action-bar';
 import { GuestConfirmDialog } from './guest-confirm-dialog';
-import { UndoToast } from './undo-toast';
+import { UndoToast } from '../undo-toast';
 import { NewGroupDialog } from './new-group-dialog';
-import { GuestDrawer } from './guest-drawer';
+import { GuestDrawer } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
 
 interface GuestsDesktopProps {
@@ -84,63 +78,29 @@ export function GuestsDesktop({
   onImportDrive,
 }: GuestsDesktopProps) {
   const t = useTranslations('guests');
-  const { params, update, reset } = useGuestListParams();
-  const deferred = useDeferredDelete(eventId);
-
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const {
+    params,
+    changeFilters: handleFilterChange,
+    resetFilters,
+    deferred,
+    startDelete,
+    guests,
+    scoped,
+    rows,
+    visibleIds,
+    statusCounts,
+    filtered,
+    selected,
+    setSelected,
+    selectionOnly,
+    setSelectionOnly,
+  } = useGuestListView(allGuests, eventId);
   const anchorRef = useRef<string | null>(null);
-  const [selectionOnly, setSelectionOnly] = useState(false);
   const [newGroupFor, setNewGroupFor] = useState<string[] | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(
     null,
   );
-
-  // Rows waiting on the Undo toast are already gone as far as the Owner sees.
-  const guests = useMemo(
-    () => allGuests.filter((guest) => !deferred.hiddenIds.has(guest.id)),
-    [allGuests, deferred.hiddenIds],
-  );
-
-  // Records that stop existing drop out of the selection.
-  useEffect(() => {
-    setSelected((prev) =>
-      pruneSelection(
-        prev,
-        guests.map((guest) => guest.id),
-      ),
-    );
-  }, [guests]);
-
-  const scoped = useMemo(
-    () => (params.issue ? scopeToGuestIssue(guests, params.issue) : guests),
-    [guests, params.issue],
-  );
-
-  const rows = useMemo(() => {
-    if (selectionOnly) return guests.filter((guest) => selected.has(guest.id));
-    return filterAndSortGuests(scoped, {
-      searchTerm: params.q,
-      groupIds: params.groups,
-      statuses: params.status ? [params.status] : [],
-      sides: params.side ? [params.side] : [],
-      noPhoneOnly: params.noPhone,
-      sortKey: params.sort,
-    });
-  }, [selectionOnly, guests, selected, scoped, params]);
-
-  const visibleIds = useMemo(() => rows.map((guest) => guest.id), [rows]);
-
-  const statusCounts = useMemo(() => {
-    const counts = {
-      all: guests.length,
-      confirmed: 0,
-      pending: 0,
-      declined: 0,
-    };
-    for (const guest of guests) counts[guest.rsvpStatus]++;
-    return counts;
-  }, [guests]);
 
   const tableNumberById = useMemo(
     () => new Map(tables.map((table) => [table.id, table.tableNumber])),
@@ -184,7 +144,7 @@ export function GuestsDesktop({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selected.size]);
+  }, [selected.size, setSelected, setSelectionOnly]);
 
   const clearSelection = () => {
     setSelected(new Set());
@@ -202,16 +162,6 @@ export function GuestsDesktop({
     anchorRef.current = id;
   };
 
-  const handleFilterChange: typeof update = (patch, mode) => {
-    setSelectionOnly(false);
-    update(patch, mode);
-  };
-
-  const resetFilters = () => {
-    setSelectionOnly(false);
-    reset();
-  };
-
   // --- writes -------------------------------------------------------------
 
   const requestDelete = (ids: string[], singleName?: string) =>
@@ -220,13 +170,7 @@ export function GuestsDesktop({
       () => {
         if (drawer.open && drawer.guest && ids.includes(drawer.guest.id))
           drawer.onOpenChange(false);
-        setSelected((prev) => {
-          const next = new Set(prev);
-          for (const id of ids) next.delete(id);
-          return next;
-        });
-        setSelectionOnly(false);
-        deferred.start(ids);
+        startDelete(ids);
       },
       singleName,
     );
@@ -344,15 +288,6 @@ export function GuestsDesktop({
   }
 
   const hidden = hiddenCount(selected, visibleIds);
-  const filtered =
-    selectionOnly ||
-    rows.length !== guests.length ||
-    !!params.q ||
-    !!params.status ||
-    params.groups.length > 0 ||
-    !!params.side ||
-    params.noPhone ||
-    !!params.issue;
 
   return (
     <div className="@container/guests flex flex-col">

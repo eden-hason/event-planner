@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { upsertGroup } from '@/features/guests/actions/groups';
+import { useCreateGroup } from '@/features/guests/hooks/use-create-group';
 
 /**
  * "New group" from the selection bar: name it, and the selection moves into
@@ -34,31 +34,20 @@ export function NewGroupDialog({
   const t = useTranslations('guests.list.newGroup');
   const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { create, error, clearError, pending } = useCreateGroup(eventId);
 
   const close = () => {
     setName('');
-    setError(null);
+    clearError();
     onClose();
   };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed || !ids) return;
-    setPending(true);
-    const formData = new FormData();
-    formData.set('name', trimmed);
-    const result = await upsertGroup(eventId, formData).catch(() => null);
-    setPending(false);
-    if (!result?.success || !result.groupId) {
-      setError(
-        result?.errorCode === 'GROUP_NAME_TAKEN' ? t('taken') : t('failed'),
-      );
-      return;
-    }
-    onCreated(result.groupId, trimmed, ids);
+    if (!ids) return;
+    const groupId = await create(name);
+    if (!groupId) return;
+    onCreated(groupId, name.trim(), ids);
     close();
   };
 
@@ -84,7 +73,7 @@ export function NewGroupDialog({
               placeholder={t('placeholder')}
               onChange={(event) => {
                 setName(event.target.value);
-                setError(null);
+                clearError();
               }}
             />
             {error && <p className="text-destructive text-sm">{error}</p>}

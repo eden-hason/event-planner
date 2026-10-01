@@ -35,19 +35,13 @@ import type { IplanScope } from '@/features/guests/utils';
 import {
   activeFilterCount,
   GUEST_SORT_KEYS,
+  GUEST_STATUS_FILTERS,
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { SelectBox } from './select-box';
 import { SideBadge } from '../side-badge';
-
-const STATUS_CHIPS: (RsvpStatus | null)[] = [
-  null,
-  'confirmed',
-  'pending',
-  'declined',
-];
 
 interface GuestToolbarProps {
   params: GuestListParams;
@@ -156,7 +150,7 @@ export function GuestToolbar({
         role="radiogroup"
         className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px] @max-4xl/guests:order-last @max-4xl/guests:w-full @max-4xl/guests:*:flex-1 @max-4xl/guests:*:justify-center"
       >
-        {STATUS_CHIPS.map((status) => {
+        {GUEST_STATUS_FILTERS.map((status) => {
           const on = params.status === status;
           return (
             <button

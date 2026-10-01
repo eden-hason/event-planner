@@ -583,48 +583,6 @@
       "confirmed": "Confirmed",
       "declined": "Declined"
     },
-    "stats": {
-      "totalGuests": "Total Guests",
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "declined": "Declined",
-      "records": "{count} records",
-      "all": "All",
-      "guestsLabel": "Guests",
-      "rsvpStatus": "RSVP status"
-    },
-    "table": {
-      "name": "Name",
-      "phone": "Phone",
-      "group": "Group",
-      "side": "Side",
-      "tableColumn": "Table",
-      "tableNumber": "Table {number}",
-      "rsvpStatus": "RSVP Status",
-      "dietaryRestrictions": "Dietary Restrictions",
-      "dietaryNone": "None",
-      "amount": "Amount",
-      "aboveInvited": "Invited {count}",
-      "aboveInvitedHint": "Answered more than invited. Changing the count clears this",
-      "notes": "Note",
-      "openMenu": "Open menu",
-      "deleteGuest": "Delete guest",
-      "editGuest": "Edit",
-      "markConfirmed": "Mark as confirmed",
-      "emptyTitle": "No Guests Yet",
-      "emptyDescription": "Get started by uploading a guest list or adding guests manually.",
-      "uploadFile": "Upload File",
-      "addGuest": "Add Guest",
-      "noGuestsSearch": "No guests found matching your search.",
-      "noGuestsFound": "No guests found.",
-      "showing": "Showing {start}-{end} of {total} records",
-      "firstPage": "First page",
-      "previousPage": "Previous page",
-      "nextPage": "Next page",
-      "lastPage": "Last page",
-      "prev": "Previous",
-      "next": "Next"
-    },
     "directory": {
       "importCsv": "Import File",
       "export": "Export",
@@ -643,17 +601,10 @@
       "guestDeleteFailed": "Failed to delete guest. Please try again"
     },
     "filters": {
-      "filterByStatus": "Status",
-      "filterByGroup": "Group",
       "filterBySide": "Side",
-      "groupsSelected": "{count} groups selected",
       "sidesSelected": "{count} sides selected",
       "noPhone": "No phone",
-      "selectAll": "Select All",
-      "title": "Filters",
-      "sortBy": "Sort by",
-      "apply": "Apply",
-      "clearAll": "Clear all"
+      "selectAll": "Select All"
     },
     "search": {
       "placeholder": "Search guests..."
@@ -1243,7 +1194,6 @@
         "select": "Select",
         "selectAll": "Select all",
         "selecting": "Select records",
-        "table": "Table {number}",
         "filters": {
           "title": "Filter and sort",
           "clear": "Clear",

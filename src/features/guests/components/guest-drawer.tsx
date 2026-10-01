@@ -27,7 +27,7 @@ import { rsvpPresentation } from '@/features/guests/utils';
 import { amountDisplay } from '@/features/guests/utils/guest-amount';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
-import { GuestForm } from '../guest-form';
+import { GuestForm } from './guest-form';
 import { GuestActivity } from './guest-activity';
 
 const FORM_ID = 'guest-drawer-form';
@@ -73,8 +73,7 @@ export function GuestDrawer({
         className={cn(
           'flex flex-col gap-0 overflow-hidden p-0 [&>button:last-child]:hidden',
           mobile
-            ? // The form's narrow columns (invited, coming, table) shrink to fit 390px.
-              'h-[92dvh] rounded-t-[24px] border-0 [--narrow-col:64px]'
+            ? 'h-[92dvh] rounded-t-[24px] border-0'
             : 'm-3 h-[calc(100dvh-1.5rem)] rounded-[18px] border sm:max-w-[480px]',
         )}
         onOpenAutoFocus={(event) => {
@@ -99,6 +98,7 @@ export function GuestDrawer({
             guest={guest}
             groups={groups}
             layout="sections"
+            compact={mobile}
             hideActions
             onPendingChange={setSubmitting}
             showDietary={showDietary}

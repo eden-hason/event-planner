@@ -3,6 +3,10 @@
 import { useTranslations } from 'next-intl';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
+import {
+  headcountShare,
+  rsvpHeadcounts,
+} from '@/features/guests/utils/rsvp-headcounts';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,21 +16,14 @@ import { cn } from '@/lib/utils';
  */
 export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
   const t = useTranslations('guests.list');
-  const heads = (status?: string) =>
-    guests
-      .filter((guest) => !status || guest.rsvpStatus === status)
-      .reduce((sum, guest) => sum + (guest.amount ?? 1), 0);
-  const total = heads();
-  const share = (n: number) => (total ? (n / total) * 100 : 0);
-  const counts = Object.fromEntries(
-    RSVP_STATUSES.map((status) => [status, heads(status)]),
-  );
+  const counts = rsvpHeadcounts(guests);
+  const total = counts.total;
 
   return (
     <div className="flex items-center gap-[22px] pt-1 pb-1">
       <div className="flex shrink-0 items-baseline gap-1.5">
         <span className="text-[26px] leading-none font-extrabold tabular-nums">
-          {Math.round(share(counts.confirmed))}%
+          {Math.round(headcountShare(counts, 'confirmed'))}%
         </span>
         <span className="text-muted-foreground text-[13px]">
           {t('meter.confirmed')}
@@ -38,7 +35,7 @@ export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
             <div
               key={status}
               className={rsvpPresentation(status).solid}
-              style={{ width: `${share(counts[status])}%` }}
+              style={{ width: `${headcountShare(counts, status)}%` }}
             />
           ))}
         </div>

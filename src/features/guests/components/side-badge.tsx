@@ -14,6 +14,11 @@ export function sideTintClass(side: GroupSide | null | undefined): string {
   return 'bg-muted text-muted-foreground';
 }
 
+/** The solid colour of a Side, for dots and meter bars. */
+export function sideSolidClass(side: GroupSide): string {
+  return side === 'bride' ? 'bg-primary' : 'bg-violet-strong';
+}
+
 /**
  * A Group's Side as a small badge after its name: the bride's side magenta, the
  * groom's violet. No side, no badge - the label is the signal, not a colour.

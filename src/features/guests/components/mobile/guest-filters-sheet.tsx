@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconCheck } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
@@ -30,14 +30,14 @@ const draftOf = (params: GuestListParams): Draft => ({
  */
 export function GuestFiltersSheet({
   open,
-  onOpenChange,
+  onClose,
   params,
   groups,
   countFor,
   onApply,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   params: GuestListParams;
   groups: GroupWithGuestsApp[];
   /** Records the list would show with these filters, for the apply button. */
@@ -62,12 +62,16 @@ export function GuestFiltersSheet({
         : [...draft.groups, id],
     });
 
-  const count = countFor({ ...params, ...draft });
+  // Only worth counting while the sheet is up to show it.
+  const count = useMemo(
+    () => (open ? countFor({ ...params, ...draft }) : 0),
+    [open, countFor, params, draft],
+  );
 
   return (
     <MobileSheet
       open={open}
-      onOpenChange={onOpenChange}
+      onClose={onClose}
       title={t('list.mobile.filters.title')}
     >
       <Section title={t('list.sort')}>
@@ -136,7 +140,7 @@ export function GuestFiltersSheet({
         <Button
           onClick={() => {
             onApply(draft);
-            onOpenChange(false);
+            onClose();
           }}
           className="h-12 flex-[1.6] rounded-xl text-[15px] font-bold"
         >

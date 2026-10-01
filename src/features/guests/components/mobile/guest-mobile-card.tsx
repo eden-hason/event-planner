@@ -2,17 +2,13 @@
 
 import { useRef, type CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  IconCheck,
-  IconDots,
-  IconUser,
-  IconUserEdit,
-} from '@tabler/icons-react';
+import { IconCheck, IconDots } from '@tabler/icons-react';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
 import { amountDisplay } from '@/features/guests/utils/guest-amount';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
+import { AmountBadge } from '../amount-badge';
 
 /** Fixed card height: the list is virtualized, so cards must never grow. */
 export const CARD_HEIGHT = 72;
@@ -130,26 +126,7 @@ export function GuestMobileCard({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
-        {/* Every card shows its count; a pencil marks one the Guest changed
-            in their own answer, so it reads apart from the invitation. */}
-        <span
-          title={
-            count.changedByGuest
-              ? t('amountChangedHint', {
-                  invited: count.invited,
-                  coming: count.value,
-                })
-              : undefined
-          }
-          className="inline-flex h-[18px] items-center gap-[3px] rounded-md bg-sky-100 px-[5px] text-[11px] font-bold text-sky-700 tabular-nums dark:bg-sky-400/15 dark:text-sky-300"
-        >
-          {count.changedByGuest ? (
-            <IconUserEdit size={11} stroke={2.3} />
-          ) : (
-            <IconUser size={11} stroke={2.3} />
-          )}
-          {count.value}
-        </span>
+        <AmountBadge count={count} size="sm" />
         <span
           className={cn(
             'inline-flex h-[22px] items-center gap-1 rounded-full px-2 text-[11.5px] font-bold',

@@ -23,34 +23,29 @@ import { cn } from '@/lib/utils';
  */
 export function MobileSheet({
   open,
-  onOpenChange,
+  onClose,
   title,
   subtitle,
   children,
-  className,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   title: string;
   subtitle?: string;
   children: ReactNode;
-  className?: string;
 }) {
   const t = useTranslations('guests.list.mobile');
   const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       <SheetContent
         side="bottom"
         dir={dir}
         // A sheet of options, not a form: focusing the first one would only
         // paint a ring on it.
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className={cn(
-          'flex max-h-[90dvh] flex-col gap-3.5 rounded-t-[24px] border-0 px-4 pt-2 pb-[max(1.75rem,env(safe-area-inset-bottom))] [&>[data-slot=sheet-close]]:hidden',
-          className,
-        )}
+        className="flex max-h-[90dvh] flex-col gap-3.5 rounded-t-[24px] border-0 px-4 pt-2 pb-[max(1.75rem,env(safe-area-inset-bottom))] [&>[data-slot=sheet-close]]:hidden"
       >
         <span className="bg-input h-1 w-[38px] shrink-0 self-center rounded-full" />
         <div className="flex items-start gap-2.5">
@@ -66,7 +61,7 @@ export function MobileSheet({
           </div>
           <button
             type="button"
-            onClick={() => onOpenChange(false)}
+            onClick={onClose}
             aria-label={t('close')}
             className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-[9px]"
           >

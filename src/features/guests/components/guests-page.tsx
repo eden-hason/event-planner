@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -287,10 +286,6 @@ export function GuestsPage({
   // count, an X that ends it, and "select all" where the add button was.
   const [selectionHeader, setSelectionHeader] =
     useState<SelectionHeader | null>(null);
-  const handleSelectionHeader = useCallback(
-    (header: SelectionHeader | null) => setSelectionHeader(header),
-    [],
-  );
 
   const groupHeaderAction = useMemo(
     () => (
@@ -369,14 +364,11 @@ export function GuestsPage({
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {
     setHeader(headerConfig);
-    // Keyed on what the action actually depends on, not on `headerConfig`:
-    // `guestsHeaderAction` is rebuilt every render (its own deps include
-    // handlers that are), so an identity-keyed effect would set state in a
-    // loop. `guests`/`eventName` are here because the export items close over
-    // them and would otherwise keep exporting a stale list; `groups` feeds
-    // the subtitle's group count the same way.
+    // Keyed on what the header shows, not on `headerConfig`, which is a new
+    // object every render: an identity-keyed effect would set state in a loop.
+    // The counts feed the phone's subtitle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, isMobile, activeTab, guests, groups, eventName, setHeader, selection]);
+  }, [title, isMobile, activeTab, guests.length, groups.length, setHeader, selection]);
 
   usePublishedHeight(tabsRowRef, '--guest-tabs-h', hasMounted && !isMobile);
 
@@ -455,7 +447,7 @@ export function GuestsPage({
               onAddGuest={handleAddGuest}
               onImportFile={goToImportRoute}
               onImportDrive={goToImportRouteViaDrive}
-              onSelectionHeader={handleSelectionHeader}
+              onSelectionHeader={setSelectionHeader}
             />
           ) : (
             <GuestsDesktop
