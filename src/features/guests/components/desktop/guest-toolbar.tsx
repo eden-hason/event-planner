@@ -40,7 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { SelectBox } from './select-box';
-import { sideDotClass } from './side-dot';
+import { SideBadge } from './side-badge';
 
 const STATUS_CHIPS: (RsvpStatus | null)[] = [
   null,
@@ -212,6 +212,7 @@ export function GuestToolbar({
         <PopoverContent
           align={dir === 'rtl' ? 'end' : 'start'}
           dir={dir}
+          sideOffset={8}
           className="flex w-[310px] flex-col gap-3.5 rounded-[14px] p-3.5"
         >
           <div className="flex flex-col gap-1">
@@ -239,15 +240,11 @@ export function GuestToolbar({
                   <button
                     type="button"
                     onClick={() => toggleGroup(group.id)}
-                    className="flex min-w-0 flex-1 items-center gap-[9px] text-start"
+                    className="flex min-w-0 flex-1 items-center gap-1.5 text-start"
                   >
-                    <span
-                      className={cn(
-                        'size-1.5 shrink-0 rounded-full',
-                        sideDotClass(group.side),
-                      )}
-                    />
-                    <span className="flex-1 truncate">{group.name}</span>
+                    <span className="truncate">{group.name}</span>
+                    <SideBadge side={group.side} />
+                    <span className="flex-1" />
                     <span className="text-muted-foreground text-xs tabular-nums">
                       {group.guestCount ?? group.guests.length}
                     </span>

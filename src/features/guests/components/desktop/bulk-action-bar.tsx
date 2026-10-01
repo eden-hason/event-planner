@@ -27,7 +27,7 @@ import {
   type RsvpStatus,
 } from '@/features/guests/utils';
 import { cn } from '@/lib/utils';
-import { sideDotClass } from './side-dot';
+import { SideBadge } from './side-badge';
 
 export type BulkAction =
   | { type: 'rsvp'; status: RsvpStatus }
@@ -146,13 +146,8 @@ export function BulkActionBar({
               onClick={() => onAction({ type: 'group', groupId: group.id })}
               className="gap-2"
             >
-              <span
-                className={cn(
-                  'size-1.5 shrink-0 rounded-full',
-                  sideDotClass(group.side),
-                )}
-              />
               <span className="truncate">{group.name}</span>
+              <SideBadge side={group.side} />
             </DropdownMenuItem>
           ))}
           {groups.length > 0 && <DropdownMenuSeparator />}
@@ -188,12 +183,6 @@ export function BulkActionBar({
               onClick={() => onAction({ type: 'side', side })}
               className="gap-2"
             >
-              <span
-                className={cn(
-                  'size-1.5 rounded-full',
-                  side ? sideDotClass(side) : 'bg-muted-foreground/40',
-                )}
-              />
               {t(`sides.${side ?? 'none'}`)}
             </DropdownMenuItem>
           ))}

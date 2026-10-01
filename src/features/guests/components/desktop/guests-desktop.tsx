@@ -518,24 +518,30 @@ export function GuestsDesktop({
         </>
       )}
 
-      <div className="pointer-events-none sticky bottom-6 z-30 mt-3 flex flex-col items-center gap-3">
-        <UndoToast
-          pending={deferred.pending}
-          failedCount={deferred.failure?.returned ?? 0}
-          onUndo={deferred.undo}
-          onRetry={deferred.retry}
-          onDismissFailure={deferred.dismissFailure}
-        />
-        {selected.size > 0 && (
-          <BulkActionBar
-            count={selected.size}
-            hidden={hidden}
-            groups={groups}
-            onClear={clearSelection}
-            onShowHidden={() => setSelectionOnly(true)}
-            onAction={handleBulk}
+      {/* Fixed to the viewport, not the list: a short list must not carry the bar
+          up with it. The empty `justify-center` row is only there so the fixed
+          child keeps its static, centred position within the page column
+          (the sidebar takes a share of the width) instead of the window's. */}
+      <div className="pointer-events-none flex justify-center">
+        <div className="pointer-events-none fixed bottom-6 z-30 flex flex-col items-center gap-3">
+          <UndoToast
+            pending={deferred.pending}
+            failedCount={deferred.failure?.returned ?? 0}
+            onUndo={deferred.undo}
+            onRetry={deferred.retry}
+            onDismissFailure={deferred.dismissFailure}
           />
-        )}
+          {selected.size > 0 && (
+            <BulkActionBar
+              count={selected.size}
+              hidden={hidden}
+              groups={groups}
+              onClear={clearSelection}
+              onShowHidden={() => setSelectionOnly(true)}
+              onAction={handleBulk}
+            />
+          )}
+        </div>
       </div>
 
       <GuestConfirmDialog request={confirm} onClose={() => setConfirm(null)} />

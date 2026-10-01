@@ -25,7 +25,7 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
-import { sideDotClass } from './side-dot';
+import { SideBadge } from './side-badge';
 
 export type RowAction =
   | { type: 'rsvp'; status: 'confirmed' | 'declined' }
@@ -111,13 +111,8 @@ export function GuestRowMenu({
                 onClick={() => onAction({ type: 'group', groupId: group.id })}
                 className="gap-2"
               >
-                <span
-                  className={cn(
-                    'size-1.5 shrink-0 rounded-full',
-                    sideDotClass(group.side),
-                  )}
-                />
                 <span className="truncate">{group.name}</span>
+                <SideBadge side={group.side} />
               </DropdownMenuItem>
             ))}
             {guest.groupId && (
