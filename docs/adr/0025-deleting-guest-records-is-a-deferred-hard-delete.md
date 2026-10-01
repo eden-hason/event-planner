@@ -50,3 +50,7 @@ list page stays out of it entirely.
   and is not made worse by this ADR, but bulk delete makes it more likely.
 - An Operator deleting from the Back Office (ADR 0007) is still an immediate hard delete
   behind a confirm. This ADR covers the Owner's guest list only.
+- Deleting a Group on mobile uses the same mechanism (`useDeferredCommit`): the same Undo
+  window, commit on leave, and a `keepalive` route handler of its own (`groups/delete`).
+  Undo matters less there, since a Group delete takes no Guest Records with it (their group
+  is set to null), but one mechanism keeps the two from drifting.

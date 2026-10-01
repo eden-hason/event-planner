@@ -30,7 +30,7 @@ import {
   IconTrash,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { GuestWithGroupApp, GroupWithGuestsApp } from '../schemas';
+import { GuestWithGroupApp, GroupWithGuestsApp, GroupSide } from '../schemas';
 import type { TableOption } from '@/features/seating';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -40,7 +40,7 @@ import {
 } from '@/features/guests/components/groups';
 import {
   GroupsMobile,
-  AssignGuestsSheet,
+  AssignGuestsScreen,
   CreateGroupSheet,
   type AssignTarget,
 } from '@/features/guests/components/groups/mobile';
@@ -106,10 +106,15 @@ export function GuestsPage({
 
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [assignSheetOpen, setAssignSheetOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<GroupWithGuestsApp | null>(null);
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+  const unassignedGuests = useMemo(
+    () => guests.filter((g) => !g.groupId),
+    [guests],
+  );
 
   const goToImportRoute = () => router.push(`/app/${eventId}/guests/import`);
   // `?source=drive` tells the wizard to open straight into the Drive picker
@@ -178,7 +183,9 @@ export function GuestsPage({
   // instead of going through `createGroupAction` - the revalidated `groups`
   // prop wouldn't be ready in time anyway.
   const handleCreateGroupAndAssign = (formData: FormData) => {
+    // Read everything needed afterwards before the FormData goes to the action.
     const groupName = (formData.get('name') as string) || '';
+    const groupSide = (formData.get('side') as GroupSide | null) || null;
 
     const promise = upsertGroup(eventId, formData).then((result) => {
       if (!result.success) {
@@ -197,7 +204,12 @@ export function GuestsPage({
     promise
       .then((result) => {
         if (result.groupId) {
-          setAssignTarget({ id: result.groupId, name: groupName, guests: [] });
+          setAssignTarget({
+            id: result.groupId,
+            name: groupName,
+            side: groupSide,
+            guests: [],
+          });
           setAssignSheetOpen(true);
         }
       })
@@ -205,11 +217,33 @@ export function GuestsPage({
   };
 
   const handleOpenGroupDialog = () => {
+    setEditingGroup(null);
     setIsGroupDialogOpen(true);
   };
 
+  const handleEditGroup = (group: GroupWithGuestsApp) => {
+    setEditingGroup(group);
+    setIsGroupDialogOpen(true);
+  };
+
+  const handleUpdateGroup = (formData: FormData) => {
+    const groupName = (formData.get('name') as string) || '';
+    const promise = upsertGroup(eventId, formData).then((result) => {
+      if (!result.success) {
+        throw new Error(groupCreateErrorMessage(result.errorCode));
+      }
+      return result;
+    });
+    toast.promise(promise, {
+      loading: t('groups.mobile.updatingGroup', { name: groupName }),
+      success: () => t('groups.mobile.groupUpdated'),
+      error: (err) =>
+        err instanceof Error ? err.message : t('groups.mobile.groupUpdateFailed'),
+    });
+  };
+
   const handleOpenAssign = (group: GroupWithGuestsApp) => {
-    setAssignTarget({ id: group.id, name: group.name, guests: group.guests });
+    setAssignTarget({ id: group.id, name: group.name, side: group.side, guests: group.guests });
     setAssignSheetOpen(true);
   };
 
@@ -356,9 +390,10 @@ export function GuestsPage({
     () => (
       <Button onClick={handleOpenGroupDialog}>
         <IconPlus size={16} />
-        {t('addGroup')}
+        {t('groups.mobile.newGroupButton')}
       </Button>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -507,6 +542,7 @@ export function GuestsPage({
               guests={guests}
               onAddGroup={handleOpenGroupDialog}
               onOpenAssign={handleOpenAssign}
+              onEditGroup={handleEditGroup}
             />
           ) : (
             <GroupsDirectory
@@ -525,6 +561,9 @@ export function GuestsPage({
           onOpenChange={setIsGroupDialogOpen}
           onCreateGroup={handleCreateGroup}
           onCreateAndAssign={handleCreateGroupAndAssign}
+          unassignedCount={unassignedGuests.length}
+          group={editingGroup}
+          onUpdateGroup={handleUpdateGroup}
         />
       ) : (
         <CreateGroupDialog
@@ -535,11 +574,12 @@ export function GuestsPage({
       )}
 
       {isMobile && (
-        <AssignGuestsSheet
+        <AssignGuestsScreen
           open={assignSheetOpen}
           onOpenChange={setAssignSheetOpen}
           group={assignTarget}
-          availableGuests={guests.filter((g) => !g.groupId)}
+          availableGuests={unassignedGuests}
+          totalRecords={guests.length}
           eventId={eventId}
         />
       )}

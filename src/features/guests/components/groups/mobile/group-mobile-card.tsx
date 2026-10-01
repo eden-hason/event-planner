@@ -1,39 +1,31 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
-import { IconDotsVertical, IconTrash } from '@tabler/icons-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useTranslations } from 'next-intl';
+import { IconDots } from '@tabler/icons-react';
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { cn } from '@/lib/utils';
+import { SideBadge, sideTintClass } from '../../side-badge';
 
 interface GroupMobileCardProps {
   group: GroupWithGuestsApp;
   onSelect: () => void;
-  onDelete: () => void;
+  onOpenMenu: () => void;
+  menuOpen?: boolean;
 }
 
-// Same side -> tint mapping as the desktop GroupCard, so a group reads the
-// same color whichever surface it's viewed from.
-const SIDE_TINT: Record<'bride' | 'groom', string> = {
-  bride: 'bg-primary/10 text-primary',
-  groom: 'bg-blue-100 text-blue-600',
-};
-
-export function GroupMobileCard({ group, onSelect, onDelete }: GroupMobileCardProps) {
+export function GroupMobileCard({
+  group,
+  onSelect,
+  onOpenMenu,
+  menuOpen,
+}: GroupMobileCardProps) {
   const t = useTranslations('guests');
-  const isRTL = useLocale() === 'he';
-  const tint = group.side ? SIDE_TINT[group.side] : 'bg-muted text-muted-foreground';
   const sub =
     group.description ||
-    (group.guestCount > 0 ? t('groups.mobile.noDescription') : t('groups.mobile.stillEmpty'));
+    (group.guestCount > 0
+      ? t('groups.mobile.noDescription')
+      : t('groups.mobile.stillEmpty'));
 
   return (
     <div
@@ -46,52 +38,53 @@ export function GroupMobileCard({ group, onSelect, onDelete }: GroupMobileCardPr
           onSelect();
         }
       }}
-      className="bg-card flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-accent/40"
+      className="bg-card hover:bg-accent/40 flex h-[72px] cursor-pointer items-center gap-2.5 rounded-[14px] border ps-2 pe-1 transition-colors"
     >
-      <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-[11px]', tint)}>
+      <div
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-[11px]',
+          sideTintClass(group.side),
+        )}
+      >
         <GroupIcon iconName={group.icon} size="md" />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[15px] font-semibold">{group.name}</span>
-          {group.side && (
-            <Badge className={cn('shrink-0 rounded-[5px] px-1.5 py-0 text-[10px] font-semibold', tint)}>
-              {t(`sides.${group.side}` as 'sides.bride' | 'sides.groom')}
-            </Badge>
-          )}
+          <span className="truncate text-[15px] font-semibold">
+            {group.name}
+          </span>
+          <SideBadge side={group.side} />
         </div>
-        <span className="text-muted-foreground truncate text-xs">{sub}</span>
+        <span className="text-muted-foreground truncate text-[12.5px]">
+          {sub}
+        </span>
       </div>
 
       <div className="flex shrink-0 flex-col items-center">
-        <span className="text-[17px] leading-none font-bold">{group.guestCount}</span>
-        <span className="text-muted-foreground text-[10px]">{t('groups.mobile.guestsLabel')}</span>
+        <span className="text-base leading-none font-extrabold tabular-nums">
+          {group.guestCount}
+        </span>
+        <span className="text-muted-foreground text-[11px]">
+          {t('groups.mobile.recordsLabel')}
+        </span>
       </div>
 
-      <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground size-8 shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="sr-only">{t('groups.openMenu')}</span>
-            <IconDotsVertical size={16} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem
-            variant="destructive"
-            className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-            onClick={onDelete}
-          >
-            <IconTrash size={20} />
-            {t('groups.deleteGroup')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        aria-label={t('groups.openMenu')}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenMenu();
+        }}
+        onKeyDown={(e) => e.stopPropagation()}
+        className={cn(
+          'text-muted-foreground -ms-1 flex h-11 w-[30px] shrink-0 items-center justify-center rounded-[9px]',
+          menuOpen && 'bg-muted',
+        )}
+      >
+        <IconDots size={18} stroke={2.4} />
+      </button>
     </div>
   );
 }

@@ -22,7 +22,7 @@ import { formatPhone } from '@/lib/phone';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { SelectBox } from './select-box';
-import { sideDotClass } from './side-dot';
+import { SideBadge } from '../side-badge';
 import { GuestRowMenu, type RowAction } from './guest-row-menu';
 
 /** Fixed row height: the list is virtualized, so rows must never grow. */
@@ -273,12 +273,10 @@ function GuestRow({
           guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
         )}
       >
-        <span
-          className={cn('size-[7px] shrink-0 rounded-full', sideDotClass(side))}
-        />
         <span className="truncate">
           {guest.group?.name ?? t('list.noGroup')}
         </span>
+        {guest.group && <SideBadge side={side} />}
       </span>
 
       <span className="flex items-center gap-[5px]">

@@ -45,7 +45,11 @@ export async function upsertGroup(
       };
     }
 
-    const rawData = Object.fromEntries(formData);
+    const rawData: Record<string, FormDataEntryValue | null> =
+      Object.fromEntries(formData);
+    // An edit sends empty values to clear the side and the description.
+    if (rawData.side === '') rawData.side = null;
+    if (rawData.description === '') rawData.description = null;
 
     const validationResult = GroupUpsertSchema.safeParse(rawData);
     if (!validationResult.success) {
