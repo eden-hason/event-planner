@@ -22,7 +22,11 @@ export {
   type IplanScope,
 } from './export-iplan';
 
-export { filterAndSortGuests, type GuestFilterParams } from './filter-guests';
+export {
+  filterAndSortGuests,
+  filterGuests,
+  type GuestFilterParams,
+} from './filter-guests';
 
 export {
   rsvpPresentation,

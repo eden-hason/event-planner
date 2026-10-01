@@ -1,162 +1,157 @@
 'use client';
 
-import { useLocale } from 'next-intl';
-import {
-  IconCheck,
-  IconDotsVertical,
-  IconEdit,
-  IconTrash,
-} from '@tabler/icons-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { formatPhone } from '@/lib/phone';
-import { GuestWithGroupApp } from '@/features/guests/schemas';
-import { RsvpPill } from '../rsvp-pill';
-import { AboveInvitedBadge } from '../above-invited-badge';
+import { useRef, type CSSProperties } from 'react';
+import { useTranslations } from 'next-intl';
+import { IconCheck, IconDots } from '@tabler/icons-react';
+import type { GuestWithGroupApp } from '@/features/guests/schemas';
+import { rsvpPresentation } from '@/features/guests/utils';
+import { amountDisplay } from '@/features/guests/utils/guest-amount';
+import { avatarTintFor } from '@/lib/avatar-tint';
+import { cn } from '@/lib/utils';
+import { AmountBadge } from '../amount-badge';
 
-type TFn = (key: string, values?: Record<string, string | number>) => string;
+/** Fixed card height: the list is virtualized, so cards must never grow. */
+export const CARD_HEIGHT = 72;
+/** How long a press has to last to start a selection. */
+const LONG_PRESS_MS = 450;
 
-interface GuestMobileCardProps {
-  guest: GuestWithGroupApp;
-  onSelect: (guest: GuestWithGroupApp) => void;
-  onDelete: (guest: GuestWithGroupApp) => void;
-  onMarkConfirmed: (guest: GuestWithGroupApp) => void;
-  /** Resolved from guest.tableId by the list - the number lives on the table row */
-  tableNumber?: number;
-  t: TFn;
-}
-
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return '';
-  if (words.length === 1) return words[0].charAt(0).toUpperCase();
-  return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
-}
-
+/**
+ * One Guest Record on the phone list (Guests Mobile design): who and which
+ * group, with the RSVP on the far side. A tap
+ * opens the record; while selecting, it toggles it instead. A long press
+ * starts a selection with this record in it.
+ */
 export function GuestMobileCard({
   guest,
-  onSelect,
-  onDelete,
-  onMarkConfirmed,
-  tableNumber,
-  t,
-}: GuestMobileCardProps) {
-  const isRTL = useLocale() === 'he';
-  const status = guest.rsvpStatus;
+  selecting,
+  checked,
+  style,
+  onOpen,
+  onToggle,
+  onLongPress,
+  onMenu,
+}: {
+  guest: GuestWithGroupApp;
+  selecting: boolean;
+  checked: boolean;
+  style?: CSSProperties;
+  onOpen: () => void;
+  onToggle: () => void;
+  onLongPress: () => void;
+  onMenu: () => void;
+}) {
+  const t = useTranslations('guests.list');
+  const count = amountDisplay(guest);
+  const presentation = rsvpPresentation(guest.rsvpStatus);
+
+  // A press that turns long starts the selection, and swallows the click that
+  // follows it so the same touch does not also toggle the record back out.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fired = useRef(false);
+  const cancelPress = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
 
   return (
     <div
-      role="button"
+      role={selecting ? 'checkbox' : 'button'}
+      aria-checked={selecting ? checked : undefined}
       tabIndex={0}
-      onClick={() => onSelect(guest)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect(guest);
-        }
+      style={style}
+      onPointerDown={() => {
+        fired.current = false;
+        if (selecting) return;
+        timer.current = setTimeout(() => {
+          fired.current = true;
+          onLongPress();
+        }, LONG_PRESS_MS);
       }}
-      className="bg-card flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-accent/40"
+      onPointerUp={cancelPress}
+      onPointerLeave={cancelPress}
+      onPointerCancel={cancelPress}
+      // Scrolling the list is not a press.
+      onTouchMove={cancelPress}
+      onContextMenu={(event) => event.preventDefault()}
+      onClick={() => {
+        if (fired.current) return;
+        if (selecting) onToggle();
+        else onOpen();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (selecting) onToggle();
+        else onOpen();
+      }}
+      className={cn(
+        'focus-visible:ring-ring/50 flex h-[72px] cursor-pointer items-center gap-2.5 rounded-[14px] border ps-3 pe-1.5 outline-none transition-colors select-none focus-visible:ring-[3px] [-webkit-touch-callout:none]',
+        checked && selecting
+          ? 'bg-primary/6 border-primary/40 border-dashed'
+          : 'bg-card active:bg-muted/60',
+      )}
     >
-      {/* Initials badge */}
-      <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-        {getInitials(guest.name)}
-      </div>
-
-      {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-[15px] font-semibold">
-            {guest.name}
-          </span>
-          {guest.group && (
-            <span className="text-muted-foreground bg-muted shrink-0 rounded px-1.5 py-0.5 text-[11px]">
-              {guest.group.name}
-            </span>
+      {selecting && (
+        <span
+          className={cn(
+            'flex size-[22px] shrink-0 items-center justify-center rounded-md border-[1.5px]',
+            checked
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-input bg-card',
           )}
-        </div>
+        >
+          {checked && <IconCheck size={15} stroke={3} />}
+        </span>
+      )}
 
-        <div className="text-muted-foreground flex items-center gap-2 text-[13px]">
-          {guest.phone && (
-            <>
-              <a
-                href={`tel:${guest.phone}`}
-                onClick={(e) => e.stopPropagation()}
-                className="hover:text-foreground -m-1 p-1"
-                dir="ltr"
-              >
-                {formatPhone(guest.phone)}
-              </a>
-              <span className="text-border">·</span>
-            </>
-          )}
-          <span>{t('mobile.seats', { count: guest.amount })}</span>
-          <AboveInvitedBadge amount={guest.amount} invitedAmount={guest.invitedAmount} />
-        </div>
-
-        {(guest.side || tableNumber !== undefined) && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {guest.side && (
-              <Badge variant="outline">{t(`sides.${guest.side}`)}</Badge>
-            )}
-            {tableNumber !== undefined && (
-              <Badge variant="outline">
-                {t('table.tableNumber', { number: tableNumber })}
-              </Badge>
-            )}
-          </div>
+      <span
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-full text-base font-bold',
+          avatarTintFor(guest.name),
         )}
+      >
+        {guest.name.charAt(0)}
+      </span>
 
+      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <span className="truncate text-[15px] font-bold">{guest.name}</span>
+        <span
+          className={cn(
+            'truncate text-[13px]',
+            guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
+          )}
+        >
+          {guest.group?.name ?? t('noGroup')}
+        </span>
       </div>
 
-      {/* Status pill */}
-      <RsvpPill status={status} />
-
-      {/* Options menu */}
-      <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground size-8 shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="sr-only">{t('table.openMenu')}</span>
-            <IconDotsVertical size={16} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-          <DropdownMenuItem
-            className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-            onClick={() => onSelect(guest)}
-          >
-            <IconEdit size={20} />
-            {t('table.editGuest')}
-          </DropdownMenuItem>
-          {status !== 'confirmed' && (
-            <DropdownMenuItem
-              className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-              onClick={() => onMarkConfirmed(guest)}
-            >
-              <IconCheck size={20} />
-              {t('table.markConfirmed')}
-            </DropdownMenuItem>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <AmountBadge count={count} size="sm" />
+        <span
+          className={cn(
+            'inline-flex h-[22px] items-center gap-1 rounded-full px-2 text-[11.5px] font-bold',
+            presentation.chip,
           )}
-          <DropdownMenuItem
-            variant="destructive"
-            className="min-h-11 gap-3 text-base [&_svg:not([class*='size-'])]:size-5"
-            onClick={() => onDelete(guest)}
-          >
-            <IconTrash size={20} />
-            {t('table.deleteGuest')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        >
+          <span className={cn('size-1.5 rounded-full', presentation.solid)} />
+          {t(`status.${guest.rsvpStatus}`)}
+        </span>
+      </div>
+
+      {!selecting && (
+        <button
+          type="button"
+          aria-label={t('rowMenu.trigger', { name: guest.name })}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onMenu();
+          }}
+          className="text-muted-foreground -ms-1 flex h-11 w-[30px] shrink-0 items-center justify-center"
+        >
+          <IconDots size={18} stroke={2.4} />
+        </button>
+      )}
     </div>
   );
 }

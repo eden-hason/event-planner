@@ -27,6 +27,7 @@ import { DeleteGroupSheet } from './delete-group-sheet';
 import { GroupUndoToast } from './group-undo-toast';
 import { useDeferredGroupDelete } from '@/features/guests/hooks/use-deferred-group-delete';
 import { cn } from '@/lib/utils';
+import { sideSolidClass } from '../../side-badge';
 
 interface GroupsMobileProps {
   eventId: string;
@@ -168,13 +169,13 @@ export function GroupsMobile({
       key: 'bride',
       label: t('list.sides.bride'),
       count: sideGroupCount('bride'),
-      dotClass: 'bg-primary',
+      dotClass: sideSolidClass('bride'),
     },
     {
       key: 'groom',
       label: t('list.sides.groom'),
       count: sideGroupCount('groom'),
-      dotClass: 'bg-violet-strong',
+      dotClass: sideSolidClass('groom'),
     },
     {
       key: 'none',
@@ -214,11 +215,14 @@ export function GroupsMobile({
         </div>
         <div className="bg-muted flex h-[7px] gap-0.5 overflow-hidden rounded-full">
           {bride > 0 && (
-            <div className="bg-primary" style={{ width: `${pct(bride)}%` }} />
+            <div
+              className={sideSolidClass('bride')}
+              style={{ width: `${pct(bride)}%` }}
+            />
           )}
           {groom > 0 && (
             <div
-              className="bg-violet-strong"
+              className={sideSolidClass('groom')}
               style={{ width: `${pct(groom)}%` }}
             />
           )}

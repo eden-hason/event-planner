@@ -1,7 +1,7 @@
 /**
  * Guest List Health Check (see CONTEXT.md): a read-only scan for likely data
  * problems. Shared by Home, which counts them, and the guest list, which
- * filters to them through `?issue=` (read in `useGuestFilters`).
+ * filters to them through `?issue=` (read in `parseGuestListParams`).
  *
  * Duplicates are by name only. Phones cannot collide: the database holds one
  * Guest Record per phone per event (guests_event_id_phone_number_key), so the

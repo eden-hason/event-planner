@@ -1,7 +1,8 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
-import { IconArmchair, IconMessage, IconTrash } from '@tabler/icons-react';
+import { useLocale } from 'next-intl';
+import { IconTrash } from '@tabler/icons-react';
+import { useDeleteConfirmCopy, useRsvpConfirmCopy } from '../guest-confirm-copy';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,26 +13,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { RsvpStatus } from '@/features/guests/utils';
-import type {
-  DeleteImpact,
-  RsvpImpact,
-} from '@/features/guests/utils/bulk-impact';
+import type { ConfirmRequest } from '@/features/guests/hooks/use-guest-writes';
 import { cn } from '@/lib/utils';
 
-export type ConfirmRequest =
-  | {
-      kind: 'rsvp';
-      status: RsvpStatus;
-      impact: RsvpImpact;
-      onConfirm: () => void;
-    }
-  | {
-      kind: 'delete';
-      impact: DeleteImpact;
-      singleName?: string;
-      onConfirm: () => void;
-    };
+export type { ConfirmRequest };
 
 /**
  * Every confirm the guest list asks for. Each one names the fallout in plain
@@ -67,30 +52,17 @@ function RsvpConfirm({
 }: {
   request: Extract<ConfirmRequest, { kind: 'rsvp' }>;
 }) {
-  const t = useTranslations('guests.list.confirmRsvp');
-  const { impact, status } = request;
-  const lines = [
-    impact.answeredThemselves > 0 && {
-      icon: IconMessage,
-      text: t(status === 'confirmed' ? 'answeredDeclined' : 'answered', {
-        count: impact.answeredThemselves,
-      }),
-    },
-    impact.losingSeat > 0 && {
-      icon: IconArmchair,
-      text: t('losingSeat', { count: impact.losingSeat }),
-    },
-  ].filter(Boolean) as { icon: typeof IconMessage; text: string }[];
+  const copy = useRsvpConfirmCopy(request);
 
   return (
     <>
       <AlertDialogHeader className="gap-3 text-start">
         <AlertDialogTitle className="text-lg leading-snug font-extrabold">
-          {t(`title.${status}`, { count: impact.changing })}
+          {copy.title}
         </AlertDialogTitle>
         <AlertDialogDescription asChild>
           <div className="flex flex-col gap-2">
-            {lines.map(({ icon: Icon, text }) => (
+            {copy.lines.map(({ icon: Icon, text }) => (
               <div
                 key={text}
                 className="text-muted-foreground flex items-start gap-[9px] text-sm leading-normal"
@@ -106,14 +78,14 @@ function RsvpConfirm({
       </AlertDialogHeader>
       <AlertDialogFooter className="mt-2 gap-2">
         <AlertDialogCancel className="h-10 rounded-[10px] px-4">
-          {t('cancel')}
+          {copy.cancel}
         </AlertDialogCancel>
         <AlertDialogAction
-          variant={status === 'declined' ? 'destructive' : 'default'}
+          variant={request.status === 'declined' ? 'destructive' : 'default'}
           onClick={request.onConfirm}
           className="h-10 rounded-[10px] px-4 font-bold"
         >
-          {t(`confirm.${status}`)}
+          {copy.confirm}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>
@@ -125,28 +97,8 @@ function DeleteConfirm({
 }: {
   request: Extract<ConfirmRequest, { kind: 'delete' }>;
 }) {
-  const t = useTranslations('guests.list.confirmDelete');
-  const { impact, singleName } = request;
-  const strong = impact.isWholeList && impact.total > 1;
-
-  const title = singleName
-    ? t('titleOne', { name: singleName })
-    : strong
-      ? t('titleAll', { count: impact.total })
-      : t('title', { count: impact.total });
-
-  const { messaged, answeredThemselves: answered } = impact;
-  const body = singleName
-    ? messaged + answered > 0
-      ? t('bodyOneHistory')
-      : null
-    : messaged > 0 && answered > 0
-      ? t('bodyBoth', { messaged, answered })
-      : messaged > 0
-        ? t('bodyMessaged', { messaged })
-        : answered > 0
-          ? t('bodyAnswered', { answered })
-          : null;
+  const { strong, title, body, confirm, cancel } =
+    useDeleteConfirmCopy(request);
 
   return (
     <>
@@ -180,7 +132,7 @@ function DeleteConfirm({
         <AlertDialogCancel
           className={cn('rounded-[10px]', strong ? 'h-11 w-full' : 'h-10 px-4')}
         >
-          {t('cancel')}
+          {cancel}
         </AlertDialogCancel>
         <AlertDialogAction
           variant="destructive"
@@ -190,11 +142,7 @@ function DeleteConfirm({
             strong ? 'h-11 w-full' : 'h-10 px-4',
           )}
         >
-          {singleName
-            ? t('confirmOne')
-            : strong
-              ? t('confirmAll', { count: impact.total })
-              : t('confirm', { count: impact.total })}
+          {confirm}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>

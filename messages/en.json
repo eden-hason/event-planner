@@ -583,48 +583,6 @@
       "confirmed": "Confirmed",
       "declined": "Declined"
     },
-    "stats": {
-      "totalGuests": "Total Guests",
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "declined": "Declined",
-      "records": "{count} records",
-      "all": "All",
-      "guestsLabel": "Guests",
-      "rsvpStatus": "RSVP status"
-    },
-    "table": {
-      "name": "Name",
-      "phone": "Phone",
-      "group": "Group",
-      "side": "Side",
-      "tableColumn": "Table",
-      "tableNumber": "Table {number}",
-      "rsvpStatus": "RSVP Status",
-      "dietaryRestrictions": "Dietary Restrictions",
-      "dietaryNone": "None",
-      "amount": "Amount",
-      "aboveInvited": "Invited {count}",
-      "aboveInvitedHint": "Answered more than invited. Changing the count clears this",
-      "notes": "Note",
-      "openMenu": "Open menu",
-      "deleteGuest": "Delete guest",
-      "editGuest": "Edit",
-      "markConfirmed": "Mark as confirmed",
-      "emptyTitle": "No Guests Yet",
-      "emptyDescription": "Get started by uploading a guest list or adding guests manually.",
-      "uploadFile": "Upload File",
-      "addGuest": "Add Guest",
-      "noGuestsSearch": "No guests found matching your search.",
-      "noGuestsFound": "No guests found.",
-      "showing": "Showing {start}-{end} of {total} records",
-      "firstPage": "First page",
-      "previousPage": "Previous page",
-      "nextPage": "Next page",
-      "lastPage": "Last page",
-      "prev": "Previous",
-      "next": "Next"
-    },
     "directory": {
       "importCsv": "Import File",
       "export": "Export",
@@ -643,17 +601,10 @@
       "guestDeleteFailed": "Failed to delete guest. Please try again"
     },
     "filters": {
-      "filterByStatus": "Status",
-      "filterByGroup": "Group",
       "filterBySide": "Side",
-      "groupsSelected": "{count} groups selected",
       "sidesSelected": "{count} sides selected",
       "noPhone": "No phone",
-      "selectAll": "Select All",
-      "title": "Filters",
-      "sortBy": "Sort by",
-      "apply": "Apply",
-      "clearAll": "Clear all"
+      "selectAll": "Select All"
     },
     "search": {
       "placeholder": "Search guests..."
@@ -1110,10 +1061,10 @@
       },
       "newGroup": {
         "title": "New group",
-        "description": "{count, plural, one {The selected guest record will move into it} other {The # selected guest records will move into it}}",
+        "description": "{count, plural, one {The selected guest record will be assigned to it} other {The # selected guest records will be assigned to it}}",
         "name": "Group name",
         "placeholder": "e.g. Friends from work",
-        "create": "Create and move",
+        "create": "Create and assign",
         "taken": "A group with this name already exists",
         "failed": "Could not create the group"
       },
@@ -1237,7 +1188,32 @@
         "rsvp": "RSVP",
         "seating": "Seating and notes"
       },
-      "amountChangedHint": "The guest changed the count when confirming: {invited} invited, {coming} coming"
+      "amountChangedHint": "The guest changed the count when confirming: {invited} invited, {coming} coming",
+      "mobile": {
+        "add": "Add",
+        "select": "Select",
+        "selectAll": "Select all",
+        "selecting": "Select records",
+        "filters": {
+          "title": "Filter and sort",
+          "clear": "Clear",
+          "show": "{count, plural, =0 {No records to show} one {Show 1 record} other {Show # records}}"
+        },
+        "rsvpTitle": "RSVP for {count, plural, one {1 guest record} other {# guest records}}",
+        "groupTitle": "Assign {count, plural, one {1 guest record} other {# guest records}} to a group",
+        "groupRecords": "{count, plural, =0 {Empty} one {1 record} other {# records}}",
+        "removeFromGroup": "Remove from group",
+        "newGroupPlaceholder": "New group name",
+        "createGroup": "Create",
+        "sideTitle": "Side for {count, plural, one {1 guest record} other {# guest records}}",
+        "noSide": "No side",
+        "exportTitle": "Export {count, plural, one {1 guest record} other {# guest records}}",
+        "exportBody": "An iPlan file with the records you selected",
+        "exportBodyHidden": "An iPlan file with the records you selected, including {hidden, plural, one {1 that is} other {# that are}} hidden by the current filters",
+        "download": "Download the file",
+        "close": "Close",
+        "clearSearch": "Clear search"
+      }
     }
   },
   "home": {

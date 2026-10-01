@@ -1,4 +1,3 @@
-import type { GuestSortKey } from '@/features/guests/hooks/use-guest-filters';
 import type { GroupSide } from '@/features/guests/schemas';
 import type { RsvpStatus } from './rsvp-presentation';
 import {
@@ -6,6 +5,14 @@ import {
   parseGuestIssue,
   type GuestIssue,
 } from './guest-health';
+
+export type GuestSortKey =
+  | 'name_asc'
+  | 'name_desc'
+  | 'created_asc'
+  | 'created_desc'
+  | 'rsvp'
+  | 'amount_desc';
 
 /**
  * The guest list's view - search, filters and sort - as it lives in the URL, so
@@ -34,6 +41,11 @@ export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
 };
 
 const STATUSES: readonly RsvpStatus[] = ['confirmed', 'pending', 'declined'];
+/** The status filter's options, in order - `null` is "all". */
+export const GUEST_STATUS_FILTERS: readonly (RsvpStatus | null)[] = [
+  null,
+  ...STATUSES,
+];
 const SIDES: readonly GroupSide[] = ['bride', 'groom'];
 export const GUEST_SORT_KEYS: readonly GuestSortKey[] = [
   'created_asc',

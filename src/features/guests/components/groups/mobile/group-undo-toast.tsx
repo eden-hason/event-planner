@@ -1,11 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-commit';
 import type { PendingGroupDelete } from '@/features/guests/hooks/use-deferred-group-delete';
-
-const RING = 2 * Math.PI * 10;
+import { CountdownRing } from '../../countdown-ring';
 
 /**
  * The Undo toast after a group delete: two lines, an Undo button and a
@@ -19,17 +16,8 @@ export function GroupUndoToast({
   onUndo: () => void;
 }) {
   const t = useTranslations('guests.groups.mobile');
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!pending) return;
-    const tick = setInterval(() => setNow(Date.now()), 200);
-    return () => clearInterval(tick);
-  }, [pending]);
-
   if (!pending) return null;
 
-  const left = Math.max(0, pending.expiresAt - now);
 
   return (
     <div
@@ -54,41 +42,7 @@ export function GroupUndoToast({
       >
         {t('undoAction')}
       </button>
-      <span
-        className="relative flex size-[26px] shrink-0 items-center justify-center"
-        aria-hidden
-      >
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 26 26"
-          className="absolute inset-0 -rotate-90"
-        >
-          <circle
-            cx="13"
-            cy="13"
-            r="10"
-            fill="none"
-            stroke="currentColor"
-            strokeOpacity={0.25}
-            strokeWidth="2.5"
-          />
-          <circle
-            cx="13"
-            cy="13"
-            r="10"
-            fill="none"
-            className="stroke-primary"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray={RING}
-            strokeDashoffset={RING * (1 - left / UNDO_WINDOW_MS)}
-          />
-        </svg>
-        <span className="text-background/70 relative text-[11px] font-bold tabular-nums">
-          {Math.ceil(left / 1000)}
-        </span>
-      </span>
+      <CountdownRing expiresAt={pending.expiresAt} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
@@ -184,7 +184,11 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               aria-label={back.label}
               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground -ms-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors"
             >
-              <ChevronLeft className="size-5 rtl:rotate-180" />
+              {back.icon === 'close' ? (
+                <X className="size-5" />
+              ) : (
+                <ChevronLeft className="size-5 rtl:rotate-180" />
+              )}
             </button>
           )}
           {title && (

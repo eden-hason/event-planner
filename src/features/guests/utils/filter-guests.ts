@@ -1,5 +1,5 @@
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
-import type { GuestSortKey } from '@/features/guests/hooks/use-guest-filters';
+import type { GuestSortKey } from './guest-list-params';
 
 const RSVP_ORDER: Record<string, number> = {
   confirmed: 0,
@@ -16,18 +16,14 @@ export interface GuestFilterParams {
   sortKey: GuestSortKey;
 }
 
-/**
- * Pure filter + sort for the guest list. Mirrors the logic in
- * `hooks/use-guests-table.ts` so the mobile card list produces identical results
- * to the desktop table without depending on TanStack Table.
- */
-export function filterAndSortGuests(
+/** The filter half of `filterAndSortGuests` - enough when only the count matters. */
+export function filterGuests(
   guests: GuestWithGroupApp[],
-  { searchTerm, groupIds, statuses, sides, noPhoneOnly, sortKey }: GuestFilterParams,
+  { searchTerm, groupIds, statuses, sides, noPhoneOnly }: Omit<GuestFilterParams, 'sortKey'>,
 ): GuestWithGroupApp[] {
   const search = searchTerm.trim().toLowerCase();
 
-  const filtered = guests.filter((guest) => {
+  return guests.filter((guest) => {
     // Side filter
     if (sides.length > 0 && (!guest.side || !sides.includes(guest.side))) {
       return false;
@@ -55,8 +51,15 @@ export function filterAndSortGuests(
     }
     return true;
   });
+}
 
-  return [...filtered].sort((a, b) => {
+/** Pure filter + sort for the guest list, shared by the desktop table and the phone cards. */
+export function filterAndSortGuests(
+  guests: GuestWithGroupApp[],
+  params: GuestFilterParams,
+): GuestWithGroupApp[] {
+  const { sortKey } = params;
+  return [...filterGuests(guests, params)].sort((a, b) => {
     let primary = 0;
     switch (sortKey) {
       case 'name_asc':

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import {
   IconBrandGoogleDrive,
   IconSearch,
@@ -18,26 +17,11 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
-import {
-  exportGuestsToIplan,
-  filterAndSortGuests,
-  scopeToGuestIssue,
-  type IplanScope,
-  type RsvpStatus,
-} from '@/features/guests/utils';
-import {
-  assignGuestsToGroup,
-  setGuestsRsvpStatus,
-  setGuestsSideValue,
-  type BulkGuestsState,
-} from '@/features/guests/actions/bulk';
-import { useGuestListParams } from '@/features/guests/hooks/use-guest-list-params';
-import { useDeferredDelete } from '@/features/guests/hooks/use-deferred-delete';
-import { deleteImpact, rsvpImpact } from '@/features/guests/utils/bulk-impact';
+import { useGuestListView } from '@/features/guests/hooks/use-guest-list-view';
+import { useGuestWrites } from '@/features/guests/hooks/use-guest-writes';
 import {
   headerState,
   hiddenCount,
-  pruneSelection,
   selectRange,
   toggleAllVisible,
   toggleOne,
@@ -45,16 +29,13 @@ import {
 import { ImportGuestsDialog } from '../groups';
 import { RsvpMeter } from './rsvp-meter';
 import { GuestToolbar } from './guest-toolbar';
-import { ActiveFilterChips } from './active-filter-chips';
+import { ActiveFilterChips } from '../active-filter-chips';
 import { GuestTable } from './guest-table';
 import { BulkActionBar, type BulkAction } from './bulk-action-bar';
-import {
-  GuestConfirmDialog,
-  type ConfirmRequest,
-} from './guest-confirm-dialog';
-import { UndoToast } from './undo-toast';
+import { GuestConfirmDialog } from './guest-confirm-dialog';
+import { UndoToast } from '../undo-toast';
 import { NewGroupDialog } from './new-group-dialog';
-import { GuestDrawer } from './guest-drawer';
+import { GuestDrawer } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
 
 interface GuestsDesktopProps {
@@ -97,77 +78,43 @@ export function GuestsDesktop({
   onImportDrive,
 }: GuestsDesktopProps) {
   const t = useTranslations('guests');
-  const { params, update, reset } = useGuestListParams();
-  const deferred = useDeferredDelete(eventId);
-
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const {
+    params,
+    changeFilters: handleFilterChange,
+    resetFilters,
+    deferred,
+    startDelete,
+    guests,
+    scoped,
+    rows,
+    visibleIds,
+    statusCounts,
+    filtered,
+    selected,
+    setSelected,
+    selectionOnly,
+    setSelectionOnly,
+  } = useGuestListView(allGuests, eventId);
   const anchorRef = useRef<string | null>(null);
-  const [selectionOnly, setSelectionOnly] = useState(false);
-  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
   const [newGroupFor, setNewGroupFor] = useState<string[] | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(
     null,
   );
 
-  // Rows waiting on the Undo toast are already gone as far as the Owner sees.
-  const guests = useMemo(
-    () => allGuests.filter((guest) => !deferred.hiddenIds.has(guest.id)),
-    [allGuests, deferred.hiddenIds],
-  );
-
-  // Records that stop existing drop out of the selection.
-  useEffect(() => {
-    setSelected((prev) =>
-      pruneSelection(
-        prev,
-        guests.map((guest) => guest.id),
-      ),
-    );
-  }, [guests]);
-
-  const scoped = useMemo(
-    () => (params.issue ? scopeToGuestIssue(guests, params.issue) : guests),
-    [guests, params.issue],
-  );
-
-  const rows = useMemo(() => {
-    if (selectionOnly) return guests.filter((guest) => selected.has(guest.id));
-    return filterAndSortGuests(scoped, {
-      searchTerm: params.q,
-      groupIds: params.groups,
-      statuses: params.status ? [params.status] : [],
-      sides: params.side ? [params.side] : [],
-      noPhoneOnly: params.noPhone,
-      sortKey: params.sort,
-    });
-  }, [selectionOnly, guests, selected, scoped, params]);
-
-  const visibleIds = useMemo(() => rows.map((guest) => guest.id), [rows]);
-
-  const statusCounts = useMemo(() => {
-    const counts = {
-      all: guests.length,
-      confirmed: 0,
-      pending: 0,
-      declined: 0,
-    };
-    for (const guest of guests) counts[guest.rsvpStatus]++;
-    return counts;
-  }, [guests]);
-
   const tableNumberById = useMemo(
     () => new Map(tables.map((table) => [table.id, table.tableNumber])),
     [tables],
   );
-  const messagedIds = useMemo(
-    () => new Set(messagedGuestIds),
-    [messagedGuestIds],
-  );
-  const byId = useMemo(
-    () => new Map(allGuests.map((guest) => [guest.id, guest])),
-    [allGuests],
-  );
+  const writes = useGuestWrites({
+    eventId,
+    eventName,
+    allGuests,
+    liveCount: guests.length,
+    groups,
+    tables,
+    messagedGuestIds,
+  });
 
   const countRef = useRef<HTMLParagraphElement>(null);
   // Only there while the list has rows; gone, it counts as zero.
@@ -197,7 +144,7 @@ export function GuestsDesktop({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selected.size]);
+  }, [selected.size, setSelected, setSelectionOnly]);
 
   const clearSelection = () => {
     setSelected(new Set());
@@ -215,113 +162,32 @@ export function GuestsDesktop({
     anchorRef.current = id;
   };
 
-  const handleFilterChange: typeof update = (patch, mode) => {
-    setSelectionOnly(false);
-    update(patch, mode);
-  };
-
-  const resetFilters = () => {
-    setSelectionOnly(false);
-    reset();
-  };
-
   // --- writes -------------------------------------------------------------
 
-  const runWrite = (
-    promise: Promise<BulkGuestsState>,
-    success: (count: number) => string,
-  ) => {
-    const checked = promise.then((result) => {
-      if (!result.success) throw new Error(t('list.toast.failed'));
-      return result;
-    });
-    toast.promise(checked, {
-      loading: t('list.toast.updating'),
-      success: (result) =>
-        result.count > 0
-          ? success(result.count)
-          : t('list.toast.nothingChanged'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('list.toast.failed'),
-    });
-  };
-
-  const setRsvp = (ids: string[], status: RsvpStatus) => {
-    const targets = ids
-      .map((id) => byId.get(id))
-      .filter((guest): guest is GuestWithGroupApp => !!guest);
-    const impact = rsvpImpact(targets, status);
-    const run = () =>
-      runWrite(setGuestsRsvpStatus(eventId, ids, status), (count) =>
-        t(`list.toast.rsvp.${status}`, { count }),
-      );
-    if (impact.needsConfirm)
-      setConfirm({ kind: 'rsvp', status, impact, onConfirm: run });
-    else run();
-  };
-
-  const setGroup = (
-    ids: string[],
-    groupId: string | null,
-    knownName?: string,
-  ) => {
-    const name =
-      knownName ?? groups.find((group) => group.id === groupId)?.name ?? '';
-    runWrite(assignGuestsToGroup(eventId, ids, groupId), (count) =>
-      groupId
-        ? t('list.toast.group', { count, group: name })
-        : t('list.toast.ungrouped', { count }),
-    );
-  };
-
-  const requestDelete = (ids: string[], singleName?: string) => {
-    const targets = ids
-      .map((id) => byId.get(id))
-      .filter((guest): guest is GuestWithGroupApp => !!guest);
-    setConfirm({
-      kind: 'delete',
-      impact: deleteImpact(targets, messagedIds, guests.length),
-      singleName,
-      onConfirm: () => {
+  const requestDelete = (ids: string[], singleName?: string) =>
+    writes.requestDelete(
+      ids,
+      () => {
         if (drawer.open && drawer.guest && ids.includes(drawer.guest.id))
           drawer.onOpenChange(false);
-        setSelected((prev) => {
-          const next = new Set(prev);
-          for (const id of ids) next.delete(id);
-          return next;
-        });
-        setSelectionOnly(false);
-        deferred.start(ids);
+        startDelete(ids);
       },
-    });
-  };
-
-  const exportGuests = (list: GuestWithGroupApp[], scope: IplanScope) => {
-    const fileName = eventName ? `${eventName}-iplan.xls` : 'iplan-guests.xls';
-    toast.promise(exportGuestsToIplan(list, { scope, fileName, tables }), {
-      loading: t('directory.exportingIplan'),
-      success: () => t('directory.exportIplanSuccess'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('directory.exportFailed'),
-    });
-  };
+      singleName,
+    );
 
   const handleBulk = (action: BulkAction) => {
     const ids = [...selected];
     switch (action.type) {
       case 'rsvp':
-        return setRsvp(ids, action.status);
+        return writes.setRsvp(ids, action.status);
       case 'group':
-        return setGroup(ids, action.groupId);
+        return writes.setGroup(ids, action.groupId);
       case 'newGroup':
         return setNewGroupFor(ids);
       case 'side':
-        return runWrite(
-          setGuestsSideValue(eventId, ids, action.side),
-          (count) => t('list.toast.side', { count }),
-        );
+        return writes.setSide(ids, action.side);
       case 'export':
-        return exportGuests(
+        return writes.exportGuests(
           allGuests.filter((guest) => selected.has(guest.id)),
           'all',
         );
@@ -333,9 +199,9 @@ export function GuestsDesktop({
   const handleRowAction = (guest: GuestWithGroupApp, action: RowAction) => {
     switch (action.type) {
       case 'rsvp':
-        return setRsvp([guest.id], action.status);
+        return writes.setRsvp([guest.id], action.status);
       case 'group':
-        return setGroup([guest.id], action.groupId);
+        return writes.setGroup([guest.id], action.groupId);
       case 'open':
         return onOpenGuest(guest);
       case 'delete':
@@ -422,15 +288,6 @@ export function GuestsDesktop({
   }
 
   const hidden = hiddenCount(selected, visibleIds);
-  const filtered =
-    selectionOnly ||
-    rows.length !== guests.length ||
-    !!params.q ||
-    !!params.status ||
-    params.groups.length > 0 ||
-    !!params.side ||
-    params.noPhone ||
-    !!params.issue;
 
   return (
     <div className="@container/guests flex flex-col">
@@ -443,7 +300,7 @@ export function GuestsDesktop({
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}
         onImportDrive={onImportDrive}
-        onExport={(scope) => exportGuests(allGuests, scope)}
+        onExport={(scope) => writes.exportGuests(allGuests, scope)}
       />
       <ActiveFilterChips
         params={params}
@@ -544,12 +401,15 @@ export function GuestsDesktop({
         </div>
       </div>
 
-      <GuestConfirmDialog request={confirm} onClose={() => setConfirm(null)} />
+      <GuestConfirmDialog
+        request={writes.confirm}
+        onClose={writes.closeConfirm}
+      />
       <NewGroupDialog
         ids={newGroupFor}
         eventId={eventId}
         onClose={() => setNewGroupFor(null)}
-        onCreated={(groupId, name, ids) => setGroup(ids, groupId, name)}
+        onCreated={(groupId, name, ids) => writes.setGroup(ids, groupId, name)}
       />
       {drawerNode}
       {importDialog}

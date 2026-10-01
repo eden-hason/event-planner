@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState, startTransition } from 'react';
+import { useActionState, startTransition, type CSSProperties } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
@@ -77,10 +77,12 @@ interface GuestFormProps {
   showDietary?: boolean;
   tables?: TableOption[];
   /**
-   * `cards` (default) boxes each section; `sections` is the desktop drawer's
-   * flat layout from the Guests Desktop design.
+   * `cards` (default) boxes each section; `sections` is the drawer's flat
+   * layout from the Guests designs.
    */
   layout?: 'cards' | 'sections';
+  /** Narrower count and table columns in `sections`, to fit a phone. */
+  compact?: boolean;
 }
 
 export function GuestForm({
@@ -95,6 +97,7 @@ export function GuestForm({
   showDietary = false,
   tables = [],
   layout = 'cards',
+  compact = false,
 }: GuestFormProps) {
   const t = useTranslations('guests');
   const isSections = layout === 'sections';
@@ -854,6 +857,8 @@ export function GuestForm({
         <form
           id={formId}
           onSubmit={form.handleSubmit(onSubmit)}
+          // The width of every narrow column below (invited, coming, table).
+          style={{ '--narrow-col': compact ? '64px' : '78px' } as CSSProperties}
           className="flex flex-col gap-[18px] [&_[data-slot=form-item]]:gap-[5px] [&_[data-slot=form-label]]:text-xs [&_[data-slot=form-label]]:font-semibold [&_[data-slot=form-label]]:text-muted-foreground"
         >
           <FormSection title={t('list.drawerSections.contact')}>
@@ -863,7 +868,7 @@ export function GuestForm({
             </div>
           </FormSection>
           <FormSection title={t('list.drawerSections.invitation')}>
-            <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_78px] gap-2.5">
+            <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_var(--narrow-col)] gap-2.5">
               {groupField}
               {sideField}
               {countField('invitedAmount', t('list.drawer.invited'))}
@@ -876,13 +881,13 @@ export function GuestForm({
             {showDietary ? (
               <>
                 {rsvpField}
-                <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+                <div className="grid grid-cols-[var(--narrow-col)_minmax(0,1fr)] gap-2.5">
                   {comingField}
                   {mealChipsField}
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-[minmax(0,1fr)_78px] gap-2.5">
+              <div className="grid grid-cols-[minmax(0,1fr)_var(--narrow-col)] gap-2.5">
                 {rsvpField}
                 {comingField}
               </div>
@@ -890,7 +895,7 @@ export function GuestForm({
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
             {/* One row, per the design: a narrow table picker beside a one-line note. */}
-            <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5">
+            <div className="grid grid-cols-[var(--narrow-col)_minmax(0,1fr)] gap-2.5">
               <FormField
                 control={form.control}
                 name="tableId"

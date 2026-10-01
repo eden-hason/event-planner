@@ -583,48 +583,6 @@
       "confirmed": "אישר",
       "declined": "סירב"
     },
-    "stats": {
-      "totalGuests": "סה\"כ אורחים",
-      "confirmed": "אישרו",
-      "pending": "ממתינים",
-      "declined": "סירבו",
-      "records": "{count} רשומות",
-      "all": "הכל",
-      "guestsLabel": "אורחים",
-      "rsvpStatus": "סטטוס אישורים"
-    },
-    "table": {
-      "name": "שם",
-      "phone": "טלפון",
-      "group": "קבוצה",
-      "side": "צד",
-      "tableColumn": "שולחן",
-      "tableNumber": "שולחן {number}",
-      "rsvpStatus": "סטטוס אישור",
-      "dietaryRestrictions": "הגבלות תזונה",
-      "dietaryNone": "ללא",
-      "amount": "כמות",
-      "aboveInvited": "הוזמנו {count}",
-      "aboveInvitedHint": "ענו יותר מהכמות שהוזמנה. שינוי הכמות יסיר את הסימון",
-      "notes": "הערה",
-      "openMenu": "פתח תפריט",
-      "deleteGuest": "מחק אורח",
-      "editGuest": "עריכה",
-      "markConfirmed": "סמן כאישר",
-      "emptyTitle": "אין אורחים עדיין",
-      "emptyDescription": "התחל בהעלאת רשימת אורחים או הוספה ידנית.",
-      "uploadFile": "העלה קובץ",
-      "addGuest": "הוסף אורח",
-      "noGuestsSearch": "לא נמצאו אורחים התואמים לחיפוש.",
-      "noGuestsFound": "לא נמצאו אורחים.",
-      "showing": "מציג {start}-{end} מתוך {total} רשומות",
-      "firstPage": "עמוד ראשון",
-      "previousPage": "עמוד קודם",
-      "nextPage": "עמוד הבא",
-      "lastPage": "עמוד אחרון",
-      "prev": "הקודם",
-      "next": "הבא"
-    },
     "directory": {
       "importCsv": "ייבוא קובץ",
       "export": "ייצוא",
@@ -643,17 +601,10 @@
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית"
     },
     "filters": {
-      "filterByStatus": "סטטוס",
-      "filterByGroup": "קבוצה",
       "filterBySide": "צד",
-      "groupsSelected": "{count} קבוצות נבחרו",
       "sidesSelected": "{count} צדדים נבחרו",
       "noPhone": "ללא טלפון",
-      "selectAll": "בחר הכל",
-      "title": "מסננים",
-      "sortBy": "מיון",
-      "apply": "החל",
-      "clearAll": "נקה הכל"
+      "selectAll": "בחר הכל"
     },
     "search": {
       "placeholder": "חפש אורחים..."
@@ -1110,10 +1061,10 @@
       },
       "newGroup": {
         "title": "קבוצה חדשה",
-        "description": "{count, plural, one {רשומת האורח שנבחרה תועבר אליה} other {# רשומות האורחים שנבחרו יועברו אליה}}",
+        "description": "{count, plural, one {רשומת האורח שנבחרה תשויך אליה} other {# רשומות האורחים שנבחרו ישויכו אליה}}",
         "name": "שם הקבוצה",
         "placeholder": "למשל: חברים מהעבודה",
-        "create": "יצירה והעברה",
+        "create": "יצירה ושיוך",
         "taken": "כבר יש קבוצה בשם הזה",
         "failed": "יצירת הקבוצה נכשלה"
       },
@@ -1237,7 +1188,32 @@
         "rsvp": "אישור הגעה",
         "seating": "הושבה והערות"
       },
-      "amountChangedHint": "האורח שינה את הכמות באישור ההגעה: הוזמנו {invited}, מגיעים {coming}"
+      "amountChangedHint": "האורח שינה את הכמות באישור ההגעה: הוזמנו {invited}, מגיעים {coming}",
+      "mobile": {
+        "add": "הוספה",
+        "select": "בחירה",
+        "selectAll": "בחירת הכל",
+        "selecting": "בחירת רשומות",
+        "filters": {
+          "title": "סינון ומיון",
+          "clear": "ניקוי",
+          "show": "{count, plural, =0 {אין רשומות להצגה} one {הצגת רשומה אחת} other {הצגת # רשומות}}"
+        },
+        "rsvpTitle": "אישור הגעה ל{count, plural, one {רשומת אורח אחת} other {-# רשומות אורחים}}",
+        "groupTitle": "שיוך {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}} לקבוצה",
+        "groupRecords": "{count, plural, =0 {ריקה} one {רשומה אחת} other {# רשומות}}",
+        "removeFromGroup": "הסרה מהקבוצה",
+        "newGroupPlaceholder": "שם לקבוצה חדשה",
+        "createGroup": "יצירה",
+        "sideTitle": "צד ל{count, plural, one {רשומת אורח אחת} other {-# רשומות אורחים}}",
+        "noSide": "ללא צד",
+        "exportTitle": "ייצוא {count, plural, one {רשומת אורח אחת} other {# רשומות אורחים}}",
+        "exportBody": "קובץ iPlan עם הרשומות שבחרתם",
+        "exportBodyHidden": "קובץ iPlan עם הרשומות שבחרתם, כולל {hidden, plural, one {אחת שלא מוצגת} other {# שלא מוצגות}} בסינון הנוכחי",
+        "download": "הורדת הקובץ",
+        "close": "סגירה",
+        "clearSearch": "ניקוי החיפוש"
+      }
     }
   },
   "home": {

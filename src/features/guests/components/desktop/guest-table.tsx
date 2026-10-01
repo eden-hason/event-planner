@@ -15,7 +15,6 @@ import type {
 } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
 import { amountDisplay } from '@/features/guests/utils/guest-amount';
-import { IconUserEdit } from '@tabler/icons-react';
 import type { HeaderState } from '@/features/guests/utils/guest-selection';
 import type { MealChoice } from '@/lib/meal-choices';
 import { formatPhone } from '@/lib/phone';
@@ -23,6 +22,7 @@ import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { SelectBox } from './select-box';
 import { SideBadge } from '../side-badge';
+import { AmountBadge } from '../amount-badge';
 import { GuestRowMenu, type RowAction } from './guest-row-menu';
 
 /** Fixed row height: the list is virtualized, so rows must never grow. */
@@ -301,16 +301,7 @@ function GuestRow({
 
       <span className="flex items-center">
         {count.changedByGuest ? (
-          <span
-            title={t('list.amountChangedHint', {
-              invited: count.invited,
-              coming: count.value,
-            })}
-            className="inline-flex h-[22px] cursor-help items-center gap-[5px] rounded-[7px] bg-sky-100 ps-1.5 pe-[7px] text-[13px] font-bold text-sky-700 tabular-nums dark:bg-sky-400/15 dark:text-sky-300"
-          >
-            <IconUserEdit size={13} stroke={2.2} />
-            {count.value}
-          </span>
+          <AmountBadge count={count} />
         ) : (
           <span className="text-muted-foreground text-[13px] tabular-nums">
             {count.value}

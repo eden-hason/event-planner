@@ -2,7 +2,6 @@
 export {
   GuestsPage,
   GuestForm,
-  GuestSearch,
   RsvpPill,
   RsvpDot,
   GuestImportFlow,
@@ -31,7 +30,6 @@ export {
 
 // Hooks (client)
 export {
-  useGuestFilters,
   type GuestSortKey,
 } from './hooks';
 

@@ -1,179 +1,188 @@
 'use client';
 
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from '@/components/ui/sheet';
+import { IconCheck } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
-import { IconCheck, IconPhoneOff } from '@tabler/icons-react';
+import { Switch } from '@/components/ui/toggle-switch';
+import type { GroupSide, GroupWithGuestsApp } from '@/features/guests/schemas';
 import {
-  GroupInfo,
-  GroupSide,
-  GROUP_SIDES,
-} from '@/features/guests/schemas';
-import { GuestSortKey } from '@/features/guests/hooks';
+  DEFAULT_GUEST_LIST_PARAMS,
+  GUEST_SORT_KEYS,
+  type GuestListParams,
+} from '@/features/guests/utils/guest-list-params';
 import { cn } from '@/lib/utils';
+import { MobileSheet } from './mobile-sheet';
 
-const SORT_KEYS: GuestSortKey[] = [
-  'name_asc',
-  'name_desc',
-  'created_asc',
-  'created_desc',
-  'rsvp',
-  'amount_desc',
-];
+type Draft = Pick<GuestListParams, 'sort' | 'groups' | 'side' | 'noPhone'>;
 
-interface GuestFiltersSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  groups: GroupInfo[];
-  selectedGroupIds: string[];
-  onGroupToggle: (groupId: string) => void;
-  selectedSides: GroupSide[];
-  onSideToggle: (side: GroupSide) => void;
-  noPhoneOnly: boolean;
-  onToggleNoPhone: () => void;
-  sortKey: GuestSortKey;
-  onSortChange: (key: GuestSortKey) => void;
-  onClearAll: () => void;
-}
+const draftOf = (params: GuestListParams): Draft => ({
+  sort: params.sort,
+  groups: params.groups,
+  side: params.side,
+  noPhone: params.noPhone,
+});
 
+/**
+ * "Filter and sort" on a phone. Unlike the desktop popover it is a draft: the
+ * list underneath stays put while the Owner picks, and the button says how
+ * many records the picks will show before they commit to them.
+ */
 export function GuestFiltersSheet({
   open,
-  onOpenChange,
+  onClose,
+  params,
   groups,
-  selectedGroupIds,
-  onGroupToggle,
-  selectedSides,
-  onSideToggle,
-  noPhoneOnly,
-  onToggleNoPhone,
-  sortKey,
-  onSortChange,
-  onClearAll,
-}: GuestFiltersSheetProps) {
+  countFor,
+  onApply,
+}: {
+  open: boolean;
+  onClose: () => void;
+  params: GuestListParams;
+  groups: GroupWithGuestsApp[];
+  /** Records the list would show with these filters, for the apply button. */
+  countFor: (params: GuestListParams) => number;
+  onApply: (patch: Draft) => void;
+}) {
   const t = useTranslations('guests');
+  const [draft, setDraft] = useState<Draft>(() => draftOf(params));
+  // Every opening starts from what the list shows now.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setDraft(draftOf(params));
+  }
 
-  const sideLabel = (side: GroupSide) =>
-    t(`sides.${side}` as 'sides.bride' | 'sides.groom');
+  const patch = (next: Partial<Draft>) =>
+    setDraft((prev) => ({ ...prev, ...next }));
+  const toggleGroup = (id: string) =>
+    patch({
+      groups: draft.groups.includes(id)
+        ? draft.groups.filter((groupId) => groupId !== id)
+        : [...draft.groups, id],
+    });
+
+  // Only worth counting while the sheet is up to show it.
+  const count = useMemo(
+    () => (open ? countFor({ ...params, ...draft }) : 0),
+    [open, countFor, params, draft],
+  );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="flex max-h-[85dvh] flex-col gap-0 rounded-t-xl p-0"
-      >
-        <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle>{t('filters.title')}</SheetTitle>
-        </SheetHeader>
+    <MobileSheet
+      open={open}
+      onClose={onClose}
+      title={t('list.mobile.filters.title')}
+    >
+      <Section title={t('list.sort')}>
+        {GUEST_SORT_KEYS.map((key) => (
+          <Chip
+            key={key}
+            on={draft.sort === key}
+            onClick={() => patch({ sort: key })}
+          >
+            {t(`sort.${key}`)}
+          </Chip>
+        ))}
+      </Section>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* Sort */}
-          <section className="mb-6">
-            <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-              {t('filters.sortBy')}
-            </h3>
-            <div className="flex flex-col gap-1">
-              {SORT_KEYS.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onSortChange(key)}
-                  className="hover:bg-accent flex min-h-11 items-center gap-2 rounded-md px-2 text-sm transition-colors"
-                >
-                  <IconCheck
-                    size={16}
-                    className={cn('shrink-0', sortKey === key ? 'opacity-100' : 'opacity-0')}
-                  />
-                  {t(`sort.${key}`)}
-                </button>
-              ))}
-            </div>
-          </section>
+      <Section title={t('list.filters.group')}>
+        {groups.length === 0 && (
+          <span className="text-muted-foreground text-[13px]">
+            {t('list.filters.noGroups')}
+          </span>
+        )}
+        {groups.map((group) => (
+          <Chip
+            key={group.id}
+            on={draft.groups.includes(group.id)}
+            onClick={() => toggleGroup(group.id)}
+          >
+            {group.name}
+          </Chip>
+        ))}
+      </Section>
 
-          {/* Group */}
-          {groups.length > 0 && (
-            <section className="mb-6">
-              <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-                {t('filters.filterByGroup')}
-              </h3>
-              <div className="flex flex-col gap-1">
-                {groups.map((group) => {
-                  const isSelected = selectedGroupIds.includes(group.id);
-                  return (
-                    <button
-                      key={group.id}
-                      type="button"
-                      onClick={() => onGroupToggle(group.id)}
-                      className="hover:bg-accent flex min-h-11 items-center gap-2 rounded-md px-2 text-sm transition-colors"
-                    >
-                      <IconCheck
-                        size={16}
-                        className={cn('shrink-0', isSelected ? 'opacity-100' : 'opacity-0')}
-                      />
-                      {group.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+      <Section title={t('list.filters.side')}>
+        {(['bride', 'groom'] as GroupSide[]).map((side) => (
+          <Chip
+            key={side}
+            on={draft.side === side}
+            onClick={() => patch({ side: draft.side === side ? null : side })}
+          >
+            {t(`list.sides.${side}`)}
+          </Chip>
+        ))}
+      </Section>
 
-          {/* Side */}
-          <section className="mb-6">
-            <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-              {t('filters.filterBySide')}
-            </h3>
-            <div className="flex flex-col gap-1">
-              {GROUP_SIDES.map((side) => {
-                const isSelected = selectedSides.includes(side);
-                return (
-                  <button
-                    key={side}
-                    type="button"
-                    onClick={() => onSideToggle(side)}
-                    className="hover:bg-accent flex min-h-11 items-center gap-2 rounded-md px-2 text-sm transition-colors"
-                  >
-                    <IconCheck
-                      size={16}
-                      className={cn('shrink-0', isSelected ? 'opacity-100' : 'opacity-0')}
-                    />
-                    {sideLabel(side)}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+      <label className="flex min-h-[50px] items-center justify-between gap-3 text-[15px] font-medium">
+        {t('list.filters.noPhoneOnly')}
+        <Switch
+          checked={draft.noPhone}
+          onCheckedChange={(noPhone) => patch({ noPhone })}
+        />
+      </label>
 
-          {/* No phone */}
-          <section>
-            <button
-              type="button"
-              onClick={onToggleNoPhone}
-              className={cn(
-                'flex min-h-11 w-full items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors',
-                noPhoneOnly
-                  ? 'border-primary/40 bg-primary/10 text-primary'
-                  : 'border-border hover:bg-accent',
-              )}
-            >
-              <IconPhoneOff size={16} />
-              {t('filters.noPhone')}
-            </button>
-          </section>
-        </div>
+      <div className="mt-1 flex gap-2">
+        <Button
+          variant="outline"
+          onClick={() =>
+            setDraft({
+              ...draftOf(DEFAULT_GUEST_LIST_PARAMS),
+              // An issue scope from Home sorts by name; clearing keeps that.
+              sort: params.issue ? 'name_asc' : DEFAULT_GUEST_LIST_PARAMS.sort,
+            })
+          }
+          className="h-12 flex-1 rounded-xl text-[15px] font-bold"
+        >
+          {t('list.mobile.filters.clear')}
+        </Button>
+        <Button
+          onClick={() => {
+            onApply(draft);
+            onClose();
+          }}
+          className="h-12 flex-[1.6] rounded-xl text-[15px] font-bold"
+        >
+          {t('list.mobile.filters.show', { count })}
+        </Button>
+      </div>
+    </MobileSheet>
+  );
+}
 
-        <SheetFooter className="flex-row justify-between border-t px-5 py-4">
-          <Button variant="ghost" onClick={onClearAll}>
-            {t('filters.clearAll')}
-          </Button>
-          <Button onClick={() => onOpenChange(false)}>{t('filters.apply')}</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-muted-foreground text-xs font-bold">{title}</span>
+      <div className="flex flex-wrap gap-[7px]">{children}</div>
+    </div>
+  );
+}
+
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={cn(
+        'flex h-9 max-w-full items-center gap-1.5 rounded-full border px-[13px] text-[13.5px]',
+        on
+          ? 'border-primary bg-primary/10 text-primary font-bold'
+          : 'bg-card font-medium',
+      )}
+    >
+      {on && <IconCheck size={14} stroke={2.6} className="shrink-0" />}
+      <span className="truncate">{children}</span>
+    </button>
   );
 }

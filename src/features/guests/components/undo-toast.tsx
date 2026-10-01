@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
-import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-commit';
 import type { PendingDelete } from '@/features/guests/hooks/use-deferred-delete';
-
-const RING = 2 * Math.PI * 10;
+import { cn } from '@/lib/utils';
+import { CountdownRing } from './countdown-ring';
 
 /**
  * The Undo toast of a deferred delete (ADR 0025), with a visible countdown. It
@@ -19,7 +17,10 @@ export function UndoToast({
   onUndo,
   onRetry,
   onDismissFailure,
+  className,
 }: {
+  /** Where it sits: desktop centres it over the list, the phone pins it above the nav. */
+  className?: string;
   pending: PendingDelete | null;
   failedCount: number;
   onUndo: () => void;
@@ -27,24 +28,16 @@ export function UndoToast({
   onDismissFailure: () => void;
 }) {
   const t = useTranslations('guests.list.undo');
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!pending) return;
-    const tick = setInterval(() => setNow(Date.now()), 200);
-    return () => clearInterval(tick);
-  }, [pending]);
-
   if (!pending && failedCount === 0) return null;
-
-  const left = pending ? Math.max(0, pending.expiresAt - now) : 0;
-  const secs = Math.ceil(left / 1000);
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="bg-foreground text-background animate-in fade-in slide-in-from-bottom-3 pointer-events-auto flex min-h-[52px] w-[440px] items-center gap-3 rounded-xl py-2.5 ps-3.5 pe-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200"
+      className={cn(
+        'bg-foreground text-background animate-in fade-in slide-in-from-bottom-3 pointer-events-auto flex min-h-[52px] items-center gap-3 rounded-xl py-2.5 ps-3.5 pe-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200 md:w-[440px]',
+        className,
+      )}
     >
       {pending ? (
         <>
@@ -58,41 +51,7 @@ export function UndoToast({
           >
             {t('action')}
           </button>
-          <span
-            className="relative flex size-[26px] shrink-0 items-center justify-center"
-            aria-hidden
-          >
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 26 26"
-              className="absolute inset-0 -rotate-90"
-            >
-              <circle
-                cx="13"
-                cy="13"
-                r="10"
-                fill="none"
-                stroke="currentColor"
-                strokeOpacity={0.25}
-                strokeWidth="2.5"
-              />
-              <circle
-                cx="13"
-                cy="13"
-                r="10"
-                fill="none"
-                className="stroke-primary"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeDasharray={RING}
-                strokeDashoffset={RING * (1 - left / UNDO_WINDOW_MS)}
-              />
-            </svg>
-            <span className="text-background/70 relative text-[11px] font-bold tabular-nums">
-              {secs}
-            </span>
-          </span>
+          <CountdownRing expiresAt={pending.expiresAt} />
         </>
       ) : (
         <>
