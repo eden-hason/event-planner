@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { useRouter } from '@/i18n/navigation';
 import { upsertGuest, type UpsertGuestState } from '@/features/guests/actions';
 import {
   type GuestUpsert,
@@ -179,6 +180,8 @@ export function GuestForm({
     [t],
   );
 
+  const router = useRouter();
+
   const [, formAction, isPending] = useActionState(
     async (
       _prevState: UpsertGuestState | null,
@@ -219,7 +222,12 @@ export function GuestForm({
       });
 
       try {
-        return await promise;
+        const result = await promise;
+        // The drawer closes before the save lands, so the page has to be asked
+        // for the saved Guest explicitly: relying on the action's revalidation
+        // alone left a new Guest missing from the list until a reload.
+        router.refresh();
+        return result;
       } catch {
         return null;
       }
