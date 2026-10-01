@@ -22,7 +22,7 @@ import { formatPhone } from '@/lib/phone';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { SelectBox } from './select-box';
-import { SideBadge } from './side-badge';
+import { SideBadge } from '../side-badge';
 import { GuestRowMenu, type RowAction } from './guest-row-menu';
 
 /** Fixed row height: the list is virtualized, so rows must never grow. */

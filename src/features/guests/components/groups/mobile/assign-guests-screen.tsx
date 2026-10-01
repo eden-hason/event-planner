@@ -17,15 +17,14 @@ import { Reveal } from '@/components/ui/reveal';
 import { GuestApp, GroupSide } from '@/features/guests/schemas';
 import { updateGroupMembers } from '@/features/guests/actions/groups';
 import { cn } from '@/lib/utils';
-import { SideBadge } from '../../desktop/side-badge';
+import { SideBadge } from '../../side-badge';
 import { avatarTintFor } from '@/lib/avatar-tint';
-
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return '';
-  if (words.length === 1) return words[0].charAt(0).toUpperCase();
-  return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
-}
+import { rsvpPresentation } from '@/features/guests/utils';
+import {
+  headerState,
+  toggleAllVisible,
+  toggleOne,
+} from '@/features/guests/utils/guest-selection';
 
 /**
  * Just enough of a group to drive the sheet - a freshly created group (from
@@ -46,8 +45,8 @@ interface AssignGuestsScreenProps {
   group: AssignTarget | null;
   /** Guests with no group at all - the same pool the desktop drawer uses. */
   availableGuests: GuestApp[];
-  /** Every guest record in the event, for the footer's "of N"; falls back to the pool. */
-  totalRecords?: number;
+  /** Every guest record in the event, for the footer's "of N". */
+  totalRecords: number;
   eventId: string;
 }
 
@@ -58,7 +57,7 @@ export function AssignGuestsScreen({
   onOpenChange,
   group,
   availableGuests,
-  totalRecords: totalRecordsProp,
+  totalRecords,
   eventId,
 }: AssignGuestsScreenProps) {
   const t = useTranslations('guests');
@@ -107,7 +106,6 @@ export function AssignGuestsScreen({
     [pool, draftIn],
   );
 
-  const totalRecords = totalRecordsProp ?? pool.length;
   const isOut = tab === 'out';
   const query = (isOut ? qOut : qIn).trim().toLowerCase();
   const visible = useMemo(() => {
@@ -116,18 +114,13 @@ export function AssignGuestsScreen({
     return list.filter((g) => g.name.toLowerCase().includes(query));
   }, [isOut, outList, inList, query]);
 
-  const dirty = useMemo(() => {
-    const base = [...originalMemberIds].sort().join();
-    const now = [...draftIn].sort().join();
-    return base !== now;
-  }, [originalMemberIds, draftIn]);
-
   const addedCount = [...draftIn].filter(
     (id) => !originalMemberIds.has(id),
   ).length;
   const removedCount = [...originalMemberIds].filter(
     (id) => !draftIn.has(id),
   ).length;
+  const dirty = addedCount > 0 || removedCount > 0;
 
   const toggleMove = (guestId: string) => {
     setDraftIn((prev) => {
@@ -138,23 +131,14 @@ export function AssignGuestsScreen({
     });
   };
 
-  const toggleSelected = (guestId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(guestId)) next.delete(guestId);
-      else next.add(guestId);
-      return next;
-    });
-  };
+  const toggleSelected = (guestId: string) =>
+    setSelected((prev) => toggleOne(prev, guestId));
 
-  const allVisibleSelected =
-    visible.length > 0 && visible.every((g) => selected.has(g.id));
+  const visibleIds = visible.map((g) => g.id);
+  const allVisibleSelected = headerState(selected, visibleIds) === 'all';
 
-  const handleToggleAll = () => {
-    setSelected(
-      allVisibleSelected ? new Set() : new Set(visible.map((g) => g.id)),
-    );
-  };
+  const handleToggleAll = () =>
+    setSelected((prev) => toggleAllVisible(prev, visibleIds));
 
   const handleApplyBulk = () => {
     if (selected.size === 0) return;
@@ -185,10 +169,6 @@ export function AssignGuestsScreen({
     const timer = setTimeout(() => setRendered(false), 300);
     return () => clearTimeout(timer);
   }, [open, rendered]);
-
-  const handleCancel = () => {
-    onOpenChange(false);
-  };
 
   const handleSave = () => {
     if (!group || !dirty) return;
@@ -387,7 +367,7 @@ export function AssignGuestsScreen({
                   avatarTintFor(g.name),
                 )}
               >
-                {getInitials(g.name).charAt(0)}
+                {g.name.trim().charAt(0).toUpperCase()}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
                 <span className="truncate text-[15px] font-bold">{g.name}</span>
@@ -396,12 +376,12 @@ export function AssignGuestsScreen({
                     {t('mobile.seats', { count: g.amount })}
                   </span>
                   {wasMember && (
-                    <span className="bg-rsvp-pending-tint text-rsvp-pending-strong inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold">
+                    <span className={cn(rsvpPresentation('pending').chip, 'inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold')}>
                       {t('groups.mobile.removedInDraft')}
                     </span>
                   )}
                   {!isOut && !originalMemberIds.has(g.id) && (
-                    <span className="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold">
+                    <span className={cn(rsvpPresentation('confirmed').chip, 'inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold')}>
                       {t('groups.mobile.addedBadge')}
                     </span>
                   )}
@@ -476,7 +456,7 @@ export function AssignGuestsScreen({
           </Button>
         ) : (
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" onClick={handleCancel}>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               {tCommon('cancel')}
             </Button>
             <Button onClick={handleSave} disabled={!dirty}>

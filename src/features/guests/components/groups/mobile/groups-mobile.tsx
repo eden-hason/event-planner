@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconFolder, IconPlus, IconUsersGroup } from '@tabler/icons-react';
@@ -19,6 +19,7 @@ import {
   GroupSide,
 } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
+import { formatPhone } from '@/lib/phone';
 import { GroupMobileCard } from './group-mobile-card';
 import { PickGroupSheet } from './pick-group-sheet';
 import { GroupActionsSheet } from './group-actions-sheet';
@@ -48,30 +49,29 @@ export function GroupsMobile({
 }: GroupsMobileProps) {
   const t = useTranslations('guests');
 
-  const handleDeleteFailed = useCallback(
-    () => toast.error(t('groups.toast.groupDeleteFailed')),
-    [t],
-  );
   const {
     pending,
+    hiddenIds,
     start: startDelete,
     undo: undoDelete,
-  } = useDeferredGroupDelete(eventId, handleDeleteFailed);
+  } = useDeferredGroupDelete(eventId, () =>
+    toast.error(t('groups.toast.groupDeleteFailed')),
+  );
 
   // While the delete is held, the group is gone and its records read as
   // unassigned, so the meter and chips already show the result.
   const groups = useMemo(
-    () => allGroups.filter((g) => g.id !== pending?.id),
-    [allGroups, pending],
+    () => allGroups.filter((g) => !hiddenIds.has(g.id)),
+    [allGroups, hiddenIds],
   );
   const guests = useMemo(
     () =>
-      pending
+      hiddenIds.size > 0
         ? allGuests.map((g) =>
-            g.groupId === pending.id ? { ...g, groupId: null } : g,
+            g.groupId && hiddenIds.has(g.groupId) ? { ...g, groupId: null } : g,
           )
         : allGuests,
-    [allGuests, pending],
+    [allGuests, hiddenIds],
   );
 
   const [menuGroup, setMenuGroup] = useState<GroupWithGuestsApp | null>(null);
@@ -326,7 +326,7 @@ export function GroupsMobile({
                         !guest.phone && 'text-destructive/70',
                       )}
                     >
-                      {guest.phone || t('filters.noPhone')}
+                      {guest.phone ? formatPhone(guest.phone) : t('filters.noPhone')}
                     </span>
                     <span>·</span>
                     <span className="whitespace-nowrap">

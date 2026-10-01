@@ -5,7 +5,7 @@ import { IconDots } from '@tabler/icons-react';
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { cn } from '@/lib/utils';
-import { SideBadge } from '../../desktop/side-badge';
+import { SideBadge, sideTintClass } from '../../side-badge';
 
 interface GroupMobileCardProps {
   group: GroupWithGuestsApp;
@@ -14,13 +14,6 @@ interface GroupMobileCardProps {
   menuOpen?: boolean;
 }
 
-// Same side -> tint mapping as the desktop GroupCard, so a group reads the
-// same color whichever surface it's viewed from.
-const SIDE_TINT: Record<'bride' | 'groom', string> = {
-  bride: 'bg-primary/10 text-primary',
-  groom: 'bg-violet-tint text-violet-strong',
-};
-
 export function GroupMobileCard({
   group,
   onSelect,
@@ -28,9 +21,6 @@ export function GroupMobileCard({
   menuOpen,
 }: GroupMobileCardProps) {
   const t = useTranslations('guests');
-  const tint = group.side
-    ? SIDE_TINT[group.side]
-    : 'bg-muted text-muted-foreground';
   const sub =
     group.description ||
     (group.guestCount > 0
@@ -53,7 +43,7 @@ export function GroupMobileCard({
       <div
         className={cn(
           'flex size-10 shrink-0 items-center justify-center rounded-[11px]',
-          tint,
+          sideTintClass(group.side),
         )}
       >
         <GroupIcon iconName={group.icon} size="md" />

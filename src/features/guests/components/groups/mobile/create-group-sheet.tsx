@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/toggle-switch';
 import {
   GROUP_ICONS,
   GROUP_SIDES,
@@ -20,7 +21,7 @@ import {
 } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { cn } from '@/lib/utils';
-import { SideBadge } from '../../desktop/side-badge';
+import { SideBadge, sideTintClass } from '../../side-badge';
 
 interface CreateGroupSheetProps {
   open: boolean;
@@ -33,18 +34,6 @@ interface CreateGroupSheetProps {
   group?: GroupWithGuestsApp | null;
   onUpdateGroup?: (formData: FormData) => void;
 }
-
-// Same side -> tint mapping as GroupMobileCard/GroupCard, so the live
-// preview matches how the group will actually look in the list.
-const SIDE_TINT: Record<GroupSide, { bg: string; text: string; dot: string }> =
-  {
-    bride: { bg: 'bg-primary/10', text: 'text-primary', dot: 'bg-primary' },
-    groom: {
-      bg: 'bg-violet-tint',
-      text: 'text-violet-strong',
-      dot: 'bg-violet-strong',
-    },
-  };
 
 export function CreateGroupSheet({
   open,
@@ -77,7 +66,6 @@ export function CreateGroupSheet({
   }, [open, group?.id]);
 
   const canCreate = fName.trim().length > 0;
-  const tint = fSide ? SIDE_TINT[fSide] : null;
 
   const reset = () => {
     setFName('');
@@ -130,7 +118,7 @@ export function CreateGroupSheet({
           <span
             className={cn(
               'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors',
-              tint ? cn(tint.bg, tint.text) : 'bg-muted text-muted-foreground',
+              sideTintClass(fSide),
             )}
           >
             <GroupIcon iconName={fIcon} size="lg" />
@@ -241,8 +229,8 @@ export function CreateGroupSheet({
                     className={cn(
                       'flex h-[46px] items-center justify-center rounded-[11px] border-[1.5px] transition-colors',
                       active
-                        ? tint
-                          ? cn(tint.bg, tint.text, 'border-current')
+                        ? fSide
+                          ? cn(sideTintClass(fSide), 'border-current')
                           : 'border-primary bg-primary/10 text-primary'
                         : 'border-border text-muted-foreground',
                     )}
@@ -255,14 +243,11 @@ export function CreateGroupSheet({
           </div>
 
           {!isEdit && unassignedCount > 0 && (
-            <button
-              type="button"
-              role="switch"
-              aria-checked={fAssign}
-              onClick={() => setFAssign((v) => !v)}
-              className="flex min-h-[50px] items-center gap-3 border-t pt-1.5 text-start"
-            >
-              <span className="flex min-w-0 flex-1 flex-col gap-px">
+            <div className="flex min-h-[50px] items-center gap-3 border-t pt-1.5">
+              <label
+                htmlFor="assign-right-away"
+                className="flex min-w-0 flex-1 cursor-pointer flex-col gap-px"
+              >
                 <span className="text-[15px] font-medium">
                   {t('groups.mobile.assignRightAway')}
                 </span>
@@ -271,16 +256,14 @@ export function CreateGroupSheet({
                     count: unassignedCount,
                   })}
                 </span>
-              </span>
-              <span
-                className={cn(
-                  'flex h-6 w-10 shrink-0 rounded-full p-0.5 transition-colors',
-                  fAssign ? 'bg-primary justify-end' : 'bg-muted justify-start',
-                )}
-              >
-                <span className="size-5 rounded-full bg-white shadow-sm" />
-              </span>
-            </button>
+              </label>
+              <Switch
+                id="assign-right-away"
+                switchSize="lg"
+                checked={fAssign}
+                onCheckedChange={setFAssign}
+              />
+            </div>
           )}
         </div>
 

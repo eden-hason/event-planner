@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-delete';
+import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-commit';
 import type { PendingGroupDelete } from '@/features/guests/hooks/use-deferred-group-delete';
 
 const RING = 2 * Math.PI * 10;

@@ -1,9 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { useLocale } from 'next-intl';
 import {
   Sheet,
   SheetContent,
@@ -13,7 +12,7 @@ import {
 import { GuestApp, GroupWithGuestsApp } from '@/features/guests/schemas';
 import { updateGroupMembers } from '@/features/guests/actions/groups';
 import { GroupIcon } from '../group-icon';
-import { SideBadge } from '../../desktop/side-badge';
+import { SideBadge, sideTintClass } from '../../side-badge';
 import { cn } from '@/lib/utils';
 
 interface PickGroupSheetProps {
@@ -84,9 +83,7 @@ export function PickGroupSheet({
               <span
                 className={cn(
                   'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
-                  group.side === 'bride' && 'bg-primary/10 text-primary',
-                  group.side === 'groom' && 'bg-violet-tint text-violet-strong',
-                  !group.side && 'bg-muted text-muted-foreground',
+                  sideTintClass(group.side),
                 )}
               >
                 <GroupIcon iconName={group.icon} size="md" />

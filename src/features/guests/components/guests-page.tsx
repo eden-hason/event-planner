@@ -111,6 +111,10 @@ export function GuestsPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+  const unassignedGuests = useMemo(
+    () => guests.filter((g) => !g.groupId),
+    [guests],
+  );
 
   const goToImportRoute = () => router.push(`/app/${eventId}/guests/import`);
   // `?source=drive` tells the wizard to open straight into the Drive picker
@@ -557,7 +561,7 @@ export function GuestsPage({
           onOpenChange={setIsGroupDialogOpen}
           onCreateGroup={handleCreateGroup}
           onCreateAndAssign={handleCreateGroupAndAssign}
-          unassignedCount={guests.filter((g) => !g.groupId).length}
+          unassignedCount={unassignedGuests.length}
           group={editingGroup}
           onUpdateGroup={handleUpdateGroup}
         />
@@ -574,7 +578,7 @@ export function GuestsPage({
           open={assignSheetOpen}
           onOpenChange={setAssignSheetOpen}
           group={assignTarget}
-          availableGuests={guests.filter((g) => !g.groupId)}
+          availableGuests={unassignedGuests}
           totalRecords={guests.length}
           eventId={eventId}
         />

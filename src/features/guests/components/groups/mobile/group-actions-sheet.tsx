@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sheet';
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
+import { sideTintClass } from '../../side-badge';
 import { cn } from '@/lib/utils';
 
 interface GroupActionsSheetProps {
@@ -79,9 +80,7 @@ export function GroupActionsSheet({
           <span
             className={cn(
               'flex size-10 shrink-0 items-center justify-center rounded-[11px]',
-              group?.side === 'bride' && 'bg-primary/10 text-primary',
-              group?.side === 'groom' && 'bg-violet-tint text-violet-strong',
-              !group?.side && 'bg-muted text-muted-foreground',
+              sideTintClass(group?.side),
             )}
           >
             <GroupIcon iconName={group?.icon} size="md" />

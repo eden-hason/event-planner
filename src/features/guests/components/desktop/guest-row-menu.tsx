@@ -25,7 +25,7 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
-import { SideBadge } from './side-badge';
+import { SideBadge } from '../side-badge';
 
 export type RowAction =
   | { type: 'rsvp'; status: 'confirmed' | 'declined' }

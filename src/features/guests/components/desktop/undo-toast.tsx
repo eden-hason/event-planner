@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
-import {
-  UNDO_WINDOW_MS,
-  type PendingDelete,
-} from '@/features/guests/hooks/use-deferred-delete';
+import { UNDO_WINDOW_MS } from '@/features/guests/hooks/use-deferred-commit';
+import type { PendingDelete } from '@/features/guests/hooks/use-deferred-delete';
 
 const RING = 2 * Math.PI * 10;
 

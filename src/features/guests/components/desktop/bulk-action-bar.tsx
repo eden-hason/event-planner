@@ -27,7 +27,7 @@ import {
   type RsvpStatus,
 } from '@/features/guests/utils';
 import { cn } from '@/lib/utils';
-import { SideBadge } from './side-badge';
+import { SideBadge } from '../side-badge';
 
 export type BulkAction =
   | { type: 'rsvp'; status: RsvpStatus }

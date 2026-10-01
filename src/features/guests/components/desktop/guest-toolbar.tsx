@@ -40,7 +40,7 @@ import {
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { SelectBox } from './select-box';
-import { SideBadge } from './side-badge';
+import { SideBadge } from '../side-badge';
 
 const STATUS_CHIPS: (RsvpStatus | null)[] = [
   null,

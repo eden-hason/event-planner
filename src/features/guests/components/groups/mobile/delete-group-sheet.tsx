@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
+import { rsvpPresentation } from '@/features/guests/utils';
+import { cn } from '@/lib/utils';
 
 interface DeleteGroupSheetProps {
   group: GroupWithGuestsApp | null;
@@ -50,7 +52,7 @@ export function DeleteGroupSheet({
         </p>
         {group && group.guestCount > 0 && (
           <div className="text-muted-foreground flex items-start gap-2 text-[14.5px] leading-normal">
-            <span className="bg-rsvp-pending-tint text-rsvp-pending-strong flex size-6 shrink-0 items-center justify-center rounded-[7px]">
+            <span className={cn(rsvpPresentation('pending').chip, 'flex size-6 shrink-0 items-center justify-center rounded-[7px]')}>
               <IconUsers size={14} stroke={2.2} />
             </span>
             {t('deleteMoves', { count: group.guestCount })}
