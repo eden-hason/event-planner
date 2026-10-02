@@ -10,7 +10,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddCallRoundDialog } from './add-call-round-dialog';
 import { Band, BandRow } from './band';
-import { BILLING_STATUS_LABELS, EventBillingStatusControl } from '@/features/billing';
+import {
+  BILLING_STATUS_LABELS,
+  EventBillingStatusControl,
+  PAYMENT_METHOD_LABELS,
+  RECORD_PACKAGE_CHANNEL_LABELS,
+} from '@/features/billing';
+import { BonusOverrideDialog } from './bonus-override-dialog';
+import { RecordPaymentDialog } from './record-payment-dialog';
+import { getEventRecordPackage } from '../queries/record-package';
 import {
   EventTimeline,
   PhoneQualityDisclosure,
@@ -25,7 +33,7 @@ import {
   getEventTimeline,
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
-import { formatEventDate, relativeEventDate } from '@/lib/date-time';
+import { ADMIN_TIME_ZONE, formatEventDate, relativeEventDate } from '@/lib/date-time';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -363,6 +371,136 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     console.error('Event outreach failed:', error);
     return <BandFailure title="Outreach timeline" />;
   }
+}
+
+/**
+ * The Record Package (ADR 0027): what the Owner paid for, the bonus on top, how much of it
+ * the guest list uses, and the payments behind it. Recording a payment is the only way Paid
+ * Records grow, and it is also how sending is turned on.
+ */
+export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
+  try {
+    const view = await getEventRecordPackage(eventId);
+    if (!view) return <BandFailure title="Record package" />;
+    const pkg = view.package;
+    return (
+      <Band
+        id="record-package"
+        title="Record package"
+        className="scroll-mt-20"
+        action={
+          <div className="flex shrink-0 gap-2">
+            <EventBillingStatusControl eventId={eventId} currentStatus={view.billingStatus} />
+            <RecordPaymentDialog
+              eventId={eventId}
+              paidRecords={pkg?.paid ?? 0}
+              bonusOverride={pkg?.bonusIsCustom ? pkg.bonus : null}
+              defaultChannel={view.channel}
+            />
+          </div>
+        }
+      >
+        {!pkg ? (
+          <BandRow>
+            <p className="text-[13.5px] font-medium">No payment recorded</p>
+            <p className="text-muted-foreground text-[12.5px] tabular-nums">
+              The guest list has {view.used.toLocaleString('en-GB')} guest records. Once the sending gate is on, an event with no package reaches nobody
+            </p>
+          </BandRow>
+        ) : (
+          <>
+            <BandRow className="flex flex-wrap items-start gap-x-9 gap-y-4">
+              <PackageFigure label="Paid" value={pkg.paid} supporting={view.channel ? RECORD_PACKAGE_CHANNEL_LABELS[view.channel] : null} />
+              <PackageFigure
+                label="Bonus"
+                value={pkg.bonus}
+                supporting={pkg.bonusIsCustom ? `Custom, automatic is ${view.automaticBonus}` : 'Automatic'}
+                action={<BonusOverrideDialog eventId={eventId} bonus={pkg.bonus} isCustom={pkg.bonusIsCustom} automaticBonus={view.automaticBonus} />}
+              />
+              <PackageFigure label="Package" value={pkg.size} />
+              <PackageFigure label="Used" value={view.used} supporting="Includes deleted records that were reached" />
+              {view.over > 0 ? (
+                <PackageFigure label="Outside the package" value={view.over} tone="warning" supporting="Skipped when a schedule sends" />
+              ) : (
+                <PackageFigure label="Left" value={view.left} />
+              )}
+            </BandRow>
+            <BandRow className="px-0 py-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="ps-4">Date</TableHead>
+                    <TableHead className="text-right">Records</TableHead>
+                    <TableHead>Channel</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead className="pe-4">Recorded by</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {view.payments.map((payment, index) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="ps-4 tabular-nums">
+                        {formatPaymentDate(payment.occurredAt)}
+                        {index === view.payments.length - 1 && <span className="text-muted-foreground ml-1.5 text-[12px]">Opening</span>}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">+{payment.records.toLocaleString('en-GB')}</TableCell>
+                      <TableCell>{RECORD_PACKAGE_CHANNEL_LABELS[payment.channel]}</TableCell>
+                      <TableCell className="text-right tabular-nums">₪{payment.amount.toLocaleString('en-GB')}</TableCell>
+                      <TableCell>{PAYMENT_METHOD_LABELS[payment.method]}</TableCell>
+                      <TableCell className="max-w-48">
+                        <span className="block truncate font-mono text-[12.5px]">{payment.reference ?? '-'}</span>
+                        {payment.note && <span className="text-muted-foreground block truncate text-[12px]" title={payment.note}>{payment.note}</span>}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground pe-4">{payment.recordedBy ?? 'Unknown'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </BandRow>
+          </>
+        )}
+      </Band>
+    );
+  } catch (error) {
+    console.error('Record package failed:', error);
+    return <BandFailure title="Record package" />;
+  }
+}
+
+function PackageFigure({
+  label,
+  value,
+  supporting,
+  action,
+  tone,
+}: {
+  label: string;
+  value: number;
+  supporting?: string | null;
+  action?: React.ReactNode;
+  tone?: 'warning';
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-muted-foreground text-[11.5px]">{label}</span>
+      <span className={cn('text-xl font-semibold tracking-[-0.01em] tabular-nums', tone === 'warning' && 'text-warning')}>
+        {value.toLocaleString('en-GB')}
+      </span>
+      {supporting && <span className="text-muted-foreground text-[12px]">{supporting}</span>}
+      {action}
+    </div>
+  );
+}
+
+function formatPaymentDate(iso: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: ADMIN_TIME_ZONE,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(iso));
 }
 
 export function EventDetailsBand({ event }: { event: EventIdentity }) {

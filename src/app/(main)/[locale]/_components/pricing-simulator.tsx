@@ -40,7 +40,7 @@ export function PricingSimulator({
   const [records, setRecords] = useState(150);
 
   const selected = CHANNELS.find((c) => c.id === channel)!;
-  const { total, bonus, capacity } = quote(records, channel);
+  const { total, bonus, packageSize } = quote(records, channel);
   const totalLabel = formatShekels(total);
   const pct = ((records - RECORDS_MIN) / (RECORDS_MAX - RECORDS_MIN)) * 100;
 
@@ -172,12 +172,12 @@ export function PricingSimulator({
           </div>
           <div className="ps-line">
             <span className="k strong">סה״כ רשומות במערכת</span>
-            <span className="v bold">{capacity}</span>
+            <span className="v bold">{packageSize}</span>
           </div>
         </div>
 
         <Link href="/start" className="ps-cta heb" onClick={onCtaClick}>
-          להתחיל עם {capacity} רשומות
+          להתחיל עם {packageSize} רשומות
         </Link>
         <span className="ps-cta-note">נסו את המערכת המלאה בחינם - משלמים רק כשמפעילים את השליחה</span>
       </aside>

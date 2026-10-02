@@ -7,6 +7,7 @@ import {
   EventGuestListBand,
   EventIdentityQueryBand,
   EventOutreachBand,
+  EventRecordPackageBand,
   EventSignalsBand,
 } from '@/features/admin';
 import { getEventRouteState } from '@/features/admin/queries/events';
@@ -29,6 +30,7 @@ export default async function EventWorkspacePage({ params }: { params: Promise<{
       ) : (
         <>
           <Suspense fallback={<EventBandSkeleton />}><EventGuestListBand eventId={eventId} /></Suspense>
+          <Suspense fallback={<EventBandSkeleton />}><EventRecordPackageBand eventId={eventId} /></Suspense>
           <Suspense fallback={<EventBandSkeleton />}><EventOutreachBand eventId={eventId} /></Suspense>
           <Suspense fallback={<EventBandSkeleton />}><EventDetailsQueryBand eventId={eventId} /></Suspense>
         </>

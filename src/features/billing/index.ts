@@ -4,18 +4,33 @@
 // there); the payment webhook write path lives in './services'.
 
 // Types
-export type { EventBillingStatus } from './types';
+export type {
+  EventBillingStatus,
+  RecordPackageChannel,
+  BillingPaymentMethod,
+  RecordPackage,
+  PackageSplit,
+  EventPayment,
+  BillingActionResult,
+} from './types';
 
 // Pure utils
 export {
   deriveHeaderStatus,
   BILLING_STATUS_LABELS,
+  PAYMENT_METHOD_LABELS,
+  RECORD_PACKAGE_CHANNEL_LABELS,
+  RECORD_PACKAGE_CHANNELS,
+  RECORD_PACKAGE_RATES,
+  bonusRecords,
+  recordPackage,
+  splitByPackage,
   UPSELL_CTA_CLASS,
   UPSELL_SURFACE_CLASS,
 } from './utils';
 
 // Server Actions
-export { setEventBillingStatus } from './actions';
+export { setEventBillingStatus, recordEventPayment, setBonusOverride } from './actions';
 
 // Components
 export {

@@ -1,5 +1,10 @@
 import type { CollaboratorRole } from '@/features/collaborate/schemas';
-import type { EventBillingStatus } from '@/features/billing';
+import type {
+  EventBillingStatus,
+  EventPayment,
+  RecordPackage,
+  RecordPackageChannel,
+} from '@/features/billing';
 
 /**
  * Back Office view models. Vocabulary is defined in CONTEXT.md - in particular
@@ -325,4 +330,19 @@ export type UserDetail = {
   onboardingFinished: boolean;
   ownedEvents: UserOwnedEvent[];
   sharedEvents: UserSharedEvent[];
+};
+
+/** The Back Office view of an Event's Record Package (ADR 0027). */
+export type EventRecordPackageView = {
+  billingStatus: EventBillingStatus;
+  /** Null when no payment was recorded yet. */
+  package: RecordPackage | null;
+  /** What the automatic rule would give, shown beside an override. */
+  automaticBonus: number;
+  used: number;
+  left: number;
+  over: number;
+  /** The channel of the latest payment: what the Owner sees as their package's channel. */
+  channel: RecordPackageChannel | null;
+  payments: (EventPayment & { recordedBy: string | null })[];
 };
