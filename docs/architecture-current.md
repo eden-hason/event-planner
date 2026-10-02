@@ -57,7 +57,7 @@ app/
 │       └── [eventId]/              Per-event workspace
 │           ├── layout.tsx · loading.tsx
 │           ├── dashboard · details · guests · schedules
-│           ├── budget · collaborate · seating · templates
+│           ├── budget · collaborate · seating
 │
 ├── (admin)/admin/                  Back-office (NOT localized; subdomain-rewritten)
 │   ├── layout.tsx · page.tsx
@@ -104,7 +104,6 @@ features/<name>/
 | `guests` | 47 | ✓ | ✓ | ✓ | – | ✓ | ✗ | Largest; CSV import, table, groups, `hooks/` |
 | `schedules` | 40 | ✓ | ✓ | ✓ | – | ✓ | ✓ | Messaging; `config/`, `constants/`, inline `.md` |
 | `seating` | 38 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | Seat diagrams on a dnd-kit canvas; DB-enforced capacity |
-| `templates` | 22 | – | – | – | ✓ | ✓ | ✗ | Landing designs; `data/`, `designs/`, `registry.tsx` |
 
 ### Component tree (representative features)
 
@@ -126,13 +125,6 @@ features/schedules/components/
 ├── target-audience-card · send-confirm-dialog · interactions-refresh-button · index
 └── wizard/          wizard-invitation-step · wizard-timeline-step
 
-features/templates/
-├── components/      templates-page · template-library-grid · template-card
-│                    template-preview · live-template-preview · ...
-├── data/            template-library.ts
-├── designs/         dark-romantic · ivory-editorial · kululu-confetti · linen
-│                    (each: constants.ts + <name>-design.tsx, 590–839 LOC)
-└── registry.tsx     type · utils.ts
 ```
 
 ## 5. Shared UI (`components/`)

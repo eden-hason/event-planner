@@ -65,7 +65,7 @@ export function SaveBar({
       className={cn(
         // Bleeds over the page card's side padding (`px-4`, `md:px-6`) so the
         // top border runs edge to edge.
-        'bg-card sticky z-20 -mx-4 border-t px-4 py-3 md:-mx-6 md:px-6',
+        'bg-card md:bg-app-shell sticky z-20 -mx-4 border-t px-4 py-3 md:-mx-6 md:px-6',
         // Above the phone's bottom nav rather than behind it; from md the nav is
         // gone and the bar sits on the bottom edge.
         'bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:bottom-0',

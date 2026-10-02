@@ -37,7 +37,7 @@ export function ScheduleFooter({
   return (
     <div
       className={cn(
-        'bg-card sticky z-10 -mx-4 flex flex-col gap-1.5 border-t px-4 pt-3 md:bottom-0 md:mx-0 md:px-0 md:pb-3',
+        'bg-card md:bg-app-shell sticky z-10 -mx-4 flex flex-col gap-1.5 border-t px-4 pt-3 md:bottom-0 md:mx-0 md:px-0 md:pb-3',
         aboveNav
           ? 'bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] pb-3'
           : 'bottom-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]',

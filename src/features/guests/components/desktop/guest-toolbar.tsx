@@ -125,7 +125,7 @@ export function GuestToolbar({
     <div
       ref={ref}
       className={cn(
-        'bg-card sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px))] z-20 -mx-6 flex flex-wrap items-center gap-x-2.5 gap-y-2 px-6 py-3 transition-shadow',
+        'bg-app-shell sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px))] z-20 -mx-6 flex flex-wrap items-center gap-x-2.5 gap-y-2 px-6 py-3 transition-shadow',
         // `box-shadow` directly, not a `shadow-*` utility: globals.css zeroes
         // Tailwind's shadow variables app-wide for the flat look, and this
         // one shadow is the design's cue that the list runs on underneath.

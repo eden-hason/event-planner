@@ -349,13 +349,10 @@ export function GuestsPage({
       }
     : {
         title,
-        // Mobile-only: desktop has the RSVP meter's counts right below it.
-        subtitle: isMobile
-          ? t('headerSubtitle', {
-              total: guests.length,
-              groupCount: groups.length,
-            })
-          : undefined,
+        subtitle: t('headerSubtitle', {
+          total: guests.length,
+          groupCount: groups.length,
+        }),
         action: isMobile ? headerAction : undefined,
         // Desktop keeps the title and tabs in view while the list scrolls, with
         // the toolbar and the table header stacked under them (D13).
@@ -366,7 +363,7 @@ export function GuestsPage({
     setHeader(headerConfig);
     // Keyed on what the header shows, not on `headerConfig`, which is a new
     // object every render: an identity-keyed effect would set state in a loop.
-    // The counts feed the phone's subtitle.
+    // The counts feed the subtitle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, isMobile, activeTab, guests.length, groups.length, setHeader, selection]);
 
@@ -398,7 +395,7 @@ export function GuestsPage({
             // Pinned under the page title on desktop; full-bleed so the list
             // never shows past its edges while it scrolls beneath.
             !isMobile &&
-              'bg-card sticky top-[var(--page-header-h,0px)] z-20 -mx-6 px-6',
+              'bg-app-shell sticky top-[var(--page-header-h,0px)] z-20 -mx-6 px-6',
             // On mobile the design keeps the tabs on the same white surface as
             // the title above, not the gray shell: bleed past `CardContent`'s
             // own inset and pull up through the Card's `gap-4` so the band

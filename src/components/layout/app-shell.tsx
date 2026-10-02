@@ -45,11 +45,10 @@ export function isFullTakeoverRoute(pathname: string) {
 }
 
 /**
- * A dedicated `--app-shell` token, not `bg-muted`/`bg-background`: the
- * sidebar (`variant="floating"`) and the page's content `Card` are both
- * white, and only read as floating panels if the canvas behind them is a
- * different shade - `--muted` would also tint every other neutral surface
- * that borrows it.
+ * A dedicated `--app-shell` token, not `bg-muted`/`bg-background`: pages sit
+ * straight on this light purple beside the white sidebar, and their own white
+ * cards only read as cards against a different shade - `--muted` would also
+ * tint every other neutral surface that borrows it.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

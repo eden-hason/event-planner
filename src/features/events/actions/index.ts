@@ -23,4 +23,3 @@ export type { CreateDraftEventState, DraftStepState } from '../schemas';
 
 export { duplicateEvent, type DuplicateEventState } from './duplicate-event';
 
-export { updateEventLandingTemplate, type UpdateLandingTemplateState } from './landing-template';

@@ -42,7 +42,7 @@ const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   test: (f) => f.canReceiveTestMessage,
   seating: (f) => f.confirmedHeads > 0 && f.tableCount === 0,
   gifting: (f) => !f.giftingConfigured,
-  preview: (f) => f.hasChosenTemplate && f.hasPreviewToken,
+  preview: (f) => f.hasPreviewToken,
   budget: (f) => f.expenseCount === 0,
 };
 

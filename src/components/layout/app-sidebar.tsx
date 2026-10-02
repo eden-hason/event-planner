@@ -12,7 +12,6 @@ import {
   IconGift,
   IconListDetails,
   IconArmchair,
-  IconPalette,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
@@ -132,16 +131,6 @@ export function AppSidebar({
       url: '/app/gifting',
       icon: IconGift,
     },
-    ...(process.env.NEXT_PUBLIC_ENABLE_TEMPLATES === 'true'
-      ? [
-          {
-            id: 'templates',
-            title: tNav('templates'),
-            url: '/app/templates',
-            icon: IconPalette,
-          },
-        ]
-      : []),
     {
       id: 'collaboration',
       title: tNav('collaboration'),
@@ -191,23 +180,15 @@ export function AppSidebar({
       side={isRTL ? 'right' : 'left'}
       collapsible="icon"
       {...props}
-      variant={isSeatingPage ? 'sidebar' : props.variant}
-      // The `ui/sidebar.tsx` primitive hardcodes bg/border/shadow on an inner
-      // div its own className prop doesn't reach - this app's sidebar wants
-      // none of them, but the shared primitive (also used by the admin back
-      // office) shouldn't lose them for every consumer, so it's overridden
-      // here via the one class the primitive does expose, targeting its
-      // inner div by its `data-sidebar` attribute.
-      //
-      // `--sidebar-accent` (the hover/active tint every menu button uses) is
-      // defined app-wide as the same gray as `--muted` - indistinguishable
-      // from the AppShell's own background now that the sidebar itself has
-      // no background to show it against. Redefining it locally to white
-      // keeps every `bg-sidebar-accent` hover/active class working, but
-      // visible, without changing the token for the admin sidebar (still
-      // opaque, where gray-on-white already has contrast).
+      // `app-sidebar` scopes the design's sidebar tokens (see globals.css) to
+      // this sidebar alone - the admin back office shares the primitive. The
+      // primitive draws the hairline on the container's content-facing edge;
+      // `border-sidebar-border` gives it the sidebar's own tint instead of the
+      // app-wide neutral `--border`. The `py-3` breathing room sits on this
+      // container, outside the primitive's inner panel, so the container
+      // needs the panel's fill too or the shell shows through the padding.
       className={cn(
-        '[--sidebar-accent:var(--background)] [&_[data-sidebar=sidebar]]:border-none [&_[data-sidebar=sidebar]]:bg-transparent [&_[data-sidebar=sidebar]]:shadow-none',
+        'app-sidebar bg-sidebar border-sidebar-border md:py-3',
         props.className,
       )}
     >
