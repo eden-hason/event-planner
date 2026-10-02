@@ -55,7 +55,7 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
+        <SidebarMenu className="gap-1.5">
           {items.map((item) => {
             const isUnavailable = item.comingSoon || disabled;
             const isActive = !isUnavailable && isActiveRoute(pathname, item.url);
@@ -63,9 +63,7 @@ export function NavMain({
               <Badge
                 className={[
                   'ms-auto rounded-sm border-none text-[10px] px-1.5 py-0 group-data-[collapsible=icon]:hidden',
-                  isActive
-                    ? 'bg-sidebar-primary-foreground text-sidebar-primary'
-                    : 'bg-primary text-primary-foreground',
+                  'bg-primary text-primary-foreground',
                 ].join(' ')}
               >
                 {t('new')}
@@ -78,9 +76,11 @@ export function NavMain({
                   asChild={!isUnavailable}
                   isActive={isActive}
                   className={[
+                    // Guests Desktop sizing: 38px rows, 14px label, 19px icon.
+                    'h-[38px] gap-2.5 rounded-[9px] px-2.5 [&>svg]:size-[19px]',
                     isActive
-                      ? '!bg-sidebar-primary !text-sidebar-primary-foreground font-semibold shadow-sm [&>svg]:text-sidebar-primary-foreground'
-                      : 'hover:!bg-sidebar-accent/60',
+                      ? '!bg-app-nav-active !text-app-nav-active-foreground font-bold'
+                      : 'text-app-nav font-medium',
                     isUnavailable ? 'cursor-default opacity-50 pointer-events-none' : '',
                   ].join(' ')}
                 >

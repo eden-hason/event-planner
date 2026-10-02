@@ -348,7 +348,7 @@ export function GuestsDesktop({
           {/* Pinned under the toolbar, which casts its shadow over it (D13). */}
           <p
             ref={countRef}
-            className="bg-card text-muted-foreground sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-[15] -mx-6 px-6 pt-1.5 pb-2 text-[12.5px]"
+            className="bg-app-shell text-muted-foreground sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-[15] -mx-6 px-6 pt-1.5 pb-2 text-[12.5px]"
           >
             {filtered
               ? t('list.countFiltered', {

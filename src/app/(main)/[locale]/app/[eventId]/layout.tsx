@@ -82,7 +82,6 @@ export default async function EventLayout({
     <AppShell>
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar
-          variant="floating"
           events={events}
           currentUserId={effectiveUser?.id ?? auth.user.id}
           user={user}

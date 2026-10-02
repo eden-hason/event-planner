@@ -18,15 +18,11 @@ import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
 
 /**
- * Wraps every event page's content in a floating white card on the gray
- * `AppShell` background - but only from `md` up. Below that the card frame,
- * its margin, and its border all disappear and the page goes edge-to-edge:
- * a floating box with its own gutter reads fine next to a sidebar, but on a
- * phone the sidebar is an off-canvas drawer, not something the card needs to
- * visually sit beside, and the box just eats width the page needs. This is a
- * CSS breakpoint, not `useIsMobile()`, so it paints correctly on first
- * render instead of flashing the desktop card before JS measures the
- * viewport.
+ * Lays out every event page's content straight on the `AppShell` background,
+ * beside the solid sidebar (the Guests Desktop shell) - no card frame at any
+ * width. Pages put their own white cards on that surface where they want
+ * one; anything pinned that sits on the page itself (a toolbar, a save bar)
+ * paints `bg-app-shell` from `md` up so it matches what scrolls beneath it.
  *
  * Its top row carries the page title alongside the controls that stand in
  * for the app-wide header that used to run across the top of the whole shell
@@ -85,16 +81,15 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         seating
           ? 'min-h-0 flex-1 gap-4 p-0'
           : cn(
-              // The same `gap-4` at every width, but it does two different
-              // jobs: at `md` it is the room the card's header border needs,
-              // and below it - where the row is a white band on the gray
-              // shell - it is the gap that separates the band from the
-              // content, with the row's own `pb-3` closing out the band.
-              'gap-4',
+              // The space between the header row and the content. Below `md`,
+              // where the row is a white band on the shell, the row's own
+              // `pb-3` closes out the band and this gap separates it from the
+              // content. From `md` up there is no band, so the row drops its
+              // padding and this tighter gap is all that sits between them.
+              'gap-4 md:gap-3',
               // Card's own default is `py-6` top and bottom; the chrome row
               // wants less air above it than CardContent wants below it, and
-              // below `md` there's no bottom padding at all since nothing
-              // needs the room without the border/background.
+              // below `md` there's no bottom padding at all.
               // No top padding below `md` either - the chrome row owns its own
               // there, so its white band reaches the top edge of the viewport
               // instead of leaving a strip of the gray shell above it.
@@ -107,16 +102,9 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               // A page that hides the nav (see `useHideBottomNav`) needs no
               // clearance for it.
               bottomNavHidden
-                ? 'mb-0 md:mb-2'
-                : 'mb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-2',
-              // `mt-2`/`me-2` (8px), matching the floating sidebar's own
-              // outer gap so the two sit level. `me-2` (not `mx-2`): the
-              // sidebar-facing side already gets its 8px from the sidebar's
-              // own `p-2` inset, so only the far edge needs its own margin -
-              // logical, so it lands on the right in LTR and the left in
-              // RTL.
-              'md:me-2 md:mt-2 md:min-h-[calc(100svh-1rem)]',
-              'md:bg-card md:rounded-xl md:border md:shadow-sm',
+                ? 'mb-0'
+                : 'mb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:mb-0',
+              'md:min-h-svh',
               pinned && 'md:pt-0',
             ),
       )}
@@ -142,12 +130,10 @@ export function PageCard({ children }: { children: React.ReactNode }) {
                 'md:bg-transparent md:px-6 md:pt-3 md:pb-0',
               )
             : cn(
-                'px-4 pb-3 md:border-b md:px-6',
-                // Below `md` the card frame is gone and the page sits straight
-                // on the gray shell, so the row needs its own surface to read
-                // as a header rather than as the first line of the content.
-                // `bg-card`, not `bg-white`: it is the same white the card uses
-                // at `md` and up, and it follows the theme into dark mode.
+                'px-4 pb-3 md:px-6 md:pb-0',
+                // Below `md` the row needs its own surface to read as a header
+                // rather than as the first line of the content. `bg-card`, not
+                // `bg-white`, so it follows the theme into dark mode.
                 // The top padding lives here rather than on the Card so the
                 // band covers it (see the Card's `pt-0` below `md`).
                 'bg-card pt-4 md:bg-transparent md:pt-0',
@@ -157,7 +143,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           // under it. The Card's top padding moves in here, so the row's
           // surface covers it and nothing shows through above the title.
           pinned &&
-            'md:bg-card md:sticky md:top-0 md:z-30 md:rounded-t-xl md:pt-3',
+            'md:bg-app-shell md:sticky md:top-0 md:z-30 md:pt-3',
         )}
       >
         <div className="flex min-w-0 items-center gap-3">

@@ -21,6 +21,9 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-app-shell: var(--app-shell);
+  --color-app-nav: var(--app-nav);
+  --color-app-nav-active: var(--app-nav-active);
+  --color-app-nav-active-foreground: var(--app-nav-active-foreground);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -188,6 +191,9 @@
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.592 0.249 333);
   --app-shell: oklch(98.3% 0.006 317.8);
+  --app-nav: oklch(0.459 0.03 313.7);
+  --app-nav-active: oklch(0.941 0.032 332.1);
+  --app-nav-active-foreground: oklch(0.543 0.224 336.6);
   /*
    * The mobile bottom nav's height. A token rather than a local constant
    * because the nav is `fixed`: PageCard and the Seating workspace have to
@@ -272,7 +278,37 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.74 0.238 333);
-  --app-shell: oklch(0.19 0.02 333);
+  --app-shell: oklch(0.187 0.019 304.9);
+  --app-nav: oklch(0.802 0.03 315.3);
+  --app-nav-active: oklch(0.66 0.227 334.9 / 16%);
+  --app-nav-active-foreground: oklch(0.769 0.161 333.4);
+}
+
+/*
+ * The event app's sidebar, from the Guests Desktop design: a solid panel the
+ * full height of the viewport, divided from the shell by a hairline rather
+ * than floating on it. Scoped to `.app-sidebar` (see `AppSidebar`) instead of
+ * redefining the `--sidebar-*` tokens globally, so the admin back office's
+ * sidebar keeps its own look.
+ *
+ * The nav item colors (`--app-nav*`, defined with the other tokens above)
+ * are not scoped here: below `md` the sidebar renders in a Sheet the
+ * primitive gives no class to, and its nav items need them too.
+ */
+.app-sidebar {
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.212 0.021 311.6);
+  --sidebar-border: oklch(0.939 0.015 316);
+  --sidebar-accent: oklch(0.955 0.011 316.5);
+  --sidebar-accent-foreground: oklch(0.212 0.021 311.6);
+}
+
+.dark .app-sidebar {
+  --sidebar: oklch(0.207 0.023 305.2);
+  --sidebar-foreground: oklch(0.956 0.012 317.7);
+  --sidebar-border: oklch(0.284 0.029 308.8);
+  --sidebar-accent: oklch(0.267 0.028 310.4);
+  --sidebar-accent-foreground: oklch(0.956 0.012 317.7);
 }
 
 /*
