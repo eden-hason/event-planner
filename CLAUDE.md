@@ -111,7 +111,8 @@ between, so local is the only gate. Verify against a fresh local database
 reaches production. `.env.local` points at the local stack (`127.0.0.1:54321`); the linked
 remote project is `kululu-prod`.
 
-**Apply migrations with `npx supabase db push`, not the Supabase MCP.**
+**Apply migrations with `npm run db:push`, never raw `npx supabase db push` and never the
+Supabase MCP.**
 `mcp__supabase__apply_migration` mints its own version number instead of using the
 migration file's timestamp, so the same migration ends up recorded in production under a
 version that matches no local file. The CLI then treats the local file as unapplied and
@@ -120,11 +121,18 @@ way (`add_message_deliveries_update_policy`, `add_message_deliveries_error_code`
 `call_rounds_owner_visibility`). Use the MCP to *inspect* the database freely; use the CLI
 to *change* it.
 
-Check for drift before pushing - any row with an empty `local` or empty `remote` is drift:
+**Push only from an up-to-date `main`.** A migration pushed from a branch that never merges
+leaves production with a version `main` has no file for, and every later push from `main`
+fails on it (`20260923000000`/`1` sat that way for weeks). `npm run db:push` enforces this:
+it refuses unless you are on `main`, level with `origin/main`, with nothing uncommitted under
+`supabase/migrations`, then refuses on drift, then runs `supabase db push` (extra arguments
+pass through, e.g. `npm run db:push -- --dry-run`). So a new migration merges to `main`
+first and is pushed after - and after the deploy, when it drops something the live code
+still uses.
 
-```
-npx supabase migration list --linked
-```
+`npm run db:drift` checks for drift on its own: a version only in production, or a file
+production has not applied. The `Migration Drift` workflow runs the same check against
+`main` every morning, which catches pushes made from anywhere else.
 
 To reconcile a migration that is really applied but recorded under the wrong version, fix
 the bookkeeping rather than re-running the SQL. Confirm the schema actually matches the
