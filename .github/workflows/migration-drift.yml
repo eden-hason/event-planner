@@ -24,9 +24,8 @@ jobs:
       # kululu-prod. Not a secret - it is in every API URL.
       SUPABASE_PROJECT_REF: kaxzfjnxpyvjtvkfwxnc
     steps:
+      # The triggering ref: main for the schedule, the chosen branch on a manual run.
       - uses: actions/checkout@v4
-        with:
-          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 24
