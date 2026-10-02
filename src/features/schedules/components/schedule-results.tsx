@@ -333,14 +333,23 @@ function Funnel({
   const t = useTranslations('schedules.results.funnel');
   const answered = summary.confirmed + summary.declined;
 
+  // Records the send skipped are not part of the audience, and the hint says which.
+  const noPhone = summary.excludedNoPhone;
+  const outside = summary.excludedOutsidePackage;
+  const audienceHint =
+    noPhone > 0 && outside > 0
+      ? t('audienceExcludedBoth', { noPhone, outside })
+      : outside > 0
+        ? t('audienceExcludedPackage', { count: outside })
+        : noPhone > 0
+          ? t('audienceExcluded', { count: noPhone })
+          : t('audienceHint');
+
   const rows = [
     {
       key: 'audience',
       label: t('audience'),
-      hint:
-        summary.excludedNoPhone > 0
-          ? t('audienceExcluded', { count: summary.excludedNoPhone })
-          : t('audienceHint'),
+      hint: audienceHint,
       n: summary.audience,
       value: 100,
       bar: 'bg-muted-foreground/25',
@@ -607,6 +616,13 @@ function NotReachedCard({
       why: t('noPhoneWhy'),
       n: counts.noPhone,
       dot: 'bg-muted-foreground/50',
+    },
+    {
+      key: 'outside_package' as const,
+      label: t('outsidePackage'),
+      why: t('outsidePackageWhy'),
+      n: counts.outsidePackage,
+      dot: 'bg-warning-solid',
     },
   ].filter((row) => row.n > 0);
   if (rows.length === 0) return null;

@@ -1713,6 +1713,8 @@
         "audience": "קהל היעד",
         "audienceHint": "כל הרשומות עם טלפון",
         "audienceExcluded": "{count, plural, one {רשומה אחת בלי טלפון לא נכללת} other {# רשומות בלי טלפון לא נכללות}}",
+        "audienceExcludedPackage": "{count, plural, one {רשומה אחת מחוץ לחבילה לא נכללת} other {# רשומות מחוץ לחבילה לא נכללות}}",
+        "audienceExcludedBoth": "{noPhone} בלי טלפון ו-{outside} מחוץ לחבילה לא נכללות",
         "reached": "הגיעו",
         "ofAudience": "{percent}% מקהל היעד",
         "seen": "נקרא",
@@ -1750,7 +1752,9 @@
         "notDelivered": "לא נמסר",
         "notDeliveredWhy": "כדאי להתקשר אליהם",
         "noPhone": "אין מספר טלפון",
-        "noPhoneWhy": "לא נשלח · אפשר להשלים מספר"
+        "noPhoneWhy": "לא נשלח · אפשר להשלים מספר",
+        "outsidePackage": "מחוץ לחבילה",
+        "outsidePackageWhy": "לא נשלח · אפשר להוסיף רשומות לחבילה"
       },
       "guests": {
         "title": "אורחים",
@@ -1766,7 +1770,8 @@
           "unseen": "טרם נקרא",
           "on_its_way": "בדרך",
           "not_delivered": "לא נמסר",
-          "no_phone": "אין מספר טלפון"
+          "no_phone": "אין מספר טלפון",
+          "outside_package": "מחוץ לחבילה"
         },
         "columns": {
           "guest": "אורח",
@@ -1782,6 +1787,7 @@
           "on_its_way": "בדרך",
           "not_delivered": "לא נמסר",
           "no_phone": "אין מספר טלפון",
+          "outside_package": "מחוץ לחבילה",
           "none": "בלי הודעה"
         },
         "channel": {
@@ -1818,6 +1824,8 @@
         "onItsWayMeta": "הטלפון עוד לא אישר קבלה",
         "noPhone": "אין מספר טלפון",
         "noPhoneMeta": "ההודעה לא נשלחה. אפשר להשלים מספר ברשימת האורחים",
+        "outsidePackage": "מחוץ לחבילה",
+        "outsidePackageMeta": "ההודעה לא נשלחה. רשימת האורחים גדולה מחבילת הרשומות",
         "confirmed": "אישר הגעה",
         "declined": "סירב",
         "call": "התקשרות לאורח",

@@ -15,6 +15,7 @@ import { resolveTemplatesForEvent } from './resolve-reminder-templates';
 import { mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
+import { loadOutsidePackageIds } from '@/features/billing/services';
 import {
   includesGiftButton,
   hasInvitationImage,
@@ -55,7 +56,13 @@ export type RenderedDelivery = {
 };
 
 export type RenderDeliveriesResult =
-  | { ok: true; rendered: RenderedDelivery[]; schedule: ScheduleApp }
+  | {
+      ok: true;
+      rendered: RenderedDelivery[];
+      schedule: ScheduleApp;
+      /** Targeted Guest Records skipped because they are outside the Record Package */
+      outsidePackage: number;
+    }
   | { ok: false; reason: string };
 
 /** Everything the renderer needs about the audience, fetched in two queries. */
@@ -103,6 +110,12 @@ export async function renderScheduleDeliveries(
     guestIds?: string[];
     /** A row already fetched with SCHEDULE_SELECT and its event, to save a query. */
     prefetched?: { schedule: ScheduleApp; event: ReturnType<typeof mapEventRow> };
+    /**
+     * Guest Records outside the Record Package, already loaded by the caller. The
+     * Dispatcher loads it before claiming the Schedule, so a failure to work it out
+     * leaves the Schedule unclaimed and retried rather than dispatched to nobody.
+     */
+    outsidePackage?: ReadonlySet<string>;
   } = {},
 ): Promise<RenderDeliveriesResult> {
   let schedule: ScheduleApp;
@@ -182,22 +195,39 @@ export async function renderScheduleDeliveries(
     return { ok: false, reason: 'No eligible guests after applying filters' };
   }
 
-  const reachable = targeted.filter((guest) => validatePhoneNumber(guest.phone));
+  // The sending gate (ADR 0027): only Guest Records inside the Record Package are
+  // sent to. It applies to a hand-picked send too - the package caps sending, not
+  // just the Dispatcher. A record outside it is skipped even if it has no phone
+  // either, because adding a number would not make it send.
+  const outsideIds =
+    options.outsidePackage ?? (await loadOutsidePackageIds(supabase, schedule.eventId));
+  if (!outsideIds) return { ok: false, reason: 'Could not check the record package' };
+  const outside = targeted.filter((guest) => outsideIds.has(guest.id));
+  const inside = targeted.filter((guest) => !outsideIds.has(guest.id));
 
-  // Guests with no usable number are a fact the Owner needs to see ("never got
-  // it - no phone number"), not just a number in a summary. Only meaningful for
-  // a whole audience: a hand-picked subset says nothing about who was left out.
+  const reachable = inside.filter((guest) => validatePhoneNumber(guest.phone));
+
+  // Skipped guests are a fact the Owner needs to see ("never got it - no phone
+  // number", "outside the package"), not just a number in a summary. Only
+  // meaningful for a whole audience: a hand-picked subset says nothing about who
+  // was left out.
   if (!options.guestIds?.length) {
-    const unreachable = targeted.filter((guest) => !validatePhoneNumber(guest.phone));
-    if (unreachable.length > 0) {
-      try {
-        await recordNotSent(supabase, scheduleId, unreachable.map((g) => g.id), 'scheduled');
-      } catch (error) {
-        console.error('[render] Could not record not-sent deliveries:', error);
+    const unreachable = inside.filter((guest) => !validatePhoneNumber(guest.phone));
+    try {
+      if (outside.length > 0) {
+        await recordNotSent(supabase, scheduleId, outside.map((g) => g.id), 'scheduled', 'outside_package');
       }
+      if (unreachable.length > 0) {
+        await recordNotSent(supabase, scheduleId, unreachable.map((g) => g.id), 'scheduled', 'no_phone');
+      }
+    } catch (error) {
+      console.error('[render] Could not record not-sent deliveries:', error);
     }
   }
 
+  if (inside.length === 0) {
+    return { ok: false, reason: 'Every targeted guest record is outside the record package' };
+  }
   if (reachable.length === 0) return { ok: false, reason: 'No guests with valid phone numbers' };
 
   // Reserve before rendering: the RSVP token is part of the message, and a
@@ -244,5 +274,5 @@ export async function renderScheduleDeliveries(
   }
 
   if (rendered.length === 0) return { ok: false, reason: 'No deliveries could be prepared' };
-  return { ok: true, rendered, schedule };
+  return { ok: true, rendered, schedule, outsidePackage: outside.length };
 }

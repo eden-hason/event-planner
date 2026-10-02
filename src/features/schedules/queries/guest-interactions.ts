@@ -13,13 +13,16 @@ import { isSmsFallbackTrigger } from '../utils';
  *   promises a retry until an SMS attempt actually exists.
  * - `no_phone`: targeted, but no attempt was possible, so no send ever
  *   happened. Listed in the table and excluded from the audience total.
+ * - `outside_package`: targeted, but the Guest Record was outside the Record
+ *   Package when the Schedule sent (ADR 0027). Listed and excluded the same way.
  */
 export type GuestDeliveryOutcome =
   | 'whatsapp'
   | 'sms'
   | 'on_its_way'
   | 'not_delivered'
-  | 'no_phone';
+  | 'no_phone'
+  | 'outside_package';
 
 /**
  * One message on one channel, as the Owner may see it: which channel, and how
@@ -85,9 +88,16 @@ export type ScheduleInteractionData = {
     reachedSms: number;
     /** Of `reachedSms`, those reached by an SMS Fallback after WhatsApp could not */
     reachedByFallback: number;
-    notReached: { onItsWay: number; notDelivered: number; noPhone: number };
+    notReached: {
+      onItsWay: number;
+      notDelivered: number;
+      noPhone: number;
+      outsidePackage: number;
+    };
     /** Targeted records left out of `audience` for want of a phone number */
     excludedNoPhone: number;
+    /** Targeted records left out of `audience` because they were outside the package */
+    excludedOutsidePackage: number;
     /** Guest records with a WhatsApp read receipt */
     seen: number;
     /**
@@ -108,6 +118,7 @@ export type ScheduleInteractionData = {
 function toOutcome(
   status: string | null,
   channel: string | null,
+  notSentReason: string | null,
 ): GuestDeliveryOutcome {
   switch (status) {
     case 'delivered':
@@ -118,7 +129,7 @@ function toOutcome(
     case 'failed':
       return 'not_delivered';
     case 'not_sent':
-      return 'no_phone';
+      return notSentReason === 'outside_package' ? 'outside_package' : 'no_phone';
     default:
       // pending: reserved just before sending, the attempt not recorded yet
       return 'on_its_way';
@@ -166,7 +177,7 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'guest_id, status, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
+        'guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
       )
       .eq('schedule_id', scheduleId),
   ]);
@@ -178,8 +189,9 @@ export async function getScheduleInteractionData(
       reachedWhatsapp: 0,
       reachedSms: 0,
       reachedByFallback: 0,
-      notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0 },
+      notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0, outsidePackage: 0 },
       excludedNoPhone: 0,
+      excludedOutsidePackage: 0,
       seen: 0,
       seenCapable: 0,
       confirmed: 0,
@@ -228,7 +240,11 @@ export async function getScheduleInteractionData(
       phone_number: string | null;
     };
     const entry = rowFor(row.guest_id as string, guest);
-    entry.delivery = toOutcome(row.status, row.delivery_method);
+    entry.delivery = toOutcome(
+      row.status,
+      row.delivery_method,
+      (row.not_sent_reason as string | null) ?? null,
+    );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
     entry.steps = toSteps(row.message_delivery_attempts as AttemptRow[] | null);
@@ -290,9 +306,10 @@ export async function getScheduleInteractionData(
   );
 
   const noPhone = count('no_phone');
+  const outsidePackage = count('outside_package');
 
   const summary = {
-    audience: withDelivery.length - noPhone,
+    audience: withDelivery.length - noPhone - outsidePackage,
     reached: count('whatsapp') + count('sms'),
     reachedWhatsapp: count('whatsapp'),
     reachedSms: count('sms'),
@@ -301,8 +318,10 @@ export async function getScheduleInteractionData(
       onItsWay: count('on_its_way'),
       notDelivered: count('not_delivered'),
       noPhone,
+      outsidePackage,
     },
     excludedNoPhone: noPhone,
+    excludedOutsidePackage: outsidePackage,
     seen: guests.filter((g) => g.seen).length,
     seenCapable,
     confirmed: confirmedGuestRecords.length,

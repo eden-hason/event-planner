@@ -8,6 +8,7 @@ import {
   IconClock,
   IconHeart,
   IconMessage,
+  IconPackage,
   IconPhone,
   IconPhoneOff,
   IconSend,
@@ -50,6 +51,8 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
       return { icon: IconClock, tone: 'pending' };
     case 'no_phone':
       return { icon: IconPhoneOff, tone: 'neutral' };
+    case 'outside_package':
+      return { icon: IconPackage, tone: 'pending' };
   }
 }
 
@@ -57,7 +60,9 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
 export function useChannelLabel() {
   const t = useTranslations('schedules.results.guests.channel');
   return (row: GuestInteractionRow) => {
-    if (row.delivery === 'no_phone') return t('notSent');
+    if (row.delivery === 'no_phone' || row.delivery === 'outside_package') {
+      return t('notSent');
+    }
     if (row.viaFallback) return t('fallback');
     if (row.delivery === 'sms') return t('sms');
     if (row.delivery === null) return null;
@@ -120,6 +125,11 @@ export function GuestJourney({
         };
       case 'no_phone':
         return { label: t('journey.noPhone'), meta: t('journey.noPhoneMeta') };
+      case 'outside_package':
+        return {
+          label: t('journey.outsidePackage'),
+          meta: t('journey.outsidePackageMeta'),
+        };
       case 'confirmed':
         return {
           label: t('journey.confirmed'),

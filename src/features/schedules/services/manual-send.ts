@@ -121,7 +121,11 @@ export async function sendSelectedDeliveries(
 
   let sentCount = 0;
   let failedCount = 0;
-  const skippedCount = deliveryIds.length - rows.length;
+  const inFlight = deliveryIds.length - rows.length;
+  // Records the sending gate left out (ADR 0027) are skipped too, and named in the
+  // message so an Operator is not left guessing why a picked guest got nothing.
+  const outsidePackage = render.outsidePackage;
+  const skippedCount = inFlight + outsidePackage;
 
   for (const row of rows) {
     const payload = parseSendPayload(row.send_payload);
@@ -167,7 +171,8 @@ export async function sendSelectedDeliveries(
       sentCount > 0
         ? `Sent to ${sentCount} ${sentCount === 1 ? 'guest record' : 'guest records'}` +
           (failedCount ? `, ${failedCount} failed` : '') +
-          (skippedCount ? `, ${skippedCount} already in flight` : '')
+          (inFlight ? `, ${inFlight} already in flight` : '') +
+          (outsidePackage ? `, ${outsidePackage} outside the record package` : '')
         : 'Nothing was sent',
     sentCount,
     failedCount,

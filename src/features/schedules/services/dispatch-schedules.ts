@@ -11,6 +11,7 @@ import { isMessageSchedule } from '../utils';
 import { isWithinSendWindow, nextOpenSlot } from '../utils/send-window';
 import { sendingConfig } from '@/lib/config/sending';
 import { formatScheduleDateTime } from '@/lib/date-time';
+import { loadOutsidePackageIds } from '@/features/billing/services';
 
 /**
  * The Dispatcher: finds Schedules whose Due Time has come, and turns each into
@@ -188,7 +189,13 @@ async function dispatchOne(
     return { scheduleId, outcome: 'held', reason, deliveriesQueued: 0 };
   }
 
-  // 3. Claim. Whoever flips dispatched_at owns this Schedule; a second
+  // 3. Work out who is outside the Record Package (ADR 0027). Before the claim on
+  //    purpose: if it cannot be worked out, the Schedule stays unclaimed and the next
+  //    run tries again, instead of being dispatched to nobody.
+  const outsidePackage = await loadOutsidePackageIds(supabase, event.id);
+  if (!outsidePackage) return fail('Could not check the record package - will retry');
+
+  // 4. Claim. Whoever flips dispatched_at owns this Schedule; a second
   //    Dispatcher running over the same row loses the race and steps away
   //    without a log row, because it did not dispatch anything.
   const { data: claimed, error: claimError } = await supabase
@@ -210,16 +217,17 @@ async function dispatchOne(
   }
 
   try {
-    // 4-6. Resolve the template family, expand the audience, reserve a
-    //      Delivery per Guest and render each message in full. Shared with the
-    //      Operator's manual send, which needs exactly the same work done for a
-    //      named handful of Guests.
+    // 5-7. Resolve the template family, expand the audience, drop the records
+    //      outside the package, reserve a Delivery per Guest and render each
+    //      message in full. Shared with the Operator's manual send, which needs
+    //      exactly the same work done for a named handful of Guests.
     const render = await renderScheduleDeliveries(supabase, scheduleId, {
       prefetched: { schedule, event },
+      outsidePackage,
     });
     if (!render.ok) return fail(render.reason);
     const queued = render.rendered;
-    // 7. Queue. next_attempt_at is the whole of "waiting to be sent"; the
+    // 8. Queue. next_attempt_at is the whole of "waiting to be sent"; the
     //    Worker claims on it and nulls it in the same statement.
     const queuedAt = new Date().toISOString();
     for (const item of queued) {
@@ -238,11 +246,17 @@ async function dispatchOne(
       }
     }
 
-    await logDispatchAttempt(supabase, scheduleId, 'dispatched', null, queued.length);
+    // A send that skipped records says so on its log row, so an Operator asking why
+    // a guest got nothing finds the answer where every other dispatch reason lives.
+    const skipped =
+      render.outsidePackage > 0
+        ? `${render.outsidePackage} outside the record package skipped`
+        : null;
+    await logDispatchAttempt(supabase, scheduleId, 'dispatched', skipped, queued.length);
     return {
       scheduleId,
       outcome: 'dispatched',
-      reason: null,
+      reason: skipped,
       deliveriesQueued: queued.length,
     };
   } catch (error) {
