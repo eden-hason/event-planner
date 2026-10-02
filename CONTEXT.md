@@ -227,7 +227,7 @@ sends.
 ## Invitation Design
 
 The visual skin of the guest-facing invitation and RSVP page - its palette, type and
-ornament. An Event has one.
+ornament. There is one, the same for every Event; Owners do not pick it.
 
 Entirely separate from a **Template**: a Design decides how the page looks, a Template
 decides what the message says. Neither constrains the other.
@@ -519,12 +519,12 @@ are ignored. Never the same phone: an Event cannot hold two Guest Records with o
 ## Live Invite Preview Link
 
 A shareable link to the guest-facing invitation site exactly as a Guest would see it.
-Distinct from the **Invitation Design** picker (which chooses the design skin) - this is
-the artifact you'd hand to someone else to look at, not a tool for changing anything.
+It is the artifact you'd hand to someone else to look at, not a tool for changing
+anything.
 
 It opens the RSVP page with a sample guest; every answer given there plays out on screen
 and writes nothing. The link belongs to the Event, not to any Guest. It is offered as a
-Featured Action once the Owner has chosen a landing template.
+Featured Action once the Event has one.
 
 ## Free to Plan, Pay to Send
 

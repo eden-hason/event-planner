@@ -59,7 +59,6 @@ export type FeaturedActionFacts = {
   tableCount: number;
   giftingConfigured: boolean;
   /** The Owner picked a landing template rather than leaving the default. */
-  hasChosenTemplate: boolean;
   hasPreviewToken: boolean;
   expenseCount: number;
 };

@@ -146,7 +146,6 @@ export async function getFeaturedActionFacts(
     confirmedHeads: countHeads(guests).confirmed,
     tableCount,
     giftingConfigured: isGiftingEnabled(event.eventSettings),
-    hasChosenTemplate: Boolean(event.landingTemplateId),
     hasPreviewToken: previewToken !== null,
     expenseCount,
   };

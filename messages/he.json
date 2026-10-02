@@ -46,7 +46,6 @@
     "gifting": "מתנות דיגיטליות",
     "collaboration": "שיתוף",
     "settings": "הגדרות",
-    "templates": "תבניות",
     "budget": "תקציב",
     "getHelp": "עזרה",
     "comingSoon": "בקרוב",
@@ -2288,44 +2287,6 @@
       "saved": "הפרופיל נשמר",
       "error": "משהו השתבש",
       "uploadError": "העלאת התמונה נכשלה"
-    }
-  },
-  "templates": {
-    "header": {
-      "title": "תבניות"
-    },
-    "showcase": {
-      "title": "עיצוב נבחר",
-      "subtitle": "זה הדף שהאורחים יגיעו אליו כשילחצו על הקישור בהודעת ההזמנה",
-      "activeBadge": "פעיל",
-      "preview": "תצוגה מקדימה",
-      "browse": "עיון בעיצובים"
-    },
-    "library": {
-      "title": "ספריית עיצובים",
-      "description": "בחרו עיצוב לדף ההזמנה של האורחים"
-    },
-    "card": {
-      "preview": "תצוגה מקדימה",
-      "select": "בחר",
-      "selected": "נבחר"
-    },
-    "dialog": {
-      "use": "השתמש בעיצוב זה"
-    },
-    "categories": {
-      "classic": "קלאסי",
-      "modern": "מודרני",
-      "minimal": "מינימלי",
-      "floral": "פרחוני",
-      "festive": "חגיגי",
-      "elegant": "אלגנטי",
-      "celebration": "חגיגה"
-    },
-    "toast": {
-      "saving": "שומר עיצוב...",
-      "saved": "עיצוב נשמר",
-      "saveFailed": "שמירת העיצוב נכשלה"
     }
   },
   "calls": {

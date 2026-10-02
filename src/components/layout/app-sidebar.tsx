@@ -12,7 +12,6 @@ import {
   IconGift,
   IconListDetails,
   IconArmchair,
-  IconPalette,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
@@ -132,16 +131,6 @@ export function AppSidebar({
       url: '/app/gifting',
       icon: IconGift,
     },
-    ...(process.env.NEXT_PUBLIC_ENABLE_TEMPLATES === 'true'
-      ? [
-          {
-            id: 'templates',
-            title: tNav('templates'),
-            url: '/app/templates',
-            icon: IconPalette,
-          },
-        ]
-      : []),
     {
       id: 'collaboration',
       title: tNav('collaboration'),

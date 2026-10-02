@@ -159,7 +159,6 @@ export const EventAppSchema = z.object({
   guestsEstimate: GuestsEstimateSchema.optional(),
   guestsCapacity: z.number().int().positive().optional(),
   budget: z.number().optional(),
-  landingTemplateId: z.string().optional(),
   // The commercial state of the event - see `@/features/billing`. `canCreateSchedules`
   // is derived from it in the database (paid | comped => can send) and kept here as the
   // read-only send gate every outreach path already checks.
@@ -210,7 +209,6 @@ export const EventDbSchema = z.object({
   guests_estimate: GuestsEstimateSchema.optional().nullable(),
   guests_capacity: z.number().int().positive().optional().nullable(),
   budget: z.number().optional().nullable(),
-  landing_template_id: z.string().optional().nullable(),
   billing_status: z.enum(EVENT_BILLING_STATUSES).default('free'),
   can_create_schedules: z.boolean().default(false),
   short_code: z.string(),
@@ -245,7 +243,6 @@ export function dbToAppTransformer(dbData: {
   guests_estimate?: GuestsEstimate | null;
   guests_capacity?: number | null;
   budget?: number | null;
-  landing_template_id?: string | null;
   billing_status?: string | null;
   can_create_schedules?: boolean | null;
   short_code: string;
@@ -302,7 +299,6 @@ export function dbToAppTransformer(dbData: {
     guestsEstimate: dbData.guests_estimate ?? undefined,
     guestsCapacity: dbData.guests_capacity ?? undefined,
     budget: dbData.budget ?? undefined,
-    landingTemplateId: dbData.landing_template_id ?? undefined,
     billingStatus,
     canCreateSchedules: dbData.can_create_schedules ?? false,
     shortCode: dbData.short_code,
