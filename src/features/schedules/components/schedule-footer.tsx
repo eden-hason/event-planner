@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-import { useBillingSheet } from './use-billing-sheet';
+import { useBillingSheet } from '@/features/billing';
 
 /**
  * The bar stuck to the bottom of an open Schedule: whatever action the

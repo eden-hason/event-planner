@@ -1,1 +1,1 @@
-export { getRecordPackage } from './record-package';
+export { getGuestPackageView, getRecordPackage } from './record-package';

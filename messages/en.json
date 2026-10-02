@@ -1214,6 +1214,21 @@
         "close": "Close",
         "clearSearch": "Clear search"
       }
+    },
+    "package": {
+      "usedLine": "{used} of {size} records in the package",
+      "left": "{count} left",
+      "full": "Package is full",
+      "over": "{count} outside the package",
+      "chip": "Outside the package",
+      "tag": "Outside package",
+      "countOutside": "{count, plural, one {# record outside the package} other {# records outside the package}} · the most recently added",
+      "bannerOwner": "The most recently added records won't get messages until records are added to the package",
+      "bannerCollaborator": "The most recently added records won't get messages. Ask the event owner to add records",
+      "addRecords": "Add records",
+      "drawerLine": "Outside the package · won't get messages",
+      "drawerLink": "Package details",
+      "whatsapp": "Hi, I'd like to add records to the package for {event}. {count} records are currently outside the package"
     }
   },
   "home": {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
 import {
@@ -13,8 +14,15 @@ import { cn } from '@/lib/utils';
  * The slim RSVP meter above the list: one stacked bar, the share confirmed, and
  * guests alongside guest records. Counts are Guests (sum of amounts); the list
  * below counts rows. Information only - filtering lives in the status chips.
+ * `aside` sits at the row's end: the Record Package card, when there is one.
  */
-export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
+export function RsvpMeter({
+  guests,
+  aside,
+}: {
+  guests: GuestWithGroupApp[];
+  aside?: ReactNode;
+}) {
   const t = useTranslations('guests.list');
   const counts = rsvpHeadcounts(guests);
   const total = counts.total;
@@ -64,6 +72,7 @@ export function RsvpMeter({ guests }: { guests: GuestWithGroupApp[] }) {
           </span>
         </div>
       </div>
+      {aside}
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { SelectBox } from './select-box';
 import { SideBadge } from '../side-badge';
 import { AmountBadge } from '../amount-badge';
 import { GuestRowMenu, type RowAction } from './guest-row-menu';
+import { OutsidePackageTag } from '../package';
 
 /** Fixed row height: the list is virtualized, so rows must never grow. */
 const ROW_HEIGHT = 44;
@@ -66,6 +67,8 @@ interface GuestTableProps {
   showMeals: boolean;
   tableNumberById: Map<string, number>;
   recentlyUpdatedId: string | null;
+  /** Guest Records outside the Record Package - tagged, never taller. */
+  outsideIds: ReadonlySet<string>;
   onToggleAll: () => void;
   onToggle: (id: string, shiftKey: boolean) => void;
   onOpen: (guest: GuestWithGroupApp) => void;
@@ -85,6 +88,7 @@ export function GuestTable({
   showMeals,
   tableNumberById,
   recentlyUpdatedId,
+  outsideIds,
   onToggleAll,
   onToggle,
   onOpen,
@@ -167,6 +171,7 @@ export function GuestTable({
                 guest.tableId ? tableNumberById.get(guest.tableId) : undefined
               }
               flash={guest.id === recentlyUpdatedId}
+              outside={outsideIds.has(guest.id)}
               onToggle={(event) => onToggle(guest.id, event.shiftKey)}
               onOpen={() => onOpen(guest)}
               onAction={(action) => onRowAction(guest, action)}
@@ -186,6 +191,7 @@ function GuestRow({
   showMeals,
   tableNumber,
   flash,
+  outside,
   onToggle,
   onOpen,
   onAction,
@@ -197,6 +203,7 @@ function GuestRow({
   showMeals: boolean;
   tableNumber: number | undefined;
   flash: boolean;
+  outside: boolean;
   onToggle: (event: MouseEvent<HTMLButtonElement>) => void;
   onOpen: () => void;
   onAction: (action: RowAction) => void;
@@ -247,7 +254,10 @@ function GuestRow({
           {guest.name.charAt(0)}
         </span>
         <div className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate font-bold">{guest.name}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-bold">{guest.name}</span>
+            {outside && <OutsidePackageTag size="md" />}
+          </span>
           {guest.notes && (
             <span className="text-muted-foreground truncate text-[11.5px]">
               {guest.notes}

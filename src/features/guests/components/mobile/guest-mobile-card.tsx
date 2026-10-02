@@ -9,6 +9,7 @@ import { amountDisplay } from '@/features/guests/utils/guest-amount';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { AmountBadge } from '../amount-badge';
+import { OutsidePackageTag } from '../package';
 
 /** Fixed card height: the list is virtualized, so cards must never grow. */
 export const CARD_HEIGHT = 72;
@@ -25,6 +26,7 @@ export function GuestMobileCard({
   guest,
   selecting,
   checked,
+  outside = false,
   style,
   onOpen,
   onToggle,
@@ -34,6 +36,8 @@ export function GuestMobileCard({
   guest: GuestWithGroupApp;
   selecting: boolean;
   checked: boolean;
+  /** Outside the Record Package: tagged on the group line, so the card keeps its height. */
+  outside?: boolean;
   style?: CSSProperties;
   onOpen: () => void;
   onToggle: () => void;
@@ -115,13 +119,16 @@ export function GuestMobileCard({
 
       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
         <span className="truncate text-[15px] font-bold">{guest.name}</span>
-        <span
-          className={cn(
-            'truncate text-[13px]',
-            guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
-          )}
-        >
-          {guest.group?.name ?? t('noGroup')}
+        <span className="flex min-w-0 items-center gap-1.5">
+          {outside && <OutsidePackageTag />}
+          <span
+            className={cn(
+              'truncate text-[13px]',
+              guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
+            )}
+          >
+            {guest.group?.name ?? t('noGroup')}
+          </span>
         </span>
       </div>
 

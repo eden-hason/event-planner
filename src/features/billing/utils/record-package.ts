@@ -4,7 +4,12 @@
  * Owner's surfaces and the sending gate all count the same way.
  */
 
-import type { PackageSplit, RecordPackage, RecordPackageChannel } from '../types';
+import type {
+  PackageSplit,
+  PackageState,
+  RecordPackage,
+  RecordPackageChannel,
+} from '../types';
 
 /** The channels a package is sold on, with the homepage's per-record rate in shekels. */
 export const RECORD_PACKAGE_CHANNELS = [
@@ -46,6 +51,16 @@ export function recordPackage(input: {
   const bonus = bonusIsCustom ? input.bonusOverride! : bonusRecords(paid);
 
   return { paid, bonus, bonusIsCustom, size: paid + bonus };
+}
+
+/** Share of the package that counts as "nearly full" (brief: 90% or more). */
+const NEAR_FULL = 0.9;
+
+/** Where the guest list sits against the package, for the tone of the package line. */
+export function packageState(size: number, used: number): PackageState {
+  if (used > size) return 'over';
+  if (used === size) return 'full';
+  return used >= size * NEAR_FULL ? 'near' : 'room';
 }
 
 /**

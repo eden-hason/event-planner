@@ -65,3 +65,21 @@ export type EventPayment = {
 };
 
 export type BillingActionResult = { success: boolean; message: string };
+
+/** How full the package is: `near` from 90% used, warning colour only when `over`. */
+export type PackageState = 'room' | 'near' | 'full' | 'over';
+
+/**
+ * The Record Package as the Guests page shows it - counts only, never money, so it is safe
+ * for a collaborator too. `outsideIds` are the Guest Records a Schedule would skip now.
+ */
+export type GuestPackageView = {
+  paid: number;
+  bonus: number;
+  size: number;
+  used: number;
+  left: number;
+  over: number;
+  state: PackageState;
+  outsideIds: string[];
+};

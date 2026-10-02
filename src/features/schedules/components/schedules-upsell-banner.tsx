@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from '@/features/billing';
 import { cn } from '@/lib/utils';
 
-import { useBillingSheet } from './use-billing-sheet';
+import { useBillingSheet } from '@/features/billing';
 
 /**
  * The one upsell on a locked timeline.

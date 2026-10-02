@@ -12,17 +12,21 @@ export type {
   PackageSplit,
   EventPayment,
   BillingActionResult,
+  GuestPackageView,
+  PackageState,
 } from './types';
 
 // Pure utils
 export {
   deriveHeaderStatus,
   BILLING_STATUS_LABELS,
+  billingWhatsAppUrl,
   PAYMENT_METHOD_LABELS,
   RECORD_PACKAGE_CHANNEL_LABELS,
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   bonusRecords,
+  packageState,
   recordPackage,
   splitByPackage,
   UPSELL_CTA_CLASS,
@@ -44,3 +48,8 @@ export { EventBillingStatusControl } from './components/event-billing-status-con
 // feature (the schedules timeline's upsell) open the same sheet the header
 // pill does, rather than inventing a second billing story.
 export { EventBillingStatusSheet } from './components/event-billing-status-sheet';
+export { useBillingSheet } from './components/use-billing-sheet';
+export {
+  RecordPackageProvider,
+  useRecordPackage,
+} from './components/record-package-context';
