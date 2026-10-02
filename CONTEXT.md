@@ -46,7 +46,8 @@ Kululu is priced per Guest Record, not per Guest. Say "guest record" whenever th
 quantity being counted is billable; say "guest" when talking about human beings attending.
 
 Both the Owner and an **Operator** can create and delete Guest Records. Because the row
-is the billing unit, either act changes what the Owner pays.
+is the billing unit, either act can change whether the list still fits its **Record
+Package** - except that deleting a Reached Guest Record never gives its place back.
 
 Deleting a Guest Record deletes its Deliveries and Call Outcomes with it. There is no
 archive and no restoring it later.
@@ -535,6 +536,36 @@ the WhatsApp lifecycle and the Call Rounds.
 Phrased from the Couple's side: free means *you plan*; paid means *we run your RSVP
 campaign*.
 
+## Record Package
+
+How many Guest Records an Event may reach: its **Paid Records** plus its **Bonus
+Records**. It caps sending, never planning - the guest list may grow past it, but only
+Guest Records inside the package are sent to.
+
+A Guest Record is inside the package if it has already been Reached, or if it is among the
+oldest unreached Guest Records that still fit in what is left. The rest are **outside the
+package** and are skipped when a Schedule sends, until the package grows or the list
+shrinks.
+
+_Avoid_: plan, tier, capacity, quota, balance
+
+## Paid Records
+
+The number of Guest Records the Owner paid for, at the channel's rate per record. It only
+grows - buying more records adds to it at the same rate.
+
+## Bonus Records
+
+Free Guest Records added on top of the Paid Records as a gift: 10 when up to 200 are paid
+for, 20 above that. A flat step, never a percentage.
+
+_Avoid_: reserve records (retired with tiers)
+
+## Reached
+
+A Guest Record is Reached once anything has been sent to it. A Reached Guest Record stays
+counted against the Record Package even if it is later deleted.
+
 ---
 
 ## Partner
@@ -552,8 +583,8 @@ The link between a Partner and one Couple's account, made when the Couple arrive
 that Partner. An account has at most one Referral, and it never moves to another Partner.
 
 A Referral is **registered** from the moment it is made, and **qualified** the first time
-one of the account's Events is paid for with real money. A comped Event does not qualify
-it. Only a qualified Referral earns a Commission, and it earns exactly one - Events paid
+one of the account's Events is paid for with real money. An Event given as a gift (a
+payment of ₪0) does not qualify it. Only a qualified Referral earns a Commission, and it earns exactly one - Events paid
 after that earn nothing.
 
 ## Partner Code

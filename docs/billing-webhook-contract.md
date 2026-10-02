@@ -29,7 +29,8 @@ call with the same `provider` + `providerRef` is a no-op that returns the
 existing row, so at-least-once webhook delivery is safe.
 
 `events.can_create_schedules` is generated from `billing_status` in the database
-(`paid | comped` => can send), so nothing else has to be updated.
+(`paid | comped` => can send), so nothing else has to be updated. `comped` is being
+retired in favour of a ₪0 gift payment (ADR 0027), after which only `paid` can send.
 
 ## The route to add
 
@@ -56,7 +57,9 @@ A refund event maps to `toStatus: 'canceled'`, `provider` + a new
 
 The Back Office event workspace has a **Billing** control
 (`EventBillingStatusControl`) that sets `comped`, `payment_pending`, `canceled`,
-or `free` by hand, with a note. `paid` is not offered in that control.
+or `free` by hand, with a note. `paid` is not offered in that control. Once ADR 0027
+lands, `comped` leaves this control too: a free Event is a recorded payment of ₪0 with
+method `gift`.
 
 A payment taken outside the system is entered with the separate **Record payment**
 action (ADR 0021): amount, method and reference, applied through the same

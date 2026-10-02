@@ -47,3 +47,4 @@ in the diff, not here.
 | [0013](0013-retry-media-download-failures.md) | A WhatsApp that failed on a media download is never retried | schedules / outreach | open |
 | [0014](0014-due-time-edit-guards.md) | Editing a Due Time has no guard for the past or for after the Event | schedules / outreach | done |
 | [0015](0015-purge-webhook-events.md) | Raw webhook payloads are kept forever, guest phone numbers included | schedules / privacy | open |
+| [0016](0016-enforce-the-package-channel.md) | The channel a Record Package was bought for is not enforced | billing / outreach | open |
