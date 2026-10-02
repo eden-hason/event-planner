@@ -4,7 +4,6 @@ const TONE_BY_STATUS: Record<EventBillingStatus, BillingPillTone> = {
   free: 'plain',
   payment_pending: 'pending',
   paid: 'premium',
-  comped: 'premium',
   canceled: 'plain',
 };
 
@@ -12,7 +11,6 @@ const SENDING_ENABLED: Record<EventBillingStatus, boolean> = {
   free: false,
   payment_pending: false,
   paid: true,
-  comped: true,
   canceled: false,
 };
 

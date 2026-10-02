@@ -92,6 +92,12 @@ select '00000000-0000-4000-b000-000000000010', '00000000-0000-4000-a000-00000000
 from event_types et
 where et.key = 'wedding';
 
+-- `paid` means a payment was recorded (ADR 0027), and the payment is what gives the Event
+-- its Record Package. A gift of 150 records covers the showcase's guest list with room left.
+insert into event_billing_events (event_id, to_status, provider, amount, channel, record_count, payment_method, note)
+values ('00000000-0000-4000-b000-000000000010', 'paid', 'manual', 0, 'whatsapp_calls', 150, 'gift',
+        'Local seed: showcase package');
+
 -- A stable pseudo-random fraction in [0, 1) per guest and purpose, so the
 -- showcase has texture without changing between runs.
 create or replace function pg_temp.h(n integer, salt integer)

@@ -29,8 +29,9 @@ call with the same `provider` + `providerRef` is a no-op that returns the
 existing row, so at-least-once webhook delivery is safe.
 
 `events.can_create_schedules` is generated from `billing_status` in the database
-(`paid | comped` => can send), so nothing else has to be updated. `comped` is being
-retired in favour of a ₪0 gift payment (ADR 0027), after which only `paid` can send.
+(`paid` => can send), so nothing else has to be updated. A payment that should count
+towards the Record Package (ADR 0027) must also carry `recordCount`, `channel` and
+`paymentMethod`; the database refuses a row that has some of them and not the others.
 
 ## The route to add
 
@@ -56,13 +57,13 @@ A refund event maps to `toStatus: 'canceled'`, `provider` + a new
 ## Manual operation until then
 
 The Back Office event workspace has a **Billing** control
-(`EventBillingStatusControl`) that sets `comped`, `payment_pending`, `canceled`,
-or `free` by hand, with a note. `paid` is not offered in that control. Once ADR 0027
-lands, `comped` leaves this control too: a free Event is a recorded payment of ₪0 with
-method `gift`.
+(`EventBillingStatusControl`) that sets `payment_pending`, `canceled`, or `free` by
+hand, with a note. `paid` is not offered in that control, and `comped` no longer
+exists (ADR 0027): a free Event is a recorded payment of ₪0 with method `gift`.
 
 A payment taken outside the system is entered with the separate **Record payment**
-action (ADR 0021): amount, method and reference, applied through the same
+action (ADR 0021, ADR 0027): records, channel, amount, method and reference, applied
+through the same
 `applyBillingTransition` seam with `provider: 'manual'` and the reference as
 `providerRef`. Partner Referral qualification (ADR 0020) follows the transition to
 `paid` whatever the provider, so it works the same before and after this webhook.

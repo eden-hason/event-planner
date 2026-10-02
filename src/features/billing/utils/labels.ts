@@ -9,7 +9,6 @@ export const BILLING_STATUS_LABELS: Record<EventBillingStatus, string> = {
   free: 'Free',
   payment_pending: 'Payment pending',
   paid: 'Paid',
-  comped: 'Comped',
   canceled: 'Canceled',
 };
 

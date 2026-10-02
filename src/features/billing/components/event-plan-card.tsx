@@ -99,7 +99,7 @@ export function EventPlanCard() {
 
   const isPending = status.tone === 'pending';
 
-  // Paid / comped / payment_pending: quiet white card that opens the sheet.
+  // Paid / payment_pending: quiet white card that opens the sheet.
   return (
     <section className="flex flex-col gap-1.5">
       {heading}

@@ -2510,7 +2510,6 @@
       "free": "Free",
       "payment_pending": "Payment pending",
       "paid": "Premium",
-      "comped": "Premium",
       "canceled": "Sending stopped"
     },
     "planCard": {
@@ -2542,10 +2541,6 @@
       "paid": {
         "title": "Sending is active",
         "description": "Your RSVP campaign is running - invitations, reminders and calls"
-      },
-      "comped": {
-        "title": "Sending is active",
-        "description": "Sending has been enabled for this event by the Kululu team"
       },
       "canceled": {
         "title": "Sending is switched off",
