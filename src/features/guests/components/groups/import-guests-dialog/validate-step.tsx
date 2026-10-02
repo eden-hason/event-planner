@@ -1,8 +1,13 @@
 'use client';
 
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { IconTrash, IconCheck, IconWand, IconInfoCircle } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconCheck,
+  IconWand,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 import {
   Table,
   TableBody,
@@ -38,6 +43,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { ImportAllValidState } from '../../import-all-valid-state';
 import { toast } from 'sonner';
 import { type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import {
@@ -312,11 +318,6 @@ export function ValidateStep({
     }
   };
 
-  // When all errors are resolved, switch off the errors tab
-  useEffect(() => {
-    if (invalidCount === 0 && activeTab === 'errors') setActiveTab('valid');
-  }, [invalidCount, activeTab]);
-
   if (!parsedData) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
@@ -360,7 +361,12 @@ export function ValidateStep({
             <div className="overflow-hidden rounded-b-lg border border-t-0">
               <div className="max-h-[280px] overflow-y-auto">
                 {filteredRows.length === 0 ? (
-                  <EmptyState tab={tab} t={t} />
+                  <EmptyState
+                    tab={tab}
+                    validCount={validCount}
+                    onReviewValid={() => setActiveTab('valid')}
+                    t={t}
+                  />
                 ) : (
                   <Table dir={dir}>
                     <TableHeader className="bg-muted/60 sticky top-0 backdrop-blur-sm">
@@ -725,21 +731,18 @@ function EditableCell({
 
 function EmptyState({
   tab,
+  validCount,
+  onReviewValid,
   t,
 }: {
   tab: 'errors' | 'valid';
+  validCount: number;
+  onReviewValid: () => void;
   t: ReturnType<typeof useTranslations<'guests'>>;
 }) {
-  if (tab === 'errors') {
-    return (
-      <div className="flex flex-col items-center justify-center gap-1 py-10">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
-          <IconCheck size={20} className="text-success" />
-        </span>
-        <p className="mt-2 text-sm font-medium">{t('import.validate.emptyNeedsFix')}</p>
-        <p className="text-xs text-muted-foreground">{t('import.validate.emptyNeedsFixSub')}</p>
-      </div>
-    );
+  // No errors and at least one valid row: celebrate instead of showing an empty list
+  if (tab === 'errors' && validCount > 0) {
+    return <ImportAllValidState compact count={validCount} onReview={onReviewValid} />;
   }
 
   return (

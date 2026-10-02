@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * The bottom sheet every phone guest-list action opens in (Guests Mobile
- * design): a grab handle, a title with an optional muted line under it, a
+ * design): a title with an optional muted line under it, a
  * close button, then the body.
  */
 export function MobileSheet({
@@ -26,12 +26,18 @@ export function MobileSheet({
   onClose,
   title,
   subtitle,
+  variant = 'options',
+  icon,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
+  /** `confirm` reads at the app's dialog scale, not the option sheets' heading. */
+  variant?: 'options' | 'confirm';
+  /** Sits at the start of the title row, e.g. a destructive action's badge. */
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   const t = useTranslations('guests.list.mobile');
@@ -45,12 +51,21 @@ export function MobileSheet({
         // A sheet of options, not a form: focusing the first one would only
         // paint a ring on it.
         onOpenAutoFocus={(event) => event.preventDefault()}
-        className="flex max-h-[90dvh] flex-col gap-3.5 rounded-t-[24px] border-0 px-4 pt-2 pb-[max(1.75rem,env(safe-area-inset-bottom))] [&>[data-slot=sheet-close]]:hidden"
+        className="flex max-h-[90dvh] flex-col gap-3.5 rounded-t-[24px] border-0 px-4 pt-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] [&>[data-slot=sheet-close]]:hidden"
       >
-        <span className="bg-input h-1 w-[38px] shrink-0 self-center rounded-full" />
-        <div className="flex items-start gap-2.5">
+        <div
+          className={cn('flex gap-2.5', icon ? 'items-center' : 'items-start')}
+        >
+          {icon}
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <SheetTitle className="text-lg leading-snug font-extrabold">
+            <SheetTitle
+              className={cn(
+                'leading-snug',
+                variant === 'confirm'
+                  ? 'text-base font-semibold'
+                  : 'text-lg font-extrabold',
+              )}
+            >
               {title}
             </SheetTitle>
             <SheetDescription

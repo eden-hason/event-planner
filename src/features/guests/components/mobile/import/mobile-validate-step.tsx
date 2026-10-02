@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { IconEdit, IconSparkles } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ImportAllValidState } from '../../import-all-valid-state';
 import {
   autoFixPhone,
   normalizePhone,
@@ -257,29 +258,26 @@ export function MobileValidateStep({
           );
         })}
 
-        {shownRows.length === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
-            <span className="text-sm font-semibold">
-              {tab === 'errors' ? t('validate.emptyNeedsFix') : t('validate.emptyValid')}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {tab === 'errors'
-                ? t('validate.emptyNeedsFixSub')
-                : t('validate.emptyValidSub')}
-            </span>
-          </div>
-        )}
+        {shownRows.length === 0 &&
+          (tab === 'errors' && validRows.length > 0 ? (
+            <ImportAllValidState count={validRows.length} onReview={() => setTab('valid')} />
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
+              <span className="text-sm font-semibold">{t('validate.emptyValid')}</span>
+              <span className="text-muted-foreground text-xs">{t('validate.emptyValidSub')}</span>
+            </div>
+          ))}
       </div>
 
-      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3">
+      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button disabled={validRows.length === 0} onClick={onImport}>
           {tv('importCount', { count: validRows.length })}
         </Button>
-        <span className="text-muted-foreground text-center text-xs">
-          {needsFixRows.length > 0
-            ? tv('footerSkip', { count: needsFixRows.length })
-            : tv('footerAllGood')}
-        </span>
+        {needsFixRows.length > 0 && (
+          <span className="text-muted-foreground text-center text-xs">
+            {tv('footerSkip', { count: needsFixRows.length })}
+          </span>
+        )}
       </div>
 
       <MobileRowEditSheet

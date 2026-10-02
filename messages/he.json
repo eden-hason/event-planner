@@ -813,8 +813,9 @@
         "autoFixNoneAvailable": "לא נמצאו מספרי טלפון לתיקון",
         "autoFixApplied": "תוקנו {count} מספרי טלפון",
         "resetRow": "אפס שורה",
-        "emptyNeedsFix": "כל השורות תקינות",
-        "emptyNeedsFixSub": "עבור ל\"תקין\" כדי לסקור את השורות שלך",
+        "emptyNeedsFix": "{count, plural, one {האורח תקין} other {כל # האורחים תקינים}}",
+        "emptyNeedsFixSub": "אין מה לתקן - אפשר להמשיך לייבוא",
+        "emptyNeedsFixAction": "לצפייה באורחים",
         "emptyValid": "אין שורות תקינות עדיין",
         "emptyValidSub": "תקן שגיאות או הסר שורות לא תקינות להמשך",
         "editNameAria": "ערוך שם עבור שורה {row}",
@@ -879,7 +880,8 @@
           "driveButtonTitle": "בחירה מ-Google Drive",
           "driveButtonSubtitle": "התחברות חד-פעמית לחשבון Google שלך",
           "connectingToDrive": "מתחבר ל-Google Drive…",
-          "driveFailed": "הייבוא מ-Google Drive נכשל"
+          "driveFailed": "הייבוא מ-Google Drive נכשל",
+          "drivePickerTitle": "בחרו את רשימת האורחים"
         },
         "analyze": {
           "fileMeta": "{rows} שורות · {columns} עמודות",
@@ -907,8 +909,7 @@
           "autofixBannerSubtitle": "הוספת 0 מוביל, הסרת רווחים ומקפים",
           "autofixAction": "תקן",
           "importCount": "ייבוא {count} אורחים",
-          "footerSkip": "{count} שורות עם בעיות ידולגו - אפשר לתקן אותן קודם",
-          "footerAllGood": "כל השורות תקינות"
+          "footerSkip": "{count, plural, one {שורה אחת עם בעיות תדולג - אפשר לתקן אותה קודם} other {# שורות עם בעיות ידולגו - אפשר לתקן אותן קודם}}"
         },
         "edit": {
           "title": "עריכת {name}",

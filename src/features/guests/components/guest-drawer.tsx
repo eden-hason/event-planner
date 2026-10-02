@@ -80,9 +80,6 @@ export function GuestDrawer({
           if (guest || mobile) event.preventDefault();
         }}
       >
-        {mobile && (
-          <span className="bg-input mx-auto mt-2 h-1 w-[38px] shrink-0 rounded-full" />
-        )}
         <DrawerHeader guest={guest} compact={mobile} />
 
         <div
@@ -173,7 +170,7 @@ function DrawerHeader({
     <div
       className={cn(
         'flex items-start border-b',
-        compact ? 'gap-[11px] px-4 pt-2.5 pb-3.5' : 'gap-3 px-5 pt-[18px] pb-4',
+        compact ? 'gap-[11px] px-4 pt-5 pb-3.5' : 'gap-3 px-5 pt-[18px] pb-4',
       )}
     >
       <span

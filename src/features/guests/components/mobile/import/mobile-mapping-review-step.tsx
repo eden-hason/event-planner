@@ -48,8 +48,9 @@ interface MobileMappingReviewStepProps {
 }
 
 /**
- * Shown only when `analyzeCsv` flagged low confidence on a field, or left the
- * required name field unmapped - see `AnalyzeCsvResult.needsReview`. Without
+ * Shown only when `analyzeCsv` left the required name field unmapped - see
+ * `AnalyzeCsvResult.needsReview`. Per-field confidence still badges each card
+ * here, but no longer opens this screen on its own. Without
  * this escape hatch, an unmapped name column used to leave the desktop
  * wizard's Next button disabled with nowhere to go (`map-step.tsx` exists but
  * nothing renders it).

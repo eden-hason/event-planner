@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useRouter } from '@/i18n/navigation';
 import {
@@ -56,6 +56,7 @@ export function GuestImportFlow({
   const searchParams = useSearchParams();
   const t = useTranslations('guests.import');
   const tu = useTranslations('guests.import.mobile.upload');
+  const locale = useLocale();
   const ts = useTranslations('guests.import.mobile.summary');
 
   const [step, setStep] = useState<FlowStep>('upload');
@@ -135,7 +136,7 @@ export function GuestImportFlow({
   const handleGoogleDriveImport = async () => {
     setIsConnectingToDrive(true);
     try {
-      const file = await pickGoogleDriveFile();
+      const file = await pickGoogleDriveFile({ locale, title: tu('drivePickerTitle') });
       // `null` means the user closed the picker without choosing anything -
       // not an error, so no toast.
       if (file) await processFile(file);

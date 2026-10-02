@@ -81,8 +81,12 @@ export function ImportWizardShell({
         Each step fills this and owns its own scroll region - most are one
         scrollable panel, but validate and summary also pin a footer to the
         bottom, which only works if this wrapper isn't scrollable itself.
+        The stepper above stays full width; on a wide screen the steps sit in
+        a centered column instead of stretching edge to edge.
       */}
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+        {children}
+      </div>
     </div>
   );
 }

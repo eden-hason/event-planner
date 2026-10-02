@@ -62,7 +62,10 @@ export const config = {
   matcher: [
     // `r/`, `s/` and `cal/` carry the trailing slash so they exclude their own
     // route without also excluding every future route whose name merely starts
-    // so.
-    '/((?!api|nav|r/|s/|cal/|auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // so. A last segment with a file extension is a `public/` asset (no route
+    // has a dot in it) - left to the proxy, a logged-out request for one gets
+    // the login redirect and the browser saves that HTML page instead of the
+    // file, which is how the CSV import templates broke.
+    '/((?!api|nav|r/|s/|cal/|auth/callback|auth/confirm|_next/static|_next/image|.*\\.[a-z0-9]+$).*)',
   ],
 };
