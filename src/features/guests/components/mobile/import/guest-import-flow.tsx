@@ -21,6 +21,7 @@ import { MobileMappingReviewStep } from './mobile-mapping-review-step';
 import { MobileValidateStep } from './mobile-validate-step';
 import { MobileSummaryStep, type SkipReason } from './mobile-summary-step';
 import { computeMergedRows, type RowEditsMap } from './compute-import-rows';
+import { cn } from '@/lib/utils';
 
 type FlowStep = 'upload' | 'analyzing' | 'review' | 'validate' | 'summary';
 
@@ -233,57 +234,75 @@ export function GuestImportFlow({
 
   return (
     <ImportWizardShell stepIndex={stepIndexFor(step)} onBack={handleBack}>
-      {step === 'upload' && (
-        <MobileUploadStep
-          onFileSelected={processFile}
-          onError={(message) => toast.error(message)}
-          onSelectGoogleDrive={handleGoogleDriveImport}
-          isConnectingToDrive={isConnectingToDrive}
-        />
-      )}
+      {/*
+        Keyed on the step so each one remounts and plays its enter animation:
+        moving on slides in from the end, going back slides in from the start
+        (`start`/`end`, so it mirrors in RTL). Every way back lands on upload
+        (see `handleBack`), so upload is the one step that enters from the
+        start. Skipped under reduced motion.
+      */}
+      <div
+        key={step}
+        className={cn(
+          'flex min-h-0 flex-1 flex-col',
+          'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out',
+          step === 'upload'
+            ? 'motion-safe:slide-in-from-start-8'
+            : 'motion-safe:slide-in-from-end-8',
+        )}
+      >
+        {step === 'upload' && (
+          <MobileUploadStep
+            onFileSelected={processFile}
+            onError={(message) => toast.error(message)}
+            onSelectGoogleDrive={handleGoogleDriveImport}
+            isConnectingToDrive={isConnectingToDrive}
+          />
+        )}
 
-      {step === 'analyzing' && parsedData && selectedFile && (
-        <MobileAnalyzeStep
-          file={selectedFile}
-          parsedData={parsedData}
-          onComplete={handleAnalyzeComplete}
-        />
-      )}
+        {step === 'analyzing' && parsedData && selectedFile && (
+          <MobileAnalyzeStep
+            file={selectedFile}
+            parsedData={parsedData}
+            onComplete={handleAnalyzeComplete}
+          />
+        )}
 
-      {step === 'review' && parsedData && (
-        <MobileMappingReviewStep
-          parsedData={parsedData}
-          mapping={columnMapping}
-          onMappingChange={setColumnMapping}
-          preview={analyzePreview}
-          onConfirm={() => setStep('validate')}
-        />
-      )}
+        {step === 'review' && parsedData && (
+          <MobileMappingReviewStep
+            parsedData={parsedData}
+            mapping={columnMapping}
+            onMappingChange={setColumnMapping}
+            preview={analyzePreview}
+            onConfirm={() => setStep('validate')}
+          />
+        )}
 
-      {step === 'validate' && parsedData && (
-        <MobileValidateStep
-          parsedData={parsedData}
-          columnMapping={columnMapping}
-          existingPhones={existingPhones}
-          groups={groups}
-          excludedRows={excludedRows}
-          onExcludedRowsChange={setExcludedRows}
-          rowEdits={rowEdits}
-          onRowEditsChange={setRowEdits}
-          onImport={handleImport}
-        />
-      )}
+        {step === 'validate' && parsedData && (
+          <MobileValidateStep
+            parsedData={parsedData}
+            columnMapping={columnMapping}
+            existingPhones={existingPhones}
+            groups={groups}
+            excludedRows={excludedRows}
+            onExcludedRowsChange={setExcludedRows}
+            rowEdits={rowEdits}
+            onRowEditsChange={setRowEdits}
+            onImport={handleImport}
+          />
+        )}
 
-      {step === 'summary' && (
-        <MobileSummaryStep
-          status={importStatus}
-          result={importResult}
-          totalFileRows={parsedData?.rows.length ?? 0}
-          reasons={skipReasons}
-          onGoToGuestList={goToGuestList}
-          onImportAnother={resetToUpload}
-        />
-      )}
+        {step === 'summary' && (
+          <MobileSummaryStep
+            status={importStatus}
+            result={importResult}
+            totalFileRows={parsedData?.rows.length ?? 0}
+            reasons={skipReasons}
+            onGoToGuestList={goToGuestList}
+            onImportAnother={resetToUpload}
+          />
+        )}
+      </div>
     </ImportWizardShell>
   );
 }
