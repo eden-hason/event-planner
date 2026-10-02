@@ -30,9 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      # Pinned to the version the scripts were written against; bump deliberately.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.119.0
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - run: node scripts/check-migration-drift.mjs
         env:

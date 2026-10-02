@@ -29,6 +29,8 @@ try {
 } catch (err) {
   console.error('check-migration-drift: could not read the migration list.');
   console.error(err instanceof Error ? err.message : err);
+  // In JSON mode the CLI reports its own errors on stdout, which was captured.
+  if (err?.stdout) console.error(String(err.stdout));
   process.exit(2);
 }
 
