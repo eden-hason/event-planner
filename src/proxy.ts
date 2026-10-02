@@ -62,7 +62,9 @@ export const config = {
   matcher: [
     // `r/`, `s/` and `cal/` carry the trailing slash so they exclude their own
     // route without also excluding every future route whose name merely starts
-    // so.
-    '/((?!api|nav|r/|s/|cal/|auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // so. `templates/` is the downloadable import templates in `public/` -
+    // left to the proxy, a logged-out or locale-less request for one gets a
+    // redirect and the browser saves the HTML page instead of the file.
+    '/((?!api|nav|r/|s/|cal/|templates/|auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

@@ -67,7 +67,8 @@ export function MobileSummaryStep({
   const explainedSkipCount = nonZeroReasons.reduce((sum, r) => sum + r.count, 0);
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
       <div className="flex flex-col items-center gap-2 py-2">
         <div className="bg-success/10 flex size-16 items-center justify-center rounded-full">
           <IconCircleCheck size={34} className="text-success" />
@@ -116,7 +117,9 @@ export function MobileSummaryStep({
         {ts('pendingNote')}
       </div>
 
-      <div className="mt-2 flex flex-col gap-2">
+    </div>
+
+      <div className="bg-card flex shrink-0 flex-col gap-2 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button onClick={onGoToGuestList}>{ts('goToGuestList')}</Button>
         <Button variant="ghost" onClick={onImportAnother}>
           {ts('importAnother')}

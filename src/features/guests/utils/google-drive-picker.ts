@@ -16,6 +16,7 @@ import { MAX_IMPORT_FILE_BYTES } from './import-guests';
 interface GoogleDocsView {
   setMimeTypes: (mimeTypes: string) => GoogleDocsView;
   setIncludeFolders: (include: boolean) => GoogleDocsView;
+  setMode: (mode: unknown) => GoogleDocsView;
 }
 
 interface GooglePickerInstance {
@@ -29,6 +30,9 @@ interface GooglePickerBuilder {
   setAppId: (appId: string) => GooglePickerBuilder;
   setCallback: (cb: (data: PickerResponse) => void) => GooglePickerBuilder;
   setSize: (width: number, height: number) => GooglePickerBuilder;
+  setLocale: (locale: string) => GooglePickerBuilder;
+  setTitle: (title: string) => GooglePickerBuilder;
+  enableFeature: (feature: unknown) => GooglePickerBuilder;
   build: () => GooglePickerInstance;
 }
 
@@ -47,6 +51,8 @@ declare global {
       picker: {
         DocsView: new (viewId?: unknown) => GoogleDocsView;
         ViewId: { DOCS: unknown };
+        DocsViewMode: { LIST: unknown };
+        Feature: { NAV_HIDDEN: unknown };
         Action: { PICKED: string; CANCEL: string };
         PickerBuilder: new () => GooglePickerBuilder;
       };
@@ -145,13 +151,25 @@ function requestAccessToken(): Promise<string> {
   });
 }
 
+export interface DrivePickerOptions {
+  /** App locale (`en`/`he`); the Picker renders in it, right-to-left for Hebrew. */
+  locale: string;
+  title: string;
+}
+
+// The Picker predates the ISO `he` code and still only knows Hebrew as `iw`.
+const PICKER_LOCALES: Record<string, string> = { he: 'iw' };
+
 interface PickedDoc {
   id: string;
   name: string;
   mimeType: string;
 }
 
-function showPicker(accessToken: string): Promise<PickedDoc | null> {
+function showPicker(
+  accessToken: string,
+  options: DrivePickerOptions,
+): Promise<PickedDoc | null> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY;
   const appId = process.env.NEXT_PUBLIC_GOOGLE_PROJECT_NUMBER;
   if (!apiKey || !appId) {
@@ -161,7 +179,9 @@ function showPicker(accessToken: string): Promise<PickedDoc | null> {
   return new Promise((resolve) => {
     const view = new window.google.picker.DocsView(window.google.picker.ViewId.DOCS)
       .setMimeTypes(DRIVE_MIME_TYPES)
-      .setIncludeFolders(false);
+      .setIncludeFolders(false)
+      // Spreadsheets have no useful thumbnail - a list shows names and dates.
+      .setMode(window.google.picker.DocsViewMode.LIST);
 
     // Google's default picker size is a small fixed box that wastes most of
     // the viewport, especially on mobile where this is the only thing on
@@ -176,6 +196,10 @@ function showPicker(accessToken: string): Promise<PickedDoc | null> {
       .setDeveloperKey(apiKey)
       .setAppId(appId)
       .setSize(width, height)
+      .setLocale(PICKER_LOCALES[options.locale] ?? options.locale)
+      .setTitle(options.title)
+      // There is only one view, so the left nav is just clutter.
+      .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
       .setCallback((data: PickerResponse) => {
         if (data.action === window.google.picker.Action.PICKED) {
           const doc = data.docs?.[0];
@@ -222,10 +246,12 @@ async function downloadDoc(doc: PickedDoc, accessToken: string): Promise<File> {
  * file's bytes as a `File` - or `null` if the user closes the picker without
  * choosing anything.
  */
-export async function pickGoogleDriveFile(): Promise<File | null> {
+export async function pickGoogleDriveFile(
+  options: DrivePickerOptions,
+): Promise<File | null> {
   await Promise.all([ensureGis(), ensurePicker()]);
   const accessToken = await requestAccessToken();
-  const doc = await showPicker(accessToken);
+  const doc = await showPicker(accessToken, options);
   if (!doc) return null;
   return downloadDoc(doc, accessToken);
 }

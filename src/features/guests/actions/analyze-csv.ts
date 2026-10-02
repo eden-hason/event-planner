@@ -19,12 +19,16 @@ export type AnalyzeCsvResult = {
   }>;
   detectedCount: number;
   /**
-   * True when a required field wasn't mapped at all, or the model flagged any
-   * mapped field as low confidence - the mobile mapping-review screen only
-   * interrupts the flow in that case, so this is the one thing it checks.
-   * Without a required-field trigger, an unmapped name column used to leave
+   * True when a required field wasn't mapped at all - the mobile
+   * mapping-review screen only interrupts the flow in that case, so this is
+   * the one thing it checks. Without it, an unmapped name column used to leave
    * the wizard's Next button permanently disabled with no manual remap to
    * fall back to (`map-step.tsx` exists but nothing renders it).
+   *
+   * Low confidence alone does not trigger it: in practice the model's guess
+   * was right nearly every time it hedged (most often on the side column),
+   * so the gate only added a confirm tap. A wrong guess still surfaces on the
+   * validate step, where the rows can be fixed.
    */
   needsReview: boolean;
 };
@@ -171,8 +175,8 @@ Rules:
           item.columnIndex < columnCount,
       )
       // A missing or malformed confidence defaults to "low" rather than
-      // "high" - an unrecognized value from the model should route the user
-      // to the review screen, not silently pass through as trustworthy.
+      // "high" - an unrecognized value from the model should not be shown as
+      // trustworthy if the review screen does open.
       .map((item) => ({
         ...item,
         confidence:
@@ -185,9 +189,6 @@ Rules:
     const missingRequiredField = REQUIRED_AI_FIELDS.some(
       (field) => !mappedFields.has(field),
     );
-    const hasLowConfidence = sanitizedPreview.some(
-      (item) => item.confidence === 'low',
-    );
 
     return {
       success: true,
@@ -195,7 +196,7 @@ Rules:
         mapping: sanitizedMapping,
         preview: sanitizedPreview,
         detectedCount: sanitizedPreview.length,
-        needsReview: missingRequiredField || hasLowConfidence,
+        needsReview: missingRequiredField,
       },
     };
   } catch (error) {

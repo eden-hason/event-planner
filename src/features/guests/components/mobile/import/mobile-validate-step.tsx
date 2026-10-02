@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { IconEdit, IconSparkles } from '@tabler/icons-react';
+import { IconCircleCheckFilled, IconEdit, IconSparkles } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -257,29 +257,40 @@ export function MobileValidateStep({
           );
         })}
 
-        {shownRows.length === 0 && (
+        {shownRows.length === 0 && tab === 'errors' && validRows.length > 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 py-16 text-center">
+            <span className="bg-success/15 ring-success/5 flex size-16 items-center justify-center rounded-full ring-8">
+              <IconCircleCheckFilled size={36} className="text-success" />
+            </span>
+            <span className="text-success mt-4 text-base font-semibold">
+              {t('validate.emptyNeedsFix', { count: validRows.length })}
+            </span>
+            <span className="text-muted-foreground text-sm">
+              {t('validate.emptyNeedsFixSub')}
+            </span>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => setTab('valid')}>
+              {t('validate.emptyNeedsFixAction')}
+            </Button>
+          </div>
+        )}
+
+        {shownRows.length === 0 && !(tab === 'errors' && validRows.length > 0) && (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
-            <span className="text-sm font-semibold">
-              {tab === 'errors' ? t('validate.emptyNeedsFix') : t('validate.emptyValid')}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {tab === 'errors'
-                ? t('validate.emptyNeedsFixSub')
-                : t('validate.emptyValidSub')}
-            </span>
+            <span className="text-sm font-semibold">{t('validate.emptyValid')}</span>
+            <span className="text-muted-foreground text-xs">{t('validate.emptyValidSub')}</span>
           </div>
         )}
       </div>
 
-      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3">
+      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button disabled={validRows.length === 0} onClick={onImport}>
           {tv('importCount', { count: validRows.length })}
         </Button>
-        <span className="text-muted-foreground text-center text-xs">
-          {needsFixRows.length > 0
-            ? tv('footerSkip', { count: needsFixRows.length })
-            : tv('footerAllGood')}
-        </span>
+        {needsFixRows.length > 0 && (
+          <span className="text-muted-foreground text-center text-xs">
+            {tv('footerSkip', { count: needsFixRows.length })}
+          </span>
+        )}
       </div>
 
       <MobileRowEditSheet

@@ -1,8 +1,14 @@
 'use client';
 
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { IconTrash, IconCheck, IconWand, IconInfoCircle } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconCheck,
+  IconWand,
+  IconInfoCircle,
+  IconCircleCheckFilled,
+} from '@tabler/icons-react';
 import {
   Table,
   TableBody,
@@ -312,11 +318,6 @@ export function ValidateStep({
     }
   };
 
-  // When all errors are resolved, switch off the errors tab
-  useEffect(() => {
-    if (invalidCount === 0 && activeTab === 'errors') setActiveTab('valid');
-  }, [invalidCount, activeTab]);
-
   if (!parsedData) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
@@ -360,7 +361,12 @@ export function ValidateStep({
             <div className="overflow-hidden rounded-b-lg border border-t-0">
               <div className="max-h-[280px] overflow-y-auto">
                 {filteredRows.length === 0 ? (
-                  <EmptyState tab={tab} t={t} />
+                  <EmptyState
+                    tab={tab}
+                    validCount={validCount}
+                    onReviewValid={() => setActiveTab('valid')}
+                    t={t}
+                  />
                 ) : (
                   <Table dir={dir}>
                     <TableHeader className="bg-muted/60 sticky top-0 backdrop-blur-sm">
@@ -725,19 +731,29 @@ function EditableCell({
 
 function EmptyState({
   tab,
+  validCount,
+  onReviewValid,
   t,
 }: {
   tab: 'errors' | 'valid';
+  validCount: number;
+  onReviewValid: () => void;
   t: ReturnType<typeof useTranslations<'guests'>>;
 }) {
-  if (tab === 'errors') {
+  // No errors and at least one valid row: celebrate instead of showing an empty list
+  if (tab === 'errors' && validCount > 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-1 py-10">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
-          <IconCheck size={20} className="text-success" />
+      <div className="flex flex-col items-center justify-center gap-1 bg-success/5 px-6 py-10 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 ring-8 ring-success/5">
+          <IconCircleCheckFilled size={28} className="text-success" />
         </span>
-        <p className="mt-2 text-sm font-medium">{t('import.validate.emptyNeedsFix')}</p>
+        <p className="mt-3 text-sm font-semibold text-success">
+          {t('import.validate.emptyNeedsFix', { count: validCount })}
+        </p>
         <p className="text-xs text-muted-foreground">{t('import.validate.emptyNeedsFixSub')}</p>
+        <Button variant="outline" size="sm" className="mt-3" onClick={onReviewValid}>
+          {t('import.validate.emptyNeedsFixAction')}
+        </Button>
       </div>
     );
   }

@@ -813,8 +813,9 @@
         "autoFixNoneAvailable": "No fixable phone numbers found",
         "autoFixApplied": "Fixed {count} phone {count, plural, one {number} other {numbers}}",
         "resetRow": "Reset row",
-        "emptyNeedsFix": "All rows look good",
-        "emptyNeedsFixSub": "Switch to Valid to review your rows",
+        "emptyNeedsFix": "{count, plural, one {Your guest is} other {All # guests are}} valid",
+        "emptyNeedsFixSub": "Nothing needs fixing - you're ready to import",
+        "emptyNeedsFixAction": "Review guests",
         "emptyValid": "No valid rows yet",
         "emptyValidSub": "Fix errors or remove invalid rows to proceed",
         "editNameAria": "Edit name for row {row}",
@@ -879,7 +880,8 @@
           "driveButtonTitle": "Choose from Google Drive",
           "driveButtonSubtitle": "One-time connection to your Google account",
           "connectingToDrive": "Connecting to Google Drive…",
-          "driveFailed": "Couldn't import from Google Drive"
+          "driveFailed": "Couldn't import from Google Drive",
+          "drivePickerTitle": "Choose your guest list"
         },
         "analyze": {
           "fileMeta": "{rows} rows · {columns} columns",
@@ -907,8 +909,7 @@
           "autofixBannerSubtitle": "Add a leading 0, remove spaces and dashes",
           "autofixAction": "Fix",
           "importCount": "Import {count} guests",
-          "footerSkip": "{count} rows with problems will be skipped - you can fix them first",
-          "footerAllGood": "All rows look good"
+          "footerSkip": "{count, plural, one {# row with problems will be skipped - you can fix it first} other {# rows with problems will be skipped - you can fix them first}}"
         },
         "edit": {
           "title": "Edit {name}",

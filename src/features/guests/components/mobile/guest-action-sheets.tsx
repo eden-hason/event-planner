@@ -28,7 +28,6 @@ import {
 } from '@/features/guests/utils';
 import { useCreateGroup } from '@/features/guests/hooks/use-create-group';
 import type { ConfirmRequest } from '@/features/guests/hooks/use-guest-writes';
-import { cn } from '@/lib/utils';
 import { sideSolidClass } from '../side-badge';
 import {
   useDeleteConfirmCopy,
@@ -184,12 +183,7 @@ export function GroupSheet({
   };
 
   return (
-    <MobileSheet
-      open={open}
-      onClose={close}
-      title={title}
-      subtitle={subtitle}
-    >
+    <MobileSheet open={open} onClose={close} title={title} subtitle={subtitle}>
       <div className="flex flex-col">
         {groups.length === 0 && (
           <p className="text-muted-foreground py-2 text-[13.5px]">
@@ -227,7 +221,11 @@ export function GroupSheet({
       <form onSubmit={submit} className="flex flex-col gap-1.5">
         <div className="flex gap-2">
           <label className="border-input focus-within:border-primary focus-within:ring-ring/50 flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[11px] border px-3 focus-within:ring-[3px]">
-            <IconPlus size={17} stroke={2.2} className="text-primary shrink-0" />
+            <IconPlus
+              size={17}
+              stroke={2.2}
+              className="text-primary shrink-0"
+            />
             <input
               value={name}
               maxLength={100}
@@ -254,7 +252,6 @@ export function GroupSheet({
     </MobileSheet>
   );
 }
-
 
 export function SideSheet({
   count,
@@ -343,11 +340,7 @@ export function MoreSheet({
     action();
   };
   return (
-    <MobileSheet
-      open={open}
-      onClose={onClose}
-      title={t('list.more')}
-    >
+    <MobileSheet open={open} onClose={onClose} title={t('list.more')}>
       <div className="flex flex-col">
         <SheetOption
           label={t('list.importFile')}
@@ -383,8 +376,8 @@ export function MoreSheet({
 
 /**
  * The phone's form of `GuestConfirmDialog`: the same requests and wording, in
- * a bottom sheet. Deleting the whole list stacks its buttons with Cancel last
- * and focused, so a stray tap on the sheet's default lands on the safe one.
+ * a bottom sheet. Deleting the whole list stacks its buttons, full width, with
+ * the destructive one first and Cancel under it.
  */
 export function GuestConfirmSheet({
   request,
@@ -401,11 +394,16 @@ export function GuestConfirmSheet({
   return request.kind === 'rsvp' ? (
     <RsvpConfirmSheet request={request} onConfirm={confirm} onClose={onClose} />
   ) : (
-    <DeleteConfirmSheet request={request} onConfirm={confirm} onClose={onClose} />
+    <DeleteConfirmSheet
+      request={request}
+      onConfirm={confirm}
+      onClose={onClose}
+    />
   );
 }
 
-const SHEET_BUTTON = 'h-12 rounded-xl text-[15px] font-bold';
+// Confirm sheets read at the app's dialog scale, not the option sheets' heading
+const CONFIRM_TITLE = 'text-base font-semibold';
 
 function RsvpConfirmSheet({
   request,
@@ -418,12 +416,17 @@ function RsvpConfirmSheet({
 }) {
   const copy = useRsvpConfirmCopy(request);
   return (
-    <MobileSheet open onClose={onClose} title={copy.title}>
+    <MobileSheet
+      open
+      onClose={onClose}
+      title={copy.title}
+      titleClassName={CONFIRM_TITLE}
+    >
       <div className="flex flex-col gap-[9px]">
         {copy.lines.map(({ icon: Icon, text }) => (
           <div
             key={text}
-            className="text-muted-foreground flex items-start gap-[9px] text-[14.5px] leading-normal"
+            className="text-muted-foreground flex items-start gap-[9px] text-sm leading-normal"
           >
             <span className="bg-rsvp-pending-tint text-rsvp-pending-strong flex size-6 shrink-0 items-center justify-center rounded-[7px]">
               <Icon size={14} stroke={2.2} />
@@ -433,17 +436,13 @@ function RsvpConfirmSheet({
         ))}
       </div>
       <div className="mt-1 flex gap-2">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          className={cn(SHEET_BUTTON, 'flex-1')}
-        >
+        <Button variant="outline" onClick={onClose} className="flex-1">
           {copy.cancel}
         </Button>
         <Button
           variant={request.status === 'declined' ? 'destructive' : 'default'}
           onClick={onConfirm}
-          className={cn(SHEET_BUTTON, 'flex-[1.6]')}
+          className="flex-[1.6]"
         >
           {copy.confirm}
         </Button>
@@ -464,44 +463,42 @@ function DeleteConfirmSheet({
   const { strong, title, body, confirm, cancel } =
     useDeleteConfirmCopy(request);
   return (
-    <MobileSheet open onClose={onClose} title={title}>
-      {strong && (
-        <span className="bg-destructive/10 text-destructive -mt-1 flex size-11 items-center justify-center rounded-xl">
-          <IconTrash size={22} />
-        </span>
-      )}
+    <MobileSheet
+      open
+      onClose={onClose}
+      title={title}
+      titleClassName={CONFIRM_TITLE}
+      icon={
+        strong && (
+          <span className="bg-destructive/10 text-destructive flex size-9 shrink-0 items-center justify-center rounded-[9px]">
+            <IconTrash size={18} />
+          </span>
+        )
+      }
+    >
       {body && (
-        <p className="text-muted-foreground text-[14.5px] leading-relaxed text-pretty">
+        <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
           {body}
         </p>
       )}
       {strong ? (
         <div className="mt-1 flex flex-col gap-2">
-          <Button variant="destructive" onClick={onConfirm} className={SHEET_BUTTON}>
+          <Button variant="destructive" onClick={onConfirm}>
             {confirm}
           </Button>
-          <Button
-            variant="outline"
-            autoFocus
-            onClick={onClose}
-            className={cn(SHEET_BUTTON, 'border-primary ring-ring/50 ring-[3px]')}
-          >
+          <Button variant="outline" onClick={onClose}>
             {cancel}
           </Button>
         </div>
       ) : (
         <div className="mt-1 flex gap-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className={cn(SHEET_BUTTON, 'flex-1')}
-          >
+          <Button variant="outline" onClick={onClose} className="flex-1">
             {cancel}
           </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
-            className={cn(SHEET_BUTTON, 'flex-[1.4]')}
+            className="flex-[1.4]"
           >
             {confirm}
           </Button>

@@ -505,6 +505,22 @@
   .marker-cluster div {
     @apply font-[inherit];
   }
+
+  /*
+   * Google Drive Picker (guest import). Its contents are a cross-origin
+   * iframe we can't style, but the backdrop and the dialog box around it are
+   * injected into our DOM. The class names are undocumented - if Google
+   * renames them this silently falls back to their default look.
+   */
+  .picker-dialog-bg {
+    @apply !bg-black/50 !opacity-100 backdrop-blur-sm;
+  }
+  .picker-dialog {
+    @apply !bg-background !border-border overflow-hidden !rounded-xl !shadow-none;
+  }
+  .picker-dialog-content {
+    @apply !rounded-xl;
+  }
 }
 
 @keyframes slide-up {
