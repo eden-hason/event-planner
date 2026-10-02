@@ -341,7 +341,7 @@ export function GuestsPage({
           <Button
             variant="ghost"
             onClick={selection.onSelectAll}
-            className="text-primary hover:text-primary h-10 px-2 font-bold"
+            className="text-primary hover:text-primary px-2"
           >
             {t('list.mobile.selectAll')}
           </Button>

@@ -133,7 +133,7 @@ export function GuestFiltersSheet({
               sort: params.issue ? 'name_asc' : DEFAULT_GUEST_LIST_PARAMS.sort,
             })
           }
-          className="h-12 flex-1 rounded-xl text-[15px] font-bold"
+          className="flex-1"
         >
           {t('list.mobile.filters.clear')}
         </Button>
@@ -142,7 +142,7 @@ export function GuestFiltersSheet({
             onApply(draft);
             onClose();
           }}
-          className="h-12 flex-[1.6] rounded-xl text-[15px] font-bold"
+          className="flex-[1.6]"
         >
           {t('list.mobile.filters.show', { count })}
         </Button>

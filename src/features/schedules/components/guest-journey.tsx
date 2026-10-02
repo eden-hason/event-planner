@@ -203,11 +203,7 @@ export function GuestJourney({
       </ol>
 
       {row.phone && (
-        <Button
-          asChild
-          variant="outline"
-          className="h-10 rounded-[11px] text-[13px] font-semibold"
-        >
+        <Button asChild variant="outline">
           <a href={`tel:${row.phone}`}>
             <IconPhone size={15} />
             {t('journey.call')}
