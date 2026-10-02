@@ -26,17 +26,16 @@ import { BILLING_STATUS_LABELS as LABELS } from '../utils';
 import type { EventBillingStatus } from '../types';
 
 const CONSEQUENCE: Partial<Record<EventBillingStatus, string>> = {
-  comped: 'Sending turns on for this event with no payment recorded',
   free: 'Sending turns off - the owner app hides all outreach again',
   canceled: 'Sending turns off - use this when a payment is refunded',
   payment_pending: 'No change to sending - marks that payment has started elsewhere',
 };
 
 /**
- * The manual half of "Free to Plan, Pay to Send" in the Back Office. Replaces
- * the old single "Enable sending" button: an operator can comp an event, revoke
- * it, or mark a payment in flight. A confirmed `paid` only ever comes from a
- * real payment, so it is not in the menu.
+ * The manual half of "Free to Plan, Pay to Send" in the Back Office: an operator
+ * can revoke sending, move an event back to free, or mark a payment in flight.
+ * Turning sending on is recording a payment (or a ₪0 gift), which also sets the
+ * Record Package, so `paid` is not in the menu (ADR 0027).
  */
 export function EventBillingStatusControl({
   eventId,
@@ -103,7 +102,7 @@ export function EventBillingStatusControl({
               id="billing-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Why this event is being comped, who approved it, the invoice number"
+              placeholder="Why the status is changing, who approved it, the refund reference"
               maxLength={500}
               rows={3}
             />

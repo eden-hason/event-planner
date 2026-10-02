@@ -10,11 +10,10 @@ import type { SetEventBillingStatusResult } from '../types';
 /**
  * Moves an event between billing statuses by hand from the Back Office.
  *
- * This is the manual half of "Free to Plan, Pay to Send": until the external
- * payment service is wired in, an operator sets `comped` (granted), `canceled`
- * (revoked), `payment_pending` (payment started elsewhere), or back to `free`.
- * A confirmed `paid` transition only ever comes from a real payment, so it is
- * not offered here.
+ * This is the manual half of "Free to Plan, Pay to Send": an operator sets
+ * `canceled` (revoked), `payment_pending` (payment started elsewhere), or back
+ * to `free`. `paid` only ever comes from a recorded payment, which also sets the
+ * Record Package (ADR 0027), so it is not offered here.
  *
  * `can_create_schedules` follows automatically - it is generated from the
  * status in the database.

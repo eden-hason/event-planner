@@ -1,12 +1,7 @@
--- HELD MIGRATION - not in supabase/migrations on purpose.
---
--- Move it there (renamed to a fresh YYYYMMDDHHMMSS_retire_comped.sql, later than every
--- applied migration) only after an Operator has recorded a payment or a gift for every
--- comped Event in production. Until then the guard in step 1 makes it fail, and a failing
--- migration in the folder blocks every push behind it. The code that stops offering
--- `comped` ships after this runs.
---
--- ---------------------------------------------------------------------------
+-- Every comped Event in production had a payment or gift recorded by hand on 2026-10-02,
+-- which is what the guard in step 1 checks. Deploy order does not matter: no Event holds
+-- `comped` any more, no code reads the log's statuses, and the old code accepts the smaller
+-- set of values.
 --
 -- `comped` retires (ADR 0027). It meant "Kululu granted sending without a payment", and it
 -- carried no package: no records, no channel. Under the Record Package every Event that

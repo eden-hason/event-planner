@@ -7,25 +7,23 @@ import { RECORD_PACKAGE_CHANNELS } from '../utils/record-package';
  *
  * `events.billing_status` is the head; `event_billing_events` is the log of how it
  * got there. `events.can_create_schedules` is generated from it in the database
- * (`paid | comped` => can send) so the outbound-reach gate can never disagree.
+ * (`paid` => can send) so the outbound-reach gate can never disagree. `comped` was
+ * retired by ADR 0027: a free Event is a recorded payment of 0 with method `gift`.
  */
 export const EVENT_BILLING_STATUSES = [
   'free',
   'payment_pending',
   'paid',
-  'comped',
   'canceled',
 ] as const;
 
 export const EventBillingStatusSchema = z.enum(EVENT_BILLING_STATUSES);
 
-/** Statuses an operator can move an event to by hand from the Back Office. */
-export const MANUAL_BILLING_STATUSES = [
-  'free',
-  'payment_pending',
-  'comped',
-  'canceled',
-] as const;
+/**
+ * Statuses an operator can move an event to by hand from the Back Office. `paid` is not
+ * one of them: it only comes from recording a payment, which also sets the package.
+ */
+export const MANUAL_BILLING_STATUSES = ['free', 'payment_pending', 'canceled'] as const;
 
 export const SetEventBillingStatusSchema = z.object({
   eventId: z.uuid(),

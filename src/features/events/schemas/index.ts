@@ -160,7 +160,7 @@ export const EventAppSchema = z.object({
   guestsCapacity: z.number().int().positive().optional(),
   budget: z.number().optional(),
   // The commercial state of the event - see `@/features/billing`. `canCreateSchedules`
-  // is derived from it in the database (paid | comped => can send) and kept here as the
+  // is derived from it in the database (paid => can send) and kept here as the
   // read-only send gate every outreach path already checks.
   billingStatus: z.enum(EVENT_BILLING_STATUSES).default('free'),
   canCreateSchedules: z.boolean().default(false),
