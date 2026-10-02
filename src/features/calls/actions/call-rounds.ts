@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
+import { loadOutsidePackageIds } from '@/features/billing/services';
 
 export type StartCallRoundResult = {
   success: boolean;
@@ -75,13 +76,25 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     if (plan.target_status) {
       guestsQuery = guestsQuery.eq('rsvp_status', plan.target_status);
     }
-    const { data: guests, error: guestsError } = await guestsQuery;
+    const [{ data: targeted, error: guestsError }, outsideIds] = await Promise.all([
+      guestsQuery,
+      loadOutsidePackageIds(supabase, plan.event_id),
+    ]);
 
     if (guestsError) {
       await releasePlan(supabase, scheduleId);
       console.error('Failed to read the round audience:', guestsError);
       return { success: false, message: 'Failed to start the round' };
     }
+    if (!outsideIds) {
+      await releasePlan(supabase, scheduleId);
+      return { success: false, message: 'Could not check the record package' };
+    }
+
+    // A call is a send like any other, so a round calls only Guest Records inside the
+    // Record Package (ADR 0027). The rest are left out of the snapshot, not called.
+    const guests = (targeted ?? []).filter((guest) => !outsideIds.has(guest.id));
+    const leftOut = (targeted?.length ?? 0) - guests.length;
 
     const { data: round, error: roundError } = await supabase
       .from('call_rounds')
@@ -100,7 +113,7 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
       return { success: false, message: 'Failed to start the round' };
     }
 
-    if (guests?.length) {
+    if (guests.length) {
       const { error: logsError } = await supabase.from('call_logs').insert(
         guests.map((guest) => ({ round_id: round.id, guest_id: guest.id })),
       );
@@ -118,7 +131,9 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
 
     return {
       success: true,
-      message: `Round started with ${guests?.length ?? 0} ${guests?.length === 1 ? 'guest record' : 'guest records'}`,
+      message:
+        `Round started with ${guests.length} ${guests.length === 1 ? 'guest record' : 'guest records'}` +
+        (leftOut ? `, ${leftOut} outside the record package left out` : ''),
       roundId: round.id,
       eventId: plan.event_id,
     };

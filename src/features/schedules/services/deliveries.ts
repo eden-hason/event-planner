@@ -92,17 +92,21 @@ export async function reserveDeliveries(
   return reserved;
 }
 
+/** Why a guest in the audience got no attempt (`message_deliveries.not_sent_reason`). */
+export type NotSentReason = 'no_phone' | 'outside_package';
+
 /**
- * Records guests who were in the audience but could not be attempted (no usable
- * phone number) as not sent. Never touches a guest who already has a delivery
- * for this schedule - an earlier attempt is a stronger fact than today's
- * missing number.
+ * Records guests who were in the audience but could not be attempted as not
+ * sent, with the reason: no usable phone number, or outside the Record Package
+ * (ADR 0027). Never touches a guest who already has a delivery for this
+ * schedule - an earlier attempt is a stronger fact than today's skip.
  */
 export async function recordNotSent(
   supabase: SupabaseClient,
   scheduleId: string,
   guestIds: string[],
   triggeredBy: 'scheduled' | 'manual',
+  reason: NotSentReason,
 ): Promise<void> {
   for (const batch of chunks(guestIds)) {
     const { error } = await supabase.from('message_deliveries').upsert(
@@ -110,6 +114,7 @@ export async function recordNotSent(
         schedule_id: scheduleId,
         guest_id: guestId,
         status: 'not_sent',
+        not_sent_reason: reason,
         triggered_by: triggeredBy,
       })),
       { onConflict: 'schedule_id,guest_id', ignoreDuplicates: true },

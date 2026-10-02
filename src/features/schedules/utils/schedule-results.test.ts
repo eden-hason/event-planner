@@ -253,3 +253,28 @@ test('moments read as time today, yesterday with time, then a date', () => {
     '9/18',
   );
 });
+
+// ─── outside the Record Package (ADR 0027) ────────────────────────────────────
+
+test('a record outside the package keeps its own status and journey', () => {
+  const outside = row({ delivery: 'outside_package' });
+  assert.equal(guestStatus(outside), 'outside_package');
+  assert.equal(seenState(outside), 'na');
+  assert.deepEqual(
+    buildJourney(outside).map((s: { kind: string }) => s.kind),
+    ['outside_package'],
+  );
+});
+
+test('records outside the package count as not reached and filter on their own', () => {
+  const rows = [
+    row({ guestName: 'נועה לוי' }),
+    row({ guestName: 'דוד פרץ', delivery: 'outside_package' }),
+    row({ guestName: 'רון גבאי', delivery: 'no_phone' }),
+  ];
+  const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
+    filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
+
+  assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
+  assert.deepEqual(names('outside_package'), ['דוד פרץ']);
+});

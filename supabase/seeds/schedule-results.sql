@@ -332,9 +332,10 @@ select * from seen;
 -- Deliveries start pending and are rolled up from their attempts by
 -- roll_up_message_delivery, the same path the webhook takes. A record with no
 -- phone never gets an attempt: the send engine files it 'not_sent' directly.
-insert into message_deliveries (id, schedule_id, guest_id, status, delivery_method, triggered_by, template_id, created_at)
+insert into message_deliveries (id, schedule_id, guest_id, status, not_sent_reason, delivery_method, triggered_by, template_id, created_at)
 select md5(schedule_id::text || guest_id::text)::uuid, schedule_id, guest_id,
        case when wa = 'not_sent' then 'not_sent' else 'pending' end::delivery_status,
+       case when wa = 'not_sent' then 'no_phone' end,
        'whatsapp', 'scheduled', template_id, sent_at
 from _send;
 

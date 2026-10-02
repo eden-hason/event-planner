@@ -1713,6 +1713,8 @@
         "audience": "Audience",
         "audienceHint": "Every record with a phone",
         "audienceExcluded": "{count, plural, one {# record without a phone excluded} other {# records without a phone excluded}}",
+        "audienceExcludedPackage": "{count, plural, one {# record outside the package excluded} other {# records outside the package excluded}}",
+        "audienceExcludedBoth": "{noPhone} without a phone and {outside} outside the package excluded",
         "reached": "Reached",
         "ofAudience": "{percent}% of the audience",
         "seen": "Seen",
@@ -1750,7 +1752,9 @@
         "notDelivered": "Not delivered",
         "notDeliveredWhy": "Worth giving them a call",
         "noPhone": "No phone number",
-        "noPhoneWhy": "Not sent · add a number"
+        "noPhoneWhy": "Not sent · add a number",
+        "outsidePackage": "Outside the package",
+        "outsidePackageWhy": "Not sent · add records to the package"
       },
       "guests": {
         "title": "Guests",
@@ -1766,7 +1770,8 @@
           "unseen": "Not seen yet",
           "on_its_way": "On its way",
           "not_delivered": "Not delivered",
-          "no_phone": "No phone number"
+          "no_phone": "No phone number",
+          "outside_package": "Outside the package"
         },
         "columns": {
           "guest": "Guest",
@@ -1782,6 +1787,7 @@
           "on_its_way": "On its way",
           "not_delivered": "Not delivered",
           "no_phone": "No phone number",
+          "outside_package": "Outside the package",
           "none": "No message"
         },
         "channel": {
@@ -1818,6 +1824,8 @@
         "onItsWayMeta": "The phone hasn't confirmed it yet",
         "noPhone": "No phone number",
         "noPhoneMeta": "Nothing was sent. Add a number in the guest list",
+        "outsidePackage": "Outside the package",
+        "outsidePackageMeta": "Nothing was sent. The guest list is bigger than the record package",
         "confirmed": "Confirmed",
         "declined": "Declined",
         "call": "Call guest",

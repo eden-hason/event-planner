@@ -20,6 +20,7 @@ export type GuestStatus =
   | 'on_its_way'
   | 'not_delivered'
   | 'no_phone'
+  | 'outside_package'
   | 'none';
 
 export function guestStatus(row: GuestInteractionRow): GuestStatus {
@@ -49,9 +50,14 @@ const NOT_REACHED: GuestDeliveryOutcome[] = [
   'on_its_way',
   'not_delivered',
   'no_phone',
+  'outside_package',
 ];
 
-export type NotReachedFilter = 'on_its_way' | 'not_delivered' | 'no_phone';
+export type NotReachedFilter =
+  | 'on_its_way'
+  | 'not_delivered'
+  | 'no_phone'
+  | 'outside_package';
 
 export type GuestFilter =
   | 'all'
@@ -130,6 +136,7 @@ export type JourneyStepKind =
   | 'not_delivered'
   | 'on_its_way'
   | 'no_phone'
+  | 'outside_package'
   | 'confirmed'
   | 'declined';
 
@@ -150,6 +157,7 @@ export type JourneyStep = {
  */
 export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
   if (row.delivery === 'no_phone') return [{ kind: 'no_phone' }];
+  if (row.delivery === 'outside_package') return [{ kind: 'outside_package' }];
 
   const steps: JourneyStep[] = [];
   for (const step of row.steps) {

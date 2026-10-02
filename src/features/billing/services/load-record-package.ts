@@ -75,6 +75,19 @@ export async function loadRecordPackage(
   };
 }
 
+/**
+ * The sending gate's question (ADR 0027): which of this Event's Guest Records are outside
+ * its Record Package right now. Null when it could not be worked out - callers must not
+ * send on a guess, so they treat that as a failure to retry, never as "nobody is outside".
+ */
+export async function loadOutsidePackageIds(
+  supabase: SupabaseClient,
+  eventId: string,
+): Promise<ReadonlySet<string> | null> {
+  const loaded = await loadRecordPackage(supabase, eventId);
+  return loaded ? new Set(loaded.split.outside) : null;
+}
+
 /** Pages past PostgREST's 1000-row cap. Null on any error, so a partial list never counts. */
 async function pageAll<T>(
   fetchPage: (
