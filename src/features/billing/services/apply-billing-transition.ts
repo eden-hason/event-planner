@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { EventBillingStatus } from '../types';
+import type {
+  BillingPaymentMethod,
+  EventBillingStatus,
+  RecordPackageChannel,
+} from '../types';
 
 export type BillingTransitionInput = {
   eventId: string;
@@ -14,8 +18,10 @@ export type BillingTransitionInput = {
   providerRef?: string;
   amount?: number;
   currency?: string;
-  channel?: 'whatsapp' | 'sms';
+  /** A payment sets records, channel, amount and method together, and lands on `paid`. */
+  channel?: RecordPackageChannel;
   recordCount?: number;
+  paymentMethod?: BillingPaymentMethod;
   note?: string;
   /** The operator who made a manual transition; null for a webhook. */
   createdBy?: string;
@@ -54,6 +60,7 @@ export async function applyBillingTransition(
     p_note: input.note ?? null,
     p_created_by: input.createdBy ?? null,
     p_occurred_at: input.occurredAt ?? new Date().toISOString(),
+    p_payment_method: input.paymentMethod ?? null,
   });
 
   const row = (Array.isArray(data) ? data[0] : data) as { id: string } | null;

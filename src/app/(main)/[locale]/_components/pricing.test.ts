@@ -32,9 +32,9 @@ describe('clampRecords', () => {
 });
 
 describe('quote', () => {
-  it('charges records times the channel rate and adds the bonus to capacity', () => {
-    assert.deepEqual(quote(150, 'whatsapp'), { total: 225, bonus: 10, capacity: 160 });
-    assert.deepEqual(quote(300, 'sms'), { total: 300, bonus: 20, capacity: 320 });
-    assert.deepEqual(quote(500, 'whatsapp_calls'), { total: 1000, bonus: 20, capacity: 520 });
+  it('charges records times the channel rate and adds the bonus to the package', () => {
+    assert.deepEqual(quote(150, 'whatsapp'), { total: 225, bonus: 10, packageSize: 160 });
+    assert.deepEqual(quote(300, 'sms'), { total: 300, bonus: 20, packageSize: 320 });
+    assert.deepEqual(quote(500, 'whatsapp_calls'), { total: 1000, bonus: 20, packageSize: 520 });
   });
 });

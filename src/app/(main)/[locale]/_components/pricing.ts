@@ -1,32 +1,31 @@
 /**
  * Homepage pricing simulator: rates and the quote maths.
  *
- * These are the public per-record rates; nothing else in the app quotes a price.
+ * These are the public per-record rates; nothing else in the app quotes a price. The rates
+ * and the bonus rule live in the billing feature, which grants what this page sells.
  */
 
-export const PRICING_CHANNELS = ['sms', 'whatsapp', 'whatsapp_calls'] as const;
-export type PricingChannel = (typeof PRICING_CHANNELS)[number];
+import type { RecordPackageChannel } from '@/features/billing';
+// The utils path, not the barrel: the barrel carries client components, and this module is
+// unit-tested outside React.
+import {
+  RECORD_PACKAGE_CHANNELS,
+  RECORD_PACKAGE_RATES,
+  bonusRecords,
+} from '@/features/billing/utils';
+
+export const PRICING_CHANNELS = RECORD_PACKAGE_CHANNELS;
+export type PricingChannel = RecordPackageChannel;
 
 /** Shekels per record, charged once when sending is switched on. */
-export const PRICING_RATES: Record<PricingChannel, number> = {
-  sms: 1,
-  whatsapp: 1.5,
-  whatsapp_calls: 2,
-};
+export const PRICING_RATES = RECORD_PACKAGE_RATES;
 
 export const RECORDS_MIN = 50;
 export const RECORDS_MAX = 1000;
 export const RECORDS_STEP = 50;
 
-/** Up to this many paid records the bonus is the small one. */
-const SMALL_PACK_MAX = 200;
-const SMALL_PACK_BONUS = 10;
-const BIG_PACK_BONUS = 20;
-
-/** Free extra records for last-minute guests, on top of the paid ones. */
-export function bonusRecords(records: number): number {
-  return records <= SMALL_PACK_MAX ? SMALL_PACK_BONUS : BIG_PACK_BONUS;
-}
+/** The bonus rule is billing's, so the homepage never promises what billing won't grant. */
+export { bonusRecords };
 
 /** Clamps to the slider's range and snaps to its step. */
 export function clampRecords(value: number): number {
@@ -40,6 +39,6 @@ export function quote(records: number, channel: PricingChannel) {
   return {
     total: records * PRICING_RATES[channel],
     bonus,
-    capacity: records + bonus,
+    packageSize: records + bonus,
   };
 }

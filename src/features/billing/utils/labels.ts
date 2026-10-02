@@ -1,4 +1,4 @@
-import type { EventBillingStatus } from '../types';
+import type { BillingPaymentMethod, EventBillingStatus, RecordPackageChannel } from '../types';
 
 /**
  * English labels for the five billing statuses. The Back Office is English-only,
@@ -11,4 +11,20 @@ export const BILLING_STATUS_LABELS: Record<EventBillingStatus, string> = {
   paid: 'Paid',
   comped: 'Comped',
   canceled: 'Canceled',
+};
+
+/** Back Office labels for the channel a package was bought for. */
+export const RECORD_PACKAGE_CHANNEL_LABELS: Record<RecordPackageChannel, string> = {
+  sms: 'SMS',
+  whatsapp: 'WhatsApp',
+  whatsapp_calls: 'WhatsApp + calls',
+};
+
+/** Back Office labels for how a payment was made. */
+export const PAYMENT_METHOD_LABELS: Record<BillingPaymentMethod, string> = {
+  bank_transfer: 'Bank transfer',
+  bit: 'Bit',
+  cash: 'Cash',
+  gift: 'Gift',
+  other: 'Other',
 };

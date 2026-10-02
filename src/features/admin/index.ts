@@ -14,6 +14,7 @@ export {
   EventIdentityBand,
   EventIdentityQueryBand,
   EventOutreachBand,
+  EventRecordPackageBand,
   EventSignalsBand,
 } from './components/event-workspace';
 export { Band, BandRow } from './components/band';
