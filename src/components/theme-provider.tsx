@@ -1,6 +1,7 @@
 'use client';
 
 import { ThemeProvider as NextThemesProvider, useTheme } from 'next-themes';
+import { IconCircleCheckFilled } from '@tabler/icons-react';
 import { Toaster } from 'sonner';
 
 /**
@@ -33,5 +34,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
  */
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
-  return <Toaster theme={resolvedTheme === 'dark' ? 'dark' : 'light'} />;
+  return (
+    <Toaster
+      position="top-center"
+      theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+      icons={{
+        success: <IconCircleCheckFilled className="text-success size-4" />,
+      }}
+    />
+  );
 }

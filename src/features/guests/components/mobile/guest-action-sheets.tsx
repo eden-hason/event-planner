@@ -220,7 +220,7 @@ export function GroupSheet({
       </div>
       <form onSubmit={submit} className="flex flex-col gap-1.5">
         <div className="flex gap-2">
-          <label className="border-input focus-within:border-primary focus-within:ring-ring/50 flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[11px] border px-3 focus-within:ring-[3px]">
+          <label className="border-input focus-within:border-primary focus-within:ring-ring/50 flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border px-3 focus-within:ring-[3px]">
             <IconPlus
               size={17}
               stroke={2.2}
@@ -239,11 +239,7 @@ export function GroupSheet({
               className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base font-semibold outline-none"
             />
           </label>
-          <Button
-            type="submit"
-            disabled={!name.trim() || pending}
-            className="h-11 rounded-[11px] px-3.5 font-bold"
-          >
+          <Button type="submit" disabled={!name.trim() || pending}>
             {t('mobile.createGroup')}
           </Button>
         </div>
@@ -310,10 +306,7 @@ export function ExportSheet({
       <p className="text-muted-foreground text-[14.5px] leading-relaxed text-pretty">
         {hidden > 0 ? t('exportBodyHidden', { hidden }) : t('exportBody')}
       </p>
-      <Button
-        onClick={onDownload}
-        className="mt-1 h-12 rounded-xl text-[15px] font-bold"
-      >
+      <Button onClick={onDownload} className="mt-1">
         {t('download')}
       </Button>
     </MobileSheet>

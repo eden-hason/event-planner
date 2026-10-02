@@ -255,26 +255,15 @@ export function GuestsDesktop({
               {t('list.empty.body')}
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2.5">
-              <Button
-                onClick={() => setImportOpen(true)}
-                className="h-[42px] gap-2 rounded-[10px] px-[18px] text-[14.5px] font-bold"
-              >
+              <Button onClick={() => setImportOpen(true)}>
                 <IconUpload size={18} />
                 {t('list.empty.upload')}
               </Button>
-              <Button
-                variant="outline"
-                onClick={onAddGuest}
-                className="h-[42px] gap-2 rounded-[10px] px-4 text-[14.5px] font-semibold"
-              >
+              <Button variant="outline" onClick={onAddGuest}>
                 <IconUserPlus size={18} />
                 {t('list.empty.add')}
               </Button>
-              <Button
-                variant="outline"
-                onClick={onImportDrive}
-                className="h-[42px] gap-2 rounded-[10px] px-4 text-[14.5px] font-semibold"
-              >
+              <Button variant="outline" onClick={onImportDrive}>
                 <IconBrandGoogleDrive size={18} />
                 {t('list.empty.drive')}
               </Button>

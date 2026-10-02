@@ -130,11 +130,11 @@ export function AssignGuestsDrawer({
               size="icon"
               onClick={handleMoveToGroup}
               disabled={selectedAvailable.length === 0}
-              className={`h-10 w-10 ${
+              className={
                 selectedAvailable.length > 0
                   ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                  : ''
-              }`}
+                  : undefined
+              }
             >
               <IconArrowRight size={20} />
             </Button>
@@ -143,11 +143,11 @@ export function AssignGuestsDrawer({
               size="icon"
               onClick={handleMoveToAvailable}
               disabled={selectedInGroup.length === 0}
-              className={`h-10 w-10 ${
+              className={
                 selectedInGroup.length > 0
                   ? 'bg-primary/15 text-primary hover:bg-primary/25'
-                  : ''
-              }`}
+                  : undefined
+              }
             >
               <IconArrowLeft size={20} />
             </Button>

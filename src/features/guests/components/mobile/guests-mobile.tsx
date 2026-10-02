@@ -257,17 +257,13 @@ export function GuestsMobile({
             {t('list.empty.body')}
           </p>
           <div className="mt-2.5 flex w-full flex-col gap-[9px]">
-            <Button
-              onClick={onImportFile}
-              className="h-12 gap-2 rounded-xl text-[15px] font-bold"
-            >
+            <Button onClick={onImportFile}>
               <IconUpload size={18} />
               {t('list.empty.upload')}
             </Button>
             <Button
               variant="outline"
               onClick={onAddGuest}
-              className="h-12 gap-2 rounded-xl text-[15px] font-semibold"
             >
               <IconUserPlus size={18} />
               {t('list.empty.add')}
@@ -275,7 +271,6 @@ export function GuestsMobile({
             <Button
               variant="outline"
               onClick={onImportDrive}
-              className="h-12 gap-2 rounded-xl text-[15px] font-semibold"
             >
               <IconBrandGoogleDrive size={18} />
               {t('list.importDrive')}
@@ -369,11 +364,7 @@ export function GuestsMobile({
           <span className="text-muted-foreground text-[13.5px] leading-normal">
             {t('list.noMatch.body')}
           </span>
-          <Button
-            variant="outline"
-            onClick={resetFilters}
-            className="mt-1 h-[42px] rounded-[11px] px-[18px] font-semibold"
-          >
+          <Button variant="outline" onClick={resetFilters} className="mt-1">
             {t('list.noMatch.clear')}
           </Button>
         </div>

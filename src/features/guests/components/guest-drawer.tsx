@@ -115,7 +115,7 @@ export function GuestDrawer({
           className={cn(
             'flex items-center gap-2 border-t',
             mobile
-              ? 'px-4 pt-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] [&_button]:h-12 [&_button]:rounded-xl [&_button]:text-[15px]'
+              ? 'px-4 pt-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]'
               : 'px-5 py-3',
           )}
         >
@@ -123,26 +123,17 @@ export function GuestDrawer({
             <Button
               variant="ghost"
               onClick={() => onDelete(guest)}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive h-[38px] gap-1.5 rounded-[10px] px-3 max-md:px-2"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <IconTrash size={16} />
               {t('drawer.delete')}
             </Button>
           )}
           <div className="flex-1" />
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="h-[38px] rounded-[10px] px-4"
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('drawer.cancel')}
           </Button>
-          <Button
-            type="submit"
-            form={FORM_ID}
-            disabled={submitting}
-            className="h-[38px] rounded-[10px] px-[18px] font-bold"
-          >
+          <Button type="submit" form={FORM_ID} disabled={submitting}>
             {guest ? t('drawer.save') : t('drawer.add')}
           </Button>
         </div>
