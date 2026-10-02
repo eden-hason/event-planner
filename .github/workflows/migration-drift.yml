@@ -1,0 +1,39 @@
+# Fails when main and production disagree about which migrations exist - see
+# scripts/check-migration-drift.mjs. Catches what `npm run db:push` can't: a
+# push made from a branch, another machine, or the Supabase dashboard.
+#
+# Needs two repository secrets:
+#   SUPABASE_ACCESS_TOKEN - a personal access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_DB_PASSWORD  - the kululu-prod database password
+name: Migration Drift
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      # kululu-prod. Not a secret - it is in every API URL.
+      SUPABASE_PROJECT_REF: kaxzfjnxpyvjtvkfwxnc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - run: node scripts/check-migration-drift.mjs
+        env:
+          SUPABASE_CLI: supabase
