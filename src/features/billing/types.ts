@@ -23,7 +23,13 @@ export type SetEventBillingStatusResult = { success: boolean; message: string };
 export type RecordPackageChannel = 'sms' | 'whatsapp' | 'whatsapp_calls';
 
 /** How an Operator says a payment was made. A gift is always a payment of 0. */
-export type BillingPaymentMethod = 'bank_transfer' | 'bit' | 'cash' | 'gift' | 'other';
+export type BillingPaymentMethod =
+  | 'bank_transfer'
+  | 'bit'
+  | 'isracard'
+  | 'cash'
+  | 'gift'
+  | 'other';
 
 /** An Event's Record Package: Paid Records plus Bonus Records (ADR 0027). */
 export type RecordPackage = {

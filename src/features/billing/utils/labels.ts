@@ -24,6 +24,7 @@ export const RECORD_PACKAGE_CHANNEL_LABELS: Record<RecordPackageChannel, string>
 export const PAYMENT_METHOD_LABELS: Record<BillingPaymentMethod, string> = {
   bank_transfer: 'Bank transfer',
   bit: 'Bit',
+  isracard: 'Isracard',
   cash: 'Cash',
   gift: 'Gift',
   other: 'Other',

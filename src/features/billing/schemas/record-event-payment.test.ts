@@ -16,6 +16,10 @@ describe('RecordEventPaymentSchema', () => {
     assert.equal(RecordEventPaymentSchema.safeParse(base).success, true);
   });
 
+  it('accepts an Isracard payment', () => {
+    assert.equal(RecordEventPaymentSchema.safeParse({ ...base, method: 'isracard' }).success, true);
+  });
+
   it('accepts a gift at 0', () => {
     assert.equal(RecordEventPaymentSchema.safeParse({ ...base, amount: 0, method: 'gift' }).success, true);
   });
