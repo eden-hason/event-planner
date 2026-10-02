@@ -23,6 +23,10 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       # kululu-prod. Not a secret - it is in every API URL.
       SUPABASE_PROJECT_REF: kaxzfjnxpyvjtvkfwxnc
+      # Not the real secret. The CLI validates supabase/config.toml before every
+      # command, and `auth.hook.send_sms.secrets` (env(SEND_SMS_HOOK_SECRETS)) must
+      # be well-formed or nothing runs. `migration list` never uses it.
+      SEND_SMS_HOOK_SECRETS: v1,whsec_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       # The triggering ref: main for the schedule, the chosen branch on a manual run.
       - uses: actions/checkout@v4
