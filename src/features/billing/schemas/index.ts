@@ -40,6 +40,7 @@ export const SetEventBillingStatusSchema = z.object({
 export const BILLING_PAYMENT_METHODS = [
   'bank_transfer',
   'bit',
+  'isracard',
   'cash',
   'gift',
   'other',
