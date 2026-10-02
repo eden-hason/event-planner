@@ -7,7 +7,6 @@ import {
   IconCheck,
   IconWand,
   IconInfoCircle,
-  IconCircleCheckFilled,
 } from '@tabler/icons-react';
 import {
   Table,
@@ -44,6 +43,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { ImportAllValidState } from '../../import-all-valid-state';
 import { toast } from 'sonner';
 import { type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import {
@@ -742,20 +742,7 @@ function EmptyState({
 }) {
   // No errors and at least one valid row: celebrate instead of showing an empty list
   if (tab === 'errors' && validCount > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-1 bg-success/5 px-6 py-10 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 ring-8 ring-success/5">
-          <IconCircleCheckFilled size={28} className="text-success" />
-        </span>
-        <p className="mt-3 text-sm font-semibold text-success">
-          {t('import.validate.emptyNeedsFix', { count: validCount })}
-        </p>
-        <p className="text-xs text-muted-foreground">{t('import.validate.emptyNeedsFixSub')}</p>
-        <Button variant="outline" size="sm" className="mt-3" onClick={onReviewValid}>
-          {t('import.validate.emptyNeedsFixAction')}
-        </Button>
-      </div>
-    );
+    return <ImportAllValidState compact count={validCount} onReview={onReviewValid} />;
   }
 
   return (

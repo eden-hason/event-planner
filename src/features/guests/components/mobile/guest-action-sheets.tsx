@@ -402,9 +402,6 @@ export function GuestConfirmSheet({
   );
 }
 
-// Confirm sheets read at the app's dialog scale, not the option sheets' heading
-const CONFIRM_TITLE = 'text-base font-semibold';
-
 function RsvpConfirmSheet({
   request,
   onConfirm,
@@ -420,7 +417,7 @@ function RsvpConfirmSheet({
       open
       onClose={onClose}
       title={copy.title}
-      titleClassName={CONFIRM_TITLE}
+      variant="confirm"
     >
       <div className="flex flex-col gap-[9px]">
         {copy.lines.map(({ icon: Icon, text }) => (
@@ -467,7 +464,7 @@ function DeleteConfirmSheet({
       open
       onClose={onClose}
       title={title}
-      titleClassName={CONFIRM_TITLE}
+      variant="confirm"
       icon={
         strong && (
           <span className="bg-destructive/10 text-destructive flex size-9 shrink-0 items-center justify-center rounded-[9px]">

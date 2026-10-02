@@ -3,9 +3,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { IconCircleCheckFilled, IconEdit, IconSparkles } from '@tabler/icons-react';
+import { IconEdit, IconSparkles } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ImportAllValidState } from '../../import-all-valid-state';
 import {
   autoFixPhone,
   normalizePhone,
@@ -257,29 +258,15 @@ export function MobileValidateStep({
           );
         })}
 
-        {shownRows.length === 0 && tab === 'errors' && validRows.length > 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 py-16 text-center">
-            <span className="bg-success/15 ring-success/5 flex size-16 items-center justify-center rounded-full ring-8">
-              <IconCircleCheckFilled size={36} className="text-success" />
-            </span>
-            <span className="text-success mt-4 text-base font-semibold">
-              {t('validate.emptyNeedsFix', { count: validRows.length })}
-            </span>
-            <span className="text-muted-foreground text-sm">
-              {t('validate.emptyNeedsFixSub')}
-            </span>
-            <Button variant="outline" size="sm" className="mt-4" onClick={() => setTab('valid')}>
-              {t('validate.emptyNeedsFixAction')}
-            </Button>
-          </div>
-        )}
-
-        {shownRows.length === 0 && !(tab === 'errors' && validRows.length > 0) && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
-            <span className="text-sm font-semibold">{t('validate.emptyValid')}</span>
-            <span className="text-muted-foreground text-xs">{t('validate.emptyValidSub')}</span>
-          </div>
-        )}
+        {shownRows.length === 0 &&
+          (tab === 'errors' && validRows.length > 0 ? (
+            <ImportAllValidState count={validRows.length} onReview={() => setTab('valid')} />
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-1 py-16 text-center">
+              <span className="text-sm font-semibold">{t('validate.emptyValid')}</span>
+              <span className="text-muted-foreground text-xs">{t('validate.emptyValidSub')}</span>
+            </div>
+          ))}
       </div>
 
       <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">

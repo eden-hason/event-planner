@@ -26,7 +26,7 @@ export function MobileSheet({
   onClose,
   title,
   subtitle,
-  titleClassName,
+  variant = 'options',
   icon,
   children,
 }: {
@@ -34,7 +34,8 @@ export function MobileSheet({
   onClose: () => void;
   title: string;
   subtitle?: string;
-  titleClassName?: string;
+  /** `confirm` reads at the app's dialog scale, not the option sheets' heading. */
+  variant?: 'options' | 'confirm';
   /** Sits at the start of the title row, e.g. a destructive action's badge. */
   icon?: ReactNode;
   children: ReactNode;
@@ -59,8 +60,10 @@ export function MobileSheet({
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <SheetTitle
               className={cn(
-                'text-lg leading-snug font-extrabold',
-                titleClassName,
+                'leading-snug',
+                variant === 'confirm'
+                  ? 'text-base font-semibold'
+                  : 'text-lg font-extrabold',
               )}
             >
               {title}
