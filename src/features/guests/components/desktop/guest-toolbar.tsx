@@ -51,6 +51,9 @@ interface GuestToolbarProps {
   ) => void;
   /** Guest Records per status, over the whole list - the chip counts. */
   statusCounts: Record<RsvpStatus | 'all', number>;
+  /** Guest Records outside the Record Package; the chip shows only while there are some. */
+  outsideCount: number;
+  outsideOnly: boolean;
   groups: GroupWithGuestsApp[];
   onAddGuest: () => void;
   onImportFile: () => void;
@@ -62,6 +65,8 @@ export function GuestToolbar({
   params,
   onChange,
   statusCounts,
+  outsideCount,
+  outsideOnly,
   groups,
   onAddGuest,
   onImportFile,
@@ -150,15 +155,15 @@ export function GuestToolbar({
         role="radiogroup"
         className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px] @max-4xl/guests:order-last @max-4xl/guests:w-full @max-4xl/guests:*:flex-1 @max-4xl/guests:*:justify-center"
       >
-        {GUEST_STATUS_FILTERS.map((status) => {
-          const on = params.status === status;
-          return (
+        {GUEST_STATUS_FILTERS.flatMap((status) => {
+          const on = params.status === status && !outsideOnly;
+          const chip = (
             <button
               key={status ?? 'all'}
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => onChange({ status })}
+              onClick={() => onChange({ status, outside: false })}
               className={cn(
                 'flex h-[30px] items-center gap-1.5 rounded-lg px-[11px] text-[13px] whitespace-nowrap transition-colors',
                 on
@@ -177,6 +182,29 @@ export function GuestToolbar({
               </span>
             </button>
           );
+          // "Outside the package" sits right after "All" (Record Package Guests design).
+          if (status !== null || outsideCount === 0) return [chip];
+          return [
+            chip,
+            <button
+              key="outside"
+              type="button"
+              role="radio"
+              aria-checked={outsideOnly}
+              onClick={() => onChange({ outside: true, status: null })}
+              className={cn(
+                'text-warning-strong flex h-[30px] items-center gap-1.5 rounded-lg px-[11px] text-[13px] whitespace-nowrap transition-colors',
+                outsideOnly
+                  ? 'bg-warning-tint font-bold shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
+                  : 'hover:bg-warning-tint/60 font-medium',
+              )}
+            >
+              {t('package.chip')}
+              <span className="text-xs font-bold tabular-nums">
+                {outsideCount.toLocaleString()}
+              </span>
+            </button>,
+          ];
         })}
       </div>
 

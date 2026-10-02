@@ -36,6 +36,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { RecordPackageProvider, type GuestPackageView } from '@/features/billing';
 
 /** The query parameter that addresses the open guest drawer. */
 const GUEST_PARAM = 'guest';
@@ -51,6 +52,8 @@ interface GuestsPageProps {
   showDietary?: boolean;
   tables?: TableOption[];
   messagedGuestIds?: string[];
+  /** The Record Package, counts only; null when the event has none. */
+  recordPackage?: GuestPackageView | null;
 }
 
 // The base `TabsTrigger` ships a border on every side (for the desktop pill),
@@ -71,6 +74,7 @@ export function GuestsPage({
   showDietary = false,
   tables = [],
   messagedGuestIds = [],
+  recordPackage = null,
 }: GuestsPageProps) {
   const t = useTranslations('guests');
   const locale = useLocale();
@@ -382,7 +386,7 @@ export function GuestsPage({
   }
 
   return (
-    <>
+    <RecordPackageProvider view={recordPackage}>
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'guests' | 'groups')}
@@ -527,6 +531,6 @@ export function GuestsPage({
         />
       )}
 
-    </>
+    </RecordPackageProvider>
   );
 }

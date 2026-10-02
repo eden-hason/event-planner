@@ -33,8 +33,15 @@ test('every filter reads back from the query', () => {
       noPhone: true,
       sort: 'name_desc',
       issue: null,
+      outside: false,
     },
   );
+});
+
+test('the outside-the-package filter round-trips through the URL', () => {
+  assert.equal(parse('package=outside').outside, true);
+  assert.equal(parse('package=inside').outside, false);
+  assert.equal(write({ ...DEFAULT_GUEST_LIST_PARAMS, outside: true }), 'package=outside');
 });
 
 test('values that are not ours are ignored rather than trusted', () => {
@@ -84,6 +91,7 @@ test('a written view reads back as itself', () => {
     noPhone: true,
     sort: 'amount_desc' as const,
     issue: 'duplicates' as const,
+    outside: true,
   };
   assert.deepEqual(parse(write(view)), view);
 });

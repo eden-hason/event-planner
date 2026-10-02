@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { bonusRecords, recordPackage, splitByPackage } from './record-package';
+import { bonusRecords, packageState, recordPackage, splitByPackage } from './record-package';
 
 describe('bonusRecords', () => {
   it('gives 10 up to and including 200 paid records', () => {
@@ -142,5 +142,19 @@ describe('splitByPackage', () => {
       reachedDeletedCount: 0,
     });
     assert.deepEqual(split.outside, ['a']);
+  });
+});
+
+describe('packageState', () => {
+  it('reads the brief worked examples on a package of 210', () => {
+    assert.equal(packageState(210, 187), 'room');
+    assert.equal(packageState(210, 205), 'near');
+    assert.equal(packageState(210, 210), 'full');
+    assert.equal(packageState(210, 225), 'over');
+  });
+
+  it('turns near at exactly 90%', () => {
+    assert.equal(packageState(100, 89), 'room');
+    assert.equal(packageState(100, 90), 'near');
   });
 });

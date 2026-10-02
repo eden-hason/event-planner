@@ -6,8 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import {
   IconBrandGoogleDrive,
@@ -49,6 +50,7 @@ import { ActiveFilterChips } from '../active-filter-chips';
 import { GuestDrawer } from '../guest-drawer';
 import { UndoToast } from '../undo-toast';
 import { CARD_HEIGHT, GuestMobileCard } from './guest-mobile-card';
+import { OutsidePackageBanner, PackageLine } from '../package';
 import { GuestFiltersSheet } from './guest-filters-sheet';
 import { SelectionBar, type SelectionAction } from './selection-bar';
 import {
@@ -123,6 +125,9 @@ export function GuestsMobile({
   onSelectionHeader,
 }: GuestsMobileProps) {
   const t = useTranslations('guests');
+  // The fade sits at the inline end, where the chips run off - the left edge in Hebrew.
+  // A gradient starts at the edge opposite its direction, so `to right` begins on the left.
+  const chipFade = `linear-gradient(to ${useLocale() === 'he' ? 'right' : 'left'}, transparent 0, #000 36px)`;
   const {
     params,
     changeFilters,
@@ -134,6 +139,9 @@ export function GuestsMobile({
     rows,
     visibleIds,
     statusCounts,
+    outsideIds,
+    outsideCount,
+    outsideOnly,
     filtered,
     countFor,
     selected,
@@ -287,7 +295,17 @@ export function GuestsMobile({
 
   return (
     <div className={cn('flex flex-col', selecting && 'pb-24')}>
-      {!selecting && !hasChipRow && <Meter guests={guests} />}
+      {!selecting && !hasChipRow && (
+        <Meter
+          guests={guests}
+          footer={
+            <PackageLine
+              variant="mobile"
+              onShowOutside={() => changeFilters({ outside: true, status: null })}
+            />
+          }
+        />
+      )}
 
       <Toolbar
         params={params}
@@ -299,18 +317,26 @@ export function GuestsMobile({
         onSelect={() => setSelecting(true)}
       />
 
-      {/* All four share the width rather than scrolling past the page's edge. */}
-      <div className="flex gap-1.5 pt-2.5">
-        {GUEST_STATUS_FILTERS.map((status) => {
-          const on = params.status === status;
-          return (
+      {/* Four chips share the width rather than scrolling past the page's edge.
+          A fifth - outside the package - makes them scroll, fading at the far end. */}
+      <div
+        className={cn(
+          'flex gap-1.5 pt-2.5',
+          outsideCount > 0 && 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        )}
+        style={outsideCount > 0 ? { maskImage: chipFade, WebkitMaskImage: chipFade } : undefined}
+      >
+        {GUEST_STATUS_FILTERS.flatMap((status) => {
+          const on = params.status === status && !outsideOnly;
+          const chip = (
             <button
               key={status ?? 'all'}
               type="button"
               aria-pressed={on}
-              onClick={() => changeFilters({ status })}
+              onClick={() => changeFilters({ status, outside: false })}
               className={cn(
-                'flex h-8 min-w-0 flex-auto items-center justify-center gap-1 rounded-full border px-2 text-[13px] whitespace-nowrap',
+                'flex h-8 items-center justify-center gap-1 rounded-full border px-2 text-[13px] whitespace-nowrap',
+                outsideCount > 0 ? 'flex-none px-[9px]' : 'min-w-0 flex-auto',
                 on
                   ? 'border-primary bg-primary/10 text-primary font-bold'
                   : 'bg-card text-muted-foreground font-medium',
@@ -330,6 +356,25 @@ export function GuestsMobile({
               </span>
             </button>
           );
+          if (status !== null || outsideCount === 0) return [chip];
+          return [
+            chip,
+            <button
+              key="outside"
+              type="button"
+              aria-pressed={outsideOnly}
+              onClick={() => changeFilters({ outside: true, status: null })}
+              className={cn(
+                'border-warning-tint-border text-warning-strong flex h-8 flex-none items-center justify-center gap-1 rounded-full border px-[9px] text-[13px] whitespace-nowrap',
+                outsideOnly ? 'bg-warning-tint font-bold' : 'bg-card font-medium',
+              )}
+            >
+              {t('package.chip')}
+              <span className="font-bold tabular-nums">
+                {outsideCount.toLocaleString()}
+              </span>
+            </button>,
+          ];
         })}
       </div>
 
@@ -353,6 +398,8 @@ export function GuestsMobile({
         }
       />
 
+      {outsideOnly && <OutsidePackageBanner variant="mobile" eventName={eventName} />}
+
       {rows.length === 0 ? (
         <div className="flex min-h-[calc(100svh-22rem)] flex-col items-center justify-center gap-2.5 px-3 py-10 text-center">
           <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
@@ -371,12 +418,14 @@ export function GuestsMobile({
       ) : (
         <>
           <p className="text-muted-foreground px-0.5 pt-2.5 pb-1.5 text-[12.5px]">
-            {filtered
-              ? t('list.countFiltered', {
-                  shown: rows.length.toLocaleString(),
-                  total: guests.length.toLocaleString(),
-                })
-              : t('list.count', { total: guests.length })}
+            {outsideOnly && rows.length === outsideCount
+              ? t('package.countOutside', { count: outsideCount })
+              : filtered
+                ? t('list.countFiltered', {
+                    shown: rows.length.toLocaleString(),
+                    total: guests.length.toLocaleString(),
+                  })
+                : t('list.count', { total: guests.length })}
           </p>
           <div
             ref={bodyRef}
@@ -391,6 +440,7 @@ export function GuestsMobile({
                   guest={guest}
                   selecting={selecting}
                   checked={selected.has(guest.id)}
+                  outside={outsideIds.has(guest.id)}
                   style={{
                     position: 'absolute',
                     insetInline: 0,
@@ -534,12 +584,20 @@ export function GuestsMobile({
  * amounts); the list below counts records. Information only - filtering is
  * the status chips' job.
  */
-function Meter({ guests }: { guests: GuestWithGroupApp[] }) {
+function Meter({
+  guests,
+  footer,
+}: {
+  guests: GuestWithGroupApp[];
+  /** The Record Package line, inside the same card rather than a second meter. */
+  footer?: ReactNode;
+}) {
   const t = useTranslations('guests.list');
   const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
 
   return (
-    <div className="bg-card flex flex-col gap-2 rounded-[14px] border px-3.5 py-3">
+    <div className="bg-card overflow-hidden rounded-[14px] border">
+    <div className="flex flex-col gap-2 px-3.5 py-3">
       <div className="flex items-baseline justify-between gap-3">
         <span className="flex items-baseline gap-[5px]">
           <b className="text-xl font-extrabold tabular-nums">
@@ -565,6 +623,8 @@ function Meter({ guests }: { guests: GuestWithGroupApp[] }) {
           />
         ))}
       </div>
+    </div>
+    {footer}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { getEventMessagedGuestIds } from '@/features/guests/queries/activity';
 import { GuestsPage as GuestsPageComponent } from '@/features/guests';
 import { getEventById } from '@/features/events/queries';
 import { getEventTableOptions } from '@/features/seating/queries';
+import { getGuestPackageView } from '@/features/billing/queries';
 
 export default async function GuestsPage({
   params,
@@ -21,6 +22,7 @@ export default async function GuestsPage({
     event,
     tables,
     messagedGuestIds,
+    recordPackage,
   ] = await Promise.all([
     getEventGuestsWithGroups(eventId),
     getEventGroupsWithGuests(eventId),
@@ -28,6 +30,7 @@ export default async function GuestsPage({
     getEventById(eventId),
     getEventTableOptions(eventId),
     getEventMessagedGuestIds(eventId),
+    getGuestPackageView(eventId),
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
@@ -42,6 +45,7 @@ export default async function GuestsPage({
       showDietary={showDietary}
       tables={tables}
       messagedGuestIds={messagedGuestIds}
+      recordPackage={recordPackage}
     />
   );
 }

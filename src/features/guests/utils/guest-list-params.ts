@@ -28,6 +28,12 @@ export type GuestListParams = {
   noPhone: boolean;
   sort: GuestSortKey;
   issue: GuestIssue | null;
+  /**
+   * Only the Guest Records outside the Record Package (ADR 0027). It sits in the status
+   * chips' row as one more choice, so turning it on clears the status and a status
+   * turns it off.
+   */
+  outside: boolean;
 };
 
 export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
@@ -38,6 +44,7 @@ export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
   noPhone: false,
   sort: 'created_asc',
   issue: null,
+  outside: false,
 };
 
 const STATUSES: readonly RsvpStatus[] = ['confirmed', 'pending', 'declined'];
@@ -64,6 +71,7 @@ const KEYS = [
   'noPhone',
   'sort',
   'issue',
+  'package',
 ] as const;
 
 /** An issue scope sorts by name, so likely duplicates sit side by side. */
@@ -90,6 +98,7 @@ export function parseGuestListParams(search: URLSearchParams): GuestListParams {
     noPhone: search.get('noPhone') === '1' || rawIssue === NO_PHONE_ISSUE,
     sort: oneOf(GUEST_SORT_KEYS, search.get('sort')) ?? defaultSortFor(issue),
     issue,
+    outside: search.get('package') === 'outside',
   };
 }
 
@@ -110,6 +119,7 @@ export function writeGuestListParams(
   if (params.sort !== defaultSortFor(params.issue))
     search.set('sort', params.sort);
   if (params.issue) search.set('issue', params.issue);
+  if (params.outside) search.set('package', 'outside');
 }
 
 /** What the Filters button's badge counts: everything but status and search. */

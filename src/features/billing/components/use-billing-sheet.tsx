@@ -2,17 +2,16 @@
 
 import * as React from 'react';
 
-import {
-  EventBillingStatusSheet,
-  useEventBillingStatus,
-} from '@/features/billing';
 import { useCollaboration } from '@/components/feature-layout';
+import { EventBillingStatusSheet } from './event-billing-status-sheet';
+import { useEventBillingStatus } from './event-billing-status-provider';
 
 /**
  * Opening the one sheet that explains the plan.
  *
- * Every billing surface on this page - the timeline's upsell banner, the
- * locked Schedule's footer - has to answer the same question the same way, and
+ * Every billing surface - the timeline's upsell banner, the locked Schedule's
+ * footer, the Guests page's package line - has to answer the same question the
+ * same way, and
  * checkout is a conversation rather than a button, so there is exactly one
  * place that conversation starts. Each of them needs the same four things:
  * the status, whether the viewer is the one who would pay, an open flag, and

@@ -29,6 +29,7 @@ import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { GuestForm } from './guest-form';
 import { GuestActivity } from './guest-activity';
+import { OutsidePackageNotice } from './package';
 
 const FORM_ID = 'guest-drawer-form';
 
@@ -88,6 +89,7 @@ export function GuestDrawer({
             mobile ? 'gap-4 px-4 pt-3.5 pb-4' : 'gap-[18px] px-5 pt-4 pb-5',
           )}
         >
+          {guest && <OutsidePackageNotice guestId={guest.id} />}
           <GuestForm
             key={guest?.id ?? 'new'}
             formId={FORM_ID}

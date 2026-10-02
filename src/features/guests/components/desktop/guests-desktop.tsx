@@ -37,6 +37,7 @@ import { UndoToast } from '../undo-toast';
 import { NewGroupDialog } from './new-group-dialog';
 import { GuestDrawer } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
+import { OutsidePackageBanner, PackageLine } from '../package';
 
 interface GuestsDesktopProps {
   guests: GuestWithGroupApp[];
@@ -89,6 +90,9 @@ export function GuestsDesktop({
     rows,
     visibleIds,
     statusCounts,
+    outsideIds,
+    outsideCount,
+    outsideOnly,
     filtered,
     selected,
     setSelected,
@@ -280,11 +284,21 @@ export function GuestsDesktop({
 
   return (
     <div className="@container/guests flex flex-col">
-      <RsvpMeter guests={guests} />
+      <RsvpMeter
+        guests={guests}
+        aside={
+          <PackageLine
+            variant="desktop"
+            onShowOutside={() => handleFilterChange({ outside: true, status: null })}
+          />
+        }
+      />
       <GuestToolbar
         params={params}
         onChange={handleFilterChange}
         statusCounts={statusCounts}
+        outsideCount={outsideCount}
+        outsideOnly={outsideOnly}
         groups={groups}
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}
@@ -310,6 +324,8 @@ export function GuestsDesktop({
           </button>
         </div>
       )}
+
+      {outsideOnly && <OutsidePackageBanner variant="desktop" eventName={eventName} />}
 
       {rows.length === 0 ? (
         <div className="border-input my-1 flex min-h-[max(360px,calc(100svh-24rem))] items-center justify-center rounded-[14px] border border-dashed">
@@ -339,12 +355,14 @@ export function GuestsDesktop({
             ref={countRef}
             className="bg-app-shell text-muted-foreground sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-[15] -mx-6 px-6 pt-1.5 pb-2 text-[12.5px]"
           >
-            {filtered
-              ? t('list.countFiltered', {
-                  shown: rows.length.toLocaleString(),
-                  total: guests.length.toLocaleString(),
-                })
-              : t('list.count', { total: guests.length })}
+            {outsideOnly && rows.length === outsideCount
+              ? t('package.countOutside', { count: outsideCount })
+              : filtered
+                ? t('list.countFiltered', {
+                    shown: rows.length.toLocaleString(),
+                    total: guests.length.toLocaleString(),
+                  })
+                : t('list.count', { total: guests.length })}
           </p>
           <GuestTable
             rows={rows}
@@ -354,6 +372,7 @@ export function GuestsDesktop({
             showMeals={showDietary}
             tableNumberById={tableNumberById}
             recentlyUpdatedId={recentlyUpdatedId}
+            outsideIds={outsideIds}
             onToggleAll={() =>
               setSelected((prev) => toggleAllVisible(prev, visibleIds))
             }

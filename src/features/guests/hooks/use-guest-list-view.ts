@@ -10,6 +10,7 @@ import {
 } from '@/features/guests/utils';
 import type { GuestListParams } from '@/features/guests/utils/guest-list-params';
 import { pruneSelection } from '@/features/guests/utils/guest-selection';
+import { useRecordPackage } from '@/features/billing';
 import { useGuestListParams } from './use-guest-list-params';
 import { useDeferredDelete } from './use-deferred-delete';
 
@@ -50,10 +51,22 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     );
   }, [guests]);
 
-  const scoped = useMemo(
-    () => (params.issue ? scopeToGuestIssue(guests, params.issue) : guests),
-    [guests, params.issue],
+  // The Record Package (ADR 0027): which records a Schedule would skip right now. The
+  // filter only applies while the event has some - a stale `?package=outside` on a list
+  // that fits again shows everyone rather than nothing.
+  const { outsideIds } = useRecordPackage();
+  const outsideCount = useMemo(
+    () => guests.filter((guest) => outsideIds.has(guest.id)).length,
+    [guests, outsideIds],
   );
+  const outsideOnly = params.outside && outsideCount > 0;
+
+  const scoped = useMemo(() => {
+    const issueScoped = params.issue ? scopeToGuestIssue(guests, params.issue) : guests;
+    return outsideOnly
+      ? issueScoped.filter((guest) => outsideIds.has(guest.id))
+      : issueScoped;
+  }, [guests, params.issue, outsideOnly, outsideIds]);
 
   // Only a selection-only view reads `selected`; a tap must not re-sort the list.
   const selectionFilter = selectionOnly ? selected : null;
@@ -96,7 +109,8 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     params.groups.length > 0 ||
     !!params.side ||
     params.noPhone ||
-    !!params.issue;
+    !!params.issue ||
+    outsideOnly;
 
   /** Hides the records behind the Undo toast and drops them from the selection. */
   const startDelete = (ids: string[]) => {
@@ -120,6 +134,9 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     rows,
     visibleIds,
     statusCounts,
+    outsideIds,
+    outsideCount,
+    outsideOnly,
     filtered,
     countFor,
     selected,
