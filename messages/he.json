@@ -989,8 +989,24 @@
           "returnHint": "אחרי הזנת הקוד, כדאי לחזור לעמוד הזה - הקבוצות יחכו כאן"
         },
         "pick": {
-          "found": "נמצאו {groups} קבוצות ו-{contacts} אנשי קשר",
-          "members": "{count, plural, one {משתתף אחד} other {# משתתפים}}"
+          "tabGroups": "קבוצות",
+          "tabContacts": "אנשי קשר",
+          "searchGroups": "חיפוש קבוצה",
+          "searchContacts": "חיפוש לפי שם או מספר",
+          "members": "{count, plural, one {משתתף אחד} other {# משתתפים}}",
+          "unnamed": "{count} בלי שם",
+          "guestGroupLabel": "הוספה לקבוצת אורחים",
+          "noName": "ללא שם",
+          "showingFirst": "מוצגים {shown} מתוך {total} - אפשר לחפש כדי למצוא עוד",
+          "emptySearch": "לא נמצאו תוצאות",
+          "emptyTab": "אין מה להציג כאן",
+          "continueEmpty": "יש לבחור קבוצות או אנשי קשר",
+          "continue": "{count, plural, one {המשך עם אדם אחד} other {המשך עם # אנשים}}",
+          "unnamedHint": "{count, plural, one {לאחד מהם אין שם - אפשר להוסיף בשלב הבא} other {ל-# מהם אין שם - אפשר להוסיף בשלב הבא}}"
+        },
+        "summary": {
+          "fromSelection": "מתוך {total} אנשים שנבחרו · {seats} מקומות",
+          "importMore": "בחירת אנשים נוספים מוואטסאפ"
         }
       }
     },

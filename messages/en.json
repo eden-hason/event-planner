@@ -989,8 +989,24 @@
           "returnHint": "After entering the code, come back to this page - your groups will be waiting"
         },
         "pick": {
-          "found": "{groups} groups and {contacts} contacts found",
-          "members": "{count, plural, one {# member} other {# members}}"
+          "tabGroups": "Groups",
+          "tabContacts": "Contacts",
+          "searchGroups": "Search groups",
+          "searchContacts": "Search by name or number",
+          "members": "{count, plural, one {# member} other {# members}}",
+          "unnamed": "{count} without a name",
+          "guestGroupLabel": "Add them to guest group",
+          "noName": "No name",
+          "showingFirst": "Showing {shown} of {total} - search to find more",
+          "emptySearch": "Nothing matches your search",
+          "emptyTab": "Nothing to show here",
+          "continueEmpty": "Choose groups or contacts",
+          "continue": "{count, plural, one {Continue with # person} other {Continue with # people}}",
+          "unnamedHint": "{count, plural, one {# has no name - add it in the next step} other {# have no name - add them in the next step}}"
+        },
+        "summary": {
+          "fromSelection": "out of {total} people selected · {seats} seats",
+          "importMore": "Pick more from WhatsApp"
         }
       }
     },
