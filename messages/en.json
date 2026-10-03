@@ -965,7 +965,7 @@
           "phoneLabel": "Your WhatsApp number",
           "phoneHint": "You will get a code to enter in WhatsApp on this phone",
           "privacyTitle": "Read-only and temporary",
-          "privacyBody": "Kululu reads your groups and contacts once to show them here. WhatsApp is unlinked as soon as it is done, and only the guests you choose are saved.",
+          "privacyBody": "Kululu reads your groups and contacts once to show them here and keeps them for a few minutes at most. WhatsApp is unlinked as soon as it is done, and only the guests you choose are saved.",
           "getCode": "Get a link code",
           "tryAgain": "Try again",
           "requesting": "Getting your code",
@@ -985,7 +985,8 @@
           "errorConnectionClosed": "WhatsApp did not accept the link - wait a few minutes and try again",
           "errorTimeout": "This took too long - try again",
           "errorUnknown": "Something went wrong - try again",
-          "errorInvalidPhone": "Enter a valid phone number"
+          "errorInvalidPhone": "Enter a valid phone number",
+          "returnHint": "After entering the code, come back to this page - your groups will be waiting"
         },
         "pick": {
           "found": "{groups} groups and {contacts} contacts found",

@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { sweepWebhookInbox } from '@/features/schedules/services/sweep-webhook-inbox';
 import { reapStrandedAttempts } from '@/features/schedules/services/reap-stranded-attempts';
 import { sweepSmsFallback } from '@/features/schedules/services/sweep-sms-fallback';
+import { purgeExpiredWhatsAppImportSessions } from '@/features/guests/services/whatsapp-import-session';
 import { isAuthorizedCron } from '@/lib/config/sending';
 
 /**
@@ -18,6 +19,10 @@ import { isAuthorizedCron } from '@/lib/config/sending';
  *
  * Running them out of order would have the Fallback deciding on a Schedule
  * whose failures had not landed yet.
+ *
+ * Unrelated to the three, it also drops expired WhatsApp import sessions
+ * (backlog 0017) - they hold other people's names and numbers, so a session
+ * nobody came back for should not linger.
  */
 export const maxDuration = 300;
 
@@ -31,12 +36,14 @@ export async function GET(request: Request) {
   const webhooks = await sweepWebhookInbox(supabase);
   const reaped = await reapStrandedAttempts(supabase);
   const fallback = await sweepSmsFallback(supabase);
+  const whatsappImports = await purgeExpiredWhatsAppImportSessions(supabase);
 
   console.log(
     `[sweep] Done: ${webhooks.processed}/${webhooks.picked} webhook(s) processed, ` +
       `${reaped.reaped} attempt(s) reaped, ` +
-      `${fallback.considered} schedule(s) considered for SMS fallback, ${fallback.sent} sent`,
+      `${fallback.considered} schedule(s) considered for SMS fallback, ${fallback.sent} sent, ` +
+      `${whatsappImports.purged} expired WhatsApp import session(s) purged`,
   );
 
-  return NextResponse.json({ success: true, webhooks, reaped, fallback });
+  return NextResponse.json({ success: true, webhooks, reaped, fallback, whatsappImports });
 }

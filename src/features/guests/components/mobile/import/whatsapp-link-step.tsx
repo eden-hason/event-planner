@@ -38,7 +38,7 @@ const ERROR_KEYS: Record<WhatsAppImportError, string> = {
  * First step of the WhatsApp import: the Owner's number, then the pairing
  * code to enter on their phone, then a wait while groups and contacts are
  * read. Everything here is a view of `useWhatsAppImport` - the session itself
- * lives in the open request (backlog 0017).
+ * runs server-side and survives the Owner switching to WhatsApp (backlog 0017).
  */
 export function WhatsAppLinkStep({
   state,
@@ -61,9 +61,9 @@ export function WhatsAppLinkStep({
           <span className="text-[16px] font-bold">
             {state.status === 'requesting' ? t('requesting') : t('reading')}
           </span>
-          {state.groups && (
+          {state.status === 'linked' && state.groupCount !== null && (
             <span className="text-muted-foreground text-[13px]">
-              {t('groupsFound', { count: state.groups.length })}
+              {t('groupsFound', { count: state.groupCount })}
             </span>
           )}
         </div>
@@ -188,6 +188,10 @@ function CodeView({ code, onCancel }: { code: string; onCancel: () => void }) {
           </div>
         </li>
       </ol>
+
+      <p className="bg-primary/5 text-primary rounded-xl p-3 text-center text-[13px] font-medium">
+        {t('returnHint')}
+      </p>
 
       <div className="text-muted-foreground mt-auto flex items-center justify-center gap-2 text-[13px]">
         <Spinner className="size-4" />
