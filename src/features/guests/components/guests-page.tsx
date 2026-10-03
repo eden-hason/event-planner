@@ -102,6 +102,9 @@ export function GuestsPage({
   // instead of the plain upload screen - see `GuestImportFlow`.
   const goToImportRouteViaDrive = () =>
     router.push(`/app/${eventId}/guests/import?source=drive`);
+  // `?source=whatsapp` opens the wizard on the WhatsApp link step instead.
+  const goToImportRouteViaWhatsApp = () =>
+    router.push(`/app/${eventId}/guests/import?source=whatsapp`);
 
   const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
     const errorMessages: Record<UpsertGroupErrorCode, string> = {
@@ -528,6 +531,7 @@ export function GuestsPage({
           onSelectSingleGuest={handleAddGuest}
           onSelectUploadFile={goToImportRoute}
           onSelectGoogleDrive={goToImportRouteViaDrive}
+          onSelectWhatsApp={goToImportRouteViaWhatsApp}
         />
       )}
 

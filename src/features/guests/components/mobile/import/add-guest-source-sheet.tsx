@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { IconUpload, IconUserPlus } from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconUpload, IconUserPlus } from '@tabler/icons-react';
 import {
   Sheet,
   SheetContent,
@@ -16,12 +16,13 @@ interface AddGuestSourceSheetProps {
   onSelectSingleGuest: () => void;
   onSelectUploadFile: () => void;
   onSelectGoogleDrive: () => void;
+  onSelectWhatsApp: () => void;
 }
 
 /**
  * The mobile "Add guest" header button's landing spot: a choice between
- * entering one guest by hand, uploading a file, and importing from Google
- * Drive, rather than jumping straight into the single-guest form the way it
+ * entering one guest by hand, uploading a file, importing from Google Drive,
+ * and picking people from the Owner's WhatsApp (backlog 0017), rather than jumping straight into the single-guest form the way it
  * used to.
  *
  * That extra tap costs the most frequent action (adding one guest) a step it
@@ -35,6 +36,7 @@ export function AddGuestSourceSheet({
   onSelectSingleGuest,
   onSelectUploadFile,
   onSelectGoogleDrive,
+  onSelectWhatsApp,
 }: AddGuestSourceSheetProps) {
   const t = useTranslations('guests.import.mobile.sourceSheet');
 
@@ -106,6 +108,30 @@ export function AddGuestSourceSheet({
               </span>
               <span className="text-muted-foreground text-xs">
                 {t('googleDriveDescription')}
+              </span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false);
+              onSelectWhatsApp();
+            }}
+            className="flex items-center gap-3 rounded-xl border p-3.5 text-start"
+          >
+            <span className="bg-success/10 text-success flex size-10 shrink-0 items-center justify-center rounded-lg">
+              <IconBrandWhatsapp size={20} />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                {t('whatsapp')}
+                <span className="bg-success/15 text-success rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+                  {t('newBadge')}
+                </span>
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {t('whatsappDescription')}
               </span>
             </div>
           </button>

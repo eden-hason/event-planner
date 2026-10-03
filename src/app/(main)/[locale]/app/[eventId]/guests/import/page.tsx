@@ -1,5 +1,7 @@
 import { getEventGuestPhones, getEventGroups } from '@/features/guests/queries';
+import { getUserProfile } from '@/features/auth/queries';
 import { GuestImportFlow } from '@/features/guests';
+import { formatPhone } from '@/lib/phone';
 
 /**
  * The mobile guest-import wizard - a full-screen takeover, not a page inside
@@ -14,9 +16,10 @@ export default async function GuestImportPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const [existingPhones, groups] = await Promise.all([
+  const [existingPhones, groups, profile] = await Promise.all([
     getEventGuestPhones(eventId),
     getEventGroups(eventId),
+    getUserProfile(),
   ]);
 
   return (
@@ -24,6 +27,7 @@ export default async function GuestImportPage({
       eventId={eventId}
       existingPhones={existingPhones}
       groups={groups}
+      ownerPhone={formatPhone(profile?.phoneNumber)}
     />
   );
 }

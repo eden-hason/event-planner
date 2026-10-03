@@ -9,6 +9,8 @@ const STEP_COUNT = 4;
 interface ImportWizardShellProps {
   /** 0-indexed: upload, analyze, validate, summary. */
   stepIndex: number;
+  /** The first two step names, when the source is not a file (e.g. WhatsApp's connect, choose). */
+  leadingStepLabels?: [string, string];
   onBack: () => void;
   children: React.ReactNode;
 }
@@ -23,6 +25,7 @@ interface ImportWizardShellProps {
  */
 export function ImportWizardShell({
   stepIndex,
+  leadingStepLabels,
   onBack,
   children,
 }: ImportWizardShellProps) {
@@ -30,8 +33,7 @@ export function ImportWizardShell({
   const tMobile = useTranslations('guests.import.mobile.header');
 
   const stepLabels = [
-    t('stepUpload'),
-    t('stepAnalyze'),
+    ...(leadingStepLabels ?? [t('stepUpload'), t('stepAnalyze')]),
     t('stepValidate'),
     t('stepSummary'),
   ];
