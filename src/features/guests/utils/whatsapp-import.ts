@@ -178,7 +178,7 @@ export function sortContacts(people: Iterable<WhatsAppPerson>): WhatsAppPerson[]
 }
 
 /** Saved name, then the person's own WhatsApp name, then empty. */
-function whatsAppDisplayName(person: WhatsAppPerson): string {
+export function whatsAppDisplayName(person: WhatsAppPerson): string {
   return person.savedName ?? person.pushName ?? '';
 }
 
@@ -241,4 +241,84 @@ export function toWhatsAppImportTable(selection: WhatsAppImportSelection): {
     parsed: { headers: ['name', 'phone', 'group'], rows },
     mapping: WHATSAPP_IMPORT_MAPPING,
   };
+}
+
+/**
+ * What the Owner has ticked on the pick step. Kept as plain ids and phones
+ * (not objects) so it survives going back from the validate step.
+ */
+export interface WhatsAppPick {
+  /** In the order they were ticked: a person's first selected group decides their guest group. */
+  groupIds: string[];
+  /** The guest group each selected WhatsApp group maps to; absent or null means none. */
+  guestGroups: Record<string, string | null>;
+  contactPhones: string[];
+}
+
+export const EMPTY_WHATSAPP_PICK: WhatsAppPick = {
+  groupIds: [],
+  guestGroups: {},
+  contactPhones: [],
+};
+
+export function toggleGroupPick(pick: WhatsAppPick, groupId: string): WhatsAppPick {
+  return pick.groupIds.includes(groupId)
+    ? { ...pick, groupIds: pick.groupIds.filter((id) => id !== groupId) }
+    : { ...pick, groupIds: [...pick.groupIds, groupId] };
+}
+
+export function setGuestGroupPick(
+  pick: WhatsAppPick,
+  groupId: string,
+  guestGroup: string | null,
+): WhatsAppPick {
+  return { ...pick, guestGroups: { ...pick.guestGroups, [groupId]: guestGroup } };
+}
+
+export function toggleContactPick(pick: WhatsAppPick, phone: string): WhatsAppPick {
+  return pick.contactPhones.includes(phone)
+    ? { ...pick, contactPhones: pick.contactPhones.filter((p) => p !== phone) }
+    : { ...pick, contactPhones: [...pick.contactPhones, phone] };
+}
+
+/** Resolves the pick against what was read; ids and phones no longer present are ignored. */
+export function toImportSelection(
+  groups: WhatsAppGroup[],
+  contacts: WhatsAppPerson[],
+  pick: WhatsAppPick,
+): WhatsAppImportSelection {
+  const groupsById = new Map(groups.map((g) => [g.id, g]));
+  const contactsByPhone = new Map(contacts.map((c) => [c.phone, c]));
+  return {
+    groups: pick.groupIds.flatMap((id) => {
+      const group = groupsById.get(id);
+      return group ? [{ group, guestGroup: pick.guestGroups[id] ?? null }] : [];
+    }),
+    contacts: pick.contactPhones.flatMap((phone) => {
+      const contact = contactsByPhone.get(phone);
+      return contact ? [contact] : [];
+    }),
+  };
+}
+
+/** How many distinct people the pick adds up to, and how many of them have no name. */
+export function summarizePick(selection: WhatsAppImportSelection): {
+  people: number;
+  unnamed: number;
+} {
+  const people = new Map<string, WhatsAppPerson>();
+  for (const { group } of selection.groups) {
+    for (const member of group.members) people.set(member.phone, member);
+  }
+  for (const contact of selection.contacts) people.set(contact.phone, contact);
+  let unnamed = 0;
+  for (const person of people.values()) if (!whatsAppDisplayName(person)) unnamed++;
+  return { people: people.size, unnamed };
+}
+
+/** Case-insensitive match of a search term against any of the given texts. */
+export function matchesSearch(term: string, ...texts: (string | null | undefined)[]): boolean {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return true;
+  return texts.some((text) => text?.toLowerCase().includes(needle));
 }

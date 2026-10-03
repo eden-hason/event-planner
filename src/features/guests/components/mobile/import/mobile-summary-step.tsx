@@ -18,6 +18,8 @@ interface MobileSummaryStepProps {
   reasons: SkipReason[];
   onGoToGuestList: () => void;
   onImportAnother: () => void;
+  /** Where the rows came from, for the wording: a file's rows or WhatsApp's people. */
+  source?: 'file' | 'whatsapp';
 }
 
 export function MobileSummaryStep({
@@ -27,9 +29,12 @@ export function MobileSummaryStep({
   reasons,
   onGoToGuestList,
   onImportAnother,
+  source = 'file',
 }: MobileSummaryStepProps) {
   const t = useTranslations('guests.import');
   const ts = useTranslations('guests.import.mobile.summary');
+  const tw = useTranslations('guests.import.whatsapp.summary');
+  const importAnotherLabel = source === 'whatsapp' ? tw('importMore') : ts('importAnother');
 
   if (status === 'importing') {
     return (
@@ -55,7 +60,7 @@ export function MobileSummaryStep({
           </p>
         </div>
         <Button variant="outline" onClick={onImportAnother}>
-          {ts('importAnother')}
+          {importAnotherLabel}
         </Button>
       </div>
     );
@@ -82,7 +87,9 @@ export function MobileSummaryStep({
             {ts('guestsAdded', { count: importedCount })}
           </span>
           <span className="text-muted-foreground text-sm">
-            {ts('fromFile', { total: totalFileRows, seats })}
+            {source === 'whatsapp'
+              ? tw('fromSelection', { total: totalFileRows, seats })
+              : ts('fromFile', { total: totalFileRows, seats })}
           </span>
         </div>
 
@@ -136,7 +143,7 @@ export function MobileSummaryStep({
       <div className="bg-card flex shrink-0 flex-col gap-2 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <Button onClick={onGoToGuestList}>{ts('goToGuestList')}</Button>
         <Button variant="ghost" onClick={onImportAnother}>
-          {ts('importAnother')}
+          {importAnotherLabel}
         </Button>
       </div>
     </div>

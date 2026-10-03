@@ -24,6 +24,12 @@ import { computeMergedRows, type RowEditsMap } from './compute-import-rows';
 import { WhatsAppLinkStep } from './whatsapp-link-step';
 import { WhatsAppPickStep } from './whatsapp-pick-step';
 import { useWhatsAppImport } from '@/features/guests/hooks/use-whatsapp-import';
+import {
+  EMPTY_WHATSAPP_PICK,
+  toImportSelection,
+  toWhatsAppImportTable,
+  type WhatsAppPick,
+} from '@/features/guests/utils/whatsapp-import';
 import { cn } from '@/lib/utils';
 
 type FlowStep =
@@ -55,6 +61,9 @@ function stepIndexFor(step: ShownStep): number {
 /**
  * The mobile guest-import wizard's state machine: upload -> analyze ->
  * (mapping review, only when the AI wasn't confident) -> validate -> summary.
+ * From WhatsApp (`?source=whatsapp`) the first two are link -> pick instead,
+ * and the pick becomes the same table a file would, so validate and summary
+ * run unchanged.
  *
  * Lives at `/guests/import` as its own full-screen route rather than inside
  * the desktop `Dialog` this replaces on mobile - see `ImportWizardShell` and
@@ -87,6 +96,9 @@ export function GuestImportFlow({
   // the status and lands back on the link step.
   const shownStep: ShownStep =
     step === 'whatsapp-link' && whatsApp.state.status === 'done' ? 'whatsapp-pick' : step;
+  // Lives here rather than in the pick step so going back from validate
+  // lands on the same ticks.
+  const [whatsAppPick, setWhatsAppPick] = useState<WhatsAppPick>(EMPTY_WHATSAPP_PICK);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [isConnectingToDrive, setIsConnectingToDrive] = useState(false);
@@ -107,6 +119,32 @@ export function GuestImportFlow({
 
   const goToGuestList = () => router.push(`/app/${eventId}/guests`);
 
+  // Back to the pick step with what was read still in hand - WhatsApp's
+  // equivalent of "upload another file".
+  const resetToWhatsAppPick = () => {
+    setParsedData(null);
+    setColumnMapping({});
+    setExcludedRows(new Set());
+    setRowEdits(new Map());
+    setImportResult(null);
+    setStep('whatsapp-link');
+  };
+
+  const handleWhatsAppContinue = () => {
+    const { parsed, mapping } = toWhatsAppImportTable(
+      toImportSelection(
+        whatsApp.state.groups ?? [],
+        whatsApp.state.contacts ?? [],
+        whatsAppPick,
+      ),
+    );
+    setParsedData(parsed);
+    setColumnMapping(mapping);
+    setExcludedRows(new Set());
+    setRowEdits(new Map());
+    setStep('validate');
+  };
+
   const resetToUpload = () => {
     setSelectedFile(null);
     setParsedData(null);
@@ -119,6 +157,15 @@ export function GuestImportFlow({
     setStep('upload');
   };
 
+  const importAnother = () => {
+    if (isWhatsApp) {
+      setWhatsAppPick(EMPTY_WHATSAPP_PICK);
+      resetToWhatsAppPick();
+    } else {
+      resetToUpload();
+    }
+  };
+
   const handleBack = () => {
     if (step === 'upload') {
       goToGuestList();
@@ -126,6 +173,7 @@ export function GuestImportFlow({
     }
     if (shownStep === 'whatsapp-pick') {
       whatsApp.cancel();
+      setWhatsAppPick(EMPTY_WHATSAPP_PICK);
       return;
     }
     if (step === 'whatsapp-link') {
@@ -138,12 +186,13 @@ export function GuestImportFlow({
       return;
     }
     if (step === 'validate') {
-      resetToUpload();
+      if (isWhatsApp) resetToWhatsAppPick();
+      else resetToUpload();
       return;
     }
     // From summary, back behaves like "import another file" rather than
     // stepping into a finished import - there's nothing to resume there.
-    resetToUpload();
+    importAnother();
   };
 
   // Shared by both sources - a device upload and a Drive download both end up
@@ -318,6 +367,10 @@ export function GuestImportFlow({
           <WhatsAppPickStep
             groups={whatsApp.state.groups ?? []}
             contacts={whatsApp.state.contacts ?? []}
+            guestGroups={groups}
+            pick={whatsAppPick}
+            onPickChange={setWhatsAppPick}
+            onContinue={handleWhatsAppContinue}
           />
         )}
 
@@ -360,7 +413,8 @@ export function GuestImportFlow({
             totalFileRows={parsedData?.rows.length ?? 0}
             reasons={skipReasons}
             onGoToGuestList={goToGuestList}
-            onImportAnother={resetToUpload}
+            onImportAnother={importAnother}
+            source={isWhatsApp ? 'whatsapp' : 'file'}
           />
         )}
       </div>

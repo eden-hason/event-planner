@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { addLidMapping, bareJid, buildGroups, buildPeople, createContactBook, jidPhone, mergeContact, resolvePhone, sortContacts, toWhatsAppImportTable, unresolvedLids, WHATSAPP_IMPORT_MAPPING } from './whatsapp-import.ts';
+import { addLidMapping, bareJid, buildGroups, buildPeople, createContactBook, EMPTY_WHATSAPP_PICK, jidPhone, matchesSearch, mergeContact, resolvePhone, setGuestGroupPick, sortContacts, summarizePick, toggleContactPick, toggleGroupPick, toImportSelection, toWhatsAppImportTable, unresolvedLids, WHATSAPP_IMPORT_MAPPING } from './whatsapp-import.ts';
 
 const PN = (digits: string) => `${digits}@s.whatsapp.net`;
 const LID = (id: string) => `${id}@lid`;
@@ -175,4 +175,69 @@ test('the selection becomes a name/phone/group table, one row per person', () =>
     // Not an Israeli mobile: kept international so validation rejects it as it would from a file.
     ['Abroad', '+14155550100', ''],
   ]);
+});
+
+test('picking toggles groups and contacts, keeping the order groups were ticked', () => {
+  let pick = EMPTY_WHATSAPP_PICK;
+  pick = toggleGroupPick(pick, 'b');
+  pick = toggleGroupPick(pick, 'a');
+  pick = toggleContactPick(pick, '972541111111');
+  assert.deepEqual(pick.groupIds, ['b', 'a']);
+  assert.deepEqual(pick.contactPhones, ['972541111111']);
+
+  pick = toggleGroupPick(pick, 'b');
+  pick = toggleContactPick(pick, '972541111111');
+  assert.deepEqual(pick.groupIds, ['a']);
+  assert.deepEqual(pick.contactPhones, []);
+  // The empty pick itself is never mutated.
+  assert.deepEqual(EMPTY_WHATSAPP_PICK.groupIds, []);
+});
+
+test('a pick resolves to groups in tick order with their guest group, skipping stale ids', () => {
+  const groups = [
+    { id: 'a', subject: 'A', unresolvedCount: 0, members: [] },
+    { id: 'b', subject: 'B', unresolvedCount: 0, members: [] },
+  ];
+  const contacts = [{ phone: '972541111111', savedName: 'Moshe', pushName: null }];
+  let pick = EMPTY_WHATSAPP_PICK;
+  pick = toggleGroupPick(pick, 'b');
+  pick = toggleGroupPick(pick, 'a');
+  pick = toggleGroupPick(pick, 'gone');
+  pick = setGuestGroupPick(pick, 'b', 'Family');
+  pick = toggleContactPick(pick, '972541111111');
+  pick = toggleContactPick(pick, '972549999999');
+
+  const selection = toImportSelection(groups, contacts, pick);
+  assert.deepEqual(
+    selection.groups.map((g: { group: { id: string }; guestGroup: string | null }) => [
+      g.group.id,
+      g.guestGroup,
+    ]),
+    [
+      ['b', 'Family'],
+      ['a', null],
+    ],
+  );
+  assert.deepEqual(selection.contacts, contacts);
+});
+
+test('the pick summary counts each person once and counts the nameless', () => {
+  const dana = { phone: '972542222222', savedName: null, pushName: 'Dana' };
+  const nameless = { phone: '972543333333', savedName: null, pushName: null };
+  const summary = summarizePick({
+    groups: [
+      { group: { id: 'a', subject: 'A', unresolvedCount: 0, members: [dana, nameless] }, guestGroup: null },
+      { group: { id: 'b', subject: 'B', unresolvedCount: 0, members: [dana] }, guestGroup: null },
+    ],
+    contacts: [dana, { phone: '972544444444', savedName: 'Avi', pushName: null }],
+  });
+  assert.deepEqual(summary, { people: 3, unnamed: 1 });
+});
+
+test('search matches any text, ignoring case and blank terms', () => {
+  assert.equal(matchesSearch('', 'anything'), true);
+  assert.equal(matchesSearch('  ', null), true);
+  assert.equal(matchesSearch('moSHE', 'Moshe Cohen', null), true);
+  assert.equal(matchesSearch('0541', null, '0541111111'), true);
+  assert.equal(matchesSearch('dana', 'Moshe', null), false);
 });
