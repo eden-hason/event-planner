@@ -31,9 +31,11 @@ type FlowStep =
   | 'analyzing'
   | 'review'
   | 'whatsapp-link'
-  | 'whatsapp-pick'
   | 'validate'
   | 'summary';
+
+/** What is on screen: `step`, except a finished WhatsApp read shows its pick step. */
+type ShownStep = FlowStep | 'whatsapp-pick';
 
 interface GuestImportFlowProps {
   eventId: string;
@@ -43,7 +45,7 @@ interface GuestImportFlowProps {
   ownerPhone?: string;
 }
 
-function stepIndexFor(step: FlowStep): number {
+function stepIndexFor(step: ShownStep): number {
   if (step === 'upload' || step === 'whatsapp-link') return 0;
   if (step === 'analyzing' || step === 'review' || step === 'whatsapp-pick') return 1;
   if (step === 'validate') return 2;
@@ -74,19 +76,17 @@ export function GuestImportFlow({
   const ts = useTranslations('guests.import.mobile.summary');
 
   const tw = useTranslations('guests.import.whatsapp');
-  // `?source=whatsapp` (from the source sheet's WhatsApp row) starts on the
-  // link step rather than the file upload.
-  const isWhatsApp = searchParams.get('source') === 'whatsapp';
+  // `?source=` comes from the source sheet: `whatsapp` starts on the link
+  // step rather than the file upload, `drive` opens the picker (below).
+  const source = searchParams.get('source');
+  const isWhatsApp = source === 'whatsapp';
   const [step, setStep] = useState<FlowStep>(isWhatsApp ? 'whatsapp-link' : 'upload');
   const whatsApp = useWhatsAppImport(eventId);
-
   // The session ends (and the device is unlinked) before `done` arrives, so
-  // moving on is all that is left to do.
-  useEffect(() => {
-    if (whatsApp.state.status === 'done' && step === 'whatsapp-link') {
-      setStep('whatsapp-pick');
-    }
-  }, [whatsApp.state.status, step]);
+  // the pick step is just what a finished link step shows; cancelling resets
+  // the status and lands back on the link step.
+  const shownStep: ShownStep =
+    step === 'whatsapp-link' && whatsApp.state.status === 'done' ? 'whatsapp-pick' : step;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [isConnectingToDrive, setIsConnectingToDrive] = useState(false);
@@ -124,14 +124,13 @@ export function GuestImportFlow({
       goToGuestList();
       return;
     }
+    if (shownStep === 'whatsapp-pick') {
+      whatsApp.cancel();
+      return;
+    }
     if (step === 'whatsapp-link') {
       whatsApp.cancel();
       goToGuestList();
-      return;
-    }
-    if (step === 'whatsapp-pick') {
-      whatsApp.cancel();
-      setStep('whatsapp-link');
       return;
     }
     if (step === 'analyzing' || step === 'review') {
@@ -190,11 +189,11 @@ export function GuestImportFlow({
   const hasAutoTriggeredDrive = useRef(false);
   useEffect(() => {
     if (hasAutoTriggeredDrive.current) return;
-    if (searchParams.get('source') !== 'drive') return;
+    if (source !== 'drive') return;
     hasAutoTriggeredDrive.current = true;
     handleGoogleDriveImport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [source]);
 
   const handleAnalyzeComplete = ({
     mapping,
@@ -270,8 +269,14 @@ export function GuestImportFlow({
 
   return (
     <ImportWizardShell
-      stepIndex={stepIndexFor(step)}
-      leadingStepLabels={isWhatsApp ? [tw('stepConnect'), tw('stepChoose')] : undefined}
+      stepIndex={stepIndexFor(shownStep)}
+      stepLabels={[
+        ...(isWhatsApp
+          ? [tw('stepConnect'), tw('stepChoose')]
+          : [t('stepUpload'), t('stepAnalyze')]),
+        t('stepValidate'),
+        t('stepSummary'),
+      ]}
       onBack={handleBack}
     >
       {/*
@@ -282,11 +287,11 @@ export function GuestImportFlow({
         start. Skipped under reduced motion.
       */}
       <div
-        key={step}
+        key={shownStep}
         className={cn(
           'flex min-h-0 flex-1 flex-col',
           'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out',
-          step === 'upload' || step === 'whatsapp-link'
+          shownStep === 'upload' || shownStep === 'whatsapp-link'
             ? 'motion-safe:slide-in-from-start-8'
             : 'motion-safe:slide-in-from-end-8',
         )}
@@ -300,7 +305,7 @@ export function GuestImportFlow({
           />
         )}
 
-        {step === 'whatsapp-link' && (
+        {shownStep === 'whatsapp-link' && (
           <WhatsAppLinkStep
             state={whatsApp.state}
             defaultPhone={ownerPhone}
@@ -309,7 +314,7 @@ export function GuestImportFlow({
           />
         )}
 
-        {step === 'whatsapp-pick' && (
+        {shownStep === 'whatsapp-pick' && (
           <WhatsAppPickStep
             groups={whatsApp.state.groups ?? []}
             contacts={whatsApp.state.contacts ?? []}

@@ -97,14 +97,11 @@ export function GuestsPage({
     [guests],
   );
 
-  const goToImportRoute = () => router.push(`/app/${eventId}/guests/import`);
-  // `?source=drive` tells the wizard to open straight into the Drive picker
-  // instead of the plain upload screen - see `GuestImportFlow`.
-  const goToImportRouteViaDrive = () =>
-    router.push(`/app/${eventId}/guests/import?source=drive`);
-  // `?source=whatsapp` opens the wizard on the WhatsApp link step instead.
-  const goToImportRouteViaWhatsApp = () =>
-    router.push(`/app/${eventId}/guests/import?source=whatsapp`);
+  // `?source=drive` opens the wizard straight into the Drive picker and
+  // `?source=whatsapp` on the WhatsApp link step, instead of the plain upload
+  // screen - see `GuestImportFlow`.
+  const goToImportRoute = (source?: 'drive' | 'whatsapp') =>
+    router.push(`/app/${eventId}/guests/import${source ? `?source=${source}` : ''}`);
 
   const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
     const errorMessages: Record<UpsertGroupErrorCode, string> = {
@@ -449,8 +446,8 @@ export function GuestsPage({
               }}
               onOpenGuest={(guest) => openGuestDrawer(guest.id)}
               onAddGuest={handleAddGuest}
-              onImportFile={goToImportRoute}
-              onImportDrive={goToImportRouteViaDrive}
+              onImportFile={() => goToImportRoute()}
+              onImportDrive={() => goToImportRoute('drive')}
               onSelectionHeader={setSelectionHeader}
             />
           ) : (
@@ -470,7 +467,7 @@ export function GuestsPage({
               }}
               onOpenGuest={(guest) => openGuestDrawer(guest.id)}
               onAddGuest={handleAddGuest}
-              onImportDrive={goToImportRouteViaDrive}
+              onImportDrive={() => goToImportRoute('drive')}
             />
           )}
         </TabsContent>
@@ -529,9 +526,9 @@ export function GuestsPage({
           open={sourceSheetOpen}
           onOpenChange={setSourceSheetOpen}
           onSelectSingleGuest={handleAddGuest}
-          onSelectUploadFile={goToImportRoute}
-          onSelectGoogleDrive={goToImportRouteViaDrive}
-          onSelectWhatsApp={goToImportRouteViaWhatsApp}
+          onSelectUploadFile={() => goToImportRoute()}
+          onSelectGoogleDrive={() => goToImportRoute('drive')}
+          onSelectWhatsApp={() => goToImportRoute('whatsapp')}
         />
       )}
 

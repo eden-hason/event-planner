@@ -12,14 +12,17 @@ import { formatPhone } from '@/lib/phone';
  */
 export default async function GuestImportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ source?: string }>;
 }) {
-  const { eventId } = await params;
+  const [{ eventId }, { source }] = await Promise.all([params, searchParams]);
   const [existingPhones, groups, profile] = await Promise.all([
     getEventGuestPhones(eventId),
     getEventGroups(eventId),
-    getUserProfile(),
+    // Only the WhatsApp step uses it, to pre-fill the number to link.
+    source === 'whatsapp' ? getUserProfile() : null,
   ]);
 
   return (

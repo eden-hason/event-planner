@@ -18,6 +18,7 @@ import {
   mergeContact,
   sortContacts,
   unresolvedLids,
+  type RawWhatsAppContact,
   type RawWhatsAppGroup,
 } from '../utils/whatsapp-import';
 
@@ -188,7 +189,8 @@ export function runWhatsAppImport({
         touch();
       });
       s.ev.on('contacts.update', (contacts) => {
-        contacts.forEach((c) => c.id && mergeContact(book, { ...c, id: c.id }));
+        // `mergeContact` skips the id-less partials an update can carry.
+        contacts.forEach((c) => mergeContact(book, c as RawWhatsAppContact));
         touch();
       });
       s.ev.on('lid-mapping.update', ({ lid, pn }) => addLidMapping(book, lid, pn));
@@ -218,14 +220,15 @@ export function runWhatsAppImport({
 
         if (connection === 'open' && linkedAt === null) {
           paired = true;
-          linkedAt = Date.now();
+          const linkTime = Date.now();
+          linkedAt = linkTime;
           touch();
           selfPhone = jidPhone(s.user?.id);
           emit({ type: 'linked' });
           void sendEarlyGroups(s);
           settleInterval = setInterval(() => {
             const now = Date.now();
-            const sinceLink = now - (linkedAt ?? now);
+            const sinceLink = now - linkTime;
             const quiet = now - lastActivityAt >= SETTLE_QUIET_MS;
             if (
               sinceLink >= SETTLE_MAX_MS ||

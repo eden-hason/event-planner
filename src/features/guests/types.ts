@@ -44,3 +44,26 @@ export type WhatsAppImportEvent =
   | { type: 'contacts'; contacts: WhatsAppPerson[] }
   | { type: 'done' }
   | { type: 'error'; reason: WhatsAppImportErrorReason };
+
+/** Everything the WhatsApp import can fail with, as the client sees it. */
+export type WhatsAppImportError = WhatsAppImportErrorReason | 'invalid_phone';
+
+/**
+ * `useWhatsAppImport`'s view of one session. `groups` and `contacts` outlive
+ * the status changes they arrive during, so they sit beside the union.
+ */
+export type WhatsAppImportState = {
+  groups: WhatsAppGroup[] | null;
+  contacts: WhatsAppPerson[] | null;
+} & (
+  | { status: 'idle' }
+  /** Waiting for WhatsApp to hand out a pairing code. */
+  | { status: 'requesting' }
+  /** Code on screen, waiting for the Owner to enter it on their phone. */
+  | { status: 'code'; code: string }
+  /** Linked, reading groups and contacts. */
+  | { status: 'linked' }
+  /** Everything read; the device has already been unlinked server-side. */
+  | { status: 'done' }
+  | { status: 'error'; error: WhatsAppImportError }
+);

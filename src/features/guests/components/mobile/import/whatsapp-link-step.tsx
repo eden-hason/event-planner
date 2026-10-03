@@ -10,13 +10,14 @@ import {
   IconLock,
   IconAlertTriangle,
 } from '@tabler/icons-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import type {
   WhatsAppImportError,
   WhatsAppImportState,
-} from '@/features/guests/hooks/use-whatsapp-import';
+} from '@/features/guests/types';
 
 interface WhatsAppLinkStepProps {
   state: WhatsAppImportState;
@@ -30,7 +31,6 @@ const ERROR_KEYS: Record<WhatsAppImportError, string> = {
   connection_closed: 'errorConnectionClosed',
   timeout: 'errorTimeout',
   unknown: 'errorUnknown',
-  request_failed: 'errorUnknown',
   invalid_phone: 'errorInvalidPhone',
 };
 
@@ -49,11 +49,11 @@ export function WhatsAppLinkStep({
   const t = useTranslations('guests.import.whatsapp.link');
   const [phone, setPhone] = useState(defaultPhone);
 
-  if (state.status === 'code' && state.code) {
+  if (state.status === 'code') {
     return <CodeView code={state.code} onCancel={onCancel} />;
   }
 
-  if (state.status === 'requesting' || state.status === 'linked' || state.status === 'done') {
+  if (state.status === 'requesting' || state.status === 'linked') {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
         <Spinner className="text-primary size-8" />
@@ -67,11 +67,9 @@ export function WhatsAppLinkStep({
             </span>
           )}
         </div>
-        {state.status !== 'done' && (
-          <Button variant="ghost" onClick={onCancel}>
-            {t('cancel')}
-          </Button>
-        )}
+        <Button variant="ghost" onClick={onCancel}>
+          {t('cancel')}
+        </Button>
       </div>
     );
   }
@@ -93,14 +91,11 @@ export function WhatsAppLinkStep({
         </span>
       </div>
 
-      {state.status === 'error' && state.error && (
-        <div
-          role="alert"
-          className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2.5 rounded-xl border p-3.5 text-[13px]"
-        >
-          <IconAlertTriangle size={18} className="mt-px shrink-0" />
-          <span>{t(ERROR_KEYS[state.error])}</span>
-        </div>
+      {state.status === 'error' && (
+        <Alert variant="destructive">
+          <IconAlertTriangle />
+          <AlertDescription>{t(ERROR_KEYS[state.error])}</AlertDescription>
+        </Alert>
       )}
 
       <label className="flex flex-col gap-1.5">

@@ -29,8 +29,8 @@ export interface RawWhatsAppGroup {
 const PN_SERVER = '@s.whatsapp.net';
 const LID_SERVER = '@lid';
 
-export const isPnJid = (jid: string) => jid.endsWith(PN_SERVER);
-export const isLidJid = (jid: string) => jid.endsWith(LID_SERVER);
+const isPnJid = (jid: string) => jid.endsWith(PN_SERVER);
+const isLidJid = (jid: string) => jid.endsWith(LID_SERVER);
 
 /** Drops the device suffix: `972548129777:17@s.whatsapp.net` -> `972548129777@s.whatsapp.net`. */
 export function bareJid(jid: string): string {
@@ -61,19 +61,28 @@ export function createContactBook(): ContactBook {
   return { byJid: new Map(), lidToPhone: new Map() };
 }
 
+const CONTACT_FIELDS = ['lid', 'phoneNumber', 'name', 'notify'] as const;
+
 /**
  * Baileys emits partial contacts with explicit `undefined` / empty fields
  * (a history-sync chat with no saved name carries `name: undefined`), so
- * empties are dropped before merging - spreading them as-is erased names that
+ * empties are skipped when merging - spreading them as-is erased names that
  * had already arrived, which is what made the spike under-count saved names.
+ * Only the fields the import reads are kept; a real Baileys contact carries
+ * more, and the book holds thousands of them for the whole session.
  */
 export function mergeContact(book: ContactBook, contact: RawWhatsAppContact): void {
   if (!contact?.id) return;
   const id = bareJid(contact.id);
-  const defined = Object.fromEntries(
-    Object.entries(contact).filter(([, v]) => v != null && v !== ''),
-  ) as Partial<RawWhatsAppContact>;
-  book.byJid.set(id, { ...book.byJid.get(id), ...defined, id });
+  let record = book.byJid.get(id);
+  if (!record) {
+    record = { id };
+    book.byJid.set(id, record);
+  }
+  for (const field of CONTACT_FIELDS) {
+    const value = contact[field];
+    if (value) record[field] = value;
+  }
 
   const lid = isLidJid(id) ? id : contact.lid ? bareJid(contact.lid) : null;
   const phone = jidPhone(isPnJid(id) ? id : contact.phoneNumber);
@@ -169,7 +178,7 @@ export function sortContacts(people: Iterable<WhatsAppPerson>): WhatsAppPerson[]
 }
 
 /** Saved name, then the person's own WhatsApp name, then empty. */
-export function whatsAppDisplayName(person: WhatsAppPerson): string {
+function whatsAppDisplayName(person: WhatsAppPerson): string {
   return person.savedName ?? person.pushName ?? '';
 }
 
@@ -188,9 +197,10 @@ export interface WhatsAppImportSelection {
  * Israeli numbers become the local `0...` form a file would carry; anything
  * else keeps a `+` and fails the validate step the same way a foreign number
  * in a file does. A plain string transform on purpose - validity is the
- * validate step's job, not this one's.
+ * validate step's job, not this one's (and `formatPhone`'s libphonenumber
+ * does not load under the unit-test runner).
  */
-export function toImportPhone(digits: string): string {
+function toImportPhone(digits: string): string {
   return digits.startsWith('972') ? `0${digits.slice(3)}` : `+${digits}`;
 }
 

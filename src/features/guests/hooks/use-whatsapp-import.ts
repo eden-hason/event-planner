@@ -2,45 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-  WhatsAppGroup,
-  WhatsAppImportErrorReason,
+  WhatsAppImportError,
   WhatsAppImportEvent,
-  WhatsAppPerson,
+  WhatsAppImportState,
 } from '../types';
 
-export type WhatsAppImportStatus =
-  | 'idle'
-  /** Waiting for WhatsApp to hand out a pairing code. */
-  | 'requesting'
-  /** Code on screen, waiting for the Owner to enter it on their phone. */
-  | 'code'
-  /** Linked, reading groups and contacts. */
-  | 'linked'
-  /** Everything read; the device has already been unlinked server-side. */
-  | 'done'
-  | 'error';
-
-export type WhatsAppImportError =
-  | WhatsAppImportErrorReason
-  | 'invalid_phone'
-  /** The request itself failed or the stream ended without saying why. */
-  | 'request_failed';
-
-export interface WhatsAppImportState {
-  status: WhatsAppImportStatus;
-  code: string | null;
-  groups: WhatsAppGroup[] | null;
-  contacts: WhatsAppPerson[] | null;
-  error: WhatsAppImportError | null;
-}
-
-const INITIAL: WhatsAppImportState = {
-  status: 'idle',
-  code: null,
-  groups: null,
-  contacts: null,
-  error: null,
-};
+const INITIAL: WhatsAppImportState = { status: 'idle', groups: null, contacts: null };
 
 /**
  * Drives one linked-device session against
@@ -66,10 +33,10 @@ export function useWhatsAppImport(eventId: string) {
       abortRef.current?.abort();
       const abort = new AbortController();
       abortRef.current = abort;
-      setState({ ...INITIAL, status: 'requesting' });
+      setState({ status: 'requesting', groups: null, contacts: null });
 
       const fail = (error: WhatsAppImportError) => {
-        if (abortRef.current === abort) setState((s) => ({ ...s, status: 'error', error }));
+        if (abortRef.current === abort) setState((s) => ({ groups: s.groups, contacts: s.contacts, status: 'error', error }));
       };
 
       let response: Response;
@@ -81,36 +48,39 @@ export function useWhatsAppImport(eventId: string) {
           signal: abort.signal,
         });
       } catch {
-        if (!abort.signal.aborted) fail('request_failed');
+        if (!abort.signal.aborted) fail('unknown');
         return;
       }
       if (!response.ok || !response.body) {
-        fail(response.status === 400 ? 'invalid_phone' : 'request_failed');
+        fail(response.status === 400 ? 'invalid_phone' : 'unknown');
         return;
       }
 
       const apply = (event: WhatsAppImportEvent) => {
         if (abortRef.current !== abort) return;
         setState((s) => {
+          const data = { groups: s.groups, contacts: s.contacts };
           switch (event.type) {
             case 'code':
-              return { ...s, status: 'code', code: event.code };
+              return { ...data, status: 'code', code: event.code };
             case 'linked':
-              return { ...s, status: 'linked' };
+            case 'done':
+              return { ...data, status: event.type };
             case 'groups':
               return { ...s, groups: event.groups };
             case 'contacts':
               return { ...s, contacts: event.contacts };
-            case 'done':
-              return { ...s, status: 'done' };
             case 'error':
-              return { ...s, status: 'error', error: event.reason };
+              return { ...data, status: 'error', error: event.reason };
           }
         });
       };
 
       const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
       let buffer = '';
+      // Where the newline search resumes - a long `contacts` line arrives over
+      // many chunks, and rescanning it from the start each time adds up.
+      let scanFrom = 0;
       let ended = false;
       try {
         for (;;) {
@@ -118,21 +88,23 @@ export function useWhatsAppImport(eventId: string) {
           if (done) break;
           buffer += value;
           let newline: number;
-          while ((newline = buffer.indexOf('\n')) !== -1) {
+          while ((newline = buffer.indexOf('\n', scanFrom)) !== -1) {
             const line = buffer.slice(0, newline).trim();
             buffer = buffer.slice(newline + 1);
+            scanFrom = 0;
             if (!line) continue;
             const event = JSON.parse(line) as WhatsAppImportEvent;
             if (event.type === 'done' || event.type === 'error') ended = true;
             apply(event);
           }
+          scanFrom = buffer.length;
         }
       } catch {
         if (abort.signal.aborted) return;
       }
       // A stream that closes without `done`/`error` (function killed, network
       // drop) is a failure, not a silent stall.
-      if (!ended && !abort.signal.aborted) fail('request_failed');
+      if (!ended && !abort.signal.aborted) fail('unknown');
     },
     [eventId],
   );

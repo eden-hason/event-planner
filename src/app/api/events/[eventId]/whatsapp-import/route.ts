@@ -29,17 +29,15 @@ export async function POST(
   const blocked = await assertNotImpersonating();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
-  const user = await getCurrentUser();
+  // RLS decides whether this user may touch the Event; no row means no. The
+  // lookup needs nothing from the user check, so the two run together.
+  const [user, { data: event }] = await Promise.all([
+    getCurrentUser(),
+    Promise.all([context.params, createClient()]).then(([{ eventId }, supabase]) =>
+      supabase.from('events').select('id').eq('id', eventId).maybeSingle(),
+    ),
+  ]);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { eventId } = await context.params;
-  const supabase = await createClient();
-  // RLS decides whether this user may touch the Event; no row means no.
-  const { data: event } = await supabase
-    .from('events')
-    .select('id')
-    .eq('id', eventId)
-    .maybeSingle();
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   let body: unknown;

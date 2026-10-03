@@ -4,20 +4,18 @@ import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
-const STEP_COUNT = 4;
-
 interface ImportWizardShellProps {
-  /** 0-indexed: upload, analyze, validate, summary. */
+  /** 0-indexed into `stepLabels`. */
   stepIndex: number;
-  /** The first two step names, when the source is not a file (e.g. WhatsApp's connect, choose). */
-  leadingStepLabels?: [string, string];
+  /** One per progress segment - the flow owns them, since they depend on the source. */
+  stepLabels: string[];
   onBack: () => void;
   children: React.ReactNode;
 }
 
 /**
  * The takeover chrome shared by every step of the mobile import wizard: a
- * back arrow, the step title, a 4-segment progress bar, and a scrolling body
+ * back arrow, the step title, a segmented progress bar, and a scrolling body
  * with an optional sticky footer. Mirrors the shell `PageCard` renders for
  * every other page, but this route opts out of that chrome entirely (see
  * `isGuestImportRoute`) because the flow needs the whole viewport and its own
@@ -25,18 +23,12 @@ interface ImportWizardShellProps {
  */
 export function ImportWizardShell({
   stepIndex,
-  leadingStepLabels,
+  stepLabels,
   onBack,
   children,
 }: ImportWizardShellProps) {
   const t = useTranslations('guests.import');
   const tMobile = useTranslations('guests.import.mobile.header');
-
-  const stepLabels = [
-    ...(leadingStepLabels ?? [t('stepUpload'), t('stepAnalyze')]),
-    t('stepValidate'),
-    t('stepSummary'),
-  ];
 
   return (
     <div className="bg-background flex h-full min-h-0 flex-col">
@@ -52,10 +44,13 @@ export function ImportWizardShell({
           </button>
           <span className="flex-1 truncate text-lg font-bold">{t('title')}</span>
           <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">
-            {tMobile('stepOf', { step: stepIndex + 1, total: STEP_COUNT })}
+            {tMobile('stepOf', { step: stepIndex + 1, total: stepLabels.length })}
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: `repeat(${stepLabels.length}, minmax(0, 1fr))` }}
+        >
           {stepLabels.map((label, i) => (
             <div key={label} className="flex flex-col gap-1">
               <span
