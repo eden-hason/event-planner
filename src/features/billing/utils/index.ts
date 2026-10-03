@@ -9,6 +9,7 @@ export {
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   bonusRecords,
+  packageAside,
   packageState,
   recordPackage,
   splitByPackage,

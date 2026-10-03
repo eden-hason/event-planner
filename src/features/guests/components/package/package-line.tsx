@@ -1,8 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { IconChevronLeft, IconChevronRight, IconPackage } from '@tabler/icons-react';
-import { PackageBar, useRecordPackage } from '@/features/billing';
+import { IconChevronRight, IconPackage } from '@tabler/icons-react';
+import { PackageBar, packageAside, useRecordPackage } from '@/features/billing';
 import { cn } from '@/lib/utils';
 
 /**
@@ -31,17 +31,12 @@ export function PackageLine({
   const over = view.state === 'over';
   const interactive = canOpenSheet || over;
   const onClick = canOpenSheet ? () => openSheet({ onShowOutside }) : onShowOutside;
-  const Chevron = locale === 'he' ? IconChevronLeft : IconChevronRight;
   const fmt = (n: number) => n.toLocaleString(locale);
 
   const usedLine = t('usedLine', { used: fmt(view.used), size: fmt(view.size) });
-  const aside = over
-    ? t('over', { count: fmt(view.over) })
-    : view.state === 'full'
-      ? t('full')
-      : t('left', { count: fmt(view.left) });
-  const asideTone =
-    over || view.state === 'near' ? 'text-warning-strong' : 'text-muted-foreground';
+  const asideParts = packageAside(view);
+  const aside = t(asideParts.key, { count: fmt(asideParts.count) });
+  const asideTone = asideParts.warn ? 'text-warning-strong' : 'text-muted-foreground';
 
   const Root = interactive ? 'button' : 'div';
   const rootProps = interactive ? { type: 'button' as const, onClick } : {};
@@ -63,7 +58,7 @@ export function PackageLine({
         <span className="whitespace-nowrap tabular-nums">{usedLine}</span>
         <span className="flex-1" />
         <span className={cn('font-bold whitespace-nowrap tabular-nums', asideTone)}>{aside}</span>
-        {interactive && <Chevron size={14} stroke={2.2} className="shrink-0" />}
+        {interactive && <IconChevronRight size={14} stroke={2.2} className="shrink-0 rtl:rotate-180" />}
       </Root>
     );
   }
@@ -93,7 +88,7 @@ export function PackageLine({
           </div>
           <PackageBar view={view} />
         </div>
-        {interactive && <Chevron size={15} stroke={2.2} />}
+        {interactive && <IconChevronRight size={15} stroke={2.2} className="rtl:rotate-180" />}
       </Root>
     </>
   );

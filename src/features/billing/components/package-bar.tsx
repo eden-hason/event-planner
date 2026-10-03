@@ -1,11 +1,23 @@
 import type { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
-import type { GuestPackageView } from '../types';
+import type { PackageCounts } from '../types';
 
 /** Diagonal stripes: the bonus reads as a gift and the overflow as a warning, not as more of the same. */
 const hatch = (color: string, mix: number): CSSProperties => ({
   backgroundImage: `repeating-linear-gradient(135deg, ${color} 0 3px, color-mix(in oklab, ${color} ${mix}%, transparent) 3px 6px)`,
 });
+
+type Fill = { className?: string; style?: CSSProperties };
+
+/** Each part of the package, used and free; the bar and its legend read the same fills. */
+const FILL: Record<'paid' | 'paidFree' | 'bonus' | 'bonusFree' | 'over', Fill> =
+  {
+    paid: { className: 'bg-primary' },
+    paidFree: { className: 'bg-primary/20' },
+    bonus: { style: hatch('var(--violet-strong)', 70) },
+    bonusFree: { style: hatch('var(--violet-strong)', 22) },
+    over: { style: hatch('var(--warning-strong)', 55) },
+  };
 
 /**
  * Paid, bonus and overflow as one bar. The width is the larger of the package and the
@@ -15,18 +27,18 @@ export function PackageBar({
   view,
   className,
 }: {
-  view: GuestPackageView;
+  view: PackageCounts;
   className?: string;
 }) {
   const total = Math.max(view.used, view.size) || 1;
   const usedPaid = Math.min(view.used, view.paid);
   const usedBonus = Math.min(Math.max(view.used - view.paid, 0), view.bonus);
-  const segments: { n: number; className?: string; style?: CSSProperties }[] = [
-    { n: usedPaid, className: 'bg-primary' },
-    { n: view.paid - usedPaid, className: 'bg-primary/20' },
-    { n: usedBonus, style: hatch('var(--violet-strong)', 70) },
-    { n: view.bonus - usedBonus, style: hatch('var(--violet-strong)', 22) },
-    { n: view.over, style: hatch('var(--warning-strong)', 55) },
+  const segments: (Fill & { n: number })[] = [
+    { n: usedPaid, ...FILL.paid },
+    { n: view.paid - usedPaid, ...FILL.paidFree },
+    { n: usedBonus, ...FILL.bonus },
+    { n: view.bonus - usedBonus, ...FILL.bonusFree },
+    { n: view.over, ...FILL.over },
   ];
 
   return (
@@ -49,19 +61,13 @@ export function PackageBar({
   );
 }
 
-const SWATCH: Record<'paid' | 'bonus' | 'over', { className?: string; style?: CSSProperties }> = {
-  paid: { className: 'bg-primary' },
-  bonus: { style: hatch('var(--violet-strong)', 70) },
-  over: { style: hatch('var(--warning-strong)', 55) },
-};
-
 /** The bar's fill for one part of the package, as a legend key. */
 export function PackageSwatch({ kind }: { kind: 'paid' | 'bonus' | 'over' }) {
   return (
     <span
       aria-hidden
-      className={cn('size-2.5 shrink-0 rounded-[3px]', SWATCH[kind].className)}
-      style={SWATCH[kind].style}
+      className={cn('size-2.5 shrink-0 rounded-[3px]', FILL[kind].className)}
+      style={FILL[kind].style}
     />
   );
 }

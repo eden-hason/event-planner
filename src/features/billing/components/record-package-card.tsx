@@ -1,10 +1,11 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { IconChevronLeft, IconChevronRight, IconPackage } from '@tabler/icons-react';
+import { IconChevronRight, IconPackage } from '@tabler/icons-react';
 import { useCollaboration } from '@/components/feature-layout';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
+import { packageAside } from '../utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
 
@@ -20,24 +21,19 @@ export function RecordPackageCard({
   eventId: string;
   view: GuestPackageView;
 }) {
-  const t = useTranslations('billing.packageCard');
+  const t = useTranslations('billing');
   const tSheet = useTranslations('billing.packageSheet');
   const tGuests = useTranslations('guests.package');
   const locale = useLocale();
-  const { isOwner, isCreator } = useCollaboration();
-  const Chevron = locale === 'he' ? IconChevronLeft : IconChevronRight;
+  const { canSeePayments } = useCollaboration();
   const fmt = (n: number) => n.toLocaleString(locale);
-
-  const over = view.state === 'over';
-  const aside = over
-    ? tGuests('over', { count: fmt(view.over) })
-    : view.state === 'full'
-      ? tGuests('full')
-      : tGuests('left', { count: fmt(view.left) });
+  const aside = packageAside(view);
 
   return (
     <section className="flex flex-col gap-1.5">
-      <h2 className="text-muted-foreground px-1.5 text-xs font-medium">{t('group')}</h2>
+      <h2 className="text-muted-foreground px-1.5 text-xs font-medium">
+        {t('planCard.group')}
+      </h2>
       <div className="bg-card flex flex-col gap-3 rounded-xl border p-3.5">
         <div className="flex items-center gap-3">
           <span
@@ -47,20 +43,26 @@ export function RecordPackageCard({
             <IconPackage size={20} stroke={1.9} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] leading-tight font-semibold">{t('title')}</p>
+            <p className="text-[15px] leading-tight font-semibold">
+              {t('packagePage.cardTitle')}
+            </p>
             {view.channel && (
               <p className="text-muted-foreground mt-0.5 truncate text-xs">
                 {tSheet(`channels.${view.channel}`)}
               </p>
             )}
           </div>
-          {isOwner && isCreator && (
+          {canSeePayments && (
             <Link
               href={`/app/${eventId}/package`}
               className="text-primary flex h-9 items-center gap-0.5 px-1.5 text-[13.5px] font-bold"
             >
-              {t('details')}
-              <Chevron size={14} stroke={2.2} />
+              {t('packageCard.details')}
+              <IconChevronRight
+                size={14}
+                stroke={2.2}
+                className="rtl:rotate-180"
+              />
             </Link>
           )}
         </div>
@@ -72,10 +74,10 @@ export function RecordPackageCard({
           <span
             className={cn(
               'font-bold',
-              over || view.state === 'near' ? 'text-warning-strong' : 'text-muted-foreground',
+              aside.warn ? 'text-warning-strong' : 'text-muted-foreground',
             )}
           >
-            {aside}
+            {tGuests(aside.key, { count: fmt(aside.count) })}
           </span>
         </div>
       </div>

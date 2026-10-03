@@ -36,18 +36,22 @@ export async function getGuestPackageView(eventId: string): Promise<GuestPackage
   if (error || !event) return null;
 
   const loaded = await loadRecordPackage(createServiceClient(), eventId);
-  if (!loaded?.package) return null;
+  return loaded?.package ? toGuestPackageView(loaded, loaded.package) : null;
+}
 
-  const { paid, bonus, size } = loaded.package;
+function toGuestPackageView(
+  loaded: LoadedRecordPackage,
+  pkg: NonNullable<LoadedRecordPackage['package']>,
+): GuestPackageView {
   const { used, left, over, outside } = loaded.split;
   return {
-    paid,
-    bonus,
-    size,
+    paid: pkg.paid,
+    bonus: pkg.bonus,
+    size: pkg.size,
     used,
     left,
     over,
-    state: packageState(size, used),
+    state: packageState(pkg.size, used),
     channel: loaded.channel,
     gifted: loaded.gifted,
     outsideIds: outside,
@@ -65,32 +69,23 @@ export async function getGuestPackageView(eventId: string): Promise<GuestPackage
 export async function getRecordPackagePageView(
   eventId: string,
 ): Promise<{ allowed: false } | { allowed: true; view: RecordPackagePageView | null }> {
-  const role = await getCollaboratorRole(eventId);
-  if (role?.role !== 'owner' || !role.isCreator) return { allowed: false };
-
   const { supabase } = await getEffectiveClient();
-  const [loaded, payments] = await Promise.all([
+  // Read through RLS, so starting the loads before the role check leaks nothing.
+  const [role, loaded, payments] = await Promise.all([
+    getCollaboratorRole(eventId),
     loadRecordPackage(supabase, eventId),
     listEventPayments(supabase, eventId),
   ]);
+  if (role?.role !== 'owner' || !role.isCreator) return { allowed: false };
   if (!loaded?.package || !payments) return { allowed: true, view: null };
 
-  const { paid, bonus, size, bonusIsCustom } = loaded.package;
-  const { used, left, over, outside } = loaded.split;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the page never reads it
+  const { outsideIds, ...counts } = toGuestPackageView(loaded, loaded.package);
   return {
     allowed: true,
     view: {
-      paid,
-      bonus,
-      size,
-      used,
-      left,
-      over,
-      state: packageState(size, used),
-      channel: loaded.channel,
-      gifted: loaded.gifted,
-      outsideIds: outside,
-      bonusIsCustom,
+      ...counts,
+      bonusIsCustom: loaded.package.bonusIsCustom,
       payments: payments.map((payment) => ({
         id: payment.id,
         records: payment.records,

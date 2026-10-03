@@ -14,8 +14,6 @@ export type {
   BillingActionResult,
   GuestPackageView,
   PackageState,
-  PackagePayment,
-  RecordPackagePageView,
 } from './types';
 
 // Pure utils
@@ -28,6 +26,7 @@ export {
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   bonusRecords,
+  packageAside,
   packageState,
   recordPackage,
   splitByPackage,
@@ -51,10 +50,9 @@ export { EventBillingStatusControl } from './components/event-billing-status-con
 // pill does, rather than inventing a second billing story.
 export { EventBillingStatusSheet } from './components/event-billing-status-sheet';
 export { useBillingSheet } from './components/use-billing-sheet';
-export { PackageBar, PackageSwatch } from './components/package-bar';
+export { PackageBar } from './components/package-bar';
 export { RecordPackagePage } from './components/record-package-page';
 export { RecordPackageCard } from './components/record-package-card';
-export { RecordPackageSheet } from './components/record-package-sheet';
 export {
   RecordPackageProvider,
   useRecordPackage,

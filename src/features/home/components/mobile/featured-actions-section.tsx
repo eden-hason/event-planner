@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { formatPhone } from '@/lib/phone';
+import { RecordPackageProvider } from '@/features/billing';
 import { getGuestPackageView } from '@/features/billing/queries';
 import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../../queries';
 import { rankFeaturedActions } from '../../utils/featured-actions';
@@ -31,8 +32,12 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
   // somewhere they cannot go.
   if (!event || !viewer?.isOwner) return null;
 
-  const recordPackage = await getGuestPackageView(eventId);
-  const facts = await getFeaturedActionFacts(event, viewer, recordPackage?.over ?? 0);
+  // The package is loaded here, not with the other facts, because its sheet needs it too.
+  const [baseFacts, recordPackage] = await Promise.all([
+    getFeaturedActionFacts(event, viewer),
+    getGuestPackageView(eventId),
+  ]);
+  const facts = { ...baseFacts, recordsOverPackage: recordPackage?.over ?? 0 };
 
   const why = (key: FeaturedActionKey): string => {
     switch (key) {
@@ -64,16 +69,16 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
   }));
 
   return (
-    <FeaturedActionList
-      eventId={eventId}
-      title={t('title')}
-      subtitle={t('subtitle')}
-      actions={actions}
-      maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
-      previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
-      health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
-      recordPackage={recordPackage}
-      eventName={event.title}
-    />
+    <RecordPackageProvider view={recordPackage} eventName={event.title}>
+      <FeaturedActionList
+        eventId={eventId}
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={actions}
+        maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
+        previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
+        health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
+      />
+    </RecordPackageProvider>
   );
 }

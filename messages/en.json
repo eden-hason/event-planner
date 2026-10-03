@@ -2633,11 +2633,8 @@
         "body": "The most recently added records won't get messages until records are added to the package or guests are removed"
       },
       "rows": {
-        "paid": "Paid records",
-        "gifted": "Records gifted by Kululu",
         "bonus": "Bonus records · free",
         "customBonus": "A gift from the Kululu team",
-        "total": "Total in package",
         "used": "In use",
         "left": "Left",
         "over": "Outside the package"
@@ -2657,13 +2654,10 @@
       "empty": {
         "title": "No record package yet",
         "description": "The package opens with the first payment. Until then, planning is free",
-        "cta": "Talk with us",
         "whatsapp": "Hi, I'd like to open a record package for {event}"
       }
     },
     "packageCard": {
-      "group": "Your plan",
-      "title": "Record package",
       "details": "Details"
     }
   }

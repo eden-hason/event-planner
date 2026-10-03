@@ -65,7 +65,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
-  const { isOwner, isCreator } = useCollaboration();
+  const { isOwner, canSeePayments } = useCollaboration();
   const tNav = useTranslations('navigation');
   const tSidebar = useTranslations('sidebar');
   const locale = useLocale();
@@ -132,8 +132,7 @@ export function AppSidebar({
       url: '/app/gifting',
       icon: IconGift,
     },
-    // Only the creator: the page lists payments, which only they may read.
-    ...(isCreator
+    ...(canSeePayments
       ? [
           {
             id: 'package',

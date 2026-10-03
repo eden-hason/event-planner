@@ -7,12 +7,18 @@ type CollaborationContextValue = {
   role: CollaboratorRole;
   isCreator: boolean;
   isOwner: boolean;
+  /**
+   * May read the Event's payments: the Owner who created it. Payment RLS checks
+   * `events.user_id`, so a co-owner collaborator would see the money missing.
+   */
+  canSeePayments: boolean;
 };
 
 const CollaborationContext = React.createContext<CollaborationContextValue>({
   role: 'owner',
   isCreator: true,
   isOwner: true,
+  canSeePayments: true,
 });
 
 export function CollaborationProvider({
@@ -29,6 +35,7 @@ export function CollaborationProvider({
       role,
       isCreator,
       isOwner: role === 'owner',
+      canSeePayments: role === 'owner' && isCreator,
     }),
     [role, isCreator],
   );

@@ -64,6 +64,21 @@ export function packageState(size: number, used: number): PackageState {
 }
 
 /**
+ * The short status beside a package's count line: how far over, full, or how many left.
+ * `warn` once the package is nearly full, so the line turns before it is too late.
+ */
+export function packageAside(view: {
+  state: PackageState;
+  left: number;
+  over: number;
+}): { key: 'over' | 'full' | 'left'; count: number; warn: boolean } {
+  const warn = view.state === 'over' || view.state === 'near';
+  if (view.state === 'over') return { key: 'over', count: view.over, warn };
+  if (view.state === 'full') return { key: 'full', count: 0, warn };
+  return { key: 'left', count: view.left, warn };
+}
+
+/**
  * Which Guest Records a Schedule may send to. A Reached record is always inside; the room
  * left after every Reached record (including deleted ones) goes to the oldest unreached
  * records, in the order they were added. The rest are outside.

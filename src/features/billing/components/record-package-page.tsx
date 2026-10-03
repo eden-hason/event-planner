@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { billingWhatsAppUrl } from '../utils';
 import type { RecordPackagePageView } from '../types';
 import { PackageBar, PackageSwatch } from './package-bar';
+import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
 
 type RecordPackagePageProps = {
   eventId: string;
@@ -24,9 +25,17 @@ type RecordPackagePageProps = {
   view: RecordPackagePageView | null;
 };
 
-function Card({ className, children }: { className?: string; children: ReactNode }) {
+function Card({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className={cn('bg-card rounded-[18px] border', className)}>{children}</div>
+    <div className={cn('bg-card rounded-[18px] border', className)}>
+      {children}
+    </div>
   );
 }
 
@@ -36,60 +45,99 @@ function Card({ className, children }: { className?: string; children: ReactNode
  * receipt and a fuel gauge - tabular numbers, a quiet bar, colour only when there is
  * something to do. Buying records is a WhatsApp conversation with Kululu, never a checkout.
  */
-export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePageProps) {
+export function RecordPackagePage({
+  eventId,
+  eventName,
+  view,
+}: RecordPackagePageProps) {
   const t = useTranslations('billing.packagePage');
-  const tSheet = useTranslations('billing.packageSheet');
-  const locale = useLocale();
 
   useFeatureHeader({ title: t('title'), subtitle: t('subtitle') });
 
-  if (!view) {
-    return (
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 py-16 text-center">
-        <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-xl">
-          <IconPackage size={24} stroke={1.9} />
-        </span>
-        <p className="text-lg font-bold">{t('empty.title')}</p>
-        <p className="text-muted-foreground text-sm text-pretty">{t('empty.description')}</p>
-        <Button asChild className="mt-2">
-          <a
-            href={billingWhatsAppUrl(t('empty.whatsapp', { event: eventName ?? '' }))}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <IconBrandWhatsapp />
-            {t('empty.cta')}
-          </a>
-        </Button>
-      </div>
-    );
-  }
+  return view ? (
+    <PackageDetails eventId={eventId} eventName={eventName} view={view} />
+  ) : (
+    <NoPackage eventName={eventName} />
+  );
+}
+
+function NoPackage({ eventName }: { eventName?: string }) {
+  const t = useTranslations('billing.packagePage');
+  const tPlan = useTranslations('billing.sheet');
+
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 py-16 text-center">
+      <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-xl">
+        <IconPackage size={24} stroke={1.9} />
+      </span>
+      <p className="text-lg font-bold">{t('empty.title')}</p>
+      <p className="text-muted-foreground text-sm text-pretty">
+        {t('empty.description')}
+      </p>
+      <Button asChild className="mt-2">
+        <a
+          href={billingWhatsAppUrl(
+            t('empty.whatsapp', { event: eventName ?? '' }),
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <IconBrandWhatsapp />
+          {tPlan('cta.talk')}
+        </a>
+      </Button>
+    </div>
+  );
+}
+
+function PackageDetails({
+  eventId,
+  eventName,
+  view,
+}: {
+  eventId: string;
+  eventName?: string;
+  view: RecordPackagePageView;
+}) {
+  const t = useTranslations('billing.packagePage');
+  const tSheet = useTranslations('billing.packageSheet');
+  const locale = useLocale();
+  const whatsappHref = usePackageWhatsAppHref(view, eventName);
 
   const fmt = (n: number) => n.toLocaleString(locale);
-  const fmtDate = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'numeric', year: 'numeric' }).format(
-      new Date(iso),
-    );
-  const fmtMoney = (amount: number) =>
-    new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: 'ILS',
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount);
+  const dateFormat = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  });
+  const moneyFormat = new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'ILS',
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  });
 
   const over = view.state === 'over';
-  const heroCount = over ? view.over : view.left;
   const channel = view.channel ? tSheet(`channels.${view.channel}`) : null;
-  const whatsappHref = billingWhatsAppUrl(
-    over
-      ? tSheet('whatsappOver', { event: eventName ?? '', count: fmt(view.over) })
-      : tSheet('whatsapp', { event: eventName ?? '' }),
-  );
 
   const legend = [
-    { kind: 'paid' as const, label: view.gifted ? t('legend.gifted') : t('legend.paid'), value: view.paid },
-    ...(view.bonus ? [{ kind: 'bonus' as const, label: t('legend.bonus'), value: view.bonus }] : []),
-    ...(view.over ? [{ kind: 'over' as const, label: t('legend.over'), value: view.over }] : []),
+    {
+      kind: 'paid' as const,
+      label: view.gifted ? t('legend.gifted') : t('legend.paid'),
+      value: view.paid,
+    },
+    ...(view.bonus
+      ? [
+          {
+            kind: 'bonus' as const,
+            label: t('legend.bonus'),
+            value: view.bonus,
+          },
+        ]
+      : []),
+    ...(view.over
+      ? [{ kind: 'over' as const, label: t('legend.over'), value: view.over }]
+      : []),
   ];
 
   const breakdown: {
@@ -100,9 +148,13 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
     total?: boolean;
     warn?: boolean;
   }[] = [
-    { key: 'paid', label: view.gifted ? t('rows.gifted') : t('rows.paid'), value: view.paid },
+    {
+      key: 'paid',
+      label: view.gifted ? tSheet('giftedRecords') : tSheet('paidRecords'),
+      value: view.paid,
+    },
     { key: 'bonus', label: t('rows.bonus'), value: view.bonus, bonus: true },
-    { key: 'total', label: t('rows.total'), value: view.size, total: true },
+    { key: 'total', label: tSheet('total'), value: view.size, total: true },
     { key: 'used', label: t('rows.used'), value: view.used },
     over
       ? { key: 'over', label: t('rows.over'), value: view.over, warn: true }
@@ -136,21 +188,10 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
           </div>
 
           <div className="flex flex-col gap-1">
-            <div
-              className={cn(
-                'flex items-baseline gap-2',
-                over ? 'text-warning-strong' : 'text-foreground',
-              )}
-            >
-              <span className="text-5xl leading-none font-extrabold tracking-[-0.02em] tabular-nums">
-                {fmt(heroCount)}
-              </span>
-              <span className="text-base font-bold">
-                {over
-                  ? tSheet('heroOver', { count: heroCount })
-                  : tSheet('heroLeft', { count: heroCount })}
-              </span>
-            </div>
+            <PackageHeroCount
+              view={view}
+              numberClassName="text-5xl tracking-[-0.02em]"
+            />
             <span className="text-muted-foreground text-[13px] tabular-nums">
               {tSheet('usedOf', { used: fmt(view.used), size: fmt(view.size) })}
             </span>
@@ -166,13 +207,19 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
               >
                 <PackageSwatch kind={item.kind} />
                 {item.label}
-                <b className="text-foreground tabular-nums">{fmt(item.value)}</b>
+                <b className="text-foreground tabular-nums">
+                  {fmt(item.value)}
+                </b>
               </span>
             ))}
           </div>
 
           {!over && (
-            <Button asChild variant="outline" className="text-primary h-11 rounded-xl font-bold">
+            <Button
+              asChild
+              variant="outline"
+              className="text-primary h-11 rounded-xl font-bold"
+            >
               {addRecords}
             </Button>
           )}
@@ -214,7 +261,11 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
               )}
             >
               {row.bonus && (
-                <IconGift size={16} stroke={2} className="text-violet-strong shrink-0" />
+                <IconGift
+                  size={16}
+                  stroke={2}
+                  className="text-violet-strong shrink-0"
+                />
               )}
               <span
                 className={cn(
@@ -246,13 +297,18 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
 
       <div className="flex min-w-0 flex-col gap-3.5">
         <Card className="flex flex-col px-4 pt-3.5 pb-1.5">
-          <span className="pb-1.5 text-[15px] font-extrabold">{t('payments.title')}</span>
+          <span className="pb-1.5 text-[15px] font-extrabold">
+            {t('payments.title')}
+          </span>
           {view.payments.map((payment, index) => {
             const Icon = payment.gift ? IconGift : IconReceipt;
             return (
               <div
                 key={payment.id}
-                className={cn('flex items-center gap-3 py-2.5', index > 0 && 'border-t')}
+                className={cn(
+                  'flex items-center gap-3 py-2.5',
+                  index > 0 && 'border-t',
+                )}
               >
                 <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-[10px]">
                   <Icon size={17} stroke={2} />
@@ -260,7 +316,10 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex items-center gap-[7px]">
                     <span className="text-sm font-bold tabular-nums">
-                      {t('payments.records', { count: payment.records, formatted: fmt(payment.records) })}
+                      {t('payments.records', {
+                        count: payment.records,
+                        formatted: fmt(payment.records),
+                      })}
                     </span>
                     {payment.id === firstPaymentId && (
                       <span className="bg-muted text-muted-foreground inline-flex h-5 items-center rounded-md px-[7px] text-[11px] font-bold">
@@ -269,11 +328,14 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
                     )}
                   </div>
                   <span className="text-muted-foreground text-[12.5px]">
-                    {fmtDate(payment.occurredAt)} · {tSheet(`channels.${payment.channel}`)}
+                    {dateFormat.format(new Date(payment.occurredAt))} ·{' '}
+                    {tSheet(`channels.${payment.channel}`)}
                   </span>
                 </div>
                 <span className="text-sm font-bold whitespace-nowrap tabular-nums">
-                  {payment.gift ? t('payments.gift') : fmtMoney(payment.amount)}
+                  {payment.gift
+                    ? t('payments.gift')
+                    : moneyFormat.format(payment.amount)}
                 </span>
               </div>
             );
@@ -281,13 +343,20 @@ export function RecordPackagePage({ eventId, eventName, view }: RecordPackagePag
         </Card>
 
         <div className="flex flex-col gap-2 px-1.5 py-1">
-          <span className="text-muted-foreground text-[13.5px] font-bold">{t('help.title')}</span>
-          {(['unlimited', 'oldestFirst', 'reachedStays'] as const).map((key) => (
-            <div key={key} className="text-muted-foreground flex gap-2 text-[13px] leading-normal">
-              <span className="bg-muted-foreground/60 mt-2 size-[5px] shrink-0 rounded-full" />
-              {t(`help.${key}`)}
-            </div>
-          ))}
+          <span className="text-muted-foreground text-[13.5px] font-bold">
+            {t('help.title')}
+          </span>
+          {(['unlimited', 'oldestFirst', 'reachedStays'] as const).map(
+            (key) => (
+              <div
+                key={key}
+                className="text-muted-foreground flex gap-2 text-[13px] leading-normal"
+              >
+                <span className="bg-muted-foreground/60 mt-2 size-[5px] shrink-0 rounded-full" />
+                {t(`help.${key}`)}
+              </div>
+            ),
+          )}
         </div>
       </div>
     </div>

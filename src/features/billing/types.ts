@@ -103,7 +103,10 @@ export type PackagePayment = {
  * The Record Package page (Record Package Plan design): the package as the Guests page sees
  * it, plus the money behind it. Owner-only, because payments carry amounts.
  */
-export type RecordPackagePageView = GuestPackageView & {
+/** The package's numbers without the record ids - all a meter, hero or sheet needs. */
+export type PackageCounts = Omit<GuestPackageView, 'outsideIds'>;
+
+export type RecordPackagePageView = PackageCounts & {
   /** An Operator set the bonus by hand, so the page credits the Kululu team for it. */
   bonusIsCustom: boolean;
   /** Newest first. */

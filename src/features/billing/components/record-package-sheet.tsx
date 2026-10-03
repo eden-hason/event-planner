@@ -17,9 +17,9 @@ import {
 } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { billingWhatsAppUrl } from '../utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
+import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
 
 type RecordPackageSheetProps = {
   open: boolean;
@@ -52,10 +52,7 @@ export function RecordPackageSheet({
   const fmt = (n: number) => n.toLocaleString(locale);
 
   const over = view.state === 'over';
-  const heroCount = over ? view.over : view.left;
-  const message = over
-    ? t('whatsappOver', { event: eventName ?? '', count: fmt(view.over) })
-    : t('whatsapp', { event: eventName ?? '' });
+  const whatsappHref = usePackageWhatsAppHref(view, eventName);
 
   const status = [
     view.gifted ? t('gifted') : t('paid'),
@@ -89,21 +86,7 @@ export function RecordPackageSheet({
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <div
-          className={cn(
-            'flex items-baseline gap-2',
-            over ? 'text-warning-strong' : 'text-foreground',
-          )}
-        >
-          <span className="text-[40px] leading-none font-extrabold tabular-nums">
-            {fmt(heroCount)}
-          </span>
-          <span className="text-base font-bold">
-            {over
-              ? t('heroOver', { count: heroCount })
-              : t('heroLeft', { count: heroCount })}
-          </span>
-        </div>
+        <PackageHeroCount view={view} numberClassName="text-[40px]" />
         <PackageBar view={view} className="h-2.5 gap-0.5" />
         <span className="text-muted-foreground text-[13.5px] tabular-nums">
           {t('usedOf', { used: fmt(view.used), size: fmt(view.size) })}
@@ -151,11 +134,7 @@ export function RecordPackageSheet({
       )}
 
       <Button asChild>
-        <a
-          href={billingWhatsAppUrl(message)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
           <IconBrandWhatsapp />
           {t('addRecords')}
         </a>

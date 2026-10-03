@@ -21,7 +21,7 @@ import {
   type Icon,
 } from '@tabler/icons-react';
 import { Link, useRouter } from '@/i18n/navigation';
-import { RecordPackageSheet, type GuestPackageView } from '@/features/billing';
+import { useRecordPackage } from '@/features/billing';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { sendHomeTestMessage, type SendTestMessageState } from '../../actions/test-message';
@@ -116,8 +116,6 @@ export function FeaturedActionList({
   maskedPhone,
   previewUrl,
   health,
-  recordPackage,
-  eventName,
 }: {
   eventId: string;
   title: string;
@@ -126,13 +124,11 @@ export function FeaturedActionList({
   maskedPhone: string | null;
   previewUrl: string | null;
   health: { duplicates: number; noPhone: number };
-  recordPackage: GuestPackageView | null;
-  eventName?: string;
 }) {
   const t = useTranslations('home.mobile');
   const [test, setTest] = useState<TestState>({ step: 'closed' });
   const [healthOpen, setHealthOpen] = useState(false);
-  const [packageOpen, setPackageOpen] = useState(false);
+  const { openSheet: openPackageSheet } = useRecordPackage();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
@@ -182,7 +178,7 @@ export function FeaturedActionList({
     } else if (key === 'preview') {
       void sharePreview();
     } else if (key === 'package') {
-      setPackageOpen(true);
+      openPackageSheet({ onShowOutside: () => router.push(`${listHref}?package=outside`) });
     } else if (key === 'ai') {
       window.dispatchEvent(new Event('kululu:open-ai-assistant'));
     }
@@ -396,16 +392,6 @@ export function FeaturedActionList({
           </div>
         );
       })}
-
-      {recordPackage && (
-        <RecordPackageSheet
-          open={packageOpen}
-          onOpenChange={setPackageOpen}
-          view={recordPackage}
-          eventName={eventName}
-          onShowOutside={() => router.push(`${listHref}?package=outside`)}
-        />
-      )}
     </section>
   );
 }
