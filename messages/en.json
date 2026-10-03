@@ -1237,18 +1237,9 @@
       "title": "Home"
     },
     "recentActivity": {
-      "title": "Recent Activity",
-      "description": "Latest RSVP updates",
-      "noActivity": "No recent RSVP changes",
-      "viewAllGuests": "View All Guests",
       "confirmedAttendance": "confirmed attendance",
       "declinedInvitation": "declined invitation",
       "updatedRsvp": "updated their RSVP",
-      "justNow": "just now",
-      "minutesAgo": "{count} minutes ago",
-      "hoursAgo": "{count} hours ago",
-      "dayAgo": "{count} day ago",
-      "daysAgo": "{count} days ago",
       "byPhone": "by phone"
     },
     "mobile": {

@@ -1237,18 +1237,9 @@
       "title": "בית"
     },
     "recentActivity": {
-      "title": "פעילות אחרונה",
-      "description": "עדכוני אישור הגעה אחרונים",
-      "noActivity": "אין שינויים באישורי הגעה לאחרונה",
-      "viewAllGuests": "כל האורחים",
       "confirmedAttendance": "אישר הגעה",
       "declinedInvitation": "סירב להזמנה",
       "updatedRsvp": "עדכן את אישורו",
-      "justNow": "זה עתה",
-      "minutesAgo": "לפני {count} דקות",
-      "hoursAgo": "לפני {count} שעות",
-      "dayAgo": "לפני {count} יום",
-      "daysAgo": "לפני {count} ימים",
       "byPhone": "בטלפון"
     },
     "mobile": {

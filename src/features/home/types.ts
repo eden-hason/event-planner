@@ -6,7 +6,6 @@ export type RecentRsvpRow = {
   name: string;
   rsvpStatus: 'pending' | 'confirmed' | 'declined';
   rsvpChangedAt: string;
-  rsvpChangedByName: string | null;
   rsvpChangeSource: 'manual' | 'guest' | 'admin_call' | null;
 };
 

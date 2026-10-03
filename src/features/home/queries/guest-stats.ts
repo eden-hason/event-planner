@@ -9,7 +9,7 @@ export async function getRecentRsvpActivity(
 
   const { data, error } = await supabase
     .from('guests')
-    .select('id, name, rsvp_status, rsvp_changed_at, rsvp_changed_by_name, rsvp_change_source')
+    .select('id, name, rsvp_status, rsvp_changed_at, rsvp_change_source')
     .eq('event_id', eventId)
     // Anything the guest did, however they did it: self-serve on the landing
     // page, or over the phone with the call team. 'manual' is excluded - that
@@ -31,7 +31,6 @@ export async function getRecentRsvpActivity(
     name: row.name,
     rsvpStatus: row.rsvp_status as 'pending' | 'confirmed' | 'declined',
     rsvpChangedAt: row.rsvp_changed_at as string,
-    rsvpChangedByName: row.rsvp_changed_by_name ?? null,
     rsvpChangeSource: row.rsvp_change_source as RecentRsvpRow['rsvpChangeSource'],
   }));
 }
