@@ -864,7 +864,9 @@
           "uploadFileDescription": "CSV or Excel from your device - up to 5MB",
           "googleDrive": "Import from Google Drive",
           "googleDriveDescription": "Pick a CSV, Excel, or Sheets file from your Drive",
-          "newBadge": "New"
+          "newBadge": "New",
+          "whatsapp": "Import from WhatsApp",
+          "whatsappDescription": "Pick people from your WhatsApp groups and contacts"
         },
         "header": {
           "stepOf": "Step {step} of {total}",
@@ -952,6 +954,42 @@
           "pendingNote": "New guests are all Pending. Assign them to groups from the Groups tab.",
           "goToGuestList": "Go to guest list",
           "importAnother": "Import another file"
+        }
+      },
+      "whatsapp": {
+        "stepConnect": "Connect",
+        "stepChoose": "Choose",
+        "link": {
+          "title": "Import from WhatsApp",
+          "subtitle": "Link WhatsApp for a moment to pick guests from your groups and contacts",
+          "phoneLabel": "Your WhatsApp number",
+          "phoneHint": "You will get a code to enter in WhatsApp on this phone",
+          "privacyTitle": "Read-only and temporary",
+          "privacyBody": "Kululu reads your groups and contacts once to show them here. WhatsApp is unlinked as soon as it is done, and only the guests you choose are saved.",
+          "getCode": "Get a link code",
+          "tryAgain": "Try again",
+          "requesting": "Getting your code",
+          "codeTitle": "Enter this code on your phone",
+          "copy": "Copy code",
+          "copied": "Code copied",
+          "instructionNotification": "Tap the WhatsApp notification on your phone and enter the code",
+          "instructionManual": "No notification? In WhatsApp, go to",
+          "pathLinkedDevices": "Linked devices",
+          "pathLinkDevice": "Link a device",
+          "pathPhoneInstead": "Link with phone number instead",
+          "waiting": "Waiting for the code",
+          "reading": "Connected - reading your groups and contacts",
+          "groupsFound": "{count, plural, one {# group found} other {# groups found}}",
+          "cancel": "Cancel",
+          "errorPairingTimeout": "The code was not entered in time - try again",
+          "errorConnectionClosed": "WhatsApp did not accept the link - wait a few minutes and try again",
+          "errorTimeout": "This took too long - try again",
+          "errorUnknown": "Something went wrong - try again",
+          "errorInvalidPhone": "Enter a valid phone number"
+        },
+        "pick": {
+          "found": "{groups} groups and {contacts} contacts found",
+          "members": "{count, plural, one {# member} other {# members}}"
         }
       }
     },

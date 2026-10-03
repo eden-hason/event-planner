@@ -864,7 +864,9 @@
           "uploadFileDescription": "CSV או Excel מהמכשיר - עד 5MB",
           "googleDrive": "ייבוא מ-Google Drive",
           "googleDriveDescription": "בחירת קובץ CSV, Excel או Sheets מהדרייב",
-          "newBadge": "חדש"
+          "newBadge": "חדש",
+          "whatsapp": "ייבוא מוואטסאפ",
+          "whatsappDescription": "בחירת אורחים מהקבוצות ומאנשי הקשר שלך בוואטסאפ"
         },
         "header": {
           "stepOf": "שלב {step} מתוך {total}",
@@ -952,6 +954,42 @@
           "pendingNote": "כל האורחים החדשים בסטטוס ממתינים. אפשר לשייך אותם לקבוצות מלשונית קבוצות.",
           "goToGuestList": "לרשימת האורחים",
           "importAnother": "ייבוא קובץ נוסף"
+        }
+      },
+      "whatsapp": {
+        "stepConnect": "חיבור",
+        "stepChoose": "בחירה",
+        "link": {
+          "title": "ייבוא מוואטסאפ",
+          "subtitle": "חיבור זמני של וואטסאפ כדי לבחור אורחים מהקבוצות ומאנשי הקשר שלך",
+          "phoneLabel": "מספר הוואטסאפ שלך",
+          "phoneHint": "יתקבל קוד להזנה בוואטסאפ בטלפון הזה",
+          "privacyTitle": "קריאה בלבד ולזמן קצר",
+          "privacyBody": "קולולו קוראת את הקבוצות ואנשי הקשר שלך פעם אחת כדי להציג אותם כאן. החיבור לוואטסאפ מנותק מיד בסיום, ורק האורחים שבחרת נשמרים.",
+          "getCode": "קבלת קוד חיבור",
+          "tryAgain": "ניסיון נוסף",
+          "requesting": "מקבלים את הקוד",
+          "codeTitle": "יש להזין את הקוד הזה בטלפון",
+          "copy": "העתקת הקוד",
+          "copied": "הקוד הועתק",
+          "instructionNotification": "יש להקיש על ההתראה מוואטסאפ בטלפון ולהזין את הקוד",
+          "instructionManual": "לא הגיעה התראה? בוואטסאפ, יש לעבור אל",
+          "pathLinkedDevices": "מכשירים מקושרים",
+          "pathLinkDevice": "קישור מכשיר",
+          "pathPhoneInstead": "קישור באמצעות מספר טלפון",
+          "waiting": "ממתינים לקוד",
+          "reading": "מחובר - קוראים את הקבוצות ואנשי הקשר",
+          "groupsFound": "{count, plural, one {נמצאה קבוצה אחת} other {נמצאו # קבוצות}}",
+          "cancel": "ביטול",
+          "errorPairingTimeout": "הקוד לא הוזן בזמן - כדאי לנסות שוב",
+          "errorConnectionClosed": "וואטסאפ לא אישרה את החיבור - כדאי לחכות כמה דקות ולנסות שוב",
+          "errorTimeout": "זה לקח יותר מדי זמן - כדאי לנסות שוב",
+          "errorUnknown": "משהו השתבש - כדאי לנסות שוב",
+          "errorInvalidPhone": "יש להזין מספר טלפון תקין"
+        },
+        "pick": {
+          "found": "נמצאו {groups} קבוצות ו-{contacts} אנשי קשר",
+          "members": "{count, plural, one {משתתף אחד} other {# משתתפים}}"
         }
       }
     },

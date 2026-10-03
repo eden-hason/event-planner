@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { IconUpload, IconUserPlus } from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconUpload, IconUserPlus } from '@tabler/icons-react';
 import {
   Sheet,
   SheetContent,
@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { GoogleDriveIcon } from '@/components/icons';
+import { cn } from '@/lib/utils';
 
 interface AddGuestSourceSheetProps {
   open: boolean;
@@ -16,13 +17,14 @@ interface AddGuestSourceSheetProps {
   onSelectSingleGuest: () => void;
   onSelectUploadFile: () => void;
   onSelectGoogleDrive: () => void;
+  onSelectWhatsApp: () => void;
 }
 
 /**
  * The mobile "Add guest" header button's landing spot: a choice between
- * entering one guest by hand, uploading a file, and importing from Google
- * Drive, rather than jumping straight into the single-guest form the way it
- * used to.
+ * entering one guest by hand, uploading a file, importing from Google Drive,
+ * and picking people from the Owner's WhatsApp (backlog 0017), rather than
+ * jumping straight into the single-guest form the way it used to.
  *
  * That extra tap costs the most frequent action (adding one guest) a step it
  * didn't pay before, in exchange for making bulk import discoverable from the
@@ -35,8 +37,13 @@ export function AddGuestSourceSheet({
   onSelectSingleGuest,
   onSelectUploadFile,
   onSelectGoogleDrive,
+  onSelectWhatsApp,
 }: AddGuestSourceSheetProps) {
   const t = useTranslations('guests.import.mobile.sourceSheet');
+  const select = (onSelect: () => void) => () => {
+    onOpenChange(false);
+    onSelect();
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -48,69 +55,82 @@ export function AddGuestSourceSheet({
           <SheetTitle>{t('title')}</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-2 px-4 pb-6">
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-              onSelectSingleGuest();
-            }}
-            className="flex items-center gap-3 rounded-xl border p-3.5 text-start"
-          >
-            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
-              <IconUserPlus size={20} />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[15px] font-semibold">{t('singleGuest')}</span>
-              <span className="text-muted-foreground text-xs">
-                {t('singleGuestDescription')}
-              </span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-              onSelectUploadFile();
-            }}
-            className="flex items-center gap-3 rounded-xl border p-3.5 text-start"
-          >
-            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
-              <IconUpload size={20} />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[15px] font-semibold">{t('uploadFile')}</span>
-              <span className="text-muted-foreground text-xs">
-                {t('uploadFileDescription')}
-              </span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onOpenChange(false);
-              onSelectGoogleDrive();
-            }}
-            className="flex items-center gap-3 rounded-xl border p-3.5 text-start"
-          >
-            <span className="bg-success/10 flex size-10 shrink-0 items-center justify-center rounded-lg">
-              <GoogleDriveIcon size={18} />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="flex items-center gap-1.5 text-[15px] font-semibold">
-                {t('googleDrive')}
-                <span className="bg-success/15 text-success rounded-full px-1.5 py-0.5 text-[10px] font-bold">
-                  {t('newBadge')}
-                </span>
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {t('googleDriveDescription')}
-              </span>
-            </div>
-          </button>
+          <SourceOption
+            icon={<IconUserPlus size={20} />}
+            iconClassName="bg-primary/10 text-primary"
+            title={t('singleGuest')}
+            description={t('singleGuestDescription')}
+            onSelect={select(onSelectSingleGuest)}
+          />
+          <SourceOption
+            icon={<IconUpload size={20} />}
+            iconClassName="bg-primary/10 text-primary"
+            title={t('uploadFile')}
+            description={t('uploadFileDescription')}
+            onSelect={select(onSelectUploadFile)}
+          />
+          <SourceOption
+            icon={<GoogleDriveIcon size={18} />}
+            iconClassName="bg-success/10"
+            title={t('googleDrive')}
+            description={t('googleDriveDescription')}
+            badge={t('newBadge')}
+            onSelect={select(onSelectGoogleDrive)}
+          />
+          <SourceOption
+            icon={<IconBrandWhatsapp size={20} />}
+            iconClassName="bg-success/10 text-success"
+            title={t('whatsapp')}
+            description={t('whatsappDescription')}
+            badge={t('newBadge')}
+            onSelect={select(onSelectWhatsApp)}
+          />
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function SourceOption({
+  icon,
+  iconClassName,
+  title,
+  description,
+  badge,
+  onSelect,
+}: {
+  icon: React.ReactNode;
+  iconClassName: string;
+  title: string;
+  description: string;
+  badge?: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex items-center gap-3 rounded-xl border p-3.5 text-start"
+    >
+      <span
+        className={cn(
+          'flex size-10 shrink-0 items-center justify-center rounded-lg',
+          iconClassName,
+        )}
+      >
+        {icon}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+          {title}
+          {badge && (
+            <span className="bg-success/15 text-success rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+              {badge}
+            </span>
+          )}
+        </span>
+        <span className="text-muted-foreground text-xs">{description}</span>
+      </div>
+    </button>
   );
 }

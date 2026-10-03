@@ -479,3 +479,20 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
 export function resolveImportErrorMessage(message: string): string {
   return IMPORT_ERROR_MESSAGES[message] ?? message;
 }
+
+/**
+ * The body of `POST /api/events/[eventId]/whatsapp-import`: the Owner's own
+ * WhatsApp number, in whatever form they typed it (`054-8129777`,
+ * `+972548129777`). Comes out as the international digits WhatsApp pairs by
+ * (`972548129777`).
+ */
+export const WhatsAppImportRequestSchema = z.object({
+  phone: z.string().transform((value, ctx) => {
+    const e164 = toE164(value);
+    if (!e164) {
+      ctx.addIssue({ code: 'custom', message: 'Invalid phone number' });
+      return z.NEVER;
+    }
+    return e164.slice(1);
+  }),
+});
