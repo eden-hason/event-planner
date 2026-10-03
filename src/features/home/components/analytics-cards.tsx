@@ -20,9 +20,8 @@ const SOURCE_TONES = [
 ] as const;
 
 /**
- * An empty card at wide width: a faded ghost of what the card will hold, with
- * the empty-state line and an icon fading in over its lower half. The ghost
- * is `home-wide:` only - below that the cards keep their plain mobile empties.
+ * An empty card: a faded ghost of what the card will hold, with the
+ * empty-state line and an icon fading in over its lower half.
  */
 function GhostEmpty({
   icon,
@@ -39,7 +38,7 @@ function GhostEmpty({
   children: ReactNode;
 }) {
   return (
-    <div className={cn('relative hidden home-wide:block', className)}>
+    <div className={cn('relative', className)}>
       {children}
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent to-card to-66% p-4">
         <div className="flex max-w-[300px] flex-col items-center gap-1.5 text-center" style={{ marginTop: overlayOffset }}>
@@ -111,47 +110,41 @@ export async function RsvpDonutCard({ eventId }: { eventId: string }) {
           </div>
         </div>
       ) : (
-        <>
-          <div className="home-wide:hidden flex items-center gap-3.5">
-            <div className="border-muted size-[84px] shrink-0 rounded-full border-[10px]" />
-            <span className="text-muted-foreground text-[13px] leading-normal">{t('donutEmpty')}</span>
-          </div>
-          <GhostEmpty
-            icon={<IconUsers className="size-[18px]" strokeWidth={1.9} />}
-            message={t('donutEmpty')}
-            overlayOffset="64px"
-          >
-            <div className="flex items-center gap-5">
-              <div
-                className="flex size-[128px] shrink-0 items-center justify-center rounded-full"
-                style={{
-                  background:
-                    'conic-gradient(var(--rsvp-confirmed-tint) 0 58%, var(--rsvp-pending-tint) 58% 86%, var(--rsvp-declined-tint) 86% 100%)',
-                }}
-              >
-                <div className="bg-card flex size-[90px] flex-col items-center justify-center gap-1.5 rounded-full">
-                  <span className={cn(GHOST_BAR, 'h-3.5 w-9')} />
-                  <span className={cn(GHOST_BAR, 'h-[7px] w-[26px]')} />
-                </div>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
-                {[
-                  ['bg-rsvp-confirmed-tint', 'bg-rsvp-confirmed/40', 'w-[46%]', 'opacity-100'],
-                  ['bg-rsvp-pending-tint', 'bg-rsvp-pending/40', 'w-[38%]', 'opacity-70'],
-                  ['bg-rsvp-declined-tint', 'bg-rsvp-declined/40', 'w-[30%]', 'opacity-45'],
-                ].map(([tint, bar, width, opacity]) => (
-                  <div
-                    key={tint}
-                    className={cn('flex h-[34px] items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
-                  >
-                    <span className={cn('h-2 rounded-full', bar, width)} />
-                    <span className={cn('h-2 w-5 rounded-full', bar)} />
-                  </div>
-                ))}
+        <GhostEmpty
+          icon={<IconUsers className="size-[18px]" strokeWidth={1.9} />}
+          message={t('donutEmpty')}
+          overlayOffset="64px"
+        >
+          <div className="home-wide:gap-5 flex items-center gap-[18px]">
+            <div
+              className="home-wide:size-[128px] flex size-[112px] shrink-0 items-center justify-center rounded-full"
+              style={{
+                background:
+                  'conic-gradient(var(--rsvp-confirmed-tint) 0 58%, var(--rsvp-pending-tint) 58% 86%, var(--rsvp-declined-tint) 86% 100%)',
+              }}
+            >
+              <div className="bg-card home-wide:size-[90px] flex size-[78px] flex-col items-center justify-center gap-1.5 rounded-full">
+                <span className={cn(GHOST_BAR, 'h-3.5 w-9')} />
+                <span className={cn(GHOST_BAR, 'h-[7px] w-[26px]')} />
               </div>
             </div>
-          </GhostEmpty>
-        </>
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              {[
+                ['bg-rsvp-confirmed-tint', 'bg-rsvp-confirmed/40', 'w-[46%]', 'opacity-100'],
+                ['bg-rsvp-pending-tint', 'bg-rsvp-pending/40', 'w-[38%]', 'opacity-70'],
+                ['bg-rsvp-declined-tint', 'bg-rsvp-declined/40', 'w-[30%]', 'opacity-45'],
+              ].map(([tint, bar, width, opacity]) => (
+                <div
+                  key={tint}
+                  className={cn('flex h-[34px] items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
+                >
+                  <span className={cn('h-2 rounded-full', bar, width)} />
+                  <span className={cn('h-2 w-5 rounded-full', bar)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </GhostEmpty>
       )}
     </Panel>
   );
@@ -202,40 +195,33 @@ export async function GroupEngagementCard({ eventId }: { eventId: string }) {
           ))}
         </CollapsibleRows>
       ) : (
-        <>
-          <div className="home-wide:hidden flex flex-col gap-2">
-            <div className="bg-muted h-[7px] rounded-full" />
-            <div className="bg-muted h-[7px] w-[70%] rounded-full" />
-            <span className="text-muted-foreground text-[13px]">{t('engagementEmpty')}</span>
-          </div>
-          <GhostEmpty
-            icon={<IconList className="size-[18px]" strokeWidth={1.9} />}
-            message={t('engagementEmpty')}
-            overlayOffset="44px"
-            className="pb-6"
-          >
-            <div className="flex flex-col gap-3.5">
-              {[
-                ['w-[30%]', 'w-[60%]', 'w-[22%]', 'opacity-100'],
-                ['w-[24%]', 'w-[48%]', 'w-[30%]', 'opacity-75'],
-                ['w-[36%]', 'w-[40%]', 'w-[34%]', 'opacity-50'],
-                ['w-[20%]', 'w-[30%]', 'w-[40%]', 'opacity-30'],
-              ].map(([name, ok, pending, opacity]) => (
-                <div key={name + ok} className={cn('flex flex-col gap-[7px]', opacity)}>
-                  <div className="flex justify-between">
-                    <span className={cn(GHOST_BAR, 'h-[9px]', name)} />
-                    <span className={cn(GHOST_BAR, 'h-[9px] w-12')} />
-                  </div>
-                  <div className="flex h-[7px] gap-0.5 overflow-hidden rounded-full">
-                    <div className={cn('bg-rsvp-confirmed-tint', ok)} />
-                    <div className={cn('bg-rsvp-pending-tint', pending)} />
-                    <div className="bg-rsvp-declined-tint flex-1" />
-                  </div>
+        <GhostEmpty
+          icon={<IconList className="size-[18px]" strokeWidth={1.9} />}
+          message={t('engagementEmpty')}
+          overlayOffset="44px"
+          className="pb-6"
+        >
+          <div className="flex flex-col gap-3.5">
+            {[
+              ['w-[30%]', 'w-[60%]', 'w-[22%]', 'opacity-100'],
+              ['w-[24%]', 'w-[48%]', 'w-[30%]', 'opacity-75'],
+              ['w-[36%]', 'w-[40%]', 'w-[34%]', 'opacity-50'],
+              ['w-[20%]', 'w-[30%]', 'w-[40%]', 'opacity-30'],
+            ].map(([name, ok, pending, opacity]) => (
+              <div key={name + ok} className={cn('flex flex-col gap-[7px]', opacity)}>
+                <div className="flex justify-between">
+                  <span className={cn(GHOST_BAR, 'h-[9px]', name)} />
+                  <span className={cn(GHOST_BAR, 'h-[9px] w-12')} />
                 </div>
-              ))}
-            </div>
-          </GhostEmpty>
-        </>
+                <div className="flex h-[7px] gap-0.5 overflow-hidden rounded-full">
+                  <div className={cn('bg-rsvp-confirmed-tint', ok)} />
+                  <div className={cn('bg-rsvp-pending-tint', pending)} />
+                  <div className="bg-rsvp-declined-tint flex-1" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </GhostEmpty>
       )}
     </Panel>
   );
@@ -325,40 +311,34 @@ export async function AnswerSourcesCard({ eventId }: { eventId: string }) {
           </div>
         </>
       ) : (
-        <>
-          <div className="home-wide:hidden flex flex-col gap-2.5">
-            <div className="bg-muted h-2.5 rounded-full" />
-            <span className="text-muted-foreground text-[13px] leading-normal">{t('sourcesEmpty')}</span>
-          </div>
-          <GhostEmpty
-            icon={<IconMessage className="size-[18px]" strokeWidth={1.9} />}
-            message={t('sourcesEmpty')}
-            overlayOffset="56px"
-          >
-            <div className="flex flex-col gap-3">
-              <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
-                <div className="bg-primary/10 w-[58%]" />
-                <div className="bg-home-violet-tint w-[27%]" />
-                <div className="bg-chart-2/10 w-[15%]" />
-              </div>
-              <div className="flex flex-col gap-2">
-                {[
-                  ['bg-primary/10', 'w-[34%]', 'opacity-100'],
-                  ['bg-home-violet-tint', 'w-[46%]', 'opacity-70'],
-                  ['bg-chart-2/10', 'w-[40%]', 'opacity-45'],
-                ].map(([tint, width, opacity]) => (
-                  <div
-                    key={tint}
-                    className={cn('flex h-9 items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
-                  >
-                    <span className={cn(GHOST_BAR, 'h-2', width)} />
-                    <span className={cn(GHOST_BAR, 'h-2 w-11')} />
-                  </div>
-                ))}
-              </div>
+        <GhostEmpty
+          icon={<IconMessage className="size-[18px]" strokeWidth={1.9} />}
+          message={t('sourcesEmpty')}
+          overlayOffset="56px"
+        >
+          <div className="flex flex-col gap-3">
+            <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
+              <div className="bg-primary/10 w-[58%]" />
+              <div className="bg-home-violet-tint w-[27%]" />
+              <div className="bg-chart-2/10 w-[15%]" />
             </div>
-          </GhostEmpty>
-        </>
+            <div className="flex flex-col gap-2">
+              {[
+                ['bg-primary/10', 'w-[34%]', 'opacity-100'],
+                ['bg-home-violet-tint', 'w-[46%]', 'opacity-70'],
+                ['bg-chart-2/10', 'w-[40%]', 'opacity-45'],
+              ].map(([tint, width, opacity]) => (
+                <div
+                  key={tint}
+                  className={cn('flex h-9 items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
+                >
+                  <span className={cn(GHOST_BAR, 'h-2', width)} />
+                  <span className={cn(GHOST_BAR, 'h-2 w-11')} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </GhostEmpty>
       )}
     </Panel>
   );
@@ -418,34 +398,29 @@ export async function RecentActivityCard({ eventId }: { eventId: string }) {
           );
         })
       ) : (
-        <>
-          <p className="text-muted-foreground home-wide:hidden px-4 pt-1 pb-4 text-[13px]">
-            {t('activityEmpty')}
-          </p>
-          <GhostEmpty
-            icon={<IconBell className="size-[18px]" strokeWidth={1.9} />}
-            message={t('activityEmpty')}
-            overlayOffset="44px"
-          >
-            {[
-              ['bg-rsvp-confirmed-tint', 'w-[46%]', 'w-[30%]', 'opacity-100'],
-              ['bg-rsvp-declined-tint', 'w-[38%]', 'w-[24%]', 'opacity-70'],
-              ['bg-rsvp-pending-tint', 'w-[52%]', 'w-[34%]', 'opacity-45'],
-            ].map(([tint, w1, w2, opacity]) => (
-              <div
-                key={tint}
-                className={cn('border-border flex items-center gap-3 border-t px-4 py-[11px]', opacity)}
-              >
-                <span className={cn('size-[34px] shrink-0 rounded-full', tint)} />
-                <div className="flex flex-1 flex-col gap-[7px]">
-                  <span className={cn(GHOST_BAR, 'h-[9px]', w1)} />
-                  <span className={cn('h-[7px] rounded-full', tint, w2)} />
-                </div>
-                <span className={cn(GHOST_BAR, 'h-[7px] w-11')} />
+        <GhostEmpty
+          icon={<IconBell className="size-[18px]" strokeWidth={1.9} />}
+          message={t('activityEmpty')}
+          overlayOffset="44px"
+        >
+          {[
+            ['bg-rsvp-confirmed-tint', 'w-[46%]', 'w-[30%]', 'opacity-100'],
+            ['bg-rsvp-declined-tint', 'w-[38%]', 'w-[24%]', 'opacity-70'],
+            ['bg-rsvp-pending-tint', 'w-[52%]', 'w-[34%]', 'opacity-45'],
+          ].map(([tint, w1, w2, opacity]) => (
+            <div
+              key={tint}
+              className={cn('border-border flex items-center gap-3 border-t px-4 py-[11px]', opacity)}
+            >
+              <span className={cn('size-[34px] shrink-0 rounded-full', tint)} />
+              <div className="flex flex-1 flex-col gap-[7px]">
+                <span className={cn(GHOST_BAR, 'h-[9px]', w1)} />
+                <span className={cn('h-[7px] rounded-full', tint, w2)} />
               </div>
-            ))}
-          </GhostEmpty>
-        </>
+              <span className={cn(GHOST_BAR, 'h-[7px] w-11')} />
+            </div>
+          ))}
+        </GhostEmpty>
       )}
     </Panel>
   );
