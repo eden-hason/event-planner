@@ -4,10 +4,10 @@ import { IconCalendar, IconChevronRight, IconMapPin, IconUsers } from '@tabler/i
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type { EventApp } from '@/features/events/schemas';
-import { getHomeEvent, getHomeGuests } from '../../queries';
-import { countHeads, percent } from '../../utils/counts';
+import { getHomeEvent, getHomeGuests } from '../queries';
+import { countHeads, percent } from '../utils/counts';
 import { daysUntil } from '@/lib/date-time';
-import { ConfettiBackground } from '../confetti';
+import { ConfettiBackground } from './confetti';
 import { RsvpTriBar } from './rsvp-tri-bar';
 
 function HeroRow({
@@ -24,12 +24,16 @@ function HeroRow({
   children: ReactNode;
 }) {
   const className = cn(
-    'flex items-center gap-3 rounded-2xl border px-3 py-2.5',
+    'flex min-w-0 flex-1 items-center gap-3 rounded-2xl border px-3 py-2.5',
     dashed === 'violet'
-      ? 'border-home-violet bg-home-violet-tint border-dashed'
+      ? 'border-home-violet bg-home-violet-tint hover:bg-home-violet/20 border-dashed'
       : dashed === 'primary'
-        ? 'border-primary/50 bg-primary/5 border-dashed'
-        : 'bg-primary/[0.03] border-border',
+        ? 'border-primary/50 bg-primary/5 hover:bg-primary/15 border-dashed'
+        : // Wide, the three rows are cells of one card split by dividers, so
+          // each loses its own box.
+          'bg-primary/[0.03] border-border home-wide:border-transparent home-wide:bg-transparent',
+    href &&
+      'focus-visible:ring-primary focus-visible:ring-offset-card transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   );
   const content = (
     <>
@@ -52,12 +56,17 @@ function HeroRow({
       )}
     </>
   );
-  return href ? (
-    <Link href={href} className={className}>
-      {content}
-    </Link>
-  ) : (
-    <div className={className}>{content}</div>
+  return (
+    // The cell around the row carries the divider between cells when wide.
+    <div className="home-wide:px-1.5 home-wide:not-first:border-s home-wide:not-first:border-border flex min-w-0">
+      {href ? (
+        <Link href={href} className={className}>
+          {content}
+        </Link>
+      ) : (
+        <div className={className}>{content}</div>
+      )}
+    </div>
   );
 }
 
@@ -95,15 +104,18 @@ export async function HomeHero({ eventId }: { eventId: string }) {
     // No negative top margin: below `md` the chrome row above this is gone (see
     // `PageCard`), so the section already starts at the top edge of the
     // viewport and the wash below runs off it rather than under a white band.
-    <section className="relative -mx-4 px-4 pb-0.5">
+    // From `md` up the chrome row stays, so the Hero becomes a rounded panel
+    // with the wash filling its own bounds instead of bleeding off the page.
+    <section className="home-wide:rounded-[28px] relative -mx-4 px-4 pb-0.5 md:mx-0 md:overflow-hidden md:rounded-3xl md:border md:px-0 md:pb-0">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[300px] [mask-image:linear-gradient(180deg,#000_0%,#000_52%,transparent_100%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[300px] [mask-image:linear-gradient(180deg,#000_0%,#000_52%,transparent_100%)] md:h-auto md:inset-y-0 md:[mask-image:none]"
         style={{ background: 'var(--home-wash)' }}
       />
+      {/* The same two strokes, sized for the phone band... */}
       <svg
         aria-hidden
-        className="pointer-events-none absolute top-0 left-0"
+        className="pointer-events-none absolute top-0 left-0 md:hidden"
         width="240"
         height="210"
         viewBox="0 0 240 210"
@@ -122,8 +134,36 @@ export async function HomeHero({ eventId }: { eventId: string }) {
           strokeWidth="1.4"
         />
       </svg>
+      {/* ...and redrawn to span the panel from `md` up. Stretched to any width,
+          so the stroke opts out of scaling to stay a hairline. */}
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 hidden h-[240px] w-full md:block"
+        viewBox="0 0 1120 240"
+        preserveAspectRatio="none"
+        fill="none"
+      >
+        <path
+          // Ends high on the right so it clears the type label and title (RTL start side).
+          d="M-20 60 C140 20 300 130 520 100 S880 10 1140 40"
+          className="stroke-primary"
+          strokeOpacity=".2"
+          strokeWidth="1.4"
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d="M-20 214 C200 150 380 220 620 160 S960 130 1140 190"
+          className="stroke-home-violet"
+          strokeOpacity=".15"
+          strokeWidth="1.4"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
       {days === 0 && (
-        <ConfettiBackground className="pointer-events-none absolute inset-x-0 top-0 h-[300px]" count={30} />
+        <ConfettiBackground
+          className="pointer-events-none absolute inset-x-0 top-0 h-[300px] md:h-auto md:inset-y-0"
+          count={30}
+        />
       )}
 
       {/*
@@ -134,14 +174,14 @@ export async function HomeHero({ eventId }: { eventId: string }) {
         the safe-area inset is added to both the height and the top padding so
         a notch eats into the band instead of into the text.
       */}
-      <div className="relative flex min-h-[calc(160px+env(safe-area-inset-top))] items-center gap-5 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6">
+      <div className="home-wide:min-h-[176px] home-wide:gap-6 home-wide:px-9 home-wide:pt-[34px] home-wide:pb-[30px] relative flex min-h-[calc(160px+env(safe-area-inset-top))] items-center gap-5 px-1.5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-6 md:min-h-[160px] md:px-[22px] md:pt-[26px]">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {typeKey && (
             <span className="text-primary text-[13px] font-semibold">
               {t(`typeLabel.${typeKey}`)}
             </span>
           )}
-          <h2 className="line-clamp-3 text-[27px] leading-[1.18] font-extrabold tracking-[-0.015em] text-balance">
+          <h2 className="home-wide:max-w-[680px] home-wide:text-[32px] line-clamp-3 text-[27px] leading-[1.18] font-extrabold tracking-[-0.015em] text-balance">
             {event.title}
           </h2>
         </div>
@@ -151,12 +191,14 @@ export async function HomeHero({ eventId }: { eventId: string }) {
               dir="ltr"
               className={cn(
                 'from-primary to-home-violet bg-gradient-to-br bg-clip-text leading-[0.85] font-extrabold tracking-[-0.05em] text-transparent tabular-nums',
-                days === 0 ? 'text-[44px] tracking-[-0.03em]' : 'text-[64px]',
+                days === 0
+                  ? 'home-wide:text-[54px] text-[44px] tracking-[-0.03em]'
+                  : 'home-wide:text-[80px] text-[64px]',
               )}
             >
               {days === 0 ? t('hero.todayTitle') : days}
             </span>
-            <span className="text-muted-foreground text-[12.5px] font-bold">
+            <span className="text-muted-foreground home-wide:text-[13px] text-[12.5px] font-bold">
               {days === 0 ? t('hero.todaySub') : t('hero.daysLabel', { count: days })}
             </span>
             <span className="bg-primary/40 mt-1 h-0.5 w-8 rounded-full" />
@@ -164,14 +206,14 @@ export async function HomeHero({ eventId }: { eventId: string }) {
         )}
       </div>
 
-      <div className="bg-card border-border relative mt-4 flex flex-col gap-2.5 rounded-3xl border p-4 shadow-[0_18px_44px_rgba(26,11,46,0.1)] dark:shadow-[0_18px_44px_rgba(0,0,0,0.35)]">
+      <div className="bg-card border-border home-wide:mx-3.5 home-wide:mb-3.5 home-wide:grid home-wide:grid-cols-3 home-wide:gap-0 home-wide:p-2.5 relative mt-4 flex flex-col gap-2.5 rounded-3xl border p-4 shadow-[0_18px_44px_rgba(26,11,46,0.1)] md:mx-3 md:mt-0 md:mb-3 dark:shadow-[0_18px_44px_rgba(0,0,0,0.35)]">
         {dateText ? (
           <HeroRow
             icon={<IconCalendar className="size-[17px]" />}
             iconClassName="bg-primary/15 text-primary"
           >
             <span className="text-muted-foreground text-[11.5px]">{t('hero.dateLabel')}</span>
-            <span className="text-[15px] font-semibold">{dateText}</span>
+            <span className="truncate text-[15px] font-semibold">{dateText}</span>
           </HeroRow>
         ) : (
           <HeroRow

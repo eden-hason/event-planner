@@ -87,6 +87,14 @@ are coming may differ from how many the Guest Record was invited for, fewer or m
 Guest's own change flagged. It can be changed by the Guest until the **RSVP Cutoff**. An Owner who
 changes it is overriding the Guest, and the RSVP becomes the Owner's.
 
+## RSVP Source
+
+Who gave an RSVP: the Guest themselves (in a Confirmation Conversation or on the RSVP
+page), an Operator during a Call Round, or someone editing the guest list. Only the latest
+answer's source is kept - an RSVP has one source, not a history.
+
+_Avoid_: Answer channel, response method
+
 ## RSVP Cutoff
 
 The end of the Event day. Until then a Guest may change their RSVP, in the chat or on the

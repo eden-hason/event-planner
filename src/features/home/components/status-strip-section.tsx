@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { IconChevronRight, IconCoin, IconArmchair, IconSend } from '@tabler/icons-react';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { getHomeEvent, getHomeViewer, getStatusStrip } from '../../queries';
+import { getHomeEvent, getHomeViewer, getStatusStrip } from '../queries';
 
 function StripRow({
   href,
@@ -11,6 +11,7 @@ function StripRow({
   label,
   value,
   started,
+  tone,
   bar,
 }: {
   href: string;
@@ -18,18 +19,22 @@ function StripRow({
   label: string;
   value: string;
   started: boolean;
+  /** The row's own colour, kept whether or not it has started. */
+  tone: string;
   bar?: { pct: number; tone: 'primary' | 'ok' | 'over' } | null;
 }) {
   return (
     <Link
       href={href}
-      className="border-border flex w-full items-center gap-3 border-t px-3.5 py-[13px] first:border-t-0"
+      className={cn(
+        'border-border flex w-full min-w-0 items-center gap-3 border-t px-3.5 py-[13px] first:border-t-0',
+        // Wide: three cells side by side, split by vertical dividers.
+        'home-wide:border-t-0 home-wide:not-first:border-s',
+        'hover:bg-primary/[0.03] focus-visible:ring-primary transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset',
+      )}
     >
       <span
-        className={cn(
-          'flex size-[38px] shrink-0 items-center justify-center rounded-[10px]',
-          started ? 'bg-muted text-muted-foreground' : 'bg-primary/15 text-primary',
-        )}
+        className={cn('flex size-[38px] shrink-0 items-center justify-center rounded-[10px]', tone)}
       >
         {icon}
       </span>
@@ -101,13 +106,14 @@ export async function StatusStripSection({ eventId }: { eventId: string }) {
   return (
     <section className="flex flex-col gap-2.5">
       <h2 className="px-0.5 text-[17px] font-bold">{t('title')}</h2>
-      <div className="bg-card border-border overflow-hidden rounded-2xl border">
+      <div className="bg-card border-border home-wide:grid home-wide:grid-cols-3 overflow-hidden rounded-2xl border">
         <StripRow
           href={`${base}/budget`}
           icon={<IconCoin className="size-[19px]" strokeWidth={1.9} />}
           label={t('budget')}
           value={budgetValue}
           started={Boolean(budget)}
+          tone="bg-warning-tint text-warning-strong"
           bar={
             budgetPct !== null && budget
               ? { pct: budgetPct, tone: budget.spent > (budget.total ?? 0) ? 'over' : budgetPct >= 100 ? 'ok' : 'primary' }
@@ -120,6 +126,7 @@ export async function StatusStripSection({ eventId }: { eventId: string }) {
           label={t('seating')}
           value={seating ? t('seatingValue', seating) : t('seatingEmpty')}
           started={Boolean(seating)}
+          tone="bg-home-violet-tint text-home-violet"
           bar={seating ? { pct: seatingPct, tone: seatingPct >= 100 ? 'ok' : 'primary' } : null}
         />
         <StripRow
@@ -128,6 +135,7 @@ export async function StatusStripSection({ eventId }: { eventId: string }) {
           label={t('messages')}
           value={scheduleValue}
           started={Boolean(schedule)}
+          tone="bg-chart-2/10 text-chart-2"
         />
       </div>
     </section>

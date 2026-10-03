@@ -24,8 +24,8 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { useRecordPackage } from '@/features/billing';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { sendHomeTestMessage, type SendTestMessageState } from '../../actions/test-message';
-import type { FeaturedActionKey } from '../../types';
+import { sendHomeTestMessage, type SendTestMessageState } from '../actions/test-message';
+import type { FeaturedActionKey } from '../types';
 
 export type FeaturedActionView = {
   key: FeaturedActionKey;
@@ -184,6 +184,13 @@ export function FeaturedActionList({
     }
   };
 
+  // Ranking can put another setup step above "add guests", so the dominant card
+  // is not necessarily first: wide, it is pulled to the top row (`order`) and the
+  // others pair up beneath it.
+  const isDominant = (key: FeaturedActionKey) => Boolean(ACTION_UI[key].dominant);
+  const paired = actions.filter((a) => !isDominant(a.key)).length;
+  const lastPaired = actions.map((a) => isDominant(a.key)).lastIndexOf(false);
+
   return (
     <section className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between px-0.5">
@@ -191,8 +198,14 @@ export function FeaturedActionList({
         <span className="text-muted-foreground text-xs">{subtitle}</span>
       </div>
 
-      {actions.map((action) => {
+      {/* Wide: two columns of the same row cards, top-aligned so an inline
+          expansion grows only its own cell. */}
+      <div className="home-wide:grid home-wide:grid-cols-2 home-wide:items-start home-wide:gap-x-3 flex flex-col gap-2.5">
+      {actions.map((action, i) => {
         const { icon: IconComponent, path, dominant = false, urgent = false } = ACTION_UI[action.key];
+        // Dominant "add guests" takes the whole first row, and an odd card out
+        // at the end spans both columns so no row reads as half empty.
+        const fullRow = dominant || (paired % 2 === 1 && i === lastPaired);
         const href = path ? `/app/${eventId}/${path}` : null;
         const isCopied = action.key === 'preview' && copied;
         const open =
@@ -206,20 +219,20 @@ export function FeaturedActionList({
               className={cn(
                 'flex shrink-0 items-center justify-center rounded-xl',
                 dominant
-                  ? 'size-[52px] bg-white/20 text-white'
+                  ? 'home-wide:size-[46px] size-[52px] bg-white/20 text-white'
                   : urgent
                     ? 'bg-warning-tint text-warning-strong size-[42px]'
                     : 'bg-primary/15 text-primary size-[42px]',
               )}
             >
-              <IconComponent className={dominant ? 'size-[26px]' : 'size-[21px]'} strokeWidth={1.9} />
+              <IconComponent className={dominant ? 'home-wide:size-6 size-[26px]' : 'size-[21px]'} strokeWidth={1.9} />
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={cn(
                     'font-bold',
-                    dominant ? 'text-[18px] text-white' : 'text-[15px]',
+                    dominant ? 'home-wide:text-base text-[18px] text-white' : 'text-[15px]',
                   )}
                 >
                   {isCopied ? t('actions.preview.copiedLabel') : action.label}
@@ -254,20 +267,26 @@ export function FeaturedActionList({
         );
 
         const rowClass = cn(
-          'flex w-full items-center gap-3',
-          dominant ? 'px-4 py-[18px]' : 'p-3.5',
+          'focus-visible:ring-primary flex w-full items-center gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-inset',
+          dominant ? 'home-wide:py-3.5 px-4 py-[18px] focus-visible:ring-white/80' : 'p-3.5',
         );
 
         return (
           <div
             key={action.key}
             className={cn(
-              'overflow-hidden rounded-2xl border',
+              'overflow-hidden rounded-2xl border transition-colors',
+              fullRow && 'home-wide:col-span-2',
+              dominant && 'home-wide:-order-1',
               dominant
-                ? 'bg-primary border-primary shadow-[0_10px_28px_color-mix(in_oklch,var(--primary)_28%,transparent)]'
+                ? 'bg-primary border-primary hover:bg-primary/90 shadow-[0_10px_28px_color-mix(in_oklch,var(--primary)_28%,transparent)]'
                 : cn(
-                    'bg-card',
-                    urgent ? 'border-warning' : open ? 'border-primary' : 'border-border',
+                    'bg-card hover:bg-primary/[0.03]',
+                    urgent
+                      ? 'border-warning hover:border-warning-strong'
+                      : open
+                        ? 'border-primary'
+                        : 'border-border hover:border-primary/40',
                   ),
             )}
           >
@@ -382,7 +401,7 @@ export function FeaturedActionList({
                 </div>
                 <Link
                   href={`${listHref}?issue=all`}
-                  className="border-border bg-card text-primary flex h-[42px] items-center justify-center gap-1 rounded-[10px] border text-[13.5px] font-semibold"
+                  className="border-border bg-card text-primary hover:border-primary/40 focus-visible:ring-primary flex h-[42px] items-center justify-center gap-1 rounded-[10px] border text-[13.5px] font-semibold transition-colors outline-none focus-visible:ring-2"
                 >
                   {t('healthCheck.openList')}
                   <IconChevronRight className="size-4 rtl:rotate-180" />
@@ -392,6 +411,7 @@ export function FeaturedActionList({
           </div>
         );
       })}
+      </div>
     </section>
   );
 }

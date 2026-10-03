@@ -2,9 +2,9 @@ import { getTranslations } from 'next-intl/server';
 import { formatPhone } from '@/lib/phone';
 import { RecordPackageProvider } from '@/features/billing';
 import { getGuestPackageView } from '@/features/billing/queries';
-import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../../queries';
-import { rankFeaturedActions } from '../../utils/featured-actions';
-import type { FeaturedActionKey } from '../../types';
+import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../queries';
+import { rankFeaturedActions } from '../utils/featured-actions';
+import type { FeaturedActionKey } from '../types';
 import { FeaturedActionList, type FeaturedActionView } from './featured-action-list';
 
 const SITE_URL =

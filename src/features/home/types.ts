@@ -6,7 +6,6 @@ export type RecentRsvpRow = {
   name: string;
   rsvpStatus: 'pending' | 'confirmed' | 'declined';
   rsvpChangedAt: string;
-  rsvpChangedByName: string | null;
   rsvpChangeSource: 'manual' | 'guest' | 'admin_call' | null;
 };
 
@@ -15,14 +14,6 @@ export type GuestStats = {
   confirmed: number;
   pending: number;
   declined: number;
-};
-
-export type OnboardingStatus = {
-  detailsComplete: boolean;
-  hasGuests: boolean;
-  hasGroups: boolean;
-  hasInvitationImage: boolean;
-  hasCollaborator: boolean;
 };
 
 /** A Featured Action picked by its eligibility rule (ADR 0010), grouped into tiers in `utils/featured-actions`. */
@@ -84,5 +75,13 @@ export type GroupHeadsRow = {
   confirmed: number;
   pending: number;
   declined: number;
+  total: number;
+};
+
+/** Answered Guest Records (not heads) per RSVP Source. Rows with no recorded source are left out. */
+export type AnswerSourceCounts = {
+  guest: number;
+  call: number;
+  list: number;
   total: number;
 };

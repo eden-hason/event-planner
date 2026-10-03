@@ -1,14 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
-  X,
-} from 'lucide-react';
+import { Menu, PanelLeft, PanelRight, X } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -23,23 +16,14 @@ import { cn } from '@/lib/utils';
  * (morphing to a close X while open) is the icon for that job instead.
  */
 export function SidebarToggleButton({ className }: { className?: string }) {
-  const { toggleSidebar, state, isMobile, openMobile } = useSidebar();
+  const { toggleSidebar, isMobile, openMobile } = useSidebar();
   const locale = useLocale();
   const t = useTranslations('sidebar');
   const isRTL = locale === 'he';
-  const isCollapsed = state === 'collapsed';
 
-  const Icon = isMobile
-    ? openMobile
-      ? X
-      : Menu
-    : isCollapsed
-      ? isRTL
-        ? PanelRightOpen
-        : PanelLeftOpen
-      : isRTL
-        ? PanelRightClose
-        : PanelLeftClose;
+  // One icon for both states: it draws the sidebar's side, and the sidebar
+  // itself shows whether it is open.
+  const Icon = isMobile ? (openMobile ? X : Menu) : isRTL ? PanelRight : PanelLeft;
 
   return (
     <button
