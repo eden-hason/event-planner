@@ -7,11 +7,39 @@ risks. This file is the spec for building it.
 
 | Question | Decision |
 |---|---|
-| Where it runs | Vercel, as **one streaming Route Handler per import**. The whole linked-device session lives inside a single invocation: no session store, no separate service. |
+| Where it runs | Vercel. The session runs in the background of the request that starts it (`after`) and reports into a short-lived `whatsapp_import_sessions` row that the page polls. No separate service. See the revision below. |
 | Platforms | **Mobile first**: the Add guests sheet and the `/guests/import` wizard. Desktop later. |
 | What the Owner picks from | **Groups and contacts**: a Groups tab first, a Contacts tab second, merged and deduplicated by phone. |
 | Guest group for WhatsApp-group members | **The Owner picks per group** with the existing `GroupCombobox`, blank by default. |
 | People with no name | **Flag for editing** in the existing validate step. The Owner fills them in, or they are skipped as "missing name". |
+
+## Revision (2026-10-03): a session row, not a stream
+
+The first build held the whole session in one streaming request. It failed on the first
+real phone test, and the reason was structural: on a phone the Owner **leaves the browser to
+enter the pairing code in WhatsApp**, the browser suspends the backgrounded tab and cuts its
+connections, the stream died, the page showed "Something went wrong", and the server
+treated the disconnect as a cancel and unlinked the device. The spike never hit this because
+it ran in a terminal. Any design for this flow has to survive the page going away for a
+minute.
+
+So now:
+
+- `POST /api/events/[eventId]/whatsapp-import` validates, inserts a
+  `whatsapp_import_sessions` row (RLS: the Owner inserts, reads and deletes their own) and
+  returns `{ sessionId }`. The session runs after the response (`after`, within the route's
+  `maxDuration`) and writes code, progress and result into the row with the service role
+  (`services/whatsapp-import-session.ts`).
+- `GET .../whatsapp-import/[sessionId]` is polled every 1.5s, plus immediately when the tab
+  becomes visible again. A failed poll is expected while the tab is in the background and is
+  just retried. The result travels once, on `done`.
+- `DELETE .../whatsapp-import/[sessionId]` ends a session. The page calls it after reading
+  the result, and on cancel. The running session checks its row every 2s and unlinks as soon
+  as the row is gone, so deleting the row is the cancel.
+- The Sweeper purges rows past `expires_at` (15 minutes). The result is other people's
+  names and numbers, held server-side for minutes at most. The privacy copy says so.
+
+The diagram below still shows the steps the Owner goes through. Only the transport changed.
 
 ## The shape
 

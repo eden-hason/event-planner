@@ -1,21 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { getCurrentUser } from '@/features/auth/queries';
 import { WhatsAppImportRequestSchema } from '@/features/guests/schemas';
-import { runWhatsAppImport } from '@/features/guests/services/whatsapp-import';
-import type { WhatsAppImportEvent } from '@/features/guests/types';
+import { runWhatsAppImportSession } from '@/features/guests/services/whatsapp-import-session';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 /**
- * Links the Owner's WhatsApp as a short-lived device and streams back their
- * groups and contacts for the guest import (backlog 0017,
+ * Starts a WhatsApp guest import: links the Owner's WhatsApp as a short-lived
+ * device and reads their groups and contacts (backlog 0017,
  * docs/whatsapp-import-plan.md).
  *
- * One request is the whole session: the response is newline-delimited JSON
- * (`WhatsAppImportEvent`) that stays open from the pairing code until the
- * device is unlinked again. A Route Handler rather than a Server Action
- * because it has to stream for a minute or more, and because the browser
- * closing the request is the signal to unlink.
+ * Returns a session id straight away and runs the session after the response
+ * (`after`), reporting into its `whatsapp_import_sessions` row. The page polls
+ * `./[sessionId]` rather than holding this request open, because on a phone
+ * the Owner leaves the page to enter the code in WhatsApp and the browser cuts
+ * the backgrounded tab's connections.
  */
 export const maxDuration = 300;
 
@@ -29,13 +29,12 @@ export async function POST(
   const blocked = await assertNotImpersonating();
   if (blocked) return NextResponse.json({ error: blocked }, { status: 403 });
 
+  const [{ eventId }, supabase] = await Promise.all([context.params, createClient()]);
   // RLS decides whether this user may touch the Event; no row means no. The
   // lookup needs nothing from the user check, so the two run together.
   const [user, { data: event }] = await Promise.all([
     getCurrentUser(),
-    Promise.all([context.params, createClient()]).then(([{ eventId }, supabase]) =>
-      supabase.from('events').select('id').eq('id', eventId).maybeSingle(),
-    ),
+    supabase.from('events').select('id').eq('id', eventId).maybeSingle(),
   ]);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -51,38 +50,23 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 });
   }
 
-  const abort = new AbortController();
-  request.signal.addEventListener('abort', () => abort.abort());
-  const encoder = new TextEncoder();
+  const { data: session, error } = await supabase
+    .from('whatsapp_import_sessions')
+    .insert({ event_id: eventId })
+    .select('id')
+    .single();
+  if (error || !session) {
+    console.error('[whatsapp-import] could not start a session:', error?.message);
+    return NextResponse.json({ error: 'Could not start' }, { status: 500 });
+  }
 
-  const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      const send = (event: WhatsAppImportEvent) =>
-        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+  after(() =>
+    runWhatsAppImportSession(createServiceClient(), {
+      sessionId: session.id,
+      phone: parsed.data.phone,
+      deadlineMs: SESSION_DEADLINE_MS,
+    }),
+  );
 
-      void runWhatsAppImport({
-        phone: parsed.data.phone,
-        signal: abort.signal,
-        deadlineMs: SESSION_DEADLINE_MS,
-        onEvent: send,
-      }).finally(() => {
-        try {
-          controller.close();
-        } catch {
-          // Already closed by a cancelled reader.
-        }
-      });
-    },
-    cancel() {
-      abort.abort();
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'application/x-ndjson; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Accel-Buffering': 'no',
-    },
-  });
+  return NextResponse.json({ sessionId: session.id });
 }

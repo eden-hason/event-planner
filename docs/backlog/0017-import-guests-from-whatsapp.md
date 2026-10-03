@@ -101,6 +101,11 @@ as the manual path.
   risk lands on the Owner's own number, not ours. The library can break without notice
   when WhatsApp changes the protocol, so this must be a best-effort import with the file
   import as the fallback.
+- **The page goes away mid-flow (found in production, 2026-10-03).** On a phone the Owner
+  switches to WhatsApp to enter the code, and the browser suspends the tab and its
+  connections. A session tied to an open request dies right there. The session must run
+  independently and let the page catch up. See the revision in
+  `docs/whatsapp-import-plan.md`.
 - **Hosting.** Each import holds a WebSocket for 1-3 minutes, and the restart after
   pairing must reconnect with the same in-memory keys. That rules out stateless
   request/response functions. It needs a small always-on Node service (e.g. Fly,

@@ -28,9 +28,9 @@ import {
  *
  * The whole session lives inside one call: keys are generated in memory,
  * never stored, and the device is unlinked on every way out - done, error,
- * deadline, or the caller aborting because the browser went away. That is
- * what lets it run inside a single streaming request instead of a long-lived
- * service.
+ * deadline, or the caller aborting. It knows nothing about who is listening;
+ * `whatsapp-import-session.ts` runs it in the background and reports it into
+ * a row the page polls.
  *
  * Talks to WhatsApp through Baileys, an unofficial client of the WhatsApp Web
  * protocol - see 0017 for the terms-of-service and breakage caveats.
@@ -39,7 +39,7 @@ import {
 export interface RunWhatsAppImportOptions {
   /** The Owner's number as international digits (`972548129777`). */
   phone: string;
-  /** Aborted when the client disconnects - unlinks and stops without emitting. */
+  /** Aborting unlinks and stops without emitting - how a session is cancelled. */
   signal: AbortSignal;
   /** Hard ceiling for the whole session; keep it under the route's `maxDuration`. */
   deadlineMs: number;
@@ -83,7 +83,7 @@ export function runWhatsAppImport({
       try {
         onEvent(event);
       } catch {
-        // The stream is gone; the abort signal will finish us.
+        // A failed report must not take the session down; it still unlinks.
       }
     };
 

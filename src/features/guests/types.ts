@@ -32,10 +32,10 @@ export type WhatsAppImportErrorReason =
   | 'unknown';
 
 /**
- * The newline-delimited JSON stream `POST /api/events/[eventId]/whatsapp-import`
- * sends. `groups` can arrive twice: once right after linking (phones complete,
- * names thin) and again once the sync settles (names filled in) - the later
- * one replaces the earlier.
+ * What a running import session reports (`runWhatsAppImport`'s `onEvent`).
+ * `groups` can arrive twice: once right after linking (phones complete, names
+ * thin) and again once the sync settles (names filled in) - the later one
+ * replaces the earlier.
  */
 export type WhatsAppImportEvent =
   | { type: 'code'; code: string }
@@ -44,6 +44,18 @@ export type WhatsAppImportEvent =
   | { type: 'contacts'; contacts: WhatsAppPerson[] }
   | { type: 'done' }
   | { type: 'error'; reason: WhatsAppImportErrorReason };
+
+/**
+ * `GET /api/events/[eventId]/whatsapp-import/[sessionId]`: a session's row as
+ * the page polls it. The result travels only once, on `done`; until then the
+ * page gets a count, since it polls every second or two.
+ */
+export type WhatsAppImportSessionView =
+  | { status: 'requesting' }
+  | { status: 'code'; code: string }
+  | { status: 'linked'; groupCount: number | null }
+  | { status: 'done'; groups: WhatsAppGroup[]; contacts: WhatsAppPerson[] }
+  | { status: 'error'; error: WhatsAppImportErrorReason };
 
 /** Everything the WhatsApp import can fail with, as the client sees it. */
 export type WhatsAppImportError = WhatsAppImportErrorReason | 'invalid_phone';
@@ -62,7 +74,7 @@ export type WhatsAppImportState = {
   /** Code on screen, waiting for the Owner to enter it on their phone. */
   | { status: 'code'; code: string }
   /** Linked, reading groups and contacts. */
-  | { status: 'linked' }
+  | { status: 'linked'; groupCount: number | null }
   /** Everything read; the device has already been unlinked server-side. */
   | { status: 'done' }
   | { status: 'error'; error: WhatsAppImportError }
