@@ -80,9 +80,8 @@ The split of **answered RSVPs** by **RSVP Source**.
   - Answered-themselves or list-updated at 0: a plain muted 0
 - **Nothing answered yet** (including zero guests): the card's own empty state, e.g.
   `התשובות יופיעו כאן כשהאורחים יתחילו לענות` (answers will appear here once guests
-  start replying). At desktop width it follows the compacted empty-state rule from
-  `home-desktop-brief.md` section 6; on mobile it matches the other analytics empty
-  states
+  start replying). It uses the same ghost empty state as the other analytics cards
+  (`home-desktop-brief.md` section 6) at every width
 - **Seating Manager:** sees it like every other analytics card
 - **Loading / error:** like the other analytics cards - its own skeleton (a bar plus
   three rows) and its own section error

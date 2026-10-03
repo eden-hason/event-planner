@@ -255,8 +255,8 @@ Section 9 of `home-page-brief.md` applies in full. At desktop width specifically
   - The status strip shows "not started" invitations
   - **The four analytics empty states are compacted into a calm, short row pair:**
     smaller placeholders and a single line of copy each, so the grid doesn't dominate
-    the page. This compaction applies **at desktop width only**; mobile's implemented
-    empty states do not change
+    the page. Since built, the same ghost empty states (a faded preview of the card
+    with the empty-state line over it) are used on mobile too, sized to the mobile cards
 - **No date:** the Hero date cell is the dashed violet link, and the countdown position
   is empty or shows the no-date title as on mobile. Never a dash or a "0"
 - **All done / fallback:** 3 fallback cards in the 2 + 1 arrangement, which must not
