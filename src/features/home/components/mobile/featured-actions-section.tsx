@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { formatPhone } from '@/lib/phone';
+import { RecordPackageProvider } from '@/features/billing';
+import { getGuestPackageView } from '@/features/billing/queries';
 import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../../queries';
 import { rankFeaturedActions } from '../../utils/featured-actions';
 import type { FeaturedActionKey } from '../../types';
@@ -30,7 +32,12 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
   // somewhere they cannot go.
   if (!event || !viewer?.isOwner) return null;
 
-  const facts = await getFeaturedActionFacts(event, viewer);
+  // The package is loaded here, not with the other facts, because its sheet needs it too.
+  const [baseFacts, recordPackage] = await Promise.all([
+    getFeaturedActionFacts(event, viewer),
+    getGuestPackageView(eventId),
+  ]);
+  const facts = { ...baseFacts, recordsOverPackage: recordPackage?.over ?? 0 };
 
   const why = (key: FeaturedActionKey): string => {
     switch (key) {
@@ -43,6 +50,8 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
           : t('health.whyNoPhone', { noPhone: facts.noPhoneRecords });
       case 'seating':
         return t('seating.why', { count: facts.confirmedHeads });
+      case 'package':
+        return t('package.why');
       case 'viewList':
         return t('viewList.why', { count: facts.guestRecords });
       default:
@@ -52,19 +61,24 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
 
   const actions: FeaturedActionView[] = rankFeaturedActions(facts).map((key) => ({
     key,
-    label: t(`${key}.label`),
+    label:
+      key === 'package'
+        ? t('package.label', { count: facts.recordsOverPackage })
+        : t(`${key}.label`),
     why: why(key),
   }));
 
   return (
-    <FeaturedActionList
-      eventId={eventId}
-      title={t('title')}
-      subtitle={t('subtitle')}
-      actions={actions}
-      maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
-      previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
-      health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
-    />
+    <RecordPackageProvider view={recordPackage} eventName={event.title}>
+      <FeaturedActionList
+        eventId={eventId}
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={actions}
+        maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
+        previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
+        health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
+      />
+    </RecordPackageProvider>
   );
 }

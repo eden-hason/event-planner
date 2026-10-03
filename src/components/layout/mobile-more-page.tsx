@@ -18,7 +18,11 @@ import {
 } from '@/components/ui/popover';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { EventPlanCard } from '@/features/billing';
+import {
+  EventPlanCard,
+  RecordPackageCard,
+  type GuestPackageView,
+} from '@/features/billing';
 import { type EventApp } from '@/features/events';
 import { cn } from '@/lib/utils';
 import {
@@ -37,6 +41,8 @@ type MobileMorePageProps = {
   events: EventApp[];
   guestCounts: Record<string, number>;
   currentUserId?: string;
+  /** Null when the event has no package yet; the plan card speaks for it instead. */
+  recordPackage: GuestPackageView | null;
   /** Rendered in the footer when the build sets it. */
   appVersion?: string;
 };
@@ -196,6 +202,7 @@ export function MobileMorePage({
   events,
   guestCounts,
   currentUserId,
+  recordPackage,
   appVersion,
 }: MobileMorePageProps) {
   const locale = useLocale();
@@ -282,7 +289,15 @@ export function MobileMorePage({
         </Group>
       )}
 
-      <EventPlanCard />
+      {/*
+        Once there is a package, it is the plan: the package card replaces the plan card
+        rather than stacking two billing stories.
+      */}
+      {recordPackage ? (
+        <RecordPackageCard eventId={eventId} view={recordPackage} />
+      ) : (
+        <EventPlanCard />
+      )}
 
       <Group label={t('groups.account')}>
         <RowCard>

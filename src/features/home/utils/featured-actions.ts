@@ -11,6 +11,13 @@ export const FEATURED_ACTION_SLOTS = 4;
 /** Below this many Guest Records a hand-built list has no drift worth flagging. */
 export const HEALTH_CHECK_MIN_RECORDS = 20;
 
+/**
+ * Above even setup: a list over its Record Package means guests are about to miss
+ * messages, and setup steps like "invite a collaborator" can stay eligible for weeks -
+ * enough of them would push the warning out of the four slots entirely.
+ */
+const BLOCKING_TIER: readonly RankedActionKey[] = ['package'];
+
 /** Tier 1, in priority order: every unfinished setup step outranks everything else. */
 const SETUP_TIER: readonly RankedActionKey[] = [
   'details',
@@ -31,6 +38,7 @@ const LATER_TIERS: ReadonlyArray<readonly RankedActionKey[]> = [
 const FALLBACK: readonly FallbackActionKey[] = ['addGuest', 'ai', 'viewList'];
 
 const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
+  package: (f) => f.recordsOverPackage > 0,
   details: (f) => !f.detailsComplete,
   addGuests: (f) => f.guestRecords === 0,
   groups: (f) => f.guestRecords > 0 && f.groupCount === 0,
@@ -58,7 +66,7 @@ export function isDetailsComplete(event: EventApp): boolean {
 }
 
 /**
- * Picks the Featured Actions for this render: every eligible setup step, then
+ * Picks the Featured Actions for this render: a blocking package warning, every eligible setup step, then
  * the highest-priority eligible action from each later tier, then the rest of
  * those in tier order, then the fallback trio. Computed, never stored, never
  * dismissed - an action leaves only when its rule turns false (ADR 0010).
@@ -68,6 +76,7 @@ export function rankFeaturedActions(facts: FeaturedActionFacts): FeaturedActionK
   const later = LATER_TIERS.map((keys) => keys.filter(isEligible));
 
   const picked: FeaturedActionKey[] = [
+    ...BLOCKING_TIER.filter(isEligible),
     ...SETUP_TIER.filter(isEligible),
     ...later.flatMap((keys) => keys.slice(0, 1)),
     ...later.flatMap((keys) => keys.slice(1)),

@@ -386,7 +386,7 @@ export function GuestsPage({
   }
 
   return (
-    <RecordPackageProvider view={recordPackage}>
+    <RecordPackageProvider view={recordPackage} eventName={eventName}>
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'guests' | 'groups')}

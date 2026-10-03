@@ -120,7 +120,7 @@ async function countRows(table: 'tables' | 'expenses', eventId: string): Promise
 export async function getFeaturedActionFacts(
   event: EventApp,
   viewer: HomeViewer,
-): Promise<FeaturedActionFacts> {
+): Promise<Omit<FeaturedActionFacts, 'recordsOverPackage'>> {
   const [guests, groups, collaboratorCount, testable, tableCount, expenseCount, previewToken] =
     await Promise.all([
       getHomeGuests(event.id),

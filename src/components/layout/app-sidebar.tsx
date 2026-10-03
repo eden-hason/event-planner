@@ -12,6 +12,7 @@ import {
   IconGift,
   IconListDetails,
   IconArmchair,
+  IconPackage,
 } from '@tabler/icons-react';
 import { NavMain } from '@/components/layout/nav-main';
 import { NavSecondary } from '@/components/layout/nav-secondary';
@@ -64,7 +65,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
-  const { isOwner } = useCollaboration();
+  const { isOwner, canSeePayments } = useCollaboration();
   const tNav = useTranslations('navigation');
   const tSidebar = useTranslations('sidebar');
   const locale = useLocale();
@@ -131,6 +132,16 @@ export function AppSidebar({
       url: '/app/gifting',
       icon: IconGift,
     },
+    ...(canSeePayments
+      ? [
+          {
+            id: 'package',
+            title: tNav('package'),
+            url: '/app/package',
+            icon: IconPackage,
+          },
+        ]
+      : []),
     {
       id: 'collaboration',
       title: tNav('collaboration'),

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PackageSplit, RecordPackage } from '../types';
+import type { PackageSplit, RecordPackage, RecordPackageChannel } from '../types';
 import { recordPackage, splitByPackage } from '../utils/record-package';
 
 const PAGE = 1000;
@@ -8,6 +8,10 @@ export type LoadedRecordPackage = {
   /** Null when no payment was ever recorded: the Event has no package. */
   package: RecordPackage | null;
   split: PackageSplit;
+  /** The channel of the latest payment: what the package is sold on now. */
+  channel: RecordPackageChannel | null;
+  /** True when every payment is a gift from Kululu, so no surface should talk about paying. */
+  gifted: boolean;
 };
 
 /**
@@ -26,9 +30,11 @@ export async function loadRecordPackage(
     supabase.from('events').select('bonus_records_override').eq('id', eventId).single(),
     supabase
       .from('event_billing_events')
-      .select('record_count')
+      .select('record_count, channel, payment_method')
       .eq('event_id', eventId)
-      .not('record_count', 'is', null),
+      .not('record_count', 'is', null)
+      .order('occurred_at', { ascending: false })
+      .order('created_at', { ascending: false }),
     pageAll<{ id: string; created_at: string }>((from) =>
       supabase
         .from('guests')
@@ -52,8 +58,9 @@ export async function loadRecordPackage(
     return null;
   }
 
+  const payments = paymentsRes.data ?? [];
   const pkg = recordPackage({
-    payments: (paymentsRes.data ?? []).map((p) => p.record_count as number),
+    payments: payments.map((p) => p.record_count as number),
     bonusOverride: eventRes.data.bonus_records_override as number | null,
   });
 
@@ -66,6 +73,8 @@ export async function loadRecordPackage(
 
   return {
     package: pkg,
+    channel: (payments[0]?.channel as RecordPackageChannel | undefined) ?? null,
+    gifted: payments.length > 0 && payments.every((p) => p.payment_method === 'gift'),
     split: splitByPackage({
       packageSize: pkg?.size ?? 0,
       records,

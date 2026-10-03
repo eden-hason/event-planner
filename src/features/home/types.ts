@@ -27,6 +27,7 @@ export type OnboardingStatus = {
 
 /** A Featured Action picked by its eligibility rule (ADR 0010), grouped into tiers in `utils/featured-actions`. */
 export type RankedActionKey =
+  | 'package'
   | 'details'
   | 'addGuests'
   | 'groups'
@@ -61,6 +62,8 @@ export type FeaturedActionFacts = {
   /** The Owner picked a landing template rather than leaving the default. */
   hasPreviewToken: boolean;
   expenseCount: number;
+  /** Guest Records beyond the Record Package, which no Schedule will reach (ADR 0027). */
+  recordsOverPackage: number;
 };
 
 export type StatusStripData = {

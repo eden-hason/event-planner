@@ -51,7 +51,8 @@
     "comingSoon": "Soon",
     "new": "New",
     "more": "More",
-    "back": "Back"
+    "back": "Back",
+    "package": "Package & payments"
   },
   "more": {
     "title": "More",
@@ -1415,6 +1416,11 @@
         "viewList": {
           "label": "Go to the guest list",
           "why": "{count} records on the list"
+        },
+        "urgent": "Urgent",
+        "package": {
+          "label": "{count, plural, one {# record won't get messages} other {# records won't get messages}}",
+          "why": "The list is bigger than the package - add records or remove guests"
         }
       },
       "testMessage": {
@@ -2588,6 +2594,71 @@
         "talk": "Talk with us"
       },
       "close": "Close"
+    },
+    "packageSheet": {
+      "title": "Record package",
+      "paid": "Paid",
+      "gifted": "A gift from Kululu",
+      "channels": {
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "whatsapp_calls": "WhatsApp + calls"
+      },
+      "heroLeft": "{count, plural, one {record left} other {records left}}",
+      "heroOver": "{count, plural, one {record over the package} other {records over the package}}",
+      "usedOf": "{used} of {size} records in use",
+      "breakdownTitle": "What's in the package",
+      "paidRecords": "Paid records",
+      "giftedRecords": "Records gifted by Kululu",
+      "bonusRecords": "Bonus · free",
+      "total": "Total in the package",
+      "overWarning": "{count, plural, one {# record won't get messages} other {# records won't get messages}}",
+      "addRecords": "Add records",
+      "showOutside": "Show the records",
+      "whatsapp": "Hi, I'd like to add records to the package for {event}",
+      "whatsappOver": "Hi, I'd like to add records to the package for {event}. {count} records are currently outside the package"
+    },
+    "packagePage": {
+      "title": "Package & payments",
+      "subtitle": "How many records are left, what the package is made of, and every payment",
+      "cardTitle": "Record package",
+      "legend": {
+        "paid": "Paid",
+        "gifted": "Gifted",
+        "bonus": "Bonus · free",
+        "over": "Outside the package"
+      },
+      "over": {
+        "title": "{count, plural, one {# record outside the package} other {# records outside the package}}",
+        "body": "The most recently added records won't get messages until records are added to the package or guests are removed"
+      },
+      "rows": {
+        "bonus": "Bonus records · free",
+        "customBonus": "A gift from the Kululu team",
+        "used": "In use",
+        "left": "Left",
+        "over": "Outside the package"
+      },
+      "payments": {
+        "title": "Payments",
+        "records": "{count, plural, one {# record} other {{formatted} records}}",
+        "first": "First purchase",
+        "gift": "Gift from Kululu"
+      },
+      "help": {
+        "title": "How the package works",
+        "unlimited": "You can add as many guests as you like",
+        "oldestFirst": "Messages go only to records in the package, oldest first",
+        "reachedStays": "A record that already got a message still counts, even if deleted"
+      },
+      "empty": {
+        "title": "No record package yet",
+        "description": "The package opens with the first payment. Until then, planning is free",
+        "whatsapp": "Hi, I'd like to open a record package for {event}"
+      }
+    },
+    "packageCard": {
+      "details": "Details"
     }
   }
 }
