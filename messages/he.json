@@ -1236,56 +1236,6 @@
     "header": {
       "title": "בית"
     },
-    "eventNotFound": "האירוע לא נמצא",
-    "stats": {
-      "daysToEvent": "ימים לאירוע",
-      "todayIsTheDay": "היום זה היום!",
-      "daysSince": "ימים מאז האירוע",
-      "daysTo": "ימים נותרו",
-      "guestsInvited": "אורחים שהוזמנו",
-      "ofEstimated": "מתוך ~{estimate} המשוערים",
-      "pctOfEstimate": "{pct}% מהאומדן",
-      "scheduledMessages": "הודעות מתוזמנות",
-      "pendingMessageSingular": "הודעה ממתינה",
-      "pendingMessages": "הודעות ממתינות",
-      "noDateYet": "עוד אין תאריך"
-    },
-    "rsvpBreakdown": {
-      "title": "פירוט אישורי הגעה",
-      "description": "סקירת תגובות אורחים",
-      "confirmed": "אישרו",
-      "pending": "ממתינים",
-      "declined": "סירבו",
-      "total": "סה\"כ",
-      "noGuests": "טרם נוספו אורחים"
-    },
-    "groupBreakdown": {
-      "title": "קבוצות אורחים",
-      "description": "פירוט לפי קבוצות",
-      "guestSingular": "אורח",
-      "guests": "אורחים",
-      "noGroups": "אין קבוצות עדיין",
-      "sideLabels": {
-        "bride": "צד הכלה",
-        "groom": "צד החתן"
-      }
-    },
-    "rsvpEngagement": {
-      "title": "אישורי הגעה לפי קבוצה",
-      "description": "תגובות אורחים לפי קבוצה",
-      "noGroups": "אין קבוצות עדיין",
-      "confirmed": "אישרו",
-      "pending": "ממתינים",
-      "declined": "סירבו"
-    },
-    "countdown": {
-      "today": "היום זה היום!",
-      "daysSince": "ימים מאז האירוע",
-      "daysTo": "ימים נותרו",
-      "noDateTitle": "מחכים לתאריך המושלם",
-      "noDateDescription": "ברגע שתקבעו, הכל כאן יתעדכן לבד",
-      "noDateChip": "התאריך עוד לפניכם"
-    },
     "recentActivity": {
       "title": "פעילות אחרונה",
       "description": "עדכוני אישור הגעה אחרונים",
@@ -1300,36 +1250,6 @@
       "dayAgo": "לפני {count} יום",
       "daysAgo": "לפני {count} ימים",
       "byPhone": "בטלפון"
-    },
-    "onboarding": {
-      "title": "התחל עם Kululu",
-      "outOf": " מתוך ",
-      "stepsLeft": " שלבים נותרו",
-      "details": {
-        "title": "השלם את פרטי האירוע",
-        "description": "הוסף שעת חופה ופרטים מרכזיים אחרים כדי שהאורחים ידעו מה לצפות.",
-        "action": "ערוך פרטים"
-      },
-      "guests": {
-        "title": "הוסף את האורח הראשון",
-        "description": "התחל לבנות את רשימת האורחים שלך על ידי הוספה ידנית או ייבוא CSV.",
-        "action": "נהל אורחים"
-      },
-      "groups": {
-        "title": "ארגן אורחים לקבוצות",
-        "description": "צור קבוצות לשמירת סדר ברשימת האורחים לפי משפחה, צד, או קשר.",
-        "action": "נהל קבוצות"
-      },
-      "invitation": {
-        "title": "העלה את עיצוב ההזמנה",
-        "description": "הוסף תמונת הזמנה יפה כדי שהאורחים יראו אותה כשהם פותחים את קישור האישור.",
-        "action": "העלה הזמנה"
-      },
-      "collaborator": {
-        "title": "הוסף שותף לניהול",
-        "description": "הזמן שותף או בן משפחה לעזור לנהל אישורי הגעה ופרטי אורחים.",
-        "action": "נהל שותפים"
-      }
     },
     "mobile": {
       "typeLabel": {
@@ -1484,10 +1404,14 @@
         "engagementLegend": "אישרו · ממתינים · סירבו",
         "engagementRow": "<b>{confirmed}</b> מתוך {total}",
         "engagementEmpty": "ברגע שתחלקו את האורחים לקבוצות, תראו כאן מי כבר ענה",
-        "groupsTitle": "לפי קבוצה",
+        "sourcesTitle": "איך ענו האורחים",
+        "sourcesUnit": "תשובות",
+        "sourcesGuest": "ענו בעצמם",
+        "sourcesCall": "בשיחה מצוות Kululu",
+        "sourcesList": "עודכנו ברשימה",
+        "sourcesCallsHint": "השיחות מתחילות אחרי סבבי הוואטסאפ",
+        "sourcesEmpty": "התשובות יופיעו כאן כשהאורחים יתחילו לענות",
         "groupsSummary": "{groups} קבוצות · {guests} אורחים",
-        "groupRow": "{count} אורחים",
-        "groupsEmpty": "אין קבוצות עדיין. נוצרות אוטומטית מעמודת \"קבוצה\" בייבוא, או ידנית בלשונית קבוצות",
         "groupsShowAll": "הצגת כל {count} הקבוצות",
         "groupsShowLess": "הצגה מצומצמת",
         "activityTitle": "פעילות אחרונה",

@@ -1236,56 +1236,6 @@
     "header": {
       "title": "Home"
     },
-    "eventNotFound": "Event not found",
-    "stats": {
-      "daysToEvent": "Days to Event",
-      "todayIsTheDay": "Today's the day!",
-      "daysSince": "days since the event",
-      "daysTo": "days to go",
-      "guestsInvited": "Guests Invited",
-      "ofEstimated": "of ~{estimate} estimated",
-      "pctOfEstimate": "{pct}% of estimate",
-      "scheduledMessages": "Scheduled Messages",
-      "pendingMessageSingular": "pending message",
-      "pendingMessages": "pending messages",
-      "noDateYet": "No date yet"
-    },
-    "rsvpBreakdown": {
-      "title": "RSVP Breakdown",
-      "description": "Guest response overview",
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "declined": "Declined",
-      "total": "Total",
-      "noGuests": "No guests yet"
-    },
-    "groupBreakdown": {
-      "title": "Guest Groups",
-      "description": "Breakdown by group",
-      "guestSingular": "guest",
-      "guests": "guests",
-      "noGroups": "No groups yet",
-      "sideLabels": {
-        "bride": "bride's side",
-        "groom": "groom's side"
-      }
-    },
-    "rsvpEngagement": {
-      "title": "RSVP by Group",
-      "description": "Guest responses per group",
-      "noGroups": "No groups yet",
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "declined": "Declined"
-    },
-    "countdown": {
-      "today": "Today is the day!",
-      "daysSince": "days since the event",
-      "daysTo": "days to go",
-      "noDateTitle": "Waiting on the perfect date",
-      "noDateDescription": "The moment you pick one, everything here updates itself",
-      "noDateChip": "The date is still ahead of you"
-    },
     "recentActivity": {
       "title": "Recent Activity",
       "description": "Latest RSVP updates",
@@ -1300,36 +1250,6 @@
       "dayAgo": "{count} day ago",
       "daysAgo": "{count} days ago",
       "byPhone": "by phone"
-    },
-    "onboarding": {
-      "title": "Get started with Kululu",
-      "outOf": " out of ",
-      "stepsLeft": " steps left",
-      "details": {
-        "title": "Complete your event details",
-        "description": "Add canopy time and other key details so guests know what to expect.",
-        "action": "Edit details"
-      },
-      "guests": {
-        "title": "Add your first guest",
-        "description": "Start building your guest list by adding guests one by one or via CSV import.",
-        "action": "Manage guests"
-      },
-      "groups": {
-        "title": "Organize guests into groups",
-        "description": "Create groups to keep your guest list organized by family, side, or relationship.",
-        "action": "Manage groups"
-      },
-      "invitation": {
-        "title": "Upload your invitation design",
-        "description": "Add a beautiful invitation image so guests see it when they open their RSVP link.",
-        "action": "Upload invitation"
-      },
-      "collaborator": {
-        "title": "Add a co-organizer",
-        "description": "Invite a partner or family member to help manage RSVPs and guest details.",
-        "action": "Manage collaborators"
-      }
     },
     "mobile": {
       "typeLabel": {
@@ -1484,10 +1404,14 @@
         "engagementLegend": "Confirmed · Pending · Declined",
         "engagementRow": "<b>{confirmed}</b> of {total}",
         "engagementEmpty": "Once guests are in groups, you'll see who has answered here",
-        "groupsTitle": "By group",
+        "sourcesTitle": "How guests answered",
+        "sourcesUnit": "answers",
+        "sourcesGuest": "Answered themselves",
+        "sourcesCall": "In a call from the Kululu team",
+        "sourcesList": "Updated in the guest list",
+        "sourcesCallsHint": "Calls start after the WhatsApp rounds",
+        "sourcesEmpty": "Answers will show up here once guests start replying",
         "groupsSummary": "{groups} groups · {guests} guests",
-        "groupRow": "{count} guests",
-        "groupsEmpty": "No groups yet. They're created from the \"group\" column on import, or by hand on the groups tab",
         "groupsShowAll": "Show all {count} groups",
         "groupsShowLess": "Show less",
         "activityTitle": "Recent activity",

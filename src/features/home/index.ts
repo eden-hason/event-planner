@@ -1,25 +1,14 @@
 // Components
-export {
-  HomeHeader,
-  EventHeroBanner,
-  RsvpBreakdownCard,
-  RecentRsvpActivityCard,
-  OnboardingChecklistCard,
-  RsvpEngagementCard,
-  DaysToEventCard,
-  GuestsInvitedCard,
-  ScheduledMessagesCard,
-  GroupBreakdownCard,
-} from './components';
+export { HomeHeader } from './components';
 
 // Types
-export type { RecentRsvpRow, GuestStats, OnboardingStatus } from './types';
+export type { RecentRsvpRow, GuestStats, AnswerSourceCounts } from './types';
 
 // Utils (pure)
-export { countHeads } from './utils/counts';
+export { countHeads, countAnswerSources } from './utils/counts';
 export { isDetailsComplete } from './utils/featured-actions';
 
 // Note: queries (getRecentRsvpActivity, getHomeViewer, getStatusStrip, ...)
 // are exported from '@/features/home/queries' to avoid importing server-only
-// code into client components. The mobile layout reads those queries itself,
-// so it is imported from '@/features/home/components/mobile/home-mobile'.
+// code into client components. The Home sections read those queries
+// themselves, so they are imported from '@/features/home/components/home-sections'.

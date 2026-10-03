@@ -113,6 +113,10 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         ref={headerRef}
         className={cn(
           'flex items-center justify-between gap-4',
+          // From `md` up the row is as tall as a title with a subtitle (28px +
+          // 16px line heights), so moving between pages with and without one
+          // does not grow or shrink the header and shift the content below it.
+          'md:min-h-11',
           // `hidden`, not just an unpainted band: gone from the flex flow, the
           // Card's `gap-4` goes with it and the content starts at y=0.
           hideChromeRowOnMobile && 'hidden md:flex',
@@ -154,6 +158,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             on the pages reached from More).
           */}
           <SidebarToggleButton className="hidden md:flex" />
+          {title && <span aria-hidden className="bg-border hidden h-[18px] w-px md:block" />}
           {isMoreSubpage && (
             <Link
               href={buildNavUrl('/app/more', eventId)}

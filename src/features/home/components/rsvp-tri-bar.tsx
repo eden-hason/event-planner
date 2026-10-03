@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { GuestStats } from '../../types';
+import type { GuestStats } from '../types';
 
 /** Confirmed · pending · declined as one segmented bar on the track colour. */
 export function RsvpTriBar({ counts, className }: { counts: GuestStats; className?: string }) {
