@@ -81,5 +81,31 @@ export type GuestPackageView = {
   left: number;
   over: number;
   state: PackageState;
+  /** The latest payment's channel; null only for rows recorded before channels existed. */
+  channel: RecordPackageChannel | null;
+  /** Every payment was a gift from Kululu. */
+  gifted: boolean;
   outsideIds: string[];
+};
+
+/** One payment as the Owner's package page lists it: what it bought and what it cost. */
+export type PackagePayment = {
+  id: string;
+  records: number;
+  channel: RecordPackageChannel;
+  /** Shekels; 0 for a gift. */
+  amount: number;
+  gift: boolean;
+  occurredAt: string;
+};
+
+/**
+ * The Record Package page (Record Package Plan design): the package as the Guests page sees
+ * it, plus the money behind it. Owner-only, because payments carry amounts.
+ */
+export type RecordPackagePageView = GuestPackageView & {
+  /** An Operator set the bonus by hand, so the page credits the Kululu team for it. */
+  bonusIsCustom: boolean;
+  /** Newest first. */
+  payments: PackagePayment[];
 };

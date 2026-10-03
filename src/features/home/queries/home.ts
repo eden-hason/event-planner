@@ -120,6 +120,8 @@ async function countRows(table: 'tables' | 'expenses', eventId: string): Promise
 export async function getFeaturedActionFacts(
   event: EventApp,
   viewer: HomeViewer,
+  /** Passed in rather than read here: the caller already loaded the package for its sheet. */
+  recordsOverPackage: number,
 ): Promise<FeaturedActionFacts> {
   const [guests, groups, collaboratorCount, testable, tableCount, expenseCount, previewToken] =
     await Promise.all([
@@ -148,6 +150,7 @@ export async function getFeaturedActionFacts(
     giftingConfigured: isGiftingEnabled(event.eventSettings),
     hasPreviewToken: previewToken !== null,
     expenseCount,
+    recordsOverPackage,
   };
 }
 

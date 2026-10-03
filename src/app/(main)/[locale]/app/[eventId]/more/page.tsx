@@ -1,6 +1,7 @@
 import { getAllUserEvents } from '@/features/events/queries';
 import { getGuestCountsByEvent } from '@/features/guests/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
+import { getGuestPackageView } from '@/features/billing/queries';
 import { MobileMorePage } from '@/components/layout/mobile-more-page';
 
 /**
@@ -17,9 +18,10 @@ export default async function MoreRoute({
 }) {
   const { eventId } = await params;
 
-  const [events, effectiveUser] = await Promise.all([
+  const [events, effectiveUser, recordPackage] = await Promise.all([
     getAllUserEvents(),
     getEffectiveUser(),
+    getGuestPackageView(eventId),
   ]);
 
   // Every event the switcher lists shows its headcount, so they are counted
@@ -32,6 +34,7 @@ export default async function MoreRoute({
       events={events}
       guestCounts={guestCounts}
       currentUserId={effectiveUser?.id}
+      recordPackage={recordPackage}
       appVersion={process.env.NEXT_PUBLIC_APP_VERSION}
     />
   );

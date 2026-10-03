@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { IconBrandWhatsapp, IconPackage } from '@tabler/icons-react';
 import { useCollaboration } from '@/components/feature-layout';
-import { billingWhatsAppUrl, useBillingSheet, useRecordPackage } from '@/features/billing';
+import { billingWhatsAppUrl, useRecordPackage } from '@/features/billing';
 import { cn } from '@/lib/utils';
 
 /**
@@ -82,25 +82,22 @@ export function OutsidePackageBanner({
  */
 export function OutsidePackageNotice({ guestId }: { guestId: string }) {
   const t = useTranslations('guests.package');
-  const { outsideIds } = useRecordPackage();
-  const { isOwner } = useCollaboration();
-  const { canPrompt, openSheet, sheet } = useBillingSheet();
+  const { outsideIds, canOpenSheet, openSheet } = useRecordPackage();
   if (!outsideIds.has(guestId)) return null;
 
   return (
     <div className="bg-warning-tint text-warning-strong flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-[13.5px] font-semibold">
       <IconPackage size={17} stroke={2} className="shrink-0" />
       <span className="min-w-0 flex-1">{t('drawerLine')}</span>
-      {isOwner && canPrompt && (
+      {canOpenSheet && (
         <button
           type="button"
-          onClick={openSheet}
+          onClick={() => openSheet()}
           className="font-bold whitespace-nowrap underline underline-offset-[3px]"
         >
           {t('drawerLink')}
         </button>
       )}
-      {sheet}
     </div>
   );
 }

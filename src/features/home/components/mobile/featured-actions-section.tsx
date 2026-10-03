@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { formatPhone } from '@/lib/phone';
+import { getGuestPackageView } from '@/features/billing/queries';
 import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../../queries';
 import { rankFeaturedActions } from '../../utils/featured-actions';
 import type { FeaturedActionKey } from '../../types';
@@ -30,7 +31,8 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
   // somewhere they cannot go.
   if (!event || !viewer?.isOwner) return null;
 
-  const facts = await getFeaturedActionFacts(event, viewer);
+  const recordPackage = await getGuestPackageView(eventId);
+  const facts = await getFeaturedActionFacts(event, viewer, recordPackage?.over ?? 0);
 
   const why = (key: FeaturedActionKey): string => {
     switch (key) {
@@ -43,6 +45,8 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
           : t('health.whyNoPhone', { noPhone: facts.noPhoneRecords });
       case 'seating':
         return t('seating.why', { count: facts.confirmedHeads });
+      case 'package':
+        return t('package.why');
       case 'viewList':
         return t('viewList.why', { count: facts.guestRecords });
       default:
@@ -52,7 +56,10 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
 
   const actions: FeaturedActionView[] = rankFeaturedActions(facts).map((key) => ({
     key,
-    label: t(`${key}.label`),
+    label:
+      key === 'package'
+        ? t('package.label', { count: facts.recordsOverPackage })
+        : t(`${key}.label`),
     why: why(key),
   }));
 
@@ -65,6 +72,8 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
       maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
       previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
       health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
+      recordPackage={recordPackage}
+      eventName={event.title}
     />
   );
 }

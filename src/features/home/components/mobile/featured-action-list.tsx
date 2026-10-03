@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  IconAlertTriangle,
   IconCheck,
   IconChecklist,
   IconChevronRight,
@@ -19,7 +20,8 @@ import {
   IconUsers,
   type Icon,
 } from '@tabler/icons-react';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { RecordPackageSheet, type GuestPackageView } from '@/features/billing';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { sendHomeTestMessage, type SendTestMessageState } from '../../actions/test-message';
@@ -36,7 +38,11 @@ export type FeaturedActionView = {
  * /app/[eventId] a card links to; an action without one plays out inline on
  * the card (see `onInlineClick`).
  */
-const ACTION_UI: Record<FeaturedActionKey, { icon: Icon; path?: string; dominant?: boolean }> = {
+const ACTION_UI: Record<
+  FeaturedActionKey,
+  { icon: Icon; path?: string; dominant?: boolean; urgent?: boolean }
+> = {
+  package: { icon: IconAlertTriangle, urgent: true },
   details: { icon: IconSettings, path: 'details' },
   addGuests: { icon: IconUsers, path: 'guests', dominant: true },
   groups: { icon: IconList, path: 'guests?tab=groups' },
@@ -110,6 +116,8 @@ export function FeaturedActionList({
   maskedPhone,
   previewUrl,
   health,
+  recordPackage,
+  eventName,
 }: {
   eventId: string;
   title: string;
@@ -118,10 +126,14 @@ export function FeaturedActionList({
   maskedPhone: string | null;
   previewUrl: string | null;
   health: { duplicates: number; noPhone: number };
+  recordPackage: GuestPackageView | null;
+  eventName?: string;
 }) {
   const t = useTranslations('home.mobile');
   const [test, setTest] = useState<TestState>({ step: 'closed' });
   const [healthOpen, setHealthOpen] = useState(false);
+  const [packageOpen, setPackageOpen] = useState(false);
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [sending, startSending] = useTransition();
@@ -169,6 +181,8 @@ export function FeaturedActionList({
       setHealthOpen((open) => !open);
     } else if (key === 'preview') {
       void sharePreview();
+    } else if (key === 'package') {
+      setPackageOpen(true);
     } else if (key === 'ai') {
       window.dispatchEvent(new Event('kululu:open-ai-assistant'));
     }
@@ -182,7 +196,7 @@ export function FeaturedActionList({
       </div>
 
       {actions.map((action) => {
-        const { icon: IconComponent, path, dominant = false } = ACTION_UI[action.key];
+        const { icon: IconComponent, path, dominant = false, urgent = false } = ACTION_UI[action.key];
         const href = path ? `/app/${eventId}/${path}` : null;
         const isCopied = action.key === 'preview' && copied;
         const open =
@@ -197,7 +211,9 @@ export function FeaturedActionList({
                 'flex shrink-0 items-center justify-center rounded-xl',
                 dominant
                   ? 'size-[52px] bg-white/20 text-white'
-                  : 'bg-primary/15 text-primary size-[42px]',
+                  : urgent
+                    ? 'bg-warning-tint text-warning-strong size-[42px]'
+                    : 'bg-primary/15 text-primary size-[42px]',
               )}
             >
               <IconComponent className={dominant ? 'size-[26px]' : 'size-[21px]'} strokeWidth={1.9} />
@@ -212,6 +228,11 @@ export function FeaturedActionList({
                 >
                   {isCopied ? t('actions.preview.copiedLabel') : action.label}
                 </span>
+                {urgent && (
+                  <span className="bg-warning-tint text-warning-strong rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap">
+                    {t('actions.urgent')}
+                  </span>
+                )}
                 {badge && (
                   <span className="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap">
                     {badge}
@@ -248,7 +269,10 @@ export function FeaturedActionList({
               'overflow-hidden rounded-2xl border',
               dominant
                 ? 'bg-primary border-primary shadow-[0_10px_28px_color-mix(in_oklch,var(--primary)_28%,transparent)]'
-                : cn('bg-card', open ? 'border-primary' : 'border-border'),
+                : cn(
+                    'bg-card',
+                    urgent ? 'border-warning' : open ? 'border-primary' : 'border-border',
+                  ),
             )}
           >
             {href ? (
@@ -372,6 +396,16 @@ export function FeaturedActionList({
           </div>
         );
       })}
+
+      {recordPackage && (
+        <RecordPackageSheet
+          open={packageOpen}
+          onOpenChange={setPackageOpen}
+          view={recordPackage}
+          eventName={eventName}
+          onShowOutside={() => router.push(`${listHref}?package=outside`)}
+        />
+      )}
     </section>
   );
 }
