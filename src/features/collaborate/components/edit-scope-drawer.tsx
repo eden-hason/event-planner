@@ -2,12 +2,14 @@
 
 import * as React from 'react';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
@@ -74,13 +76,17 @@ export function EditScopeDrawer({
   if (!collaborator) return null;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="fixed inset-y-0 right-0 w-full max-w-md rounded-none">
-        <DrawerHeader>
-          <DrawerTitle>{t('title', { name: collaborator.fullName })}</DrawerTitle>
-          <DrawerDescription>{t('description')}</DrawerDescription>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto p-4">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-lg">
+        <ResponsiveDialogHeader className="text-start">
+          <ResponsiveDialogTitle>
+            {t('title', { name: collaborator.fullName })}
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('description')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody className="py-2">
           <ScopePicker
             groups={groups}
             guests={guests}
@@ -89,8 +95,8 @@ export function EditScopeDrawer({
             onGroupsChange={setSelectedGroups}
             onGuestsChange={setSelectedGuests}
           />
-        </div>
-        <div className="border-t p-4">
+        </ResponsiveDialogBody>
+        <ResponsiveDialogFooter className="border-t">
           <Button
             onClick={handleSave}
             disabled={
@@ -101,8 +107,8 @@ export function EditScopeDrawer({
           >
             {isPending ? t('saving') : t('save')}
           </Button>
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -4,13 +4,14 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { Info } from 'lucide-react';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -121,8 +122,8 @@ function PersonFields({
  *
  * It writes into the page's one form, but commits on its own: the two or four
  * fields it owns are saved when the Owner confirms and rolled back when they
- * cancel, so closing the drawer never leaves a name half-changed behind the
- * page's save bar.
+ * cancel, so closing the editor never leaves a name half-changed behind the
+ * page's save bar. A bottom drawer on a phone, a dialog on desktop.
  */
 export function HostsEditorDrawer({
   open,
@@ -154,17 +155,19 @@ export function HostsEditorDrawer({
   };
 
   return (
-    <Drawer
+    <ResponsiveDialog
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : handleCancel())}
     >
-      <DrawerContent className="max-h-[92vh]">
-        <DrawerHeader className="text-start">
-          <DrawerTitle>{t('drawerTitle')}</DrawerTitle>
-          <DrawerDescription>{t('drawerDescription')}</DrawerDescription>
-        </DrawerHeader>
+      <ResponsiveDialogContent className="sm:max-w-lg">
+        <ResponsiveDialogHeader className="text-start">
+          <ResponsiveDialogTitle>{t('drawerTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('drawerDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
-        <div className="flex flex-col gap-3 overflow-y-auto px-4 pb-2">
+        <ResponsiveDialogBody className="flex flex-col gap-3 pb-2">
           {couple ? (
             <>
               <PersonFields
@@ -201,9 +204,9 @@ export function HostsEditorDrawer({
               parentsPlaceholder={t('parentsPlaceholderCelebrant')}
             />
           )}
-        </div>
+        </ResponsiveDialogBody>
 
-        <DrawerFooter className="flex-row gap-2">
+        <ResponsiveDialogFooter className="flex-row gap-2">
           <Button
             type="button"
             variant="outline"
@@ -221,8 +224,8 @@ export function HostsEditorDrawer({
           >
             {isSaving ? tHeader('saving') : tHeader('save')}
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

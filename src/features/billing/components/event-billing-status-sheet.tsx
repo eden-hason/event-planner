@@ -5,14 +5,15 @@ import { Check } from 'lucide-react';
 import { IconBrandWhatsapp } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer';
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { billingWhatsAppUrl } from '../utils';
 import type { BillingHeaderStatus } from '../types';
@@ -27,6 +28,7 @@ type EventBillingStatusSheetProps = {
  * The detail behind the header pill: what the current billing status means,
  * what planning covers, and what sending unlocks. Checkout is external, so the
  * call to action is a WhatsApp conversation rather than a payment button.
+ * A bottom drawer on a phone, a dialog on desktop.
  */
 export function EventBillingStatusSheet({
   open,
@@ -41,16 +43,18 @@ export function EventBillingStatusSheet({
   const unlockKeys = ['whatsapp', 'calls', 'tracking'] as const;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent dir={dir} className="mx-auto max-w-md">
-        <DrawerHeader className="text-start">
-          <DrawerTitle>{t(`sheet.${status.status}.title`)}</DrawerTitle>
-          <DrawerDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent dir={dir} className="mx-auto max-w-md">
+        <ResponsiveDialogHeader className="text-start">
+          <ResponsiveDialogTitle>
+            {t(`sheet.${status.status}.title`)}
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {t(`sheet.${status.status}.description`)}
-          </DrawerDescription>
-        </DrawerHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
-        <div className="space-y-5 px-4 pb-2 text-start">
+        <ResponsiveDialogBody className="space-y-5 pb-2 text-start">
           {!status.sendingEnabled && (
             <section className="space-y-2">
               <h3 className="text-sm font-semibold">
@@ -99,9 +103,9 @@ export function EventBillingStatusSheet({
               ))}
             </ul>
           </section>
-        </div>
+        </ResponsiveDialogBody>
 
-        <DrawerFooter>
+        <ResponsiveDialogFooter>
           <Button
             asChild
             variant={status.sendingEnabled ? 'outline' : 'default'}
@@ -115,11 +119,11 @@ export function EventBillingStatusSheet({
               {t('sheet.cta.talk')}
             </a>
           </Button>
-          <DrawerClose asChild>
+          <ResponsiveDialogClose asChild>
             <Button variant="ghost">{t('sheet.close')}</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          </ResponsiveDialogClose>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
