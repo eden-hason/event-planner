@@ -14,13 +14,21 @@ A wedding is the archetype and the core market, but the model is not wedding-spe
 
 ## Draft Event
 
-An Event whose Owner has started creating it but has not finished. It exists, and holds
+An Event whose Owner or **Visitor** has started creating it but has not finished. It exists, and holds
 whatever has been answered so far, but it is not yet a workspace: it does not appear in
 the event switcher and it cannot be opened.
 
 The Owner is always returned to where they left off, never to a half-empty workspace.
 A Draft Event becomes an Event proper the moment creation is completed - there is no
 other way out of the state, and no partial access along the way.
+
+## Visitor
+
+Someone who has started a Draft Event without an account. A Visitor holds exactly one
+Draft Event and nothing else, and becomes its Owner by creating an account to save it -
+the only way a Visitor's Draft Event becomes an Event proper. A Visitor who signs in to an
+account that already exists, or who never saves, is forgotten along with their Draft Event.
+_Avoid_: anonymous user, anonymous Owner, guest (a **Guest** is invited to an Event)
 
 ## Couple
 
