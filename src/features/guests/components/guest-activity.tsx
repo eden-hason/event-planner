@@ -175,6 +175,11 @@ const TONE = {
   neutral: 'bg-muted text-muted-foreground',
 };
 
+const FALLBACK_SUB = {
+  failed: 'fallback',
+  unconfirmed: 'fallbackUnconfirmed',
+} as const;
+
 function describe(item: GuestActivityItem, t: T) {
   switch (item.kind) {
     case 'delivery': {
@@ -191,12 +196,7 @@ function describe(item: GuestActivityItem, t: T) {
         meta: item.channel
           ? t(item.channel === 'sms' ? 'viaSms' : 'viaWhatsapp')
           : null,
-        sub:
-          item.fallback === 'failed'
-            ? t('fallback')
-            : item.fallback === 'unconfirmed'
-              ? t('fallbackUnconfirmed')
-              : null,
+        sub: item.fallback ? t(FALLBACK_SUB[item.fallback]) : null,
       };
     }
     case 'call':

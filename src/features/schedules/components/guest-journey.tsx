@@ -56,6 +56,11 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
   }
 }
 
+const FALLBACK_META = {
+  failed: 'journey.sentFallbackMeta',
+  unconfirmed: 'journey.sentFallbackUnconfirmedMeta',
+} as const;
+
 /** The guest's channel as one phrase: "WhatsApp", "SMS", "SMS after WhatsApp" */
 export function useChannelLabel() {
   const t = useTranslations('schedules.results.guests.channel');
@@ -100,11 +105,7 @@ export function GuestJourney({
               label: t('journey.sentSms'),
               // An unconfirmed WhatsApp may still arrive, and its receipt can
               // land after this step, so it never claims WhatsApp failed.
-              meta: step.fallback
-                ? row.fallbackReason === 'unconfirmed'
-                  ? t('journey.sentFallbackUnconfirmedMeta')
-                  : t('journey.sentFallbackMeta')
-                : t('journey.smsMeta'),
+              meta: t(step.fallback ? FALLBACK_META[step.fallback] : 'journey.smsMeta'),
             }
           : { label: t('journey.sentWhatsapp'), meta: '' };
       case 'delivered':

@@ -201,12 +201,26 @@ async function loadFallbackDeliveries(
  */
 export type StuckWindow = { now: Date; minHours: number; maxHours: number };
 
-function stuckWindow(): StuckWindow {
+const HOUR_MS = 3_600_000;
+
+export function stuckWindow(now = new Date()): StuckWindow {
   const config = sendingConfig();
   return {
-    now: new Date(),
+    now,
     minHours: config.smsFallbackStuckMinHours,
     maxHours: config.smsFallbackStuckMaxHours,
+  };
+}
+
+/**
+ * The window as the `sent_at` range it covers, both ends inclusive. The one
+ * statement of the rule: the classifier and the sweeper's query both use it.
+ */
+export function stuckSentAtRange(window: StuckWindow): { from: Date; to: Date } {
+  const now = window.now.getTime();
+  return {
+    from: new Date(now - window.maxHours * HOUR_MS),
+    to: new Date(now - window.minHours * HOUR_MS),
   };
 }
 
@@ -216,9 +230,10 @@ export function stuckForHours(
   window: StuckWindow,
 ): number | null {
   if (!sentAt) return null;
-  const hours = (window.now.getTime() - Date.parse(sentAt)) / 3_600_000;
-  if (!Number.isFinite(hours) || hours < window.minHours || hours > window.maxHours) return null;
-  return hours;
+  const sent = Date.parse(sentAt);
+  const { from, to } = stuckSentAtRange(window);
+  if (!(sent >= from.getTime() && sent <= to.getTime())) return null;
+  return (window.now.getTime() - sent) / HOUR_MS;
 }
 
 export function classifySmsFallbackCandidates(
@@ -232,39 +247,11 @@ export function classifySmsFallbackCandidates(
     const attempts = [...row.message_delivery_attempts].sort((a, b) =>
       b.created_at.localeCompare(a.created_at),
     );
-
-    if (row.status === 'sent') {
-      // A Sent delivery is only a candidate while its WhatsApp is stuck. Every
-      // other Sent delivery - one an SMS already reached, one still inside the
-      // window, one too old to bother - is simply not a fallback case, so it is
-      // left out silently rather than listed.
-      if (attempts.some((a) => a.channel === 'sms')) continue;
-      const accepted = attempts.find((a) => a.channel === 'whatsapp' && a.status === 'sent');
-      const hours = stuckForHours(accepted?.sent_at ?? null, window);
-      if (hours == null) continue;
-
-      const base = {
-        deliveryId: row.id,
-        guestId: row.guest_id,
-        guestName: row.guests?.name ?? 'Unknown guest',
-        guestPhone: row.guests?.phone_number ?? null,
-        errorCode: null,
-        errorMessage: null,
-      };
-      if (!validatePhoneNumber(base.guestPhone)) {
-        excluded.push({ ...base, exclusion: 'no_phone', reason: 'No usable phone number' });
-      } else {
-        eligible.push({
-          ...base,
-          reason: `WhatsApp accepted ${Math.floor(hours)}h ago but never confirmed delivered`,
-        });
-      }
-      continue;
-    }
-
-    const lastWhatsAppFailure = attempts.find(
-      (a) => a.channel === 'whatsapp' && a.status === 'failed',
-    );
+    const hasSms = attempts.some((a) => a.channel === 'sms');
+    const lastWhatsAppFailure =
+      row.status === 'failed'
+        ? attempts.find((a) => a.channel === 'whatsapp' && a.status === 'failed')
+        : undefined;
     const base = {
       deliveryId: row.id,
       guestId: row.guest_id,
@@ -274,10 +261,23 @@ export function classifySmsFallbackCandidates(
       errorMessage: lastWhatsAppFailure?.error_message ?? null,
     };
 
-    if (attempts.some((a) => a.channel === 'sms')) {
+    let reason: string;
+    if (row.status === 'sent') {
+      // A Sent delivery is only a candidate while its WhatsApp is stuck. Every
+      // other Sent delivery - one an SMS already reached, one still inside the
+      // window, one too old to bother - is simply not a fallback case, so it is
+      // left out silently rather than listed.
+      if (hasSms) continue;
+      const accepted = attempts.find((a) => a.channel === 'whatsapp' && a.status === 'sent');
+      const hours = stuckForHours(accepted?.sent_at ?? null, window);
+      if (hours == null) continue;
+      reason = `WhatsApp accepted ${Math.floor(hours)}h ago but never confirmed delivered`;
+    } else if (hasSms) {
       excluded.push({ ...base, exclusion: 'already_sms', reason: 'Already tried by SMS' });
+      continue;
     } else if (!lastWhatsAppFailure) {
       excluded.push({ ...base, exclusion: 'not_whatsapp', reason: 'No failed WhatsApp attempt' });
+      continue;
     } else if (classifyWhatsAppFailure(lastWhatsAppFailure.error_code) === 'system') {
       excluded.push({
         ...base,
@@ -287,13 +287,15 @@ export function classifySmsFallbackCandidates(
             ? 'Failure with no error code - resend on WhatsApp once the cause is fixed'
             : `Error ${lastWhatsAppFailure.error_code} is not a guest-level failure - resend on WhatsApp once the cause is fixed`,
       });
-    } else if (!validatePhoneNumber(base.guestPhone)) {
+      continue;
+    } else {
+      reason = describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'WhatsApp failed';
+    }
+
+    if (!validatePhoneNumber(base.guestPhone)) {
       excluded.push({ ...base, exclusion: 'no_phone', reason: 'No usable phone number' });
     } else {
-      eligible.push({
-        ...base,
-        reason: describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'WhatsApp failed',
-      });
+      eligible.push({ ...base, reason });
     }
   }
 

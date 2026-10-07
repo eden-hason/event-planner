@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { sendSmsFallback } from './send-sms-fallback';
+import { sendSmsFallback, stuckSentAtRange, stuckWindow } from './send-sms-fallback';
 import { classifyWhatsAppFailure } from '../utils/whatsapp-failures';
 import { sendingConfig } from '@/lib/config/sending';
 
@@ -152,6 +152,13 @@ export function lastFailureActivityAt(
   return latest;
 }
 
+type StuckCandidateRow = {
+  message_deliveries: {
+    schedule_id: string;
+    message_delivery_attempts: { channel: string }[];
+  };
+};
+
 /**
  * Schedules that might be ready: those with a Stuck WhatsApp (accepted inside
  * the Stuck window, still Sent) and those with at least one failed Delivery.
@@ -161,34 +168,33 @@ export function lastFailureActivityAt(
  * old failures from crowding fresh work out of the per-sweep cap.
  */
 async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promise<string[]> {
-  const config = sendingConfig();
-  const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 3_600_000).toISOString();
+  const { from, to } = stuckSentAtRange(stuckWindow(now));
 
-  const { data: stuck, error: stuckError } = await supabase
-    .from('message_delivery_attempts')
-    .select('message_deliveries!inner(schedule_id)')
-    .eq('channel', 'whatsapp')
-    .eq('status', 'sent')
-    .eq('message_deliveries.status', 'sent')
-    .lte('sent_at', hoursAgo(config.smsFallbackStuckMinHours))
-    .gte('sent_at', hoursAgo(config.smsFallbackStuckMaxHours))
-    .limit(2_000);
-  if (stuckError) throw stuckError;
+  const [stuck, failed] = await Promise.all([
+    supabase
+      .from('message_delivery_attempts')
+      .select('message_deliveries!inner(schedule_id, message_delivery_attempts(channel))')
+      .eq('channel', 'whatsapp')
+      .eq('status', 'sent')
+      .eq('message_deliveries.status', 'sent')
+      .gte('sent_at', from.toISOString())
+      .lte('sent_at', to.toISOString())
+      .limit(2_000),
+    supabase.from('message_deliveries').select('schedule_id').eq('status', 'failed').limit(2_000),
+  ]);
+  if (stuck.error) throw stuck.error;
+  if (failed.error) throw failed.error;
 
-  const { data: failed, error: failedError } = await supabase
-    .from('message_deliveries')
-    .select('schedule_id')
-    .eq('status', 'failed')
-    .limit(2_000);
-  if (failedError) throw failedError;
+  // SMS reports nothing past accepted, so a stuck delivery the Fallback already
+  // reached stays Sent and would match for the rest of the window. Leaving it
+  // out keeps handled schedules from taking the per-sweep slots.
+  const stuckIds = ((stuck.data ?? []) as unknown as StuckCandidateRow[])
+    .map((row) => row.message_deliveries)
+    .filter((delivery) => !delivery.message_delivery_attempts.some((a) => a.channel === 'sms'))
+    .map((delivery) => delivery.schedule_id);
 
   return [
-    ...new Set([
-      ...((stuck ?? []) as unknown as { message_deliveries: { schedule_id: string } }[]).map(
-        (row) => row.message_deliveries.schedule_id,
-      ),
-      ...(failed ?? []).map((row: { schedule_id: string }) => row.schedule_id),
-    ]),
+    ...new Set([...stuckIds, ...(failed.data ?? []).map((row: { schedule_id: string }) => row.schedule_id)]),
   ];
 }
 

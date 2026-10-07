@@ -1,5 +1,7 @@
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
+import type { SmsFallbackReason } from './send-helpers';
+
 import type {
   GuestDeliveryOutcome,
   GuestInteractionRow,
@@ -144,8 +146,8 @@ export type JourneyStep = {
   kind: JourneyStepKind;
   at?: string;
   channel?: 'whatsapp' | 'sms';
-  /** A `sent` that is an SMS Fallback */
-  fallback?: boolean;
+  /** Why a `sent` is an SMS Fallback; absent or null when it is not one */
+  fallback?: SmsFallbackReason | null;
   guestCount?: number;
   mealCounts?: Record<string, number>;
 };

@@ -31,8 +31,8 @@ export type GuestDeliveryOutcome =
  */
 export type GuestDeliveryStep = {
   channel: 'whatsapp' | 'sms';
-  /** An SMS Fallback sent after WhatsApp could not reach the guest */
-  fallback: boolean;
+  /** Why this message is an SMS Fallback; null when it is not one */
+  fallback: SmsFallbackReason | null;
   sentAt?: string;
   deliveredAt?: string;
   readAt?: string;
@@ -52,8 +52,6 @@ export type GuestInteractionRow = {
   steps: GuestDeliveryStep[];
   /** Reached over SMS only because WhatsApp could not reach them */
   viaFallback: boolean;
-  /** Why an SMS Fallback went out, whether or not it is what reached them */
-  fallbackReason: SmsFallbackReason | null;
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**
@@ -150,12 +148,13 @@ type AttemptRow = {
 };
 
 function toSteps(attempts: AttemptRow[] | null): GuestDeliveryStep[] {
+  const reason = smsFallbackReason(attempts ?? []);
   return (attempts ?? [])
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map((attempt) => ({
       channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
-      fallback: isSmsFallbackTrigger(attempt.triggered_by),
+      fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
       sentAt: attempt.sent_at ?? undefined,
       deliveredAt: attempt.delivered_at ?? undefined,
       readAt: attempt.read_at ?? undefined,
@@ -223,7 +222,6 @@ export async function getScheduleInteractionData(
         guestName: guest.name,
         steps: [],
         viaFallback: false,
-        fallbackReason: null,
         delivery: null,
         seen: false,
         amount: guest.amount ?? 1,
@@ -251,9 +249,6 @@ export async function getScheduleInteractionData(
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
     entry.steps = toSteps(row.message_delivery_attempts as AttemptRow[] | null);
-    entry.fallbackReason = smsFallbackReason(
-      (row.message_delivery_attempts as AttemptRow[] | null) ?? [],
-    );
     entry.viaFallback =
       entry.delivery === 'sms' &&
       entry.steps.some((step) => step.fallback && !step.failedAt);
