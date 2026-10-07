@@ -21,7 +21,6 @@ const BLOCKING_TIER: readonly RankedActionKey[] = ['package'];
 /** Tier 1, in priority order: every unfinished setup step outranks everything else. */
 const SETUP_TIER: readonly RankedActionKey[] = [
   'details',
-  'addGuests',
   'groups',
   'invitationImage',
   'collaborator',
@@ -40,7 +39,6 @@ const FALLBACK: readonly FallbackActionKey[] = ['addGuest', 'ai', 'viewList'];
 const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   package: (f) => f.recordsOverPackage > 0,
   details: (f) => !f.detailsComplete,
-  addGuests: (f) => f.guestRecords === 0,
   groups: (f) => f.guestRecords > 0 && f.groupCount === 0,
   invitationImage: (f) => !f.hasInvitationImage,
   collaborator: (f) => f.collaboratorCount <= 1,

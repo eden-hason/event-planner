@@ -20,7 +20,6 @@ export type GuestStats = {
 export type RankedActionKey =
   | 'package'
   | 'details'
-  | 'addGuests'
   | 'groups'
   | 'invitationImage'
   | 'collaborator'

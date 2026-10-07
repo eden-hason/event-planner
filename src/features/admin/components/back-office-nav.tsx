@@ -17,7 +17,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 
 /**
  * Stubs are reachable and clearly unfinished rather than disabled or silently
@@ -46,53 +48,64 @@ export function BackOfficeNav({
   environment: string;
 }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-3 pt-3.5">
-        <div className="flex items-baseline gap-2 px-2">
-          <span className="text-[15px] font-bold tracking-tight">Kululu</span>
-          <span className="text-muted-foreground text-[10px] font-semibold tracking-[0.09em] uppercase">
-            Back Office
-          </span>
-        </div>
-      </SidebarHeader>
+      {/*
+       * Below `md` the sidebar is a Sheet portalled to <body>, out of the admin
+       * layout's `dir="ltr"` and under the RTL <html>, so the direction is
+       * re-declared here. `contents` keeps the Sidebar's own flex column intact.
+       */}
+      <div dir="ltr" className="contents">
+        <SidebarHeader className="px-3 pt-3.5">
+          <div className="flex items-baseline gap-2 px-2">
+            <span className="text-[15px] font-bold tracking-tight">Kululu</span>
+            <span className="text-muted-foreground text-[10px] font-semibold tracking-[0.09em] uppercase">
+              Back Office
+            </span>
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="px-2 pt-2">
-        <SidebarMenu className="gap-0.5">
-          {NAV_ITEMS.map(({ label, href, icon: Icon, stub }) => {
-            const isActive =
-              href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+        <SidebarContent className="px-2 pt-2">
+          <SidebarMenu className="gap-0.5">
+            {NAV_ITEMS.map(({ label, href, icon: Icon, stub }) => {
+              const isActive =
+                href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
-            return (
-              <SidebarMenuItem key={href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  className="h-9 text-[13.5px] font-medium data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground"
-                >
-                  <Link href={href}>
-                    <Icon className={isActive ? '' : 'text-muted-foreground'} />
-                    <span className="flex-1">{label}</span>
-                    {stub && !isActive && (
-                      <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
-                        Stub
-                      </span>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarContent>
+              return (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    className="h-9 text-[13.5px] font-medium data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground"
+                  >
+                    <Link href={href} onClick={() => setOpenMobile(false)}>
+                      <Icon className={isActive ? '' : 'text-muted-foreground'} />
+                      <span className="flex-1">{label}</span>
+                      {stub && !isActive && (
+                        <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
+                          Stub
+                        </span>
+                      )}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
 
-      <SidebarFooter className="px-5 pb-4">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-muted-foreground truncate text-xs">{email}</span>
-          <span className="text-muted-foreground/70 text-[11px]">{environment}</span>
-        </div>
-      </SidebarFooter>
+        <SidebarFooter className="gap-3 px-5 pb-4">
+          <div className="self-start">
+            <ThemeToggle labels={{ light: 'Light', dark: 'Dark', system: 'System' }} />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground truncate text-xs">{email}</span>
+            <span className="text-muted-foreground/70 text-[11px]">{environment}</span>
+          </div>
+        </SidebarFooter>
+      </div>
     </Sidebar>
   );
 }

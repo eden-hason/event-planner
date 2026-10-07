@@ -477,8 +477,8 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         ))}
       </div>
 
-      <Surface>
-        <table className="w-full border-collapse text-[13px]">
+      <Surface className="overflow-x-auto">
+        <table className="w-full min-w-[760px] border-collapse text-[13px]">
           <thead>
             <tr className="text-muted-foreground border-b text-left text-[11.5px] font-semibold tracking-[0.06em] uppercase">
               <th className="px-3 py-2 font-semibold">Guest record</th>

@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
 import { NotificationsMenu } from '@/components/layout/notifications-menu';
 import { EventBillingStatusPill } from '@/features/billing';
-import { SaveEventPill } from '@/features/auth';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { useRef } from 'react';
@@ -195,10 +194,6 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* A Visitor's way to save their Event (ADR 0028), at every width -
-              unlike the status pill, it is the one thing they most need to
-              find. Nothing for an Owner. */}
-          <SaveEventPill />
           {action}
           {/*
             The account-status pill (see `@/features/billing`), the theme menu,

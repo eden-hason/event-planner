@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Bell, ChevronRight, CloudUpload, LogIn, LogOut } from 'lucide-react';
 import { useSaveEvent } from '@/features/auth';
 import { Link } from '@/i18n/navigation';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -263,12 +264,21 @@ export function MobileMorePage({
                   .join(' · ')}
               </p>
             </div>
-            <MobileEventSwitcher
-              events={events}
-              currentEventId={eventId}
-              guestCounts={guestCounts}
-              currentUserId={currentUserId}
-            />
+            {/* A Visitor holds a single unsaved Event, so there is nothing
+                to switch to - saving it is the next step (ADR 0028). */}
+            {isVisitor ? (
+              <Button size="sm" className="shrink-0" onClick={() => openSave()}>
+                <CloudUpload />
+                {tSidebar('visitor.save')}
+              </Button>
+            ) : (
+              <MobileEventSwitcher
+                events={events}
+                currentEventId={eventId}
+                guestCounts={guestCounts}
+                currentUserId={currentUserId}
+              />
+            )}
           </div>
         </Group>
       )}

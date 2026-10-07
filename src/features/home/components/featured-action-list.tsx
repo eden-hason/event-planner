@@ -41,11 +41,10 @@ export type FeaturedActionView = {
  */
 const ACTION_UI: Record<
   FeaturedActionKey,
-  { icon: Icon; path?: string; dominant?: boolean; urgent?: boolean }
+  { icon: Icon; path?: string; urgent?: boolean }
 > = {
   package: { icon: IconAlertTriangle, urgent: true },
   details: { icon: IconSettings, path: 'details' },
-  addGuests: { icon: IconUsers, path: 'guests', dominant: true },
   groups: { icon: IconList, path: 'guests?tab=groups' },
   invitationImage: { icon: IconPhoto, path: 'details' },
   collaborator: { icon: IconUserPlus, path: 'collaborate' },
@@ -190,13 +189,6 @@ export function FeaturedActionList({
     }
   };
 
-  // Ranking can put another setup step above "add guests", so the dominant card
-  // is not necessarily first: wide, it is pulled to the top row (`order`) and the
-  // others pair up beneath it.
-  const isDominant = (key: FeaturedActionKey) => Boolean(ACTION_UI[key].dominant);
-  const paired = actions.filter((a) => !isDominant(a.key)).length;
-  const lastPaired = actions.map((a) => isDominant(a.key)).lastIndexOf(false);
-
   return (
     <section className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between px-0.5">
@@ -208,10 +200,10 @@ export function FeaturedActionList({
           expansion grows only its own cell. */}
       <div className="home-wide:grid home-wide:grid-cols-2 home-wide:items-start home-wide:gap-x-3 flex flex-col gap-2.5">
       {actions.map((action, i) => {
-        const { icon: IconComponent, path, dominant = false, urgent = false } = ACTION_UI[action.key];
-        // Dominant "add guests" takes the whole first row, and an odd card out
-        // at the end spans both columns so no row reads as half empty.
-        const fullRow = dominant || (paired % 2 === 1 && i === lastPaired);
+        const { icon: IconComponent, path, urgent = false } = ACTION_UI[action.key];
+        // Wide, an odd card out at the end spans both columns so no row reads
+        // as half empty.
+        const fullRow = actions.length % 2 === 1 && i === actions.length - 1;
         const href = path ? `/app/${eventId}/${path}` : null;
         const isCopied = action.key === 'preview' && copied;
         const open =
@@ -223,24 +215,15 @@ export function FeaturedActionList({
           <>
             <span
               className={cn(
-                'flex shrink-0 items-center justify-center rounded-xl',
-                dominant
-                  ? 'home-wide:size-[46px] size-[52px] bg-white/20 text-white'
-                  : urgent
-                    ? 'bg-warning-tint text-warning-strong size-[42px]'
-                    : 'bg-primary/15 text-primary size-[42px]',
+                'flex size-[42px] shrink-0 items-center justify-center rounded-xl',
+                urgent ? 'bg-warning-tint text-warning-strong' : 'bg-primary/15 text-primary',
               )}
             >
-              <IconComponent className={dominant ? 'home-wide:size-6 size-[26px]' : 'size-[21px]'} strokeWidth={1.9} />
+              <IconComponent className="size-[21px]" strokeWidth={1.9} />
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
               <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={cn(
-                    'font-bold',
-                    dominant ? 'home-wide:text-base text-[18px] text-white' : 'text-[15px]',
-                  )}
-                >
+                <span className="text-[15px] font-bold">
                   {isCopied ? t('actions.preview.copiedLabel') : action.label}
                 </span>
                 {urgent && (
@@ -254,46 +237,28 @@ export function FeaturedActionList({
                   </span>
                 )}
               </div>
-              <span
-                className={cn(
-                  'text-[13px] leading-[1.45]',
-                  dominant ? 'text-white/85' : 'text-muted-foreground',
-                )}
-              >
+              <span className="text-muted-foreground text-[13px] leading-[1.45]">
                 {isCopied ? t('actions.preview.copiedWhy') : action.why}
               </span>
             </div>
-            <IconChevronRight
-              className={cn(
-                'size-[18px] shrink-0 rtl:rotate-180',
-                dominant ? 'text-white/70' : 'text-muted-foreground',
-              )}
-            />
+            <IconChevronRight className="text-muted-foreground size-[18px] shrink-0 rtl:rotate-180" />
           </>
         );
 
-        const rowClass = cn(
-          'focus-visible:ring-primary flex w-full items-center gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-inset',
-          dominant ? 'home-wide:py-3.5 px-4 py-[18px] focus-visible:ring-white/80' : 'p-3.5',
-        );
+        const rowClass =
+          'focus-visible:ring-primary flex w-full items-center gap-3 rounded-2xl p-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset';
 
         return (
           <div
             key={action.key}
             className={cn(
-              'overflow-hidden rounded-2xl border transition-colors',
+              'bg-card hover:bg-primary/[0.03] overflow-hidden rounded-2xl border transition-colors',
               fullRow && 'home-wide:col-span-2',
-              dominant && 'home-wide:-order-1',
-              dominant
-                ? 'bg-primary border-primary hover:bg-primary/90 shadow-[0_10px_28px_color-mix(in_oklch,var(--primary)_28%,transparent)]'
-                : cn(
-                    'bg-card hover:bg-primary/[0.03]',
-                    urgent
-                      ? 'border-warning hover:border-warning-strong'
-                      : open
-                        ? 'border-primary'
-                        : 'border-border hover:border-primary/40',
-                  ),
+              urgent
+                ? 'border-warning hover:border-warning-strong'
+                : open
+                  ? 'border-primary'
+                  : 'border-border hover:border-primary/40',
             )}
           >
             {href ? (
