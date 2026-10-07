@@ -16,9 +16,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { isExistingAccountError } from '../utils/visitor';
 import { SaveEventForm } from './save-event-form';
 
@@ -65,8 +71,9 @@ export function useSaveGatedClick(reason: SaveReason) {
 }
 
 /**
- * Saving the Event from anywhere in the workspace (ADR 0028). One dialog,
- * opened by the header pill or by any action that needs an account.
+ * Saving the Event from anywhere in the workspace (ADR 0028). One form,
+ * opened by the header pill or by any action that needs an account - a bottom
+ * drawer on a phone, a dialog on desktop.
  *
  * Also picks up the return from Google: `?save=exists`, or Supabase's
  * `#error_code=email_exists`, means the Google account already has a Kululu
@@ -83,6 +90,7 @@ export function SaveEventProvider({
   const tAuth = useTranslations('auth');
   const router = useRouter();
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<SaveReason | undefined>();
   const [startAt, setStartAt] = useState<'details' | 'googleExists'>('details');
@@ -133,32 +141,43 @@ export function SaveEventProvider({
     [isVisitor, openSave, requireSaved],
   );
 
+  const Title = isMobile ? DrawerTitle : DialogTitle;
+  const Description = isMobile ? DrawerDescription : DialogDescription;
+  const body = (
+    <>
+      <div className="flex flex-col gap-2 text-start">
+        <Title>{t('title')}</Title>
+        <Description>{reason ? t(`reason.${reason}`) : t('subtitle')}</Description>
+      </div>
+      {/* Keyed so each opening starts fresh rather than mid-step. */}
+      <SaveEventForm
+        key={`${open}-${startAt}`}
+        returnTo={pathname}
+        startAt={startAt}
+        onSaved={() => {
+          setOpen(false);
+          toast.success(t('saved'));
+          router.refresh();
+        }}
+      />
+    </>
+  );
+
   return (
     <Context.Provider value={value}>
       {children}
-      {isVisitor && (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="sm:max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle>{t('title')}</DialogTitle>
-              <DialogDescription>
-                {reason ? t(`reason.${reason}`) : t('subtitle')}
-              </DialogDescription>
-            </DialogHeader>
-            {/* Keyed so each opening starts fresh rather than mid-step. */}
-            <SaveEventForm
-              key={`${open}-${startAt}`}
-              returnTo={pathname}
-              startAt={startAt}
-              onSaved={() => {
-                setOpen(false);
-                toast.success(t('saved'));
-                router.refresh();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      {isVisitor &&
+        (isMobile ? (
+          <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerContent className="mx-auto max-h-[92vh] max-w-md">
+              <div className="flex flex-col gap-4 overflow-y-auto px-4 pt-3 pb-7">{body}</div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="sm:max-w-[420px]">{body}</DialogContent>
+          </Dialog>
+        ))}
     </Context.Provider>
   );
 }

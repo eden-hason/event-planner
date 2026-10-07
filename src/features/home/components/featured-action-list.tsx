@@ -7,6 +7,7 @@ import {
   IconCheck,
   IconChecklist,
   IconChevronRight,
+  IconCloudUpload,
   IconCoin,
   IconGift,
   IconLink,
@@ -133,7 +134,7 @@ export function FeaturedActionList({
   const [copied, setCopied] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [sending, startSending] = useTransition();
-  const { requireSaved } = useSaveEvent();
+  const { isVisitor, openSave, requireSaved } = useSaveEvent();
 
   const needsPhone = !maskedPhone;
   const listHref = `/app/${eventId}/guests`;
@@ -195,6 +196,31 @@ export function FeaturedActionList({
         <h2 className="text-[17px] font-bold">{title}</h2>
         <span className="text-muted-foreground text-xs">{subtitle}</span>
       </div>
+
+      {/* A Visitor's Event lives only in this browser until it is saved, and
+          every send is gated on that (ADR 0028) - so saving rides above the
+          ranked actions, outside the four slots, styled to stand apart. */}
+      {isVisitor && (
+        <button
+          type="button"
+          onClick={() => openSave()}
+          className="bg-primary text-primary-foreground border-primary focus-visible:ring-primary focus-visible:ring-offset-background flex w-full items-center gap-3 rounded-2xl border p-3.5 shadow-md transition-[filter] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-offset-2"
+        >
+          <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-white/20">
+            <IconCloudUpload className="size-[21px]" strokeWidth={1.9} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
+            <span className="text-[15px] font-bold">{t('actions.save.label')}</span>
+            <span className="text-primary-foreground/85 text-[13px] leading-[1.45]">
+              {t('actions.save.why')}
+            </span>
+          </div>
+          <span className="text-primary flex h-9 shrink-0 items-center gap-1 rounded-full bg-white px-3.5 text-[13.5px] font-bold">
+            {t('actions.save.cta')}
+            <IconChevronRight className="size-4 rtl:rotate-180" />
+          </span>
+        </button>
+      )}
 
       {/* Wide: two columns of the same row cards, top-aligned so an inline
           expansion grows only its own cell. */}
