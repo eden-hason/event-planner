@@ -7,7 +7,4 @@ export {
   type DeliveryMethodStats,
 } from './message-deliveries';
 
-export {
-  getDeliveryStatsByScheduleId,
-  type ScheduleDeliveryStats,
-} from './delivery-stats';
+export { getSentCountByScheduleId } from './sent-counts';

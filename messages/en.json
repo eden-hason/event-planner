@@ -1633,8 +1633,6 @@
       "eventDayUndated": "Event day",
       "recipientCount": "{count, plural, one {1 recipient} other {# recipients}}",
       "callCount": "{count, plural, one {1 call} other {# calls}}",
-      "readRate": "{percent}% read",
-      "reachedRate": "{percent}% reached",
       "callLiveStat": "{confirmed} confirmed · {awaiting} to go",
       "callDoneStat": "{confirmed} confirmed · {noAnswer} no answer",
       "callOff": "This round was switched off. Get in touch for details"
@@ -1716,7 +1714,7 @@
         "refresh": "Refresh"
       },
       "funnel": {
-        "title": "The message's journey",
+        "title": "What happened to the message",
         "unit": "In guest records",
         "audience": "Audience",
         "audienceHint": "Every record with a phone",
@@ -1727,6 +1725,7 @@
         "ofAudience": "{percent}% of the audience",
         "seen": "Seen",
         "seenHint": "of {count} WhatsApp deliveries",
+        "seenNote": "Guests who turned off read receipts can't be counted, so the real number may be higher",
         "answered": "Responded",
         "answeredHint": "{confirmed} confirmed · {declined} declined"
       },
@@ -1775,7 +1774,7 @@
           "notReached": "Not reached",
           "noResponse": "No response",
           "confirmed": "Confirmed",
-          "unseen": "Not seen yet",
+          "unseen": "No read receipt",
           "on_its_way": "On its way",
           "not_delivered": "Not delivered",
           "no_phone": "No phone number",
@@ -1806,7 +1805,7 @@
         },
         "seenState": {
           "seen": "Seen",
-          "unseen": "Not seen yet",
+          "unseen": "No read receipt",
           "sms": "Not available on SMS"
         },
         "answer": {

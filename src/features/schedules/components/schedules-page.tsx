@@ -24,7 +24,7 @@ import {
 } from '../utils';
 import { offsetDays, timelineStatus } from '../utils/timeline';
 import { resolveTemplatesForPreview } from '../queries/resolve-templates';
-import { getDeliveryStatsByScheduleId } from '../queries/delivery-stats';
+import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { ScheduleDetailPane } from './schedule-detail-pane';
 import { SchedulesEmptyState } from './schedules-empty-state';
@@ -76,14 +76,14 @@ export async function SchedulesPage({
     );
   }
 
-  const [guests, roundsBySchedule, deliveryStats] = await Promise.all([
+  const [guests, roundsBySchedule, sentCounts] = await Promise.all([
     getEventGuests(eventId),
     // RLS-bound: a viewer without Owner access gets an empty map, so a call
     // plan renders as planned rather than exposing its results.
     getCallRoundsByScheduleId(eventId),
     // One aggregate for the whole Event, so a seven-card timeline costs one
     // round trip rather than seven.
-    getDeliveryStatsByScheduleId(schedules.map((schedule) => schedule.id)),
+    getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
   ]);
 
   // schedule.template is only the family anchor. Resolve what would actually be
@@ -235,7 +235,6 @@ export async function SchedulesPage({
       // view-only on a call plan (ADR 0004), so its pane carries no action.
       const status = timelineStatus(schedule, isMessage ? null : round?.status);
 
-      const stats = deliveryStats.get(schedule.id);
       // Before the send the audience is whoever matches the target today. Once
       // it has gone out, that live count drifts as guests answer - "Not yet
       // answered" shrinks to nothing - so a sent Schedule reports the guest
@@ -243,22 +242,9 @@ export async function SchedulesPage({
       // (A call round freezes its own list; see round.total below.)
       const targeted = filterGuestsByTarget(guests, schedule.targetStatus);
       const audienceCount =
-        isMessage && status === 'sent' ? (stats?.sent ?? 0) : targeted.length;
-      // Only a sent send has a result to report, and only one that produced
-      // deliveries can be scored. Read rate where WhatsApp can report it,
-      // reached rate otherwise - an SMS schedule never reports a read receipt.
-      const miniStat: OutreachItem['miniStat'] =
-        status === 'sent' && stats && stats.total > 0
-          ? stats.readCapable > 0
-            ? {
-                percent: Math.round((stats.read / stats.readCapable) * 100),
-                kind: 'read' as const,
-              }
-            : {
-                percent: Math.round((stats.reached / stats.total) * 100),
-                kind: 'reached' as const,
-              }
-          : null;
+        isMessage && status === 'sent'
+          ? (sentCounts.get(schedule.id) ?? 0)
+          : targeted.length;
 
       // Once a round has started its audience is the frozen call list, not the
       // live count, and the header line says how the round stands rather than
@@ -282,7 +268,6 @@ export async function SchedulesPage({
         whenDetailed,
         audience: audienceLabel(schedule.targetStatus),
         audienceCount: round ? round.total : audienceCount,
-        miniStat,
         callProgress: round
           ? {
               total: round.total,
