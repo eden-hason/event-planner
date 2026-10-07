@@ -1633,8 +1633,6 @@
       "eventDayUndated": "יום האירוע",
       "recipientCount": "{count, plural, one {נמען אחד} other {# נמענים}}",
       "callCount": "{count, plural, one {שיחה אחת} other {# שיחות}}",
-      "readRate": "{percent}% נקראו",
-      "reachedRate": "{percent}% הגיעו",
       "callLiveStat": "{confirmed} אישרו · {awaiting} נותרו",
       "callDoneStat": "{confirmed} אישרו · {noAnswer} לא ענו",
       "callOff": "הסבב בוטל. לפרטים אפשר לפנות אלינו"
@@ -1716,7 +1714,7 @@
         "refresh": "רענון"
       },
       "funnel": {
-        "title": "המסע של ההודעה",
+        "title": "מה קרה להודעה",
         "unit": "ברשומות אורח",
         "audience": "קהל היעד",
         "audienceHint": "כל הרשומות עם טלפון",
@@ -1727,6 +1725,7 @@
         "ofAudience": "{percent}% מקהל היעד",
         "seen": "נקרא",
         "seenHint": "מתוך {count} מסירות בוואטסאפ",
+        "seenNote": "אורחים שכיבו את אישורי הקריאה לא נספרים, כך שהמספר האמיתי עשוי להיות גבוה יותר",
         "answered": "הגיבו",
         "answeredHint": "{confirmed} אישרו · {declined} סירבו"
       },
@@ -1775,7 +1774,7 @@
           "notReached": "לא קיבלו",
           "noResponse": "לא הגיבו",
           "confirmed": "אישרו",
-          "unseen": "טרם נקרא",
+          "unseen": "אין אישור קריאה",
           "on_its_way": "בדרך",
           "not_delivered": "לא נמסר",
           "no_phone": "אין מספר טלפון",
@@ -1806,7 +1805,7 @@
         },
         "seenState": {
           "seen": "נקרא",
-          "unseen": "טרם נקרא",
+          "unseen": "אין אישור קריאה",
           "sms": "לא זמין ב-SMS"
         },
         "answer": {

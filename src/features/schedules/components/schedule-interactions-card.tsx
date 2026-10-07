@@ -33,8 +33,10 @@ export async function ScheduleInteractionsCard({
 }: ScheduleInteractionsCardProps) {
   const data = await getScheduleInteractionData(scheduleId);
 
+  // Keyed so the filter and open guest reset when the pane switches schedule.
   return (
     <ScheduleResults
+      key={scheduleId}
       data={data}
       collectsRsvp={collectsRsvp}
       channel={channel}

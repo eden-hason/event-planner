@@ -244,16 +244,6 @@ function TimelineCard({
                   })}
             </span>
           )}
-          {item.miniStat && (
-            <span className="text-success ms-auto text-[11.5px] font-bold">
-              {t(
-                item.miniStat.kind === 'read'
-                  ? 'timeline.readRate'
-                  : 'timeline.reachedRate',
-                { percent: item.miniStat.percent },
-              )}
-            </span>
-          )}
         </div>
 
         {item.callProgress && <CallProgressBar counts={item.callProgress} />}

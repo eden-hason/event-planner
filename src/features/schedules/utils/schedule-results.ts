@@ -71,7 +71,7 @@ export type GuestFilter =
 
 /**
  * The filter chips a schedule offers. Answer filters only where the schedule
- * collects RSVPs, and "not seen yet" only where a read receipt can exist. The
+ * collects RSVPs, and "no read receipt" only where a read receipt can exist. The
  * per-reason filters are reached from the not-reached card, not from a chip.
  */
 export function availableFilters(options: {

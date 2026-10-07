@@ -52,12 +52,6 @@ export type OutreachItem = {
   /** How many records that audience currently holds, or null for a call plan the viewer cannot count */
   audienceCount: number | null;
   /**
-   * The one result number a sent card shows: a percentage and the label it is
-   * of. Null on anything not yet sent, and on a send that produced no
-   * deliveries to score.
-   */
-  miniStat: { percent: number; kind: 'read' | 'reached' } | null;
-  /**
    * How a started call round is going, in records. Null for a message and for
    * a call plan that has not started - the card has nothing to report until
    * the Operator presses Start.

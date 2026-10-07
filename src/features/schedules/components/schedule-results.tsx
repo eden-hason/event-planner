@@ -116,6 +116,8 @@ export function ScheduleResults({
     );
   }
 
+  const hasNotReached = Object.values(summary.notReached).some((n) => n > 0);
+
   const notReached = (
     <NotReachedCard
       counts={summary.notReached}
@@ -132,21 +134,27 @@ export function ScheduleResults({
 
         <div className="grid gap-3.5 @4xl:grid-cols-[minmax(0,1fr)_250px] @4xl:items-start">
           <div className="flex min-w-0 flex-col gap-3.5">
-            <div className="grid gap-3.5 @2xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] @2xl:items-start">
-              <Funnel
-                summary={summary}
-                showSeen={showSeen}
-                collectsRsvp={collectsRsvp}
-              />
-              <div className="flex min-w-0 flex-col gap-3.5">
-                <ChannelsCard summary={summary} isSms={isSms} />
-                {collectsRsvp && <RsvpCard summary={summary} />}
+            {/* Masonry, not rows: a short card never leaves a gap beside a tall
+                one. Padding, not margin, spaces it - a column drops margin at
+                its foot - so one -mb cancels the trailing space either way. */}
+            <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
+              <div>
+                <Funnel
+                  summary={summary}
+                  showSeen={showSeen}
+                  collectsRsvp={collectsRsvp}
+                />
               </div>
-            </div>
-
-            {/* Below the rail's width, what the rail holds sits here, above the list */}
-            <div className="flex flex-col gap-3.5 @4xl:hidden">
-              {notReached}
+              <div>
+                <ChannelsCard summary={summary} isSms={isSms} />
+              </div>
+              {collectsRsvp && (
+                <div>
+                  <RsvpCard summary={summary} />
+                </div>
+              )}
+              {/* Below the rail's width, what the rail holds flows in here */}
+              {hasNotReached && <div className="@4xl:hidden">{notReached}</div>}
             </div>
 
             <ScheduleResultsGuests
@@ -319,7 +327,9 @@ type Summary = ScheduleInteractionData['summary'];
 /**
  * Audience, reached, seen, answered. Seen is drawn as a share of the
  * WhatsApp deliveries rather than of the audience, so its bar is a ratio that
- * can move either way as late failures leave that denominator.
+ * can move either way as late failures leave that denominator. It is also a
+ * floor, not a count: a guest who turned off read receipts never reports one,
+ * and the row says so.
  */
 function Funnel({
   summary,
@@ -377,6 +387,7 @@ function Funnel({
             value: percent(summary.seen, summary.seenCapable),
             bar: 'bg-primary/60',
             num: 'text-primary',
+            note: t('seenNote'),
           },
         ]
       : []),
@@ -425,6 +436,11 @@ function Funnel({
             </span>
           </div>
           <Bar value={row.value} className={row.bar} />
+          {row.note && (
+            <p className="text-muted-foreground text-[11.5px] leading-snug @2xl:text-xs">
+              {row.note}
+            </p>
+          )}
         </div>
       ))}
     </section>
