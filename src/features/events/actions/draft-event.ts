@@ -1,8 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
-import { getCurrentUser } from '@/features/auth/queries';
+import { getCurrentUser, getVisitorId } from '@/features/auth/queries';
+import { sendVisitorEventAdminEmail } from '@/lib/email/send-visitor-event-admin-email';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -353,14 +355,40 @@ export async function publishDraftEvent(
     const { draft, message } = await loadDraft(supabase, eventId);
     if (!draft) return { success: false, message };
 
-    const { error } = await supabase
+    const { data: published, error } = await supabase
       .from('events')
       .update({ status: 'published', is_default: true })
-      .eq('id', eventId);
+      .eq('id', eventId)
+      .select('title, event_date, location')
+      .single();
 
     if (error) {
       console.error('Error publishing draft event:', error);
       return { success: false, message: 'Failed to finish creating your event' };
+    }
+
+    // A Visitor finishing an event is the earliest sign of a real lead - the
+    // new-user email only comes if they later save. Sent after the response so
+    // it never slows down or fails their way into the workspace.
+    const visitorId = await getVisitorId();
+    if (visitorId) {
+      const location = published.location as { name?: string } | null;
+      const createdAt = new Date();
+      after(async () => {
+        const result = await sendVisitorEventAdminEmail({
+          eventId,
+          title: published.title,
+          eventType: readEventTypeKey(draft.event_types) ?? null,
+          eventDate: published.event_date,
+          venue: location?.name ?? null,
+          visitorId,
+          createdAt,
+        });
+
+        if (!result.success && !result.skipped) {
+          console.error('Visitor event admin notification not sent:', result.error);
+        }
+      });
     }
 
     // The freshly published event becomes the one the app opens by default.
