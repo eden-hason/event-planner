@@ -191,7 +191,12 @@ function describe(item: GuestActivityItem, t: T) {
         meta: item.channel
           ? t(item.channel === 'sms' ? 'viaSms' : 'viaWhatsapp')
           : null,
-        sub: item.viaFallback ? t('fallback') : null,
+        sub:
+          item.fallback === 'failed'
+            ? t('fallback')
+            : item.fallback === 'unconfirmed'
+              ? t('fallbackUnconfirmed')
+              : null,
       };
     }
     case 'call':

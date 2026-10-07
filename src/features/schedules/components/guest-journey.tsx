@@ -98,8 +98,12 @@ export function GuestJourney({
         return step.channel === 'sms'
           ? {
               label: t('journey.sentSms'),
+              // An unconfirmed WhatsApp may still arrive, and its receipt can
+              // land after this step, so it never claims WhatsApp failed.
               meta: step.fallback
-                ? t('journey.sentFallbackMeta')
+                ? row.fallbackReason === 'unconfirmed'
+                  ? t('journey.sentFallbackUnconfirmedMeta')
+                  : t('journey.sentFallbackMeta')
                 : t('journey.smsMeta'),
             }
           : { label: t('journey.sentWhatsapp'), meta: '' };

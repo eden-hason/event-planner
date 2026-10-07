@@ -1230,6 +1230,7 @@
         "viaWhatsapp": "via WhatsApp",
         "viaSms": "via SMS",
         "fallback": "WhatsApp was not delivered, sent by SMS instead",
+        "fallbackUnconfirmed": "WhatsApp didn't confirm delivery, so it was also sent by SMS",
         "call": "Call in call round {round}",
         "callOutcome": {
           "no_answer": "No answer",
@@ -1819,6 +1820,7 @@
         "sentWhatsapp": "Sent on WhatsApp",
         "sentSms": "Sent by SMS",
         "sentFallbackMeta": "Because WhatsApp couldn't reach them",
+        "sentFallbackUnconfirmedMeta": "Because WhatsApp hadn't confirmed delivery",
         "smsMeta": "SMS doesn't report delivery or reading",
         "delivered": "Delivered",
         "deliveredMeta": "The phone confirmed it",

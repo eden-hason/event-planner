@@ -4,7 +4,8 @@ import { classifyWhatsAppFailure } from '../utils/whatsapp-failures';
 import { sendingConfig } from '@/lib/config/sending';
 
 /**
- * The automatic half of the SMS Fallback (ADR 0016).
+ * The automatic half of the SMS Fallback (ADR 0016), for failed deliveries and
+ * Stuck WhatsApps alike - the engine decides which deliveries qualify.
  *
  * ADR 0012 shipped the manual half and left the trigger for later, expecting it
  * to "evaluate a Schedule's failures together after a settle window" and call
@@ -151,15 +152,44 @@ export function lastFailureActivityAt(
   return latest;
 }
 
-/** Schedules that have at least one failed Delivery and might be ready. */
-async function candidateScheduleIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data, error } = await supabase
+/**
+ * Schedules that might be ready: those with a Stuck WhatsApp (accepted inside
+ * the Stuck window, still Sent) and those with at least one failed Delivery.
+ *
+ * Stuck ones come first. The window bounds them to the last few days, while a
+ * failed Delivery nobody can fall back stays failed forever, so the order keeps
+ * old failures from crowding fresh work out of the per-sweep cap.
+ */
+async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promise<string[]> {
+  const config = sendingConfig();
+  const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 3_600_000).toISOString();
+
+  const { data: stuck, error: stuckError } = await supabase
+    .from('message_delivery_attempts')
+    .select('message_deliveries!inner(schedule_id)')
+    .eq('channel', 'whatsapp')
+    .eq('status', 'sent')
+    .eq('message_deliveries.status', 'sent')
+    .lte('sent_at', hoursAgo(config.smsFallbackStuckMinHours))
+    .gte('sent_at', hoursAgo(config.smsFallbackStuckMaxHours))
+    .limit(2_000);
+  if (stuckError) throw stuckError;
+
+  const { data: failed, error: failedError } = await supabase
     .from('message_deliveries')
     .select('schedule_id')
     .eq('status', 'failed')
     .limit(2_000);
-  if (error) throw error;
-  return [...new Set((data ?? []).map((row: { schedule_id: string }) => row.schedule_id))];
+  if (failedError) throw failedError;
+
+  return [
+    ...new Set([
+      ...((stuck ?? []) as unknown as { message_deliveries: { schedule_id: string } }[]).map(
+        (row) => row.message_deliveries.schedule_id,
+      ),
+      ...(failed ?? []).map((row: { schedule_id: string }) => row.schedule_id),
+    ]),
+  ];
 }
 
 async function evaluateSchedule(
@@ -252,7 +282,7 @@ export async function sweepSmsFallback(
 
   let candidates: string[];
   try {
-    candidates = await candidateScheduleIds(supabase);
+    candidates = await candidateScheduleIds(supabase, now);
   } catch (error) {
     console.error('[sms-fallback-sweep] Could not find candidates:', error);
     return { considered: 0, sent: 0, results };

@@ -43,6 +43,8 @@ export {
   buildAttemptRecord,
   generateConfirmationToken,
   isSmsFallbackTrigger,
+  smsFallbackReason,
+  type SmsFallbackReason,
   type AttemptTrigger,
   type SmsFallbackTrigger,
   type GuestSendResult,

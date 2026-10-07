@@ -1,7 +1,7 @@
 'use server';
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { isSmsFallbackTrigger } from '../utils';
+import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from '../utils';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -52,6 +52,8 @@ export type GuestInteractionRow = {
   steps: GuestDeliveryStep[];
   /** Reached over SMS only because WhatsApp could not reach them */
   viaFallback: boolean;
+  /** Why an SMS Fallback went out, whether or not it is what reached them */
+  fallbackReason: SmsFallbackReason | null;
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**
@@ -221,6 +223,7 @@ export async function getScheduleInteractionData(
         guestName: guest.name,
         steps: [],
         viaFallback: false,
+        fallbackReason: null,
         delivery: null,
         seen: false,
         amount: guest.amount ?? 1,
@@ -248,6 +251,9 @@ export async function getScheduleInteractionData(
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
     entry.steps = toSteps(row.message_delivery_attempts as AttemptRow[] | null);
+    entry.fallbackReason = smsFallbackReason(
+      (row.message_delivery_attempts as AttemptRow[] | null) ?? [],
+    );
     entry.viaFallback =
       entry.delivery === 'sms' &&
       entry.steps.some((step) => step.fallback && !step.failedAt);

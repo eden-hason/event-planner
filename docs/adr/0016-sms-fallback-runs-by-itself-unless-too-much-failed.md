@@ -43,3 +43,13 @@ a real audience the ten quiet minutes rarely came and Operators pressed the butt
 Only an attempt being made or failing now counts. The sweeper's attempts are recorded as
 `fallback_auto` and the button's stay `fallback`, so the two can be told apart; both are
 still limited to one per Delivery.
+
+**Amended 2026-10-07:** silence is now a fallback case after all, within bounds. A real
+Schedule (`c40689a5`) left one Guest's WhatsApp accepted and unconfirmed for a day, and
+the Guest was never reached. Getting both an SMS and a late WhatsApp is the better
+failure. A WhatsApp accepted at least 2 hours ago (`SMS_FALLBACK_STUCK_MIN_HOURS`) with no
+delivered receipt, and not more than 72 hours ago (`SMS_FALLBACK_STUCK_MAX_HOURS`), is a
+candidate for the button and the sweeper. The ceiling is not optional: production holds
+hundreds of August sends that never recorded a receipt, and they must never be picked up.
+Stuck deliveries do not count toward the Fallback Freeze, which still measures failures
+only.

@@ -51,6 +51,13 @@ export type SendingConfig = {
   smsFallbackFreezePct: number;
   /** Failures below which the Freeze never applies, so a test Event cannot freeze. */
   smsFallbackFreezeMin: number;
+  /**
+   * The Stuck window: a WhatsApp accepted at least this many hours ago with no
+   * delivered receipt is an SMS Fallback candidate...
+   */
+  smsFallbackStuckMinHours: number;
+  /** ...until it is this many hours old, after which it is left alone. */
+  smsFallbackStuckMaxHours: number;
   /** How long a pending attempt may sit before the reaper calls it stranded. */
   attemptReaperMinutes: number;
   /** Hard cap on an Operator's manual send. */
@@ -69,6 +76,8 @@ export function sendingConfig(): SendingConfig {
     smsFallbackSettleMinutes: number('SMS_FALLBACK_SETTLE_MINUTES', 10),
     smsFallbackFreezePct: number('SMS_FALLBACK_FREEZE_PCT', 30),
     smsFallbackFreezeMin: number('SMS_FALLBACK_FREEZE_MIN', 10),
+    smsFallbackStuckMinHours: number('SMS_FALLBACK_STUCK_MIN_HOURS', 2),
+    smsFallbackStuckMaxHours: number('SMS_FALLBACK_STUCK_MAX_HOURS', 72),
     attemptReaperMinutes: number('ATTEMPT_REAPER_MINUTES', 10),
     maxManualRecipients: number('MAX_MANUAL_RECIPIENTS', 10),
   };

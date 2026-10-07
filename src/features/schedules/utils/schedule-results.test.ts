@@ -11,6 +11,7 @@ const row = (over: Partial<Row>): Row => ({
   guestName: 'נועה לוי',
   steps: [],
   viaFallback: false,
+  fallbackReason: null,
   delivery: 'whatsapp',
   seen: false,
   amount: 1,
