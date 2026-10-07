@@ -1339,10 +1339,6 @@
           "label": "Complete your event details",
           "why": "The time and the venue"
         },
-        "addGuests": {
-          "label": "Add guests",
-          "why": "By hand, from Excel or from Google Drive"
-        },
         "groups": {
           "label": "Sort guests into groups",
           "why": "Family, friends, work"
@@ -2649,7 +2645,6 @@
     }
   },
   "saveEvent": {
-    "pill": "Save your event",
     "title": "Save your event",
     "subtitle": "Create your account so it's here whenever you come back, on any device",
     "reason": {

@@ -59,7 +59,7 @@ function PlannedWorkItem({ row }: { row: PlannedWorkRow }) {
           <span className="text-muted-foreground truncate text-[12.5px]">{row.detail}</span>
         </span>
 
-        <span className="text-secondary-foreground w-[170px] shrink-0 truncate text-[13px]">
+        <span className="text-secondary-foreground hidden w-[170px] shrink-0 truncate text-[13px] sm:block">
           {row.eventTitle}
         </span>
       </Link>

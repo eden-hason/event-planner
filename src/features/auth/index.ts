@@ -15,7 +15,6 @@ export {
   useSaveEvent,
   useSaveGatedClick,
 } from './components/save-event-provider';
-export { SaveEventPill } from './components/save-event-pill';
 
 // Utils
 export { isVisitor, SAVE_REQUIRED } from './utils/visitor';

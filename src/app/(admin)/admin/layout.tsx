@@ -27,7 +27,7 @@ export default async function AdminLayout({
         <BackOfficeNav email={email} environment={environment} />
         <SidebarInset className="bg-muted">
           <BackOfficeTopBar testAccountsVisible={testAccountsVisible}>{topbar}</BackOfficeTopBar>
-          <div className="w-full px-8 py-6">{children}</div>
+          <div className="w-full px-4 py-4 md:px-8 md:py-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </div>

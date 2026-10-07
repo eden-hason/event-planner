@@ -67,6 +67,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'Kululu אישורי הגעה',
   description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',
+  // iOS: opens full-screen from the home screen (the manifest's `standalone`
+  // for older versions), and the label under the icon - without it iOS uses
+  // the full page title, which gets truncated.
+  appleWebApp: { capable: true, title: 'Kululu' },
   openGraph: {
     title: 'Kululu אישורי הגעה',
     description: 'Kululu - מערכת אחת לניהול אירועים ואישורי הגעה',

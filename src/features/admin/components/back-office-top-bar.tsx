@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { OperatorSearch } from './operator-search';
 import { TestAccountsToggle } from './test-accounts-toggle';
 
@@ -25,7 +25,9 @@ export function BackOfficeTopBar({
   });
 
   return (
-    <header className="bg-card flex h-14 flex-none items-center gap-4 border-b px-6">
+    <header className="bg-card flex h-14 flex-none items-center gap-2 border-b px-3 md:gap-4 md:px-6">
+      {/* The only way to the nav below `md`, where the sidebar is a drawer. */}
+      <SidebarTrigger className="-ms-1 shrink-0" />
       {/*
        * The slot owns the whole left region, so a route that carries an action
        * can push it right with an auto margin instead of the bar having to know
@@ -37,8 +39,7 @@ export function BackOfficeTopBar({
        * applies to every route, and the slot belongs to the route.
        */}
       <TestAccountsToggle visible={testAccountsVisible} />
-      <ThemeToggle labels={{ light: 'Light', dark: 'Dark', system: 'System' }} />
-      <span className="text-muted-foreground shrink-0 text-[12.5px]">{today}</span>
+      <span className="text-muted-foreground hidden shrink-0 text-[12.5px] md:inline">{today}</span>
     </header>
   );
 }

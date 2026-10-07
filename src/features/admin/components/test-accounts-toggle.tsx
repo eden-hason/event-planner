@@ -41,14 +41,15 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
         })
       }
       className={cn(
-        'bg-card hover:bg-accent/50 focus-visible:ring-ring flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border pr-1.5 pl-3 transition-colors focus-visible:ring-2 focus-visible:outline-none',
+        'bg-card hover:bg-accent/50 focus-visible:ring-ring flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border pr-1.5 pl-2.5 transition-colors sm:pl-3 focus-visible:ring-2 focus-visible:outline-none',
         isPending && 'pointer-events-none opacity-60',
       )}
     >
       <FlaskConical
         className={cn('size-4', optimistic ? 'text-primary' : 'text-muted-foreground')}
       />
-      <span className="text-[13px] font-medium">Test accounts</span>
+      {/* The flask and the switch carry it on a phone; `aria-label` names it. */}
+      <span className="hidden text-[13px] font-medium sm:inline">Test accounts</span>
       {/*
        * Absolute knob rather than a translated one: the offsets are the two
        * ends of the track, so the resting position cannot drift with the

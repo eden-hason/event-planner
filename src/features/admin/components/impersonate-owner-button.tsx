@@ -1,14 +1,15 @@
 import { Eye } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { startImpersonation } from '../actions/impersonation';
 
 /**
  * Drops the Operator into the Owner app as this event's owner, which is the
  * fastest way to answer "what is the couple actually looking at". The session
  * is read-only and `ImpersonationBanner` carries the way back out.
  *
- * A plain form rather than a client component: the same shape the banner's Exit
- * already uses, and it keeps the top bar free of client JavaScript.
+ * Opens in a new tab so the Back Office stays where it was. A native form
+ * posting to a route handler rather than a Server Action, because React
+ * submits an action itself and ignores `target`. It also keeps the top bar
+ * free of client JavaScript.
  */
 export function ImpersonateOwnerButton({
   ownerId,
@@ -21,7 +22,8 @@ export function ImpersonateOwnerButton({
   label?: string;
 }) {
   return (
-    <form action={startImpersonation.bind(null, ownerId)}>
+    <form action="/api/admin/impersonate" method="post" target="_blank">
+      <input type="hidden" name="userId" value={ownerId} />
       <Button type="submit" variant="outline" size="sm" title={`Open the app as ${ownerName}`}>
         <Eye className="size-3.5" />
         {label}
