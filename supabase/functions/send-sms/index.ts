@@ -6,10 +6,11 @@ const ACTIVE_TRAIL_URL =
 /**
  * Payload delivered by the Supabase `send_sms` auth hook.
  *
- * On a phone change (`sms_type: 'phone_change'`) the code goes to the number
- * being verified, not the current one. A Visitor saving with their phone
- * (ADR 0028) is exactly that: an anonymous user with no `phone` at all, and
- * the new number in `new_phone` (`phone_change` in the database row).
+ * On a phone change the code goes to the number being verified, not the
+ * current one. A Visitor saving with their phone (ADR 0028) is exactly that:
+ * an anonymous user with no `phone` at all, and the new number in `new_phone`.
+ * The hosted Auth does not always send `sms_type`, so an empty `phone` with a
+ * `new_phone` is read as a phone change too.
  */
 interface SendSmsHookPayload {
   user: { phone?: string; new_phone?: string; phone_change?: string };
@@ -55,10 +56,11 @@ Deno.serve(async (req) => {
   }
 
   const smsType = payload.sms?.sms_type;
+  const pendingPhone = payload.user?.new_phone || payload.user?.phone_change;
   const phone =
     smsType === 'phone_change'
-      ? payload.user?.new_phone || payload.user?.phone_change
-      : payload.user?.phone;
+      ? pendingPhone
+      : payload.user?.phone || pendingPhone;
   const otp = payload.sms?.otp;
 
   if (!phone || !otp) {
@@ -67,6 +69,7 @@ Deno.serve(async (req) => {
     console.error('send_sms hook payload missing phone or otp:', {
       smsType,
       userFields: Object.keys(payload.user ?? {}),
+      smsFields: Object.keys(payload.sms ?? {}),
       hasOtp: !!otp,
     });
     return hookError(400, 'Missing phone or otp in hook payload');
