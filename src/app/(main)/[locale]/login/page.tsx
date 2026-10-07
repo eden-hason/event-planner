@@ -2,6 +2,7 @@ import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { AuthTakeover } from '@/features/auth/components/auth-takeover';
+import { isVisitor } from '@/features/auth';
 
 // Force dynamic rendering since this page uses cookies for authentication
 export const dynamic = 'force-dynamic';
@@ -20,9 +21,13 @@ export default async function LoginPage({
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
-  if (data.user) {
+  // A Visitor (ADR 0028) has a session but no account: signing in is exactly
+  // what they came here to do, so they get the form rather than a bounce.
+  if (data.user && !isVisitor(data.user)) {
     redirect({ href: next || '/app', locale });
   }
 
-  return <AuthTakeover next={next} />;
+  // Signing in from here replaces a Visitor's session, and their Event goes
+  // with it once the sign-in succeeds - so they are told before they start.
+  return <AuthTakeover next={next} holdsUnsavedEvent={isVisitor(data.user)} />;
 }

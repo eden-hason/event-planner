@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { SaveEventPill } from '@/features/auth';
 import { HomeHero } from './home-hero';
 import { FeaturedActionsSection } from './featured-actions-section';
 import { StatusStripSection } from './status-strip-section';
@@ -43,6 +44,9 @@ export function HomeSections({ eventId }: { eventId: string }) {
   return (
     <div className="md:@container/home pb-3.5 md:mx-auto md:w-full md:max-w-[1120px] md:pb-0">
       <div className="home-wide:gap-7 flex flex-col gap-[22px]">
+        {/* Home has no header row on the phone, so a Visitor's save pill
+            (ADR 0028) stands here instead. Nothing for an Owner. */}
+        <SaveEventPill className="self-end md:hidden" />
         <Section fallback={<HeroSkeleton />}>
           <HomeHero eventId={eventId} />
         </Section>

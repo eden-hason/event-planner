@@ -445,7 +445,7 @@ export function HomepageClient() {
       {/* NAV */}
       <header className="hp-nav" ref={navRef} id="nav" dir="rtl">
         <div className="wrap nav-inner">
-          <Link href="/login" className="btn btn-primary heb" id="navCta">
+          <Link href="/start" className="btn btn-primary heb" id="navCta">
             כניסה / הרשמה
           </Link>
 
@@ -486,7 +486,7 @@ export function HomepageClient() {
           <a href="#how" className={activeSection === 'how' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>יצירת אירוע</a>
           <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''} onClick={() => setMobileMenuOpen(false)}>חבילות</a>
         </nav>
-        <Link href="/login" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>
+        <Link href="/start" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>
           כניסה / הרשמה
         </Link>
       </div>

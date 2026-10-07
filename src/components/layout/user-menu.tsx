@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ChevronsUpDown, LogOutIcon } from 'lucide-react';
+import { ChevronsUpDown, CloudUpload, LogIn, LogOutIcon } from 'lucide-react';
 import posthog from 'posthog-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -22,6 +22,9 @@ import {
 import { ThemeMenuItems } from '@/components/layout/theme-toggle';
 import { formatPhone } from '@/lib/phone';
 import { useLogout } from '@/components/layout/use-logout';
+import { Link } from '@/i18n/navigation';
+import { useSaveEvent } from '@/features/auth';
+import { cn } from '@/lib/utils';
 
 export interface AppShellUser {
   id: string;
@@ -34,7 +37,12 @@ export interface AppShellUser {
 export function UserMenu({ user }: { user: AppShellUser }) {
   const locale = useLocale();
   const t = useTranslations('sidebar');
+  const { isVisitor, openSave } = useSaveEvent();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
+  // A Visitor has no name until they save: the menu reads like anyone else's,
+  // with a "?" for the face and "Visitor" for the name, and offers saving where
+  // an Owner would log out - logging out a Visitor would lose the Event.
+  const name = isVisitor ? t('visitor.name') : user.name;
   const initials = user.name
     .trim()
     .split(/\s+/)
@@ -59,12 +67,29 @@ export function UserMenu({ user }: { user: AppShellUser }) {
     posthog.identify(user.id, {
       email: user.email,
       name: user.name,
+      is_visitor: isVisitor,
     });
-  }, [user.email, user.id, user.name]);
+  }, [user.email, user.id, user.name, isVisitor]);
 
   const handleLogout = useLogout();
 
-  const subtitle = user.email || (user.phone && formatPhone(user.phone));
+  const subtitle = isVisitor
+    ? t('visitor.subtitle')
+    : user.email || (user.phone && formatPhone(user.phone));
+
+  const avatar = (
+    <Avatar>
+      {!isVisitor && user.avatar && <AvatarImage src={user.avatar} alt={name} />}
+      <AvatarFallback
+        className={cn(
+          isVisitor &&
+            'border-muted-foreground/40 text-muted-foreground border border-dashed bg-transparent font-semibold',
+        )}
+      >
+        {isVisitor ? '?' : initials || '?'}
+      </AvatarFallback>
+    </Avatar>
+  );
 
   return (
     <SidebarMenu>
@@ -76,12 +101,9 @@ export function UserMenu({ user }: { user: AppShellUser }) {
               aria-label={t('userMenu')}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center"
             >
-              <Avatar>
-                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                <AvatarFallback>{initials || '?'}</AvatarFallback>
-              </Avatar>
+              {avatar}
               <div className="grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate font-semibold">{name}</span>
                 {subtitle && (
                   <span className="text-muted-foreground truncate text-xs">
                     {subtitle}
@@ -99,7 +121,7 @@ export function UserMenu({ user }: { user: AppShellUser }) {
           >
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1 text-start">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{name}</span>
                 {subtitle && (
                   <span className="text-muted-foreground truncate text-xs">
                     {subtitle}
@@ -120,13 +142,29 @@ export function UserMenu({ user }: { user: AppShellUser }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => void handleLogout()}
-              >
-                <LogOutIcon />
-                {t('logOut')}
-              </DropdownMenuItem>
+              {isVisitor ? (
+                <>
+                  <DropdownMenuItem onSelect={() => openSave()}>
+                    <CloudUpload />
+                    {t('visitor.save')}
+                  </DropdownMenuItem>
+                  {/* /login warns that signing in discards this Event. */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">
+                      <LogIn />
+                      {t('visitor.signIn')}
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => void handleLogout()}
+                >
+                  <LogOutIcon />
+                  {t('logOut')}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

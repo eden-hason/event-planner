@@ -18,6 +18,7 @@ import {
   CollaborationProvider,
 } from '@/components/feature-layout';
 import { AiAssistant } from '@/features/ai-chat';
+import { SaveEventProvider } from '@/features/auth';
 import {
   EventBillingStatusProvider,
   deriveHeaderStatus,
@@ -80,35 +81,40 @@ export default async function EventLayout({
 
   return (
     <AppShell>
-      <div className="flex min-h-0 w-full flex-1">
-        <AppSidebar
-          events={events}
-          currentUserId={effectiveUser?.id ?? auth.user.id}
-          user={user}
-        />
-        {/* `min-w-0`: a flex item never shrinks below its content by default,
-            so a page wider than the room left would slide under the sidebar. */}
-        <SidebarInset className="min-w-0 bg-transparent">
-          <ImpersonationBanner />
-          <BottomNavProvider>
-            <LayoutContentWrapper>
-              <CollaborationProvider role={role} isCreator={isCreator}>
-                <FeatureLayoutProvider>
-                  <EventBillingStatusProvider
-                    value={deriveHeaderStatus(event.billingStatus)}
-                  >
-                    <PageCard>{children}</PageCard>
-                  </EventBillingStatusProvider>
-                  <HiddenOnFullTakeoverRoute>
-                    <AiAssistant eventId={eventId} />
-                  </HiddenOnFullTakeoverRoute>
-                </FeatureLayoutProvider>
-              </CollaborationProvider>
-            </LayoutContentWrapper>
-            <MobileBottomNav />
-          </BottomNavProvider>
-        </SidebarInset>
-      </div>
+      {/* A Visitor plans freely; anything that needs an account opens the
+          save dialog this provides (ADR 0028). Above the sidebar too, whose
+          user menu is one of the ways in. */}
+      <SaveEventProvider isVisitor={!!effectiveUser?.isVisitor}>
+        <div className="flex min-h-0 w-full flex-1">
+          <AppSidebar
+            events={events}
+            currentUserId={effectiveUser?.id ?? auth.user.id}
+            user={user}
+          />
+          {/* `min-w-0`: a flex item never shrinks below its content by default,
+              so a page wider than the room left would slide under the sidebar. */}
+          <SidebarInset className="min-w-0 bg-transparent">
+            <ImpersonationBanner />
+            <BottomNavProvider>
+              <LayoutContentWrapper>
+                <CollaborationProvider role={role} isCreator={isCreator}>
+                  <FeatureLayoutProvider>
+                    <EventBillingStatusProvider
+                      value={deriveHeaderStatus(event.billingStatus)}
+                    >
+                      <PageCard>{children}</PageCard>
+                    </EventBillingStatusProvider>
+                    <HiddenOnFullTakeoverRoute>
+                      <AiAssistant eventId={eventId} />
+                    </HiddenOnFullTakeoverRoute>
+                  </FeatureLayoutProvider>
+                </CollaborationProvider>
+              </LayoutContentWrapper>
+              <MobileBottomNav />
+            </BottomNavProvider>
+          </SidebarInset>
+        </div>
+      </SaveEventProvider>
     </AppShell>
   );
 }

@@ -8,9 +8,11 @@ import {
   useState,
 } from 'react';
 import { useTranslations } from 'next-intl';
-import { cn } from '@/lib/utils';
+import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
+import { GoogleIcon } from '@/components/icons';
+import { OtpCodeInput } from './otp-code-input';
 import {
   TakeoverBackButton,
   TakeoverButton,
@@ -29,18 +31,17 @@ import {
  * no separate sign-up, and no email/password.
  */
 
-function GoogleGlyph() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-      <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z" />
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-    </svg>
-  );
-}
-
-export function AuthTakeover({ next }: { next?: string }) {
+export function AuthTakeover({
+  next,
+  holdsUnsavedEvent = false,
+}: {
+  next?: string;
+  /**
+   * A Visitor (ADR 0028): signing in to an account here discards the Event
+   * they have been planning, so the screen says so before they start.
+   */
+  holdsUnsavedEvent?: boolean;
+}) {
   const t = useTranslations('auth');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [localPhone, setLocalPhone] = useState('');
@@ -162,7 +163,7 @@ export function AuthTakeover({ next }: { next?: string }) {
         onClick={handleGoogle}
         className="flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
       >
-        <GoogleGlyph />
+        <GoogleIcon />
         {t('signInWithGoogle')}
       </button>
       {googleError && <TakeoverError>{googleError}</TakeoverError>}
@@ -192,37 +193,12 @@ export function AuthTakeover({ next }: { next?: string }) {
         <input type="hidden" name="phone" value={e164Phone} />
         {next && <input type="hidden" name="next" value={next} />}
 
-        {/* The boxes are presentation; one real input sits invisibly over them
-            so paste, autofill and the OS one-time-code hint all keep working. */}
-        <div className="relative my-5">
-          <div dir="ltr" className="flex justify-center gap-2.5">
-            {Array.from({ length: 6 }, (_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'flex h-14 w-[46px] items-center justify-center rounded-[14px] bg-white font-rubik text-2xl font-bold text-[var(--kt-ink)] transition-colors',
-                  i === otp.length
-                    ? 'border-2 border-[var(--kt-brand)]'
-                    : 'border-[1.5px] border-[var(--kt-border)]',
-                )}
-              >
-                {otp[i] ?? ''}
-              </div>
-            ))}
-          </div>
-          <input
-            ref={otpInputRef}
-            name="token"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            inputMode="numeric"
-            maxLength={6}
-            autoComplete="one-time-code"
-            required
-            aria-label={t('verificationCode')}
-            className="absolute inset-0 h-full w-full opacity-[0.01]"
-          />
-        </div>
+        <OtpCodeInput
+          value={otp}
+          onChange={setOtp}
+          label={t('verificationCode')}
+          inputRef={otpInputRef}
+        />
 
         {verifyState.message && !verifyState.success && (
           <TakeoverError>{verifyState.message}</TakeoverError>
@@ -276,6 +252,17 @@ export function AuthTakeover({ next }: { next?: string }) {
               <p className="mb-7 text-[15px] leading-relaxed text-[var(--kt-ink-muted)] md:text-base">
                 {t('takeoverSubtitle')}
               </p>
+              {holdsUnsavedEvent && (
+                <div className="mb-5 max-w-[400px] rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white px-4 py-3 text-[14px] leading-relaxed text-[var(--kt-ink-muted)]">
+                  {t('unsavedEventWarning')}{' '}
+                  <Link
+                    href="/app"
+                    className="font-semibold text-[var(--kt-brand)] hover:text-[var(--kt-brand-deep)]"
+                  >
+                    {t('backToMyEvent')}
+                  </Link>
+                </div>
+              )}
               {phonePane}
             </>
           ) : (

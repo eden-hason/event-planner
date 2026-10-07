@@ -4,6 +4,11 @@ export interface User {
   phone?: string;
   displayName: string;
   avatar: string;
+  /**
+   * A Visitor: planning without an account (ADR 0028). They can use the
+   * workspace, but nothing that reaches people or costs money until they save.
+   */
+  isVisitor?: boolean;
 }
 
 export interface ProfileData {

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
 import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
+import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackageSheetProps = {
   open: boolean;
@@ -53,6 +54,7 @@ export function RecordPackageSheet({
 
   const over = view.state === 'over';
   const whatsappHref = usePackageWhatsAppHref(view, eventName);
+  const gatePay = useSaveGatedClick('pay');
 
   const status = [
     view.gifted ? t('gifted') : t('paid'),
@@ -134,7 +136,7 @@ export function RecordPackageSheet({
       )}
 
       <Button asChild>
-        <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+        <a href={whatsappHref} onClick={gatePay} target="_blank" rel="noopener noreferrer">
           <IconBrandWhatsapp />
           {t('addRecords')}
         </a>

@@ -5,6 +5,7 @@ import { IconBrandWhatsapp, IconPackage } from '@tabler/icons-react';
 import { useCollaboration } from '@/components/feature-layout';
 import { billingWhatsAppUrl, useRecordPackage } from '@/features/billing';
 import { cn } from '@/lib/utils';
+import { useSaveGatedClick } from '@/features/auth';
 
 /**
  * The tag on a Guest Record a Schedule would skip. Sized to sit inside the existing row:
@@ -39,6 +40,7 @@ export function OutsidePackageBanner({
   const t = useTranslations('guests.package');
   const { view } = useRecordPackage();
   const { isOwner } = useCollaboration();
+  const gatePay = useSaveGatedClick('pay');
   if (!view || view.over === 0) return null;
 
   const href = billingWhatsAppUrl(
@@ -64,6 +66,7 @@ export function OutsidePackageBanner({
       {isOwner && (
         <a
           href={href}
+          onClick={gatePay}
           target="_blank"
           rel="noopener noreferrer"
           className="bg-card text-foreground flex h-[34px] shrink-0 items-center gap-[5px] rounded-[9px] px-3 text-[13px] font-bold whitespace-nowrap"

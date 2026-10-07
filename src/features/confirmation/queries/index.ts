@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { getVisitorId } from '@/features/auth/queries';
 import {
   buildEventTitleParts,
   readEventTypeKey,
@@ -102,6 +103,33 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
 }
 
 /**
+ * Whether the Event belongs to a Visitor who has not saved it (ADR 0028), as
+ * seen by whoever is opening the link. The RSVP and preview links of an
+ * unsaved Event reach nobody: the workspace offers them for sharing only after
+ * saving, and a copied link shows the same nothing an unknown token does. The
+ * Visitor themselves is the exception - previewing their own page is planning.
+ */
+async function hiddenAsVisitorEvent(
+  supabase: ReturnType<typeof createServiceClient>,
+  eventId: string,
+): Promise<boolean> {
+  const { data: event } = await supabase
+    .from('events')
+    .select('user_id')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (!event) return false;
+  const { data: owner } = await supabase
+    .from('profiles')
+    .select('is_visitor')
+    .eq('id', event.user_id)
+    .maybeSingle();
+  if (owner?.is_visitor !== true) return false;
+
+  return (await getVisitorId()) !== event.user_id;
+}
+
+/**
  * Fetches confirmation page data by token using the service role client.
  */
 export async function getConfirmationDataByToken(
@@ -187,13 +215,15 @@ export async function getConfirmationDataByGuestToken(
   if (error || !data) {
     return null;
   }
+  const event = data.events as unknown as EventRow;
+  if (await hiddenAsVisitorEvent(supabase, event.id)) return null;
 
   return {
     deliveryId: null,
     respondedAt: null,
     responseData: null,
     guest: toGuestView(data as unknown as GuestRow),
-    event: toEventView(data.events as unknown as EventRow),
+    event: toEventView(event),
     scheduleId: null,
   };
 }
@@ -220,6 +250,7 @@ export async function getConfirmationPreviewData(
   if (error || !data) {
     return null;
   }
+  if (await hiddenAsVisitorEvent(supabase, (data as unknown as EventRow).id)) return null;
 
   return {
     deliveryId: null,

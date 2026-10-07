@@ -1,5 +1,6 @@
 import { NextResponse, after } from 'next/server';
 import { getCurrentUser } from '@/features/auth/queries';
+import { SAVE_REQUIRED } from '@/features/auth';
 import { WhatsAppImportRequestSchema } from '@/features/guests/schemas';
 import { runWhatsAppImportSession } from '@/features/guests/services/whatsapp-import-session';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
@@ -37,6 +38,8 @@ export async function POST(
     supabase.from('events').select('id').eq('id', eventId).maybeSingle(),
   ]);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Reads the Visitor's own WhatsApp: they save first (ADR 0028).
+  if (user.isVisitor) return NextResponse.json({ error: SAVE_REQUIRED }, { status: 403 });
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   let body: unknown;

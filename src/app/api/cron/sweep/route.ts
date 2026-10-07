@@ -4,6 +4,7 @@ import { sweepWebhookInbox } from '@/features/schedules/services/sweep-webhook-i
 import { reapStrandedAttempts } from '@/features/schedules/services/reap-stranded-attempts';
 import { sweepSmsFallback } from '@/features/schedules/services/sweep-sms-fallback';
 import { purgeExpiredWhatsAppImportSessions } from '@/features/guests/services/whatsapp-import-session';
+import { purgeAbandonedVisitors } from '@/features/auth/services/visitors';
 import { isAuthorizedCron } from '@/lib/config/sending';
 
 /**
@@ -22,7 +23,8 @@ import { isAuthorizedCron } from '@/lib/config/sending';
  *
  * Unrelated to the three, it also drops expired WhatsApp import sessions
  * (backlog 0017) - they hold other people's names and numbers, so a session
- * nobody came back for should not linger.
+ * nobody came back for should not linger. And it forgets Visitors who left
+ * their Draft Event untouched for 30 days (ADR 0028).
  */
 export const maxDuration = 300;
 
@@ -37,13 +39,15 @@ export async function GET(request: Request) {
   const reaped = await reapStrandedAttempts(supabase);
   const fallback = await sweepSmsFallback(supabase);
   const whatsappImports = await purgeExpiredWhatsAppImportSessions(supabase);
+  const visitors = await purgeAbandonedVisitors(supabase);
 
   console.log(
     `[sweep] Done: ${webhooks.processed}/${webhooks.picked} webhook(s) processed, ` +
       `${reaped.reaped} attempt(s) reaped, ` +
       `${fallback.considered} schedule(s) considered for SMS fallback, ${fallback.sent} sent, ` +
-      `${whatsappImports.purged} expired WhatsApp import session(s) purged`,
+      `${whatsappImports.purged} expired WhatsApp import session(s) purged, ` +
+      `${visitors.purged} abandoned Visitor(s) forgotten`,
   );
 
-  return NextResponse.json({ success: true, webhooks, reaped, fallback, whatsappImports });
+  return NextResponse.json({ success: true, webhooks, reaped, fallback, whatsappImports, visitors });
 }

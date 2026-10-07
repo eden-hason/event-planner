@@ -2,6 +2,7 @@ import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getInvitationByToken } from '@/features/collaborate/queries';
+import { isVisitor } from '@/features/auth';
 import { InvitationResponsePage } from './invitation-response-page';
 
 export default async function InvitationPage({
@@ -71,7 +72,8 @@ export default async function InvitationPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  // A Visitor (ADR 0028) has a session but no account to accept with.
+  if (!user || isVisitor(user)) {
     // Redirect to login with return URL
     return redirect({ href: `/login?next=/invitations/${token}`, locale });
   }

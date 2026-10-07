@@ -34,7 +34,15 @@
     "takeoverTitle": "Your event starts here",
     "takeoverSubtitle": "Guests, RSVPs and budget - all in one place",
     "heroTitle": "Event and guest management, made easy",
-    "heroSubtitle": "WhatsApp RSVPs, seating charts and a budget that keeps up"
+    "heroSubtitle": "WhatsApp RSVPs, seating charts and a budget that keeps up",
+    "visitorDropped": {
+      "title": "You already have an account",
+      "bodyHome": "We've taken you to your existing event. The new one you started wasn't saved",
+      "bodyStart": "You're signed in to your existing account. The event you started wasn't saved",
+      "ok": "Got it"
+    },
+    "unsavedEventWarning": "You have an event that isn't saved yet. Signing in here will discard it.",
+    "backToMyEvent": "Back to my event"
   },
   "navigation": {
     "home": "Home",
@@ -292,6 +300,12 @@
     "notifications": {
       "title": "Notifications",
       "empty": "No notifications yet"
+    },
+    "visitor": {
+      "name": "Visitor",
+      "subtitle": "Your event isn't saved yet",
+      "save": "Save your event",
+      "signIn": "Sign in to an existing account"
     }
   },
   "budget": {
@@ -1406,7 +1420,8 @@
           "cap-reached": "This event has used all its test messages",
           "no-schedule": "There's no RSVP message to send yet",
           "not-allowed": "Only the event's owners can get a test message",
-          "send-failed": "We couldn't send it, try again"
+          "send-failed": "We couldn't send it, try again",
+          "save-required": "Save your event first"
         }
       },
       "healthCheck": {
@@ -2501,7 +2516,9 @@
       "subtitle": "Your event exists. From here, everything starts falling into place",
       "cta": "Let's start planning",
       "entering": "One moment..."
-    }
+    },
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in"
   },
   "billing": {
     "pill": {
@@ -2630,5 +2647,28 @@
     "packageCard": {
       "details": "Details"
     }
+  },
+  "saveEvent": {
+    "pill": "Save your event",
+    "title": "Save your event",
+    "subtitle": "Create your account so it's here whenever you come back, on any device",
+    "reason": {
+      "send": "Before anything goes out to guests, save your event",
+      "invite": "Before you invite anyone, save your event",
+      "import": "Before importing from WhatsApp, save your event",
+      "pay": "Before choosing a package, save your event",
+      "share": "Before you share your event's links, save it"
+    },
+    "nameLabel": "Your full name",
+    "namePlaceholder": "e.g. Dana Levi",
+    "savePhone": "Save with my phone",
+    "saveGoogle": "Save with Google",
+    "phoneExistsTitle": "This number already has a Kululu account",
+    "googleExistsTitle": "This Google account already has a Kululu account",
+    "existsBody": "Signing in to it will discard the event you're working on here. Your existing account's events are not affected",
+    "useDifferentNumber": "Use a different number",
+    "useDifferentAccount": "Use a different account",
+    "signInAndDiscard": "Sign in and discard this event",
+    "saved": "Your event is saved"
   }
 }

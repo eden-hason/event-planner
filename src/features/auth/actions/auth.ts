@@ -1,11 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { toE164 } from '@/lib/phone';
+import { requestOrigin } from './origin';
+import { rememberVisitor, settleRememberedVisitor } from '../services/visitor-session';
+import { getVisitorId } from '../queries/auth';
 import { sendNewUserAdminEmail } from '@/lib/email/send-new-user-admin-email';
 
 export async function saveAvatarUrl(avatarUrl: string) {
@@ -109,6 +111,16 @@ export async function logout() {
   redirect('/login');
 }
 
+/**
+ * Signing in from /login while holding a Visitor session drops the Visitor's
+ * draft once the sign-in succeeds (ADR 0028), as at the save gate. Only the
+ * save gate upgrades a Visitor; /login always signs in.
+ */
+async function rememberVisitorBeforeSignIn() {
+  const visitorId = await getVisitorId();
+  if (visitorId) await rememberVisitor(visitorId);
+}
+
 export async function sendOtp(
   prevState: { success: boolean; message: string },
   formData: FormData,
@@ -121,6 +133,7 @@ export async function sendOtp(
     return { success: false, message: 'Phone number is required' };
   }
 
+  await rememberVisitorBeforeSignIn();
   const { error } = await supabase.auth.signInWithOtp({ phone });
 
   if (error) {
@@ -150,18 +163,20 @@ export async function verifyOtp(
     return { success: false, message: 'Phone and verification code are required' };
   }
 
-  const { error } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     phone,
     token,
     type: 'sms',
   });
 
-  if (error) {
+  if (error || !data.user) {
     return {
       success: false,
-      message: error.message || 'Invalid verification code',
+      message: error?.message || 'Invalid verification code',
     };
   }
+
+  await settleRememberedVisitor(data.user.id);
 
   revalidatePath('/', 'layout');
   redirect(next);
@@ -170,13 +185,8 @@ export async function verifyOtp(
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
 
-  const headersList = await headers();
-  const host =
-    headersList.get('x-forwarded-host') ||
-    headersList.get('host') ||
-    'localhost:3000';
-  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
-  const baseUrl = `${isLocal ? 'http' : 'https'}://${host}`;
+  await rememberVisitorBeforeSignIn();
+  const baseUrl = await requestOrigin();
 
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next || '/app')}`;
 

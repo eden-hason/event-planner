@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { GuestForm } from './guest-form';
 import { GuestActivity } from './guest-activity';
 import { OutsidePackageNotice } from './package';
+import { useSaveEvent } from '@/features/auth';
 
 const FORM_ID = 'guest-drawer-form';
 
@@ -228,7 +229,11 @@ function InvitationLink({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
   const url = () => `${window.location.origin}/c/${token}`;
 
+  const { requireSaved } = useSaveEvent();
+
   const copy = () => {
+    // A Visitor's RSVP link reaches nobody until they save (ADR 0028).
+    if (!requireSaved('share')) return;
     navigator.clipboard
       .writeText(`${t('sheet.copyInvitationLinkPrefix')}\n${url()}`)
       .catch(() => {});

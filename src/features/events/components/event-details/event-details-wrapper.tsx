@@ -5,7 +5,6 @@ import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Form } from '@/components/ui/form';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { buildNavUrl } from '@/components/layout/nav-urls';
@@ -86,8 +85,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
   const female = eventType === 'bat_mitzva';
   const hasCeremony = eventType === 'wedding';
 
-  const typeLabel = eventType ? t(`types.${eventType}`) : null;
-
   const form = useForm<EventDetailsFormValues>({
     resolver: zodResolver(EventDetailsFormSchema),
     defaultValues: buildDefaultValues(event),
@@ -103,11 +100,6 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
   useFeatureHeader({
     title: t('header.title'),
     subtitle: t('header.subtitle'),
-    action: typeLabel ? (
-      <Badge variant="secondary" className="rounded-full">
-        {typeLabel}
-      </Badge>
-    ) : undefined,
   });
 
   const save = React.useCallback(

@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import type { GroupApp, GuestApp } from '@/features/guests/schemas';
 import { isGmailAddress, type CollaboratorRole } from '../schemas';
 import posthog from 'posthog-js';
+import { useSaveEvent } from '@/features/auth';
 
 interface InviteCollaboratorDialogProps {
   eventId: string;
@@ -155,6 +156,7 @@ export function InviteCollaboratorDialog({
   const t = useTranslations('collaborate.inviteDialog');
   const [step, setStep] = React.useState<Step>('form');
   const [isPending, setIsPending] = React.useState(false);
+  const { requireSaved } = useSaveEvent();
   const [copied, setCopied] = React.useState(false);
 
   const roles = [
@@ -225,6 +227,11 @@ export function InviteCollaboratorDialog({
   };
 
   const handleSubmit = async () => {
+    // Inviting reaches a person: a Visitor saves first (ADR 0028).
+    if (!requireSaved('invite')) {
+      onOpenChange(false);
+      return;
+    }
     setIsPending(true);
 
     const formData = new FormData();

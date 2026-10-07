@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getImpersonation } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { User, ProfileData } from '../schemas';
+import { isVisitor } from '../utils/visitor';
 
 // Wrapped with React cache() so a single render resolves the auth call once,
 // however many server components ask for it - the same reason getImpersonation
@@ -47,7 +48,21 @@ export const getUserProfile = cache(async function getUserProfile(): Promise<Pro
 export async function getEffectiveUser(): Promise<User | null> {
   try {
     const impersonation = await getImpersonation();
-    if (!impersonation) return getCurrentUser();
+    if (!impersonation) {
+      // The profile wins, as below. user_metadata alone is not enough: a
+      // Visitor who saves with Google is upgraded by linking the identity,
+      // which does not copy Google's name and picture into user_metadata - only
+      // a later Google sign-in does - and a phone save never has them at all.
+      // Both write the profile. getUserProfile is cached, so Home's own call
+      // reuses this read.
+      const [user, profile] = await Promise.all([getCurrentUser(), getUserProfile()]);
+      if (!user) return null;
+      return {
+        ...user,
+        displayName: profile?.fullName || user.displayName,
+        avatar: profile?.avatarUrl || user.avatar,
+      };
+    }
 
     const adminSupabase = createServiceClient();
     const { data } = await adminSupabase.auth.admin.getUserById(impersonation.userId);
@@ -76,6 +91,7 @@ export async function getEffectiveUser(): Promise<User | null> {
         authUser.user_metadata?.avatar_url ||
         authUser.user_metadata?.picture ||
         '',
+      isVisitor: isVisitor(authUser),
     };
   } catch (error) {
     console.error('Get effective user error:', error);
@@ -108,9 +124,19 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
         '',
       avatar:
         user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+      isVisitor: isVisitor(user),
     };
   } catch (error) {
     console.error('Get current user error:', error);
     return null;
   }
+});
+
+/**
+ * The Visitor's user id when the session is a Visitor's, otherwise null.
+ * Shares getCurrentUser's cached auth call.
+ */
+export const getVisitorId = cache(async function getVisitorId(): Promise<string | null> {
+  const user = await getCurrentUser();
+  return user?.isVisitor ? user.id : null;
 });

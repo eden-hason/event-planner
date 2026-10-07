@@ -6,6 +6,7 @@ import type {
   WhatsAppImportSessionView,
   WhatsAppImportState,
 } from '../types';
+import { useSaveEvent } from '@/features/auth';
 
 const INITIAL: WhatsAppImportState = { status: 'idle', groups: null, contacts: null };
 
@@ -55,8 +56,12 @@ export function useWhatsAppImport(eventId: string) {
 
   useEffect(() => endCurrent, [endCurrent]);
 
+  const { requireSaved } = useSaveEvent();
+
   const start = useCallback(
     async (phone: string) => {
+      // It reads the Visitor's own WhatsApp: they save first (ADR 0028).
+      if (!requireSaved('import')) return;
       endCurrent();
       const attempt = attemptRef.current;
       setState({ status: 'requesting', groups: null, contacts: null });
@@ -148,7 +153,7 @@ export function useWhatsAppImport(eventId: string) {
       document.addEventListener('visibilitychange', onVisible);
       void poll();
     },
-    [eventId, endCurrent, sessionUrl],
+    [eventId, endCurrent, sessionUrl, requireSaved],
   );
 
   return { state, start, cancel };

@@ -1,8 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
 import { getCurrentUser } from '@/features/auth/queries';
+import { sendVisitorEventAdminEmail } from '@/lib/email/send-visitor-event-admin-email';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -98,17 +100,27 @@ export async function createDraftEvent(
   if (blocked) return { success: false, message: blocked };
 
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to create events' };
-    }
-
     const parsed = EventTypeKeySchema.safeParse(eventType);
     if (!parsed.success) {
       return { success: false, message: 'Unknown event type' };
     }
 
     const supabase = await createClient();
+
+    // Someone with no session becomes a Visitor here, on their first answer,
+    // and nowhere else (ADR 0028). Not on page load: a bounce, a crawler or a
+    // returning Owner on their way to sign in leaves no user behind. Their
+    // profile row comes with the anonymous user (a database trigger), so the
+    // event insert below finds it.
+    let ownerId = (await getCurrentUser())?.id;
+    if (!ownerId) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error || !data.user) {
+        console.error('Error starting a Visitor session:', error);
+        return { success: false, message: 'Failed to create your event' };
+      }
+      ownerId = data.user.id;
+    }
     const eventTypeId = await resolveEventTypeId(supabase, parsed.data);
     if (!eventTypeId) return { success: false, message: 'Unknown event type' };
 
@@ -150,7 +162,7 @@ export async function createDraftEvent(
     const { data: newEvent, error } = await supabase
       .from('events')
       .insert({
-        user_id: currentUser.id,
+        user_id: ownerId,
         event_type_id: eventTypeId,
         status: 'draft',
         onboarding_step: 'type',
@@ -323,6 +335,9 @@ export async function setDraftLocation(
  *
  * This is the only way out of the draft state, and the point at which the event
  * gains a workspace and appears in the event switcher.
+ *
+ * A Visitor publishes like anyone else and goes straight into their workspace;
+ * saving is something they do later, from there (ADR 0028).
  */
 export async function publishDraftEvent(
   eventId: string,
@@ -340,14 +355,39 @@ export async function publishDraftEvent(
     const { draft, message } = await loadDraft(supabase, eventId);
     if (!draft) return { success: false, message };
 
-    const { error } = await supabase
+    const { data: published, error } = await supabase
       .from('events')
       .update({ status: 'published', is_default: true })
-      .eq('id', eventId);
+      .eq('id', eventId)
+      .select('title, event_date, location')
+      .single();
 
     if (error) {
       console.error('Error publishing draft event:', error);
       return { success: false, message: 'Failed to finish creating your event' };
+    }
+
+    // A Visitor finishing an event is the earliest sign of a real lead - the
+    // new-user email only comes if they later save. Sent after the response so
+    // it never slows down or fails their way into the workspace.
+    if (currentUser.isVisitor) {
+      const location = published.location as { name?: string } | null;
+      const createdAt = new Date();
+      after(async () => {
+        const result = await sendVisitorEventAdminEmail({
+          eventId,
+          title: published.title,
+          eventType: readEventTypeKey(draft.event_types) ?? null,
+          eventDate: published.event_date,
+          venue: location?.name ?? null,
+          visitorId: currentUser.id,
+          createdAt,
+        });
+
+        if (!result.success && !result.skipped) {
+          console.error('Visitor event admin notification not sent:', result.error);
+        }
+      });
     }
 
     // The freshly published event becomes the one the app opens by default.
