@@ -98,18 +98,33 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
       return null;
     }
 
+    // The profile comes first, as in getEffectiveUser. user_metadata alone is
+    // not enough: a Visitor who saves with Google is upgraded by linking the
+    // identity, which does not copy Google's name and picture into
+    // user_metadata - only a later Google sign-in does - and a phone save never
+    // has them at all. Both write the profile.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+
     return {
       id: user.id,
       email: user.email || undefined,
       phone: user.phone || undefined,
       displayName:
+        profile?.full_name ||
         user.user_metadata?.full_name ||
         user.user_metadata?.name ||
         user.email ||
         user.phone ||
         '',
       avatar:
-        user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+        profile?.avatar_url ||
+        user.user_metadata?.avatar_url ||
+        user.user_metadata?.picture ||
+        '',
       isVisitor: isVisitor(user),
     };
   } catch (error) {

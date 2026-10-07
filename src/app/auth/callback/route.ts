@@ -53,14 +53,18 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user && !isVisitor(data.user)) {
+      // Linking Google to the Visitor leaves user_metadata as the anonymous
+      // user's (empty) - Google's name and picture are only on the identity.
+      const google = data.user.identities?.find(
+        (identity) => identity.provider === 'google',
+      )?.identity_data;
       const formData = new FormData();
       formData.set(
         'full_name',
-        typedName ||
-          data.user.user_metadata?.full_name ||
-          data.user.user_metadata?.name ||
-          '',
+        typedName || google?.full_name || google?.name || '',
       );
+      const picture = google?.avatar_url || google?.picture;
+      if (picture) formData.set('avatar_url', picture);
       if (data.user.email) formData.set('email', data.user.email);
       await updateUserProfile(formData);
     }
