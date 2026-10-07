@@ -107,7 +107,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
         <DialogHeader>
           <DialogTitle>SMS fallback</DialogTitle>
           <DialogDescription>
-            Sends the SMS version of this message to guests whose WhatsApp failed for a guest-level reason
+            Sends the SMS version of this message to guests whose WhatsApp failed for a guest-level reason, or was never confirmed delivered
           </DialogDescription>
         </DialogHeader>
 

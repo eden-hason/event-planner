@@ -1,7 +1,7 @@
 'use server';
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { isSmsFallbackTrigger } from '../utils';
+import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from '../utils';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -31,8 +31,8 @@ export type GuestDeliveryOutcome =
  */
 export type GuestDeliveryStep = {
   channel: 'whatsapp' | 'sms';
-  /** An SMS Fallback sent after WhatsApp could not reach the guest */
-  fallback: boolean;
+  /** Why this message is an SMS Fallback; null when it is not one */
+  fallback: SmsFallbackReason | null;
   sentAt?: string;
   deliveredAt?: string;
   readAt?: string;
@@ -148,12 +148,13 @@ type AttemptRow = {
 };
 
 function toSteps(attempts: AttemptRow[] | null): GuestDeliveryStep[] {
+  const reason = smsFallbackReason(attempts ?? []);
   return (attempts ?? [])
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map((attempt) => ({
       channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
-      fallback: isSmsFallbackTrigger(attempt.triggered_by),
+      fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
       sentAt: attempt.sent_at ?? undefined,
       deliveredAt: attempt.delivered_at ?? undefined,
       readAt: attempt.read_at ?? undefined,

@@ -103,11 +103,11 @@ test('a journey across WhatsApp and an SMS Fallback reads in time order', () => 
       steps: [
         {
           channel: 'whatsapp',
-          fallback: false,
+          fallback: null,
           sentAt: '2026-09-20T15:00:00Z',
           failedAt: '2026-09-20T15:04:00Z',
         },
-        { channel: 'sms', fallback: true, sentAt: '2026-09-21T08:30:00Z' },
+        { channel: 'sms', fallback: 'failed', sentAt: '2026-09-21T08:30:00Z' },
       ],
     }),
   );
@@ -123,7 +123,7 @@ test('a journey across WhatsApp and an SMS Fallback reads in time order', () => 
       'confirmed',
     ],
   );
-  assert.equal(journey[2].fallback, true);
+  assert.equal(journey[2].fallback, 'failed');
 });
 
 test('a guest on the way ends in an open step, and no phone is one step', () => {
@@ -133,7 +133,7 @@ test('a guest on the way ends in an open step, and no phone is one step', () => 
       steps: [
         {
           channel: 'whatsapp',
-          fallback: false,
+          fallback: null,
           sentAt: '2026-09-20T15:00:00Z',
         },
       ],
@@ -158,7 +158,7 @@ test('SMS never claims delivered or seen', () => {
       steps: [
         {
           channel: 'sms',
-          fallback: false,
+          fallback: null,
           sentAt: '2026-09-20T15:00:00Z',
           deliveredAt: '2026-09-20T15:01:00Z',
         },
@@ -226,7 +226,7 @@ test('the latest activity is the newest timestamp on the row', () => {
         steps: [
           {
             channel: 'whatsapp',
-            fallback: false,
+            fallback: null,
             readAt: '2026-09-20T17:00:00Z',
           },
         ],

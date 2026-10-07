@@ -21,10 +21,13 @@ import {
   type ParameterResolutionContext,
   type SmsFallbackTrigger,
 } from '../utils';
+import { sendingConfig } from '@/lib/config/sending';
 
 /**
  * The SMS Fallback engine (CONTEXT.md, ADR 0012): a further SMS attempt for a
- * schedule's deliveries whose WhatsApp attempt failed for a guest-level reason.
+ * schedule's deliveries whose WhatsApp attempt failed for a guest-level reason,
+ * or was accepted but never confirmed delivered (a Stuck WhatsApp, ADR 0016
+ * amendment of 2026-10-07).
  *
  * Phase 1 is launched by an Operator from the Back Office. The planned
  * automatic trigger is expected to call this same engine, so nothing here
@@ -32,9 +35,12 @@ import {
  *
  * Eligibility, recomputed on every call so a half-finished batch can be picked
  * up again without remembering where it stopped:
- *   1. the delivery is Failed, and its failed attempt was on WhatsApp
- *   2. it has no SMS attempt yet
- *   3. the failure is guest-level (unknown codes are system-level)
+ *   1. the delivery is Failed, and its failed attempt was on WhatsApp, and the
+ *      failure is guest-level (unknown codes are system-level); or
+ *   2. the delivery is Sent, and its WhatsApp attempt was accepted inside the
+ *      Stuck window - long enough ago that a receipt should have come, recently
+ *      enough that an SMS is still worth having
+ *   3. either way, it has no SMS attempt yet
  * RSVP is deliberately not considered.
  */
 
@@ -79,11 +85,13 @@ type AttemptRow = {
   status: string;
   error_code: number | null;
   error_message: string | null;
+  sent_at: string | null;
   created_at: string;
 };
 
-export type FailedDeliveryRow = {
+export type FallbackDeliveryRow = {
   id: string;
+  status: 'failed' | 'sent';
   guest_id: string;
   confirmation_token: string | null;
   guests: { name: string; phone_number: string | null } | null;
@@ -170,22 +178,68 @@ async function resolveSmsTemplates(
   };
 }
 
-async function loadFailedDeliveries(
+async function loadFallbackDeliveries(
   supabase: SupabaseClient,
   scheduleId: string,
-): Promise<FailedDeliveryRow[]> {
+): Promise<FallbackDeliveryRow[]> {
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
-      'id, guest_id, confirmation_token, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, created_at)',
+      'id, status, guest_id, confirmation_token, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
     )
     .eq('schedule_id', scheduleId)
-    .eq('status', 'failed');
+    .in('status', ['failed', 'sent']);
   if (error) throw error;
-  return (data ?? []) as unknown as FailedDeliveryRow[];
+  return (data ?? []) as unknown as FallbackDeliveryRow[];
 }
 
-export function classifySmsFallbackCandidates(rows: FailedDeliveryRow[]) {
+/**
+ * When an accepted WhatsApp with no delivered receipt counts as stuck: older
+ * than `minHours`, younger than `maxHours`. The ceiling keeps a send from weeks
+ * ago - including ones from before receipts were recorded - from ever being
+ * picked up.
+ */
+export type StuckWindow = { now: Date; minHours: number; maxHours: number };
+
+const HOUR_MS = 3_600_000;
+
+export function stuckWindow(now = new Date()): StuckWindow {
+  const config = sendingConfig();
+  return {
+    now,
+    minHours: config.smsFallbackStuckMinHours,
+    maxHours: config.smsFallbackStuckMaxHours,
+  };
+}
+
+/**
+ * The window as the `sent_at` range it covers, both ends inclusive. The one
+ * statement of the rule: the classifier and the sweeper's query both use it.
+ */
+export function stuckSentAtRange(window: StuckWindow): { from: Date; to: Date } {
+  const now = window.now.getTime();
+  return {
+    from: new Date(now - window.maxHours * HOUR_MS),
+    to: new Date(now - window.minHours * HOUR_MS),
+  };
+}
+
+/** Hours since a stuck WhatsApp was accepted, or null when it is not stuck. */
+export function stuckForHours(
+  sentAt: string | null,
+  window: StuckWindow,
+): number | null {
+  if (!sentAt) return null;
+  const sent = Date.parse(sentAt);
+  const { from, to } = stuckSentAtRange(window);
+  if (!(sent >= from.getTime() && sent <= to.getTime())) return null;
+  return (window.now.getTime() - sent) / HOUR_MS;
+}
+
+export function classifySmsFallbackCandidates(
+  rows: FallbackDeliveryRow[],
+  window: StuckWindow,
+) {
   const eligible: SmsFallbackRecipient[] = [];
   const excluded: SmsFallbackPlan['excluded'] = [];
 
@@ -193,9 +247,11 @@ export function classifySmsFallbackCandidates(rows: FailedDeliveryRow[]) {
     const attempts = [...row.message_delivery_attempts].sort((a, b) =>
       b.created_at.localeCompare(a.created_at),
     );
-    const lastWhatsAppFailure = attempts.find(
-      (a) => a.channel === 'whatsapp' && a.status === 'failed',
-    );
+    const hasSms = attempts.some((a) => a.channel === 'sms');
+    const lastWhatsAppFailure =
+      row.status === 'failed'
+        ? attempts.find((a) => a.channel === 'whatsapp' && a.status === 'failed')
+        : undefined;
     const base = {
       deliveryId: row.id,
       guestId: row.guest_id,
@@ -205,10 +261,23 @@ export function classifySmsFallbackCandidates(rows: FailedDeliveryRow[]) {
       errorMessage: lastWhatsAppFailure?.error_message ?? null,
     };
 
-    if (attempts.some((a) => a.channel === 'sms')) {
+    let reason: string;
+    if (row.status === 'sent') {
+      // A Sent delivery is only a candidate while its WhatsApp is stuck. Every
+      // other Sent delivery - one an SMS already reached, one still inside the
+      // window, one too old to bother - is simply not a fallback case, so it is
+      // left out silently rather than listed.
+      if (hasSms) continue;
+      const accepted = attempts.find((a) => a.channel === 'whatsapp' && a.status === 'sent');
+      const hours = stuckForHours(accepted?.sent_at ?? null, window);
+      if (hours == null) continue;
+      reason = `WhatsApp accepted ${Math.floor(hours)}h ago but never confirmed delivered`;
+    } else if (hasSms) {
       excluded.push({ ...base, exclusion: 'already_sms', reason: 'Already tried by SMS' });
+      continue;
     } else if (!lastWhatsAppFailure) {
       excluded.push({ ...base, exclusion: 'not_whatsapp', reason: 'No failed WhatsApp attempt' });
+      continue;
     } else if (classifyWhatsAppFailure(lastWhatsAppFailure.error_code) === 'system') {
       excluded.push({
         ...base,
@@ -218,13 +287,15 @@ export function classifySmsFallbackCandidates(rows: FailedDeliveryRow[]) {
             ? 'Failure with no error code - resend on WhatsApp once the cause is fixed'
             : `Error ${lastWhatsAppFailure.error_code} is not a guest-level failure - resend on WhatsApp once the cause is fixed`,
       });
-    } else if (!validatePhoneNumber(base.guestPhone)) {
+      continue;
+    } else {
+      reason = describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'WhatsApp failed';
+    }
+
+    if (!validatePhoneNumber(base.guestPhone)) {
       excluded.push({ ...base, exclusion: 'no_phone', reason: 'No usable phone number' });
     } else {
-      eligible.push({
-        ...base,
-        reason: describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'WhatsApp failed',
-      });
+      eligible.push({ ...base, reason });
     }
   }
 
@@ -283,9 +354,9 @@ export async function buildSmsFallbackPlan(
 
   const [resolution, rows] = await Promise.all([
     resolveSmsTemplates(supabase, loaded),
-    loadFailedDeliveries(supabase, scheduleId),
+    loadFallbackDeliveries(supabase, scheduleId),
   ]);
-  const { eligible, excluded } = classifySmsFallbackCandidates(rows);
+  const { eligible, excluded } = classifySmsFallbackCandidates(rows, stuckWindow());
 
   let preview: string | null = null;
   if (resolution.ok && eligible.length > 0) {
@@ -339,9 +410,9 @@ export async function sendSmsFallback(
   const resolution = await resolveSmsTemplates(supabase, loaded);
   if (!resolution.ok) return { success: false, message: resolution.reason, ...empty };
 
-  const rows = await loadFailedDeliveries(supabase, scheduleId);
+  const rows = await loadFallbackDeliveries(supabase, scheduleId);
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));
-  const batch = classifySmsFallbackCandidates(rows).eligible.slice(0, Math.max(0, options.limit));
+  const batch = classifySmsFallbackCandidates(rows, stuckWindow()).eligible.slice(0, Math.max(0, options.limit));
   if (batch.length === 0) {
     return { success: false, message: 'No deliveries are eligible for SMS fallback', ...empty };
   }

@@ -24,6 +24,8 @@ export {
   describeGuestLevelFailure,
   type WhatsAppFailureSide,
   isSmsFallbackTrigger,
+  smsFallbackReason,
+  type SmsFallbackReason,
   buildCalendarEntry,
   toIcs,
   toGoogleCalendarUrl,

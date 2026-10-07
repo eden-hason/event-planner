@@ -1,5 +1,5 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { isSmsFallbackTrigger } from '@/features/schedules';
+import { smsFallbackReason } from '@/features/schedules';
 import type {
   ActivityAnswer,
   ActivityCall,
@@ -47,7 +47,9 @@ type DeliveryRow = {
   delivered_at: string | null;
   created_at: string;
   schedules: { schedule_types: { key: string } | null } | null;
-  message_delivery_attempts: { triggered_by: string | null }[] | null;
+  message_delivery_attempts:
+    | { channel: string; status: string; triggered_by: string | null }[]
+    | null;
 };
 
 type CallRow = {
@@ -84,7 +86,7 @@ export async function getGuestActivityInput(
     supabase
       .from('message_deliveries')
       .select(
-        'status, delivery_method, sent_at, delivered_at, created_at, schedules(schedule_types(key)), message_delivery_attempts(triggered_by)',
+        'status, delivery_method, sent_at, delivered_at, created_at, schedules(schedule_types(key)), message_delivery_attempts(channel, status, triggered_by)',
       )
       .eq('guest_id', guestId),
     supabase
@@ -133,9 +135,7 @@ export async function getGuestActivityInput(
             : row.delivery_method === 'whatsapp'
               ? 'whatsapp'
               : null,
-        viaFallback: (row.message_delivery_attempts ?? []).some((a) =>
-          isSmsFallbackTrigger(a.triggered_by),
-        ),
+        fallback: smsFallbackReason(row.message_delivery_attempts ?? []),
         at:
           row.delivered_at ??
           row.sent_at ??

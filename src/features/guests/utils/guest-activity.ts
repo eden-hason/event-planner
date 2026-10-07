@@ -4,6 +4,8 @@
  * without leaving the guest list.
  */
 
+import type { SmsFallbackReason } from '@/features/schedules';
+
 export type DeliveryStatus =
   | 'pending'
   | 'sent'
@@ -33,8 +35,8 @@ export type ActivityDelivery = {
   scheduleTypeKey: string;
   status: DeliveryStatus;
   channel: DeliveryChannel | null;
-  /** WhatsApp failed and the SMS Fallback is what went out. */
-  viaFallback: boolean;
+  /** Why an SMS Fallback went out for this Delivery, if one did. */
+  fallback: SmsFallbackReason | null;
   at: string | null;
 };
 

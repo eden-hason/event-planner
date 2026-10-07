@@ -1,10 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { sendSmsFallback } from './send-sms-fallback';
+import { sendSmsFallback, stuckSentAtRange, stuckWindow } from './send-sms-fallback';
 import { classifyWhatsAppFailure } from '../utils/whatsapp-failures';
 import { sendingConfig } from '@/lib/config/sending';
 
 /**
- * The automatic half of the SMS Fallback (ADR 0016).
+ * The automatic half of the SMS Fallback (ADR 0016), for failed deliveries and
+ * Stuck WhatsApps alike - the engine decides which deliveries qualify.
  *
  * ADR 0012 shipped the manual half and left the trigger for later, expecting it
  * to "evaluate a Schedule's failures together after a settle window" and call
@@ -151,15 +152,50 @@ export function lastFailureActivityAt(
   return latest;
 }
 
-/** Schedules that have at least one failed Delivery and might be ready. */
-async function candidateScheduleIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('message_deliveries')
-    .select('schedule_id')
-    .eq('status', 'failed')
-    .limit(2_000);
-  if (error) throw error;
-  return [...new Set((data ?? []).map((row: { schedule_id: string }) => row.schedule_id))];
+type StuckCandidateRow = {
+  message_deliveries: {
+    schedule_id: string;
+    message_delivery_attempts: { channel: string }[];
+  };
+};
+
+/**
+ * Schedules that might be ready: those with a Stuck WhatsApp (accepted inside
+ * the Stuck window, still Sent) and those with at least one failed Delivery.
+ *
+ * Stuck ones come first. The window bounds them to the last few days, while a
+ * failed Delivery nobody can fall back stays failed forever, so the order keeps
+ * old failures from crowding fresh work out of the per-sweep cap.
+ */
+async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promise<string[]> {
+  const { from, to } = stuckSentAtRange(stuckWindow(now));
+
+  const [stuck, failed] = await Promise.all([
+    supabase
+      .from('message_delivery_attempts')
+      .select('message_deliveries!inner(schedule_id, message_delivery_attempts(channel))')
+      .eq('channel', 'whatsapp')
+      .eq('status', 'sent')
+      .eq('message_deliveries.status', 'sent')
+      .gte('sent_at', from.toISOString())
+      .lte('sent_at', to.toISOString())
+      .limit(2_000),
+    supabase.from('message_deliveries').select('schedule_id').eq('status', 'failed').limit(2_000),
+  ]);
+  if (stuck.error) throw stuck.error;
+  if (failed.error) throw failed.error;
+
+  // SMS reports nothing past accepted, so a stuck delivery the Fallback already
+  // reached stays Sent and would match for the rest of the window. Leaving it
+  // out keeps handled schedules from taking the per-sweep slots.
+  const stuckIds = ((stuck.data ?? []) as unknown as StuckCandidateRow[])
+    .map((row) => row.message_deliveries)
+    .filter((delivery) => !delivery.message_delivery_attempts.some((a) => a.channel === 'sms'))
+    .map((delivery) => delivery.schedule_id);
+
+  return [
+    ...new Set([...stuckIds, ...(failed.data ?? []).map((row: { schedule_id: string }) => row.schedule_id)]),
+  ];
 }
 
 async function evaluateSchedule(
@@ -252,7 +288,7 @@ export async function sweepSmsFallback(
 
   let candidates: string[];
   try {
-    candidates = await candidateScheduleIds(supabase);
+    candidates = await candidateScheduleIds(supabase, now);
   } catch (error) {
     console.error('[sms-fallback-sweep] Could not find candidates:', error);
     return { considered: 0, sent: 0, results };

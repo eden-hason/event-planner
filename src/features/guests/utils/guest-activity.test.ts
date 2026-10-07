@@ -54,14 +54,14 @@ test('everything that happened to a Guest Record is merged newest first', () => 
         scheduleTypeKey: 'initial_invitation',
         status: 'read',
         channel: 'whatsapp',
-        viaFallback: false,
+        fallback: null,
         at: '2026-09-01T07:00:00Z',
       },
       {
         scheduleTypeKey: 'confirmation',
         status: 'sent',
         channel: 'sms',
-        viaFallback: true,
+        fallback: 'failed',
         at: '2026-09-10T07:00:00Z',
       },
     ],
@@ -83,7 +83,7 @@ test('everything that happened to a Guest Record is merged newest first', () => 
     ['call', 'answer', 'delivery', 'delivery'],
   );
   const fallback = items[2];
-  assert.equal(fallback.kind === 'delivery' && fallback.viaFallback, true);
+  assert.equal(fallback.kind === 'delivery' && fallback.fallback, 'failed');
   assert.equal(fallback.kind === 'delivery' && fallback.outcome, 'reached');
 });
 
@@ -205,14 +205,14 @@ test('a Delivery with no time yet sorts after everything that has one', () => {
         scheduleTypeKey: 'confirmation',
         status: 'pending',
         channel: 'whatsapp',
-        viaFallback: false,
+        fallback: null,
         at: null,
       },
       {
         scheduleTypeKey: 'initial_invitation',
         status: 'delivered',
         channel: 'whatsapp',
-        viaFallback: false,
+        fallback: null,
         at: '2026-09-01T07:00:00Z',
       },
     ],

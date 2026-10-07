@@ -229,6 +229,24 @@ export function isSmsFallbackTrigger(triggeredBy: string | null | undefined): bo
 }
 
 /**
+ * Why a Delivery's SMS Fallback went out: its WhatsApp `failed`, or it was
+ * accepted and never confirmed delivered (`unconfirmed`, a Stuck WhatsApp).
+ * Null when the Delivery has no fallback. The two read differently to the
+ * Owner - an unconfirmed WhatsApp may still have arrived, and its receipt can
+ * land after the SMS.
+ */
+export type SmsFallbackReason = 'failed' | 'unconfirmed';
+
+export function smsFallbackReason(
+  attempts: { channel: string; status: string; triggered_by: string | null }[],
+): SmsFallbackReason | null {
+  if (!attempts.some((a) => isSmsFallbackTrigger(a.triggered_by))) return null;
+  return attempts.some((a) => a.channel === 'whatsapp' && a.status === 'failed')
+    ? 'failed'
+    : 'unconfirmed';
+}
+
+/**
  * One message_delivery_attempts row. The parent message_deliveries row is
  * never written from a send result - its status is rolled up from its attempts
  * in the database (ADR 0011).

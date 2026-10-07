@@ -1230,6 +1230,7 @@
         "viaWhatsapp": "ב-WhatsApp",
         "viaSms": "ב-SMS",
         "fallback": "WhatsApp לא נמסר, נשלח SMS במקום",
+        "fallbackUnconfirmed": "וואטסאפ לא אישר מסירה, אז נשלח גם SMS",
         "call": "שיחה בסבב שיחות {round}",
         "callOutcome": {
           "no_answer": "לא ענו",
@@ -1819,6 +1820,7 @@
         "sentWhatsapp": "נשלח בוואטסאפ",
         "sentSms": "נשלח ב-SMS",
         "sentFallbackMeta": "כי וואטסאפ לא הגיע",
+        "sentFallbackUnconfirmedMeta": "כי וואטסאפ עדיין לא אישר מסירה",
         "smsMeta": "SMS לא מדווח על מסירה או קריאה",
         "delivered": "נמסר",
         "deliveredMeta": "הטלפון אישר קבלה",
