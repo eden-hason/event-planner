@@ -1394,6 +1394,11 @@
           "why": "{count} records on the list"
         },
         "urgent": "Urgent",
+        "save": {
+          "label": "Keep your event",
+          "why": "Create an account to access it from any device",
+          "cta": "Save"
+        },
         "package": {
           "label": "{count, plural, one {# record won't get messages} other {# records won't get messages}}",
           "why": "The list is bigger than the package - add records or remove guests"
