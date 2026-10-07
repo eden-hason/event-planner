@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { updateUserProfile } from '@/features/auth';
 import { settleRememberedVisitor } from '@/features/auth/services/visitor-session';
 import {
-  classifyUpgradeError,
+  isExistingAccountError,
   isVisitor,
   safeReturnPath,
   SAVE_NAME_COOKIE,
@@ -28,12 +28,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const isSave = searchParams.get('save') === '1';
-  // if "next" is in param, use it as the redirect URL
-  let next = searchParams.get('next') ?? '/';
-  if (!next.startsWith('/')) {
-    // if "next" is not a relative URL, use the default
-    next = '/';
-  }
+  const next = safeReturnPath(searchParams.get('next'), '/');
 
   const supabase = await createClient();
 
@@ -45,8 +40,7 @@ export async function GET(request: Request) {
     store.delete(SAVE_NAME_COOKIE);
 
     if (!code) {
-      const exists =
-        classifyUpgradeError(searchParams.get('error_code')) === 'existing-account';
+      const exists = isExistingAccountError(searchParams.get('error_code'));
       // Cancelled at Google or failed: back where they were, Event intact.
       return redirectTo(request, exists ? withParam(returnTo, 'save', 'exists') : returnTo);
     }

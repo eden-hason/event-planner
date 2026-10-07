@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { toE164 } from '@/lib/phone';
 import { requestOrigin } from './origin';
 import { rememberVisitor, settleRememberedVisitor } from '../services/visitor-session';
-import { isVisitor } from '../utils/visitor';
+import { getVisitorId } from '../queries/auth';
 import { sendNewUserAdminEmail } from '@/lib/email/send-new-user-admin-email';
 
 export async function saveAvatarUrl(avatarUrl: string) {
@@ -116,13 +116,9 @@ export async function logout() {
  * draft once the sign-in succeeds (ADR 0028), as at the save gate. Only the
  * save gate upgrades a Visitor; /login always signs in.
  */
-async function rememberVisitorBeforeSignIn(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user && isVisitor(user)) await rememberVisitor(user.id);
+async function rememberVisitorBeforeSignIn() {
+  const visitorId = await getVisitorId();
+  if (visitorId) await rememberVisitor(visitorId);
 }
 
 export async function sendOtp(
@@ -137,7 +133,7 @@ export async function sendOtp(
     return { success: false, message: 'Phone number is required' };
   }
 
-  await rememberVisitorBeforeSignIn(supabase);
+  await rememberVisitorBeforeSignIn();
   const { error } = await supabase.auth.signInWithOtp({ phone });
 
   if (error) {
@@ -189,7 +185,7 @@ export async function verifyOtp(
 export async function signInWithGoogle(next?: string) {
   const supabase = await createClient();
 
-  await rememberVisitorBeforeSignIn(supabase);
+  await rememberVisitorBeforeSignIn();
   const baseUrl = await requestOrigin();
 
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next || '/app')}`;

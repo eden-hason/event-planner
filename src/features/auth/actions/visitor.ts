@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { toE164 } from '@/lib/phone';
 import { requestOrigin } from './origin';
 import { updateUserProfile } from './auth';
+import { getVisitorId } from '../queries/auth';
 import {
   clearRememberedVisitor,
   hasRememberedVisitor,
@@ -14,8 +15,8 @@ import {
   settleRememberedVisitor,
 } from '../services/visitor-session';
 import {
-  classifyUpgradeError,
-  isVisitor,
+  isExistingAccountError,
+  ROUND_TRIP_COOKIE_OPTIONS,
   safeReturnPath,
   SAVE_NAME_COOKIE,
   SAVE_RETURN_COOKIE,
@@ -47,21 +48,9 @@ export type SaveState = {
   outcome?: 'saved' | 'signedIn';
 };
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-  // Long enough for a Google round trip.
-  maxAge: 60 * 30,
-};
-
 async function currentVisitor() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return { supabase, visitor: user && isVisitor(user) ? user : null };
+  const [supabase, visitorId] = await Promise.all([createClient(), getVisitorId()]);
+  return { supabase, visitor: visitorId ? { id: visitorId } : null };
 }
 
 const EXPIRED = 'Your session has expired, please start again';
@@ -89,7 +78,7 @@ export async function startPhoneSave(
       await clearRememberedVisitor();
       return { success: true, message: 'Verification code sent' };
     }
-    if (classifyUpgradeError(error.code) === 'existing-account') {
+    if (isExistingAccountError(error.code)) {
       return { success: false, message: '', existingAccount: true };
     }
     return { success: false, message: error.message || 'Failed to send verification code' };
@@ -161,8 +150,8 @@ export async function startGoogleSave(
 
   // Google's own name is the fallback; what they typed wins.
   const store = await cookies();
-  store.set(SAVE_NAME_COOKIE, fullName.trim().slice(0, 200), COOKIE_OPTIONS);
-  store.set(SAVE_RETURN_COOKIE, safeReturnPath(returnTo), COOKIE_OPTIONS);
+  store.set(SAVE_NAME_COOKIE, fullName.trim().slice(0, 200), ROUND_TRIP_COOKIE_OPTIONS);
+  store.set(SAVE_RETURN_COOKIE, safeReturnPath(returnTo), ROUND_TRIP_COOKIE_OPTIONS);
 
   const origin = await requestOrigin();
   const { data, error } = await supabase.auth.linkIdentity({

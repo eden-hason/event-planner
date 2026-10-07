@@ -32,19 +32,16 @@ export interface AppShellUser {
   email?: string;
   phone?: string;
   avatar?: string;
-  /** Planning without an account yet (ADR 0028). */
-  isVisitor?: boolean;
 }
 
 export function UserMenu({ user }: { user: AppShellUser }) {
   const locale = useLocale();
   const t = useTranslations('sidebar');
-  const { openSave } = useSaveEvent();
+  const { isVisitor, openSave } = useSaveEvent();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
   // A Visitor has no name until they save: the menu reads like anyone else's,
   // with a "?" for the face and "Visitor" for the name, and offers saving where
   // an Owner would log out - logging out a Visitor would lose the Event.
-  const isVisitor = !!user.isVisitor;
   const name = isVisitor ? t('visitor.name') : user.name;
   const initials = user.name
     .trim()

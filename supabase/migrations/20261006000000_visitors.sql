@@ -268,7 +268,12 @@ begin
         ) x)
       ) as last_active
     from auth.users u
+    -- last_active is a greatest() over these too, so a Visitor newer than 30
+    -- days can never qualify: skip their activity scan. The Sweeper runs this
+    -- every few minutes.
     where u.is_anonymous
+      and u.created_at < now() - interval '30 days'
+      and u.updated_at < now() - interval '30 days'
   ),
   abandoned as (
     select id from visitor_activity

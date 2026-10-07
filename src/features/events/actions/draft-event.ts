@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
-import { getCurrentUser, getVisitorId } from '@/features/auth/queries';
+import { getCurrentUser } from '@/features/auth/queries';
 import { sendVisitorEventAdminEmail } from '@/lib/email/send-visitor-event-admin-email';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -370,8 +370,7 @@ export async function publishDraftEvent(
     // A Visitor finishing an event is the earliest sign of a real lead - the
     // new-user email only comes if they later save. Sent after the response so
     // it never slows down or fails their way into the workspace.
-    const visitorId = await getVisitorId();
-    if (visitorId) {
+    if (currentUser.isVisitor) {
       const location = published.location as { name?: string } | null;
       const createdAt = new Date();
       after(async () => {
@@ -381,7 +380,7 @@ export async function publishDraftEvent(
           eventType: readEventTypeKey(draft.event_types) ?? null,
           eventDate: published.event_date,
           venue: location?.name ?? null,
-          visitorId,
+          visitorId: currentUser.id,
           createdAt,
         });
 

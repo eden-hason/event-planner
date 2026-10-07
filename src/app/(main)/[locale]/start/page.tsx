@@ -54,7 +54,7 @@ export default async function StartPage({
         phoneNumber: profile?.phoneNumber ?? '',
         email: profile?.email ?? '',
       }}
-      needsProfile={!!profile && !visitorId && !profile.initialSetupComplete}
+      needsProfile={hasAccount && !profile?.initialSetupComplete}
       hasAccount={hasAccount}
     />
     {/* An account with no event to land on lands here after a sign-in that

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyUpgradeError, isSaveRequired, isVisitor, safeReturnPath, SAVE_REQUIRED } from './visitor';
+import { isExistingAccountError, isVisitor, safeReturnPath } from './visitor';
 
 test('a Visitor is an anonymous user, nobody else is', () => {
   assert.equal(isVisitor({ is_anonymous: true }), true);
@@ -11,23 +11,17 @@ test('a Visitor is an anonymous user, nobody else is', () => {
 });
 
 test('an identity that already exists means an existing account', () => {
-  assert.equal(classifyUpgradeError('phone_exists'), 'existing-account');
-  assert.equal(classifyUpgradeError('email_exists'), 'existing-account');
-  assert.equal(classifyUpgradeError('identity_already_exists'), 'existing-account');
+  assert.equal(isExistingAccountError('phone_exists'), true);
+  assert.equal(isExistingAccountError('email_exists'), true);
+  assert.equal(isExistingAccountError('identity_already_exists'), true);
 });
 
 test('anything else is a failure, never a reason to discard the Event', () => {
-  assert.equal(classifyUpgradeError('otp_expired'), 'failed');
-  assert.equal(classifyUpgradeError('manual_linking_disabled'), 'failed');
-  assert.equal(classifyUpgradeError(''), 'failed');
-  assert.equal(classifyUpgradeError(null), 'failed');
-  assert.equal(classifyUpgradeError(undefined), 'failed');
-});
-
-test('a save-required refusal is recognised, other failures are not', () => {
-  assert.equal(isSaveRequired({ message: SAVE_REQUIRED }), true);
-  assert.equal(isSaveRequired({ message: 'Failed to send' }), false);
-  assert.equal(isSaveRequired(null), false);
+  assert.equal(isExistingAccountError('otp_expired'), false);
+  assert.equal(isExistingAccountError('manual_linking_disabled'), false);
+  assert.equal(isExistingAccountError(''), false);
+  assert.equal(isExistingAccountError(null), false);
+  assert.equal(isExistingAccountError(undefined), false);
 });
 
 test('the save dialog only ever returns to a path on this site', () => {

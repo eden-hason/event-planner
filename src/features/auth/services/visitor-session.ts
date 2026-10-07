@@ -1,6 +1,10 @@
 import { cookies } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/service';
-import { VISITOR_COOKIE, VISITOR_DROPPED_COOKIE } from '../utils/visitor';
+import {
+  ROUND_TRIP_COOKIE_OPTIONS,
+  VISITOR_COOKIE,
+  VISITOR_DROPPED_COOKIE,
+} from '../utils/visitor';
 
 /**
  * The cookie half of ADR 0028's "an Event never moves to an existing account".
@@ -22,15 +26,7 @@ import { VISITOR_COOKIE, VISITOR_DROPPED_COOKIE } from '../utils/visitor';
 /** Remembers the Visitor about to sign in to an existing account. */
 export async function rememberVisitor(visitorId: string): Promise<void> {
   const store = await cookies();
-  store.set(VISITOR_COOKIE, visitorId, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    // Long enough for an OTP or a Google round trip, short enough that a
-    // sign-in abandoned today does not drop a draft started next week.
-    maxAge: 60 * 30,
-  });
+  store.set(VISITOR_COOKIE, visitorId, ROUND_TRIP_COOKIE_OPTIONS);
 }
 
 /**

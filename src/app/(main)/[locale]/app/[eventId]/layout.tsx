@@ -77,7 +77,6 @@ export default async function EventLayout({
     email: effectiveUser?.email,
     phone: effectiveUser?.phone,
     avatar: effectiveUser?.avatar,
-    isVisitor: !!effectiveUser?.isVisitor,
   };
 
   return (

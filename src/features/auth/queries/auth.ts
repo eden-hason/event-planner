@@ -48,7 +48,21 @@ export const getUserProfile = cache(async function getUserProfile(): Promise<Pro
 export async function getEffectiveUser(): Promise<User | null> {
   try {
     const impersonation = await getImpersonation();
-    if (!impersonation) return getCurrentUser();
+    if (!impersonation) {
+      // The profile wins, as below. user_metadata alone is not enough: a
+      // Visitor who saves with Google is upgraded by linking the identity,
+      // which does not copy Google's name and picture into user_metadata - only
+      // a later Google sign-in does - and a phone save never has them at all.
+      // Both write the profile. getUserProfile is cached, so Home's own call
+      // reuses this read.
+      const [user, profile] = await Promise.all([getCurrentUser(), getUserProfile()]);
+      if (!user) return null;
+      return {
+        ...user,
+        displayName: profile?.fullName || user.displayName,
+        avatar: profile?.avatarUrl || user.avatar,
+      };
+    }
 
     const adminSupabase = createServiceClient();
     const { data } = await adminSupabase.auth.admin.getUserById(impersonation.userId);
@@ -98,33 +112,18 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
       return null;
     }
 
-    // The profile comes first, as in getEffectiveUser. user_metadata alone is
-    // not enough: a Visitor who saves with Google is upgraded by linking the
-    // identity, which does not copy Google's name and picture into
-    // user_metadata - only a later Google sign-in does - and a phone save never
-    // has them at all. Both write the profile.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, avatar_url')
-      .eq('id', user.id)
-      .maybeSingle();
-
     return {
       id: user.id,
       email: user.email || undefined,
       phone: user.phone || undefined,
       displayName:
-        profile?.full_name ||
         user.user_metadata?.full_name ||
         user.user_metadata?.name ||
         user.email ||
         user.phone ||
         '',
       avatar:
-        profile?.avatar_url ||
-        user.user_metadata?.avatar_url ||
-        user.user_metadata?.picture ||
-        '',
+        user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
       isVisitor: isVisitor(user),
     };
   } catch (error) {
@@ -135,19 +134,9 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
 
 /**
  * The Visitor's user id when the session is a Visitor's, otherwise null.
- *
- * Also the guard for anything a Visitor must save before doing - sending,
- * inviting, importing, paying (ADR 0028): `if (await getVisitorId())` refuse
- * with `SAVE_REQUIRED`.
+ * Shares getCurrentUser's cached auth call.
  */
 export const getVisitorId = cache(async function getVisitorId(): Promise<string | null> {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user && isVisitor(user) ? user.id : null;
-  } catch {
-    return null;
-  }
+  const user = await getCurrentUser();
+  return user?.isVisitor ? user.id : null;
 });

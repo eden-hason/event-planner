@@ -13,7 +13,8 @@ import {
   verifyPhoneSave,
   type SaveState,
 } from '../actions';
-import { GoogleGlyph, OtpCodeInput } from './otp-code-input';
+import { GoogleIcon } from '@/components/icons';
+import { OtpCodeInput } from './otp-code-input';
 
 type Step = 'details' | 'phoneExists' | 'googleExists' | 'otp';
 
@@ -43,7 +44,6 @@ export function SaveEventForm({
   const [step, setStep] = useState<Step>(startAt);
   const [fullName, setFullName] = useState('');
   const [localPhone, setLocalPhone] = useState('');
-  const [e164Phone, setE164Phone] = useState('');
   const [otp, setOtp] = useState('');
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [isLeaving, startLeaving] = useTransition();
@@ -53,7 +53,8 @@ export function SaveEventForm({
   const [verifyState, verifyAction, isVerifying] = useActionState(verifyPhoneSave, INITIAL);
 
   const named = !!fullName.trim();
-  const phoneReady = !!toE164(localPhone);
+  const e164Phone = toE164(localPhone) ?? '';
+  const phoneReady = !!e164Phone;
 
   useEffect(() => {
     if (sendState.success) setStep('otp');
@@ -75,11 +76,9 @@ export function SaveEventForm({
   }, [verifyState]);
 
   const sendCode = (discard: boolean) => {
-    const phone = toE164(localPhone);
-    if (!phone) return;
-    setE164Phone(phone);
+    if (!e164Phone) return;
     const formData = new FormData();
-    formData.set('phone', phone);
+    formData.set('phone', e164Phone);
     if (discard) formData.set('discard', '1');
     startLeaving(() => sendAction(formData));
   };
@@ -218,7 +217,7 @@ export function SaveEventForm({
         onClick={() => goGoogle(false)}
         disabled={!named || isLeaving}
       >
-        <GoogleGlyph />
+        <GoogleIcon />
         {t('saveGoogle')}
       </Button>
       {googleError && <p className="text-destructive text-sm">{googleError}</p>}

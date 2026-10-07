@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isVisitor as isVisitorClaims } from '@/features/auth/utils/visitor';
 
 export async function updateSession(request: NextRequest, effectivePath?: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -46,7 +47,7 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     userId = data?.claims.sub ?? null;
     // A Visitor (ADR 0028) is an anonymous user planning without an account.
     // They use the app like an Owner; only the back office is closed to them.
-    isVisitor = data?.claims.is_anonymous === true;
+    isVisitor = isVisitorClaims(data?.claims);
   } catch (error) {
     console.error('Error getting user from Supabase:', error);
   }

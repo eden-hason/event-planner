@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { classifyUpgradeError } from '../utils/visitor';
+import { isExistingAccountError } from '../utils/visitor';
 import { SaveEventForm } from './save-event-form';
 
 /**
@@ -97,7 +97,7 @@ export function SaveEventProvider({
     const hashError = hash.get('error_code') || hash.get('error');
     const exists =
       params.get('save') === 'exists' ||
-      classifyUpgradeError(hash.get('error_code')) === 'existing-account';
+      isExistingAccountError(hash.get('error_code'));
     if (!exists && !hashError) return;
 
     params.delete('save');

@@ -11,7 +11,8 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
-import { GoogleGlyph, OtpCodeInput } from './otp-code-input';
+import { GoogleIcon } from '@/components/icons';
+import { OtpCodeInput } from './otp-code-input';
 import {
   TakeoverBackButton,
   TakeoverButton,
@@ -162,7 +163,7 @@ export function AuthTakeover({
         onClick={handleGoogle}
         className="flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
       >
-        <GoogleGlyph />
+        <GoogleIcon />
         {t('signInWithGoogle')}
       </button>
       {googleError && <TakeoverError>{googleError}</TakeoverError>}

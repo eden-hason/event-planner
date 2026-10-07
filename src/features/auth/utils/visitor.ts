@@ -26,25 +26,32 @@ const EXISTING_ACCOUNT_CODES = new Set([
   'identity_already_exists',
 ]);
 
-export type UpgradeOutcome = 'existing-account' | 'failed';
-
-export function classifyUpgradeError(code: string | null | undefined): UpgradeOutcome {
-  return code && EXISTING_ACCOUNT_CODES.has(code) ? 'existing-account' : 'failed';
+export function isExistingAccountError(code: string | null | undefined): boolean {
+  return !!code && EXISTING_ACCOUNT_CODES.has(code);
 }
 
 /**
  * What a Server Action returns when a Visitor tries something that needs an
- * account - sending, inviting, importing, paying (ADR 0028). The client sees it
- * and opens the save dialog instead of showing an error.
+ * account - sending, inviting, importing, paying (ADR 0028). The client gates
+ * these up front with the save dialog, so this is the backstop.
  */
 export const SAVE_REQUIRED = 'Save your event first';
 
-export function isSaveRequired(result: { message?: string | null } | null | undefined): boolean {
-  return result?.message === SAVE_REQUIRED;
-}
-
 /** Holds the Visitor's user id across a sign-in to an existing account. */
 export const VISITOR_COOKIE = 'kululu_visitor';
+
+/**
+ * For the cookies that carry a save or sign-in across an OTP or a Google round
+ * trip: long enough for that, short enough that a sign-in abandoned today does
+ * not drop a draft started next week.
+ */
+export const ROUND_TRIP_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+  maxAge: 60 * 30,
+};
 
 /**
  * Set once a Visitor has been forgotten. Read and cleared by the browser,

@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
-import { createClient } from '@/lib/supabase/server';
+import { getVisitorId } from '@/features/auth/queries';
 import {
   buildEventTitleParts,
   readEventTypeKey,
@@ -103,9 +103,6 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
 }
 
 /**
- * Fetches confirmation page data by token using the service role client.
- */
-/**
  * Whether the Event belongs to a Visitor who has not saved it (ADR 0028), as
  * seen by whoever is opening the link. The RSVP and preview links of an
  * unsaved Event reach nobody: the workspace offers them for sharing only after
@@ -129,13 +126,12 @@ async function hiddenAsVisitorEvent(
     .maybeSingle();
   if (owner?.is_visitor !== true) return false;
 
-  const session = await createClient();
-  const {
-    data: { user },
-  } = await session.auth.getUser();
-  return user?.id !== event.user_id;
+  return (await getVisitorId()) !== event.user_id;
 }
 
+/**
+ * Fetches confirmation page data by token using the service role client.
+ */
 export async function getConfirmationDataByToken(
   token: string,
 ): Promise<ConfirmationPageData | null> {
