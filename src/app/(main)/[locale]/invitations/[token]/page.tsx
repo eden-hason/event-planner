@@ -71,7 +71,8 @@ export default async function InvitationPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  // A Visitor (ADR 0028) has a session but no account to accept with.
+  if (!user || user.is_anonymous) {
     // Redirect to login with return URL
     return redirect({ href: `/login?next=/invitations/${token}`, locale });
   }

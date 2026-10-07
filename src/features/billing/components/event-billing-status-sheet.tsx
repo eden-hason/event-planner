@@ -14,6 +14,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { useSaveGatedClick } from '@/features/auth';
 import { billingWhatsAppUrl } from '../utils';
 import type { BillingHeaderStatus } from '../types';
 
@@ -34,6 +35,7 @@ export function EventBillingStatusSheet({
   status,
 }: EventBillingStatusSheetProps) {
   const t = useTranslations('billing');
+  const gatePay = useSaveGatedClick('pay');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
 
@@ -108,6 +110,7 @@ export function EventBillingStatusSheet({
           >
             <a
               href={billingWhatsAppUrl(t('sheet.whatsAppMessage'))}
+              onClick={gatePay}
               target="_blank"
               rel="noopener noreferrer"
             >

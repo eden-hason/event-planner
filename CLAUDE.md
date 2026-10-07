@@ -153,6 +153,12 @@ migrations use `000000` plus a sequence for same-day ordering, lowercase SQL, an
 migrations should end with a guard that raises if the data did not land as intended - see
 `20260814000001_link_call_rounds_to_schedules.sql`.
 
+**Every new table with RLS needs a Visitor decision.** A Visitor (ADR 0028) is an anonymous
+user and passes every `authenticated` policy, so a new table is open to them by default.
+Either list it in `public.visitor_open_tables()` (planning data) or close it with a
+restrictive `is_visitor()` policy (anything that reaches people or costs money). `db reset`
+fails until one is done - the check is `supabase/seeds/visitor-guard.sql`.
+
 ## Patterns
 
 ### Data Flow

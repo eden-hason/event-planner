@@ -2,7 +2,7 @@
 
 Status: open
 Area: auth / abuse
-Related: `docs/adr/0028-a-visitor-draft-never-moves-to-an-existing-account.md`,
+Related: `docs/adr/0028-a-visitor-plans-freely-and-saves-to-reach-out.md`,
 `supabase/config.toml` (`[auth.captcha]`, `[auth.rate_limit]`)
 
 ## The problem
@@ -10,8 +10,10 @@ Related: `docs/adr/0028-a-visitor-draft-never-moves-to-an-existing-account.md`,
 ADR 0028 opens anonymous sign-in: the first answer on `/start` creates an auth user and an
 `events` row, with no login. The only protection is Supabase's per-IP anonymous limit
 (`anonymous_users`, 30 per hour by default). A script rotating IPs can fill `auth.users` and
-`events` with Visitor drafts. The 30-day purge clears them eventually, but they distort the
-back office and analytics in the meantime.
+`events` with Visitor Events, and since a Visitor plans freely, each one can hold an
+unbounded guest list. The 30-day purge clears them eventually, but they cost storage and
+distort analytics in the meantime. Nothing a Visitor writes reaches anyone outside Kululu,
+which is what keeps this a nuisance rather than an incident.
 
 A worse and older gap: phone OTP (`signInWithOtp`, and `updateUser({ phone })` at the save
 gate) sends a paid SMS to any number it is given. That makes it a target for SMS pumping,
@@ -38,7 +40,7 @@ This was true before ADR 0028; the save gate just puts the endpoint on the newco
 ## When to pick this up
 
 Any of: anonymous sign-ups out of proportion to published Events; an OTP SMS bill above the
-sign-up rate; Visitor drafts flooding the back office faster than the purge clears them.
+sign-up rate; Visitor Events piling up faster than the purge clears them.
 
 ## Done means
 

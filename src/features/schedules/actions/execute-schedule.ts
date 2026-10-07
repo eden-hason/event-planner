@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { isVisitor, SAVE_REQUIRED } from '@/features/auth';
 import { createClient } from '@/lib/supabase/server';
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { dispatchScheduleById } from '../services/dispatch-schedules';
@@ -43,6 +44,10 @@ export async function executeSchedule(
 
     if (authError || !user) {
       return { success: false, message: 'Unauthorized' };
+    }
+    // Sending reaches guests: a Visitor saves first (ADR 0028).
+    if (isVisitor(user)) {
+      return { success: false, message: SAVE_REQUIRED };
     }
 
     const { supabase } = await getEffectiveClient();

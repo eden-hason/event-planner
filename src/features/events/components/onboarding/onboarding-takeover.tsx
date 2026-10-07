@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import {
@@ -64,12 +64,20 @@ export function OnboardingTakeover({
   draft,
   profile,
   needsProfile,
+  hasAccount,
   exitHref,
 }: {
   /** An unfinished event to resume, if the couple has one. */
   draft: DraftEventResume | null;
   profile: { fullName: string; phoneNumber: string; email: string };
   needsProfile: boolean;
+  /**
+   * False for someone with no account - a Visitor, or someone about to become
+   * one on their first answer (ADR 0028). They go through the takeover and
+   * into their workspace exactly like an Owner; it only decides whether the
+   * first screen offers a way to sign in instead.
+   */
+  hasAccount: boolean;
   /**
    * Where "back" leads from the first screen. Set only when there is already a
    * workspace behind the takeover - a first-time couple has nowhere to go back
@@ -363,7 +371,23 @@ export function OnboardingTakeover({
   const question = (
     <>
       {screen === 'type' && (
-        <TypeScreen selected={answers.eventType} onPick={handlePickType} />
+        <>
+          <TypeScreen selected={answers.eventType} onPick={handlePickType} />
+          {/* The one door is /start, so a returning Owner on a new device
+              lands here too. Signing in from here drops anything started
+              without an account (ADR 0028). */}
+          {!hasAccount && (
+            <p className="mt-4 text-center text-[13.5px] text-[var(--kt-ink-muted)]">
+              {t('haveAccount')}{' '}
+              <Link
+                href="/login"
+                className="font-semibold text-[var(--kt-brand)] hover:text-[var(--kt-brand-deep)]"
+              >
+                {t('signIn')}
+              </Link>
+            </p>
+          )}
+        </>
       )}
       {screen === 'names' && answers.eventType && (
         <NamesScreen

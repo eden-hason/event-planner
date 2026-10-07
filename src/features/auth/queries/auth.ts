@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getImpersonation } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { User, ProfileData } from '../schemas';
+import { isVisitor } from '../utils/visitor';
 
 // Wrapped with React cache() so a single render resolves the auth call once,
 // however many server components ask for it - the same reason getImpersonation
@@ -76,6 +77,7 @@ export async function getEffectiveUser(): Promise<User | null> {
         authUser.user_metadata?.avatar_url ||
         authUser.user_metadata?.picture ||
         '',
+      isVisitor: isVisitor(authUser),
     };
   } catch (error) {
     console.error('Get effective user error:', error);
@@ -108,9 +110,29 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
         '',
       avatar:
         user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+      isVisitor: isVisitor(user),
     };
   } catch (error) {
     console.error('Get current user error:', error);
+    return null;
+  }
+});
+
+/**
+ * The Visitor's user id when the session is a Visitor's, otherwise null.
+ *
+ * Also the guard for anything a Visitor must save before doing - sending,
+ * inviting, importing, paying (ADR 0028): `if (await getVisitorId())` refuse
+ * with `SAVE_REQUIRED`.
+ */
+export const getVisitorId = cache(async function getVisitorId(): Promise<string | null> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user && isVisitor(user) ? user.id : null;
+  } catch {
     return null;
   }
 });

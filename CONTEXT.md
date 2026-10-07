@@ -24,10 +24,12 @@ other way out of the state, and no partial access along the way.
 
 ## Visitor
 
-Someone who has started a Draft Event without an account. A Visitor holds exactly one
-Draft Event and nothing else, and becomes its Owner by creating an account to save it -
-the only way a Visitor's Draft Event becomes an Event proper. A Visitor who signs in to an
-account that already exists, or who never saves, is forgotten along with their Draft Event.
+Someone planning an Event without an account. A Visitor has one Event, which they can plan
+freely, but nothing they do reaches anyone outside Kululu until they **save** it.
+
+**Saving** is a Visitor creating an account, which makes them the Event's Owner. A Visitor
+who signs in to an account that already exists, or who never saves, is forgotten along
+with their Event.
 _Avoid_: anonymous user, anonymous Owner, guest (a **Guest** is invited to an Event)
 
 ## Couple

@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { sendHomeTestMessage, type SendTestMessageState } from '../actions/test-message';
 import type { FeaturedActionKey } from '../types';
+import { useSaveEvent } from '@/features/auth';
 
 export type FeaturedActionView = {
   key: FeaturedActionKey;
@@ -133,6 +134,7 @@ export function FeaturedActionList({
   const [copied, setCopied] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [sending, startSending] = useTransition();
+  const { requireSaved } = useSaveEvent();
 
   const needsPhone = !maskedPhone;
   const listHref = `/app/${eventId}/guests`;
@@ -150,6 +152,8 @@ export function FeaturedActionList({
 
   const sharePreview = async () => {
     if (!previewUrl) return;
+    // A Visitor's invite link reaches nobody until they save (ADR 0028).
+    if (!requireSaved('share')) return;
     // The native sheet first on a phone - it is where WhatsApp lives. Only a
     // missing or failing share falls back to the clipboard; a dismissed sheet
     // is the Owner's choice and ends there.
@@ -172,6 +176,8 @@ export function FeaturedActionList({
 
   const onInlineClick = (key: FeaturedActionKey) => {
     if (key === 'test') {
+      // A test goes to a real phone: a Visitor saves first (ADR 0028).
+      if (!requireSaved('send')) return;
       setTest((prev) => (prev.step === 'closed' ? { step: 'confirm' } : { step: 'closed' }));
     } else if (key === 'health') {
       setHealthOpen((open) => !open);

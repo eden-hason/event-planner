@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Crown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCollaboration } from '@/components/feature-layout';
+import { useSaveEvent } from '@/features/auth';
 import { useEventBillingStatus } from './event-billing-status-provider';
 import { EventBillingStatusSheet } from './event-billing-status-sheet';
 import { BILLING_TONE_CLASS } from '../utils';
@@ -18,14 +19,17 @@ import { BILLING_TONE_CLASS } from '../utils';
  *
  * Owner-only - a seating-manager collaborator is not the payer and has no
  * billing decision to make - and silent until the provider supplies a status.
+ * Not shown to a Visitor either: there is no account to bill until they save,
+ * and the header's "Save your event" pill takes its place (ADR 0028).
  */
 export function EventBillingStatusPill() {
   const status = useEventBillingStatus();
   const { isOwner } = useCollaboration();
+  const { isVisitor } = useSaveEvent();
   const t = useTranslations('billing');
   const [open, setOpen] = React.useState(false);
 
-  if (!status || !isOwner) return null;
+  if (!status || !isOwner || isVisitor) return null;
 
   const showCrown = status.tone === 'premium';
   const showClock = status.tone === 'pending';

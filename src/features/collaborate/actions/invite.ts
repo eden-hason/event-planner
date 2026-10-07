@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/features/auth/queries';
+import { SAVE_REQUIRED } from '@/features/auth';
 import { revalidatePath } from 'next/cache';
 import { InviteFormSchema, type ActionState } from '../schemas';
 import { generateInviteToken, buildInvitationLink } from '../utils';
@@ -15,6 +16,10 @@ export async function createInvitation(
     const currentUser = await getCurrentUser();
     if (!currentUser) {
       return { success: false, message: 'You must be logged in.' };
+    }
+    // Inviting reaches a person: a Visitor saves first (ADR 0028).
+    if (currentUser.isVisitor) {
+      return { success: false, message: SAVE_REQUIRED };
     }
 
     const rawData = {

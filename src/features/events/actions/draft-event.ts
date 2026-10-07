@@ -98,17 +98,27 @@ export async function createDraftEvent(
   if (blocked) return { success: false, message: blocked };
 
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, message: 'You must be logged in to create events' };
-    }
-
     const parsed = EventTypeKeySchema.safeParse(eventType);
     if (!parsed.success) {
       return { success: false, message: 'Unknown event type' };
     }
 
     const supabase = await createClient();
+
+    // Someone with no session becomes a Visitor here, on their first answer,
+    // and nowhere else (ADR 0028). Not on page load: a bounce, a crawler or a
+    // returning Owner on their way to sign in leaves no user behind. Their
+    // profile row comes with the anonymous user (a database trigger), so the
+    // event insert below finds it.
+    let ownerId = (await getCurrentUser())?.id;
+    if (!ownerId) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error || !data.user) {
+        console.error('Error starting a Visitor session:', error);
+        return { success: false, message: 'Failed to create your event' };
+      }
+      ownerId = data.user.id;
+    }
     const eventTypeId = await resolveEventTypeId(supabase, parsed.data);
     if (!eventTypeId) return { success: false, message: 'Unknown event type' };
 
@@ -150,7 +160,7 @@ export async function createDraftEvent(
     const { data: newEvent, error } = await supabase
       .from('events')
       .insert({
-        user_id: currentUser.id,
+        user_id: ownerId,
         event_type_id: eventTypeId,
         status: 'draft',
         onboarding_step: 'type',
@@ -323,6 +333,9 @@ export async function setDraftLocation(
  *
  * This is the only way out of the draft state, and the point at which the event
  * gains a workspace and appears in the event switcher.
+ *
+ * A Visitor publishes like anyone else and goes straight into their workspace;
+ * saving is something they do later, from there (ADR 0028).
  */
 export async function publishDraftEvent(
   eventId: string,

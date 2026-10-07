@@ -2,7 +2,8 @@
 
 import { type ElementType, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Bell, ChevronRight, LogOut } from 'lucide-react';
+import { Bell, ChevronRight, CloudUpload, LogIn, LogOut } from 'lucide-react';
+import { useSaveEvent } from '@/features/auth';
 import { Link } from '@/i18n/navigation';
 import {
   DropdownMenu,
@@ -212,6 +213,7 @@ export function MobileMorePage({
   const tNotifications = useTranslations('sidebar.notifications');
   const tools = useMoreNavItems();
   const logout = useLogout();
+  const { isVisitor, openSave } = useSaveEvent();
   const { theme, setTheme, mounted } = useMountedTheme();
 
   useFeatureHeader({ title: t('title') });
@@ -361,12 +363,28 @@ export function MobileMorePage({
             </div>
           )}
 
-          <AccountRow
-            icon={LogOut}
-            label={tSidebar('logOut')}
-            destructive
-            onClick={() => void logout()}
-          />
+          {/* A Visitor has no account to log out of - doing so would lose
+              the Event - so they get saving instead, as in the sidebar's
+              user menu (ADR 0028). */}
+          {isVisitor ? (
+            <>
+              <AccountRow
+                icon={CloudUpload}
+                label={tSidebar('visitor.save')}
+                onClick={() => openSave()}
+              />
+              <Link href="/login" className={ROW_CLASS}>
+                <AccountRow bare icon={LogIn} label={tSidebar('visitor.signIn')} />
+              </Link>
+            </>
+          ) : (
+            <AccountRow
+              icon={LogOut}
+              label={tSidebar('logOut')}
+              destructive
+              onClick={() => void logout()}
+            />
+          )}
         </RowCard>
       </Group>
 

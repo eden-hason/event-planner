@@ -40,9 +40,13 @@ export async function updateSession(request: NextRequest, effectivePath?: string
   // they were with getUser.
 
   let userId: string | null = null;
+  let isVisitor = false;
   try {
     const { data } = await supabase.auth.getClaims();
     userId = data?.claims.sub ?? null;
+    // A Visitor (ADR 0028) is an anonymous user planning without an account.
+    // They use the app like an Owner; only the back office is closed to them.
+    isVisitor = data?.claims.is_anonymous === true;
   } catch (error) {
     console.error('Error getting user from Supabase:', error);
   }
@@ -52,8 +56,13 @@ export async function updateSession(request: NextRequest, effectivePath?: string
   const rawPath = effectivePath ?? request.nextUrl.pathname;
   const strippedPath = rawPath.replace(/^\/en/, '') || '/';
 
+  // The takeover is the front door: anyone may start an event without an
+  // account, and becomes a Visitor on their first answer.
+  const isTakeover = strippedPath === '/start' || strippedPath.startsWith('/start/');
+
   if (
     !userId &&
+    !isTakeover &&
     strippedPath !== '/' &&
     !strippedPath.startsWith('/login') &&
     !strippedPath.startsWith('/auth') &&
@@ -70,6 +79,14 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     !strippedPath.startsWith('/terms') &&
     !strippedPath.startsWith('/nav')
   ) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('next', rawPath);
+    return NextResponse.redirect(url);
+  }
+
+  // The back office is never a Visitor's: sign in first.
+  if (isVisitor && (strippedPath.startsWith('/admin') || strippedPath.startsWith('/partners'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', rawPath);

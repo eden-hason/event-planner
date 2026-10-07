@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { executeSchedule } from '../actions/execute-schedule';
 import { type ScheduleApp } from '../schemas';
 import posthog from 'posthog-js';
+import { useSaveEvent } from '@/features/auth';
 
 interface SendConfirmDialogProps {
   scheduleId: string;
@@ -50,7 +51,11 @@ export function SendConfirmDialog({
         ? t('audience.pendingGuests')
         : t('audience.allGuests');
 
+  const { requireSaved } = useSaveEvent();
+
   const handleSendNow = () => {
+    // Sending reaches guests: a Visitor saves first (ADR 0028).
+    if (!requireSaved('send')) return;
     startSendTransition(async () => {
       const promise = executeSchedule(scheduleId).then((result) => {
         if (!result.success) throw new Error(result.message);

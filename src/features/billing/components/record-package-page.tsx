@@ -17,6 +17,7 @@ import { billingWhatsAppUrl } from '../utils';
 import type { RecordPackagePageView } from '../types';
 import { PackageBar, PackageSwatch } from './package-bar';
 import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
+import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackagePageProps = {
   eventId: string;
@@ -64,6 +65,7 @@ export function RecordPackagePage({
 function NoPackage({ eventName }: { eventName?: string }) {
   const t = useTranslations('billing.packagePage');
   const tPlan = useTranslations('billing.sheet');
+  const gatePay = useSaveGatedClick('pay');
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 py-16 text-center">
@@ -79,6 +81,7 @@ function NoPackage({ eventName }: { eventName?: string }) {
           href={billingWhatsAppUrl(
             t('empty.whatsapp', { event: eventName ?? '' }),
           )}
+          onClick={gatePay}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -103,6 +106,7 @@ function PackageDetails({
   const tSheet = useTranslations('billing.packageSheet');
   const locale = useLocale();
   const whatsappHref = usePackageWhatsAppHref(view, eventName);
+  const gatePay = useSaveGatedClick('pay');
 
   const fmt = (n: number) => n.toLocaleString(locale);
   const dateFormat = new Intl.DateTimeFormat(locale, {
@@ -162,7 +166,7 @@ function PackageDetails({
   ];
 
   const addRecords = (
-    <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+    <a href={whatsappHref} onClick={gatePay} target="_blank" rel="noopener noreferrer">
       <IconBrandWhatsapp />
       {tSheet('addRecords')}
     </a>

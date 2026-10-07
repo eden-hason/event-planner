@@ -4,9 +4,9 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted. Amended by ADR 0028: a Draft Event may now be held by a **Visitor** with no
-account, and a Visitor's abandoned draft is purged after 30 days rather than kept as a
-record of interest. Owner drafts are unaffected.
+Accepted. Amended by ADR 0028: an Event, draft or published, may now belong to a
+**Visitor** with no account, and a Visitor who goes 30 days without activity is purged
+with their Event rather than kept as a record of interest. Owner drafts are unaffected.
 
 ## Context
 

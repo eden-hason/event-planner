@@ -1,1 +1,1 @@
-export { getCurrentUser, getUserProfile, getEffectiveUser } from './auth';
+export { getCurrentUser, getUserProfile, getEffectiveUser, getVisitorId } from './auth';

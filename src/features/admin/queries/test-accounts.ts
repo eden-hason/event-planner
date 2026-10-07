@@ -32,7 +32,10 @@ export const areTestAccountsVisible = cache(async function areTestAccountsVisibl
 });
 
 export type TestScope = {
-  /** profiles.id of every flagged account. Also what events.user_id holds. */
+  /**
+   * profiles.id of every flagged account, and of every Visitor. Also what
+   * events.user_id holds.
+   */
   userIds: string[];
   /** Every event those accounts own, draft and published alike. */
   eventIds: string[];
@@ -48,21 +51,25 @@ export type TestScope = {
  * reads below an event (guests, schedules, call rounds, deliveries) is already
  * scoped by event id, so those ids are all it takes to filter the rest.
  *
- * With the toggle on it returns an empty scope rather than each caller learning
- * to skip its filter: excludeIds and the `includes` guards on the detail reads
- * are all no-ops on an empty list, so one check here switches the whole Back
- * Office without touching a single query.
+ * With the toggle on it leaves test accounts out of the scope rather than each
+ * caller learning to skip its filter: excludeIds and the `includes` guards on
+ * the detail reads take whatever list this returns, so one check here switches
+ * the whole Back Office without touching a single query.
  */
 export const getTestScope = cache(async function getTestScope(): Promise<TestScope> {
   await assertAdmin();
-  if (await areTestAccountsVisible()) return { userIds: [], eventIds: [] };
+  const showTestAccounts = await areTestAccountsVisible();
 
   const supabase = createServiceClient();
 
+  // Visitors (ADR 0028) ride on the same exclusion, and the toggle never shows
+  // them: nobody can be contacted about an Event that was never saved, and the
+  // purge deletes it within a month. Their number stays small for the same
+  // reason, which is what keeps the id lists below a sensible length.
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
     .select('id')
-    .eq('is_test_account', true);
+    .or(showTestAccounts ? 'is_visitor.eq.true' : 'is_test_account.eq.true,is_visitor.eq.true');
 
   if (profilesError) throw new Error(profilesError.message);
 

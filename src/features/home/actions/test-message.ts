@@ -6,13 +6,21 @@ import { getImpersonation } from '@/lib/supabase/admin';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { sendTestMessage } from '@/features/schedules/services/send-test-message';
 import { toE164 } from '@/lib/phone';
+import { isVisitor } from '@/features/auth';
 import { getTestMessageSchedule } from '../queries';
 
 export type SendTestMessageState =
   | { success: true; phone: string }
   | {
       success: false;
-      reason: 'no-phone' | 'invalid-phone' | 'not-allowed' | 'no-schedule' | 'cap-reached' | 'send-failed';
+      reason:
+        | 'no-phone'
+        | 'invalid-phone'
+        | 'not-allowed'
+        | 'save-required'
+        | 'no-schedule'
+        | 'cap-reached'
+        | 'send-failed';
     };
 
 /**
@@ -30,6 +38,8 @@ export async function sendHomeTestMessage(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { success: false, reason: 'not-allowed' };
+  // A test goes to a real phone: a Visitor saves first (ADR 0028).
+  if (isVisitor(user)) return { success: false, reason: 'save-required' };
 
   // An Operator impersonating an Owner can see Home, but a test goes to the
   // Owner's personal phone and spends the event's allowance. The role check is
