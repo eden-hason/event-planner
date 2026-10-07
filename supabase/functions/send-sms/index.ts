@@ -3,10 +3,17 @@ import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0';
 const ACTIVE_TRAIL_URL =
   'https://webapi.mymarketing.co.il/api/smscampaign/OperationalMessage';
 
-/** Payload delivered by the Supabase `send_sms` auth hook. */
+/**
+ * Payload delivered by the Supabase `send_sms` auth hook.
+ *
+ * On a phone change (`sms_type: 'phone_change'`) the code goes to the number
+ * being verified, not the current one. A Visitor saving with their phone
+ * (ADR 0028) is exactly that: an anonymous user with no `phone` at all, and
+ * the new number in `new_phone` (`phone_change` in the database row).
+ */
 interface SendSmsHookPayload {
-  user: { phone: string };
-  sms: { otp: string };
+  user: { phone?: string; new_phone?: string; phone_change?: string };
+  sms: { otp: string; sms_type?: string };
 }
 
 /** Auth hooks expect failures as `{ error: { http_code, message } }`. */
@@ -47,10 +54,21 @@ Deno.serve(async (req) => {
     return hookError(401, 'Invalid webhook signature');
   }
 
-  const phone = payload.user?.phone;
+  const smsType = payload.sms?.sms_type;
+  const phone =
+    smsType === 'phone_change'
+      ? payload.user?.new_phone || payload.user?.phone_change
+      : payload.user?.phone;
   const otp = payload.sms?.otp;
 
   if (!phone || !otp) {
+    // Auth reports any 400 from a hook as "Invalid payload sent to hook", so
+    // say here which part was missing. Field names only, never their values.
+    console.error('send_sms hook payload missing phone or otp:', {
+      smsType,
+      userFields: Object.keys(payload.user ?? {}),
+      hasOtp: !!otp,
+    });
     return hookError(400, 'Missing phone or otp in hook payload');
   }
 
