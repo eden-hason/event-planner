@@ -15,6 +15,7 @@ interface FeatureLayoutContextType {
   action: ReactNode | null;
   back: FeatureHeaderBack | null;
   sticky: boolean;
+  transparent: boolean;
   setHeader: (config: FeatureHeaderConfig) => void;
   clearHeader: () => void;
 }
@@ -38,6 +39,11 @@ interface FeatureHeaderConfig {
    * published as `--page-header-h`.
    */
   sticky?: boolean;
+  /**
+   * Below `md`, drop the white band: the title sits straight on the page, and
+   * a compact blurred bar takes over once it scrolls out of view.
+   */
+  transparent?: boolean;
 }
 
 const FeatureLayoutContext = createContext<FeatureLayoutContextType | null>(
@@ -50,6 +56,7 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
   const [action, setAction] = useState<ReactNode | null>(null);
   const [back, setBack] = useState<FeatureHeaderBack | null>(null);
   const [sticky, setSticky] = useState(false);
+  const [transparent, setTransparent] = useState(false);
 
   const setHeader = useCallback((config: FeatureHeaderConfig) => {
     setTitle(config.title);
@@ -57,6 +64,7 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
     setAction(config.action ?? null);
     setBack(config.back ?? null);
     setSticky(config.sticky ?? false);
+    setTransparent(config.transparent ?? false);
   }, []);
 
   const clearHeader = useCallback(() => {
@@ -65,11 +73,21 @@ export function FeatureLayoutProvider({ children }: { children: ReactNode }) {
     setAction(null);
     setBack(null);
     setSticky(false);
+    setTransparent(false);
   }, []);
 
   return (
     <FeatureLayoutContext.Provider
-      value={{ title, subtitle, action, back, sticky, setHeader, clearHeader }}
+      value={{
+        title,
+        subtitle,
+        action,
+        back,
+        sticky,
+        transparent,
+        setHeader,
+        clearHeader,
+      }}
     >
       {children}
     </FeatureLayoutContext.Provider>

@@ -9,7 +9,7 @@ import { NotificationsMenu } from '@/components/layout/notifications-menu';
 import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { isSeatingRoute, isGuestImportRoute, isHomeRoute } from './app-shell';
@@ -30,6 +30,12 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
  * this row is the only place left to reach them (the user menu lives in the
  * sidebar footer instead).
  *
+ * A page can ask for a `transparent` header instead (see the feature layout
+ * context): below `md` the row loses its white band and the title sits on the
+ * page itself, larger, and once it scrolls away a compact bar - one line on a
+ * blurred wash of the page - pins to the top so the title stays in view
+ * without clashing with the cards passing under it.
+ *
  * The Seating Plan keeps the flat, full-bleed treatment at every size - a
  * work surface, not a page, so a card frame would eat into the canvas at any
  * width - but still gets the chrome row (stripped of its border), which is
@@ -46,10 +52,13 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   // stays from `md` up, where Home is the desktop layout and the Hero is one
   // card in a grid rather than the top of the page.
   const hideChromeRowOnMobile = isHomeRoute(pathname);
-  const { title, subtitle, action, back, sticky } = useFeatureLayoutContext();
+  const { title, subtitle, action, back, sticky, transparent } =
+    useFeatureLayoutContext();
   const headerRef = useRef<HTMLDivElement>(null);
   const pinned = sticky && !seating;
   usePublishedHeight(headerRef, '--page-header-h', pinned);
+  const bare = transparent && !seating;
+  const scrolledPast = useScrolledPast(headerRef, bare);
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -133,15 +142,20 @@ export function PageCard({ children }: { children: React.ReactNode }) {
                 // Card's own `gap-4` closes the row out, so no bottom padding.
                 'md:bg-transparent md:px-6 md:pt-3 md:pb-0',
               )
-            : cn(
-                'px-4 pb-3 md:px-6 md:pb-0',
-                // Below `md` the row needs its own surface to read as a header
-                // rather than as the first line of the content. `bg-card`, not
-                // `bg-white`, so it follows the theme into dark mode.
-                // The top padding lives here rather than on the Card so the
-                // band covers it (see the Card's `pt-0` below `md`).
-                'bg-card pt-4 md:bg-transparent md:pt-0',
-              ),
+            : bare
+              ? // No band below `md`: more air above the title, and the
+                // Card's `gap-4` is nearly all that separates it from the
+                // content.
+                'px-4 pt-5 pb-0.5 md:px-6 md:pt-0 md:pb-0'
+              : cn(
+                  'px-4 pb-3 md:px-6 md:pb-0',
+                  // Below `md` the row needs its own surface to read as a header
+                  // rather than as the first line of the content. `bg-card`, not
+                  // `bg-white`, so it follows the theme into dark mode.
+                  // The top padding lives here rather than on the Card so the
+                  // band covers it (see the Card's `pt-0` below `md`).
+                  'bg-card pt-4 md:bg-transparent md:pt-0',
+                ),
           // A page that asked for it keeps this row in view (see `sticky` in
           // the feature layout context), and its own sticky controls stack
           // under it. The Card's top padding moves in here, so the row's
@@ -183,10 +197,30 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             </button>
           )}
           {title && (
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold">{title}</h1>
+            <div
+              className={cn(
+                'min-w-0',
+                bare && 'flex flex-col gap-0.5 md:block',
+              )}
+            >
+              <h1
+                className={cn(
+                  'truncate text-xl font-semibold',
+                  // Without a band the title carries the header on its own,
+                  // so below `md` it is bigger and heavier.
+                  bare &&
+                    'text-2xl leading-[1.15] font-extrabold md:text-xl md:leading-7 md:font-semibold',
+                )}
+              >
+                {title}
+              </h1>
               {subtitle && (
-                <p className="text-muted-foreground truncate text-xs">
+                <p
+                  className={cn(
+                    'text-muted-foreground truncate text-xs',
+                    bare && 'text-[13px] md:text-xs',
+                  )}
+                >
                   {subtitle}
                 </p>
               )}
@@ -216,6 +250,27 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
+      {bare && (
+        <div
+          aria-hidden={!scrolledPast}
+          inert={!scrolledPast}
+          className={cn(
+            'bg-app-shell/80 border-border/60 fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-2.5 border-b px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 backdrop-blur-[14px] transition-opacity duration-200 md:hidden',
+            scrolledPast ? 'opacity-100' : 'pointer-events-none opacity-0',
+          )}
+        >
+          {/* The `h1` above still names the page; this is its echo. */}
+          <span
+            aria-hidden
+            className="min-w-0 truncate text-base font-extrabold"
+          >
+            {title}
+          </span>
+          {action && (
+            <div className="flex shrink-0 items-center gap-2">{action}</div>
+          )}
+        </div>
+      )}
       <CardContent
         className={cn(
           'space-y-6',
@@ -226,4 +281,30 @@ export function PageCard({ children }: { children: React.ReactNode }) {
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Whether the element has scrolled up out of the viewport - below the top
+ * edge does not count. Off when `enabled` is false.
+ */
+function useScrolledPast(
+  ref: React.RefObject<HTMLElement | null>,
+  enabled: boolean,
+) {
+  const [past, setPast] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !enabled) {
+      setPast(false);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      setPast(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, enabled]);
+
+  return past;
 }
