@@ -9,7 +9,7 @@ import { NotificationsMenu } from '@/components/layout/notifications-menu';
 import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { isSeatingRoute, isGuestImportRoute, isHomeRoute } from './app-shell';
@@ -31,9 +31,10 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
  * sidebar footer instead).
  *
  * Below `md` the row has no surface of its own: the title sits straight on
- * the page, larger, and once it scrolls away a compact bar - one line on a
- * blurred wash of the page - pins to the top so the title stays in view
- * without clashing with the cards passing under it.
+ * the page, larger. As the page scrolls the row collapses into a compact bar
+ * pinned to the top - the title shrinks into one line and a blurred wash of
+ * the page fades in behind it - so the title stays in view without clashing
+ * with the cards passing under it. See `useCollapsingHeader`.
  *
  * The Seating Plan keeps the flat, full-bleed treatment at every size - a
  * work surface, not a page, so a card frame would eat into the canvas at any
@@ -55,10 +56,10 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   const headerRef = useRef<HTMLDivElement>(null);
   const pinned = sticky && !seating;
   usePublishedHeight(headerRef, '--page-header-h', pinned);
-  // The Seating Plan never scrolls the page, and Home has no row to scroll
-  // away below `md`, so neither needs the compact bar.
-  const compactBar = !seating && !hideChromeRowOnMobile;
-  const scrolledPast = useScrolledPast(headerRef, compactBar);
+  // The Seating Plan never scrolls the page, and Home has no row below `md`,
+  // so neither collapses.
+  const collapsing = !seating && !hideChromeRowOnMobile;
+  useCollapsingHeader(headerRef, collapsing);
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -148,8 +149,22 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           // surface covers it and nothing shows through above the title.
           pinned &&
             'md:bg-app-shell md:sticky md:top-0 md:z-30 md:pt-3',
+          // Below `md` the row pins with only its last `COLLAPSED_HEIGHT`
+          // pixels in view; everything in it slides down into that strip.
+          collapsing &&
+            'isolate max-md:sticky max-md:top-[var(--collapse-top,0px)] max-md:z-30',
         )}
       >
+        {collapsing && (
+          // The compact bar's surface. It covers whatever is left of the row
+          // in view - the whole row at rest, the strip once pinned - and fades
+          // in as it shrinks. Only its opacity moves, never the blur radius,
+          // which is costly to animate.
+          <div
+            aria-hidden
+            className="bg-app-shell/80 border-border/60 pointer-events-none absolute inset-x-0 top-[calc(var(--collapse,0)*var(--collapse-dist,0px))] bottom-0 -z-10 border-b [opacity:var(--collapse,0)] backdrop-blur-[14px] md:hidden"
+          />
+        )}
         <div className="flex min-w-0 items-center gap-3">
           {/*
             Toggles the sidebar - `md` and up only. Below `md` navigation is the
@@ -163,6 +178,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             <Link
               href={buildNavUrl('/app/more', eventId)}
               aria-label={tNav('back')}
+              data-collapse=""
               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground -ms-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors md:hidden"
             >
               <ChevronLeft className="size-5 rtl:rotate-180" />
@@ -173,6 +189,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={back.onClick}
               aria-label={back.label}
+              data-collapse=""
               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground -ms-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors"
             >
               {back.icon === 'close' ? (
@@ -183,23 +200,28 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             </button>
           )}
           {title && (
-            <div className="flex min-w-0 flex-col gap-0.5 md:block">
+            <div
+              data-collapse="title"
+              className="flex min-w-0 flex-col gap-0.5 md:block"
+            >
               {/*
                 With no band behind it the title carries the header on its
-                own, so below `md` it is bigger and heavier.
+                own, so below `md` it is bigger and heavier - and shrinks back
+                to 16px as the row collapses.
               */}
-              <h1 className="truncate text-2xl leading-[1.15] font-extrabold md:text-xl md:leading-7 md:font-semibold">
+              <h1 className="truncate text-2xl leading-[1.15] font-extrabold ltr:origin-left rtl:origin-right [scale:calc(1_-_var(--collapse,0)/3)] md:text-xl md:leading-7 md:font-semibold">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-muted-foreground truncate text-[13px] md:text-xs">
+                // Gone by the time the row is halfway collapsed.
+                <p className="text-muted-foreground truncate text-[13px] [opacity:calc(1_-_var(--collapse,0)*2)] md:text-xs">
                   {subtitle}
                 </p>
               )}
             </div>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div data-collapse="" className="flex shrink-0 items-center gap-2">
           {action}
           {/*
             The account-status pill (see `@/features/billing`), the theme menu,
@@ -222,52 +244,6 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      {compactBar && (
-        <div
-          aria-hidden={!scrolledPast}
-          inert={!scrolledPast}
-          className={cn(
-            'bg-app-shell/80 border-border/60 fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-2.5 border-b px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 backdrop-blur-[14px] transition-opacity duration-200 md:hidden',
-            scrolledPast ? 'opacity-100' : 'pointer-events-none opacity-0',
-          )}
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            {isMoreSubpage && (
-              <Link
-                href={buildNavUrl('/app/more', eventId)}
-                aria-label={tNav('back')}
-                className="text-muted-foreground -ms-1 flex size-7 shrink-0 items-center justify-center rounded-md"
-              >
-                <ChevronLeft className="size-5 rtl:rotate-180" />
-              </Link>
-            )}
-            {back && (
-              <button
-                type="button"
-                onClick={back.onClick}
-                aria-label={back.label}
-                className="text-muted-foreground -ms-1 flex size-7 shrink-0 items-center justify-center rounded-md"
-              >
-                {back.icon === 'close' ? (
-                  <X className="size-5" />
-                ) : (
-                  <ChevronLeft className="size-5 rtl:rotate-180" />
-                )}
-              </button>
-            )}
-            {/* The `h1` above still names the page; this is its echo. */}
-            <span
-              aria-hidden
-              className="min-w-0 truncate text-base font-extrabold"
-            >
-              {title}
-            </span>
-          </div>
-          {action && (
-            <div className="flex shrink-0 items-center gap-2">{action}</div>
-          )}
-        </div>
-      )}
       <CardContent
         className={cn(
           'space-y-6',
@@ -280,28 +256,106 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The height of the collapsed row: one 16px line with 12px above and below. */
+const COLLAPSED_HEIGHT = 48;
+/** Scroll that runs a collapse with almost no height to lose, so it still eases. */
+const MIN_COLLAPSE_SCROLL = 32;
+
 /**
- * Whether the element has scrolled up out of the viewport - below the top
- * edge does not count. Off when `enabled` is false.
+ * Collapses the chrome row into a compact bar as the page scrolls, below `md`.
+ *
+ * The row is sticky with a negative `top`, so it scrolls until only its last
+ * `COLLAPSED_HEIGHT` pixels are in view and pins there - nothing in the flow
+ * changes height, so the content below never jumps. Scroll progress from 0
+ * to 1 goes into `--collapse`, and the CSS does the rest: each
+ * `[data-collapse]` element slides by `--dy` into the strip, the title
+ * scales down, the subtitle fades and the bar's surface fades in. It tracks
+ * the scroll itself rather than playing a timed animation, so it follows the
+ * finger both ways and stops wherever the scroll stops.
  */
-function useScrolledPast(
+function useCollapsingHeader(
   ref: React.RefObject<HTMLElement | null>,
   enabled: boolean,
 ) {
-  const [past, setPast] = useState(false);
+  useLayoutEffect(() => {
+    const row = ref.current;
+    if (!row || !enabled) return;
+    const mobile = window.matchMedia('(max-width: 767px)');
+    let distance = 0;
+    let frame = 0;
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !enabled) {
-      setPast(false);
-      return;
-    }
-    const observer = new IntersectionObserver(([entry]) => {
-      setPast(!entry.isIntersecting && entry.boundingClientRect.top < 0);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
+    const movers = () =>
+      row.querySelectorAll<HTMLElement>('[data-collapse]');
+
+    const clear = () => {
+      for (const name of ['--collapse', '--collapse-top', '--collapse-dist']) {
+        row.style.removeProperty(name);
+      }
+      for (const el of movers()) {
+        el.style.removeProperty('translate');
+      }
+    };
+
+    const update = () => {
+      frame = 0;
+      const progress = Math.min(
+        1,
+        Math.max(0, window.scrollY / Math.max(distance, MIN_COLLAPSE_SCROLL)),
+      );
+      row.style.setProperty('--collapse', String(progress));
+    };
+
+    // Where everything has to end up depends on the row's height and on
+    // what is in it, so it is measured again whenever either changes. It
+    // reads the resting layout - collapse and shifts reset, all within one
+    // frame, so nothing flickers - since a shifted element's own position
+    // would be off by however far it has already moved.
+    const measure = () => {
+      clear();
+      if (!mobile.matches) return;
+      const rowTop = row.getBoundingClientRect().top;
+      const height = row.offsetHeight;
+      distance = Math.max(0, height - COLLAPSED_HEIGHT);
+      row.style.setProperty('--collapse-top', `${-distance}px`);
+      row.style.setProperty('--collapse-dist', `${distance}px`);
+      const center = height - COLLAPSED_HEIGHT / 2;
+      const shifts = Array.from(movers(), (el) => {
+        // The title block lines up on its `h1`, not on its own middle: the
+        // subtitle under it is fading out.
+        const anchor =
+          el.dataset.collapse === 'title'
+            ? (el.querySelector('h1') ?? el)
+            : el;
+        const box = anchor.getBoundingClientRect();
+        return [el, center - (box.top - rowTop + box.height / 2)] as const;
+      });
+      for (const [el, dy] of shifts) {
+        el.style.setProperty(
+          'translate',
+          `0 calc(var(--collapse, 0) * ${dy}px)`,
+        );
+      }
+      update();
+    };
+
+    const onScroll = () => {
+      if (mobile.matches && !frame) frame = requestAnimationFrame(update);
+    };
+
+    measure();
+    const resize = new ResizeObserver(measure);
+    resize.observe(row);
+    const mutation = new MutationObserver(measure);
+    mutation.observe(row, { childList: true, subtree: true });
+    mobile.addEventListener('change', measure);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      mutation.disconnect();
+      mobile.removeEventListener('change', measure);
+      window.removeEventListener('scroll', onScroll);
+      clear();
+    };
   }, [ref, enabled]);
-
-  return past;
 }
