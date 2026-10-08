@@ -4,7 +4,10 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { OverviewStats, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
-import { formatScheduleDateTime } from '@/lib/date-time';
+import { eventDaysFromToday, formatScheduleDateTime } from '@/lib/date-time';
+import { ASK_TYPE_KEYS } from '@/features/schedules/utils/ask-plan';
+import { planEntryFromRow } from '@/features/schedules/utils/timeline';
+import { isNoAskPlanned, NO_ASK_PLANNED_DAYS } from '../utils/no-ask-planned';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -49,7 +52,8 @@ function unwrapCount(result: { count: number | null; error: { message: string } 
 const SEVERITY: Record<Signal['kind'], number> = {
   overdue_schedule: 0,
   failed_delivery: 1,
-  stale_call_round: 2,
+  no_ask_planned: 2,
+  stale_call_round: 3,
 };
 
 export async function getOverviewStats(): Promise<OverviewStats> {
@@ -147,7 +151,12 @@ export async function getSignals(): Promise<Signal[]> {
   const test = await getTestScope();
   const testEventIds = new Set(test.eventIds);
 
-  const [overdue, failed, stale] = await Promise.all([
+  // The No Ask Planned window, as UTC calendar days like event_date itself.
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const askWindowEndUtc = new Date(todayUtc.getTime() + (NO_ASK_PLANNED_DAYS + 1) * 86_400_000);
+
+  const [overdue, failed, stale, askEvents] = await Promise.all([
     // Overdue Schedule: due, not finished, and never handed to the queue.
     //
     // `dispatched_at is null` is the load-bearing half. A Schedule is no longer
@@ -184,6 +193,22 @@ export async function getSignals(): Promise<Signal[]> {
         .is('completed_at', null)
         .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS)),
       'event_id',
+      test.eventIds,
+    ),
+
+    // No Ask Planned: Events that can send, inside the window, with their asks.
+    // The window is narrowed here and the rule itself applied below, so the
+    // predicate lives in one place (utils/no-ask-planned.ts).
+    excludeIds(
+      supabase
+        .from('events')
+        .select('id, title, event_date, can_create_schedules, schedules(id, scheduled_date, schedule_types!inner(key))')
+        .eq('can_create_schedules', true)
+        .gte('event_date', todayUtc.toISOString())
+        .lt('event_date', askWindowEndUtc.toISOString())
+        // Only the asks come back; the Event's other Schedules cannot change the answer.
+        .in('schedules.schedule_types.key', [...ASK_TYPE_KEYS]),
+      'id',
       test.eventIds,
     ),
   ]);
@@ -328,6 +353,34 @@ export async function getSignals(): Promise<Signal[]> {
       detail: `${called} of ${total} guest records called`,
       occurredAt: row.created_at,
       href: `/admin/events/${row.event_id}#schedule-${row.schedule_id}`,
+    });
+  }
+
+  for (const event of unwrap(askEvents)) {
+    const schedules = (event.schedules ?? []).map(planEntryFromRow);
+    if (
+      !isNoAskPlanned({
+        eventDate: event.event_date,
+        canSend: event.can_create_schedules,
+        schedules,
+        now,
+      })
+    ) {
+      continue;
+    }
+    const days = eventDaysFromToday(event.event_date, now) ?? 0;
+    signals.push({
+      id: `no_ask_planned:${event.id}`,
+      kind: 'no_ask_planned',
+      eventId: event.id,
+      eventTitle: event.title ?? 'Untitled event',
+      headline: `No invitation or confirmation dated, ${days} ${days === 1 ? 'day' : 'days'} to the event`,
+      detail: 'Nothing will ask guests to RSVP until the owner picks a date',
+      // When the window opened for it - the age is how long it has gone unasked.
+      occurredAt: new Date(
+        Date.parse(event.event_date as string) - NO_ASK_PLANNED_DAYS * 86_400_000,
+      ).toISOString(),
+      href: `/admin/events/${event.id}`,
     });
   }
 

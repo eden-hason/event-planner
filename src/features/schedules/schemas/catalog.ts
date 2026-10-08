@@ -41,7 +41,8 @@ export const DefaultScheduleDbSchema = z.object({
   schedule_type_id: z.uuid(),
   // Null for non-message types - a call round has no template to send.
   template_id: z.uuid().nullable(),
-  days_offset: z.number().int(),
+  // Null when the Owner dates the Schedule: it is seeded undated (ADR 0029).
+  days_offset: z.number().int().nullable(),
   default_time: z.string(),
   target_status: z.enum(['pending', 'confirmed']).nullable(),
   sort_order: z.number().int(),

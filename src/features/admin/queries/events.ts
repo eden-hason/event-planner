@@ -3,7 +3,13 @@
 import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { classifyWhatsAppFailure, validatePhoneNumber } from '@/features/schedules';
+import {
+  classifyWhatsAppFailure,
+  comparePlanOrder,
+  numberPlan,
+  planEntryFromRow,
+  validatePhoneNumber,
+} from '@/features/schedules';
 import type {
   EventGuestSummary,
   EventIdentity,
@@ -16,6 +22,7 @@ import type {
 } from '../types';
 import { eventDaysFromToday, israelWallClockParts } from '@/lib/date-time';
 import { getTestScope } from './test-accounts';
+import { isNoAskPlanned } from '../utils/no-ask-planned';
 
 const PAGE_SIZE = 50;
 const STALE_ROUND_MS = 3 * 86_400_000;
@@ -326,7 +333,7 @@ type ScheduleJoinRow = {
   id: string;
   event_id: string;
   schedule_type_id: string;
-  scheduled_date: string;
+  scheduled_date: string | null;
   sent_at: string | null;
   dispatched_at: string | null;
   status: string | null;
@@ -335,17 +342,25 @@ type ScheduleJoinRow = {
   message_templates: unknown;
 };
 
-export async function getEventTimeline(eventId: string): Promise<EventTimelineRow[]> {
+// Cached per render: the signals band and the outreach band both read it.
+export const getEventTimeline = cache(async function getEventTimeline(
+  eventId: string,
+): Promise<EventTimelineRow[]> {
   await assertAdmin();
   const supabase = createServiceClient();
   const schedules = unwrap(
     await supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(name, execution_kind), message_templates(channel)')
-      .eq('event_id', eventId)
-      .order('scheduled_date', { ascending: true }),
+      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(key, name, execution_kind), message_templates(channel)')
+      .eq('event_id', eventId),
   ) as unknown as ScheduleJoinRow[];
   if (!schedules.length) return [];
+
+  // The Owner's plan order and numbering (ADR 0029), so "Confirmation 2" here
+  // is the Owner's "Confirmation 2".
+  const entries = new Map(schedules.map((row) => [row.id, planEntryFromRow(row)]));
+  const numbers = numberPlan([...entries.values()]);
+  schedules.sort((a, b) => comparePlanOrder(entries.get(a.id)!, entries.get(b.id)!));
 
   const scheduleIds = schedules.map((row) => row.id);
   const [guestsResult, deliveriesResult, roundsResult] = await Promise.all([
@@ -367,20 +382,11 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
   const rounds = unwrap(roundsResult);
   const roundBySchedule = new Map(rounds.map((row) => [row.schedule_id, row]));
 
-  const position = new Map<string, number>();
-  const totals = new Map<string, number>();
-  for (const schedule of schedules) {
-    const key = schedule.schedule_type_id;
-    totals.set(key, (totals.get(key) ?? 0) + 1);
-    position.set(schedule.id, totals.get(key)!);
-  }
-
   return schedules.map((schedule) => {
     const scheduleType = eventType(schedule.schedule_types) as { name?: string | null; execution_kind?: string | null } | null;
     const base = scheduleType?.name ?? 'Schedule';
-    const title = (totals.get(schedule.schedule_type_id) ?? 0) > 1
-      ? `${base} ${position.get(schedule.id)}`
-      : base;
+    const number = numbers.get(schedule.id);
+    const title = number && number.total > 1 ? `${base} ${number.index}` : base;
     const isCall = scheduleType?.execution_kind === 'phone_call';
     const round = roundBySchedule.get(schedule.id);
     const logs = (round?.call_logs ?? []) as { id: string; notes: string | null; outcome: string | null }[];
@@ -396,10 +402,13 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
     return {
       id: schedule.id,
       kind: isCall ? 'call' : 'message',
+      scheduleTypeKey: entries.get(schedule.id)?.scheduleTypeKey ?? '',
       title,
       status,
       scheduledDate: schedule.scheduled_date,
-      scheduledTime: israelWallClockParts(schedule.scheduled_date).time,
+      scheduledTime: schedule.scheduled_date
+        ? israelWallClockParts(schedule.scheduled_date).time
+        : null,
       sentAt: schedule.sent_at,
       targetStatus: schedule.target_status,
       channel: template?.channel ?? null,
@@ -430,11 +439,15 @@ export async function getEventTimeline(eventId: string): Promise<EventTimelineRo
       }),
     };
   });
-}
+});
 
 export async function getEventSignals(eventId: string): Promise<EventWorkspaceSignal[]> {
   await assertAdmin();
-  const timeline = await getEventTimeline(eventId);
+  // Both cached, and both already read by the rest of the workspace.
+  const [timeline, event] = await Promise.all([
+    getEventTimeline(eventId),
+    getEventIdentity(eventId),
+  ]);
   const now = Date.now();
   const failureCutoff = now - 30 * 86_400_000;
   const signals: EventWorkspaceSignal[] = [];
@@ -442,7 +455,12 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
   let fallbackCount = 0;
   let firstFailedSchedule: EventTimelineRow | null = null;
   for (const row of timeline) {
-    if (row.status === 'planned' && new Date(row.scheduledDate).getTime() < now) {
+    // An Undated Schedule is never due, so never overdue (ADR 0029).
+    if (
+      row.status === 'planned'
+      && row.scheduledDate
+      && new Date(row.scheduledDate).getTime() < now
+    ) {
       signals.push({
         id: `overdue:${row.id}`,
         kind: 'overdue_schedule',
@@ -478,6 +496,23 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
       });
     }
   }
+  if (
+    event
+    && isNoAskPlanned({
+      eventDate: event.eventDate,
+      canSend: event.canCreateSchedules,
+      schedules: timeline,
+      now: new Date(now),
+    })
+  ) {
+    signals.push({
+      id: `no_ask:${eventId}`,
+      kind: 'no_ask_planned',
+      headline: 'No invitation or confirmation is dated',
+      detail: 'Nothing will ask guests to RSVP until the owner picks a date',
+      href: `#schedule-${timeline.find((row) => !row.scheduledDate)?.id ?? ''}`,
+    });
+  }
   if (firstFailedSchedule) {
     signals.push({
       id: `failed:${eventId}`,
@@ -487,6 +522,11 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
       href: `#schedule-${firstFailedSchedule.id}-failures`,
     });
   }
-  const severity = { overdue_schedule: 0, failed_delivery: 1, stale_call_round: 2 } as const;
+  const severity = {
+    overdue_schedule: 0,
+    failed_delivery: 1,
+    no_ask_planned: 2,
+    stale_call_round: 3,
+  } as const;
   return signals.sort((a, b) => severity[a.kind] - severity[b.kind]);
 }

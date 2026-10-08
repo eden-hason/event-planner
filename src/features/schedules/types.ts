@@ -14,6 +14,9 @@ export type OutreachItemStatus =
   // "locked" rather than "off": the organiser has not declined this schedule,
   // they have not been offered it.
   | 'locked'
+  // Outstanding, but the Owner has not picked a Due Time yet, so nothing will
+  // go out (ADR 0029). A locked Schedule reads as locked whether dated or not.
+  | 'undated'
   // Call rounds: a plan that has been started, and one that is finished
   | 'in_progress'
   | 'completed';
@@ -37,12 +40,22 @@ export type OutreachItem = {
   kind: 'message' | 'call';
   /** The Schedule type key, for the icon lookup */
   typeKey: string;
-  /** Whole days from the Event, negative before it. Null without an Event date. */
+  /**
+   * Whole days from the Event, negative before it. Null without an Event date,
+   * and for an Undated Schedule.
+   */
   offset: number | null;
+  /**
+   * Whether the Schedule has no Due Time yet (ADR 0029). An undated card sits
+   * in its own group above the dated timeline - it has no place on it - and
+   * keeps this flag while locked, when its status reads 'locked' instead.
+   */
+  undated: boolean;
   /**
    * The Due Time's date, formatted server-side in the viewer's locale. Date
    * only: the card's meta line already carries the channel and the offset, and
-   * a clock face as well pushed it into an ellipsis on a 375px screen.
+   * a clock face as well pushed it into an ellipsis on a 375px screen. Says
+   * that there is no date yet for an Undated Schedule.
    */
   when: string;
   /** The same instant with its clock face, for the detail header's one line. */

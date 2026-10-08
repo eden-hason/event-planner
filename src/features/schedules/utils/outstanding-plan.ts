@@ -23,6 +23,8 @@ interface PlanRow {
   status: string | null;
   scheduleTypeKey: string;
   executionKind?: string | null;
+  /** Null for an Undated Schedule. */
+  scheduledDate: string | null;
 }
 
 /**
@@ -31,8 +33,12 @@ interface PlanRow {
  * missed its window - none of the three would move if the date moved. A
  * `disabled` row does count: it is dated and simply waiting on payment, so it
  * carries the stale date forward the moment the Event can send.
+ *
+ * An Undated Schedule (ADR 0029) is outstanding but points at no date, so a
+ * moved Event leaves nothing of it behind.
  */
 function isOutstanding(row: PlanRow): boolean {
+  if (row.scheduledDate === null) return false;
   return row.status === null || row.status === 'disabled';
 }
 

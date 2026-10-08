@@ -78,6 +78,10 @@ export function expiryReason(params: {
     }
   }
 
+  // An Undated Schedule is never due, so it cannot be late (ADR 0029). The
+  // sweep never selects one; this keeps a by-id dispatch honest too.
+  if (schedule.scheduledDate === null) return null;
+
   const lateBy = now.getTime() - Date.parse(schedule.scheduledDate);
   if (lateBy > maxLatenessHours * HOUR_MS) {
     const hours = Math.floor(lateBy / HOUR_MS);

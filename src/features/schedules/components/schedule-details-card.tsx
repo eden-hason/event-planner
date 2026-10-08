@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 
 import {
+  DEFAULT_SEND_TIME,
   offsetDays as offsetDaysFrom,
   offsetPhrase,
   sendWindowHours,
@@ -25,9 +26,6 @@ import {
 import { firstSendableDay, lastDueDay } from '../utils/due-time-guards';
 import { SettingsCard } from './settings-card';
 import { useScheduleSettings } from './schedule-settings-context';
-
-/** Used when a schedule has no time yet - the middle of the send window. */
-const DEFAULT_SEND_TIME = '10:00';
 
 /**
  * An Israel calendar day, "YYYY-MM-DD", as a local Date the picker can show.
@@ -125,14 +123,23 @@ export function ScheduleDetailsCard({
   };
 
   const handleTimeChange = (value: string) => {
-    const day = israelWallClockParts(scheduledDate || eventDate || new Date().toISOString()).date;
+    // An Undated Schedule keeps no date until the Owner picks one: choosing the
+    // hour first only sets the hour, never a day nobody chose (ADR 0029).
+    if (!scheduledDate) {
+      setScheduledTime(value);
+      return;
+    }
+    const day = israelWallClockParts(scheduledDate).date;
     const iso = israelWallClockToIso(day, value);
     if (!iso) return;
     setScheduledDate(iso);
     setScheduledTime(value);
   };
 
-  if (!scheduledDate || !eventDate) return null;
+  // An Undated Schedule is the case this card exists for, so it renders; a
+  // dated one with no Event date has nothing to be measured against. A Due
+  // Time can only be picked once there is an Event day to bound it.
+  if (!eventDate) return null;
 
   const relativeNote = relative ? t(`relative.${relative.key}`, { count: relative.count }) : null;
   const invalid = dueTimeIssue !== null;
@@ -217,6 +224,7 @@ export function ScheduleDetailsCard({
       )}
 
       <p className="text-muted-foreground text-xs">
+        {!scheduledDate && `${t('undatedHelper')} · `}
         {relativeNote}
         {relativeNote ? ' · ' : ''}
         {t('sendWindowHelper', {

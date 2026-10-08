@@ -115,6 +115,17 @@ as $$ select ((n::bigint * 2654435761 + salt::bigint * 40503) % 10007)::double p
 -- and the send time the story needs, carrying its type, template and audience.
 -- ---------------------------------------------------------------------------
 
+-- 10:00 Israel time, `days` from the showcase Event's date.
+create or replace function pg_temp.due(days integer)
+returns timestamptz
+language sql
+stable
+as $$
+  select (((e.event_date at time zone 'UTC')::date + days) + time '10:00') at time zone 'Asia/Jerusalem'
+    from events e
+   where e.id = '00000000-0000-4000-b000-000000000010'
+$$;
+
 drop table if exists _s;
 create temp table _s (
   k           integer primary key,  -- 0 save the date, 1 confirmation, 2 follow-up, 3 call plan
@@ -136,19 +147,27 @@ drop table if exists _seeded;
 create temp table _seeded as
 select s.*,
        st.key as type_key,
-       row_number() over (partition by s.schedule_type_id order by s.scheduled_date) as nth
+       -- Invitations and Confirmations are seeded undated (ADR 0029), so the two
+       -- Confirmations are told apart by audience: the first goes to everyone,
+       -- the follow-up only to those who have not answered.
+       row_number() over (
+         partition by s.schedule_type_id
+         order by s.scheduled_date nulls last, s.target_status nulls first
+       ) as nth
 from schedules s
 join schedule_types st on st.id = s.schedule_type_id
 where s.event_id = '00000000-0000-4000-b000-000000000010';
 
--- Sent on time, except the follow-up (90 minutes ago, so it is live whatever the
--- hour) and the call plan, which the Owner started early half an hour ago.
+-- The save the date and the first confirmation went out at 10:00 on the days the
+-- Owner picked for them (-30 and -21). The follow-up went 90 minutes ago, so it
+-- is live whatever the hour, and the call plan was started early half an hour ago.
 update _s
    set template_id = sd.template_id,
        sent_at = case _s.k
+                   when 0 then pg_temp.due(-30)
+                   when 1 then pg_temp.due(-21)
                    when 2 then now() - interval '90 minutes'
                    when 3 then now() - interval '30 minutes'
-                   else sd.scheduled_date
                  end
   from _seeded sd
  where sd.type_key = _s.type_key and sd.nth = _s.nth;
@@ -158,7 +177,7 @@ delete from schedules
 
 insert into schedules (id, event_id, schedule_type_id, template_id, scheduled_date, target_status, status, sent_at, dispatched_at, custom_text)
 select _s.id, sd.event_id, sd.schedule_type_id, sd.template_id,
-       case when _s.k in (2, 3) then _s.sent_at else sd.scheduled_date end,
+       _s.sent_at,
        sd.target_status, 'sent', _s.sent_at, _s.sent_at, sd.custom_text
 from _s
 join _seeded sd using (type_key, nth);

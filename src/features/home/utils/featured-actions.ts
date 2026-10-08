@@ -15,8 +15,11 @@ export const HEALTH_CHECK_MIN_RECORDS = 20;
  * Above even setup: a list over its Record Package means guests are about to miss
  * messages, and setup steps like "invite a collaborator" can stay eligible for weeks -
  * enough of them would push the warning out of the four slots entirely.
+ *
+ * An Event with no ask dated is the same failure at its widest: no Guest is ever
+ * invited or asked for an answer until the Owner picks a date (ADR 0029).
  */
-const BLOCKING_TIER: readonly RankedActionKey[] = ['package'];
+const BLOCKING_TIER: readonly RankedActionKey[] = ['package', 'planAsk'];
 
 /** Tier 1, in priority order: every unfinished setup step outranks everything else. */
 const SETUP_TIER: readonly RankedActionKey[] = [
@@ -38,6 +41,7 @@ const FALLBACK: readonly FallbackActionKey[] = ['addGuest', 'ai', 'viewList'];
 
 const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   package: (f) => f.recordsOverPackage > 0,
+  planAsk: (f) => f.noAskPlanned,
   details: (f) => !f.detailsComplete,
   groups: (f) => f.guestRecords > 0 && f.groupCount === 0,
   invitationImage: (f) => !f.hasInvitationImage,

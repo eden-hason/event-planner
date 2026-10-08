@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   IconAlertTriangle,
+  IconCalendarPlus,
   IconCheck,
   IconChecklist,
   IconChevronRight,
@@ -45,6 +46,7 @@ const ACTION_UI: Record<
   { icon: Icon; path?: string; urgent?: boolean }
 > = {
   package: { icon: IconAlertTriangle, urgent: true },
+  planAsk: { icon: IconCalendarPlus, path: 'schedules', urgent: true },
   details: { icon: IconSettings, path: 'details' },
   groups: { icon: IconList, path: 'guests?tab=groups' },
   invitationImage: { icon: IconPhoto, path: 'details' },

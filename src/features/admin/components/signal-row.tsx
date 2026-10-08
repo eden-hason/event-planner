@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ClockAlert, MessageSquareX, Phone } from 'lucide-react';
+import { CalendarX, ClockAlert, MessageSquareX, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Signal, SignalKind } from '../types';
 
@@ -7,7 +7,9 @@ import type { Signal, SignalKind } from '../types';
  * Severity is carried by icon shape, weight and order - not by three alarm
  * colours. The system has --destructive and --success and no --warning, and a
  * page where everything is red teaches the Operator to scroll past it. Only the
- * two failure kinds take colour; a stale round is bookkeeping and stays grey.
+ * two failure kinds take colour; a stale round is bookkeeping and stays grey,
+ * and so is an Event with no ask planned - an Owner who has not chosen yet, not
+ * something Kululu failed to do.
  */
 const KIND: Record<
   SignalKind,
@@ -24,6 +26,12 @@ const KIND: Record<
     tone: 'text-destructive',
     weight: 'font-medium',
     label: 'Failed delivery',
+  },
+  no_ask_planned: {
+    icon: CalendarX,
+    tone: 'text-muted-foreground',
+    weight: 'font-medium',
+    label: 'No ask planned',
   },
   stale_call_round: {
     icon: Phone,

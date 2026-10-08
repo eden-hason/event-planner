@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
+import { numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
 
 const DAY_MS = 86_400_000;
 
@@ -104,6 +105,9 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
         .is('dispatched_at', null)
         .eq('events.status', 'published')
         .eq('events.can_create_schedules', true)
+        // An Undated Schedule is not planned work: nothing will happen until the
+        // Owner dates it (ADR 0029). The No Ask Planned Signal covers it.
+        .not('scheduled_date', 'is', null)
         .order('scheduled_date', { ascending: true }),
       'event_id',
       test.eventIds,
@@ -115,24 +119,24 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   const eventIds = [...new Set(open.map((row) => row.event_id))];
 
   // Labels must match what the Owner sees in their own app, and that index runs
-  // over every schedule of the type - sent and cancelled included - ordered by
-  // date. Indexing only the open rows would number the same plan differently on
-  // the two sides. See schedules-page.tsx and brief 3.10.
+  // over every schedule of the type - sent and cancelled included - in plan
+  // order. Indexing only the open rows would number the same plan differently
+  // on the two sides, so both number through numberPlan, one Event at a time.
   const siblings = unwrap(
     await supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id')
-      .in('event_id', eventIds)
-      .order('scheduled_date', { ascending: true }),
+      .select('id, event_id, scheduled_date, target_status, schedule_types(key)')
+      .in('event_id', eventIds),
   );
-
-  const orderByTypeKey = new Map<string, string[]>();
+  const entriesByEvent = new Map<string, PlanEntry[]>();
   for (const row of siblings) {
-    const key = `${row.event_id}:${row.schedule_type_id}`;
-    const list = orderByTypeKey.get(key) ?? [];
-    list.push(row.id);
-    orderByTypeKey.set(key, list);
+    const entries = entriesByEvent.get(row.event_id) ?? [];
+    entries.push(planEntryFromRow(row));
+    entriesByEvent.set(row.event_id, entries);
   }
+  const numbers = new Map(
+    [...entriesByEvent.values()].flatMap((entries) => [...numberPlan(entries)]),
+  );
 
   // One aggregate pass rather than a query per call plan.
   const guests = unwrap(
@@ -156,8 +160,8 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
     const isCall = row.schedule_types?.execution_kind === 'phone_call';
     const baseName = row.schedule_types?.name ?? 'Schedule';
 
-    const order = orderByTypeKey.get(`${row.event_id}:${row.schedule_type_id}`) ?? [];
-    const title = order.length > 1 ? `${baseName} ${order.indexOf(row.id) + 1}` : baseName;
+    const number = numbers.get(row.id);
+    const title = number && number.total > 1 ? `${baseName} ${number.index}` : baseName;
 
     const scheduledMs = new Date(row.scheduled_date).getTime();
     const lateBy = scheduledMs < now ? lateness(scheduledMs, now) : null;

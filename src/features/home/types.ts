@@ -19,6 +19,7 @@ export type GuestStats = {
 /** A Featured Action picked by its eligibility rule (ADR 0010), grouped into tiers in `utils/featured-actions`. */
 export type RankedActionKey =
   | 'package'
+  | 'planAsk'
   | 'details'
   | 'groups'
   | 'invitationImage'
@@ -54,6 +55,11 @@ export type FeaturedActionFacts = {
   expenseCount: number;
   /** Guest Records beyond the Record Package, which no Schedule will reach (ADR 0027). */
   recordsOverPackage: number;
+  /**
+   * The Event can send but none of its Initial Invitations or Confirmations is
+   * dated, so nothing will ever ask its Guests anything (ADR 0029).
+   */
+  noAskPlanned: boolean;
 };
 
 export type StatusStripData = {

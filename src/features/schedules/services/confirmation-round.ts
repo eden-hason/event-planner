@@ -15,14 +15,15 @@ export async function loadIsFollowUpConfirmation(
     eventId: string;
     scheduleTypeId: string;
     scheduleTypeKey: string;
-    scheduledDate: string;
+    scheduledDate: string | null;
+    targetStatus?: string | null;
   },
 ): Promise<boolean> {
   if (schedule.scheduleTypeKey !== 'confirmation') return false;
 
   const { data, error } = await supabase
     .from('schedules')
-    .select('id, scheduled_date, status')
+    .select('id, scheduled_date, status, target_status')
     .eq('event_id', schedule.eventId)
     .eq('schedule_type_id', schedule.scheduleTypeId)
     .neq('id', schedule.id);
@@ -37,8 +38,9 @@ export async function loadIsFollowUpConfirmation(
     (data ?? []).map((row) => ({
       id: row.id as string,
       scheduleTypeKey: 'confirmation',
-      scheduledDate: row.scheduled_date as string,
+      scheduledDate: row.scheduled_date as string | null,
       status: row.status as string | null,
+      targetStatus: row.target_status as string | null,
     })),
   );
 }

@@ -54,14 +54,63 @@ interface ScheduleTimelineProps {
 }
 
 /**
- * The plan as a timeline: every Schedule of the Event in one chronological
- * list, with the day of the Event marked in it.
+ * The plan as a timeline: every dated Schedule of the Event in one
+ * chronological list, with the day of the Event marked in it.
  *
  * Messages and call rounds share the list rather than sitting in separate
  * menus. The ordering is the whole point - a call that sits between two
  * reminders is part of how the plan works, and two menus made that invisible.
+ *
+ * Undated Schedules (ADR 0029) have no place on it, so they lead in a group of
+ * their own, and each one moves into the timeline once it is given a date.
  */
 export function ScheduleTimeline({
+  items,
+  activeId,
+  onSelect,
+  dayLabel,
+}: ScheduleTimelineProps) {
+  const t = useTranslations('schedules');
+  const undated = items.filter((item) => item.undated);
+  const dated = items.filter((item) => !item.undated);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {undated.length > 0 && (
+        <section aria-labelledby="undated-schedules" className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h2 id="undated-schedules" className="text-foreground text-sm font-bold">
+              {t('timeline.undatedTitle')}
+            </h2>
+            <p className="text-muted-foreground text-xs">{t('timeline.undatedHint')}</p>
+          </div>
+          <Timeline value={0} role="list">
+            {undated.map((item, index) => (
+              <TimelineCard
+                key={item.id}
+                step={index + 1}
+                item={item}
+                isActive={item.id === activeId}
+                onSelect={onSelect}
+                offsetLabel={null}
+              />
+            ))}
+          </Timeline>
+        </section>
+      )}
+      {dated.length > 0 && (
+        <DatedTimeline
+          items={dated}
+          activeId={activeId}
+          onSelect={onSelect}
+          dayLabel={dayLabel}
+        />
+      )}
+    </div>
+  );
+}
+
+function DatedTimeline({
   items,
   activeId,
   onSelect,
@@ -157,6 +206,7 @@ function TimelineCard({
   const Icon = typeIcon(item.typeKey);
   const done = isDone(item.status);
   const live = item.status === 'in_progress';
+  const undated = item.status === 'undated';
   const muted =
     item.status === 'locked' ||
     item.status === 'cancelled' ||
@@ -189,6 +239,7 @@ function TimelineCard({
           'bg-card flex min-w-0 cursor-pointer flex-col gap-2 rounded-xl border p-3 text-start transition-colors',
           'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
           isActive ? 'border-primary shadow-xs' : 'hover:bg-accent/40',
+          undated && !isActive && 'border-primary/40 border-dashed',
           done && !isActive && 'border-success/25',
           live && !isActive && 'border-info-tint-border',
         )}

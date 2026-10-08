@@ -30,6 +30,10 @@ export {
   toIcs,
   toGoogleCalendarUrl,
   type CalendarEntry,
+  comparePlanOrder,
+  numberPlan,
+  planEntryFromRow,
+  type PlanEntry,
 } from './utils';
 
 // Schemas/Types

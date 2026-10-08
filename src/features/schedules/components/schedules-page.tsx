@@ -22,7 +22,7 @@ import {
   isMessageSchedule,
   shouldSendTableNumbers,
 } from '../utils';
-import { offsetDays, timelineStatus } from '../utils/timeline';
+import { comparePlanOrder, numberPlan, offsetDays, timelineStatus } from '../utils/timeline';
 import { resolveTemplatesForPreview } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
@@ -160,22 +160,20 @@ export async function SchedulesPage({
   // One chronological list. Messages and call rounds used to be two separate
   // menus, which made it impossible to see that a call sits between two
   // reminders - the ordering *is* the plan, so they share one timeline.
-  resolved.sort(
-    (a, b) =>
-      Date.parse(a.schedule.scheduledDate) -
-      Date.parse(b.schedule.scheduledDate),
-  );
+  resolved.sort((a, b) => comparePlanOrder(a.schedule, b.schedule));
 
   // A type that appears more than once (a second Confirmation round) is
-  // numbered, in the order the timeline shows it.
-  const seenOfType = new Map<string, number>();
-  const totalOfType = new Map<string, number>();
-  for (const { schedule } of resolved) {
-    totalOfType.set(
-      schedule.scheduleTypeKey,
-      (totalOfType.get(schedule.scheduleTypeKey) ?? 0) + 1,
-    );
-  }
+  // numbered in plan order, the same order that decides which Confirmation is
+  // the follow-up - so "Confirmation 2" is always the one that says so.
+  const numbers = numberPlan(resolved.map(({ schedule }) => schedule));
+
+  // Shown in a different order than they are numbered: an Undated Schedule has
+  // no place on the timeline, so the undated ones lead in a group of their own
+  // (ADR 0029), still in plan order among themselves.
+  const shown = [
+    ...resolved.filter(({ schedule }) => schedule.scheduledDate === null),
+    ...resolved.filter(({ schedule }) => schedule.scheduledDate !== null),
+  ];
 
   // Numeric rather than a month name: the card's meta line already carries the
   // channel and the offset, and "21 August" pushed it into an ellipsis on a
@@ -191,9 +189,11 @@ export async function SchedulesPage({
     minute: '2-digit',
     hourCycle: 'h23',
   });
-  const formatWhen = (iso: string) => dayMonth.format(new Date(iso));
-  const formatWhenDetailed = (iso: string) =>
-    `${dayMonth.format(new Date(iso))} · ${clock.format(new Date(iso))}`;
+  const noDate = t('timeline.noDate');
+  const formatWhen = (iso: string | null) =>
+    iso ? dayMonth.format(new Date(iso)) : noDate;
+  const formatWhenDetailed = (iso: string | null) =>
+    iso ? `${dayMonth.format(new Date(iso))} · ${clock.format(new Date(iso))}` : noDate;
 
   const audienceLabel = (targetStatus: ScheduleApp['targetStatus']) =>
     targetStatus === 'confirmed'
@@ -207,7 +207,7 @@ export async function SchedulesPage({
   const callSchedules = resolved.filter(({ schedule }) => !isMessageSchedule(schedule));
   const messageCount = resolved.length - callSchedules.length;
 
-  const items: OutreachItem[] = resolved.map(
+  const items: OutreachItem[] = shown.map(
     ({ schedule, template, smsBody, seatingGap, offersNote }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
@@ -220,12 +220,9 @@ export async function SchedulesPage({
           )
         : schedule.scheduleTypeName;
 
-      const index = (seenOfType.get(schedule.scheduleTypeKey) ?? 0) + 1;
-      seenOfType.set(schedule.scheduleTypeKey, index);
+      const number = numbers.get(schedule.id);
       const label =
-        (totalOfType.get(schedule.scheduleTypeKey) ?? 1) > 1
-          ? `${baseLabel} ${index}`
-          : baseLabel;
+        number && number.total > 1 ? `${baseLabel} ${number.index}` : baseLabel;
 
       const isMessage = isMessageSchedule(schedule);
       const round = isMessage ? undefined : roundsBySchedule.get(schedule.id);
@@ -264,6 +261,7 @@ export async function SchedulesPage({
         kind: isMessage ? ('message' as const) : ('call' as const),
         typeKey: schedule.scheduleTypeKey,
         offset: offsetDays(eventDate, schedule.scheduledDate),
+        undated: schedule.scheduledDate === null,
         when: formatWhen(schedule.scheduledDate),
         whenDetailed,
         audience: audienceLabel(schedule.targetStatus),
@@ -290,6 +288,10 @@ export async function SchedulesPage({
             status={status}
             audienceCount={audienceCount}
           />
+        ) : schedule.scheduledDate === null ? (
+          // A call plan is always proposed a date (ADR 0029). One without has no
+          // plan to show; its card already reads "No date yet".
+          null
         ) : (
           <CallRoundPane
             eventId={eventId}

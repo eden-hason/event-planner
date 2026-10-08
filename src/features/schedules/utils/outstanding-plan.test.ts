@@ -7,9 +7,11 @@ const row = (
     status: string | null;
     scheduleTypeKey: string;
     executionKind: string | null;
+    scheduledDate: string | null;
   }> = {},
 ) => ({
   status: null as string | null,
+  scheduledDate: '2026-10-01T07:00:00Z' as string | null,
   scheduleTypeKey: 'invitation',
   executionKind: 'message' as string | null,
   ...overrides,
@@ -39,6 +41,15 @@ test('history, decisions and misses are not stranded', () => {
 
 test('a disabled schedule still carries its date', () => {
   const summary = summariseOutstandingPlan([row({ status: 'disabled' })]);
+  assert.equal(summary.messageCount, 1);
+});
+
+test('an undated schedule points at no date, so nothing of it is stranded', () => {
+  const summary = summariseOutstandingPlan([
+    row({ scheduledDate: null }),
+    row({ status: 'disabled', scheduledDate: null }),
+    row({ scheduledDate: '2026-10-01T07:00:00Z' }),
+  ]);
   assert.equal(summary.messageCount, 1);
 });
 

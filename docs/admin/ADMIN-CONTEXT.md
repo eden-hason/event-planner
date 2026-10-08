@@ -120,7 +120,7 @@ rather than in a design file:
   Round is bookkeeping and stays grey. A page where everything is red teaches the Operator to
   scroll past it.
 
-### The three predicates
+### The four predicates
 
 These are the definitions. If a page shows something that does not match one of these
 exactly, the page is lying to the Operator.
@@ -129,10 +129,14 @@ exactly, the page is lying to the Operator.
 |---|---|---|
 | **Overdue Schedule** | `schedules.status IS NULL AND scheduled_date < now()` | The send should have gone out and did not. Almost always a failure in cron or message processing - the product silently let a paying customer down. |
 | **Failed Delivery** | `message_deliveries.status = 'failed'`, created within the last 30 days, grouped by Event | Specific Guests never received the message. `error_code` carries the WhatsApp reason. |
+| **No Ask Planned** | `events.can_create_schedules` and `event_date` within the next 21 days, and every Initial Invitation / Confirmation has `scheduled_date IS NULL` | Those Schedules start undated and never send until the Owner dates one (ADR 0029), so the Event is weeks out and no Guest will ever be asked to RSVP. Not a system failure, so it stays grey. |
 | **Stale Call Round** | `call_rounds.completed_at IS NULL AND created_at < now() - interval '3 days'` | A round somebody started and walked away from. Round Completion is a deliberate act (see `CONTEXT.md`), so an old open round means a human forgot, not that Guests are unreachable. |
 
 No grace period on Overdue Schedule: if the clock has passed and the row is not `sent`, it is
-overdue. The 3-day threshold on Stale Call Round is a judgement call, not a fact - it lives in
+overdue. An undated row is never overdue - it has no clock to pass. The 21-day window on No
+Ask Planned is when an Owner's silence becomes worth a call, not a threshold on how a campaign
+is going: the fact underneath is that nothing will be sent at all. It lives in
+`NO_ASK_PLANNED_DAYS` (`utils/no-ask-planned.ts`). The 3-day threshold on Stale Call Round is a judgement call, not a fact - it lives in
 one named constant so it can be changed in one place.
 
 ---
