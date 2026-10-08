@@ -603,8 +603,8 @@ grows - buying more records adds to it at the same rate.
 
 ## Bonus Records
 
-Free Guest Records added on top of the Paid Records as a gift: 10 when up to 200 are paid
-for, 20 above that. A flat step, never a percentage.
+Free Guest Records added on top of the Paid Records as a gift: 10 once 150 or more are paid
+for, none below that. A flat number, never a percentage.
 
 _Avoid_: reserve records (retired with tiers)
 

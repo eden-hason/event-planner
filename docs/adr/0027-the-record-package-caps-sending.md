@@ -29,7 +29,8 @@ package caps **sending**, never planning. The guest list may grow past it, which
 - **Paid Records come only from recorded payments.** ADR 0021's *record a payment* gains
   `records` and `channel`. Each payment adds to Paid Records, so a top-up is just another
   payment, and the payments are the audit trail. Nothing edits the total directly.
-- **Bonus Records follow the homepage rule by default** (10 up to 200 paid, 20 above),
+- **Bonus Records follow the homepage rule by default** (10 from 150 paid, none below;
+  ADR 0030 replaced the original 10 up to 200, 20 above),
   computed from total Paid Records, so splitting a purchase never stacks bonuses. An
   Operator may override the bonus per Event. The override stays until an Operator resets
   it to automatic, and a later top-up does not undo it.

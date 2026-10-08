@@ -25,6 +25,8 @@ export {
   RECORD_PACKAGE_CHANNEL_LABELS,
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
+  BONUS_MIN_PAID,
+  BONUS_RECORDS,
   bonusRecords,
   packageAside,
   packageState,

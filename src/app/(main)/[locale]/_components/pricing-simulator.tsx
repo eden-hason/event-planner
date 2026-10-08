@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import {
+  BONUS_MIN_PAID,
+  BONUS_RECORDS,
   PRICING_RATES,
   RECORDS_MAX,
   RECORDS_MIN,
@@ -128,15 +130,23 @@ export function PricingSimulator({
             </div>
           </div>
 
-          <div className="ps-gift">
+          {/* Below the threshold the gift stays in view, dimmed, with what it takes to earn it */}
+          <div className={`ps-gift${bonus ? '' : ' locked'}`}>
             <div className="ps-gift-badge">
-              <span className="n" dir="ltr">+{bonus}</span>
+              <span className="n" dir="ltr">+{BONUS_RECORDS}</span>
               <span className="u">רשומות</span>
             </div>
-            <div className="ps-gift-text">
-              <span className="t">{bonus} רשומות נוספות במתנה</span>
-              <span className="d">לאורחים שנזכרתם בהם ברגע האחרון - כבר כלולות במחיר החבילה</span>
-            </div>
+            {bonus ? (
+              <div className="ps-gift-text">
+                <span className="t">{bonus} רשומות נוספות במתנה</span>
+                <span className="d">לאורחים שנזכרתם בהם ברגע האחרון - כבר כלולות במחיר החבילה</span>
+              </div>
+            ) : (
+              <div className="ps-gift-text">
+                <span className="t">{BONUS_RECORDS} רשומות במתנה מ-{BONUS_MIN_PAID} רשומות</span>
+                <span className="d">עוד {BONUS_MIN_PAID - records} רשומות והמתנה שלכם</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,13 +173,15 @@ export function PricingSimulator({
             <span className="k">{records} רשומות × {rateLabel(channel)}</span>
             <span className="v">{totalLabel} ₪</span>
           </div>
-          <div className="ps-line">
-            <span className="k ps-line-bonus">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              {bonus} רשומות נוספות
-            </span>
-            <span className="v ps-free">ללא עלות</span>
-          </div>
+          {bonus > 0 && (
+            <div className="ps-line">
+              <span className="k ps-line-bonus">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                {bonus} רשומות נוספות
+              </span>
+              <span className="v ps-free">ללא עלות</span>
+            </div>
+          )}
           <div className="ps-line">
             <span className="k strong">סה״כ רשומות במערכת</span>
             <span className="v bold">{packageSize}</span>

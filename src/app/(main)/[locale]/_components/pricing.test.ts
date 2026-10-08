@@ -4,14 +4,14 @@ import { describe, it } from 'node:test';
 import { bonusRecords, clampRecords, quote } from './pricing';
 
 describe('bonusRecords', () => {
-  it('gives 10 up to and including 200 records', () => {
-    assert.equal(bonusRecords(50), 10);
-    assert.equal(bonusRecords(200), 10);
+  it('gives nothing below 150 records', () => {
+    assert.equal(bonusRecords(50), 0);
+    assert.equal(bonusRecords(140), 0);
   });
 
-  it('gives 20 above 200 records', () => {
-    assert.equal(bonusRecords(250), 20);
-    assert.equal(bonusRecords(1000), 20);
+  it('gives 10 from 150 records, whatever the package size', () => {
+    assert.equal(bonusRecords(150), 10);
+    assert.equal(bonusRecords(1000), 10);
   });
 });
 
@@ -34,7 +34,11 @@ describe('clampRecords', () => {
 describe('quote', () => {
   it('charges records times the channel rate and adds the bonus to the package', () => {
     assert.deepEqual(quote(150, 'whatsapp'), { total: 225, bonus: 10, packageSize: 160 });
-    assert.deepEqual(quote(300, 'sms'), { total: 300, bonus: 20, packageSize: 320 });
-    assert.deepEqual(quote(500, 'whatsapp_calls'), { total: 1000, bonus: 20, packageSize: 520 });
+    assert.deepEqual(quote(300, 'sms'), { total: 300, bonus: 10, packageSize: 310 });
+    assert.deepEqual(quote(500, 'whatsapp_calls'), { total: 1000, bonus: 10, packageSize: 510 });
+  });
+
+  it('has no bonus below 150 records', () => {
+    assert.deepEqual(quote(100, 'sms'), { total: 100, bonus: 0, packageSize: 100 });
   });
 });

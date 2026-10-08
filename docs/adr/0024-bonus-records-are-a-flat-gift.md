@@ -1,3 +1,6 @@
+> **Partly superseded by ADR 0030:** Bonus Records are now 10 from 150 paid records and
+> none below, not 10 up to 200 and 20 above.
+
 # Bonus Records are a flat gift, not a reserve
 
 The homepage pricing simulator gives free extra Guest Records on top of the paid ones: 10

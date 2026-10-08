@@ -15,6 +15,7 @@ import sharingShot from '@/assets/sharing.png';
 import whatsappShot from '@/assets/whatsapp.png';
 
 import { PricingSimulator } from './pricing-simulator';
+import { BONUS_MIN_PAID, BONUS_RECORDS } from './pricing';
 
 const WHATSAPP_NUMBER = '972552639234';
 const WHATSAPP_OPENING_MESSAGE = 'היי, אשמח לקבל פרטים נוספים על Kululu';
@@ -321,6 +322,8 @@ export function HomepageClient() {
         .ps-gift-text{display:flex;flex-direction:column;gap:4px;flex-grow:1}
         .ps-gift-text .t{font-size:18px;font-weight:700;color:var(--ink)}
         .ps-gift-text .d{font-size:14px;color:var(--ink-2);line-height:1.5}
+        .ps-gift.locked{border-style:dashed;background:none}
+        .ps-gift.locked .ps-gift-badge{opacity:.45;box-shadow:none}
         .ps-summary{display:flex;flex-direction:column;gap:24px;padding:32px}
         .ps-sum-head{display:flex;flex-direction:column;gap:6px}
         .ps-sum-label{font-size:15px;font-weight:600;color:var(--ink-2)}
@@ -666,7 +669,7 @@ export function HomepageClient() {
             <div className="faq-list reveal">
               {([
                 { q:'איך מתבצע החיוב ב Kululu?', a:'החיוב מתבצע לפי אירוע - תשלום חד פעמי לפי כמות רשומות המוזמנים שלכם' },
-                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>אין בעיה. כל חבילה כוללת רשומות נוספות במתנה בדיוק בשביל האורחים של הרגע האחרון.<br/>צריכים עוד? מוסיפים רשומות לתזמון באותו מחיר לרשומה, או רק מוסיפים אותם לרשימה ומעדכנים סטטוס בעצמכם או שולחים להם קישור אישור אישי.</> },
+                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>אין בעיה. כל חבילה של {BONUS_MIN_PAID} רשומות ומעלה כוללת {BONUS_RECORDS} רשומות נוספות במתנה בדיוק בשביל האורחים של הרגע האחרון.<br/>צריכים עוד? מוסיפים רשומות לתזמון באותו מחיר לרשומה, או רק מוסיפים אותם לרשימה ומעדכנים סטטוס בעצמכם או שולחים להם קישור אישור אישי.</> },
                 { q:'האם ניתן לנהל את האירוע יחד עם בן/בת הזוג או מפיק האירוע?', a:'בטח, ניתן לצרף שותפים לניהול האירוע עם הרשאות צפייה או עריכה.' },
                 { q:'איך עוזר ה-AI מסדר הושבה?', a:<>הוא משתמש בקבוצות ובהערות שהוספתם - &quot;חברים של הכלה&quot;, &quot;משפחה חתן&quot;, &quot;חברים צבא&quot; ומציע שיבוצים שתוכלו לאשר, לערוך או להתעלם מהם.<br/>עוזר ה-AI לא מזיז אף אחד ללא אישורכם.</> },
                 { q:'האם פרטי האורחים שלי מאובטחים?', a:<>בוודאי. רשימת האורחים שלכם שייכת לכם, אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק.<br/>הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.</> },

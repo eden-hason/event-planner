@@ -49,7 +49,7 @@ Owner-only.
 ## 3. The model in one paragraph (what the UI must make obvious)
 
 The Owner paid for **N records** on a **channel** (SMS, WhatsApp, or WhatsApp + calls) and got
-**Bonus Records** free on top: 10 when up to 200 are paid for, 20 above that, or a custom
+**Bonus Records** free on top: 10 once 150 or more are paid for (ADR 0030), or a custom
 number Kululu set. **Package = Paid + Bonus.** Planning is never limited, so the guest list can
 grow past the package. But **when a Schedule sends, it only goes to Guest Records inside the
 package.** Records that have already been sent to are always inside. Then the oldest
@@ -204,8 +204,8 @@ In the event workspace's billing area, beside the status control:
 
 - **Record payment:** records, channel, amount (₪, may be 0), method (bank transfer / Bit /
   cash / gift / other), reference, note. A live preview shows "Package after this payment:
-  250 + 20 bonus = 270".
-- **Bonus:** "Automatic (20)" with an override field and a "Reset to automatic" action.
+  250 + 10 bonus = 260".
+- **Bonus:** "Automatic (10)" with an override field and a "Reset to automatic" action.
 - **Package summary and payment history**, the same numbers the Owner sees, plus who
   recorded each payment.
 
