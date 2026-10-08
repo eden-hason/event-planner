@@ -91,12 +91,12 @@ export function PricingSimulator({
               </div>
             </div>
             <div className="ps-stepper">
-              <button type="button" className="ps-step-btn" onClick={() => setRecords(clampRecords(records - RECORDS_STEP))} aria-label="הורדת 50 רשומות">−</button>
+              <button type="button" className="ps-step-btn" onClick={() => setRecords(clampRecords(records - RECORDS_STEP))} aria-label={`הורדת ${RECORDS_STEP} רשומות`}>−</button>
               <div className="ps-count">
                 <span className="n">{records}</span>
                 <span className="u">רשומות</span>
               </div>
-              <button type="button" className="ps-step-btn" onClick={() => setRecords(clampRecords(records + RECORDS_STEP))} aria-label="הוספת 50 רשומות">+</button>
+              <button type="button" className="ps-step-btn" onClick={() => setRecords(clampRecords(records + RECORDS_STEP))} aria-label={`הוספת ${RECORDS_STEP} רשומות`}>+</button>
             </div>
           </div>
 

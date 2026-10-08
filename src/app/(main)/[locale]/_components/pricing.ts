@@ -22,7 +22,7 @@ export const PRICING_RATES = RECORD_PACKAGE_RATES;
 
 export const RECORDS_MIN = 50;
 export const RECORDS_MAX = 1000;
-export const RECORDS_STEP = 50;
+export const RECORDS_STEP = 10;
 
 /** The bonus rule is billing's, so the homepage never promises what billing won't grant. */
 export { bonusRecords };
