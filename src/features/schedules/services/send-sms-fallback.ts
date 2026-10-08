@@ -304,6 +304,35 @@ export function classifySmsFallbackCandidates(
   return { eligible: eligible.sort(byName), excluded: excluded.sort(byName) };
 }
 
+/**
+ * The Failed deliveries an SMS is on its way to without anyone pressing a
+ * button: one whose SMS attempt is already being made, or one the sweeper will
+ * pick up once the Schedule settles. Nothing while a Freeze holds the
+ * automatic batch - that waits on an Operator, so it is not on its way.
+ *
+ * Asks the engine's own classifier, so the results screen promises exactly the
+ * guests `sendSmsFallback` would send to.
+ */
+export function awaitingSmsFallback(
+  rows: FallbackDeliveryRow[],
+  { frozen, window }: { frozen: boolean; window: StuckWindow },
+): Set<string> {
+  const failed = rows.filter((row) => row.status === 'failed');
+  const awaiting = new Set(
+    failed
+      .filter((row) =>
+        row.message_delivery_attempts.some((a) => a.channel === 'sms' && a.status === 'pending'),
+      )
+      .map((row) => row.id),
+  );
+  if (!frozen) {
+    for (const recipient of classifySmsFallbackCandidates(failed, window).eligible) {
+      awaiting.add(recipient.deliveryId);
+    }
+  }
+  return awaiting;
+}
+
 async function loadGuestsAndTables(
   supabase: SupabaseClient,
   guestIds: string[],

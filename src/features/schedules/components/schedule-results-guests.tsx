@@ -34,6 +34,7 @@ const STATUS_TONE: Record<GuestStatus, keyof typeof RESULT_TONE> = {
   delivered: 'ok',
   sms: 'info',
   on_its_way: 'pending',
+  sms_on_its_way: 'pending',
   not_delivered: 'bad',
   no_phone: 'neutral',
   outside_package: 'pending',
@@ -47,7 +48,8 @@ const CHANNEL_SWATCH = {
 } as const;
 
 function channelSwatch(row: GuestInteractionRow) {
-  if (row.delivery === 'sms') return CHANNEL_SWATCH.sms;
+  if (row.delivery === 'sms' || row.delivery === 'sms_on_its_way')
+    return CHANNEL_SWATCH.sms;
   if (
     row.delivery === 'no_phone' ||
     row.delivery === 'outside_package' ||

@@ -75,9 +75,14 @@ export function ScheduleResults({
   // Scored against WhatsApp deliveries only, so shown only when there are some.
   const showSeen = !isSms && summary.seenCapable > 0;
 
+  // An SMS Fallback still to go out is a state about to change, like any other
+  // message on its way.
+  const onItsWay =
+    summary.notReached.onItsWay + summary.notReached.smsOnItsWay;
+
   const liveness = resultsLiveness({
     sentAt,
-    onItsWay: summary.notReached.onItsWay,
+    onItsWay,
     collectsRsvp,
     now,
   });
@@ -93,7 +98,7 @@ export function ScheduleResults({
     <LiveStrip
       liveness={liveness}
       sentAt={sentAt}
-      onItsWay={summary.notReached.onItsWay}
+      onItsWay={onItsWay}
       now={now}
       locale={locale}
     />
@@ -450,7 +455,8 @@ function Funnel({
 /**
  * How the schedule arrived: WhatsApp, SMS, and what has not arrived yet. On a
  * WhatsApp schedule the SMS row is SMS Fallback - Kululu taking care of the
- * guests WhatsApp could not reach - and says so, once it has happened.
+ * guests WhatsApp could not reach - and says so, once it has happened. Before
+ * it has, those guests are an SMS on its way rather than not delivered.
  */
 function ChannelsCard({
   summary,
@@ -476,6 +482,13 @@ function ChannelsCard({
       sub: isSms ? t('smsScheduleSub') : t('smsFallbackSub'),
       n: summary.reachedSms,
       color: 'bg-channel-sms',
+    },
+    {
+      key: 'smsWay',
+      label: t('smsOnItsWay'),
+      sub: t('smsOnItsWaySub'),
+      n: summary.notReached.smsOnItsWay,
+      color: 'bg-channel-sms/45',
     },
     {
       key: 'way',
@@ -618,6 +631,13 @@ function NotReachedCard({
       why: t('onItsWayWhy'),
       n: counts.onItsWay,
       dot: 'bg-warning-solid',
+    },
+    {
+      key: 'sms_on_its_way' as const,
+      label: t('smsOnItsWay'),
+      why: t('smsOnItsWayWhy'),
+      n: counts.smsOnItsWay,
+      dot: 'bg-channel-sms',
     },
     {
       key: 'not_delivered' as const,

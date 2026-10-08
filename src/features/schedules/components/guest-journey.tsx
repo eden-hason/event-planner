@@ -49,6 +49,8 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
       return { icon: IconAlertTriangle, tone: 'bad' };
     case 'on_its_way':
       return { icon: IconClock, tone: 'pending' };
+    case 'sms_on_its_way':
+      return { icon: IconMessage, tone: 'pending' };
     case 'no_phone':
       return { icon: IconPhoneOff, tone: 'neutral' };
     case 'outside_package':
@@ -68,7 +70,9 @@ export function useChannelLabel() {
     if (row.delivery === 'no_phone' || row.delivery === 'outside_package') {
       return t('notSent');
     }
-    if (row.viaFallback) return t('fallback');
+    if (row.viaFallback || row.delivery === 'sms_on_its_way') {
+      return t('fallback');
+    }
     if (row.delivery === 'sms') return t('sms');
     if (row.delivery === null) return null;
     return t('whatsapp');
@@ -127,6 +131,11 @@ export function GuestJourney({
         return {
           label: t('journey.onItsWay'),
           meta: t('journey.onItsWayMeta'),
+        };
+      case 'sms_on_its_way':
+        return {
+          label: t('journey.smsOnItsWay'),
+          meta: t('journey.smsOnItsWayMeta'),
         };
       case 'no_phone':
         return { label: t('journey.noPhone'), meta: t('journey.noPhoneMeta') };

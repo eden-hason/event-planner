@@ -31,6 +31,11 @@ const GUEST_LEVEL_CODES = new Map<number, string>([
   [130472, 'WhatsApp withheld the message'],
   // Recipient cannot be sender: the guest's number is Kululu's own business number.
   [131021, 'Invalid recipient number'],
+  // Meta's generic "Something went wrong". Its cause is unknown, so it is not
+  // retried, but it has struck one guest at a time - and should it ever hit a
+  // whole audience, counting it as guest-level is what lets the Fallback
+  // Freeze catch the spike.
+  [131000, 'WhatsApp could not deliver it'],
 ]);
 
 export function classifyWhatsAppFailure(

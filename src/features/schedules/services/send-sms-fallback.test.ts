@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { classifySmsFallbackCandidates, stuckForHours } from './send-sms-fallback.ts';
+import { awaitingSmsFallback, classifySmsFallbackCandidates, stuckForHours } from './send-sms-fallback.ts';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
 import { smsFallbackReason } from '../utils/send-helpers.ts';
 
@@ -149,4 +149,56 @@ test('no fallback attempt means no reason', () => {
     smsFallbackReason([{ channel: 'whatsapp', status: 'sent', triggered_by: 'scheduled' }]),
     null,
   );
+});
+
+// ─── What the results screen may call on its way ──────────────────────────────
+
+test('an SMS already being sent is on its way, even under a Freeze', () => {
+  const awaiting = awaitingSmsFallback(
+    [
+      row({
+        status: 'failed',
+        attempts: [
+          { channel: 'whatsapp', status: 'failed', error_code: 131026 },
+          { channel: 'sms', status: 'pending' },
+        ],
+      }),
+    ],
+    { frozen: true, window: WINDOW },
+  );
+  assert.deepEqual([...awaiting], ['delivery-1']);
+});
+
+test('a system-level failure has no SMS on its way', () => {
+  const awaiting = awaitingSmsFallback(
+    [row({ status: 'failed', attempts: [{ channel: 'whatsapp', status: 'failed', error_code: 132000 }] })],
+    { frozen: false, window: WINDOW },
+  );
+  assert.equal(awaiting.size, 0);
+});
+
+test('a fallback SMS that failed too has nothing more on its way', () => {
+  const awaiting = awaitingSmsFallback(
+    [
+      row({
+        status: 'failed',
+        attempts: [
+          { channel: 'whatsapp', status: 'failed', error_code: 131026 },
+          { channel: 'sms', status: 'failed' },
+        ],
+      }),
+    ],
+    { frozen: false, window: WINDOW },
+  );
+  assert.equal(awaiting.size, 0);
+});
+
+test('a stuck WhatsApp is left to read as on its way, not as an SMS', () => {
+  // Only Failed deliveries change state here - a Sent one already reads as
+  // "on its way", and its receipt may still land.
+  const awaiting = awaitingSmsFallback(
+    [row({ status: 'sent', attempts: [{ channel: 'whatsapp', status: 'sent', sent_at: hoursAgo(24) }] })],
+    { frozen: false, window: WINDOW },
+  );
+  assert.equal(awaiting.size, 0);
 });

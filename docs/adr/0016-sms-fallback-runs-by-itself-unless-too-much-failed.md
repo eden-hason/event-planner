@@ -53,3 +53,15 @@ candidate for the button and the sweeper. The ceiling is not optional: productio
 hundreds of August sends that never recorded a receipt, and they must never be picked up.
 Stuck deliveries do not count toward the Fallback Freeze, which still measures failures
 only.
+
+**Amended 2026-10-08:** two changes, both from Schedule `0efaaf0b`. First, its results
+showed 13 guests as "Not delivered" for over an hour while the sweeper waited for the
+second wave of sends to settle, and then reached every one of them by SMS. The screen had
+deliberately promised nothing until an SMS attempt existed, but once the sweeper runs by
+itself the promise is safe to make: a Failed Delivery the engine's own classifier would
+send to now reads "SMS on the way", and so does one whose SMS is being made. Never while a
+Freeze holds the Schedule - that waits on an Operator, so nothing is on its way. Second,
+`131000` (Meta's generic "Something went wrong") is now a Guest-level Failure. It had
+failed once in production, on one guest, and left that guest unreached. Its cause is
+unknown, which is why it is still not retried, and why counting it toward the Freeze
+matters: should it ever hit a whole audience, the Freeze holds the batch.

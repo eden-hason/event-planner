@@ -151,6 +151,42 @@ test('a guest on the way ends in an open step, and no phone is one step', () => 
   );
 });
 
+test('a guest an SMS Fallback is coming for ends in an open SMS step', () => {
+  const journey = buildJourney(
+    row({
+      delivery: 'sms_on_its_way',
+      steps: [
+        {
+          channel: 'whatsapp',
+          fallback: null,
+          sentAt: '2026-10-08T16:13:00Z',
+          failedAt: '2026-10-08T16:13:45Z',
+        },
+      ],
+    }),
+  );
+  assert.deepEqual(
+    journey.map(
+      (s: { kind: string; channel?: string }) =>
+        `${s.kind}${s.channel ? `:${s.channel}` : ''}`,
+    ),
+    ['sent:whatsapp', 'not_delivered:whatsapp', 'sms_on_its_way:sms'],
+  );
+});
+
+test('an SMS on its way is not reached yet, and has no read receipt to miss', () => {
+  const rows = [
+    row({ guestName: 'a', delivery: 'sms_on_its_way' }),
+    row({ guestName: 'b', delivery: 'not_delivered' }),
+  ];
+  const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
+    filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
+  assert.deepEqual(names('notReached'), ['a', 'b']);
+  assert.deepEqual(names('sms_on_its_way'), ['a']);
+  assert.equal(guestStatus(rows[0]), 'sms_on_its_way');
+  assert.equal(seenState(rows[0]), 'na');
+});
+
 test('SMS never claims delivered or seen', () => {
   const journey = buildJourney(
     row({
