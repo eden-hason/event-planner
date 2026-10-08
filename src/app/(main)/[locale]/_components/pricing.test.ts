@@ -21,9 +21,9 @@ describe('clampRecords', () => {
     assert.equal(clampRecords(1050), 1000);
   });
 
-  it('snaps to the 50-record step', () => {
-    assert.equal(clampRecords(170), 150);
-    assert.equal(clampRecords(180), 200);
+  it('snaps to the 10-record step', () => {
+    assert.equal(clampRecords(173), 170);
+    assert.equal(clampRecords(176), 180);
   });
 
   it('falls back to the minimum for non-numbers', () => {
