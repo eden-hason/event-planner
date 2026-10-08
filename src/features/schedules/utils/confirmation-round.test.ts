@@ -14,11 +14,17 @@ import {
 import type { MessageTemplateApp } from '../schemas/message-templates';
 import type { ParameterResolutionContext } from './parameter-resolvers';
 
-const confirmation = (id: string, scheduledDate: string, status: string | null = null) => ({
+const confirmation = (
+  id: string,
+  scheduledDate: string | null,
+  status: string | null = null,
+  targetStatus: string | null = null,
+) => ({
   id,
   scheduleTypeKey: 'confirmation',
   scheduledDate,
   status,
+  targetStatus,
 });
 
 const template: MessageTemplateApp = {
@@ -71,6 +77,19 @@ describe('isFollowUpConfirmation', () => {
   it('ignores an expired earlier round - it never asked anyone', () => {
     const expired = confirmation('a', '2026-10-01T07:00:00Z', 'expired');
     assert.equal(isFollowUpConfirmation(second, [expired, second]), false);
+  });
+
+  it('puts an undated round after every dated one', () => {
+    const undated = confirmation('c', null);
+    assert.equal(isFollowUpConfirmation(undated, [first, undated]), true);
+    assert.equal(isFollowUpConfirmation(first, [first, undated]), false);
+  });
+
+  it('orders two undated rounds by audience - everyone first, then non-responders', () => {
+    const everyone = confirmation('z', null);
+    const chase = confirmation('a', null, null, 'pending');
+    assert.equal(isFollowUpConfirmation(everyone, [everyone, chase]), false);
+    assert.equal(isFollowUpConfirmation(chase, [everyone, chase]), true);
   });
 
   it('never applies to another Schedule Type', () => {

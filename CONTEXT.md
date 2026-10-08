@@ -182,6 +182,33 @@ and time: a Schedule holding two answers to "when" will eventually give the wron
 A Due Time is a request, not a promise. What becomes of it is decided by the **Send
 Window**.
 
+A Schedule may have no Due Time yet - see **Undated Schedule**. It never has more than one.
+
+## Undated Schedule
+
+A Schedule that has no **Due Time** because the Owner has not chosen one. It is never sent:
+an Undated Schedule is not late, not held and not expired, it simply has not been asked
+for.
+
+Initial Invitations and Confirmations begin undated - when to invite and when to ask for an
+answer is the Owner's call, and Kululu does not guess it. Event Reminders and Thank Yous
+begin with a Due Time Kululu proposes, relative to the Event date, which the Owner may
+change. Call plans are proposed a date too: a person starts them, so a proposed date can
+never reach a Guest by itself.
+
+Undated is a starting state, not a switch. Once dated, a Schedule can be re-dated but not
+made undated again; deciding not to send is turning the Schedule off, which is a different
+thing from not having decided yet.
+
+An Owner dates a Schedule only once their Event can send. Until then the Schedule is
+locked, dated or not.
+
+While an Event that can send has none of its Initial Invitations or Confirmations dated or
+sent, the Owner is offered a **Featured Action** to date one, and within 21 days of the
+Event an Operator sees a **No Ask Planned** Signal. Dating any one of them clears both - an
+Owner who invites on paper and only wants a Confirmation is not chased about the
+Invitation.
+
 ## Send Window
 
 The hours in which Kululu may put a message in front of a Guest: 09:00 to 21:00 Israel
@@ -442,8 +469,10 @@ never merge - impersonation is a lens, not a change of identity.
 
 ## Signal
 
-A condition, derived at read time, that an Operator should look at. There are exactly three:
-an **Overdue Schedule**, a **Failed Delivery**, and a **Stale Call Round**.
+A condition, derived at read time, that an Operator should look at. There are exactly four:
+an **Overdue Schedule**, a **Failed Delivery**, a **Stale Call Round**, and **No Ask
+Planned** (an Event that can send, 21 days or less away, with no Initial Invitation or
+Confirmation dated or sent - see **Undated Schedule**).
 
 A Signal is never stored. There is no signals table and no row to mark as read: a Signal
 exists exactly as long as the condition producing it is true, and vanishes when the

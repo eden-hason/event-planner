@@ -1403,6 +1403,10 @@
         "package": {
           "label": "{count, plural, one {# record won't get messages} other {# records won't get messages}}",
           "why": "The list is bigger than the package - add records or remove guests"
+        },
+        "planAsk": {
+          "label": "Choose when to invite your guests",
+          "why": "No invitation or RSVP request goes out until you pick a date"
         }
       },
       "testMessage": {
@@ -1508,7 +1512,8 @@
         "inProgress": "In progress",
         "completed": "Finished",
         "locked": "Locked",
-        "disabled": "Locked"
+        "disabled": "Locked",
+        "undated": "No date"
       }
     },
     "timing": {
@@ -1529,7 +1534,8 @@
       "invalid": {
         "afterEvent": "Pick a date on or before the event day",
         "expires": "This time is more than {hours} hours ago, so the message would expire instead of sending - pick a later time"
-      }
+      },
+      "undatedHelper": "Pick a date to schedule this message"
     },
     "audience": {
       "cardTitle": "Who it's sent to",
@@ -1635,7 +1641,10 @@
       "callCount": "{count, plural, one {1 call} other {# calls}}",
       "callLiveStat": "{confirmed} confirmed · {awaiting} to go",
       "callDoneStat": "{confirmed} confirmed · {noAnswer} no answer",
-      "callOff": "This round was switched off. Get in touch for details"
+      "callOff": "This round was switched off. Get in touch for details",
+      "noDate": "No date yet",
+      "undatedTitle": "Not scheduled yet",
+      "undatedHint": "Pick when each one goes out - nothing is sent until you do"
     },
     "detail": {
       "back": "Back to the timeline",

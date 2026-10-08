@@ -16,10 +16,16 @@ const CAP_PER_GROUP = 4;
 const GROUP_LABEL: Record<SignalKind, string> = {
   overdue_schedule: 'Overdue schedules',
   failed_delivery: 'Failed deliveries',
+  no_ask_planned: 'No ask planned',
   stale_call_round: 'Stale call rounds',
 };
 
-const RANK: SignalKind[] = ['overdue_schedule', 'failed_delivery', 'stale_call_round'];
+const RANK: SignalKind[] = [
+  'overdue_schedule',
+  'failed_delivery',
+  'no_ask_planned',
+  'stale_call_round',
+];
 
 export function SignalList({ signals }: { signals: Signal[] }) {
   if (signals.length === 0) {
@@ -33,7 +39,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">Nothing needs your attention</span>
             <span className="text-muted-foreground text-[13px]">
-              No overdue schedules, failed deliveries, or stale call rounds
+              No overdue schedules, failed deliveries, unplanned asks, or stale call rounds
             </span>
           </div>
         </BandRow>

@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { israelWallClockParts } from '@/lib/date-time';
 
 import { updateCustomText, updateScheduledDate } from '../actions';
+import { DEFAULT_SEND_TIME } from '../utils/timeline';
 import type { ScheduleApp } from '../schemas';
 import {
   dueTimeIssue as findDueTimeIssue,
@@ -29,7 +30,7 @@ interface ScheduleSettings {
   editable: boolean;
   note: string;
   setNote: (note: string) => void;
-  /** The Due Time, as an instant. */
+  /** The Due Time, as an instant. Empty while an Undated Schedule has no date picked. */
   scheduledDate: string;
   setScheduledDate: (iso: string) => void;
   /** The Israel wall clock of the Due Time, `HH:mm`. */
@@ -99,8 +100,12 @@ export function ScheduleSettingsProvider({
 
   // Read back out of the Due Time rather than stored beside it: there is one
   // instant, and the clock face is a view of it (ADR 0015).
+  // An Undated Schedule starts on the default hour: a time alone sends nothing,
+  // so only the date is left for the Owner to choose (ADR 0029).
   const [scheduledTime, setScheduledTime] = useState(() =>
-    schedule.scheduledDate ? israelWallClockParts(schedule.scheduledDate).time : '',
+    schedule.scheduledDate
+      ? israelWallClockParts(schedule.scheduledDate).time
+      : DEFAULT_SEND_TIME,
   );
 
   // `useState` only seeds on mount, and this provider outlives a server

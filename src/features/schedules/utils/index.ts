@@ -50,6 +50,9 @@ export {
   type GuestSendResult,
 } from './send-helpers';
 
+export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
+export { comparePlanOrder, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
+
 export {
   classifyWhatsAppFailure,
   describeGuestLevelFailure,

@@ -28,7 +28,11 @@ export type OverviewStats = {
   confirmed: number;
 };
 
-export type SignalKind = 'overdue_schedule' | 'failed_delivery' | 'stale_call_round';
+export type SignalKind =
+  | 'overdue_schedule'
+  | 'failed_delivery'
+  | 'no_ask_planned'
+  | 'stale_call_round';
 
 /**
  * A condition derived at read time that an Operator should look at. Never
@@ -188,11 +192,14 @@ export type EventTimelineDelivery = {
 export type EventTimelineRow = {
   id: string;
   kind: 'message' | 'call';
+  /** The schedule type's catalog key */
+  scheduleTypeKey: string;
   title: string;
   status: 'planned' | 'sent' | 'cancelled' | 'in_progress' | 'completed';
-  scheduledDate: string;
+  /** Null for an Undated Schedule, which the Owner has not dated yet (ADR 0029). */
+  scheduledDate: string | null;
   /** Israel wall clock of the Due Time, derived - there is no stored clock face. */
-  scheduledTime: string;
+  scheduledTime: string | null;
   sentAt: string | null;
   targetStatus: string | null;
   channel: string | null;

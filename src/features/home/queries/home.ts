@@ -6,7 +6,13 @@ import { getEffectiveUser, getUserProfile } from '@/features/auth/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import { getGlobalProgressCounts } from '@/features/seating/queries';
 import { findGuestIssues } from '@/features/guests';
-import { isGiftingEnabled } from '@/features/schedules/utils';
+import {
+  ASK_TYPE_KEYS,
+  comparePlanOrder,
+  hasNoAskPlanned,
+  isGiftingEnabled,
+  planEntryFromRow,
+} from '@/features/schedules/utils';
 import { daysUntil } from '@/lib/date-time';
 import { TEST_MESSAGE_CAP } from '@/features/schedules/services/send-test-message';
 import type { EventApp } from '@/features/events/schemas';
@@ -62,6 +68,10 @@ export const getHomeViewer = cache(async function getHomeViewer(
  * The earliest confirmation Schedule that has not gone out yet - the one a Test
  * Message previews. Reads through the viewer's own client, so RLS also confirms
  * the event is theirs.
+ *
+ * A dated one wins; with none dated it is the first Undated one in plan order,
+ * the round that asks everyone (ADR 0029). The Test Message is about what the
+ * message says, which an Undated Schedule already knows.
  */
 export const getTestMessageSchedule = cache(async function getTestMessageSchedule(
   eventId: string,
@@ -69,18 +79,18 @@ export const getTestMessageSchedule = cache(async function getTestMessageSchedul
   const { supabase } = await getEffectiveClient();
   const { data, error } = await supabase
     .from('schedules')
-    .select('id, schedule_types!inner (key)')
+    .select('id, scheduled_date, target_status, schedule_types!inner (key)')
     .eq('event_id', eventId)
     .eq('schedule_types.key', 'confirmation')
-    .is('status', null)
-    .order('scheduled_date', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .is('status', null);
   if (error) {
     console.error('Error fetching the test message schedule:', error);
     return null;
   }
-  return data ? { id: data.id } : null;
+  // An Event has a couple of Confirmations at most, so the plan order is
+  // applied here rather than restated as SQL that could drift from it.
+  const [first] = (data ?? []).map(planEntryFromRow).sort(comparePlanOrder);
+  return first ? { id: first.id } : null;
 });
 
 async function canReceiveTestMessage(eventId: string, viewer: HomeViewer): Promise<boolean> {
@@ -117,20 +127,49 @@ async function countRows(table: 'tables' | 'expenses', eventId: string): Promise
   return count ?? 0;
 }
 
+/**
+ * Whether a sending Event has none of its Initial Invitations or Confirmations
+ * dated (ADR 0029) - nothing will ever ask its Guests anything until one is.
+ * An Event that cannot send yet is not asked: it cannot date them.
+ */
+async function hasNoAskPlannedForEvent(event: EventApp): Promise<boolean> {
+  if (!event.canCreateSchedules) return false;
+  const { supabase } = await getEffectiveClient();
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('id, scheduled_date, schedule_types!inner (key)')
+    .eq('event_id', event.id)
+    .in('schedule_types.key', [...ASK_TYPE_KEYS]);
+  if (error) {
+    console.error('Error fetching the ask plan:', error);
+    return false;
+  }
+  return hasNoAskPlanned((data ?? []).map(planEntryFromRow));
+}
+
 export async function getFeaturedActionFacts(
   event: EventApp,
   viewer: HomeViewer,
 ): Promise<Omit<FeaturedActionFacts, 'recordsOverPackage'>> {
-  const [guests, groups, collaboratorCount, testable, tableCount, expenseCount, previewToken] =
-    await Promise.all([
-      getHomeGuests(event.id),
-      getHomeGroups(event.id),
-      getCollaboratorCount(event.id),
-      canReceiveTestMessage(event.id, viewer),
-      countRows('tables', event.id),
-      countRows('expenses', event.id),
-      getPreviewToken(event.id),
-    ]);
+  const [
+    guests,
+    groups,
+    collaboratorCount,
+    testable,
+    tableCount,
+    expenseCount,
+    previewToken,
+    noAskPlanned,
+  ] = await Promise.all([
+    getHomeGuests(event.id),
+    getHomeGroups(event.id),
+    getCollaboratorCount(event.id),
+    canReceiveTestMessage(event.id, viewer),
+    countRows('tables', event.id),
+    countRows('expenses', event.id),
+    getPreviewToken(event.id),
+    hasNoAskPlannedForEvent(event),
+  ]);
 
   const issues = findGuestIssues(guests);
 
@@ -148,6 +187,7 @@ export async function getFeaturedActionFacts(
     giftingConfigured: isGiftingEnabled(event.eventSettings),
     hasPreviewToken: previewToken !== null,
     expenseCount,
+    noAskPlanned,
   };
 }
 
@@ -175,6 +215,8 @@ export async function getStatusStrip(event: EventApp): Promise<StatusStripData> 
       .select('scheduled_date, schedule_types!inner (key)')
       .eq('event_id', event.id)
       .is('status', null)
+      // An Undated Schedule is not next - nothing goes out until it is dated.
+      .not('scheduled_date', 'is', null)
       .order('scheduled_date', { ascending: true })
       .limit(1)
       .maybeSingle(),

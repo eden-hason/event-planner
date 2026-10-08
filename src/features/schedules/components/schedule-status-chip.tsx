@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import {
+  IconCalendarPlus,
   IconCheck,
   IconClock,
   IconLock,
@@ -14,7 +15,7 @@ import type { OutreachItemStatus } from '../types';
 type ChipIcon = React.ComponentType<IconProps>;
 
 /**
- * The five readings a Schedule has on the timeline.
+ * The readings a Schedule has on the timeline.
  *
  * 'locked' and 'cancelled' are deliberately different chips over what is,
  * underneath, the same inert row: "off" is a decision the organiser made and
@@ -24,6 +25,10 @@ type ChipIcon = React.ComponentType<IconProps>;
  * 'expired' shares the muted treatment with 'cancelled' because the outcome for
  * the guest is the same - no message - and keeps its own label because the
  * reason is not (ADR 0015).
+ *
+ * 'undated' is the one reading that asks the Owner for something: nothing goes
+ * out until they pick a Due Time (ADR 0029). It takes the primary tone rather
+ * than 'pending''s, which promises a send that is not coming.
  *
  * A call round's 'in_progress' and 'completed' land here too: the distinction
  * that matters in a list is done / in flight / abandoned, not which engine
@@ -36,6 +41,7 @@ const TONE: Record<OutreachItemStatus, string> = {
   pending: 'bg-violet-tint text-violet-strong',
   in_progress: 'bg-info-tint text-info-strong',
   locked: 'bg-warning-tint text-warning-ink',
+  undated: 'bg-primary/10 text-primary',
   cancelled: 'bg-muted text-muted-foreground',
   expired: 'bg-muted text-muted-foreground',
 };
@@ -44,6 +50,7 @@ const ICON: Partial<Record<OutreachItemStatus, ChipIcon>> = {
   sent: IconCheck,
   pending: IconClock,
   locked: IconLock,
+  undated: IconCalendarPlus,
 };
 
 const LABEL_KEY: Record<OutreachItemStatus, string> = {
@@ -52,6 +59,7 @@ const LABEL_KEY: Record<OutreachItemStatus, string> = {
   pending: 'pending',
   in_progress: 'inProgress',
   locked: 'locked',
+  undated: 'undated',
   cancelled: 'cancelled',
   expired: 'expired',
 };

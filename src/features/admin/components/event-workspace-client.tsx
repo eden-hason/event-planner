@@ -71,10 +71,14 @@ export function PhoneQualityDisclosure({ summary }: { summary: EventGuestSummary
 
 export function WorkspaceSignals({ signals }: { signals: EventWorkspaceSignal[] }) {
   if (!signals.length) return null;
-  const destructive = signals.some((signal) => signal.kind !== 'stale_call_round');
+  // Only the failure kinds take colour (see SignalRow).
+  const destructive = signals.some(
+    (signal) => signal.kind === 'overdue_schedule' || signal.kind === 'failed_delivery',
+  );
   const labels: Record<EventWorkspaceSignal['kind'], string> = {
     overdue_schedule: 'Overdue schedules',
     failed_delivery: 'Failed deliveries',
+    no_ask_planned: 'No ask planned',
     stale_call_round: 'Stale call rounds',
   };
   const groups = signals.length > 6
@@ -163,7 +167,7 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
       : row.status === 'sent' || row.status === 'completed'
         ? 'border-l-success'
         : 'border-l-border';
-  const dateLabel = row.status === 'cancelled'
+  const dateLabel = row.status === 'cancelled' || !row.scheduledDate
     ? null
     : formatScheduleDateTime(row.scheduledDate).split(',')[0];
   return (
@@ -171,6 +175,8 @@ function TimelineRow({ row, eventId }: { row: EventTimelineRow; eventId: string 
       <div className="text-muted-foreground flex flex-col items-end gap-0.5 pt-3 text-right text-[11.5px] tabular-nums">
         {dateLabel && <span className="text-foreground text-[12.5px] font-medium whitespace-nowrap">{dateLabel}</span>}
         {dateLabel && <span>{row.scheduledTime}</span>}
+        {/* The Owner has not picked a Due Time (ADR 0029): nothing will send. */}
+        {!row.scheduledDate && row.status !== 'cancelled' && <span>No date</span>}
       </div>
       <div className={cn('bg-card min-w-0 overflow-hidden rounded-lg border border-l-[3px] shadow-xs', rail)}>
         <div className="flex flex-wrap items-center gap-3 px-3.5 py-3">

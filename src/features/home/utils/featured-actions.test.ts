@@ -20,7 +20,25 @@ const settled: FeaturedActionFacts = {
   hasPreviewToken: false,
   expenseCount: 1,
   recordsOverPackage: 0,
+  noAskPlanned: false,
 };
+
+describe('no ask planned', () => {
+  it('asks the Owner to date an ask, ahead of every setup step', () => {
+    const ranked = rankFeaturedActions({
+      ...settled,
+      noAskPlanned: true,
+      detailsComplete: false,
+      hasInvitationImage: false,
+      collaboratorCount: 1,
+    });
+    assert.equal(ranked[0], 'planAsk');
+  });
+
+  it('is gone once an ask is dated', () => {
+    assert.ok(!rankFeaturedActions(settled).includes('planAsk'));
+  });
+});
 
 describe('package warning', () => {
   it('no package warning while the list fits the package', () => {

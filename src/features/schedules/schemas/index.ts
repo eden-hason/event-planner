@@ -113,8 +113,9 @@ export const DISPATCH_SCHEDULE_SELECT =
 export const ScheduleDbSchema = z.object({
   id: z.uuid(),
   event_id: z.uuid(),
-  // The Due Time: one instant, authored as Israel wall clock (ADR 0015).
-  scheduled_date: z.string(),
+  // The Due Time: one instant, authored as Israel wall clock (ADR 0015). Null
+  // for an Undated Schedule, which the Owner has not dated yet (ADR 0029).
+  scheduled_date: z.string().nullable(),
   status: z.enum(SCHEDULE_STATUSES).nullable(),
   // When the Dispatcher claimed this Schedule and queued its Deliveries.
   dispatched_at: z.string().nullable().optional(),

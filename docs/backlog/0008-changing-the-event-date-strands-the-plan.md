@@ -39,6 +39,10 @@ the safest default was to touch nothing the organiser had not asked to be touche
   it is only half of it: the Owner is told plainly, but the "one action that would fix it" is
   still seven rows edited by hand on the messages page.
 
+- **Fewer Schedules are seeded with a date now** (ADR 0029). Initial Invitations and
+  Confirmations start undated, so a date change strands only the Event Reminder, the Thank
+  You, call plans, and dates the Owner chose. The problem is narrower, but it is still there.
+
 ## Options already considered
 
 - **Shift every unsent Schedule by the same delta.** Preserves whatever the organiser had
