@@ -20,6 +20,7 @@ export type GuestStatus =
   | 'delivered'
   | 'sms'
   | 'on_its_way'
+  | 'sms_on_its_way'
   | 'not_delivered'
   | 'no_phone'
   | 'outside_package'
@@ -50,6 +51,7 @@ export function seenState(row: GuestInteractionRow): 'seen' | 'unseen' | 'na' {
 
 const NOT_REACHED: GuestDeliveryOutcome[] = [
   'on_its_way',
+  'sms_on_its_way',
   'not_delivered',
   'no_phone',
   'outside_package',
@@ -57,6 +59,7 @@ const NOT_REACHED: GuestDeliveryOutcome[] = [
 
 export type NotReachedFilter =
   | 'on_its_way'
+  | 'sms_on_its_way'
   | 'not_delivered'
   | 'no_phone'
   | 'outside_package';
@@ -137,6 +140,7 @@ export type JourneyStepKind =
   | 'seen'
   | 'not_delivered'
   | 'on_its_way'
+  | 'sms_on_its_way'
   | 'no_phone'
   | 'outside_package'
   | 'confirmed'
@@ -216,6 +220,9 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
     .map(({ step }) => step);
 
   if (row.delivery === 'on_its_way') ordered.push({ kind: 'on_its_way' });
+  if (row.delivery === 'sms_on_its_way') {
+    ordered.push({ kind: 'sms_on_its_way', channel: 'sms' });
+  }
   return ordered;
 }
 

@@ -79,6 +79,26 @@ export function freezeDecision(params: {
   };
 }
 
+/**
+ * The Freeze for one Schedule's attempts, with the configured thresholds. The
+ * sweeper and the results screen both ask this, so the screen never promises
+ * an SMS the sweeper is withholding.
+ */
+export function scheduleFreeze(
+  attempts: Pick<AttemptRow, 'channel' | 'status' | 'error_code'>[],
+): { frozen: boolean; reason: string | null } {
+  const config = sendingConfig();
+  const whatsAppAttempts = attempts.filter((a) => a.channel === 'whatsapp');
+  return freezeDecision({
+    totalAttempts: whatsAppAttempts.length,
+    guestLevelFailures: whatsAppAttempts.filter(
+      (a) => a.status === 'failed' && classifyWhatsAppFailure(a.error_code) === 'guest',
+    ).length,
+    freezePct: config.smsFallbackFreezePct,
+    freezeMin: config.smsFallbackFreezeMin,
+  });
+}
+
 type AttemptRow = {
   delivery_id: string;
   status: string;
@@ -244,17 +264,7 @@ async function evaluateSchedule(
     return { ...nothing, outcome: 'not_settled', reason: settle.reason };
   }
 
-  const whatsAppAttempts = attempts.filter((a) => a.channel === 'whatsapp');
-  const guestLevelFailures = whatsAppAttempts.filter(
-    (a) => a.status === 'failed' && classifyWhatsAppFailure(a.error_code) === 'guest',
-  ).length;
-
-  const freeze = freezeDecision({
-    totalAttempts: whatsAppAttempts.length,
-    guestLevelFailures,
-    freezePct: config.smsFallbackFreezePct,
-    freezeMin: config.smsFallbackFreezeMin,
-  });
+  const freeze = scheduleFreeze(attempts);
   if (freeze.frozen) {
     console.warn(`[sms-fallback-sweep] Frozen for schedule ${scheduleId}: ${freeze.reason}`);
     return { ...nothing, outcome: 'frozen', reason: freeze.reason };

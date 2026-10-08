@@ -2,6 +2,12 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from '../utils';
+import {
+  awaitingSmsFallback,
+  stuckWindow,
+  type FallbackDeliveryRow,
+} from '../services/send-sms-fallback';
+import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -9,8 +15,11 @@ import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from 
  * - `whatsapp` / `sms`: Reached, over that channel. An accepted SMS counts -
  *   SMS never reports further than accepted.
  * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
- * - `not_delivered`: every attempt failed. Deliberately factual - nothing here
- *   promises a retry until an SMS attempt actually exists.
+ * - `sms_on_its_way`: WhatsApp failed and the automatic SMS Fallback will
+ *   reach them - the SMS is being sent, or the sweeper sends it once the
+ *   Schedule settles. Never while a Fallback Freeze holds the batch.
+ * - `not_delivered`: every attempt failed and no SMS is coming by itself - a
+ *   System-level Failure, a frozen Schedule, or an SMS that failed too.
  * - `no_phone`: targeted, but no attempt was possible, so no send ever
  *   happened. Listed in the table and excluded from the audience total.
  * - `outside_package`: targeted, but the Guest Record was outside the Record
@@ -20,6 +29,7 @@ export type GuestDeliveryOutcome =
   | 'whatsapp'
   | 'sms'
   | 'on_its_way'
+  | 'sms_on_its_way'
   | 'not_delivered'
   | 'no_phone'
   | 'outside_package';
@@ -90,6 +100,7 @@ export type ScheduleInteractionData = {
     reachedByFallback: number;
     notReached: {
       onItsWay: number;
+      smsOnItsWay: number;
       notDelivered: number;
       noPhone: number;
       outsidePackage: number;
@@ -139,6 +150,7 @@ function toOutcome(
 type AttemptRow = {
   channel: string;
   status: string;
+  error_code: number | null;
   triggered_by: string;
   sent_at: string | null;
   delivered_at: string | null;
@@ -178,7 +190,7 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
+        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
       )
       .eq('schedule_id', scheduleId),
   ]);
@@ -190,7 +202,13 @@ export async function getScheduleInteractionData(
       reachedWhatsapp: 0,
       reachedSms: 0,
       reachedByFallback: 0,
-      notReached: { onItsWay: 0, notDelivered: 0, noPhone: 0, outsidePackage: 0 },
+      notReached: {
+        onItsWay: 0,
+        smsOnItsWay: 0,
+        notDelivered: 0,
+        noPhone: 0,
+        outsidePackage: 0,
+      },
       excludedNoPhone: 0,
       excludedOutsidePackage: 0,
       seen: 0,
@@ -234,18 +252,55 @@ export async function getScheduleInteractionData(
   let seenCapable = 0;
   const seenCapableIds = new Set<string>();
 
-  for (const row of deliveriesResult.data ?? []) {
+  const deliveryRows = deliveriesResult.data ?? [];
+  const smsComing = awaitingSmsFallback(
+    deliveryRows.map((row) => {
+      const guest = row.guests as unknown as {
+        name: string;
+        phone_number: string | null;
+      };
+      return {
+        id: row.id as string,
+        status: row.status,
+        guest_id: row.guest_id as string,
+        confirmation_token: null,
+        guests: { name: guest.name, phone_number: guest.phone_number },
+        message_delivery_attempts: (
+          (row.message_delivery_attempts as AttemptRow[] | null) ?? []
+        ).map((attempt) => ({
+          channel: attempt.channel,
+          status: attempt.status,
+          error_code: attempt.error_code,
+          error_message: null,
+          sent_at: attempt.sent_at,
+          created_at: attempt.created_at,
+        })),
+      } as FallbackDeliveryRow;
+    }),
+    {
+      frozen: scheduleFreeze(
+        deliveryRows.flatMap(
+          (row) => (row.message_delivery_attempts as AttemptRow[] | null) ?? [],
+        ),
+      ).frozen,
+      window: stuckWindow(),
+    },
+  );
+
+  for (const row of deliveryRows) {
     const guest = row.guests as unknown as {
       name: string;
       amount: number | null;
       phone_number: string | null;
     };
     const entry = rowFor(row.guest_id as string, guest);
-    entry.delivery = toOutcome(
-      row.status,
-      row.delivery_method,
-      (row.not_sent_reason as string | null) ?? null,
-    );
+    entry.delivery = smsComing.has(row.id as string)
+      ? 'sms_on_its_way'
+      : toOutcome(
+          row.status,
+          row.delivery_method,
+          (row.not_sent_reason as string | null) ?? null,
+        );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
     entry.steps = toSteps(row.message_delivery_attempts as AttemptRow[] | null);
@@ -317,6 +372,7 @@ export async function getScheduleInteractionData(
     reachedByFallback: guests.filter((g) => g.viaFallback).length,
     notReached: {
       onItsWay: count('on_its_way'),
+      smsOnItsWay: count('sms_on_its_way'),
       notDelivered: count('not_delivered'),
       noPhone,
       outsidePackage,

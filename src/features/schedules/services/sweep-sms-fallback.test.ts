@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { freezeDecision, lastFailureActivityAt, settleDecision } from './sweep-sms-fallback.ts';
+import { freezeDecision, lastFailureActivityAt, scheduleFreeze, settleDecision } from './sweep-sms-fallback.ts';
 
 const THRESHOLDS = { freezePct: 30, freezeMin: 10 };
 
@@ -70,6 +70,26 @@ test('a whole audience failing at guest level freezes', () => {
     ...THRESHOLDS,
   });
   assert.equal(decision.frozen, true);
+});
+
+test('a spike of 131000 freezes like any other guest-level code', () => {
+  // 131000 is Meta's generic error, made guest-level so a lone one falls back.
+  // Its cause is unknown, so a whole audience of them must still hold the batch.
+  const attempts = [
+    ...Array.from({ length: 12 }, () => ({ channel: 'whatsapp', status: 'failed', error_code: 131000 })),
+    ...Array.from({ length: 8 }, () => ({ channel: 'whatsapp', status: 'read', error_code: null })),
+  ];
+  assert.equal(scheduleFreeze(attempts).frozen, true);
+});
+
+test('the freeze counts WhatsApp attempts only', () => {
+  // The fallback SMS sent so far must not dilute the rate.
+  const attempts = [
+    ...Array.from({ length: 12 }, () => ({ channel: 'whatsapp', status: 'failed', error_code: 131026 })),
+    ...Array.from({ length: 8 }, () => ({ channel: 'whatsapp', status: 'read', error_code: null })),
+    ...Array.from({ length: 30 }, () => ({ channel: 'sms', status: 'sent', error_code: null })),
+  ];
+  assert.equal(scheduleFreeze(attempts).frozen, true);
 });
 
 test('no attempts cannot freeze', () => {

@@ -28,7 +28,7 @@ test('guest-level failures never retry', () => {
   // A number that is not on WhatsApp will not be on WhatsApp in fifteen
   // minutes. Retrying costs a send and changes nothing; the SMS Fallback is
   // the remedy for these.
-  for (const code of [131026, 131049, 131050, 130472, 131021]) {
+  for (const code of [131026, 131049, 131050, 130472, 131021, 131000]) {
     assert.equal(isTransient(code, 400), false, `${code} should not retry`);
     assert.equal(classifyWhatsAppFailure(code), 'guest');
   }
