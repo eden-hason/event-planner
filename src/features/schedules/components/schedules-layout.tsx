@@ -111,7 +111,11 @@ export function SchedulesLayout({
         back: { label: t('detail.back'), onClick: close },
       });
     } else {
-      setHeader({ title: t('header.title'), subtitle: summary });
+      setHeader({
+        title: t('header.title'),
+        subtitle: summary,
+        transparent: true,
+      });
     }
     return () => clearHeader();
   }, [setHeader, clearHeader, t, summary, headerItem, close]);
