@@ -10,7 +10,9 @@ import { isAuthorizedCron } from '@/lib/config/sending';
  * Finds Schedules whose Due Time has come and queues a rendered Delivery per
  * Guest. Nothing here talks to WhatsApp; that is the Worker's job.
  */
-export const maxDuration = 60;
+// Matches the Worker. Queueing is one statement now (ADR 0031), so a dispatch
+// takes seconds; the headroom is for rendering a very large audience.
+export const maxDuration = 300;
 
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) {

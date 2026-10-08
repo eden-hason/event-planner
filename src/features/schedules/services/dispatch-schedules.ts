@@ -30,6 +30,19 @@ import { loadOutsidePackageIds } from '@/features/billing/services';
 
 const DEFAULT_BATCH = 25;
 
+/**
+ * How long a claim may go without a 'dispatched' row before it counts as
+ * interrupted. Comfortably past the dispatch route's maxDuration, so a dispatch
+ * still running is never mistaken for one that died.
+ */
+const RESUME_AFTER_MINUTES = 10;
+
+/** Failed tries after which an interrupted dispatch is left to an Operator. */
+const MAX_RESUME_FAILURES = 3;
+
+/** Interrupted dispatches looked at per run, after the due ones. */
+const MAX_RESUMES_PER_RUN = 5;
+
 export type DispatchOutcome = 'dispatched' | 'held' | 'expired' | 'failed';
 
 export type DispatchResult = {
@@ -42,6 +55,8 @@ export type DispatchResult = {
 export type DispatchSummary = {
   considered: number;
   dispatched: number;
+  /** Interrupted dispatches finished this run (ADR 0031), also counted in their outcome */
+  resumed: number;
   held: number;
   expired: number;
   failed: number;
@@ -89,6 +104,62 @@ export function expiryReason(params: {
   }
 
   return null;
+}
+
+export type DispatchLogRow = { outcome: DispatchOutcome; attemptedAt: string };
+
+/**
+ * Whether a claimed Schedule is an interrupted dispatch worth resuming now.
+ *
+ * `queue_dispatch` queues every Delivery and logs the 'dispatched' row in one
+ * transaction, so a claim with no such row is a dispatch that never finished -
+ * killed at maxDuration, or failed after the claim (ADR 0031). It is resumed
+ * once it is old enough that no Dispatcher can still be working on it, and
+ * given up on after a few failed tries ten minutes apart, so a Schedule that cannot render does
+ * not write a failure to its log every minute for two days. An 'expired' row is
+ * a resume that found the moment had passed, and is final too.
+ *
+ * Pure, so the rules can be reasoned about without a database.
+ */
+export function shouldResume(params: {
+  dispatchedAt: string;
+  log: DispatchLogRow[];
+  now: Date;
+  maxLatenessHours: number;
+}): boolean {
+  const { dispatchedAt, log, now, maxLatenessHours } = params;
+
+  const age = now.getTime() - Date.parse(dispatchedAt);
+  if (!Number.isFinite(age)) return false;
+  if (age < RESUME_AFTER_MINUTES * 60_000) return false;
+  if (age > maxLatenessHours * HOUR_MS) return false;
+
+  if (log.some((row) => row.outcome === 'dispatched' || row.outcome === 'expired')) {
+    return false;
+  }
+
+  const claimedAt = Date.parse(dispatchedAt);
+  const failures = log
+    .filter((row) => row.outcome === 'failed' && Date.parse(row.attemptedAt) >= claimedAt)
+    .map((row) => Date.parse(row.attemptedAt));
+  if (failures.length >= MAX_RESUME_FAILURES) return false;
+
+  // Tries are spaced, not one a minute: three failures should span half an
+  // hour, long enough for a transient cause - a deploy landing before its
+  // migration - to clear before the resume gives up.
+  const lastFailure = Math.max(...failures);
+  return !(now.getTime() - lastFailure < RESUME_AFTER_MINUTES * 60_000);
+}
+
+/** The held reason, saying when it will go and not just that it is waiting. */
+function heldReason(now: Date): string {
+  const { sendWindow } = sendingConfig();
+  const opensAt = nextOpenSlot(now, sendWindow);
+  return (
+    `Outside the send window (${sendWindow.start}-${sendWindow.end} Israel) - ` +
+    `will send at ` +
+    `${formatScheduleDateTime(opensAt.toISOString())}`
+  );
 }
 
 async function logDispatchAttempt(
@@ -184,11 +255,7 @@ async function dispatchOne(
   if (!isWithinSendWindow(now, config.sendWindow)) {
     // Say when it will go, not just that it is waiting. "Held" with no time is
     // the same unanswered question the dispatch log exists to end.
-    const opensAt = nextOpenSlot(now, config.sendWindow);
-    const reason =
-      `Outside the send window (${config.sendWindow.start}-${config.sendWindow.end} Israel) - ` +
-      `will send at ` +
-      `${formatScheduleDateTime(opensAt.toISOString())}`;
+    const reason = heldReason(now);
     await logDispatchAttempt(supabase, scheduleId, 'held', reason);
     return { scheduleId, outcome: 'held', reason, deliveriesQueued: 0 };
   }
@@ -220,6 +287,35 @@ async function dispatchOne(
     };
   }
 
+  return queueSchedule(supabase, { scheduleId, schedule, event, outsidePackage });
+}
+
+/**
+ * Renders a claimed Schedule and queues it - steps 5-8, shared by a first
+ * dispatch and a resumed one.
+ *
+ * The queueing is one `queue_dispatch` call: every Delivery and the
+ * 'dispatched' log row land together or not at all, and only Deliveries never
+ * attempted are queued. For a first dispatch that is everyone; for a resume it
+ * is exactly the Guests the interrupted run never reached (ADR 0031).
+ */
+async function queueSchedule(
+  supabase: SupabaseClient,
+  params: {
+    scheduleId: string;
+    schedule: ScheduleApp;
+    event: EventRow;
+    outsidePackage: ReadonlySet<string>;
+    resumed?: boolean;
+  },
+): Promise<DispatchResult> {
+  const { scheduleId, schedule, event, outsidePackage, resumed = false } = params;
+
+  const fail = async (reason: string): Promise<DispatchResult> => {
+    await logDispatchAttempt(supabase, scheduleId, 'failed', reason);
+    return { scheduleId, outcome: 'failed', reason, deliveriesQueued: 0 };
+  };
+
   try {
     // 5-7. Resolve the template family, expand the audience, drop the records
     //      outside the package, reserve a Delivery per Guest and render each
@@ -230,44 +326,190 @@ async function dispatchOne(
       outsidePackage,
     });
     if (!render.ok) return fail(render.reason);
-    const queued = render.rendered;
-    // 8. Queue. next_attempt_at is the whole of "waiting to be sent"; the
-    //    Worker claims on it and nulls it in the same statement.
-    const queuedAt = new Date().toISOString();
-    for (const item of queued) {
-      const { error } = await supabase
-        .from('message_deliveries')
-        .update({
-          template_id: item.templateId,
-          send_payload: item.payload,
-          next_attempt_at: queuedAt,
-        })
-        .eq('id', item.deliveryId);
-      if (error) {
-        // Partial queueing is survivable - the rest of the batch still sends,
-        // and this guest's Delivery simply has no attempt, which is visible.
-        console.error('[dispatch] Could not queue delivery', item.deliveryId, error);
-      }
-    }
 
     // A send that skipped records says so on its log row, so an Operator asking why
     // a guest got nothing finds the answer where every other dispatch reason lives.
-    const skipped =
-      render.outsidePackage > 0
-        ? `${render.outsidePackage} outside the record package skipped`
-        : null;
-    await logDispatchAttempt(supabase, scheduleId, 'dispatched', skipped, queued.length);
+    // A resume says so too: the Guests it reached got the message late.
+    const reason =
+      [
+        resumed ? 'Resumed an interrupted dispatch' : null,
+        render.outsidePackage > 0
+          ? `${render.outsidePackage} outside the record package skipped`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' - ') || null;
+
+    // 8. Queue. next_attempt_at is the whole of "waiting to be sent"; the
+    //    Worker claims on it and nulls it in the same statement.
+    const { data: queued, error } = await supabase.rpc('queue_dispatch', {
+      p_schedule_id: scheduleId,
+      p_items: render.rendered.map((item) => ({
+        delivery_id: item.deliveryId,
+        template_id: item.templateId,
+        send_payload: item.payload,
+      })),
+      p_reason: reason,
+    });
+    if (error) return fail(`Could not queue the deliveries: ${error.message}`);
+    if (queued == null) {
+      // Two Dispatchers resumed the same Schedule at once; the other finished it.
+      return {
+        scheduleId,
+        outcome: 'held',
+        reason: 'Another dispatcher finished this schedule first',
+        deliveriesQueued: 0,
+      };
+    }
+
     return {
       scheduleId,
       outcome: 'dispatched',
-      reason: skipped,
-      deliveriesQueued: queued.length,
+      reason,
+      deliveriesQueued: Number(queued),
     };
   } catch (error) {
     // Anything at all. The old engine let a throw escape to the cron, which
     // logged a line and left the Schedule looking untouched.
     return fail(error instanceof Error ? error.message : 'Dispatch failed');
   }
+}
+
+/**
+ * Finishes one interrupted dispatch (ADR 0031): a Schedule the Dispatcher
+ * claimed but never logged as dispatched, because the run died partway.
+ *
+ * The audience is rendered again, but `queue_dispatch` queues only Guests with
+ * no attempt, so nobody the interrupted run reached hears twice. The Send
+ * Window still applies; the Event having passed ends it for good, without
+ * marking the Schedule expired - part of its audience did get the message.
+ */
+async function resumeOne(
+  supabase: SupabaseClient,
+  scheduleId: string,
+  dispatchedAt: string,
+  now: Date,
+): Promise<DispatchResult> {
+  const config = sendingConfig();
+
+  const fail = async (reason: string): Promise<DispatchResult> => {
+    await logDispatchAttempt(supabase, scheduleId, 'failed', reason);
+    return { scheduleId, outcome: 'failed', reason, deliveriesQueued: 0 };
+  };
+
+  const { data, error } = await supabase
+    .from('schedules')
+    .select(
+      `${SCHEDULE_SELECT},
+       events (id, user_id, title, event_date, location, host_details,
+               invitations, reception_time, short_code, event_settings,
+               guests_experience, event_types (key))`,
+    )
+    .eq('id', scheduleId)
+    .maybeSingle();
+  if (error || !data) return fail('Could not load the schedule to resume it');
+
+  let schedule: ScheduleApp;
+  try {
+    schedule = ScheduleDbToAppSchema.parse(data);
+  } catch (parseError) {
+    return fail(
+      `Schedule row could not be read: ${parseError instanceof Error ? parseError.message : 'invalid shape'}`,
+    );
+  }
+  const eventRow = (data as { events?: Record<string, unknown> | null }).events;
+  if (!eventRow) return fail('Schedule has no event');
+  const event: EventRow = mapEventRow(eventRow);
+  if (!isMessageSchedule(schedule)) {
+    return fail(`Schedule type ${schedule.scheduleTypeKey} is not dispatched as a message`);
+  }
+
+  // Lateness is measured from the claim, not the Due Time: the Schedule was on
+  // time, it is the resume that is late.
+  const expired = expiryReason({
+    schedule: { scheduledDate: dispatchedAt, scheduleTypeKey: schedule.scheduleTypeKey },
+    eventDate: event.eventDate,
+    now,
+    maxLatenessHours: config.scheduleMaxLatenessHours,
+  });
+  if (expired) {
+    const reason = `Not resumed - ${expired}`;
+    await logDispatchAttempt(supabase, scheduleId, 'expired', reason);
+    return { scheduleId, outcome: 'expired', reason, deliveriesQueued: 0 };
+  }
+
+  if (!isWithinSendWindow(now, config.sendWindow)) {
+    const reason = `Resume held - ${heldReason(now)}`;
+    await logDispatchAttempt(supabase, scheduleId, 'held', reason);
+    return { scheduleId, outcome: 'held', reason, deliveriesQueued: 0 };
+  }
+
+  const outsidePackage = await loadOutsidePackageIds(supabase, event.id);
+  if (!outsidePackage) return fail('Could not check the record package - will retry');
+
+  return queueSchedule(supabase, { scheduleId, schedule, event, outsidePackage, resumed: true });
+}
+
+/**
+ * Finds claimed Schedules whose dispatch never finished, and resumes them.
+ *
+ * Two plain queries rather than an RPC: claims from the last lateness window
+ * are few, and 'held' rows are left out of the log read because a Schedule
+ * held overnight writes one a minute.
+ */
+async function findInterrupted(
+  supabase: SupabaseClient,
+  now: Date,
+): Promise<{ id: string; dispatchedAt: string }[]> {
+  const { scheduleMaxLatenessHours } = sendingConfig();
+  const since = new Date(now.getTime() - scheduleMaxLatenessHours * HOUR_MS).toISOString();
+  const before = new Date(now.getTime() - RESUME_AFTER_MINUTES * 60_000).toISOString();
+
+  const { data: claimed, error } = await supabase
+    .from('schedules')
+    .select('id, dispatched_at, schedule_types!inner (execution_kind)')
+    .eq('schedule_types.execution_kind', 'message')
+    .is('status', null)
+    .gte('dispatched_at', since)
+    .lte('dispatched_at', before);
+  if (error) {
+    console.error('[dispatch] Could not look for interrupted dispatches:', error);
+    return [];
+  }
+  if (!claimed?.length) return [];
+
+  const { data: log, error: logError } = await supabase
+    .from('schedule_dispatch_attempts')
+    .select('schedule_id, outcome, attempted_at')
+    .in(
+      'schedule_id',
+      claimed.map((row) => row.id),
+    )
+    .in('outcome', ['dispatched', 'expired', 'failed']);
+  if (logError) {
+    console.error('[dispatch] Could not read the dispatch log:', logError);
+    return [];
+  }
+
+  const bySchedule = new Map<string, DispatchLogRow[]>();
+  for (const row of log ?? []) {
+    const rows = bySchedule.get(row.schedule_id) ?? [];
+    rows.push({ outcome: row.outcome as DispatchOutcome, attemptedAt: row.attempted_at });
+    bySchedule.set(row.schedule_id, rows);
+  }
+
+  return claimed
+    .filter((row): row is typeof row & { dispatched_at: string } => !!row.dispatched_at)
+    .filter((row) =>
+      shouldResume({
+        dispatchedAt: row.dispatched_at,
+        log: bySchedule.get(row.id) ?? [],
+        now,
+        maxLatenessHours: scheduleMaxLatenessHours,
+      }),
+    )
+    .slice(0, MAX_RESUMES_PER_RUN)
+    .map((row) => ({ id: row.id, dispatchedAt: row.dispatched_at }));
 }
 
 /**
@@ -286,6 +528,7 @@ export async function dispatchDueSchedules(
   const summary: DispatchSummary = {
     considered: 0,
     dispatched: 0,
+    resumed: 0,
     held: 0,
     expired: 0,
     failed: 0,
@@ -324,30 +567,13 @@ export async function dispatchDueSchedules(
 
   if (error) {
     console.error('[dispatch] Could not load due schedules:', error);
-    return summary;
-  }
-  if (!due?.length) {
+  } else if (!due?.length) {
     console.log('[dispatch] Nothing due');
-    return summary;
+  } else {
+    console.log(`[dispatch] ${due.length} schedule(s) due`);
   }
-  console.log(`[dispatch] ${due.length} schedule(s) due`);
 
-  for (const row of due) {
-    // dispatchOne is written not to throw, but the loop guards anyway: one
-    // unsendable Schedule must never stop the other twenty-four, which is the
-    // failure mode this whole component replaces.
-    let result: DispatchResult;
-    try {
-      result = await dispatchOne(supabase, row as Record<string, unknown>, now);
-    } catch (error) {
-      result = {
-        scheduleId: String((row as { id?: unknown }).id ?? 'unknown'),
-        outcome: 'failed',
-        reason: error instanceof Error ? error.message : 'Dispatch threw',
-        deliveriesQueued: 0,
-      };
-      console.error('[dispatch] Unhandled failure for', result.scheduleId, error);
-    }
+  const record = (result: DispatchResult) => {
     // One line per Schedule, on every outcome and not just failures. A cron
     // whose healthy runs are silent is a cron nobody can tell is alive, and
     // "held" or "expired" is exactly what an Operator is looking for when they
@@ -365,10 +591,47 @@ export async function dispatchDueSchedules(
     else if (result.outcome === 'held') summary.held += 1;
     else if (result.outcome === 'expired') summary.expired += 1;
     else summary.failed += 1;
+  };
+
+  for (const row of due ?? []) {
+    // dispatchOne is written not to throw, but the loop guards anyway: one
+    // unsendable Schedule must never stop the other twenty-four, which is the
+    // failure mode this whole component replaces.
+    let result: DispatchResult;
+    try {
+      result = await dispatchOne(supabase, row as Record<string, unknown>, now);
+    } catch (error) {
+      result = {
+        scheduleId: String((row as { id?: unknown }).id ?? 'unknown'),
+        outcome: 'failed',
+        reason: error instanceof Error ? error.message : 'Dispatch threw',
+        deliveriesQueued: 0,
+      };
+      console.error('[dispatch] Unhandled failure for', result.scheduleId, error);
+    }
+    record(result);
+  }
+
+  // After the due ones, so a fresh Schedule never waits behind a recovery.
+  for (const { id, dispatchedAt } of await findInterrupted(supabase, now)) {
+    let result: DispatchResult;
+    try {
+      result = await resumeOne(supabase, id, dispatchedAt, now);
+    } catch (error) {
+      result = {
+        scheduleId: id,
+        outcome: 'failed',
+        reason: error instanceof Error ? error.message : 'Resume threw',
+        deliveriesQueued: 0,
+      };
+      console.error('[dispatch] Unhandled failure resuming', id, error);
+    }
+    if (result.outcome === 'dispatched') summary.resumed += 1;
+    record(result);
   }
 
   console.log(
-    `[dispatch] Done: ${summary.dispatched} dispatched, ${summary.held} held, ` +
+    `[dispatch] Done: ${summary.dispatched} dispatched (${summary.resumed} resumed), ${summary.held} held, ` +
       `${summary.expired} expired, ${summary.failed} failed, ` +
       `${summary.deliveriesQueued} deliveries queued`,
   );

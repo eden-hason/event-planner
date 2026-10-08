@@ -231,6 +231,13 @@ which is meant to land afterwards - or its **Due Time** is more than 48 hours pa
 An expiry is recorded with its reason and shown to an Operator. A Schedule that quietly
 stops mattering is the failure this replaces.
 
+## Interrupted Dispatch
+
+A Schedule the Dispatcher claimed but never finished queueing - the run died partway, so
+part of the audience got the message and the rest got nothing. Recognised by a claim with no
+`dispatched` row in the dispatch log, and resumed for the Guests who were never attempted,
+never re-sent to the ones who were.
+
 ## Variant
 
 The **editorial tone** a Schedule's message is written in - the same message, said
