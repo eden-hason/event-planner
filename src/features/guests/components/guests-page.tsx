@@ -400,13 +400,11 @@ export function GuestsPage({
             // never shows past its edges while it scrolls beneath.
             !isMobile &&
               'bg-app-shell sticky top-[var(--page-header-h,0px)] z-20 -mx-6 px-6',
-            // On mobile the design keeps the tabs on the same white surface as
-            // the title above, not the gray shell: bleed past `CardContent`'s
-            // own inset and pull up through the Card's `gap-4` so the band
-            // reads as one continuous header instead of two floating pieces.
-            // No bottom padding of its own - the border sits flush against
-            // the tabs themselves, exactly like the design's header block.
-            isMobile && '-mx-4 -mt-4 border-b bg-card px-4',
+            // On mobile the tabs sit on the page like the title above them,
+            // bleeding past `CardContent`'s own inset so their border runs
+            // edge to edge. No bottom padding of its own - the border sits
+            // flush against the tabs themselves.
+            isMobile && '-mx-4 border-b px-4',
           )}
         >
           <TabsList

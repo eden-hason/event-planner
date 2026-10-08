@@ -30,9 +30,8 @@ import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
  * this row is the only place left to reach them (the user menu lives in the
  * sidebar footer instead).
  *
- * A page can ask for a `transparent` header instead (see the feature layout
- * context): below `md` the row loses its white band and the title sits on the
- * page itself, larger, and once it scrolls away a compact bar - one line on a
+ * Below `md` the row has no surface of its own: the title sits straight on
+ * the page, larger, and once it scrolls away a compact bar - one line on a
  * blurred wash of the page - pins to the top so the title stays in view
  * without clashing with the cards passing under it.
  *
@@ -52,13 +51,14 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   // stays from `md` up, where Home is the desktop layout and the Hero is one
   // card in a grid rather than the top of the page.
   const hideChromeRowOnMobile = isHomeRoute(pathname);
-  const { title, subtitle, action, back, sticky, transparent } =
-    useFeatureLayoutContext();
+  const { title, subtitle, action, back, sticky } = useFeatureLayoutContext();
   const headerRef = useRef<HTMLDivElement>(null);
   const pinned = sticky && !seating;
   usePublishedHeight(headerRef, '--page-header-h', pinned);
-  const bare = transparent && !seating;
-  const scrolledPast = useScrolledPast(headerRef, bare);
+  // The Seating Plan never scrolls the page, and Home has no row to scroll
+  // away below `md`, so neither needs the compact bar.
+  const compactBar = !seating && !hideChromeRowOnMobile;
+  const scrolledPast = useScrolledPast(headerRef, compactBar);
   const t = useTranslations('sidebar');
   const tNav = useTranslations('navigation');
 
@@ -90,18 +90,15 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         seating
           ? 'min-h-0 flex-1 gap-4 p-0'
           : cn(
-              // The space between the header row and the content. Below `md`,
-              // where the row is a white band on the shell, the row's own
-              // `pb-3` closes out the band and this gap separates it from the
-              // content. From `md` up there is no band, so the row drops its
-              // padding and this tighter gap is all that sits between them.
+              // The space between the header row and the content: nearly all
+              // of it below `md`, where the row keeps only a sliver of bottom
+              // padding, and all of it from `md` up.
               'gap-4 md:gap-3',
               // Card's own default is `py-6` top and bottom; the chrome row
               // wants less air above it than CardContent wants below it, and
               // below `md` there's no bottom padding at all.
               // No top padding below `md` either - the chrome row owns its own
-              // there, so its white band reaches the top edge of the viewport
-              // instead of leaving a strip of the gray shell above it.
+              // there.
               'pt-0 pb-0 md:pt-3 md:pb-6',
               // Clearance above the fixed `MobileBottomNav`, at every width
               // below `md` - the card frame is gone there, but the nav still
@@ -131,31 +128,20 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           hideChromeRowOnMobile && 'hidden md:flex',
           seating
             ? cn(
-                // Below `md` the Seating Plan gets the same white band as every
-                // other page - it hands its title and its actions to this row
-                // rather than keeping a header of its own (see `SeatingPage`).
-                'bg-card px-4 pt-4 pb-3',
-                // From `md` up the workspace is full-bleed again, so the row
-                // loses the band but keeps the title: it is the page's only
+                // Below `md` the Seating Plan gets the same row as every other
+                // page - it hands its title and its actions to this row rather
+                // than keeping a header of its own (see `SeatingPage`).
+                'px-4 pt-5 pb-0.5',
+                // From `md` up the row keeps the title: it is the page's only
                 // header there too. `px-6` lines the title and its actions up
                 // with the workspace below rather than with the card edge; the
                 // Card's own `gap-4` closes the row out, so no bottom padding.
-                'md:bg-transparent md:px-6 md:pt-3 md:pb-0',
+                'md:px-6 md:pt-3 md:pb-0',
               )
-            : bare
-              ? // No band below `md`: more air above the title, and the
-                // Card's `gap-4` is nearly all that separates it from the
-                // content.
-                'px-4 pt-5 pb-0.5 md:px-6 md:pt-0 md:pb-0'
-              : cn(
-                  'px-4 pb-3 md:px-6 md:pb-0',
-                  // Below `md` the row needs its own surface to read as a header
-                  // rather than as the first line of the content. `bg-card`, not
-                  // `bg-white`, so it follows the theme into dark mode.
-                  // The top padding lives here rather than on the Card so the
-                  // band covers it (see the Card's `pt-0` below `md`).
-                  'bg-card pt-4 md:bg-transparent md:pt-0',
-                ),
+            : // Below `md` there is no band behind the row: the title sits on
+              // the page, with more air above it. The top padding lives here
+              // rather than on the Card (see the Card's `pt-0` below `md`).
+              'px-4 pt-5 pb-0.5 md:px-6 md:pt-0 md:pb-0',
           // A page that asked for it keeps this row in view (see `sticky` in
           // the feature layout context), and its own sticky controls stack
           // under it. The Card's top padding moves in here, so the row's
@@ -197,30 +183,16 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             </button>
           )}
           {title && (
-            <div
-              className={cn(
-                'min-w-0',
-                bare && 'flex flex-col gap-0.5 md:block',
-              )}
-            >
-              <h1
-                className={cn(
-                  'truncate text-xl font-semibold',
-                  // Without a band the title carries the header on its own,
-                  // so below `md` it is bigger and heavier.
-                  bare &&
-                    'text-2xl leading-[1.15] font-extrabold md:text-xl md:leading-7 md:font-semibold',
-                )}
-              >
+            <div className="flex min-w-0 flex-col gap-0.5 md:block">
+              {/*
+                With no band behind it the title carries the header on its
+                own, so below `md` it is bigger and heavier.
+              */}
+              <h1 className="truncate text-2xl leading-[1.15] font-extrabold md:text-xl md:leading-7 md:font-semibold">
                 {title}
               </h1>
               {subtitle && (
-                <p
-                  className={cn(
-                    'text-muted-foreground truncate text-xs',
-                    bare && 'text-[13px] md:text-xs',
-                  )}
-                >
+                <p className="text-muted-foreground truncate text-[13px] md:text-xs">
                   {subtitle}
                 </p>
               )}
@@ -250,7 +222,7 @@ export function PageCard({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      {bare && (
+      {compactBar && (
         <div
           aria-hidden={!scrolledPast}
           inert={!scrolledPast}
@@ -259,13 +231,38 @@ export function PageCard({ children }: { children: React.ReactNode }) {
             scrolledPast ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         >
-          {/* The `h1` above still names the page; this is its echo. */}
-          <span
-            aria-hidden
-            className="min-w-0 truncate text-base font-extrabold"
-          >
-            {title}
-          </span>
+          <div className="flex min-w-0 items-center gap-2">
+            {isMoreSubpage && (
+              <Link
+                href={buildNavUrl('/app/more', eventId)}
+                aria-label={tNav('back')}
+                className="text-muted-foreground -ms-1 flex size-7 shrink-0 items-center justify-center rounded-md"
+              >
+                <ChevronLeft className="size-5 rtl:rotate-180" />
+              </Link>
+            )}
+            {back && (
+              <button
+                type="button"
+                onClick={back.onClick}
+                aria-label={back.label}
+                className="text-muted-foreground -ms-1 flex size-7 shrink-0 items-center justify-center rounded-md"
+              >
+                {back.icon === 'close' ? (
+                  <X className="size-5" />
+                ) : (
+                  <ChevronLeft className="size-5 rtl:rotate-180" />
+                )}
+              </button>
+            )}
+            {/* The `h1` above still names the page; this is its echo. */}
+            <span
+              aria-hidden
+              className="min-w-0 truncate text-base font-extrabold"
+            >
+              {title}
+            </span>
+          </div>
           {action && (
             <div className="flex shrink-0 items-center gap-2">{action}</div>
           )}

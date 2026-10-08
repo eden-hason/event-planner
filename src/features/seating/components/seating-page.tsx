@@ -223,8 +223,8 @@ export function SeatingPage(props: SeatingPageProps) {
       <div
         className={cn(
           WORKSPACE_HEIGHT,
-          // No top padding: the chrome row's band closes with its own `pb-3`
-          // and the Card adds the gap below it.
+          // No top padding: the Card's gap below the chrome row is already
+          // the space above the workspace.
           'flex min-h-0 flex-col overflow-hidden',
           // The fixed MobileBottomNav is docked to the bottom of the viewport,
           // flush with the edge. The workspace is full-bleed with no page

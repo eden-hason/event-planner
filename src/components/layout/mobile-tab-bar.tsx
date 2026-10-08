@@ -179,7 +179,7 @@ export function MobileTabBar({
       data-slot="mobile-tab-bar"
       aria-label={ariaLabel}
       className={cn(
-        // `bg-card`, matching the mobile header band in `PageCard`: `--background`
+        // `bg-card`, not `--background`: `--background`
         // is darker than `--card` in dark mode, which left the bar reading as a
         // hole below the app-shell canvas.
         'bg-card/95 supports-[backdrop-filter]:bg-card/80 fixed inset-x-0 z-40 border-t backdrop-blur md:hidden',
