@@ -191,6 +191,13 @@ export function GuestForm({
       formData: FormData,
     ): Promise<UpsertGuestState | null> => {
       const promise = upsertGuest(eventId, formData).then((result) => {
+        if (!result.success && result.phoneTakenBy !== undefined) {
+          throw new Error(
+            result.phoneTakenBy
+              ? t('form.phoneTakenBy', { name: result.phoneTakenBy })
+              : t('form.phoneTaken'),
+          );
+        }
         if (!result.success) {
           throw new Error(
             result.message

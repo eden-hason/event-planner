@@ -21,6 +21,9 @@ export type UpsertGuestState = {
   success: boolean;
   errors?: z.ZodError<z.input<typeof GuestUpsertSchema>>;
   message?: string | null;
+  // Set when the phone number is already on another Guest of this Event
+  // (`guests_event_id_phone_number_key`), with that Guest's name when readable.
+  phoneTakenBy?: string | null;
 };
 
 export type DeleteGuestState = {
@@ -172,6 +175,28 @@ export async function upsertGuest(
         error.message.includes('seating_')
       ) {
         return { success: false, message: error.message };
+      }
+      // A phone number belongs to one Guest per Event. Name who has it, so the
+      // Owner can find that record instead of retrying a save that cannot land.
+      if (
+        error.code === '23505' &&
+        error.message.includes('guests_event_id_phone_number_key') &&
+        dbData.phone_number
+      ) {
+        const { data: holder } = await supabase
+          .from('guests')
+          .select('name')
+          .eq('event_id', eventId)
+          .eq('phone_number', dbData.phone_number)
+          .maybeSingle();
+        const holderName = holder?.name ?? null;
+        return {
+          success: false,
+          phoneTakenBy: holderName,
+          message: holderName
+            ? `This phone number already belongs to ${holderName} in this guest list`
+            : 'This phone number already exists in this guest list',
+        };
       }
       return {
         success: false,

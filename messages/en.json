@@ -569,6 +569,8 @@
       "updating": "Updating...",
       "adding": "Adding...",
       "phoneInvalid": "Must be a valid Israeli mobile number (e.g. 054-1234567)",
+      "phoneTaken": "This phone number is already in your guest list",
+      "phoneTakenBy": "This phone number already belongs to {name} in your guest list",
       "side": "Side",
       "noSide": "No side",
       "table": {
