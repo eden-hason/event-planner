@@ -24,15 +24,14 @@ export const RECORD_PACKAGE_RATES: Record<RecordPackageChannel, number> = {
   whatsapp_calls: 2,
 };
 
-/** Up to this many paid records the bonus is the small one (ADR 0024). */
-const SMALL_PACK_MAX = 200;
-const SMALL_PACK_BONUS = 10;
-const BIG_PACK_BONUS = 20;
+/** From this many paid records a package earns its bonus (ADR 0030). */
+export const BONUS_MIN_PAID = 150;
+/** The bonus is the same whatever the package size: a flat gift, never a percentage. */
+export const BONUS_RECORDS = 10;
 
-/** The automatic Bonus Records for a total of Paid Records: a flat step, never a percentage. */
+/** The automatic Bonus Records for a total of Paid Records. */
 export function bonusRecords(paidRecords: number): number {
-  if (paidRecords <= 0) return 0;
-  return paidRecords <= SMALL_PACK_MAX ? SMALL_PACK_BONUS : BIG_PACK_BONUS;
+  return paidRecords >= BONUS_MIN_PAID ? BONUS_RECORDS : 0;
 }
 
 /**

@@ -9,6 +9,8 @@ import type { RecordPackageChannel } from '@/features/billing';
 // The utils path, not the barrel: the barrel carries client components, and this module is
 // unit-tested outside React.
 import {
+  BONUS_MIN_PAID,
+  BONUS_RECORDS,
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   bonusRecords,
@@ -25,7 +27,7 @@ export const RECORDS_MAX = 1000;
 export const RECORDS_STEP = 10;
 
 /** The bonus rule is billing's, so the homepage never promises what billing won't grant. */
-export { bonusRecords };
+export { BONUS_MIN_PAID, BONUS_RECORDS, bonusRecords };
 
 /** Clamps to the slider's range and snaps to its step. */
 export function clampRecords(value: number): number {

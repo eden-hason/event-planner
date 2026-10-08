@@ -4,18 +4,17 @@ import { describe, it } from 'node:test';
 import { bonusRecords, packageState, recordPackage, splitByPackage } from './record-package';
 
 describe('bonusRecords', () => {
-  it('gives 10 up to and including 200 paid records', () => {
-    assert.equal(bonusRecords(1), 10);
-    assert.equal(bonusRecords(200), 10);
-  });
-
-  it('gives 20 above 200 paid records', () => {
-    assert.equal(bonusRecords(201), 20);
-    assert.equal(bonusRecords(1000), 20);
-  });
-
-  it('gives nothing when nothing was paid for', () => {
+  it('gives nothing below 150 paid records', () => {
     assert.equal(bonusRecords(0), 0);
+    assert.equal(bonusRecords(1), 0);
+    assert.equal(bonusRecords(149), 0);
+  });
+
+  it('gives 10 from 150 paid records, whatever the package size', () => {
+    assert.equal(bonusRecords(150), 10);
+    assert.equal(bonusRecords(200), 10);
+    assert.equal(bonusRecords(201), 10);
+    assert.equal(bonusRecords(1000), 10);
   });
 });
 
@@ -30,11 +29,20 @@ describe('recordPackage', () => {
   });
 
   it('computes the bonus from the total, so a split purchase never stacks it', () => {
-    assert.deepEqual(recordPackage({ payments: [150, 100], bonusOverride: null }), {
-      paid: 250,
-      bonus: 20,
+    assert.deepEqual(recordPackage({ payments: [150, 150], bonusOverride: null }), {
+      paid: 300,
+      bonus: 10,
       bonusIsCustom: false,
-      size: 270,
+      size: 310,
+    });
+  });
+
+  it('grants the bonus once a top-up crosses 150 paid records', () => {
+    assert.deepEqual(recordPackage({ payments: [100, 50], bonusOverride: null }), {
+      paid: 150,
+      bonus: 10,
+      bonusIsCustom: false,
+      size: 160,
     });
   });
 
