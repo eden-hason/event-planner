@@ -49,6 +49,8 @@ may represent several Guests.
 
 **The unit of billing.** One row in the guest list, which may cover more than one Guest -
 a family of five arriving as one entry is one Guest Record with an amount of five.
+Only a Guest Record that can be sent to - it has a phone number, or was already Reached -
+counts against the **Record Package**.
 For seating, every Guest it covers stays together at one Table; a Guest Record is never
 split across Tables.
 
@@ -596,10 +598,11 @@ How many Guest Records an Event may reach: its **Paid Records** plus its **Bonus
 Records**. It caps sending, never planning - the guest list may grow past it, but only
 Guest Records inside the package are sent to.
 
-A Guest Record is inside the package if it has already been Reached, or if it is among the
-oldest unreached Guest Records that still fit in what is left. The rest are **outside the
-package** and are skipped when a Schedule sends, until the package grows or the list
-shrinks.
+A Guest Record is inside the package if it has already been Reached, or if it has a phone
+number and is among the unreached Guest Records that got theirs earliest and still fit in
+what is left. The rest with a phone are **outside the package** and are skipped when a
+Schedule sends, until the package grows or the list shrinks. A Guest Record with no phone
+is neither: nothing can be sent to it, so the package does not count it.
 
 _Avoid_: plan, tier, capacity, quota, balance
 

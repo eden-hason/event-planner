@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { IconChevronRight, IconPackage } from '@tabler/icons-react';
-import { PackageBar, packageAside, useRecordPackage } from '@/features/billing';
+import { PackageBar, PackageUncountedNote, packageAside, useRecordPackage } from '@/features/billing';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils';
  * narrow the list to the records outside it from there. A collaborator has no sheet, so
  * over the package their tap narrows the list straight away, and otherwise the line is
  * information only.
+ *
+ * Records with no phone are not counted (ADR 0033). The desktop card says how many under its
+ * bar; the phone line has no room, so there the package sheet says it.
  */
 export function PackageLine({
   variant,
@@ -87,6 +90,7 @@ export function PackageLine({
             <span className={cn('font-bold', asideTone)}>{aside}</span>
           </div>
           <PackageBar view={view} />
+          <PackageUncountedNote view={view} className="text-[12px] whitespace-nowrap" />
         </div>
         {interactive && <IconChevronRight size={15} stroke={2.2} className="rtl:rotate-180" />}
       </Root>

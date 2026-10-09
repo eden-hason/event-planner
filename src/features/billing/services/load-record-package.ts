@@ -35,10 +35,10 @@ export async function loadRecordPackage(
       .order('occurred_at', { ascending: false })
       .order('created_at', { ascending: false }),
     orNull(
-      pageAll<{ id: string; created_at: string }>((from, to) =>
+      pageAll<{ id: string; phone_added_at: string | null }>((from, to) =>
         supabase
           .from('guests')
-          .select('id, created_at')
+          .select('id, phone_added_at')
           .eq('event_id', eventId)
           .order('id')
           .range(from, to),
@@ -70,7 +70,7 @@ export async function loadRecordPackage(
   const reachedIds = new Set(reached.map((r) => r.guest_id));
   const records = guests.map((g) => ({
     id: g.id,
-    createdAt: g.created_at,
+    phoneAddedAt: g.phone_added_at,
     reached: reachedIds.delete(g.id),
   }));
 

@@ -78,35 +78,48 @@ export function packageAside(view: {
 }
 
 /**
- * Which Guest Records a Schedule may send to. A Reached record is always inside; the room
- * left after every Reached record (including deleted ones) goes to the oldest unreached
- * records, in the order they were added. The rest are outside.
+ * Which Guest Records a Schedule may send to (ADR 0027, ADR 0033). Only records that could
+ * ever be sent to count: a Reached record, or one with a phone number. A Reached record is
+ * always inside; the room left after every Reached record (including deleted ones) goes to
+ * the unreached records with a phone, in the order they got it. The rest are outside.
+ *
+ * A record with no phone is neither counted nor outside - nothing can be sent to it - and
+ * is reported as `uncounted`, so the Owner can see why the count is lower than the list.
  */
 export function splitByPackage(input: {
   packageSize: number;
-  records: readonly { id: string; createdAt: string; reached: boolean }[];
+  records: readonly {
+    id: string;
+    /** When it last went from no phone to a phone; null while it has none. */
+    phoneAddedAt: string | null;
+    reached: boolean;
+  }[];
   reachedDeletedCount: number;
 }): PackageSplit {
   const reachedLive = input.records.filter((r) => r.reached).length;
   const room = Math.max(0, input.packageSize - reachedLive - input.reachedDeletedCount);
 
-  const outside = input.records
-    .filter((r) => !r.reached)
+  const waiting = input.records.filter(
+    (r): r is typeof r & { phoneAddedAt: string } => !r.reached && r.phoneAddedAt !== null,
+  );
+
+  const outside = waiting
     .sort((a, b) =>
-      a.createdAt === b.createdAt
+      a.phoneAddedAt === b.phoneAddedAt
         ? a.id.localeCompare(b.id)
-        : a.createdAt < b.createdAt
+        : a.phoneAddedAt < b.phoneAddedAt
           ? -1
           : 1,
     )
     .slice(room)
     .map((r) => r.id);
 
-  const used = input.records.length + input.reachedDeletedCount;
+  const used = reachedLive + waiting.length + input.reachedDeletedCount;
 
   return {
     outside,
     used,
+    uncounted: input.records.length - reachedLive - waiting.length,
     left: Math.max(0, input.packageSize - used),
     over: Math.max(0, used - input.packageSize),
   };

@@ -19,7 +19,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
-import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
+import { PackageHeroCount, PackageUncountedNote, usePackageWhatsAppHref } from './package-hero';
 import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackageSheetProps = {
@@ -93,6 +93,7 @@ export function RecordPackageSheet({
         <span className="text-muted-foreground text-[13.5px] tabular-nums">
           {t('usedOf', { used: fmt(view.used), size: fmt(view.size) })}
         </span>
+        <PackageUncountedNote view={view} className="-mt-1.5" />
       </div>
 
       <div className="bg-muted/60 flex flex-col rounded-[14px] px-3.5 py-1">

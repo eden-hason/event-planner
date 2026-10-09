@@ -44,6 +44,28 @@ export function PackageHeroCount({
   );
 }
 
+/**
+ * The quiet line under a package count when some Guest Records have no phone (ADR 0033):
+ * they are in the list but not in the count, so the count reads lower than the list.
+ * Nothing when every record has a phone.
+ */
+export function PackageUncountedNote({
+  view,
+  className,
+}: {
+  view: Pick<PackageCounts, 'uncounted'>;
+  className?: string;
+}) {
+  const t = useTranslations('billing.packageSheet');
+  if (view.uncounted === 0) return null;
+
+  return (
+    <span className={cn('text-muted-foreground text-[12.5px] tabular-nums', className)}>
+      {t('uncounted', { count: view.uncounted })}
+    </span>
+  );
+}
+
 /** "Add records" is a WhatsApp conversation; over the package it says by how much. */
 export function usePackageWhatsAppHref(
   view: PackageCounts,

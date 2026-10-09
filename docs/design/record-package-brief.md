@@ -71,9 +71,11 @@ surface exists so that skipping is never a surprise.
 | Full | used = package | neutral, "every new guest needs a record" |
 | Over | used > package | warning: "N won't receive messages" |
 
-"Used" counts every Guest Record in the list plus any Reached record that was later
-deleted. In practice that is the list size, and the design does not need to explain the
-deleted-records nuance except in one helper line on the Plan page.
+"Used" counts every Guest Record in the list that has a phone number, plus any Reached
+record (including one later deleted or left without a phone). Records with no phone are not
+counted (ADR 0033); wherever the count is shown, a quiet note says how many were left out,
+so a count lower than the list explains itself. The deleted-records nuance needs only one
+helper line on the Plan page.
 
 ## 4. Art direction
 
