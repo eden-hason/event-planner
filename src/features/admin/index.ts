@@ -4,6 +4,7 @@ export * from './actions';
 export * from './types';
 export { EventsIndex } from './components/events-index';
 export { EventsIndexSkeleton } from './components/events-index-skeleton';
+export { parseEventsIndexParams } from './utils/events-index';
 export {
   DraftEventBand,
   DraftEventQueryBand,

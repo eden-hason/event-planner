@@ -2,6 +2,9 @@ export { GoogleDriveIcon } from './google-drive-icon';
 export { GoogleIcon } from './google-icon';
 
 export {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CalendarDays,
   Check,
   ChevronDown,

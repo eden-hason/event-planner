@@ -10,6 +10,7 @@ import {
   planEntryFromRow,
   validatePhoneNumber,
 } from '@/features/schedules';
+import type { EventBillingStatus, RecordPackageChannel } from '@/features/billing';
 import type {
   EventGuestSummary,
   EventIdentity,
@@ -23,6 +24,7 @@ import type {
 import { eventDaysFromToday, israelWallClockParts } from '@/lib/date-time';
 import { getTestScope } from './test-accounts';
 import { isNoAskPlanned } from '../utils/no-ask-planned';
+import { filterEventRows, sortEventRows } from '../utils/events-index';
 
 const PAGE_SIZE = 50;
 const STALE_ROUND_MS = 3 * 86_400_000;
@@ -38,147 +40,92 @@ function eventType(value: unknown): { name?: string | null; key?: string | null 
   return (value as { name?: string | null; key?: string | null } | null) ?? null;
 }
 
-function setupReason(input: {
-  status: string | null;
-  canCreateSchedules: boolean;
-  guestRecords: number;
-  schedules: number;
-}): string | null {
-  if (input.status !== 'published') return null;
-  if (!input.canCreateSchedules) return 'Sending not enabled';
-  if (input.guestRecords === 0) return 'No guest list';
-  if (input.schedules === 0) return 'No outreach';
-  return null;
-}
-
 type BaseEventRow = {
   id: string;
   user_id: string;
   title: string | null;
   status: string | null;
   event_date: string | null;
-  onboarding_step: string | null;
-  can_create_schedules: boolean | null;
+  created_at: string;
+  billing_status: EventBillingStatus | null;
   event_types: unknown;
+  guests: { count: number }[];
+  /** At most one row: the newest payment. */
+  event_billing_events: { channel: RecordPackageChannel | null }[];
 };
 
+/** An embedded `relation(count)` comes back as `[{ count }]`. */
+function embeddedCount(value: { count: number }[] | null | undefined): number {
+  return value?.[0]?.count ?? 0;
+}
+
+/**
+ * Every Event in scope, filtered, sorted and paged here rather than in SQL: the
+ * search spans the owner's profile, and at this volume one pass over the rows
+ * is cheaper than a view to keep in step. Guest Records are counted and the
+ * newest payment picked in the database - fetching those rows themselves ran
+ * into PostgREST's 1,000-row cap and undercounted.
+ */
 export async function getEventsIndex(filters: EventsIndexFilters): Promise<EventsIndexPage> {
   await assertAdmin();
   const supabase = createServiceClient();
-  const test = await getTestScope();
-
-  const events = unwrap(
-    await supabase
+  const [test, eventsResult, typesResult] = await Promise.all([
+    getTestScope(),
+    supabase
       .from('events')
-      .select('id, user_id, title, status, event_date, onboarding_step, can_create_schedules, event_types(name, key)')
+      .select('id, user_id, title, status, event_date, created_at, billing_status, event_types(name, key), guests(count), event_billing_events(channel)')
       .in('status', ['published', 'draft'])
-      .order('created_at', { ascending: false }),
-  ).filter((row) => !test.userIds.includes(row.user_id)) as unknown as BaseEventRow[];
-
-  if (!events.length) {
-    return {
-      rows: [], totalRows: 0, page: 1, pageSize: PAGE_SIZE, pageCount: 1,
-      totals: { publishedEvents: 0, draftEvents: 0, guestRecords: 0, actualGuests: 0 },
-    };
-  }
-
-  const eventIds = events.map((event) => event.id);
-  const ownerIds = [...new Set(events.map((event) => event.user_id))];
-  const [ownersResult, guestsResult, schedulesResult] = await Promise.all([
-    supabase.from('profiles').select('id, full_name, email').in('id', ownerIds),
-    supabase.from('guests').select('event_id, amount, rsvp_status').in('event_id', eventIds),
-    supabase.from('schedules').select('event_id, schedule_types(execution_kind)').in('event_id', eventIds),
+      // The package is the channel of the newest payment.
+      .not('event_billing_events.record_count', 'is', null)
+      .order('occurred_at', { referencedTable: 'event_billing_events', ascending: false })
+      .order('created_at', { referencedTable: 'event_billing_events', ascending: false })
+      .limit(1, { referencedTable: 'event_billing_events' }),
+    supabase.from('event_types').select('key, name').order('name'),
   ]);
-  const owners = unwrap(ownersResult);
-  const guests = unwrap(guestsResult);
-  const schedules = unwrap(schedulesResult);
+  const testUserIds = new Set(test.userIds);
+  const events = (unwrap(eventsResult) as unknown as BaseEventRow[])
+    .filter((row) => !testUserIds.has(row.user_id));
+  const eventTypes = unwrap(typesResult).map((type) => ({ key: type.key, name: type.name ?? type.key }));
 
+  const ownerIds = [...new Set(events.map((event) => event.user_id))];
+  const owners = ownerIds.length
+    ? unwrap(await supabase.from('profiles').select('id, full_name, email, phone_number').in('id', ownerIds))
+    : [];
   const ownerById = new Map(owners.map((owner) => [owner.id, owner]));
-  const guestTallies = new Map<string, { records: number; actual: number; confirmed: number }>();
-  for (const guest of guests) {
-    if (!guest.event_id) continue;
-    const tally = guestTallies.get(guest.event_id) ?? { records: 0, actual: 0, confirmed: 0 };
-    tally.records += 1;
-    tally.actual += guest.amount ?? 1;
-    if (guest.rsvp_status === 'confirmed') tally.confirmed += 1;
-    guestTallies.set(guest.event_id, tally);
-  }
-  const schedulesByEvent = new Map<string, number>();
-  const outreachByEvent = new Map<string, { messages: number; calls: number }>();
-  for (const schedule of schedules) {
-    schedulesByEvent.set(schedule.event_id, (schedulesByEvent.get(schedule.event_id) ?? 0) + 1);
-    const type = schedule.schedule_types as unknown as { execution_kind: string | null } | null;
-    const tally = outreachByEvent.get(schedule.event_id) ?? { messages: 0, calls: 0 };
-    if (type?.execution_kind === 'phone_call') tally.calls += 1;
-    else tally.messages += 1;
-    outreachByEvent.set(schedule.event_id, tally);
-  }
 
   const allRows: EventIndexRow[] = events.map((event) => {
     const owner = ownerById.get(event.user_id);
-    const tally = guestTallies.get(event.id) ?? { records: 0, actual: 0, confirmed: 0 };
+    const type = eventType(event.event_types);
     return {
       id: event.id,
       title: event.title?.trim() || 'Untitled event',
       status: event.status === 'draft' ? 'draft' : 'published',
       eventDate: event.event_date,
-      eventTypeName: eventType(event.event_types)?.name ?? eventType(event.event_types)?.key ?? 'Event',
-      ownerName: owner?.full_name || owner?.email || 'Unknown owner',
+      createdAt: event.created_at,
+      eventTypeKey: type?.key ?? null,
+      eventTypeName: type?.name ?? type?.key ?? 'Event',
+      ownerName: owner?.full_name?.trim() || owner?.email || 'Unknown owner',
       ownerEmail: owner?.email ?? null,
-      guestRecords: tally.records,
-      actualGuests: tally.actual,
-      confirmedRecords: tally.confirmed,
-      confirmationRate: tally.records ? tally.confirmed / tally.records : null,
-      setupReason: setupReason({
-        status: event.status,
-        canCreateSchedules: event.can_create_schedules ?? false,
-        guestRecords: tally.records,
-        schedules: schedulesByEvent.get(event.id) ?? 0,
-      }),
-      onboardingStep: event.onboarding_step,
-      messageSchedules: outreachByEvent.get(event.id)?.messages ?? 0,
-      callPlans: outreachByEvent.get(event.id)?.calls ?? 0,
+      ownerPhone: owner?.phone_number ?? null,
+      billingStatus: event.billing_status ?? 'free',
+      packageChannel: event.event_billing_events[0]?.channel ?? null,
+      guestRecords: embeddedCount(event.guests),
     };
   });
 
-  const published = allRows.filter((row) => row.status === 'published');
-  const totals = {
-    publishedEvents: published.length,
-    draftEvents: allRows.length - published.length,
-    guestRecords: published.reduce((sum, row) => sum + row.guestRecords, 0),
-    actualGuests: published.reduce((sum, row) => sum + row.actualGuests, 0),
-  };
-
-  const needle = filters.q.trim().toLocaleLowerCase('en');
-  const visible = allRows.filter((row) => {
-    if (filters.status !== 'all' && row.status !== filters.status) return false;
-    if (filters.needsSetup && !row.setupReason) return false;
-    if (!needle) return true;
-    return [row.title, row.ownerName, row.ownerEmail ?? ''].some((value) =>
-      value.toLocaleLowerCase('en').includes(needle),
-    );
-  });
-
-  visible.sort((a, b) => {
-    const aDays = eventDaysFromToday(a.eventDate);
-    const bDays = eventDaysFromToday(b.eventDate);
-    const group = (days: number | null) => days === null ? 2 : days >= 0 ? 0 : 1;
-    const groupDifference = group(aDays) - group(bDays);
-    if (groupDifference) return groupDifference;
-    if (aDays === null || bDays === null) return a.title.localeCompare(b.title);
-    return group(aDays) === 1 ? bDays - aDays : aDays - bDays;
-  });
-
+  const now = new Date();
+  const visible = sortEventRows(filterEventRows(allRows, filters, now), filters.sort, filters.dir, now);
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, filters.page), pageCount);
   const start = (page - 1) * PAGE_SIZE;
   return {
     rows: visible.slice(start, start + PAGE_SIZE),
     totalRows: visible.length,
+    totalEvents: allRows.length,
     page,
     pageSize: PAGE_SIZE,
     pageCount,
-    totals,
+    eventTypes,
   };
 }
 

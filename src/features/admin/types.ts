@@ -82,12 +82,34 @@ export type EventSearchResult = {
   ownerEmail: string | null;
 };
 
-export type EventsIndexStatus = 'all' | 'published' | 'draft';
+export type EventsIndexStatus = 'published' | 'draft';
+
+/** Payment as the Events index filters it: anything short of `paid` is unpaid. */
+export type EventsIndexPayment = 'paid' | 'unpaid';
+
+/** Where the Event Date sits against today. An undated Event counts as upcoming. */
+export type EventsIndexTiming = 'upcoming' | 'ended';
+
+/** When the Event was opened in the system - `created_at`, never the Event Date. */
+export type EventsIndexCreated = 'week' | 'month' | 'custom';
+
+export type EventsIndexSortKey = 'owner' | 'date' | 'created' | 'records';
+export type SortDirection = 'asc' | 'desc';
 
 export type EventsIndexFilters = {
   q: string;
-  status: EventsIndexStatus;
-  needsSetup: boolean;
+  status: EventsIndexStatus | null;
+  /** `event_types.key` values, any of which matches. */
+  types: string[];
+  payment: EventsIndexPayment | null;
+  package: RecordPackageChannel | null;
+  timing: EventsIndexTiming | null;
+  created: EventsIndexCreated | null;
+  /** Inclusive Israel calendar dates (YYYY-MM-DD), used only when `created` is `custom`. */
+  createdFrom: string | null;
+  createdTo: string | null;
+  sort: EventsIndexSortKey;
+  dir: SortDirection;
   page: number;
 };
 
@@ -96,31 +118,29 @@ export type EventIndexRow = {
   title: string;
   status: 'published' | 'draft';
   eventDate: string | null;
+  createdAt: string;
+  eventTypeKey: string | null;
   eventTypeName: string;
   ownerName: string;
   ownerEmail: string | null;
+  /** E.164, as stored on the profile. */
+  ownerPhone: string | null;
+  billingStatus: EventBillingStatus;
+  /** The channel of the newest payment; null until the Event is paid for. */
+  packageChannel: RecordPackageChannel | null;
   guestRecords: number;
-  actualGuests: number;
-  confirmedRecords: number;
-  confirmationRate: number | null;
-  setupReason: string | null;
-  onboardingStep: string | null;
-  messageSchedules: number;
-  callPlans: number;
 };
 
 export type EventsIndexPage = {
   rows: EventIndexRow[];
+  /** Events matching the search and filters, across every page. */
   totalRows: number;
+  /** Every Event in scope, before search and filters. */
+  totalEvents: number;
   page: number;
   pageSize: number;
   pageCount: number;
-  totals: {
-    publishedEvents: number;
-    draftEvents: number;
-    guestRecords: number;
-    actualGuests: number;
-  };
+  eventTypes: { key: string; name: string }[];
 };
 
 export type EventIdentity = {

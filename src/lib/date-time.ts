@@ -11,15 +11,28 @@ export function eventDaysFromToday(eventDate: string | null, now = new Date()): 
   return Math.round((utcCalendarStart(eventDate) - utcCalendarStart(now)) / DAY_MS);
 }
 
-/** Today's calendar date in Israel, where the product's events happen, as a UTC midnight. */
+// Built once: a timezone-aware formatter is costly to construct, and these run
+// per row on list pages.
+const ISRAEL_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ADMIN_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+const ISRAEL_WALL_CLOCK = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ADMIN_TIME_ZONE,
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+});
+
+/** Today's calendar date in Israel, where the product's events happen, as YYYY-MM-DD. */
+export function israelToday(now: Date = new Date()): string {
+  return ISRAEL_DATE.format(now);
+}
+
+/** Today's calendar date in Israel as a UTC midnight. */
 function israelCalendarStart(now: Date): number {
-  const ymd = new Intl.DateTimeFormat('en-CA', {
-    timeZone: ADMIN_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-  return Date.parse(`${ymd}T00:00:00Z`);
+  return Date.parse(`${israelToday(now)}T00:00:00Z`);
 }
 
 /**
@@ -126,13 +139,7 @@ export function israelWallClockToIso(date: string, time: string): string | null 
  */
 export function israelWallClockParts(iso: string): { date: string; time: string } {
   const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-CA', {
-      timeZone: ADMIN_TIME_ZONE,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-    })
-      .formatToParts(new Date(iso))
-      .map((part) => [part.type, part.value]),
+    ISRAEL_WALL_CLOCK.formatToParts(new Date(iso)).map((part) => [part.type, part.value]),
   );
   return {
     date: `${parts.year}-${parts.month}-${parts.day}`,
