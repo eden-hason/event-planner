@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { pageAll } from '@/lib/supabase/row-cap';
 import type { PackageSplit, RecordPackage, RecordPackageChannel } from '../types';
 import { recordPackage, splitByPackage } from '../utils/record-package';
-
-const PAGE = 1000;
 
 export type LoadedRecordPackage = {
   /** Null when no payment was ever recorded: the Event has no package. */
@@ -35,21 +34,25 @@ export async function loadRecordPackage(
       .not('record_count', 'is', null)
       .order('occurred_at', { ascending: false })
       .order('created_at', { ascending: false }),
-    pageAll<{ id: string; created_at: string }>((from) =>
-      supabase
-        .from('guests')
-        .select('id, created_at')
-        .eq('event_id', eventId)
-        .order('id')
-        .range(from, from + PAGE - 1),
+    orNull(
+      pageAll<{ id: string; created_at: string }>((from, to) =>
+        supabase
+          .from('guests')
+          .select('id, created_at')
+          .eq('event_id', eventId)
+          .order('id')
+          .range(from, to),
+      ),
     ),
-    pageAll<{ guest_id: string }>((from) =>
-      supabase
-        .from('event_reached_records')
-        .select('guest_id')
-        .eq('event_id', eventId)
-        .order('guest_id')
-        .range(from, from + PAGE - 1),
+    orNull(
+      pageAll<{ guest_id: string }>((from, to) =>
+        supabase
+          .from('event_reached_records')
+          .select('guest_id')
+          .eq('event_id', eventId)
+          .order('guest_id')
+          .range(from, to),
+      ),
     ),
   ]);
 
@@ -97,20 +100,12 @@ export async function loadOutsidePackageIds(
   return loaded ? new Set(loaded.split.outside) : null;
 }
 
-/** Pages past PostgREST's 1000-row cap. Null on any error, so a partial list never counts. */
-async function pageAll<T>(
-  fetchPage: (
-    from: number,
-  ) => PromiseLike<{ data: T[] | null; error: unknown }>,
-): Promise<T[] | null> {
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await fetchPage(from);
-    if (error) {
-      console.error('loadRecordPackage page failed:', error);
-      return null;
-    }
-    rows.push(...(data ?? []));
-    if (!data || data.length < PAGE) return rows;
+/** Null on any error, so a partial list never counts. */
+async function orNull<T>(rows: Promise<T[]>): Promise<T[] | null> {
+  try {
+    return await rows;
+  } catch (error) {
+    console.error('loadRecordPackage page failed:', error);
+    return null;
   }
 }

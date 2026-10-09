@@ -2,6 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
+import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
 import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
@@ -60,6 +61,28 @@ function audienceLabel(targetStatus: string | null, count: number): string {
   if (targetStatus === 'pending') return `${count} pending ${unit}`;
   if (targetStatus === 'confirmed') return `${count} confirmed ${unit}`;
   return `${count} guest ${unit}`;
+}
+
+/**
+ * Guest Records per Event by RSVP status, counted by the database through three
+ * aliased embeds of the same relation. Select it on `events` and narrow two of
+ * them with `.eq('pending.rsvp_status', 'pending')` and the confirmed twin.
+ */
+const AUDIENCE_COUNTS = 'id, total:guests(count), pending:guests(count), confirmed:guests(count)';
+
+type AudienceRow = {
+  id: string;
+  total: { count: number }[];
+  pending: { count: number }[];
+  confirmed: { count: number }[];
+};
+
+function audienceCounts(row: AudienceRow) {
+  return {
+    total: embeddedCount(row.total),
+    pending: embeddedCount(row.pending),
+    confirmed: embeddedCount(row.confirmed),
+  };
 }
 
 type ScheduleRow = {
@@ -122,11 +145,13 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   // over every schedule of the type - sent and cancelled included - in plan
   // order. Indexing only the open rows would number the same plan differently
   // on the two sides, so both number through numberPlan, one Event at a time.
-  const siblings = unwrap(
-    await supabase
+  const siblings = await pageAll((from, to) =>
+    supabase
       .from('schedules')
       .select('id, event_id, scheduled_date, target_status, schedule_types(key)')
-      .in('event_id', eventIds),
+      .in('event_id', eventIds)
+      .order('id')
+      .range(from, to),
   );
   const entriesByEvent = new Map<string, PlanEntry[]>();
   for (const row of siblings) {
@@ -138,20 +163,17 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
     [...entriesByEvent.values()].flatMap((entries) => [...numberPlan(entries)]),
   );
 
-  // One aggregate pass rather than a query per call plan.
-  const guests = unwrap(
-    await supabase.from('guests').select('event_id, rsvp_status').in('event_id', eventIds),
-  );
-
-  const tally = new Map<string, { pending: number; confirmed: number; total: number }>();
-  for (const guest of guests) {
-    if (!guest.event_id) continue;
-    const entry = tally.get(guest.event_id) ?? { pending: 0, confirmed: 0, total: 0 };
-    entry.total += 1;
-    if (guest.rsvp_status === 'pending') entry.pending += 1;
-    if (guest.rsvp_status === 'confirmed') entry.confirmed += 1;
-    tally.set(guest.event_id, entry);
-  }
+  // Counted in the database, one query for every Event. Reading the guest rows
+  // to tally them here ran into PostgREST's 1,000-row cap and undercounted.
+  const audiences = unwrap(
+    await supabase
+      .from('events')
+      .select(AUDIENCE_COUNTS)
+      .in('id', eventIds)
+      .eq('pending.rsvp_status', 'pending')
+      .eq('confirmed.rsvp_status', 'confirmed'),
+  ) as unknown as AudienceRow[];
+  const tally = new Map(audiences.map((row) => [row.id, audienceCounts(row)]));
 
   const now = Date.now();
   const today = calendarParts(new Date(now));
@@ -248,42 +270,21 @@ export async function listEventsForPlanning(): Promise<
     await excludeIds(
       supabase
         .from('events')
-        .select('id, title')
+        .select(`title, ${AUDIENCE_COUNTS}`)
         .eq('status', 'published')
         .eq('can_create_schedules', true)
+        .eq('pending.rsvp_status', 'pending')
+        .eq('confirmed.rsvp_status', 'confirmed')
         .order('event_date', { ascending: true }),
       'user_id',
       test.userIds,
     ),
-  );
-
-  if (!events.length) return [];
-
-  const guests = unwrap(
-    await supabase
-      .from('guests')
-      .select('event_id, rsvp_status')
-      .in(
-        'event_id',
-        events.map((event) => event.id),
-      ),
-  );
-
-  const tally = new Map<string, { pending: number; confirmed: number }>();
-  for (const guest of guests) {
-    if (!guest.event_id) continue;
-    const entry = tally.get(guest.event_id) ?? { pending: 0, confirmed: 0 };
-    if (guest.rsvp_status === 'pending') entry.pending += 1;
-    if (guest.rsvp_status === 'confirmed') entry.confirmed += 1;
-    tally.set(guest.event_id, entry);
-  }
+  ) as unknown as (AudienceRow & { title: string | null })[];
 
   return events
-    .map((event) => ({
-      id: event.id,
-      title: event.title ?? 'Untitled event',
-      pending: tally.get(event.id)?.pending ?? 0,
-      confirmed: tally.get(event.id)?.confirmed ?? 0,
-    }))
+    .map((event) => {
+      const { pending, confirmed } = audienceCounts(event);
+      return { id: event.id, title: event.title ?? 'Untitled event', pending, confirmed };
+    })
     .filter((event) => event.pending + event.confirmed > 0);
 }

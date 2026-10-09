@@ -3,6 +3,7 @@
 import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
+import { pageAll } from '@/lib/supabase/row-cap';
 import {
   classifyWhatsAppFailure,
   comparePlanOrder,
@@ -275,14 +276,19 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
 export async function getEventGuestSummary(eventId: string): Promise<EventGuestSummary> {
   await assertAdmin();
   const supabase = createServiceClient();
-  const [guestsResult, groupsResult] = await Promise.all([
-    supabase
-      .from('guests')
-      .select('id, name, phone_number, amount, rsvp_status, group_id, rsvp_change_source, groups(name)')
-      .eq('event_id', eventId),
+  // Paged, not a single read: one Event can hold more Guest Records than
+  // PostgREST's 1,000-row cap, and the unusable phones need the rows themselves.
+  const [guests, groupsResult] = await Promise.all([
+    pageAll((from, to) =>
+      supabase
+        .from('guests')
+        .select('id, name, phone_number, amount, rsvp_status, group_id, rsvp_change_source, groups(name)')
+        .eq('event_id', eventId)
+        .order('id')
+        .range(from, to),
+    ),
     supabase.from('groups').select('id', { count: 'exact', head: true }).eq('event_id', eventId),
   ]);
-  const guests = unwrap(guestsResult);
   if (groupsResult.error) throw new Error(groupsResult.error.message);
 
   const summary: EventGuestSummary = {
@@ -363,22 +369,33 @@ export const getEventTimeline = cache(async function getEventTimeline(
   schedules.sort((a, b) => comparePlanOrder(entries.get(a.id)!, entries.get(b.id)!));
 
   const scheduleIds = schedules.map((row) => row.id);
-  const [guestsResult, deliveriesResult, roundsResult] = await Promise.all([
-    supabase.from('guests').select('id, name, phone_number, rsvp_status').eq('event_id', eventId),
-    supabase
-      .from('message_deliveries')
-      .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel)')
-      .in('schedule_id', scheduleIds)
-      // Every state a delivery can settle in. Filtering to sent/failed dropped a
-      // delivery from the timeline the moment the webhook marked it delivered.
-      .in('status', ['sent', 'delivered', 'read', 'failed', 'not_sent']),
+  // Guests and deliveries are paged: every send to an Event adds a delivery per
+  // Guest Record, so a few sends put one Event past PostgREST's 1,000-row cap.
+  const [guests, deliveries, roundsResult] = await Promise.all([
+    pageAll((from, to) =>
+      supabase
+        .from('guests')
+        .select('id, name, phone_number, rsvp_status')
+        .eq('event_id', eventId)
+        .order('id')
+        .range(from, to),
+    ),
+    pageAll((from, to) =>
+      supabase
+        .from('message_deliveries')
+        .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel)')
+        .in('schedule_id', scheduleIds)
+        // Every state a delivery can settle in. Filtering to sent/failed dropped a
+        // delivery from the timeline the moment the webhook marked it delivered.
+        .in('status', ['sent', 'delivered', 'read', 'failed', 'not_sent'])
+        .order('id')
+        .range(from, to),
+    ),
     supabase
       .from('call_rounds')
       .select('id, schedule_id, created_at, completed_at, call_logs(id, notes, outcome)')
       .in('schedule_id', scheduleIds),
   ]);
-  const guests = unwrap(guestsResult);
-  const deliveries = unwrap(deliveriesResult);
   const rounds = unwrap(roundsResult);
   const roundBySchedule = new Map(rounds.map((row) => [row.schedule_id, row]));
 

@@ -2,17 +2,12 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
+import { pageAll } from '@/lib/supabase/row-cap';
 import type { CollaboratorRole } from '@/features/collaborate/schemas';
 import type { UserDetail, UserRow, UserSharedEvent, UsersIndexFilters, UsersIndexPage } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 
 const PAGE_SIZE = 50;
-
-function unwrap<T>(result: { data: T | null; error: { message: string } | null }): T {
-  if (result.error) throw new Error(result.error.message);
-  if (result.data === null) throw new Error('Query returned no data');
-  return result.data;
-}
 
 type ProfileRow = {
   id: string;
@@ -35,46 +30,52 @@ export async function getUsersIndex(filters: UsersIndexFilters): Promise<UsersIn
   const supabase = createServiceClient();
   const test = await getTestScope();
 
-  const [profilesResult, testAccountsCount] = await Promise.all([
-    excludeIds(
-      supabase
-        .from('profiles')
-        .select('id, full_name, email, phone_number, is_admin, is_test_account, created_at')
-        .order('created_at', { ascending: false }),
-      'id',
-      test.userIds,
+  // The row reads are paged: PostgREST caps a response at 1,000 rows, and the
+  // ownership tallies read every Event and Collaborator, not one row per User.
+  const [profilesResult, testAccountsCount, ownedEvents, collaborations] = await Promise.all([
+    pageAll((from, to) =>
+      excludeIds(
+        supabase
+          .from('profiles')
+          .select('id, full_name, email, phone_number, is_admin, is_test_account, created_at')
+          .order('created_at', { ascending: false })
+          // A unique tie-break, so no row moves between pages.
+          .order('id')
+          .range(from, to),
+        'id',
+        test.userIds,
+      ),
     ),
     // Independent of the toggle: the hidden-accounts footer needs "how many
     // exist" regardless of whether they are showing right now.
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_test_account', true),
-  ]);
-
-  const profiles = unwrap(profilesResult) as unknown as ProfileRow[];
-  if (testAccountsCount.error) throw new Error(testAccountsCount.error.message);
-
-  const profileIds = profiles.map((profile) => profile.id);
-  const ownedByUser = new Map<string, number>();
-  const sharedByUser = new Map<string, number>();
-
-  if (profileIds.length) {
-    const [eventsResult, collaboratorsResult] = await Promise.all([
-      supabase.from('events').select('user_id').in('user_id', profileIds),
+    // Not narrowed to the listed profiles: a list of every User's id would ride
+    // in the URL and outgrow it. events.user_id has no foreign key to profiles,
+    // so the count cannot be embedded either. Rows for hidden Users go unread.
+    pageAll((from, to) =>
+      supabase.from('events').select('user_id').order('id').range(from, to),
+    ),
+    pageAll((from, to) =>
       supabase
         .from('event_collaborators')
         .select('user_id')
         .eq('is_creator', false)
-        .in('user_id', profileIds),
-    ]);
-    if (eventsResult.error) throw new Error(eventsResult.error.message);
-    if (collaboratorsResult.error) throw new Error(collaboratorsResult.error.message);
+        .order('id')
+        .range(from, to),
+    ),
+  ]);
 
-    for (const row of eventsResult.data ?? []) {
-      ownedByUser.set(row.user_id, (ownedByUser.get(row.user_id) ?? 0) + 1);
-    }
-    for (const row of collaboratorsResult.data ?? []) {
-      if (!row.user_id) continue;
-      sharedByUser.set(row.user_id, (sharedByUser.get(row.user_id) ?? 0) + 1);
-    }
+  const profiles = profilesResult as unknown as ProfileRow[];
+  if (testAccountsCount.error) throw new Error(testAccountsCount.error.message);
+
+  const ownedByUser = new Map<string, number>();
+  const sharedByUser = new Map<string, number>();
+  for (const row of ownedEvents) {
+    ownedByUser.set(row.user_id, (ownedByUser.get(row.user_id) ?? 0) + 1);
+  }
+  for (const row of collaborations) {
+    if (!row.user_id) continue;
+    sharedByUser.set(row.user_id, (sharedByUser.get(row.user_id) ?? 0) + 1);
   }
 
   const allRows: UserRow[] = profiles.map((profile) => ({
