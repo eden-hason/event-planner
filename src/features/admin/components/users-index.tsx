@@ -30,6 +30,7 @@ import { formatEventDate } from '@/lib/date-time';
 import { avatarTint, initialsFor } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 import { ToggleTestAccountsLink } from './toggle-test-accounts-link';
+import { countLabel } from '../utils/count-label';
 
 function hrefFor(filters: UsersIndexFilters, patch: Partial<UsersIndexFilters & { user: string | null }>) {
   const next = { ...filters, user: null as string | null, ...patch };
@@ -39,10 +40,6 @@ function hrefFor(filters: UsersIndexFilters, patch: Partial<UsersIndexFilters & 
   if (next.user) params.set('user', next.user);
   const query = params.toString();
   return query ? `/admin/users?${query}` : '/admin/users';
-}
-
-function countLabel(value: number, singular: string, plural = `${singular}s`) {
-  return `${value.toLocaleString('en-GB')} ${value === 1 ? singular : plural}`;
 }
 
 export function UsersIndex({
