@@ -301,8 +301,8 @@
  * The event app's sidebar, from the Guests Desktop design: a solid panel the
  * full height of the viewport, divided from the shell by a hairline rather
  * than floating on it. Scoped to `.app-sidebar` (see `AppSidebar`) instead of
- * redefining the `--sidebar-*` tokens globally, so the admin back office's
- * sidebar keeps its own look.
+ * redefining the `--sidebar-*` tokens globally; the admin back office opts
+ * in with the same class rather than inheriting it.
  *
  * The nav item colors (`--app-nav*`, defined with the other tokens above)
  * are not scoped here: below `md` the sidebar renders in a Sheet the
