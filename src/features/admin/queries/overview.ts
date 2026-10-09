@@ -2,6 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
+import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
 import type { OverviewStats, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { eventDaysFromToday, formatScheduleDateTime } from '@/lib/date-time';
@@ -72,7 +73,17 @@ export async function getOverviewStats(): Promise<OverviewStats> {
   const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const upcomingEndUtc = new Date(todayUtc.getTime() + UPCOMING_WINDOW_DAYS * 86_400_000);
 
-  const [users, joinedThisWeek, events, eventsUpcoming, publishedEvents] = await Promise.all([
+  // Guest Records are counted through their Event rather than against a list of
+  // published event ids: that list was itself a row read, capped at 1,000.
+  const guestsOnPublished = (rsvpStatus?: string) => {
+    const query = supabase
+      .from('guests')
+      .select('id, events!inner(status)', { count: 'exact', head: true })
+      .eq('events.status', 'published');
+    return excludeIds(rsvpStatus ? query.eq('rsvp_status', rsvpStatus) : query, 'event_id', test.eventIds);
+  };
+
+  const [users, joinedThisWeek, events, eventsUpcoming, guestRecords, confirmed] = await Promise.all([
     excludeIds(
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       'id',
@@ -104,42 +115,17 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       'user_id',
       test.userIds,
     ),
-    excludeIds(
-      supabase.from('events').select('id').eq('status', 'published'),
-      'user_id',
-      test.userIds,
-    ),
+    guestsOnPublished(),
+    guestsOnPublished('confirmed'),
   ]);
-
-  // Guest Records need no filter of their own: publishedIds no longer contains
-  // any test account's event.
-  const publishedIds = unwrap(publishedEvents).map((e) => e.id);
-
-  let guestRecords = 0;
-  let confirmed = 0;
-  if (publishedIds.length) {
-    const [records, confirmedRecords] = await Promise.all([
-      supabase
-        .from('guests')
-        .select('id', { count: 'exact', head: true })
-        .in('event_id', publishedIds),
-      supabase
-        .from('guests')
-        .select('id', { count: 'exact', head: true })
-        .eq('rsvp_status', 'confirmed')
-        .in('event_id', publishedIds),
-    ]);
-    guestRecords = unwrapCount(records);
-    confirmed = unwrapCount(confirmedRecords);
-  }
 
   return {
     users: unwrapCount(users),
     usersJoinedThisWeek: unwrapCount(joinedThisWeek),
     events: unwrapCount(events),
     eventsUpcoming: unwrapCount(eventsUpcoming),
-    guestRecords,
-    confirmed,
+    guestRecords: unwrapCount(guestRecords),
+    confirmed: unwrapCount(confirmed),
   };
 }
 
@@ -179,19 +165,28 @@ export async function getSignals(): Promise<Signal[]> {
 
     // The only read here with no event_id of its own - it reaches one through
     // schedules - so its test accounts are dropped in the grouping loop below
-    // rather than by a filter.
-    supabase
-      .from('message_deliveries')
-      .select('id, error_code, created_at, schedules!inner(id, event_id, events(title)), message_delivery_attempts(channel)')
-      .eq('status', 'failed')
-      .gte('created_at', daysAgo(FAILED_DELIVERY_LOOKBACK_DAYS)),
+    // rather than by a filter. Paged: one failed send to a large Event can
+    // pass the 1,000-row cap alone, and the codes need the rows themselves.
+    pageAll((from, to) =>
+      supabase
+        .from('message_deliveries')
+        .select('id, error_code, created_at, schedules!inner(id, event_id, events(title)), message_delivery_attempts(channel)')
+        .eq('status', 'failed')
+        .gte('created_at', daysAgo(FAILED_DELIVERY_LOOKBACK_DAYS))
+        .order('id')
+        .range(from, to),
+    ),
 
+    // A round's call_logs are its immutable audience snapshot - comparing against
+    // today's whole event list invents progress changes after the round started.
+    // Counted here: one round of a large Event can pass the 1,000-row cap.
     excludeIds(
       supabase
         .from('call_rounds')
-        .select('id, created_at, event_id, schedule_id, events(title)')
+        .select('id, created_at, event_id, schedule_id, events(title), snapshot:call_logs(count), called:call_logs(count)')
         .is('completed_at', null)
-        .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS)),
+        .lt('created_at', daysAgo(STALE_CALL_ROUND_DAYS))
+        .not('called.outcome', 'is', null),
       'event_id',
       test.eventIds,
     ),
@@ -256,7 +251,7 @@ export async function getSignals(): Promise<Signal[]> {
     string,
     { title: string; count: number; codes: Map<number, number>; oldest: string; scheduleId: string }
   >();
-  for (const row of unwrap(failed)) {
+  for (const row of failed) {
     const schedule = row.schedules as unknown as {
       id: string;
       event_id: string;
@@ -301,33 +296,15 @@ export async function getSignals(): Promise<Signal[]> {
 
   const staleRounds = unwrap(stale);
 
-  // A round's call_logs are its immutable audience snapshot. Comparing against
-  // today's whole event list invents progress changes after the round started.
-  const calledPerRound = new Map<string, number>();
-  const snapshotPerRound = new Map<string, number>();
   const labels = new Map<string, string>();
   if (staleRounds.length) {
-    const [logs, siblings] = await Promise.all([
-      supabase
-        .from('call_logs')
-        .select('round_id, outcome')
-        .in(
-          'round_id',
-          staleRounds.map((r) => r.id),
-        ),
-      supabase
+    const siblingRows = unwrap(
+      await supabase
         .from('schedules')
         .select('id, event_id, schedule_type_id, schedule_types(name)')
         .in('event_id', [...new Set(staleRounds.map((round) => round.event_id))])
         .order('scheduled_date', { ascending: true }),
-    ]);
-    for (const log of unwrap(logs)) {
-      snapshotPerRound.set(log.round_id, (snapshotPerRound.get(log.round_id) ?? 0) + 1);
-      if (log.outcome !== null) {
-        calledPerRound.set(log.round_id, (calledPerRound.get(log.round_id) ?? 0) + 1);
-      }
-    }
-    const siblingRows = unwrap(siblings);
+    );
     for (const round of staleRounds) {
       if (!round.schedule_id) continue;
       const schedule = siblingRows.find((row) => row.id === round.schedule_id);
@@ -341,8 +318,8 @@ export async function getSignals(): Promise<Signal[]> {
 
   for (const row of staleRounds) {
     const event = row.events as unknown as { title: string | null } | null;
-    const called = calledPerRound.get(row.id) ?? 0;
-    const total = snapshotPerRound.get(row.id) ?? 0;
+    const called = embeddedCount(row.called);
+    const total = embeddedCount(row.snapshot);
     const label = labels.get(row.id) ?? 'Call Round';
     signals.push({
       id: `stale_call_round:${row.id}`,
@@ -404,8 +381,11 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
     await excludeIds(
       supabase
         .from('events')
-        .select('id, title, event_date, user_id, event_types(name)')
+        // Counted in the database: reading the guest rows to tally them here
+        // ran into PostgREST's 1,000-row cap and undercounted.
+        .select('id, title, event_date, user_id, event_types(name), total:guests(count), confirmed:guests(count)')
         .eq('status', 'published')
+        .eq('confirmed.rsvp_status', 'confirmed')
         .gte('event_date', todayUtc.toISOString())
         .lt('event_date', endUtc.toISOString())
         .order('event_date', { ascending: true }),
@@ -429,28 +409,8 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   );
   const ownerById = new Map(owners.map((o) => [o.id, o]));
 
-  // One aggregate pass over guests rather than a query per event.
-  const guests = unwrap(
-    await supabase
-      .from('guests')
-      .select('event_id, rsvp_status')
-      .in(
-        'event_id',
-        events.map((e) => e.id),
-      ),
-  );
-
-  const tally = new Map<string, { total: number; confirmed: number }>();
-  for (const guest of guests) {
-    if (!guest.event_id) continue;
-    const entry = tally.get(guest.event_id) ?? { total: 0, confirmed: 0 };
-    entry.total += 1;
-    if (guest.rsvp_status === 'confirmed') entry.confirmed += 1;
-    tally.set(guest.event_id, entry);
-  }
-
   return events.map((event) => {
-    const counts = tally.get(event.id) ?? { total: 0, confirmed: 0 };
+    const counts = { total: embeddedCount(event.total), confirmed: embeddedCount(event.confirmed) };
     const type = event.event_types as unknown as { name: string | null } | null;
     const owner = ownerById.get(event.user_id);
 

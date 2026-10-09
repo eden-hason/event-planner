@@ -2,6 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
+import { pageAll } from '@/lib/supabase/row-cap';
 import type { CallOutcome } from '@/features/calls/types';
 import { getTestScope } from './test-accounts';
 
@@ -78,14 +79,18 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
     }
   }
 
-  const { data: logs, error: logsError } = await supabase
-    .from('call_logs')
-    .select('guest_id, outcome, notes, guests!inner(name, phone_number, rsvp_status, amount)')
-    .eq('round_id', roundId);
+  // Paged: a round snapshots every targeted Guest Record, and one Event can hold
+  // more than PostgREST's 1,000-row cap.
+  const logs = await pageAll((from, to) =>
+    supabase
+      .from('call_logs')
+      .select('id, guest_id, outcome, notes, guests!inner(name, phone_number, rsvp_status, amount)')
+      .eq('round_id', roundId)
+      .order('id')
+      .range(from, to),
+  );
 
-  if (logsError) throw new Error(logsError.message);
-
-  const guests: RoundGuestRow[] = (logs ?? []).map((log) => {
+  const guests: RoundGuestRow[] = logs.map((log) => {
     const guest = log.guests as unknown as {
       name: string | null;
       phone_number: string | null;
