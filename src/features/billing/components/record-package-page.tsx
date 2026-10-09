@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { billingWhatsAppUrl } from '../utils';
 import type { RecordPackagePageView } from '../types';
 import { PackageBar, PackageSwatch } from './package-bar';
-import { PackageHeroCount, usePackageWhatsAppHref } from './package-hero';
+import { PackageHeroCount, PackageUncountedNote, usePackageWhatsAppHref } from './package-hero';
 import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackagePageProps = {
@@ -199,6 +199,7 @@ function PackageDetails({
             <span className="text-muted-foreground text-[13px] tabular-nums">
               {tSheet('usedOf', { used: fmt(view.used), size: fmt(view.size) })}
             </span>
+            <PackageUncountedNote view={view} />
           </div>
 
           <PackageBar view={view} className="h-3 gap-0.5" />

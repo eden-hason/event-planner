@@ -2615,6 +2615,7 @@
       "heroLeft": "{count, plural, one {record left} other {records left}}",
       "heroOver": "{count, plural, one {record over the package} other {records over the package}}",
       "usedOf": "{used} of {size} records in use",
+      "uncounted": "{count, plural, one {# record without a phone - not counted} other {# records without a phone - not counted}}",
       "breakdownTitle": "What's in the package",
       "paidRecords": "Paid records",
       "giftedRecords": "Records gifted by Kululu",

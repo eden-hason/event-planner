@@ -33,6 +33,7 @@ export async function getEventRecordPackage(eventId: string): Promise<EventRecor
     package: loaded.package,
     automaticBonus: bonusRecords(loaded.package?.paid ?? 0),
     used: loaded.split.used,
+    uncounted: loaded.split.uncounted,
     left: loaded.split.left,
     over: loaded.split.over,
     channel: payments[0]?.channel ?? null,

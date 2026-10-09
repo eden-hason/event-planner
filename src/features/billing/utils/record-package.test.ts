@@ -70,7 +70,14 @@ describe('recordPackage', () => {
   });
 });
 
-const record = (id: string, createdAt: string, reached = false) => ({ id, createdAt, reached });
+/** A record with a phone, which it got at `phoneAddedAt`. */
+const record = (id: string, phoneAddedAt: string, reached = false) => ({
+  id,
+  phoneAddedAt,
+  reached,
+});
+/** A record with no phone number. */
+const noPhone = (id: string, reached = false) => ({ id, phoneAddedAt: null, reached });
 
 describe('splitByPackage', () => {
   it('puts everyone inside while the list fits', () => {
@@ -81,11 +88,12 @@ describe('splitByPackage', () => {
     });
     assert.deepEqual(split.outside, []);
     assert.equal(split.used, 2);
+    assert.equal(split.uncounted, 0);
     assert.equal(split.left, 1);
     assert.equal(split.over, 0);
   });
 
-  it('leaves the newest unreached records outside', () => {
+  it('leaves the records that got a phone last outside', () => {
     const split = splitByPackage({
       packageSize: 2,
       records: [
@@ -100,7 +108,7 @@ describe('splitByPackage', () => {
     assert.equal(split.left, 0);
   });
 
-  it('keeps a Reached record inside even when it was added last', () => {
+  it('keeps a Reached record inside even when it got its phone last', () => {
     const split = splitByPackage({
       packageSize: 2,
       records: [
@@ -134,7 +142,7 @@ describe('splitByPackage', () => {
     assert.equal(split.over, 1);
   });
 
-  it('breaks a created-at tie by id so the split is stable', () => {
+  it('breaks a phone-date tie by id so the split is stable', () => {
     const split = splitByPackage({
       packageSize: 1,
       records: [record('b', '2026-01-01'), record('a', '2026-01-01')],
@@ -143,13 +151,81 @@ describe('splitByPackage', () => {
     assert.deepEqual(split.outside, ['b']);
   });
 
-  it('puts every unreached record outside when there is no package', () => {
+  it('puts every unreached record with a phone outside when there is no package', () => {
     const split = splitByPackage({
       packageSize: 0,
-      records: [record('a', '2026-01-01'), record('b', '2026-01-02', true)],
+      records: [record('a', '2026-01-01'), record('b', '2026-01-02', true), noPhone('c')],
       reachedDeletedCount: 0,
     });
     assert.deepEqual(split.outside, ['a']);
+  });
+
+  describe('records with no phone (ADR 0033)', () => {
+    const pad = (i: number) => String(i).padStart(3, '0');
+    const withPhones = (count: number) =>
+      Array.from({ length: count }, (_, i) => record(`p${pad(i)}`, `2026-02-01T00:00:00.${pad(i)}Z`));
+    const withoutPhones = (count: number) =>
+      Array.from({ length: count }, (_, i) => noPhone(`n${pad(i)}`));
+
+    it('leaves them out of the count: 90 with a phone and 20 without fit a package of 100', () => {
+      const split = splitByPackage({
+        packageSize: 100,
+        records: [...withPhones(90), ...withoutPhones(20)],
+        reachedDeletedCount: 0,
+      });
+      assert.deepEqual(split.outside, []);
+      assert.equal(split.used, 90);
+      assert.equal(split.uncounted, 20);
+      assert.equal(split.left, 10);
+      assert.equal(split.over, 0);
+    });
+
+    it('never lets them hold a slot a guest with a phone needs', () => {
+      // Whatever order they were added in, the 100 records with a phone all fit.
+      const split = splitByPackage({
+        packageSize: 100,
+        records: [...withoutPhones(20), ...withPhones(100)],
+        reachedDeletedCount: 0,
+      });
+      assert.deepEqual(split.outside, []);
+      assert.equal(split.used, 100);
+      assert.equal(split.uncounted, 20);
+    });
+
+    it('never tags them outside, even over the package', () => {
+      const split = splitByPackage({
+        packageSize: 1,
+        records: [record('a', '2026-01-01'), record('b', '2026-01-02'), noPhone('c')],
+        reachedDeletedCount: 0,
+      });
+      assert.deepEqual(split.outside, ['b']);
+      assert.equal(split.uncounted, 1);
+    });
+
+    it('lines up an old record that just got a phone behind everyone who already had one', () => {
+      // `old` was added first but only got its phone today, so it is the one left outside.
+      const split = splitByPackage({
+        packageSize: 2,
+        records: [
+          record('old', '2026-03-01'),
+          record('a', '2026-01-02'),
+          record('b', '2026-01-03'),
+        ],
+        reachedDeletedCount: 0,
+      });
+      assert.deepEqual(split.outside, ['old']);
+    });
+
+    it('keeps counting a Reached record that later lost its phone', () => {
+      const split = splitByPackage({
+        packageSize: 2,
+        records: [noPhone('a', true), record('b', '2026-01-02'), record('c', '2026-01-03')],
+        reachedDeletedCount: 0,
+      });
+      assert.deepEqual(split.outside, ['c']);
+      assert.equal(split.used, 3);
+      assert.equal(split.uncounted, 0);
+    });
   });
 });
 

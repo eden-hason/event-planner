@@ -404,7 +404,7 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
           <BandRow>
             <p className="text-[13.5px] font-medium">No payment recorded</p>
             <p className="text-muted-foreground text-[12.5px] tabular-nums">
-              The guest list has {view.used.toLocaleString('en-GB')} guest records. Once the sending gate is on, an event with no package reaches nobody
+              The guest list has {view.used.toLocaleString('en-GB')} guest records with a phone. Once the sending gate is on, an event with no package reaches nobody
             </p>
           </BandRow>
         ) : (
@@ -418,7 +418,15 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
                 action={<BonusOverrideDialog eventId={eventId} bonus={pkg.bonus} isCustom={pkg.bonusIsCustom} automaticBonus={view.automaticBonus} />}
               />
               <PackageFigure label="Package" value={pkg.size} />
-              <PackageFigure label="Used" value={view.used} supporting="Includes deleted records that were reached" />
+              <PackageFigure
+                label="Used"
+                value={view.used}
+                supporting={
+                  view.uncounted > 0
+                    ? `Includes deleted records that were reached · ${view.uncounted.toLocaleString('en-GB')} without a phone not counted`
+                    : 'Includes deleted records that were reached'
+                }
+              />
               {view.over > 0 ? (
                 <PackageFigure label="Outside the package" value={view.over} tone="warning" supporting="Skipped when a schedule sends" />
               ) : (

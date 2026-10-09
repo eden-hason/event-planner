@@ -44,8 +44,13 @@ export type RecordPackage = {
 export type PackageSplit = {
   /** Guest Record ids a Schedule will skip, newest last. */
   outside: string[];
-  /** Every Guest Record in the list plus deleted ones that were Reached. */
+  /**
+   * The records counted against the package: every Reached one (deleted too) and every
+   * live one with a phone number.
+   */
   used: number;
+  /** Live records with no phone that were never Reached: in the list, not in the count. */
+  uncounted: number;
   left: number;
   over: number;
 };
@@ -78,6 +83,8 @@ export type GuestPackageView = {
   bonus: number;
   size: number;
   used: number;
+  /** Guest Records with no phone, which the package does not count. */
+  uncounted: number;
   left: number;
   over: number;
   state: PackageState;

@@ -367,6 +367,8 @@ export type EventRecordPackageView = {
   /** What the automatic rule would give, shown beside an override. */
   automaticBonus: number;
   used: number;
+  /** Guest Records with no phone, which the package does not count (ADR 0033). */
+  uncounted: number;
   left: number;
   over: number;
   /** The channel of the latest payment: what the Owner sees as their package's channel. */

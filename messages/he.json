@@ -2616,6 +2616,7 @@
       "heroLeft": "{count, plural, one {רשומה נשארה} other {רשומות נשארו}}",
       "heroOver": "{count, plural, one {רשומה מעבר לחבילה} other {רשומות מעבר לחבילה}}",
       "usedOf": "{used} מתוך {size} רשומות בשימוש",
+      "uncounted": "{count, plural, one {רשומה אחת ללא טלפון - לא נספרת} other {# רשומות ללא טלפון - לא נספרות}}",
       "breakdownTitle": "ממה מורכבת החבילה",
       "paidRecords": "רשומות ששולמו",
       "giftedRecords": "רשומות במתנה מ-Kululu",
