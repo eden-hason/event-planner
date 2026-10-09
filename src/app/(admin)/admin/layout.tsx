@@ -25,7 +25,7 @@ export default async function AdminLayout({
     <div dir="ltr">
       <SidebarProvider style={{ '--sidebar-width': '220px' } as React.CSSProperties}>
         <BackOfficeNav email={email} environment={environment} />
-        <SidebarInset className="bg-muted">
+        <SidebarInset className="bg-app-shell">
           <BackOfficeTopBar testAccountsVisible={testAccountsVisible}>{topbar}</BackOfficeTopBar>
           <div className="w-full px-4 py-4 md:px-8 md:py-6">{children}</div>
         </SidebarInset>

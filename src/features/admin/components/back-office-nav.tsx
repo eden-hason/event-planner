@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { cn } from '@/lib/utils';
 
 /**
  * Stubs are reachable and clearly unfinished rather than disabled or silently
@@ -51,16 +52,20 @@ export function BackOfficeNav({
   const { setOpenMobile } = useSidebar();
 
   return (
-    <Sidebar>
+    // `app-sidebar` borrows the event app's tinted sidebar tokens (see
+    // globals.css), so the two shells read as one product.
+    <Sidebar className="app-sidebar border-sidebar-border">
       {/*
        * Below `md` the sidebar is a Sheet portalled to <body>, out of the admin
        * layout's `dir="ltr"` and under the RTL <html>, so the direction is
        * re-declared here. `contents` keeps the Sidebar's own flex column intact.
+       * The Sheet takes no class from the primitive, so `app-sidebar` is
+       * re-declared here too.
        */}
-      <div dir="ltr" className="contents">
+      <div dir="ltr" className="app-sidebar contents">
         <SidebarHeader className="px-3 pt-3.5">
           <div className="flex items-baseline gap-2 px-2">
-            <span className="text-[15px] font-bold tracking-tight">Kululu</span>
+            <span className="text-primary text-[15px] font-bold tracking-tight">Kululu</span>
             <span className="text-muted-foreground text-[10px] font-semibold tracking-[0.09em] uppercase">
               Back Office
             </span>
@@ -78,10 +83,15 @@ export function BackOfficeNav({
                   <SidebarMenuButton
                     asChild
                     isActive={isActive}
-                    className="h-9 text-[13.5px] font-medium data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground"
+                    className={cn(
+                      'h-9 text-[13.5px]',
+                      isActive
+                        ? '!bg-app-nav-active !text-app-nav-active-foreground font-bold'
+                        : 'text-app-nav font-medium',
+                    )}
                   >
                     <Link href={href} onClick={() => setOpenMobile(false)}>
-                      <Icon className={isActive ? '' : 'text-muted-foreground'} />
+                      <Icon />
                       <span className="flex-1">{label}</span>
                       {stub && !isActive && (
                         <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
