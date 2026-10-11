@@ -3,8 +3,13 @@
 import * as React from 'react';
 import type { BillingHeaderStatus } from '../types';
 
-const EventBillingStatusContext =
-  React.createContext<BillingHeaderStatus | null>(null);
+type EventBillingContext = {
+  status: BillingHeaderStatus;
+  /** The event's title, for the messages a billing surface pre-fills. */
+  eventName: string;
+};
+
+const EventBillingStatusContext = React.createContext<EventBillingContext | null>(null);
 
 /**
  * Carries the current event's billing status down to the header pill.
@@ -14,18 +19,26 @@ const EventBillingStatusContext =
  */
 export function EventBillingStatusProvider({
   value,
+  eventName,
   children,
 }: {
   value: BillingHeaderStatus;
+  eventName: string;
   children: React.ReactNode;
 }) {
+  const context = React.useMemo(() => ({ status: value, eventName }), [value, eventName]);
   return (
-    <EventBillingStatusContext.Provider value={value}>
+    <EventBillingStatusContext.Provider value={context}>
       {children}
     </EventBillingStatusContext.Provider>
   );
 }
 
 export function useEventBillingStatus(): BillingHeaderStatus | null {
-  return React.useContext(EventBillingStatusContext);
+  return React.useContext(EventBillingStatusContext)?.status ?? null;
+}
+
+/** The current event's title, or an empty string outside the provider. */
+export function useBillingEventName(): string {
+  return React.useContext(EventBillingStatusContext)?.eventName ?? '';
 }

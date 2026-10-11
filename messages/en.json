@@ -80,7 +80,8 @@
       "collaboration": "Invite partners and share the workload",
       "seating": "Tables, groups and where everyone sits",
       "budget": "Track expenses and gifts received",
-      "aiAssistant": "Ask anything about your event"
+      "aiAssistant": "Ask anything about your event",
+      "package": "Choose a plan, records and payments"
     },
     "picker": {
       "title": "Choose an event",
@@ -2668,6 +2669,76 @@
     },
     "packageCard": {
       "details": "Details"
+    },
+    "upgrade": {
+      "button": "Upgrade",
+      "pageTitle": "Plans and Payments",
+      "title": "Choose your package",
+      "subtitle": "Choose how to reach your guests and how many records - and see the final price. One-time payment",
+      "subtitleShort": "Choose how to reach your guests and how many records. One-time payment",
+      "planStep": "How should we reach your guests?",
+      "planGroup": "Plan",
+      "recordsStep": "How many records do you have?",
+      "recordsHint": "A record is one phone number - a single guest, a couple or a family",
+      "records": "records",
+      "fewer": "{step} fewer records",
+      "more": "{step} more records",
+      "recordsValue": "{count} records",
+      "perRecord": "per record",
+      "plans": {
+        "whatsapp": {
+          "name": "WhatsApp",
+          "desc": "Through the official WhatsApp integration - your dashboard updates in real time with every read and RSVP"
+        },
+        "whatsapp_calls": {
+          "name": "WhatsApp + calls",
+          "desc": "Every WhatsApp schedule included, plus a human representative calls the guests who didn't answer"
+        }
+      },
+      "lines": {
+        "invitation": {
+          "t": "First invitation message",
+          "s": "Can be swapped for a confirmation round, your choice"
+        },
+        "confirmations": {
+          "t": "2 confirmation rounds",
+          "s": "You can attach your event invitation to the messages"
+        },
+        "reminder": {
+          "t": "Reminder before the event",
+          "s": "Includes the table number and a fee-free Bit or PayBox gift option"
+        },
+        "thankYou": {
+          "t": "Thank-you message after the event",
+          "s": "You can attach a gift link to the message"
+        },
+        "callRounds": {
+          "t": "2 phone call rounds",
+          "s": "A human representative calls whoever hasn't answered yet"
+        },
+        "callResults": {
+          "t": "Call results in real time",
+          "s": "Every answer shows up for you as soon as the call ends"
+        }
+      },
+      "includes": "What's included",
+      "includesIn": "What's included in {plan}",
+      "itemCount": "{count, plural, one {1 item} other {# items}}",
+      "giftEarned": "{count} extra records as a gift",
+      "giftToNext": "{missing} more records and get {count} free",
+      "giftPill": "free",
+      "giftFrom": "from {count}",
+      "summary": "Package summary",
+      "oneTime": "One-time payment",
+      "lineRecords": "{count} records × {rate}",
+      "lineBonus": "{count} extra records",
+      "free": "Free",
+      "totalRecords": "Total records",
+      "footerRecords": "{count} records · {plan}",
+      "footerBonus": "Includes {count} free",
+      "pay": "Checkout",
+      "payNote": "Payment is completed with our team on WhatsApp",
+      "whatsApp": "Hi, I'd like to turn on sending for {event}: {plan} plan, {records} records, {total}"
     }
   },
   "saveEvent": {

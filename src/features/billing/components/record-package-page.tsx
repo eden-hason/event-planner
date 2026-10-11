@@ -11,6 +11,8 @@ import {
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { useFeatureHeader } from '@/components/feature-layout';
+import { useEventBillingStatus } from './event-billing-status-provider';
+import { UpgradeSimulator } from './upgrade-simulator';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { billingWhatsAppUrl } from '../utils';
@@ -52,13 +54,33 @@ export function RecordPackagePage({
   view,
 }: RecordPackagePageProps) {
   const t = useTranslations('billing.packagePage');
+  const tUpgrade = useTranslations('billing.upgrade');
+  const status = useEventBillingStatus();
+  // Nothing paid and nothing pending: the page is where the Owner picks a Plan and pays
+  const upgrading = !view && Boolean(status?.canUpgrade);
 
-  useFeatureHeader({ title: t('title'), subtitle: t('subtitle') });
+  useFeatureHeader(
+    upgrading
+      ? { title: tUpgrade('pageTitle') }
+      : { title: t('title'), subtitle: t('subtitle') },
+  );
 
-  return view ? (
-    <PackageDetails eventId={eventId} eventName={eventName} view={view} />
-  ) : (
-    <NoPackage eventName={eventName} />
+  if (view) return <PackageDetails eventId={eventId} eventName={eventName} view={view} />;
+  if (!upgrading) return <NoPackage eventName={eventName} />;
+
+  return (
+    <div className="flex flex-col gap-3.5 md:gap-6">
+      <div className="flex flex-col gap-1 md:gap-1.5">
+        <h2 className="text-2xl font-extrabold md:text-[30px] md:tracking-[-0.4px]">
+          {tUpgrade('title')}
+        </h2>
+        <p className="text-muted-foreground text-[13.5px] leading-normal md:text-[15px]">
+          <span className="md:hidden">{tUpgrade('subtitleShort')}</span>
+          <span className="hidden md:inline">{tUpgrade('subtitle')}</span>
+        </p>
+      </div>
+      <UpgradeSimulator eventName={eventName} />
+    </div>
   );
 }
 

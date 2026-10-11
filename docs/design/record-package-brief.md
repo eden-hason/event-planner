@@ -49,7 +49,7 @@ Owner-only.
 ## 3. The model in one paragraph (what the UI must make obvious)
 
 The Owner paid for **N records** on a **channel** (SMS, WhatsApp, or WhatsApp + calls) and got
-**Bonus Records** free on top: 10 once 150 or more are paid for (ADR 0030), or a custom
+**Bonus Records** free on top: 10 once 200 or more are paid for, 20 from 400 (ADR 0035), or a custom
 number Kululu set. **Package = Paid + Bonus.** Planning is never limited, so the guest list can
 grow past the package. But **when a Schedule sends, it only goes to Guest Records inside the
 package.** Records that have already been sent to are always inside. Then the oldest

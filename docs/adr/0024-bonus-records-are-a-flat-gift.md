@@ -1,5 +1,8 @@
-> **Partly superseded by ADR 0030:** Bonus Records are now 10 from 150 paid records and
-> none below, not 10 up to 200 and 20 above.
+> **Partly superseded by ADR 0030, then ADR 0035:** Bonus Records are now 10 from 200 paid
+> records and 20 from 400, none below 200.
+>
+> **Partly superseded by ADR 0034:** SMS is no longer sold. Two Plans remain, WhatsApp 1.5 ₪
+> and WhatsApp + calls 2 ₪.
 
 # Bonus Records are a flat gift, not a reserve
 

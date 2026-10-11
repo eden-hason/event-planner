@@ -7,6 +7,7 @@ import {
   IconArmchair,
   IconCoins,
   IconGift,
+  IconPackage,
   IconUsersGroup,
 } from '@tabler/icons-react';
 import { Bot } from 'lucide-react';
@@ -81,7 +82,7 @@ export function useMoreNavItems(): MoreNavItem[] {
   const tNav = useTranslations('navigation');
   const tMore = useTranslations('more.descriptions');
   const tChat = useTranslations('aiChat');
-  const { isOwner } = useCollaboration();
+  const { isOwner, canSeePayments } = useCollaboration();
 
   const items: MoreNavItem[] = [
     {
@@ -92,6 +93,20 @@ export function useMoreNavItems(): MoreNavItem[] {
       tint: 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300',
       href: buildNavUrl('/app/gifting', eventId),
     },
+    // The plans page: a Plan to choose before anything is paid, the package after. Only for
+    // the Event's creator, the one who pays - the same rule as the sidebar's entry.
+    ...(canSeePayments
+      ? [
+          {
+            value: 'package',
+            label: tNav('package'),
+            description: tMore('package'),
+            icon: IconPackage,
+            tint: 'bg-pink-100 text-pink-700 dark:bg-pink-400/15 dark:text-pink-300',
+            href: buildNavUrl('/app/package', eventId),
+          },
+        ]
+      : []),
     {
       value: 'collaboration',
       label: tNav('collaboration'),

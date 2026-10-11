@@ -15,7 +15,7 @@ import sharingShot from '@/assets/sharing.png';
 import whatsappShot from '@/assets/whatsapp.png';
 
 import { PricingSimulator } from './pricing-simulator';
-import { BONUS_MIN_PAID, BONUS_RECORDS } from './pricing';
+import { BONUS_STEPS } from '@/features/billing/utils';
 
 const WHATSAPP_NUMBER = '972552639234';
 const WHATSAPP_OPENING_MESSAGE = 'היי, אשמח לקבל פרטים נוספים על Kululu';
@@ -289,16 +289,22 @@ export function HomepageClient() {
         .ps-step-text{display:flex;flex-direction:column;gap:4px}
         .ps-step-title{margin:0;font-size:20px;font-weight:700;line-height:28px}
         .ps-step-sub{margin:0;font-size:14px;color:var(--ink-2);line-height:1.5;max-width:380px}
-        .ps-channels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-        .ps-chan{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px;text-align:right;color:var(--ink);border-radius:16px;border:2px solid rgba(26,11,46,0.1);background:#fff;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
+        .ps-channels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .ps-chan{display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:20px;text-align:right;color:var(--ink);border-radius:16px;border:2px solid rgba(26,11,46,0.1);background:#fff;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease}
         .ps-chan:hover{border-color:rgba(210,60,194,0.5)}
         .ps-chan.on{border-color:var(--primary);background:rgba(210,60,194,0.05);box-shadow:0 6px 16px rgba(210,60,194,0.16)}
         .ps-chan:focus-visible,.ps-step-btn:focus-visible,.ps-cta:focus-visible{outline:3px solid rgba(139,63,240,0.45);outline-offset:2px}
         .ps-chan-head{display:flex;align-items:center;gap:12px;width:100%}
         .ps-chan-ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;border-radius:12px}
+        .ps-chan-stack{position:relative}
+        .ps-chan-stack>span{position:absolute;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+        .ps-chan-stack .back{bottom:0;left:0}
+        .ps-chan-stack .front{top:0;right:0}
+        .ps-chan-stack svg{width:17px;height:17px}
+        .ps-chan-text{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
         .ps-chan-name{font-size:17px;font-weight:700;line-height:1.3}
         .ps-chan-desc{font-size:14px;color:var(--ink-2);line-height:1.5}
-        .ps-chan-price{display:flex;align-items:baseline;gap:4px;margin-top:auto}
+        .ps-chan-price{display:flex;align-items:baseline;gap:4px;flex-shrink:0}
         .ps-chan-price .amt{font-size:24px;font-weight:800}
         .ps-chan-price .per{font-size:14px;color:#6E5F85}
         .ps-records-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -315,37 +321,58 @@ export function HomepageClient() {
         .ps-range:focus-visible::-webkit-slider-thumb{outline:3px solid rgba(139,63,240,0.45);outline-offset:2px}
         .ps-ticks{position:relative;height:20px;font-size:13px;color:#6E5F85}
         .ps-ticks span{position:absolute;top:0}
-        .ps-gift{display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:18px;border:1.5px solid rgba(210,60,194,0.35);background:linear-gradient(90deg,rgba(210,60,194,0.09),rgba(139,63,240,0.09))}
-        .ps-gift-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:72px;height:72px;border-radius:16px;background:linear-gradient(135deg,#D23CC2,#8B3FF0);color:#fff;box-shadow:0 6px 16px rgba(210,60,194,0.28)}
-        .ps-gift-badge .n{font-size:30px;font-weight:800;line-height:1}
-        .ps-gift-badge .u{font-size:11px;font-weight:600;opacity:.9}
-        .ps-gift-text{display:flex;flex-direction:column;gap:4px;flex-grow:1}
-        .ps-gift-text .t{font-size:18px;font-weight:700;color:var(--ink)}
-        .ps-gift-text .d{font-size:14px;color:var(--ink-2);line-height:1.5}
-        .ps-gift.locked{border-style:dashed;background:none}
-        .ps-gift.locked .ps-gift-badge{opacity:.45;box-shadow:none}
+        .ps-gift{display:flex;flex-direction:column;gap:6px;padding:16px 18px 14px;border-radius:18px;border:1.5px solid rgba(210,60,194,0.35);background:linear-gradient(90deg,rgba(210,60,194,0.09),rgba(139,63,240,0.09))}
+        .ps-gift-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+        .ps-gift-title{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--ink)}
+        .ps-gift-title svg{color:var(--primary-deep);flex-shrink:0}
+        .ps-gift-pill{padding:4px 10px;border-radius:99px;background:linear-gradient(90deg,#D23CC2,#8B3FF0);color:#fff;font-size:12.5px;font-weight:700;opacity:0;transform:scale(.6);transition:opacity .2s ease,transform .3s cubic-bezier(.34,1.56,.64,1)}
+        .ps-gift-pill.on{opacity:1;transform:none}
+        .ps-gift-pill.on .n{display:inline-block;animation:ps-pop .35s cubic-bezier(.34,1.56,.64,1)}
+        @keyframes ps-pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+        .ps-gift-track{position:relative;height:62px;margin:8px 14px 0}
+        .ps-gift-rail{position:absolute;top:8px;left:0;right:0;height:6px;border-radius:99px;background:#EDE7F3}
+        .ps-gift-rail span{position:absolute;top:0;bottom:0;right:0;border-radius:99px;background:linear-gradient(to left,#D23CC2,#8B3FF0);transition:width .2s ease-out}
+        .ps-gift-dot{position:absolute;top:4px;width:14px;height:14px;margin-right:-7px;border-radius:50%;background:#fff;border:3px solid var(--primary);box-shadow:0 2px 6px rgba(210,60,194,0.35);transition:right .2s ease-out}
+        .ps-gift-step{position:absolute;top:0;transform:translateX(50%);display:flex;flex-direction:column;align-items:center;gap:4px}
+        .ps-gift-step .mark{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;color:#fff;border:1.5px dashed var(--primary);transition:border-color .2s ease}
+        .ps-gift-step.on .mark{background:linear-gradient(135deg,#D23CC2,#8B3FF0);border-style:solid;border-color:transparent}
+        .ps-gift-step .n{font-size:14px;font-weight:800;line-height:1;color:#6E5F85;transition:color .2s ease}
+        .ps-gift-step.on .n{color:var(--primary-deep)}
+        .ps-gift-step .from{font-size:11px;color:#6E5F85;white-space:nowrap}
         .ps-summary{display:flex;flex-direction:column;gap:24px;padding:32px}
         .ps-sum-head{display:flex;flex-direction:column;gap:6px}
         .ps-sum-label{font-size:15px;font-weight:600;color:var(--ink-2)}
         .ps-sum-sel{display:flex;align-items:center;gap:8px}
-        .ps-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+        .ps-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600;transition:background .2s ease,color .2s ease}
         .ps-sum-rate{font-size:14px;color:#6E5F85}
         .ps-total{display:flex;flex-direction:column;gap:4px}
         .ps-total-row{display:flex;align-items:baseline;gap:6px}
         .ps-total-row .amt{font-size:64px;font-weight:800;line-height:1;letter-spacing:-1px}
         .ps-total-row .cur{font-size:28px;font-weight:700}
         .ps-total-note{font-size:14px;color:#6E5F85}
-        .ps-lines{display:flex;flex-direction:column;gap:12px;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:15px}
+        .ps-includes{display:flex;flex-direction:column}
+        .ps-includes-label{font-size:15px;font-weight:600;color:var(--ink-2)}
+        .ps-inc{display:flex;gap:10px;align-items:flex-start;padding-top:12px}
+        .ps-inc .ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+        .ps-inc .txt{display:flex;flex-direction:column;gap:1px}
+        .ps-inc .t{font-size:14.5px;font-weight:600;line-height:1.4}
+        .ps-inc .s{font-size:13px;color:#6E5F85;line-height:1.4}
+        .ps-lines{display:flex;flex-direction:column;gap:12px;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:15px;--fold-gap:12px}
         .ps-line{display:flex;justify-content:space-between;align-items:center;gap:12px}
         .ps-line .k{color:var(--ink-2)}
         .ps-line .k.strong{color:var(--ink);font-weight:600}
         .ps-line .v{font-weight:600}
         .ps-line .v.bold{font-weight:700}
         .ps-line-bonus{display:inline-flex;align-items:center;gap:6px}
+        /* Folds a row in and out by height; --fold-gap cancels the parent's flex gap while shut */
+        .ps-fold{display:grid;grid-template-rows:0fr;opacity:0;margin-top:calc(-1 * var(--fold-gap,0px));transition:grid-template-rows .3s ease,margin-top .3s ease,opacity .15s ease}
+        .ps-fold.open{grid-template-rows:1fr;opacity:1;margin-top:0;transition:grid-template-rows .3s ease,margin-top .3s ease,opacity .25s ease .1s}
+        .ps-fold>*{min-height:0;overflow:hidden}
         .ps-free{font-weight:700;color:#15803D}
         .ps-cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;margin-top:auto;border-radius:14px;background:linear-gradient(90deg,#D23CC2,#8B3FF0);color:#fff;font-size:18px;font-weight:700;box-shadow:0 6px 16px rgba(210,60,194,0.28),inset 0 -2px 0 rgba(0,0,0,0.08);transition:filter .15s ease,transform .15s ease}
         .ps-cta:hover{filter:brightness(1.06);transform:translateY(-1px)}
         .ps-cta-note{font-size:13px;color:#6E5F85;text-align:center;margin-top:-12px}
+        @media(prefers-reduced-motion:reduce){.ps-gift-pill,.ps-fold,.ps-fold.open,.ps-gift-rail span,.ps-gift-dot,.ps-gift-step .mark,.ps-gift-step .n,.ps-pill{transition:none}.ps-gift-pill.on .n{animation:none}}
         @media(max-width:1080px){.ps-grid{grid-template-columns:1fr}}
         .ps-chan-note{display:none}
         @media(max-width:720px){
@@ -360,15 +387,18 @@ export function HomepageClient() {
           .ps-step-title{font-size:17px;line-height:24px}
           .ps-step-sub{font-size:12.5px}
           .ps-channels{gap:8px}
-          .ps-chan{align-items:center;gap:6px;padding:10px 6px;text-align:center;border-radius:14px}
-          .ps-chan-head{flex-direction:column;gap:6px}
-          .ps-chan-ic{width:32px;height:32px;border-radius:10px}
+          .ps-chan{padding:12px;border-radius:14px}
+          .ps-chan-head{gap:10px}
+          .ps-chan-ic{width:34px;height:34px;border-radius:10px}
           .ps-chan-ic svg{width:17px;height:17px}
-          .ps-chan-name{font-size:13.5px;line-height:1.25;min-height:34px;display:flex;align-items:center}
+          .ps-chan-stack>span{width:26px;height:26px;border-radius:8px}
+          .ps-chan-stack svg{width:15px;height:15px}
+          .ps-chan-text{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:1px}
+          .ps-chan-name{font-size:13.5px;line-height:1.25}
           .ps-chan-desc{display:none}
-          .ps-chan-price{flex-direction:column;align-items:center;gap:0;margin-top:0}
-          .ps-chan-price .amt{font-size:18px}
-          .ps-chan-price .per{font-size:11.5px}
+          .ps-chan-price{font-size:12px;color:#6E5F85}
+          .ps-chan-price .amt{font-size:15px;color:var(--ink)}
+          .ps-chan-price .per{font-size:12px}
           .ps-chan-note{display:block;margin:0;font-size:13px;color:var(--ink-2);line-height:1.45}
           .ps-records-head{gap:10px}
           .ps-stepper{width:100%;gap:8px}
@@ -377,13 +407,6 @@ export function HomepageClient() {
           .ps-count .n{font-size:22px}
           .ps-slider{padding:4px 0;gap:8px}
           .ps-ticks{font-size:12px}
-          .ps-gift{padding:10px 12px;gap:12px;border-radius:14px}
-          .ps-gift-badge{width:44px;height:44px;border-radius:12px}
-          .ps-gift-badge .n{font-size:17px}
-          .ps-gift-badge .u{display:none}
-          .ps-gift-text{gap:2px}
-          .ps-gift-text .t{font-size:15px}
-          .ps-gift-text .d{font-size:12.5px;line-height:1.4}
           .ps-summary{padding:18px 16px;gap:14px;border-radius:20px}
           .ps-sum-head{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
           .ps-sum-label{font-size:14px}
@@ -391,7 +414,14 @@ export function HomepageClient() {
           .ps-total-row .amt{font-size:44px}
           .ps-total-row .cur{font-size:22px}
           .ps-total-note{font-size:13px}
-          .ps-lines{padding:12px 0;gap:8px;font-size:14px}
+          .ps-includes{padding-top:12px;border-top:1px solid var(--line)}
+          .ps-includes-label{font-size:13px}
+          .ps-inc{gap:9px;padding-top:9px}
+          .ps-inc .ic{width:18px;height:18px}
+          .ps-inc .ic svg{width:11px;height:11px}
+          .ps-inc .t{font-size:13.5px;line-height:1.35}
+          .ps-inc .s{font-size:12px;line-height:1.35}
+          .ps-lines{padding:12px 0;gap:8px;--fold-gap:8px;font-size:14px}
           .ps-cta{height:50px;font-size:16px;border-radius:12px}
           .ps-cta-note{margin-top:-6px;font-size:12px}
         }
@@ -668,14 +698,15 @@ export function HomepageClient() {
           <div className="faq-wrap">
             <div className="faq-list reveal">
               {([
-                { q:'איך מתבצע החיוב ב Kululu?', a:'החיוב מתבצע לפי אירוע - תשלום חד פעמי לפי כמות רשומות המוזמנים שלכם' },
-                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>אין בעיה. כל חבילה של {BONUS_MIN_PAID} רשומות ומעלה כוללת {BONUS_RECORDS} רשומות נוספות במתנה בדיוק בשביל האורחים של הרגע האחרון.<br/>צריכים עוד? מוסיפים רשומות לתזמון באותו מחיר לרשומה, או רק מוסיפים אותם לרשימה ומעדכנים סטטוס בעצמכם או שולחים להם קישור אישור אישי.</> },
+                { q:'איך מתבצע החיוב ב Kululu?', a:'החיוב מתבצע לפי אירוע - תשלום חד פעמי לפי כמות רשומות המוזמנים שלכם והחבילה שבחרתם' },
+                { q:'מה ההבדל בין החבילות?', a:<>בחבילת וואטסאפ מקבלים הודעת הזמנה (אפשר להחליף אותה בסבב אישור הגעה), שני סבבי אישור הגעה, תזכורת לפני האירוע והודעת תודה אחרי האירוע.<br/>בחבילת וואטסאפ + שיחות מקבלים את כל אלה, ובנוסף שני סבבי שיחות טלפון שמבצע נציג אנושי. התשובות מתעדכנות אצלכם בזמן אמת.</> },
+                { q:'מה אם רשימת האורחים גדלה באמצע התכנון?', a:<>אין בעיה. {BONUS_STEPS.map((s, i) => i === 0 ? `מ-${s.minPaid} רשומות החבילה כוללת ${s.records} רשומות נוספות במתנה` : `ומ-${s.minPaid} רשומות - ${s.records}`).join(', ')}, בדיוק בשביל האורחים של הרגע האחרון.<br/>צריכים עוד? מוסיפים רשומות לתזמון באותו מחיר לרשומה, או רק מוסיפים אותם לרשימה ומעדכנים סטטוס בעצמכם או שולחים להם קישור אישור אישי.</> },
                 { q:'האם ניתן לנהל את האירוע יחד עם בן/בת הזוג או מפיק האירוע?', a:'בטח, ניתן לצרף שותפים לניהול האירוע עם הרשאות צפייה או עריכה.' },
                 { q:'איך עוזר ה-AI מסדר הושבה?', a:<>הוא משתמש בקבוצות ובהערות שהוספתם - &quot;חברים של הכלה&quot;, &quot;משפחה חתן&quot;, &quot;חברים צבא&quot; ומציע שיבוצים שתוכלו לאשר, לערוך או להתעלם מהם.<br/>עוזר ה-AI לא מזיז אף אחד ללא אישורכם.</> },
                 { q:'האם פרטי האורחים שלי מאובטחים?', a:<>בוודאי. רשימת האורחים שלכם שייכת לכם, אנחנו לא מוכרים, משתפים או משתמשים בה לשיווק.<br/>הנתונים מוצפנים, ואפשר לייצא הכל או למחוק את האירוע בלחיצה אחת אחרי היום הגדול.</> },
                 { q:'האם המערכת מתאימה לכל סוגי האירועים?', a:'כן, המערכת מתאימה לחתונות, חינה, בר/בת מצוות, אירועים עסקיים, ימי הולדת ועוד.' },
                 { q:'האם אפשר לייבא רשימות מוזמנים מקובץ אקסל?', a:'כן, ניתן לייבא קבצי Excel ו-CSV בצורה פשוטה ומהירה.' },
-                { q:'מה קורה אם מוזמנים לא עונים?', a:'המערכת מבצעת סבב הודעות נוסף ולאחר מכן שני סבבי שיחות טלפון למוזמנים שטרם אישרו הגעה.' },
+                { q:'מה קורה אם מוזמנים לא עונים?', a:'המערכת שולחת סבב אישור הגעה נוסף למי שטרם ענה. בחבילת וואטסאפ + שיחות, נציג אנושי מתקשר אחר כך בשני סבבי שיחות טלפון למוזמנים שטרם אישרו הגעה.' },
                 { q:'האם המערכת עובדת גם מהטלפון?', a:'כן, המערכת מותאמת לשימוש מלא גם מהמובייל וגם מהמחשב.' },
               ] as Array<{q:string,a:React.ReactNode}>).map(({q,a},i) => (
                 <div key={i} className={`faq-item${openFaqs.has(i) ? ' open' : ''}`}>

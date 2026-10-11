@@ -23,5 +23,6 @@ export function deriveHeaderStatus(status: EventBillingStatus): BillingHeaderSta
     status,
     tone: TONE_BY_STATUS[status],
     sendingEnabled: SENDING_ENABLED[status],
+    canUpgrade: !SENDING_ENABLED[status] && status !== 'payment_pending',
   };
 }

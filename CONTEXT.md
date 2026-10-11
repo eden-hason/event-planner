@@ -394,7 +394,8 @@ A pass of **human phone calls** made by the Kululu team to Guests who have not r
 after the WhatsApp rounds. Operated from the admin back office, not by the Couple. Each
 call's outcome is recorded against the Guest.
 
-Two Call Rounds are included with every paid Event. Call Rounds are a service Kululu performs,
+Two Call Rounds are included with every Event on the **WhatsApp + calls** Plan; an Event on
+the WhatsApp Plan gets none. Call Rounds are a service Kululu performs,
 not a feature the Couple operates - this distinction matters in all customer-facing copy.
 The Owner watches a Call Round; they never run one.
 
@@ -604,17 +605,34 @@ what is left. The rest with a phone are **outside the package** and are skipped 
 Schedule sends, until the package grows or the list shrinks. A Guest Record with no phone
 is neither: nothing can be sent to it, so the package does not count it.
 
-_Avoid_: plan, tier, capacity, quota, balance
+_Avoid_: plan (a **Plan** is what the records are bought for, not how many), tier,
+capacity, quota, balance
+
+## Plan
+
+What an Owner's Guest Records are bought for, which sets the rate per record. There are
+two:
+
+- **WhatsApp** - an Initial Invitation (or a Confirmation round in its place), two
+  Confirmation rounds, an Event Reminder and a Thank You
+- **WhatsApp + calls** - all of that, plus two **Call Rounds**
+
+A Plan has no size; the Record Package says how many. It is stored as the payment's channel
+(`record_package_channel`). SMS is no longer sold as a Plan - SMS reaches a Guest only as an
+**SMS Fallback**.
+
+_Avoid_: tier, channel (in Owner-facing copy)
 
 ## Paid Records
 
-The number of Guest Records the Owner paid for, at the channel's rate per record. It only
+The number of Guest Records the Owner paid for, at their Plan's rate per record. It only
 grows - buying more records adds to it at the same rate.
 
 ## Bonus Records
 
-Free Guest Records added on top of the Paid Records as a gift: 10 once 150 or more are paid
-for, none below that. A flat number, never a percentage.
+Free Guest Records added on top of the Paid Records as a gift: 10 once 200 or more are paid
+for, 20 once 400 or more are, none below 200. Each step replaces the one before, so 400 paid
+earns 20, not 30. A flat number per step, never a percentage.
 
 _Avoid_: reserve records (retired with tiers)
 

@@ -1,3 +1,6 @@
+> **Superseded by ADR 0035:** Bonus Records are now 10 from 200 paid records and 20 from
+> 400, none below 200.
+
 # Bonus Records start at 150 paid records and are always 10
 
 Bonus Records used to be 10 when an Owner paid for up to 200 records and 20 above that, for

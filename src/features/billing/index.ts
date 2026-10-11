@@ -25,9 +25,9 @@ export {
   RECORD_PACKAGE_CHANNEL_LABELS,
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
-  BONUS_MIN_PAID,
-  BONUS_RECORDS,
+  BONUS_STEPS,
   bonusRecords,
+  nextBonusStep,
   packageAside,
   packageState,
   recordPackage,
@@ -45,6 +45,7 @@ export {
   useEventBillingStatus,
 } from './components/event-billing-status-provider';
 export { EventBillingStatusPill } from './components/event-billing-status-pill';
+export { UpgradeButton } from './components/upgrade-button';
 export { EventPlanCard } from './components/event-plan-card';
 export { EventBillingStatusControl } from './components/event-billing-status-control';
 // The one place the plan is explained. Exported so surfaces outside this

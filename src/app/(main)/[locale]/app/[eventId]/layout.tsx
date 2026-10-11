@@ -101,6 +101,7 @@ export default async function EventLayout({
                   <FeatureLayoutProvider>
                     <EventBillingStatusProvider
                       value={deriveHeaderStatus(event.billingStatus)}
+                      eventName={event.title}
                     >
                       <PageCard>{children}</PageCard>
                     </EventBillingStatusProvider>
