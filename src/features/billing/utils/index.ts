@@ -8,13 +8,25 @@ export {
 export {
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
-  BONUS_MIN_PAID,
-  BONUS_RECORDS,
+  BONUS_STEPS,
   bonusRecords,
+  nextBonusStep,
   packageAside,
   packageState,
   recordPackage,
   splitByPackage,
 } from './record-package';
+
+export {
+  GIFT_TRACK_END,
+  PRICING_CHANNELS,
+  RECORDS_MAX,
+  RECORDS_MIN,
+  RECORDS_STEP,
+  clampRecords,
+  quote,
+  trackPct,
+  type PricingChannel,
+} from './pricing';
 
 export { BILLING_TONE_CLASS, UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from './tone-class';

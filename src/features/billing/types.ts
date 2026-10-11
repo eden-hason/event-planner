@@ -15,6 +15,8 @@ export type BillingHeaderStatus = {
   status: EventBillingStatus;
   tone: BillingPillTone;
   sendingEnabled: boolean;
+  /** Nothing is paid or on its way, so the header offers the upgrade sheet instead of the pill. */
+  canUpgrade: boolean;
 };
 
 export type SetEventBillingStatusResult = { success: boolean; message: string };

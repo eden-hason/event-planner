@@ -24,14 +24,27 @@ export const RECORD_PACKAGE_RATES: Record<RecordPackageChannel, number> = {
   whatsapp_calls: 2,
 };
 
-/** From this many paid records a package earns its bonus (ADR 0030). */
-export const BONUS_MIN_PAID = 150;
-/** The bonus is the same whatever the package size: a flat gift, never a percentage. */
-export const BONUS_RECORDS = 10;
+/**
+ * The bonus grows in steps on total Paid Records (ADR 0035): each step replaces the one
+ * before it, never adds to it. A flat number per step, never a percentage.
+ */
+export const BONUS_STEPS = [
+  { minPaid: 200, records: 10 },
+  { minPaid: 400, records: 20 },
+] as const;
 
 /** The automatic Bonus Records for a total of Paid Records. */
 export function bonusRecords(paidRecords: number): number {
-  return paidRecords >= BONUS_MIN_PAID ? BONUS_RECORDS : 0;
+  let bonus = 0;
+  for (const step of BONUS_STEPS) {
+    if (paidRecords >= step.minPaid) bonus = step.records;
+  }
+  return bonus;
+}
+
+/** The next bonus step above a total of Paid Records, or null once past the last one. */
+export function nextBonusStep(paidRecords: number): (typeof BONUS_STEPS)[number] | null {
+  return BONUS_STEPS.find((step) => paidRecords < step.minPaid) ?? null;
 }
 
 /**

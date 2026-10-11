@@ -1,20 +1,43 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { bonusRecords, packageState, recordPackage, splitByPackage } from './record-package';
+import {
+  bonusRecords,
+  nextBonusStep,
+  packageState,
+  recordPackage,
+  splitByPackage,
+} from './record-package';
 
 describe('bonusRecords', () => {
-  it('gives nothing below 150 paid records', () => {
+  it('gives nothing below 200 paid records', () => {
     assert.equal(bonusRecords(0), 0);
-    assert.equal(bonusRecords(1), 0);
-    assert.equal(bonusRecords(149), 0);
+    assert.equal(bonusRecords(150), 0);
+    assert.equal(bonusRecords(199), 0);
   });
 
-  it('gives 10 from 150 paid records, whatever the package size', () => {
-    assert.equal(bonusRecords(150), 10);
+  it('gives 10 from 200 paid records', () => {
     assert.equal(bonusRecords(200), 10);
-    assert.equal(bonusRecords(201), 10);
-    assert.equal(bonusRecords(1000), 10);
+    assert.equal(bonusRecords(399), 10);
+  });
+
+  it('gives 20 from 400 paid records, in place of the 10 rather than on top', () => {
+    assert.equal(bonusRecords(400), 20);
+    assert.equal(bonusRecords(1000), 20);
+  });
+});
+
+describe('nextBonusStep', () => {
+  it('points at the first step below it', () => {
+    assert.deepEqual(nextBonusStep(150), { minPaid: 200, records: 10 });
+  });
+
+  it('points at the bigger step once the first is earned', () => {
+    assert.deepEqual(nextBonusStep(250), { minPaid: 400, records: 20 });
+  });
+
+  it('is null past the last step', () => {
+    assert.equal(nextBonusStep(400), null);
   });
 });
 
@@ -29,20 +52,20 @@ describe('recordPackage', () => {
   });
 
   it('computes the bonus from the total, so a split purchase never stacks it', () => {
-    assert.deepEqual(recordPackage({ payments: [150, 150], bonusOverride: null }), {
-      paid: 300,
-      bonus: 10,
+    assert.deepEqual(recordPackage({ payments: [200, 200], bonusOverride: null }), {
+      paid: 400,
+      bonus: 20,
       bonusIsCustom: false,
-      size: 310,
+      size: 420,
     });
   });
 
-  it('grants the bonus once a top-up crosses 150 paid records', () => {
-    assert.deepEqual(recordPackage({ payments: [100, 50], bonusOverride: null }), {
-      paid: 150,
+  it('grants the bonus once a top-up crosses 200 paid records', () => {
+    assert.deepEqual(recordPackage({ payments: [150, 50], bonusOverride: null }), {
+      paid: 200,
       bonus: 10,
       bonusIsCustom: false,
-      size: 160,
+      size: 210,
     });
   });
 

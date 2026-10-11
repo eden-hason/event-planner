@@ -20,7 +20,8 @@ import { BILLING_TONE_CLASS } from '../utils';
  * Owner-only - a seating-manager collaborator is not the payer and has no
  * billing decision to make - and silent until the provider supplies a status.
  * Not shown to a Visitor either: there is no account to bill until they save,
- * and the header's "Save your event" pill takes its place (ADR 0028).
+ * and the header's "Save your event" pill takes its place (ADR 0028). Nor while
+ * the Owner can still upgrade: the header's upgrade button stands in for it.
  */
 export function EventBillingStatusPill() {
   const status = useEventBillingStatus();
@@ -29,7 +30,7 @@ export function EventBillingStatusPill() {
   const t = useTranslations('billing');
   const [open, setOpen] = React.useState(false);
 
-  if (!status || !isOwner || isVisitor) return null;
+  if (!status || !isOwner || isVisitor || status.canUpgrade) return null;
 
   const showCrown = status.tone === 'premium';
   const showClock = status.tone === 'pending';

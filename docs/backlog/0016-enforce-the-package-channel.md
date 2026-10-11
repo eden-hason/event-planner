@@ -4,10 +4,13 @@ Status: open
 
 ## The problem
 
-The homepage sells records at three rates: SMS 1 ₪, WhatsApp 1.5 ₪, WhatsApp + calls 2 ₪
-(`src/app/(main)/[locale]/_components/pricing.ts`). ADR 0027 records the channel on each
-payment and shows it to the Owner, but sending never checks it. An Event that paid the SMS
-rate can still send WhatsApp Schedules and run Call Rounds.
+Kululu sells two Plans (ADR 0034): WhatsApp 1.5 ₪ and WhatsApp + calls 2 ₪
+(`src/app/(main)/[locale]/_components/pricing.ts`). ADR 0027 records the Plan on each
+payment as its channel and shows it to the Owner, but sending never checks it. An Event on
+the WhatsApp Plan can still have Call Rounds run for it.
+
+SMS was sold at 1 ₪ until ADR 0034 and never bought. `sms` is still a value of
+`record_package_channel`; drop it as part of this work.
 
 ## What is true today
 
@@ -23,7 +26,8 @@ rate can still send WhatsApp Schedules and run Call Rounds.
   channel (150 on WhatsApp, then 50 on WhatsApp + calls) has no defined meaning yet.
 - Does SMS Fallback count as "SMS" for a WhatsApp-only package? It is operator-launched and
   exists to rescue failed WhatsApp sends, so it probably should not.
-- Is an upgrade (SMS → WhatsApp) the rate difference on the records already paid for?
+- Is an upgrade (WhatsApp → WhatsApp + calls) the rate difference on the records already
+  paid for? The in-app upgrade view (ADR 0034) will need the answer.
 
 ## Done means
 
