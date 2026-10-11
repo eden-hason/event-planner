@@ -29,12 +29,12 @@ import { cn } from '@/lib/utils';
  * page, and badging Events there would call a built surface unbuilt.
  */
 const NAV_ITEMS = [
-  { label: 'Overview', href: '/admin', icon: LayoutDashboard, stub: false },
-  { label: 'Users', href: '/admin/users', icon: Users, stub: false },
-  { label: 'Events', href: '/admin/events', icon: CalendarDays, stub: false },
-  { label: 'Operations', href: '/admin/operations', icon: Wrench, stub: false },
+  { label: 'סקירה', href: '/admin', icon: LayoutDashboard, stub: false },
+  { label: 'משתמשים', href: '/admin/users', icon: Users, stub: false },
+  { label: 'אירועים', href: '/admin/events', icon: CalendarDays, stub: false },
+  { label: 'תפעול', href: '/admin/operations', icon: Wrench, stub: false },
   {
-    label: 'Configuration',
+    label: 'הגדרות',
     href: '/admin/configuration',
     icon: SlidersHorizontal,
     stub: true,
@@ -54,20 +54,19 @@ export function BackOfficeNav({
   return (
     // `app-sidebar` borrows the event app's tinted sidebar tokens (see
     // globals.css), so the two shells read as one product.
-    <Sidebar className="app-sidebar border-sidebar-border">
+    // On the right, like the event app's sidebar under the RTL <html>.
+    <Sidebar side="right" className="app-sidebar border-sidebar-border">
       {/*
-       * Below `md` the sidebar is a Sheet portalled to <body>, out of the admin
-       * layout's `dir="ltr"` and under the RTL <html>, so the direction is
-       * re-declared here. `contents` keeps the Sidebar's own flex column intact.
-       * The Sheet takes no class from the primitive, so `app-sidebar` is
-       * re-declared here too.
+       * Below `md` the sidebar is a Sheet portalled to <body>, which takes no
+       * class from the primitive, so `app-sidebar` is re-declared here.
+       * `contents` keeps the Sidebar's own flex column intact.
        */}
-      <div dir="ltr" className="app-sidebar contents">
+      <div className="app-sidebar contents">
         <SidebarHeader className="px-3 pt-3.5">
           <div className="flex items-baseline gap-2 px-2">
             <span className="text-primary text-[15px] font-bold tracking-tight">Kululu</span>
             <span className="text-muted-foreground text-[10px] font-semibold tracking-[0.09em] uppercase">
-              Back Office
+              ניהול
             </span>
           </div>
         </SidebarHeader>
@@ -83,8 +82,10 @@ export function BackOfficeNav({
                   <SidebarMenuButton
                     asChild
                     isActive={isActive}
+                    // `text-start`, not the primitive's `text-left`: under RTL a
+                    // left-aligned label sits away from its icon at the far edge.
                     className={cn(
-                      'h-9 text-[13.5px]',
+                      'h-9 text-start text-[13.5px]',
                       isActive
                         ? '!bg-app-nav-active !text-app-nav-active-foreground font-bold'
                         : 'text-app-nav font-medium',
@@ -95,7 +96,7 @@ export function BackOfficeNav({
                       <span className="flex-1">{label}</span>
                       {stub && !isActive && (
                         <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
-                          Stub
+                          בבנייה
                         </span>
                       )}
                     </Link>
@@ -108,7 +109,7 @@ export function BackOfficeNav({
 
         <SidebarFooter className="gap-3 px-5 pb-4">
           <div className="self-start">
-            <ThemeToggle labels={{ light: 'Light', dark: 'Dark', system: 'System' }} />
+            <ThemeToggle labels={{ light: 'בהיר', dark: 'כהה', system: 'מערכת' }} />
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-muted-foreground truncate text-xs">{email}</span>

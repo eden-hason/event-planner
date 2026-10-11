@@ -26,9 +26,9 @@ import { BILLING_STATUS_LABELS as LABELS } from '../utils';
 import type { EventBillingStatus } from '../types';
 
 const CONSEQUENCE: Partial<Record<EventBillingStatus, string>> = {
-  free: 'Sending turns off - the owner app hides all outreach again',
-  canceled: 'Sending turns off - use this when a payment is refunded',
-  payment_pending: 'No change to sending - marks that payment has started elsewhere',
+  free: 'השליחה נכבית - האפליקציה של בעלי האירוע מסתירה שוב את כל התקשורת',
+  canceled: 'השליחה נכבית - לשימוש כשתשלום מוחזר',
+  payment_pending: 'אין שינוי בשליחה - מסמן שהתשלום התחיל במקום אחר',
 };
 
 /**
@@ -73,14 +73,14 @@ export function EventBillingStatusControl({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button type="button" variant="outline" size="sm" className="shrink-0 text-[13px]">
-            Billing: {LABELS[currentStatus]}
+            חיוב: {LABELS[currentStatus]}
             <ChevronDown className="size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {MANUAL_BILLING_STATUSES.filter((s) => s !== currentStatus).map((s) => (
             <DropdownMenuItem key={s} onSelect={() => setTarget(s)}>
-              Set to {LABELS[s]}
+              שינוי ל{LABELS[s]}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -89,30 +89,30 @@ export function EventBillingStatusControl({
       <Dialog open={target !== null} onOpenChange={(next) => !pending && !next && setTarget(null)}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Set billing to {target ? LABELS[target] : ''}?</DialogTitle>
+            <DialogTitle>לשנות את סטטוס החיוב ל{target ? LABELS[target] : ''}?</DialogTitle>
             <DialogDescription>
-              {target ? (CONSEQUENCE[target] ?? 'Updates the billing status for this event') : ''}
+              {target ? (CONSEQUENCE[target] ?? 'מעדכן את סטטוס החיוב של האירוע') : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <label htmlFor="billing-note" className="text-sm font-medium">
-              Note (optional)
+              הערה (לא חובה)
             </label>
             <Textarea
               id="billing-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Why the status is changing, who approved it, the refund reference"
+              placeholder="למה הסטטוס משתנה, מי אישר, אסמכתת ההחזר"
               maxLength={500}
               rows={3}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setTarget(null)} disabled={pending}>
-              Cancel
+              ביטול
             </Button>
             <Button type="button" onClick={confirm} disabled={pending}>
-              {pending ? 'Saving' : 'Apply'}
+              {pending ? 'שומרים' : 'החלה'}
             </Button>
           </DialogFooter>
         </DialogContent>

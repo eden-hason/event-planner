@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Band, BandRow, Surface } from './band';
 import type { UpcomingEvent } from '../types';
-import { formatEventDate } from '@/lib/date-time';
+import { formatEventDate } from '../utils/format';
 
 function formatDate(iso: string): string {
   return formatEventDate(iso, { year: false });
@@ -14,9 +14,9 @@ function formatDate(iso: string): string {
 export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
   if (events.length === 0) {
     return (
-      <Band title="Upcoming">
+      <Band title="אירועים קרובים">
         <BandRow className="text-muted-foreground pb-[18px] text-[13.5px]">
-          No events in the next 30 days
+          אין אירועים ב-30 הימים הקרובים
         </BandRow>
       </Band>
     );
@@ -24,7 +24,7 @@ export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
 
   return (
     <Band
-      title={`Upcoming (${events.length} in the next 30 days)`}
+      title={`אירועים קרובים (${events.length} ב-30 הימים הקרובים)`}
     >
       {events.map((event) => (
         <Link
@@ -34,23 +34,23 @@ export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
         >
           <span className="min-w-0 flex-1 truncate font-medium">{event.title}</span>
 
-          <span className="text-muted-foreground w-16 shrink-0 text-right tabular-nums">
+          <span className="text-muted-foreground w-20 shrink-0 text-end tabular-nums">
             {formatDate(event.eventDate)}
           </span>
 
           {/* Null is not zero: an empty guest list has no rate, and "0%" would
               read as a failing campaign rather than as a list not yet built. */}
           {event.confirmationRate === null ? (
-            <span className="text-muted-foreground/70 w-60 shrink-0 text-right">
-              no guest list yet
+            <span className="text-muted-foreground/70 w-60 shrink-0 text-end">
+              עדיין אין רשימת אורחים
             </span>
           ) : (
             <>
-              <span className="text-muted-foreground w-26 shrink-0 text-right tabular-nums">
-                {event.guestRecords.toLocaleString('en-GB')} records
+              <span className="text-muted-foreground w-26 shrink-0 text-end tabular-nums">
+                {event.guestRecords.toLocaleString('he-IL')} רשומות
               </span>
-              <span className="text-secondary-foreground w-30 shrink-0 text-right tabular-nums">
-                {Math.round(event.confirmationRate * 100)}% confirmed
+              <span className="text-secondary-foreground w-30 shrink-0 text-end tabular-nums">
+                {Math.round(event.confirmationRate * 100)}% אישרו
               </span>
             </>
           )}
@@ -62,9 +62,9 @@ export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
 
 export function UpcomingEventsError() {
   return (
-    <Band title="Upcoming">
+    <Band title="אירועים קרובים">
       <BandRow className="text-destructive text-[13.5px]">
-        Upcoming events didn&apos;t load
+        האירועים הקרובים לא נטענו
       </BandRow>
     </Band>
   );
@@ -82,7 +82,7 @@ export function UpcomingEventsSkeleton() {
             className="bg-accent h-3 animate-pulse rounded-md"
             style={{ maxWidth: width, flex: 1 }}
           />
-          <div className="bg-accent ml-auto h-3 w-12 animate-pulse rounded-md" />
+          <div className="bg-accent ms-auto h-3 w-12 animate-pulse rounded-md" />
           <div className="bg-accent h-3 w-21 animate-pulse rounded-md" />
           <div className="bg-accent h-3 w-25 animate-pulse rounded-md" />
         </div>

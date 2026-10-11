@@ -40,7 +40,7 @@ export async function getSmsFallbackPlan(scheduleId: string): Promise<SmsFallbac
     return { ok: true, plan: await buildSmsFallbackPlan(supabase, scheduleId) };
   } catch (error) {
     console.error('getSmsFallbackPlan failed:', error);
-    return { ok: false, message: 'Could not work out who can fall back to SMS' };
+    return { ok: false, message: 'לא הצלחנו לחשב למי אפשר לשלוח ב-SMS' };
   }
 }
 
@@ -67,6 +67,6 @@ export async function launchSmsFallback(scheduleId: string): Promise<SmsFallback
     return { ...outcome, plan: await buildSmsFallbackPlan(supabase, scheduleId) };
   } catch (error) {
     console.error('launchSmsFallback failed:', error);
-    return { success: false, message: 'SMS fallback failed', ...empty };
+    return { success: false, message: 'שליחת ה-SMS נכשלה', ...empty };
   }
 }

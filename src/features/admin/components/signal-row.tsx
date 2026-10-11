@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CalendarX, ClockAlert, MessageSquareX, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Signal, SignalKind } from '../types';
+import { hoursText, relativeEventDate } from '../utils/format';
 
 /**
  * Severity is carried by icon shape, weight and order - not by three alarm
@@ -19,35 +20,34 @@ const KIND: Record<
     icon: ClockAlert,
     tone: 'text-destructive',
     weight: 'font-semibold',
-    label: 'Overdue schedule',
+    label: 'תזמון באיחור',
   },
   failed_delivery: {
     icon: MessageSquareX,
     tone: 'text-destructive',
     weight: 'font-medium',
-    label: 'Failed delivery',
+    label: 'שליחה שנכשלה',
   },
   no_ask_planned: {
     icon: CalendarX,
     tone: 'text-muted-foreground',
     weight: 'font-medium',
-    label: 'No ask planned',
+    label: 'אין בקשת אישור מתוכננת',
   },
   stale_call_round: {
     icon: Phone,
     tone: 'text-muted-foreground',
     weight: 'font-medium',
-    label: 'Stale call round',
+    label: 'סבב שיחות תקוע',
   },
 };
 
 function age(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const hours = Math.floor(ms / 3_600_000);
-  if (hours < 1) return 'just now';
-  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+  if (hours < 1) return 'הרגע';
+  if (hours < 24) return `לפני ${hoursText(hours)}`;
+  return relativeEventDate(-Math.floor(hours / 24)) as string;
 }
 
 export function SignalRow({ signal }: { signal: Signal }) {

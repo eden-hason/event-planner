@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import { startCallRound } from '@/features/calls/actions/call-rounds';
@@ -74,33 +74,33 @@ export function QueueRowAction({ row }: { row: QueueActionRow }) {
         onClick={() => setOpen(true)}
         className="shrink-0 text-[13px] font-medium"
       >
-        Start round
+        התחלת סבב
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <AdminDialogContent className="sm:max-w-[440px]">
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Start this round?</DialogTitle>
+            <DialogTitle>להתחיל את הסבב?</DialogTitle>
             <DialogDescription>
-              {row.audienceLabel} will be snapshotted into the round. Guests who confirm later stay
-              in the list with their current RSVP shown
+              {row.audienceLabel} ייכנסו לסבב כפי שהם עכשיו. אורחים שיאשרו בהמשך יישארו ברשימה
+              עם הסטטוס העדכני שלהם
             </DialogDescription>
           </DialogHeader>
 
           <p className="text-muted-foreground flex items-start gap-2 text-[12.5px]">
             <Info className="mt-px size-3.5 shrink-0" />
-            <span>Nobody is called yet. Deleting the round returns the plan to unstarted</span>
+            <span>עוד לא מתקשרים לאף אחד. מחיקת הסבב מחזירה את התוכנית למצב שלא התחיל</span>
           </p>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              ביטול
             </Button>
             <Button type="button" onClick={confirm} disabled={pending}>
-              Start round
+              התחלת סבב
             </Button>
           </DialogFooter>
-        </AdminDialogContent>
+        </DialogContent>
       </Dialog>
     </>
   );

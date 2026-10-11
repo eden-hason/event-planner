@@ -6,6 +6,7 @@ import { pageAll } from '@/lib/supabase/row-cap';
 import type { CollaboratorRole } from '@/features/collaborate/schemas';
 import type { UserDetail, UserRow, UserSharedEvent, UsersIndexFilters, UsersIndexPage } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
+import { eventTitle } from '../utils/labels';
 
 const PAGE_SIZE = 50;
 
@@ -166,7 +167,7 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
     onboardingFinished: !!profile.initial_setup_complete,
     ownedEvents: (ownedResult.data ?? []).map((event) => ({
       id: event.id,
-      title: event.title?.trim() || 'Untitled event',
+      title: eventTitle(event.title),
       eventDate: event.event_date,
       status: event.status === 'draft' ? 'draft' : 'published',
     })),
@@ -178,7 +179,7 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
         if (!event) return null;
         return {
           id: event.id,
-          title: event.title?.trim() || 'Untitled event',
+          title: eventTitle(event.title),
           role: row.role as CollaboratorRole,
         };
       })

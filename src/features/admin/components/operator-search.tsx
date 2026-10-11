@@ -6,18 +6,10 @@ import { Search } from 'lucide-react';
 import { searchEvents } from '@/features/admin/queries/search';
 import type { EventSearchResult } from '@/features/admin/types';
 import { cn } from '@/lib/utils';
+import { formatEventDate } from '../utils/format';
 
 /** Long enough that typing a couple's name does not fire a query per keystroke. */
 const DEBOUNCE_MS = 200;
-
-function formatEventDate(iso: string | null): string {
-  if (!iso) return 'No date';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 /**
  * Header search across event title, owner name and owner email, landing on the
@@ -114,7 +106,7 @@ export function OperatorSearch() {
           aria-controls={listId}
           aria-autocomplete="list"
           value={term}
-          placeholder="Search events, owners, emails"
+          placeholder="חיפוש אירועים, בעלים, אימיילים"
           onChange={(event) => {
             setTerm(event.target.value);
             setOpen(true);
@@ -129,12 +121,12 @@ export function OperatorSearch() {
         <div
           id={listId}
           role="listbox"
-          className="bg-popover absolute top-full left-0 z-50 mt-1.5 w-full overflow-hidden rounded-md border shadow-sm"
+          className="bg-popover absolute top-full start-0 z-50 mt-1.5 w-full overflow-hidden rounded-md border shadow-sm"
         >
           {failed ? (
-            <p className="text-destructive px-3 py-2.5 text-[13px]">Search didn&apos;t load</p>
+            <p className="text-destructive px-3 py-2.5 text-[13px]">החיפוש לא נטען</p>
           ) : results.length === 0 ? (
-            <p className="text-muted-foreground px-3 py-2.5 text-[13px]">No events match</p>
+            <p className="text-muted-foreground px-3 py-2.5 text-[13px]">לא נמצאו אירועים</p>
           ) : (
             results.map((result, index) => (
               <button
@@ -145,7 +137,7 @@ export function OperatorSearch() {
                 onMouseEnter={() => setActive(index)}
                 onClick={() => go(result)}
                 className={cn(
-                  'flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left',
+                  'flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start',
                   index === active && 'bg-accent',
                 )}
               >
@@ -153,7 +145,7 @@ export function OperatorSearch() {
                   <span className="truncate text-[13.5px] font-medium">{result.title}</span>
                   {result.isDraft && (
                     <span className="text-muted-foreground shrink-0 rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
-                      Draft
+                      טיוטה
                     </span>
                   )}
                 </span>

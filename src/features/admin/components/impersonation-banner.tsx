@@ -20,10 +20,10 @@ export async function ImpersonationBanner() {
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-warning" />
         <span>
-          Viewing as <span className="font-semibold">{displayName}</span>
+          צפייה בתור <span className="font-semibold">{displayName}</span>
           {/* Locally the Operator gets a real session as the Owner; see createClient */}
-          <span className="ml-2 opacity-70">
-            · {impersonation.readOnly ? 'Read-only' : 'Editing as owner'}
+          <span className="ms-2 opacity-70">
+            · {impersonation.readOnly ? 'קריאה בלבד' : 'עריכה בתור הבעלים'}
           </span>
         </span>
       </div>
@@ -32,7 +32,7 @@ export async function ImpersonationBanner() {
           type="submit"
           className="border-warning/40 bg-background text-warning hover:bg-warning/15 rounded-md border px-3 py-1 text-xs font-medium transition-colors"
         >
-          Exit
+          יציאה
         </button>
       </form>
     </div>

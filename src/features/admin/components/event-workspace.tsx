@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,6 +26,7 @@ import {
   WorkspaceSignals,
 } from './event-workspace-client';
 import { RetryButton } from './retry-button';
+import { VenueNameDialog } from './venue-name-dialog';
 import {
   getEventGuestSummary,
   getEventIdentity,
@@ -33,14 +34,15 @@ import {
   getEventTimeline,
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
-import { ADMIN_TIME_ZONE, formatEventDate, relativeEventDate } from '@/lib/date-time';
+import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
+import { collaboratorRoleLabel, rsvpLabel } from '../utils/labels';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
 export function EventIdentityBand({ event }: { event: EventIdentity }) {
-  const hosts = event.hostNames.length ? event.hostNames.join(' and ') : null;
+  const hosts = event.hostNames.length ? event.hostNames.join(' ו') : null;
   const eventDate = formatEventDate(event.eventDate, { weekday: true });
-  const relativeDate = relativeEventDate(event.daysFromToday, { futureStyle: 'in' });
+  const relativeDate = relativeEventDate(event.daysFromToday);
 
   if (event.status === 'draft') {
     return (
@@ -48,7 +50,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
         <CardContent className="flex flex-col gap-3 px-5 py-[18px]">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h1 className="text-muted-foreground min-w-0 truncate text-xl font-semibold tracking-[-0.015em]">{event.title}</h1>
-            <Badge variant="secondary" className="text-primary bg-primary/10 text-[11px] tracking-[0.04em] uppercase">Draft</Badge>
+            <Badge variant="secondary" className="text-primary bg-primary/10 text-[11px] tracking-[0.04em] uppercase">טיוטה</Badge>
             <Badge variant="outline" className="text-muted-foreground text-[11px] tracking-[0.04em] uppercase">{event.eventTypeName}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -57,14 +59,15 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
               {relativeDate && <span className="text-muted-foreground tabular-nums">{relativeDate}</span>}
             </EventMeta>
             <EventMeta icon={<MapPin />} muted={!event.locationName}>
-              <span className="truncate">{event.locationName ?? 'No venue yet'}</span>
+              <span className="truncate">{event.locationName ?? 'עדיין אין מקום'}</span>
+              <VenueNameDialog eventId={event.id} locationName={event.locationName} />
             </EventMeta>
           </div>
           <Separator />
           <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Owner</p>
+            <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">בעלים</p>
             <p className="mt-1 truncate text-[13.5px]">{event.owner.email ?? event.owner.name}</p>
-            <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'No phone number'}</p>
+            <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'אין מספר טלפון'}</p>
           </div>
         </CardContent>
       </Card>
@@ -81,13 +84,13 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
           </div>
           {hosts && (
             <p className="text-foreground/80 truncate text-[13.5px]">
-              <span className="text-muted-foreground">{event.hostNames.length > 1 ? 'Hosts: ' : 'Host: '}</span>
+              <span className="text-muted-foreground">{event.hostNames.length > 1 ? 'מארחים: ' : 'מארח: '}</span>
               {hosts}
             </p>
           )}
           {event.parentNames.length > 0 && (
             <p className="text-muted-foreground truncate text-[12.5px]">
-              Parents: {event.parentNames.join(' · ')}
+              הורים: {event.parentNames.join(' · ')}
             </p>
           )}
         </div>
@@ -98,11 +101,12 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
             {relativeDate && <span className="text-muted-foreground tabular-nums">{relativeDate}</span>}
           </EventMeta>
           <EventMeta icon={<MapPin />} muted={!event.locationName}>
-            <span className="truncate">{event.locationName ?? 'No venue yet'}</span>
+            <span className="truncate">{event.locationName ?? 'עדיין אין מקום'}</span>
+            <VenueNameDialog eventId={event.id} locationName={event.locationName} />
           </EventMeta>
           <EventMeta icon={<Clock3 />}>
             <span className="tabular-nums">
-              Ceremony {event.ceremonyTime?.slice(0, 5) ?? 'not set'} · Reception {event.receptionTime?.slice(0, 5) ?? 'not set'}
+              חופה {event.ceremonyTime?.slice(0, 5) ?? 'לא נקבע'} · קבלת פנים {event.receptionTime?.slice(0, 5) ?? 'לא נקבע'}
             </span>
           </EventMeta>
         </div>
@@ -111,22 +115,22 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
       </CardContent>
 
       <CardContent className="flex min-w-0 flex-col gap-3 border-t px-5 py-[18px] lg:border-t-0 lg:border-l">
-        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Owner</p>
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">בעלים</p>
         <div className="flex min-w-0 flex-col gap-0.5">
           <p className="truncate text-sm font-medium">{event.owner.name}</p>
-          <p className="text-muted-foreground truncate text-[12.5px]">{event.owner.email ?? 'No email'}</p>
-          <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'No phone number'}</p>
+          <p className="text-muted-foreground truncate text-[12.5px]">{event.owner.email ?? 'אין אימייל'}</p>
+          <p className="text-muted-foreground font-mono text-[12.5px] tabular-nums">{event.owner.phone ? formatPhone(event.owner.phone) : 'אין מספר טלפון'}</p>
         </div>
         {event.collaborators.length > 0 && (
           <>
             <Separator />
             <div className="flex flex-col gap-1.5">
-              <p className="text-muted-foreground text-xs">Also on this event</p>
+              <p className="text-muted-foreground text-xs">שותפים נוספים באירוע</p>
               {event.collaborators.map((person) => (
                 <div key={person.id} className="flex min-w-0 flex-wrap items-baseline gap-2">
                   <span className="truncate text-[13px]">{person.name}</span>
                   <Badge variant="outline" className="text-muted-foreground px-2 py-0 text-[11.5px] font-normal normal-case">
-                    {formatCollaboratorRole(person.role)}
+                    {collaboratorRoleLabel(person.role)}
                   </Badge>
                 </div>
               ))}
@@ -155,18 +159,13 @@ function EventMeta({
   );
 }
 
-function formatCollaboratorRole(role: string) {
-  const words = role.replaceAll('_', ' ').toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 export async function EventIdentityQueryBand({ eventId }: { eventId: string }) {
   try {
     const event = await getEventIdentity(eventId);
-    return event ? <EventIdentityBand event={event} /> : <BandFailure title="Event" />;
+    return event ? <EventIdentityBand event={event} /> : <BandFailure title="אירוע" />;
   } catch (error) {
     console.error('Event identity failed:', error);
-    return <BandFailure title="Event" />;
+    return <BandFailure title="אירוע" />;
   }
 }
 
@@ -174,7 +173,7 @@ function Detail({ icon, label, value, supporting }: { icon?: React.ReactNode; la
   return (
     <div className="flex items-start gap-2">
       {icon && <span className="text-muted-foreground mt-0.5 [&_svg]:size-4">{icon}</span>}
-      <span><span className="text-muted-foreground block text-[11.5px]">{label}</span><span className="text-[13px] font-medium">{value}</span>{supporting && <span className="text-muted-foreground ml-1.5 text-[12px]">{supporting}</span>}</span>
+      <span><span className="text-muted-foreground block text-[11.5px]">{label}</span><span className="text-[13px] font-medium">{value}</span>{supporting && <span className="text-muted-foreground ms-1.5 text-[12px]">{supporting}</span>}</span>
     </div>
   );
 }
@@ -183,10 +182,10 @@ export function DraftEventBand({ event }: { event: EventIdentity }) {
   return (
     <Alert className="p-5">
       <Info />
-      <AlertTitle>Onboarding was never finished, so there is nothing to work yet</AlertTitle>
+      <AlertTitle>ההרשמה לא הושלמה, כך שעדיין אין על מה לעבוד</AlertTitle>
       <AlertDescription className="flex flex-col gap-1">
-        <span>A draft has no guest list, no schedules and no workspace in the owner app. The owner is reachable above if this one is worth a call</span>
-        <span className="text-muted-foreground/70 text-xs tabular-nums">Created {formatEventDate(event.createdAt)}, onboarding stopped after {event.onboardingStep ?? 'an unknown step'}</span>
+        <span>לטיוטה אין רשימת אורחים, אין תזמונים ואין סביבת עבודה באפליקציה. פרטי הבעלים מופיעים למעלה אם שווה להתקשר</span>
+        <span className="text-muted-foreground/70 text-xs tabular-nums">נוצר ב-{formatEventDate(event.createdAt)}, ההרשמה נעצרה אחרי {event.onboardingStep ?? 'שלב לא ידוע'}</span>
       </AlertDescription>
     </Alert>
   );
@@ -195,10 +194,10 @@ export function DraftEventBand({ event }: { event: EventIdentity }) {
 export async function DraftEventQueryBand({ eventId }: { eventId: string }) {
   try {
     const event = await getEventIdentity(eventId);
-    return event ? <DraftEventBand event={event} /> : <BandFailure title="Draft event" />;
+    return event ? <DraftEventBand event={event} /> : <BandFailure title="אירוע בטיוטה" />;
   } catch (error) {
     console.error('Draft event state failed:', error);
-    return <BandFailure title="Draft event" />;
+    return <BandFailure title="אירוע בטיוטה" />;
   }
 }
 
@@ -208,7 +207,7 @@ export async function EventSignalsBand({ eventId, outreachEnabled = true }: { ev
     return <WorkspaceSignals signals={outreachEnabled ? signals : signals.map((signal) => ({ ...signal, href: '#outreach-gate' }))} />;
   } catch (error) {
     console.error('Event signals failed:', error);
-    return <BandFailure title="Signals" />;
+    return <BandFailure title="התראות" />;
   }
 }
 
@@ -216,19 +215,19 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
   try {
     const summary = await getEventGuestSummary(eventId);
     return (
-      <Band title="Guest list">
+      <Band title="רשימת אורחים">
         {summary.guestRecords === 0 ? (
           <BandRow>
             <Empty className="min-h-48 border-0 p-4">
-              <EmptyHeader><EmptyMedia variant="icon"><Users /></EmptyMedia><EmptyTitle>No guest list yet</EmptyTitle><EmptyDescription>Guest records will appear here after the owner adds or imports them</EmptyDescription></EmptyHeader>
+              <EmptyHeader><EmptyMedia variant="icon"><Users /></EmptyMedia><EmptyTitle>עדיין אין רשימת אורחים</EmptyTitle><EmptyDescription>רשומות האורחים יופיעו כאן אחרי שבעלי האירוע יוסיפו או ייבאו אותן</EmptyDescription></EmptyHeader>
             </Empty>
           </BandRow>
         ) : (
           <>
             <BandRow className="flex flex-wrap items-baseline gap-x-9 gap-y-5">
-              <Metric value={summary.guestRecords} label="guest records" supporting="the billable unit" />
-              <Metric value={summary.actualGuests} label="guests" supporting="actual humans invited" />
-              <Metric value={summary.groups} label="groups" supporting="grouped guest records" />
+              <Metric value={summary.guestRecords} label="רשומות אורחים" supporting="יחידת החיוב" />
+              <Metric value={summary.actualGuests} label="אורחים" supporting="אנשים שהוזמנו בפועל" />
+              <Metric value={summary.groups} label="קבוצות" supporting="רשומות אורחים מקובצות" />
             </BandRow>
             <BandRow className="flex flex-col gap-3">
               <RsvpBar summary={summary} />
@@ -242,14 +241,14 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
             {summary.confirmed + summary.declined > 0 && (
               <BandRow className="bg-muted flex flex-col gap-2.5 py-3.5">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">Where the answers came from</p>
+                  <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.07em] uppercase">מאיפה הגיעו התשובות</p>
                   <p className="text-foreground/80 text-[12.5px] tabular-nums">
-                    {operatorAnswers(summary)} of {summary.confirmed + summary.declined} answers came from Kululu operators on the phone
+                    {operatorAnswers(summary)} מתוך {summary.confirmed + summary.declined} תשובות הגיעו מנציגי Kululu בטלפון
                   </p>
                 </div>
                 <Table>
-                  <TableHeader><TableRow><TableHead className="px-0">Source</TableHead><TableHead className="w-24 text-right">Confirmed</TableHead><TableHead className="w-24 px-0 text-right">Declined</TableHead></TableRow></TableHeader>
-                  <TableBody>{summary.provenance.filter((row) => row.confirmed + row.declined > 0).map((row) => <TableRow key={row.label}><TableCell className="px-0 text-[13px]">{provenanceLabel(row.label)}</TableCell><TableCell className="text-right text-[13px] tabular-nums">{row.confirmed}</TableCell><TableCell className="px-0 text-right text-[13px] tabular-nums">{row.declined}</TableCell></TableRow>)}</TableBody>
+                  <TableHeader><TableRow><TableHead className="px-0">מקור</TableHead><TableHead className="w-24 text-end">אישרו</TableHead><TableHead className="w-24 px-0 text-end">לא מגיעים</TableHead></TableRow></TableHeader>
+                  <TableBody>{summary.provenance.filter((row) => row.confirmed + row.declined > 0).map((row) => <TableRow key={row.label}><TableCell className="px-0 text-[13px]">{provenanceLabel(row.label)}</TableCell><TableCell className="text-end text-[13px] tabular-nums">{row.confirmed}</TableCell><TableCell className="px-0 text-end text-[13px] tabular-nums">{row.declined}</TableCell></TableRow>)}</TableBody>
                 </Table>
               </BandRow>
             )}
@@ -259,19 +258,19 @@ export async function EventGuestListBand({ eventId }: { eventId: string }) {
     );
   } catch (error) {
     console.error('Event guest list failed:', error);
-    return <BandFailure title="Guest list" />;
+    return <BandFailure title="רשימת אורחים" />;
   }
 }
 
 function Metric({ value, label, supporting }: { value: number; label: string; supporting: string }) {
-  return <div className="flex flex-col gap-0.5"><p className="text-xl font-semibold tracking-[-0.01em] tabular-nums">{value.toLocaleString('en-GB')} {label}</p><p className="text-muted-foreground text-[12.5px]">{supporting}</p></div>;
+  return <div className="flex flex-col gap-0.5"><p className="text-xl font-semibold tracking-[-0.01em] tabular-nums">{value.toLocaleString('he-IL')} {label}</p><p className="text-muted-foreground text-[12.5px]">{supporting}</p></div>;
 }
 
 function RsvpBar({ summary }: { summary: EventGuestSummary }) {
   const total = summary.confirmed + summary.declined + summary.pending;
   if (!total) return null;
   return (
-    <div className="bg-border flex h-2.5 overflow-hidden rounded-full" aria-label="RSVP status distribution">
+    <div className="bg-border flex h-2.5 overflow-hidden rounded-full" aria-label="התפלגות אישורי ההגעה">
       <div className="bg-rsvp-confirmed" style={{ width: `${summary.confirmed / total * 100}%` }} />
       <div className="bg-rsvp-declined" style={{ width: `${summary.declined / total * 100}%` }} />
       <div className="bg-rsvp-pending" style={{ width: `${summary.pending / total * 100}%` }} />
@@ -301,8 +300,8 @@ function RsvpLegend({
           rsvpPresentation(status).solid,
         )}
       />
-      <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('en-GB')}</span>
-      <span className="text-muted-foreground text-[13px]">{status}</span>
+      <span className="text-sm font-semibold tabular-nums">{value.toLocaleString('he-IL')}</span>
+      <span className="text-muted-foreground text-[13px]">{rsvpLabel(status)}</span>
       <span className="text-muted-foreground/70 text-[12.5px] tabular-nums">{percent}%</span>
     </div>
   );
@@ -315,61 +314,60 @@ function operatorAnswers(summary: EventGuestSummary) {
 
 function provenanceLabel(label: string) {
   const labels: Record<string, string> = {
-    'Guest response': 'Guest self-served the link',
-    'Back Office call': 'Operator on the phone',
-    'Owner update': 'Owner typed it in',
-    'Before source tracking': 'Before this was tracked',
+    'Guest response': 'האורח ענה בעצמו בקישור',
+    'Back Office call': 'נציג בטלפון',
+    'Owner update': 'בעלי האירוע הזינו',
+    'Before source tracking': 'לפני שהתחלנו לעקוב',
+    'No response yet': 'עדיין אין תשובה',
   };
   return labels[label] ?? label;
 }
 
 export async function EventOutreachBand({ eventId }: { eventId: string }) {
   try {
-    const event = await getEventIdentity(eventId);
-    if (!event) return <BandFailure title="Outreach timeline" />;
-    if (!event.canCreateSchedules) {
-      return (
-        <Band id="outreach-timeline" title="Outreach timeline" className="scroll-mt-20">
-          <BandRow>
-            <Item id="outreach-gate" variant="muted">
-              <ItemContent>
-                <ItemTitle>Sending is not enabled for this event</ItemTitle>
-                <ItemDescription>Outreach remains unavailable until payment is completed and Kululu enables sending</ItemDescription>
-              </ItemContent>
-              <ItemActions><EventBillingStatusControl eventId={event.id} currentStatus={event.billingStatus} /></ItemActions>
-            </Item>
-          </BandRow>
-        </Band>
-      );
-    }
-    const [rows, guestSummary] = await Promise.all([getEventTimeline(event.id), getEventGuestSummary(event.id)]);
-    const canPlanCalls = guestSummary.pending + guestSummary.confirmed > 0;
+    const [event, rows] = await Promise.all([getEventIdentity(eventId), getEventTimeline(eventId)]);
+    if (!event) return <BandFailure title="ציר התקשורת" />;
+    // The timeline shows either way, so an Operator can date the plan and shape
+    // it before payment; call rounds wait for sending like everything else. An
+    // empty guest list does not hide them: the audience is taken at Start.
+    const sendingEnabled = event.canCreateSchedules;
+    const guestSummary = sendingEnabled ? await getEventGuestSummary(eventId) : null;
     return (
       <Band
         id="outreach-timeline"
-        title="Outreach timeline"
+        title="ציר התקשורת"
         className="scroll-mt-20"
         // Bulk sending is gone (ADR 0013): a Schedule sends when its Due Time
         // comes, and the one manual path left is the per-delivery send on the
         // timeline itself, capped at ten guest records.
-        action={canPlanCalls ? (
+        action={guestSummary ? (
           <div className="flex shrink-0 gap-2">
             <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
           </div>
         ) : null}
       >
+        {!sendingEnabled && (
+          <BandRow>
+            <Item id="outreach-gate" variant="muted">
+              <ItemContent>
+                <ItemTitle>השליחה לא מופעלת לאירוע הזה</ItemTitle>
+                <ItemDescription>שום דבר כאן לא יישלח עד שהתשלום יושלם ו-Kululu תפעיל את השליחה. עדיין אפשר לשנות תאריכים ואת ההזמנה</ItemDescription>
+              </ItemContent>
+            </Item>
+          </BandRow>
+        )}
         <BandRow>
           {rows.length ? (
-            <EventTimeline rows={rows} eventId={event.id} />
+            <EventTimeline rows={rows} eventId={event.id} sendingEnabled={sendingEnabled} />
           ) : (
-            <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>No outreach planned</EmptyTitle><EmptyDescription>{canPlanCalls ? 'Add a call round or wait for the owner to configure messages' : 'Outreach can be planned as soon as the guest list has an eligible audience'}</EmptyDescription></EmptyHeader></Empty>
+            <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>לא מתוכננת תקשורת</EmptyTitle><EmptyDescription>{!sendingEnabled ? 'התוכנית נוצרת ברגע שלאירוע יש סוג ותאריך' : 'אפשר להוסיף סבב שיחות או לחכות שבעלי האירוע יגדירו הודעות'}</EmptyDescription></EmptyHeader></Empty>
           )}
         </BandRow>
       </Band>
     );
   } catch (error) {
     console.error('Event outreach failed:', error);
-    return <BandFailure title="Outreach timeline" />;
+    return <BandFailure title="ציר התקשורת" />;
   }
 }
 
@@ -381,12 +379,12 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
 export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
   try {
     const view = await getEventRecordPackage(eventId);
-    if (!view) return <BandFailure title="Record package" />;
+    if (!view) return <BandFailure title="חבילת רשומות" />;
     const pkg = view.package;
     return (
       <Band
         id="record-package"
-        title="Record package"
+        title="חבילת רשומות"
         className="scroll-mt-20"
         action={
           <div className="flex shrink-0 gap-2">
@@ -402,66 +400,66 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
       >
         {!pkg ? (
           <BandRow>
-            <p className="text-[13.5px] font-medium">No payment recorded</p>
+            <p className="text-[13.5px] font-medium">לא נרשם תשלום</p>
             <p className="text-muted-foreground text-[12.5px] tabular-nums">
-              The guest list has {view.used.toLocaleString('en-GB')} guest records with a phone. Once the sending gate is on, an event with no package reaches nobody
+              ברשימת האורחים יש {view.used.toLocaleString('he-IL')} רשומות אורחים עם טלפון. כשהשליחה תופעל, אירוע בלי חבילה לא יגיע לאף אחד
             </p>
           </BandRow>
         ) : (
           <>
             <BandRow className="flex flex-wrap items-start gap-x-9 gap-y-4">
-              <PackageFigure label="Paid" value={pkg.paid} supporting={view.channel ? RECORD_PACKAGE_CHANNEL_LABELS[view.channel] : null} />
+              <PackageFigure label="שולם" value={pkg.paid} supporting={view.channel ? RECORD_PACKAGE_CHANNEL_LABELS[view.channel] : null} />
               <PackageFigure
-                label="Bonus"
+                label="בונוס"
                 value={pkg.bonus}
-                supporting={pkg.bonusIsCustom ? `Custom, automatic is ${view.automaticBonus}` : 'Automatic'}
+                supporting={pkg.bonusIsCustom ? `מותאם, האוטומטי הוא ${view.automaticBonus}` : 'אוטומטי'}
                 action={<BonusOverrideDialog eventId={eventId} bonus={pkg.bonus} isCustom={pkg.bonusIsCustom} automaticBonus={view.automaticBonus} />}
               />
-              <PackageFigure label="Package" value={pkg.size} />
+              <PackageFigure label="חבילה" value={pkg.size} />
               <PackageFigure
-                label="Used"
+                label="בשימוש"
                 value={view.used}
                 supporting={
                   view.uncounted > 0
-                    ? `Includes deleted records that were reached · ${view.uncounted.toLocaleString('en-GB')} without a phone not counted`
-                    : 'Includes deleted records that were reached'
+                    ? `כולל רשומות שנמחקו אחרי שקיבלו הודעה · ${view.uncounted.toLocaleString('he-IL')} בלי טלפון לא נספרות`
+                    : 'כולל רשומות שנמחקו אחרי שקיבלו הודעה'
                 }
               />
               {view.over > 0 ? (
-                <PackageFigure label="Outside the package" value={view.over} tone="warning" supporting="Skipped when a schedule sends" />
+                <PackageFigure label="מחוץ לחבילה" value={view.over} tone="warning" supporting="מדולגות כשתזמון נשלח" />
               ) : (
-                <PackageFigure label="Left" value={view.left} />
+                <PackageFigure label="נותרו" value={view.left} />
               )}
             </BandRow>
             <BandRow className="px-0 py-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="ps-4">Date</TableHead>
-                    <TableHead className="text-right">Records</TableHead>
-                    <TableHead>Channel</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead className="pe-4">Recorded by</TableHead>
+                    <TableHead className="ps-4">תאריך</TableHead>
+                    <TableHead className="text-end">רשומות</TableHead>
+                    <TableHead>ערוץ</TableHead>
+                    <TableHead className="text-end">סכום</TableHead>
+                    <TableHead>אמצעי תשלום</TableHead>
+                    <TableHead>אסמכתה</TableHead>
+                    <TableHead className="pe-4">נרשם על ידי</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {view.payments.map((payment, index) => (
                     <TableRow key={payment.id}>
                       <TableCell className="ps-4 tabular-nums">
-                        {formatPaymentDate(payment.occurredAt)}
-                        {index === view.payments.length - 1 && <span className="text-muted-foreground ml-1.5 text-[12px]">Opening</span>}
+                        {formatShortDate(payment.occurredAt)}
+                        {index === view.payments.length - 1 && <span className="text-muted-foreground ms-1.5 text-[12px]">פתיחה</span>}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">+{payment.records.toLocaleString('en-GB')}</TableCell>
+                      <TableCell className="text-end tabular-nums">+{payment.records.toLocaleString('he-IL')}</TableCell>
                       <TableCell>{RECORD_PACKAGE_CHANNEL_LABELS[payment.channel]}</TableCell>
-                      <TableCell className="text-right tabular-nums">₪{payment.amount.toLocaleString('en-GB')}</TableCell>
+                      <TableCell className="text-end tabular-nums">₪{payment.amount.toLocaleString('he-IL')}</TableCell>
                       <TableCell>{PAYMENT_METHOD_LABELS[payment.method]}</TableCell>
                       <TableCell className="max-w-48">
                         <span className="block truncate font-mono text-[12.5px]">{payment.reference ?? '-'}</span>
                         {payment.note && <span className="text-muted-foreground block truncate text-[12px]" title={payment.note}>{payment.note}</span>}
                       </TableCell>
-                      <TableCell className="text-muted-foreground pe-4">{payment.recordedBy ?? 'Unknown'}</TableCell>
+                      <TableCell className="text-muted-foreground pe-4">{payment.recordedBy ?? 'לא ידוע'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -473,7 +471,7 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
     );
   } catch (error) {
     console.error('Record package failed:', error);
-    return <BandFailure title="Record package" />;
+    return <BandFailure title="חבילת רשומות" />;
   }
 }
 
@@ -494,7 +492,7 @@ function PackageFigure({
     <div className="flex flex-col gap-0.5">
       <span className="text-muted-foreground text-[11.5px]">{label}</span>
       <span className={cn('text-xl font-semibold tracking-[-0.01em] tabular-nums', tone === 'warning' && 'text-warning')}>
-        {value.toLocaleString('en-GB')}
+        {value.toLocaleString('he-IL')}
       </span>
       {supporting && <span className="text-muted-foreground text-[12px]">{supporting}</span>}
       {action}
@@ -502,23 +500,14 @@ function PackageFigure({
   );
 }
 
-function formatPaymentDate(iso: string) {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: ADMIN_TIME_ZONE,
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(iso));
-}
-
 export function EventDetailsBand({ event }: { event: EventIdentity }) {
   return (
-    <Band title="Event details">
+    <Band title="פרטי האירוע">
       <BandRow className="grid gap-x-6 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        <Detail label="Created" value={formatEventDate(event.createdAt)} />
-        <Detail label="Billing" value={BILLING_STATUS_LABELS[event.billingStatus]} supporting={event.canCreateSchedules ? 'Sending enabled' : 'Sending disabled'} />
-        <Detail label="Guest page code" value={event.shortCode || 'Not assigned'} />
-        <Detail label="Collaborators" value={String(event.collaborators.length)} />
+        <Detail label="נוצר" value={formatEventDate(event.createdAt)} />
+        <Detail label="חיוב" value={BILLING_STATUS_LABELS[event.billingStatus]} supporting={event.canCreateSchedules ? 'השליחה מופעלת' : 'השליחה כבויה'} />
+        <Detail label="קוד עמוד האורחים" value={event.shortCode || 'לא הוקצה'} />
+        <Detail label="שותפים" value={String(event.collaborators.length)} />
       </BandRow>
     </Band>
   );
@@ -527,10 +516,10 @@ export function EventDetailsBand({ event }: { event: EventIdentity }) {
 export async function EventDetailsQueryBand({ eventId }: { eventId: string }) {
   try {
     const event = await getEventIdentity(eventId);
-    return event ? <EventDetailsBand event={event} /> : <BandFailure title="Event details" />;
+    return event ? <EventDetailsBand event={event} /> : <BandFailure title="פרטי האירוע" />;
   } catch (error) {
     console.error('Event details failed:', error);
-    return <BandFailure title="Event details" />;
+    return <BandFailure title="פרטי האירוע" />;
   }
 }
 
@@ -539,5 +528,5 @@ export function EventBandSkeleton() {
 }
 
 function BandFailure({ title }: { title: string }) {
-  return <Band title={title}><BandRow className="flex items-center justify-between gap-4"><div><p className="text-[13.5px] font-medium">This section didn&apos;t load</p><p className="text-muted-foreground text-[12px]">Other event information is still available</p></div><RetryButton /></BandRow></Band>;
+  return <Band title={title}><BandRow className="flex items-center justify-between gap-4"><div><p className="text-[13.5px] font-medium">החלק הזה לא נטען</p><p className="text-muted-foreground text-[12px]">שאר פרטי האירוע עדיין זמינים</p></div><RetryButton /></BandRow></Band>;
 }

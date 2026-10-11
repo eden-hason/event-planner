@@ -158,6 +158,7 @@ value in both the light palette and the dark block that exists in the stylesheet
 
 - **LTR and English.** The Owner app is Hebrew and RTL; the Back Office is
   explicitly `dir="ltr"` and is not localised. All copy is hardcoded English
+  (superseded 2026-10-11: the Back Office is Hebrew and RTL, ADR 0037)
 - **Copy rules are binding:** no em dashes, no trailing periods on single-line UI
   text (labels, buttons, toasts, row text)
 - **Numbers carry their unit.** "1,011 guest records", never a bare "1,011"

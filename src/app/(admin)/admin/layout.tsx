@@ -6,8 +6,10 @@ import { BackOfficeTopBar } from '@/features/admin/components/back-office-top-ba
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 /**
- * The Back Office is an internal staff tool: LTR and English, unlike the
- * Owner-facing app. This gate is not sufficient on its own - Server Actions and
+ * The Back Office is an internal staff tool, in Hebrew and RTL like the rest of
+ * the app (ADR 0037): it inherits `dir` from the root <html>, so portals
+ * (dialogs, sheets, menus) read the same direction as the page with nothing
+ * re-declared. This gate is not sufficient on its own - Server Actions and
  * route handlers never pass through it, so every query calls assertAdmin too.
  */
 export default async function AdminLayout({
@@ -22,14 +24,12 @@ export default async function AdminLayout({
   const testAccountsVisible = await areTestAccountsVisible();
 
   return (
-    <div dir="ltr">
-      <SidebarProvider style={{ '--sidebar-width': '220px' } as React.CSSProperties}>
-        <BackOfficeNav email={email} environment={environment} />
-        <SidebarInset className="bg-app-shell">
-          <BackOfficeTopBar testAccountsVisible={testAccountsVisible}>{topbar}</BackOfficeTopBar>
-          <div className="w-full px-4 py-4 md:px-8 md:py-6">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+    <SidebarProvider style={{ '--sidebar-width': '220px' } as React.CSSProperties}>
+      <BackOfficeNav email={email} environment={environment} />
+      <SidebarInset className="bg-app-shell">
+        <BackOfficeTopBar testAccountsVisible={testAccountsVisible}>{topbar}</BackOfficeTopBar>
+        <div className="w-full px-4 py-4 md:px-8 md:py-6">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

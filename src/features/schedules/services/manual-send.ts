@@ -110,7 +110,7 @@ export async function sendSelectedDeliveries(
   });
   if (claimError) {
     console.error('[manual-send] Claim failed:', claimError);
-    return { success: false, message: 'Could not claim those deliveries', ...empty };
+    return { success: false, message: 'לא הצלחנו לשריין את השליחות האלה', ...empty };
   }
 
   const rows = (claimed ?? []) as {
@@ -169,11 +169,11 @@ export async function sendSelectedDeliveries(
     success: sentCount > 0,
     message:
       sentCount > 0
-        ? `Sent to ${sentCount} ${sentCount === 1 ? 'guest record' : 'guest records'}` +
-          (failedCount ? `, ${failedCount} failed` : '') +
-          (inFlight ? `, ${inFlight} already in flight` : '') +
-          (outsidePackage ? `, ${outsidePackage} outside the record package` : '')
-        : 'Nothing was sent',
+        ? `נשלח ל-${sentCount === 1 ? 'רשומת אורח אחת' : `${sentCount} רשומות אורחים`}` +
+          (failedCount ? `, ${failedCount} נכשלו` : '') +
+          (inFlight ? `, ${inFlight} כבר בדרך` : '') +
+          (outsidePackage ? `, ${outsidePackage} מחוץ לחבילת הרשומות` : '')
+        : 'שום דבר לא נשלח',
     sentCount,
     failedCount,
     skippedCount,

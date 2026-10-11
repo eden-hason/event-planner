@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { pageAll } from '@/lib/supabase/row-cap';
 import type { CallOutcome } from '@/features/calls/types';
 import { getTestScope } from './test-accounts';
+import { eventTitle, scheduleTypeName } from '../utils/labels';
 
 export type RoundGuestRow = {
   guestId: string;
@@ -49,20 +50,20 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
 
   // Label parity with the Owner app: the index runs over every schedule of the
   // type on this event, whatever its status. See brief 3.10.
-  let title = 'Call Round';
+  let title = scheduleTypeName('phone_call');
   let targetStatus: string | null = null;
 
   if (round.schedule_id) {
     const { data: plan } = await supabase
       .from('schedules')
-      .select('schedule_type_id, target_status, schedule_types(name)')
+      .select('schedule_type_id, target_status, schedule_types(key, name)')
       .eq('id', round.schedule_id)
       .single();
 
     if (plan) {
       targetStatus = plan.target_status;
-      const type = plan.schedule_types as unknown as { name: string | null } | null;
-      const baseName = type?.name ?? 'Call Round';
+      const type = plan.schedule_types as unknown as { key: string | null; name: string | null } | null;
+      const baseName = scheduleTypeName(type?.key, type?.name);
 
       const { data: siblings } = await supabase
         .from('schedules')
@@ -100,7 +101,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
 
     return {
       guestId: log.guest_id as string,
-      name: guest?.name ?? 'Unnamed record',
+      name: guest?.name ?? 'רשומה ללא שם',
       phone: guest?.phone_number ?? null,
       currentRsvpStatus: (guest?.rsvp_status ?? 'pending') as RoundGuestRow['currentRsvpStatus'],
       outcome: (log.outcome ?? null) as CallOutcome | null,
@@ -113,13 +114,13 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
   // worklist, and the rows that still need a call are the ones being worked.
   guests.sort((a, b) => {
     const rank = (row: RoundGuestRow) => (row.outcome ? 1 : 0);
-    return rank(a) - rank(b) || a.name.localeCompare(b.name);
+    return rank(a) - rank(b) || a.name.localeCompare(b.name, 'he');
   });
 
   return {
     id: round.id,
     eventId: round.event_id,
-    eventTitle: event?.title ?? 'Untitled event',
+    eventTitle: eventTitle(event?.title),
     title,
     startedAt: round.created_at,
     completedAt: round.completed_at,

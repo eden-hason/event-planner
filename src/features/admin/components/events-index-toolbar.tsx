@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition, type ComponentProps } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
+import { he } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
 import { ChevronDown, Search, X } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -99,13 +100,13 @@ export function EventsIndexToolbar({
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name or phone number"
-          aria-label="Search events by owner name or phone number"
+          placeholder="חיפוש לפי שם או מספר טלפון"
+          aria-label="חיפוש אירועים לפי שם בעלי האירוע או מספר טלפון"
           className="[&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <InputGroupAddon align="inline-end">
-            <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => setQuery('')}>
+            <InputGroupButton size="icon-xs" aria-label="ניקוי החיפוש" onClick={() => setQuery('')}>
               <X />
             </InputGroupButton>
           </InputGroupAddon>
@@ -119,7 +120,7 @@ export function EventsIndexToolbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <FilterButton label="Event type" selection={typesLabel(filters.types, eventTypes)} />
+            <FilterButton label="סוג אירוע" selection={typesLabel(filters.types, eventTypes)} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-44">
             {eventTypes.map((type) => {
@@ -145,21 +146,21 @@ export function EventsIndexToolbar({
             {filters.types.length > 0 && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => apply({ types: [] })}>Any type</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => apply({ types: [] })}>כל הסוגים</DropdownMenuItem>
               </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
 
         <RadioFilter
-          label="Payment"
+          label="תשלום"
           value={filters.payment}
           options={PAYMENT_LABELS}
           onChange={(payment) => apply({ payment })}
         />
 
         <RadioFilter
-          label="Package"
+          label="חבילה"
           value={filters.package}
           options={RECORD_PACKAGE_CHANNEL_LABELS}
           onChange={(channel) => apply({ package: channel })}
@@ -168,7 +169,7 @@ export function EventsIndexToolbar({
         <CreatedFilter filters={filters} apply={apply} />
 
         <RadioFilter
-          label="Status"
+          label="סטטוס"
           value={filters.status}
           options={STATUS_LABELS}
           onChange={(status) => apply({ status })}
@@ -193,13 +194,13 @@ function TimingToggle({
       type="single"
       variant="outline"
       size="sm"
-      aria-label="Upcoming or ended events"
+      aria-label="אירועים קרובים או שהסתיימו"
       className="bg-card"
       value={value ?? ALL}
       // Radix sends '' when the pressed item is clicked again; All stays pressed instead.
       onValueChange={(next) => next && onChange(next === ALL ? null : (next as EventsIndexTiming))}
     >
-      <ToggleGroupItem value={ALL} className="px-3 text-[12.5px]">All</ToggleGroupItem>
+      <ToggleGroupItem value={ALL} className="px-3 text-[12.5px]">הכול</ToggleGroupItem>
       {(Object.entries(TIMING_LABELS) as [EventsIndexTiming, string][]).map(([key, label]) => (
         <ToggleGroupItem key={key} value={key} className="px-3 text-[12.5px]">{label}</ToggleGroupItem>
       ))}
@@ -251,7 +252,7 @@ function RadioFilter<T extends string>({
           value={value ?? ANY}
           onValueChange={(next) => onChange(next === ANY ? null : (next as T))}
         >
-          <DropdownMenuRadioItem value={ANY}>Any</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={ANY}>הכול</DropdownMenuRadioItem>
           {(Object.entries(options) as [T, string][]).map(([key, optionLabel]) => (
             <DropdownMenuRadioItem key={key} value={key}>
               {optionLabel}
@@ -279,7 +280,7 @@ function CreatedFilter({
   }));
 
   const presets = [
-    { value: null, label: 'Any time' },
+    { value: null, label: 'כל הזמנים' },
     { value: 'week' as const, label: CREATED_LABELS.week },
     { value: 'month' as const, label: CREATED_LABELS.month },
   ];
@@ -293,7 +294,7 @@ function CreatedFilter({
       }}
     >
       <PopoverTrigger asChild>
-        <FilterButton label="Created" selection={createdLabel(filters)} />
+        <FilterButton label="נוצר" selection={createdLabel(filters)} />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-1">
         <div className="flex flex-col">
@@ -306,7 +307,7 @@ function CreatedFilter({
                 apply({ created: preset.value, createdFrom: null, createdTo: null });
               }}
               className={cn(
-                'hover:bg-accent rounded-sm px-2 py-1.5 text-left text-sm',
+                'hover:bg-accent rounded-sm px-2 py-1.5 text-start text-sm',
                 !custom && filters.created === preset.value && 'font-medium',
               )}
             >
@@ -316,15 +317,17 @@ function CreatedFilter({
           <button
             type="button"
             onClick={() => setCustom(true)}
-            className={cn('hover:bg-accent rounded-sm px-2 py-1.5 text-left text-sm', custom && 'font-medium')}
+            className={cn('hover:bg-accent rounded-sm px-2 py-1.5 text-start text-sm', custom && 'font-medium')}
           >
-            Custom range
+            {CREATED_LABELS.custom}
           </button>
         </div>
         {custom && (
           <div className="border-t pt-1">
             <Calendar
               mode="range"
+              locale={he}
+              dir="rtl"
               selected={range}
               onSelect={setRange}
               defaultMonth={range?.from}
@@ -333,7 +336,7 @@ function CreatedFilter({
             />
             <div className="flex items-center justify-between gap-2 px-3 pb-2">
               <span className="text-muted-foreground text-xs">
-                {range?.from ? dateRangeLabel(isoDay(range.from), range.to ? isoDay(range.to) : null) : 'Pick the first day'}
+                {range?.from ? dateRangeLabel(isoDay(range.from), range.to ? isoDay(range.to) : null) : 'בחירת היום הראשון'}
               </span>
               <Button
                 size="sm"
@@ -348,7 +351,7 @@ function CreatedFilter({
                   });
                 }}
               >
-                Apply
+                החלה
               </Button>
             </div>
           </div>
@@ -359,7 +362,7 @@ function CreatedFilter({
 }
 
 function typesLabel(types: string[], eventTypes: EventsIndexPage['eventTypes']): string | null {
-  if (types.length > 1) return `${types.length} types`;
+  if (types.length > 1) return `${types.length} סוגים`;
   return types[0] ? (eventTypes.find((type) => type.key === types[0])?.name ?? types[0]) : null;
 }
 

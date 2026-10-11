@@ -26,7 +26,7 @@ export function ToggleTestAccountsLink({ visible }: { visible: boolean }) {
       }
       className="text-primary decoration-primary/35 underline decoration-1 underline-offset-[3px] disabled:opacity-60"
     >
-      {visible ? 'Hide them' : 'Show them'}
+      {visible ? 'להסתיר אותם' : 'להציג אותם'}
     </button>
   );
 }

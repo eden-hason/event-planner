@@ -27,12 +27,12 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
       type="button"
       role="switch"
       aria-checked={optimistic}
-      aria-label="Test accounts"
+      aria-label="חשבונות בדיקה"
       disabled={isPending}
       title={
         optimistic
-          ? 'Test accounts are included across the Back Office'
-          : 'Test accounts are hidden across the Back Office'
+          ? 'חשבונות בדיקה נכללים בכל מערכת הניהול'
+          : 'חשבונות בדיקה מוסתרים בכל מערכת הניהול'
       }
       onClick={() =>
         startTransition(async () => {
@@ -41,7 +41,7 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
         })
       }
       className={cn(
-        'bg-card hover:bg-accent/50 focus-visible:ring-ring flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border pr-1.5 pl-2.5 transition-colors sm:pl-3 focus-visible:ring-2 focus-visible:outline-none',
+        'bg-card hover:bg-accent/50 focus-visible:ring-ring flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border ps-2.5 pe-1.5 transition-colors sm:ps-3 focus-visible:ring-2 focus-visible:outline-none',
         isPending && 'pointer-events-none opacity-60',
       )}
     >
@@ -49,7 +49,7 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
         className={cn('size-4', optimistic ? 'text-primary' : 'text-muted-foreground')}
       />
       {/* The flask and the switch carry it on a phone; `aria-label` names it. */}
-      <span className="hidden text-[13px] font-medium sm:inline">Test accounts</span>
+      <span className="hidden text-[13px] font-medium sm:inline">חשבונות בדיקה</span>
       {/*
        * Absolute knob rather than a translated one: the offsets are the two
        * ends of the track, so the resting position cannot drift with the
@@ -64,7 +64,7 @@ export function TestAccountsToggle({ visible }: { visible: boolean }) {
         <span
           className={cn(
             'absolute top-0.5 size-3.5 rounded-full bg-background shadow-sm transition-all',
-            optimistic ? 'left-[16px]' : 'left-0.5',
+            optimistic ? 'start-[16px]' : 'start-0.5',
           )}
         />
       </span>

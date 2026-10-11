@@ -35,12 +35,12 @@ export async function sendSelectedDeliveriesAdmin(
 
   const selected = [...new Set(guestIds)];
   if (selected.length === 0) {
-    return { success: false, message: 'Select at least one delivery' };
+    return { success: false, message: 'צריך לבחור לפחות שליחה אחת' };
   }
   if (selected.length > maxManualRecipients) {
     return {
       success: false,
-      message: `Select at most ${maxManualRecipients} guest records - larger sends go through a schedule`,
+      message: `אפשר לבחור עד ${maxManualRecipients} רשומות אורחים - שליחה גדולה יותר עוברת דרך תזמון`,
     };
   }
 
@@ -50,13 +50,13 @@ export async function sendSelectedDeliveriesAdmin(
     .eq('id', scheduleId)
     .maybeSingle();
   if (error || !schedule) {
-    return { success: false, message: 'That schedule no longer exists' };
+    return { success: false, message: 'התזמון הזה כבר לא קיים' };
   }
   const event = (Array.isArray(schedule.events) ? schedule.events[0] : schedule.events) as
     | { can_create_schedules: boolean }
     | null;
   if (!event?.can_create_schedules) {
-    return { success: false, message: 'Sending is not enabled for this event' };
+    return { success: false, message: 'השליחה לא מופעלת לאירוע הזה' };
   }
 
   const outcome = await sendSelectedDeliveries(supabase, scheduleId, selected);

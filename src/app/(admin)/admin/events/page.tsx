@@ -24,8 +24,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Searc
       <Empty className="bg-card min-h-80 border">
         <EmptyHeader>
           <EmptyMedia variant="icon"><TriangleAlert /></EmptyMedia>
-          <EmptyTitle>Events didn&apos;t load</EmptyTitle>
-          <EmptyDescription>Something went wrong fetching the list. Try again in a moment</EmptyDescription>
+          <EmptyTitle>האירועים לא נטענו</EmptyTitle>
+          <EmptyDescription>משהו השתבש בטעינת הרשימה. אפשר לנסות שוב בעוד רגע</EmptyDescription>
         </EmptyHeader>
         <RetryButton />
       </Empty>

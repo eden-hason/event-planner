@@ -27,7 +27,7 @@ export default function OverviewPage() {
   // The date lives in the shell's top bar now, not here.
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-lg font-semibold tracking-tight">Overview</h1>
+      <h1 className="text-lg font-semibold tracking-tight">סקירה</h1>
 
       {/* Each band streams and fails on its own - one broken query must not take
           the page down or, worse, render as an all-clear. */}

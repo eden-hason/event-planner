@@ -18,7 +18,7 @@ export async function getOperatorIdentity(): Promise<OperatorIdentity> {
 
   // A Back Office that does not say which database it is reading is one
   // mis-click away from an Operator acting on the wrong data.
-  const environment = isLocalDatabase() ? 'Local' : 'Production';
+  const environment = isLocalDatabase() ? 'סביבה מקומית' : 'ייצור';
 
-  return { email: email ?? 'Unknown operator', environment };
+  return { email: email ?? 'נציג לא ידוע', environment };
 }

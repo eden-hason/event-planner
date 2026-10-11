@@ -36,20 +36,20 @@ export async function gateScheduleForSend(
     .eq('id', scheduleId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return { ok: false, message: 'That schedule no longer exists' };
+  if (!data) return { ok: false, message: 'התזמון הזה כבר לא קיים' };
 
   const scheduleType = (Array.isArray(data.schedule_types)
     ? data.schedule_types[0]
     : data.schedule_types) as { name: string; execution_kind: string } | null;
   if (scheduleType?.execution_kind !== 'message') {
-    return { ok: false, message: 'Call rounds are not sent from here' };
+    return { ok: false, message: 'סבבי שיחות לא נשלחים מכאן' };
   }
 
   const event = (Array.isArray(data.events) ? data.events[0] : data.events) as
     | { can_create_schedules: boolean }
     | null;
   if (!event?.can_create_schedules) {
-    return { ok: false, message: 'Sending is not enabled for this event' };
+    return { ok: false, message: 'השליחה לא מופעלת לאירוע הזה' };
   }
 
   return {

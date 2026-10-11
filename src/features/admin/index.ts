@@ -35,5 +35,4 @@ export { UsersIndexSkeleton } from './components/users-index-skeleton';
 export { UserSheet, UserSheetError, UserSheetShell } from './components/user-sheet';
 export { UserSheetSkeleton } from './components/user-sheet-skeleton';
 export { MarkTestAccountDialog } from './components/mark-test-account-dialog';
-export { AdminSheetContent } from './components/admin-sheet';
 export { resolveAdminTopBar, type AdminTopBarMode } from './utils/topbar';

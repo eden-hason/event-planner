@@ -25,7 +25,7 @@ export async function setEventBillingStatus(
 
   const parsed = SetEventBillingStatusSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, message: parsed.error.issues[0]?.message ?? 'Invalid input' };
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'קלט לא תקין' };
   }
   const { eventId, toStatus, note } = parsed.data;
 
@@ -38,14 +38,14 @@ export async function setEventBillingStatus(
     .maybeSingle();
   if (readError) {
     console.error('setEventBillingStatus read failed:', readError);
-    return { success: false, message: 'Could not load that event' };
+    return { success: false, message: 'לא הצלחנו לטעון את האירוע' };
   }
-  if (!event) return { success: false, message: 'That event no longer exists' };
+  if (!event) return { success: false, message: 'האירוע הזה כבר לא קיים' };
   if (event.status === 'draft') {
-    return { success: false, message: 'A draft event has no workspace to enable sending for' };
+    return { success: false, message: 'לאירוע בטיוטה אין סביבת עבודה להפעיל עבורה שליחה' };
   }
   if (event.billing_status === toStatus) {
-    return { success: true, message: 'Already set' };
+    return { success: true, message: 'כבר מוגדר' };
   }
 
   const result = await applyBillingTransition(supabase, {
@@ -58,5 +58,5 @@ export async function setEventBillingStatus(
   if (!result.ok) return { success: false, message: result.message };
 
   revalidateOutreach(eventId);
-  return { success: true, message: 'Billing status updated' };
+  return { success: true, message: 'סטטוס החיוב עודכן' };
 }

@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -30,7 +30,7 @@ function RecipientRow({ recipient }: { recipient: SmsFallbackRecipient }) {
         <span className="text-muted-foreground block">{recipient.reason}</span>
       </span>
       <span className="text-muted-foreground shrink-0 tabular-nums">
-        {recipient.guestPhone ? formatPhone(recipient.guestPhone) : 'No phone'}
+        {recipient.guestPhone ? formatPhone(recipient.guestPhone) : 'אין טלפון'}
       </span>
     </div>
   );
@@ -75,13 +75,13 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
         return result;
       });
       toast.promise(promise, {
-        loading: 'Sending SMS fallback',
+        loading: 'שולחים SMS',
         success: (result) => {
           if (result.plan) setPlan(result.plan);
           router.refresh();
           return result.message;
         },
-        error: (error) => (error instanceof Error ? error.message : 'SMS fallback failed'),
+        error: (error) => (error instanceof Error ? error.message : 'שליחת ה-SMS נכשלה'),
       });
       try {
         await promise;
@@ -98,16 +98,16 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm" variant="outline" className="mt-3 ml-2">
-          <MessageSquare /> SMS fallback
+        <Button type="button" size="sm" variant="outline" className="mt-3 ms-2">
+          <MessageSquare /> שליחה ב-SMS
         </Button>
       </DialogTrigger>
 
-      <AdminDialogContent className="sm:max-w-[560px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle>SMS fallback</DialogTitle>
+          <DialogTitle>שליחה ב-SMS</DialogTitle>
           <DialogDescription>
-            Sends the SMS version of this message to guests whose WhatsApp failed for a guest-level reason, or was never confirmed delivered
+            שולח את גרסת ה-SMS של ההודעה לאורחים שהוואטסאפ שלהם נכשל מסיבה שקשורה אליהם, או שהמסירה לא אושרה
           </DialogDescription>
         </DialogHeader>
 
@@ -119,7 +119,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
         ) : loadError ? (
           <Alert variant="destructive">
             <TriangleAlert />
-            <AlertTitle>Could not load the fallback</AlertTitle>
+            <AlertTitle>לא הצלחנו לטעון את השליחה ב-SMS</AlertTitle>
             <AlertDescription>{loadError}</AlertDescription>
           </Alert>
         ) : plan ? (
@@ -127,18 +127,18 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
             {unavailable && (
               <Alert variant="destructive">
                 <TriangleAlert />
-                <AlertTitle>This schedule cannot fall back to SMS</AlertTitle>
+                <AlertTitle>אי אפשר לשלוח את התזמון הזה ב-SMS</AlertTitle>
                 <AlertDescription>{unavailable}</AlertDescription>
               </Alert>
             )}
 
             <div className="flex gap-4 rounded-lg border px-3 py-2.5">
               <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-muted-foreground text-[11.5px]">Eligible</span>
+                <span className="text-muted-foreground text-[11.5px]">מתאימים</span>
                 <span className="text-[17px] font-semibold tabular-nums">{eligibleCount}</span>
               </div>
               <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-muted-foreground text-[11.5px]">Left out</span>
+                <span className="text-muted-foreground text-[11.5px]">לא נכללו</span>
                 <span className="text-muted-foreground text-[17px] font-semibold tabular-nums">{plan.excluded.length}</span>
               </div>
             </div>
@@ -146,7 +146,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
             {plan.preview && !unavailable && (
               <div className="flex flex-col gap-1">
                 <span className="text-muted-foreground text-[11.5px]">
-                  Preview - as {plan.eligible[0]?.guestName} will receive it
+                  תצוגה מקדימה - כפי ש{plan.eligible[0]?.guestName} יקבל/תקבל
                 </span>
                 <pre dir="auto" className="bg-muted max-h-40 overflow-auto rounded-md border px-3 py-2 font-sans text-[12.5px] whitespace-pre-wrap">
                   {plan.preview}
@@ -157,7 +157,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
             {eligibleCount > 0 && (
               <Collapsible>
                 <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[12px] font-medium">
-                  Eligible guests ({eligibleCount}) <ChevronDown />
+                  אורחים מתאימים ({eligibleCount}) <ChevronDown />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 max-h-56 overflow-auto rounded-lg border">
                   {plan.eligible.map((recipient) => (
@@ -170,7 +170,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
             {plan.excluded.length > 0 && (
               <Collapsible defaultOpen={eligibleCount === 0}>
                 <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[12px] font-medium">
-                  Left out ({plan.excluded.length}) <ChevronDown />
+                  לא נכללו ({plan.excluded.length}) <ChevronDown />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 max-h-56 overflow-auto rounded-lg border">
                   {plan.excluded.map((recipient) => (
@@ -182,7 +182,7 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
 
             {eligibleCount > MAX_BATCH_SIZE && (
               <p className="text-muted-foreground text-[11.5px]">
-                One batch carries {MAX_BATCH_SIZE}. Send again for the rest
+                כל סבב שליחה כולל עד {MAX_BATCH_SIZE}. צריך לשלוח שוב בשביל השאר
               </p>
             )}
           </div>
@@ -190,13 +190,13 @@ export function SmsFallbackDialog({ scheduleId }: { scheduleId: string }) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
-            Close
+            סגירה
           </Button>
           <Button onClick={send} disabled={sending || loading || !plan || !!unavailable || batchCount === 0}>
-            {batchCount > 0 ? `Send ${batchCount} SMS now` : 'Nothing to send'}
+            {batchCount > 0 ? `שליחת ${batchCount} הודעות SMS עכשיו` : 'אין מה לשלוח'}
           </Button>
         </DialogFooter>
-      </AdminDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

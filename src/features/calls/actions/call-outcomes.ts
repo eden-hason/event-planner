@@ -31,7 +31,7 @@ export async function recordCallOutcome(input: {
   const supabase = createServiceClient();
 
   if (input.outcome !== null && !CALL_OUTCOMES.includes(input.outcome)) {
-    return { success: false, message: 'That is not a call outcome' };
+    return { success: false, message: 'זו לא תוצאת שיחה' };
   }
 
   try {
@@ -50,7 +50,7 @@ export async function recordCallOutcome(input: {
 
     if (logError) {
       console.error('Failed to record call outcome:', logError);
-      return { success: false, message: 'Failed to save the outcome' };
+      return { success: false, message: 'שמירת התוצאה נכשלה' };
     }
 
     if (input.outcome === 'confirmed' || input.outcome === 'declined') {
@@ -83,15 +83,15 @@ export async function recordCallOutcome(input: {
 
       if (guestError) {
         console.error('Failed to propagate RSVP:', guestError);
-        return { success: false, message: 'Outcome saved but the RSVP did not update' };
+        return { success: false, message: 'התוצאה נשמרה אבל אישור ההגעה לא התעדכן' };
       }
     }
 
     revalidateOutreach(input.eventId);
-    return { success: true, message: 'Outcome saved' };
+    return { success: true, message: 'התוצאה נשמרה' };
   } catch (error) {
     console.error('recordCallOutcome failed:', error);
-    return { success: false, message: 'Failed to save the outcome' };
+    return { success: false, message: 'שמירת התוצאה נכשלה' };
   }
 }
 
@@ -120,13 +120,13 @@ export async function saveCallNote(input: {
 
     if (error) {
       console.error('Failed to save call note:', error);
-      return { success: false, message: 'Failed to save the note' };
+      return { success: false, message: 'שמירת ההערה נכשלה' };
     }
 
     revalidateOutreach(input.eventId);
-    return { success: true, message: 'Note saved' };
+    return { success: true, message: 'ההערה נשמרה' };
   } catch (error) {
     console.error('saveCallNote failed:', error);
-    return { success: false, message: 'Failed to save the note' };
+    return { success: false, message: 'שמירת ההערה נכשלה' };
   }
 }

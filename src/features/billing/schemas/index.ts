@@ -31,7 +31,7 @@ export const SetEventBillingStatusSchema = z.object({
   note: z
     .string()
     .trim()
-    .max(500, 'Keep the note under 500 characters')
+    .max(500, 'ההערה צריכה להיות קצרה מ-500 תווים')
     .optional(),
 });
 
@@ -56,26 +56,26 @@ export const RecordEventPaymentSchema = z
   .object({
     eventId: z.uuid(),
     records: z
-      .number({ error: 'Enter how many records were paid for' })
-      .int('Records must be a whole number')
-      .min(1, 'At least one record')
+      .number({ error: 'צריך להזין כמה רשומות שולמו' })
+      .int('מספר הרשומות צריך להיות שלם')
+      .min(1, 'לפחות רשומה אחת')
       .max(MAX_RECORDS_PER_PAYMENT, `At most ${MAX_RECORDS_PER_PAYMENT.toLocaleString('en-GB')} records in one payment`),
     channel: z.enum(RECORD_PACKAGE_CHANNELS),
     amount: z
-      .number({ error: 'Enter the amount received' })
-      .min(0, 'The amount cannot be negative')
-      .max(1_000_000, 'That amount is too large')
-      .refine((n) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6, 'Use at most two decimal places'),
+      .number({ error: 'צריך להזין את הסכום שהתקבל' })
+      .min(0, 'הסכום לא יכול להיות שלילי')
+      .max(1_000_000, 'הסכום גדול מדי')
+      .refine((n) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6, 'עד שתי ספרות אחרי הנקודה'),
     method: z.enum(BILLING_PAYMENT_METHODS),
-    reference: z.string().trim().max(100, 'Keep the reference under 100 characters').optional(),
-    note: z.string().trim().max(500, 'Keep the note under 500 characters').optional(),
+    reference: z.string().trim().max(100, 'האסמכתה צריכה להיות קצרה מ-100 תווים').optional(),
+    note: z.string().trim().max(500, 'ההערה צריכה להיות קצרה מ-500 תווים').optional(),
   })
   .refine((p) => p.method !== 'gift' || p.amount === 0, {
-    message: 'A gift is a payment of ₪0',
+    message: 'מתנה היא תשלום של ₪0',
     path: ['amount'],
   })
   .refine((p) => p.method === 'gift' || p.amount > 0, {
-    message: 'A payment of ₪0 is a gift - choose Gift as the method',
+    message: 'תשלום של ₪0 הוא מתנה - צריך לבחור מתנה כאמצעי התשלום',
     path: ['method'],
   });
 
@@ -84,8 +84,8 @@ export const SetBonusOverrideSchema = z.object({
   eventId: z.uuid(),
   bonus: z
     .number()
-    .int('Bonus must be a whole number')
-    .min(0, 'Bonus cannot be negative')
-    .max(1000, 'At most 1,000 bonus records')
+    .int('הבונוס צריך להיות מספר שלם')
+    .min(0, 'הבונוס לא יכול להיות שלילי')
+    .max(1000, 'עד 1,000 רשומות בונוס')
     .nullable(),
 });

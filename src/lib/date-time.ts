@@ -47,31 +47,6 @@ export function daysUntil(date: string, now: Date = new Date()): number {
   return Math.round((utcCalendarStart(date) - israelCalendarStart(now)) / DAY_MS);
 }
 
-export function formatEventDate(
-  eventDate: string | null,
-  options?: { year?: boolean; weekday?: boolean },
-): string {
-  if (!eventDate) return 'No date';
-  const formatted = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'UTC',
-    ...(options?.weekday ? { weekday: 'short' } : {}),
-    day: 'numeric',
-    month: 'short',
-    ...(options?.year === false ? {} : { year: 'numeric' }),
-  }).format(new Date(eventDate));
-  return options?.weekday ? formatted.replace(',', '') : formatted;
-}
-
-/** "12 August 2026" - the full-month form used where a date stands alone, e.g. the Users sheet. */
-export function formatFullDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'UTC',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(iso));
-}
-
 export function formatScheduleDateTime(iso: string, time?: string | null): string {
   const value = new Date(iso);
   const date = new Intl.DateTimeFormat('en-GB', {
@@ -87,20 +62,6 @@ export function formatScheduleDateTime(iso: string, time?: string | null): strin
     hourCycle: 'h23',
   }).format(value);
   return `${date}, ${formattedTime}`;
-}
-
-export function relativeEventDate(
-  days: number | null,
-  options?: { futureStyle?: 'away' | 'in' },
-): string | null {
-  if (days === null) return null;
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
-  if (days === -1) return 'Yesterday';
-  if (days > 0) {
-    return options?.futureStyle === 'in' ? `in ${days} days` : `${days} days away`;
-  }
-  return `${Math.abs(days)} days ago`;
 }
 
 /** Converts an Operator-entered Israel wall clock to an instant, including DST. */

@@ -14,17 +14,17 @@ import { Button } from '@/components/ui/button';
 export function ImpersonateOwnerButton({
   ownerId,
   ownerName,
-  label = 'View as owner',
+  label = 'צפייה כבעלים',
 }: {
   ownerId: string;
   ownerName: string;
-  /** "View as owner" on the event workspace; the Users sheet says "View as user" instead. */
+  /** "צפייה כבעלים" on the event workspace; the Users sheet says "צפייה כמשתמש" instead. */
   label?: string;
 }) {
   return (
     <form action="/api/admin/impersonate" method="post" target="_blank">
       <input type="hidden" name="userId" value={ownerId} />
-      <Button type="submit" variant="outline" size="sm" title={`Open the app as ${ownerName}`}>
+      <Button type="submit" variant="outline" size="sm" title={`פתיחת האפליקציה בתור ${ownerName}`}>
         <Eye className="size-3.5" />
         {label}
       </Button>

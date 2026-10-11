@@ -47,7 +47,7 @@ export async function setUserTestAccountFlag(
     if (readError) throw readError;
 
     if (!profile) {
-      return { success: false, message: 'That user no longer exists', userHidden: false };
+      return { success: false, message: 'המשתמש הזה כבר לא קיים', userHidden: false };
     }
 
     // Marking hides the account everywhere unless the Operator has the toggle
@@ -60,7 +60,7 @@ export async function setUserTestAccountFlag(
     if (!!profile.is_test_account === value) {
       return {
         success: true,
-        message: value ? 'Already marked as a test account' : 'That account carries no test mark',
+        message: value ? 'כבר מסומן כחשבון בדיקה' : 'החשבון הזה לא מסומן כחשבון בדיקה',
         userHidden,
       };
     }
@@ -75,11 +75,11 @@ export async function setUserTestAccountFlag(
 
     return {
       success: true,
-      message: value ? 'Marked as a test account' : 'Test account mark removed',
+      message: value ? 'סומן כחשבון בדיקה' : 'סימון חשבון הבדיקה הוסר',
       userHidden,
     };
   } catch (error) {
     console.error('setUserTestAccountFlag failed:', error);
-    return { success: false, message: 'Failed to update the test account mark', userHidden: false };
+    return { success: false, message: 'לא הצלחנו לעדכן את סימון חשבון הבדיקה', userHidden: false };
   }
 }

@@ -26,11 +26,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { UserRow, UsersIndexFilters, UsersIndexPage } from '../types';
-import { formatEventDate } from '@/lib/date-time';
+import { formatEventDate } from '../utils/format';
 import { avatarTint, initialsFor } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 import { ToggleTestAccountsLink } from './toggle-test-accounts-link';
-import { countLabel } from '../utils/count-label';
+import { countLabel } from '../utils/labels';
 
 function hrefFor(filters: UsersIndexFilters, patch: Partial<UsersIndexFilters & { user: string | null }>) {
   const next = { ...filters, user: null as string | null, ...patch };
@@ -59,11 +59,11 @@ export function UsersIndex({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline gap-2.5">
-        <h1 className="text-lg font-semibold tracking-tight">Users</h1>
-        <p className="text-muted-foreground text-[13px]">Everyone with an account, newest first</p>
+        <h1 className="text-lg font-semibold tracking-tight">משתמשים</h1>
+        <p className="text-muted-foreground text-[13px]">כל מי שיש לו חשבון, מהחדש לישן</p>
         {hasAnyUsers && (
           <span className="text-muted-foreground ms-auto shrink-0 text-[13px] tabular-nums">
-            {countLabel(data.totalUsers, 'user')}
+            {countLabel(data.totalUsers, 'משתמש אחד', 'משתמשים')}
           </span>
         )}
       </div>
@@ -74,12 +74,12 @@ export function UsersIndex({
             {openUserId && <input type="hidden" name="user" value={openUserId} />}
             <InputGroup>
               <InputGroupAddon><Search /></InputGroupAddon>
-              <InputGroupInput name="q" defaultValue={filters.q} placeholder="Search name, email or phone" />
+              <InputGroupInput name="q" defaultValue={filters.q} placeholder="חיפוש לפי שם, אימייל או טלפון" />
             </InputGroup>
           </form>
           {hasQuery && (
             <Button asChild variant="link" size="sm" className="text-muted-foreground h-auto p-1">
-              <Link href={hrefFor(filters, { q: '', page: 1, user: openUserId })}>Clear search</Link>
+              <Link href={hrefFor(filters, { q: '', page: 1, user: openUserId })}>ניקוי החיפוש</Link>
             </Button>
           )}
         </div>
@@ -89,9 +89,9 @@ export function UsersIndex({
         <Empty className="bg-card min-h-80 border">
           <EmptyHeader>
             <EmptyMedia variant="icon"><UsersIcon /></EmptyMedia>
-            <EmptyTitle>No users yet</EmptyTitle>
+            <EmptyTitle>עדיין אין משתמשים</EmptyTitle>
             <EmptyDescription>
-              Accounts appear here the moment someone signs in for the first time
+              חשבונות מופיעים כאן ברגע שמישהו מתחבר בפעם הראשונה
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -99,14 +99,14 @@ export function UsersIndex({
         <Empty className="bg-card min-h-72 border">
           <EmptyHeader>
             <EmptyMedia variant="icon"><Search /></EmptyMedia>
-            <EmptyTitle>No users match &quot;{filters.q.trim()}&quot;</EmptyTitle>
+            <EmptyTitle>אין משתמשים שמתאימים ל-&quot;{filters.q.trim()}&quot;</EmptyTitle>
             <EmptyDescription>
-              Search covers name, email and phone. {countLabel(data.totalUsers, 'user')} exist
+              החיפוש עובר על שם, אימייל וטלפון. יש {countLabel(data.totalUsers, 'משתמש אחד', 'משתמשים')}
             </EmptyDescription>
           </EmptyHeader>
           <Button asChild variant="outline" size="sm">
             <Link href={hrefFor(filters, { q: '', page: 1, user: openUserId })}>
-              <X data-icon="inline-start" />Clear search
+              <X data-icon="inline-start" />ניקוי החיפוש
             </Link>
           </Button>
         </Empty>
@@ -115,11 +115,11 @@ export function UsersIndex({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/35 hover:bg-muted/35">
-                <TableHead className="px-4 text-[11px] tracking-[0.06em] uppercase">User</TableHead>
-                <TableHead className="w-[168px] text-[11px] tracking-[0.06em] uppercase">Phone</TableHead>
-                <TableHead className="w-[128px] text-[11px] tracking-[0.06em] uppercase">Events</TableHead>
-                <TableHead className="w-[84px] px-4 text-right text-[11px] tracking-[0.06em] uppercase">
-                  Joined
+                <TableHead className="px-4 text-[11px] tracking-[0.06em] uppercase">משתמש</TableHead>
+                <TableHead className="w-[168px] text-[11px] tracking-[0.06em] uppercase">טלפון</TableHead>
+                <TableHead className="w-[128px] text-[11px] tracking-[0.06em] uppercase">אירועים</TableHead>
+                <TableHead className="w-[96px] px-4 text-end text-[11px] tracking-[0.06em] uppercase">
+                  הצטרפות
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -132,24 +132,24 @@ export function UsersIndex({
           <div className="text-muted-foreground flex items-center gap-2.5 border-t px-4 py-2.5 text-[12px] tabular-nums">
             <span>
               {data.totalRows === 0
-                ? 'No rows on this page'
-                : `Showing ${(data.page - 1) * data.pageSize + 1}-${Math.min(data.page * data.pageSize, data.totalRows)} of ${data.totalRows}, 50 per page`}
+                ? 'אין שורות בעמוד הזה'
+                : `מוצגים ${(data.page - 1) * data.pageSize + 1}-${Math.min(data.page * data.pageSize, data.totalRows)} מתוך ${data.totalRows}, 50 בעמוד`}
             </span>
-            <span className="text-muted-foreground/70 ms-auto">Rows open the user sheet</span>
+            <span className="text-muted-foreground/70 ms-auto">לחיצה על שורה פותחת את כרטיס המשתמש</span>
             {data.pageCount > 1 && (
               <div className="flex gap-2">
                 <Button asChild={data.page > 1} variant="outline" size="sm" disabled={data.page <= 1}>
                   {data.page > 1 ? (
-                    <Link href={hrefFor(filters, { page: data.page - 1, user: openUserId })}>Previous</Link>
+                    <Link href={hrefFor(filters, { page: data.page - 1, user: openUserId })}>הקודם</Link>
                   ) : (
-                    <span>Previous</span>
+                    <span>הקודם</span>
                   )}
                 </Button>
                 <Button asChild={data.page < data.pageCount} variant="outline" size="sm" disabled={data.page >= data.pageCount}>
                   {data.page < data.pageCount ? (
-                    <Link href={hrefFor(filters, { page: data.page + 1, user: openUserId })}>Next</Link>
+                    <Link href={hrefFor(filters, { page: data.page + 1, user: openUserId })}>הבא</Link>
                   ) : (
-                    <span>Next</span>
+                    <span>הבא</span>
                   )}
                 </Button>
               </div>
@@ -163,8 +163,8 @@ export function UsersIndex({
           <EyeOff className="text-muted-foreground size-3.5" />
           <span className="text-muted-foreground tabular-nums">
             {testAccountsVisible
-              ? `${countLabel(data.testAccountsTotal, 'test account')} shown, counted nowhere else`
-              : `${countLabel(data.testAccountsTotal, 'test account')} hidden`}
+              ? `${countLabel(data.testAccountsTotal, 'חשבון בדיקה אחד מוצג', 'חשבונות בדיקה מוצגים')}, לא נספרים בשום מקום אחר`
+              : `${countLabel(data.testAccountsTotal, 'חשבון בדיקה אחד מוסתר', 'חשבונות בדיקה מוסתרים')}`}
           </span>
           <ToggleTestAccountsLink visible={testAccountsVisible} />
         </div>
@@ -202,35 +202,35 @@ function UserTableRow({
               </span>
               {row.isAdmin && (
                 <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                  ADMIN
+                  מנהל
                 </Badge>
               )}
               {row.isTestAccount && (
                 <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                  TEST
+                  בדיקה
                 </Badge>
               )}
             </span>
             <span className={cn('truncate text-[12.5px]', hasName ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
-              {hasName ? row.email : 'No name provided'}
+              {hasName ? row.email : 'לא הוזן שם'}
             </span>
           </span>
         </Link>
       </TableCell>
       <TableCell className={cn('text-[13px] tabular-nums', !row.phone && 'text-muted-foreground/70')}>
-        {row.phone ? formatPhone(row.phone) : 'not provided'}
+        {row.phone ? formatPhone(row.phone) : 'לא הוזן'}
       </TableCell>
       <TableCell>
         <span className={cn('block text-[13px] tabular-nums', row.ownedEvents === 0 && 'text-muted-foreground')}>
-          {row.ownedEvents > 0 ? countLabel(row.ownedEvents, 'owned', 'owned') : 'None'}
+          {row.ownedEvents > 0 ? countLabel(row.ownedEvents, 'אירוע אחד בבעלות', 'בבעלות') : 'אין'}
         </span>
         {row.sharedEvents > 0 && (
           <span className="text-muted-foreground block text-[12px] tabular-nums">
-            +{row.sharedEvents} shared
+            +{row.sharedEvents} משותפים
           </span>
         )}
       </TableCell>
-      <TableCell className="px-4 text-right text-[13px] tabular-nums">
+      <TableCell className="px-4 text-end text-[13px] tabular-nums">
         {formatEventDate(row.createdAt, { year: false })}
       </TableCell>
     </TableRow>

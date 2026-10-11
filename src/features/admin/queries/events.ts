@@ -7,6 +7,7 @@ import { pageAll } from '@/lib/supabase/row-cap';
 import {
   classifyWhatsAppFailure,
   comparePlanOrder,
+  isFollowUpConfirmation,
   numberPlan,
   planEntryFromRow,
   validatePhoneNumber,
@@ -26,6 +27,8 @@ import { eventDaysFromToday, israelWallClockParts } from '@/lib/date-time';
 import { getTestScope } from './test-accounts';
 import { isNoAskPlanned } from '../utils/no-ask-planned';
 import { filterEventRows, sortEventRows } from '../utils/events-index';
+import { eventTitle, eventTypeName, scheduleTypeName, UNKNOWN_OWNER } from '../utils/labels';
+import { conversionRejection, dueTimeRejection, type ScheduleControlState } from '../utils/schedule-controls';
 
 const PAGE_SIZE = 50;
 const STALE_ROUND_MS = 3 * 86_400_000;
@@ -86,7 +89,7 @@ export async function getEventsIndex(filters: EventsIndexFilters): Promise<Event
   const testUserIds = new Set(test.userIds);
   const events = (unwrap(eventsResult) as unknown as BaseEventRow[])
     .filter((row) => !testUserIds.has(row.user_id));
-  const eventTypes = unwrap(typesResult).map((type) => ({ key: type.key, name: type.name ?? type.key }));
+  const eventTypes = unwrap(typesResult).map((type) => ({ key: type.key, name: eventTypeName(type.key, type.name) }));
 
   const ownerIds = [...new Set(events.map((event) => event.user_id))];
   const owners = ownerIds.length
@@ -99,13 +102,13 @@ export async function getEventsIndex(filters: EventsIndexFilters): Promise<Event
     const type = eventType(event.event_types);
     return {
       id: event.id,
-      title: event.title?.trim() || 'Untitled event',
+      title: eventTitle(event.title),
       status: event.status === 'draft' ? 'draft' : 'published',
       eventDate: event.event_date,
       createdAt: event.created_at,
       eventTypeKey: type?.key ?? null,
-      eventTypeName: type?.name ?? type?.key ?? 'Event',
-      ownerName: owner?.full_name?.trim() || owner?.email || 'Unknown owner',
+      eventTypeName: eventTypeName(type?.key, type?.name),
+      ownerName: owner?.full_name?.trim() || owner?.email || UNKNOWN_OWNER,
       ownerEmail: owner?.email ?? null,
       ownerPhone: owner?.phone_number ?? null,
       billingStatus: event.billing_status ?? 'free',
@@ -187,9 +190,9 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
 
   return {
     id: event.id,
-    title: event.title?.trim() || 'Untitled event',
+    title: eventTitle(event.title),
     status: event.status === 'draft' ? 'draft' : 'published',
-    eventTypeName: eventType(event.event_types)?.name ?? eventType(event.event_types)?.key ?? 'Event',
+    eventTypeName: eventTypeName(eventType(event.event_types)?.key, eventType(event.event_types)?.name),
     eventDate: event.event_date,
     daysFromToday: eventDaysFromToday(event.event_date),
     locationName: location?.name ?? null,
@@ -202,7 +205,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     createdAt: event.created_at,
     ownerId: event.user_id,
     owner: {
-      name: owner?.full_name || owner?.email || 'Unknown owner',
+      name: owner?.full_name || owner?.email || UNKNOWN_OWNER,
       email: owner?.email ?? null,
       phone: owner?.phone_number ?? null,
     },
@@ -210,7 +213,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
       const profile = row.profiles as unknown as { full_name: string | null; email: string | null } | null;
       return {
         id: row.id,
-        name: profile?.full_name || profile?.email || 'Unknown collaborator',
+        name: profile?.full_name || profile?.email || 'שותף לא ידוע',
         email: profile?.email ?? null,
         role: row.role,
       };
@@ -220,7 +223,10 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
   };
 });
 
-export async function getEventGuestSummary(eventId: string): Promise<EventGuestSummary> {
+// Cached per render: the guest list band and the outreach band both read it.
+export const getEventGuestSummary = cache(async function getEventGuestSummary(
+  eventId: string,
+): Promise<EventGuestSummary> {
   await assertAdmin();
   const supabase = createServiceClient();
   // Paged, not a single read: one Event can hold more Guest Records than
@@ -280,7 +286,7 @@ export async function getEventGuestSummary(eventId: string): Promise<EventGuestS
       phone: guest.phone_number,
     }));
   return summary;
-}
+});
 
 type ScheduleJoinRow = {
   id: string;
@@ -346,12 +352,18 @@ export const getEventTimeline = cache(async function getEventTimeline(
   const rounds = unwrap(roundsResult);
   const roundBySchedule = new Map(rounds.map((row) => [row.schedule_id, row]));
 
-  return schedules.map((schedule) => {
+  // What the ConvertDialog warns about: the plan as it would read with each
+  // convertible Invitation already a Confirmation.
+  const roundEntries = schedules.map((row) => ({ ...entries.get(row.id)!, status: row.status }));
+
+  const rows: EventTimelineRow[] = schedules.map((schedule) => {
     const scheduleType = eventType(schedule.schedule_types) as { name?: string | null; execution_kind?: string | null } | null;
-    const base = scheduleType?.name ?? 'Schedule';
+    const typeKey = entries.get(schedule.id)?.scheduleTypeKey ?? '';
+    const base = scheduleTypeName(typeKey, scheduleType?.name);
     const number = numbers.get(schedule.id);
     const title = number && number.total > 1 ? `${base} ${number.index}` : base;
     const isCall = scheduleType?.execution_kind === 'phone_call';
+    const kind = isCall ? 'call' : 'message';
     const round = roundBySchedule.get(schedule.id);
     const logs = (round?.call_logs ?? []) as { id: string; notes: string | null; outcome: string | null }[];
     const target = guests.filter((guest) => !schedule.target_status || guest.rsvp_status === schedule.target_status);
@@ -363,10 +375,19 @@ export const getEventTimeline = cache(async function getEventTimeline(
       ? round.completed_at ? 'completed' : 'in_progress'
       : schedule.status === 'cancelled' ? 'cancelled'
         : schedule.status === 'sent' || schedule.dispatched_at ? 'sent' : 'planned';
+    const controlState: ScheduleControlState = {
+      scheduleTypeKey: typeKey,
+      kind,
+      status: schedule.status,
+      dispatchedAt: schedule.dispatched_at,
+      sentAt: schedule.sent_at,
+      hasRound: !!round,
+    };
+    const convertible = conversionRejection(controlState) === null;
     return {
       id: schedule.id,
-      kind: isCall ? 'call' : 'message',
-      scheduleTypeKey: entries.get(schedule.id)?.scheduleTypeKey ?? '',
+      kind,
+      scheduleTypeKey: typeKey,
       title,
       status,
       scheduledDate: schedule.scheduled_date,
@@ -388,7 +409,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
         return {
           id: delivery.id,
           guestId: delivery.guest_id,
-          guestName: guest?.name ?? 'Unknown guest',
+          guestName: guest?.name ?? 'אורח לא ידוע',
           guestPhone: guest?.phone_number ?? null,
           status: delivery.status,
           errorMessage: delivery.error_message,
@@ -401,8 +422,22 @@ export const getEventTimeline = cache(async function getEventTimeline(
             .some((attempt) => attempt.channel === 'sms'),
         };
       }),
+      dueTimeEditable: dueTimeRejection(controlState) === null,
+      convertible,
+      convertsToFollowUp: convertible && isFollowUpConfirmation(
+        { ...entries.get(schedule.id)!, scheduleTypeKey: 'confirmation', targetStatus: null },
+        roundEntries,
+      ),
+      convertNarrows: [],
     };
   });
+
+  // What converting an Invitation would narrow: every Confirmation that can
+  // still change and still goes to everyone - the same rows the RPC updates.
+  const narrowed = rows
+    .filter((row) => row.scheduleTypeKey === 'confirmation' && row.targetStatus === null && row.dueTimeEditable)
+    .map((row) => row.title);
+  return rows.map((row) => (row.convertible ? { ...row, convertNarrows: narrowed } : row));
 });
 
 export async function getEventSignals(eventId: string): Promise<EventWorkspaceSignal[]> {
@@ -428,8 +463,8 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
       signals.push({
         id: `overdue:${row.id}`,
         kind: 'overdue_schedule',
-        headline: `${row.title} is overdue`,
-        detail: 'The planned date has passed and this work has not started',
+        headline: `${row.title} באיחור`,
+        detail: 'המועד המתוכנן עבר והעבודה עוד לא התחילה',
         href: `#schedule-${row.id}`,
       });
     }
@@ -454,8 +489,8 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
       signals.push({
         id: `stale:${row.roundId}`,
         kind: 'stale_call_round',
-        headline: `${row.title} is still open`,
-        detail: `${row.calledCount} of ${row.roundGuestCount} guest records called`,
+        headline: `${row.title} עדיין פתוח`,
+        detail: `התקשרנו ל-${row.calledCount} מתוך ${row.roundGuestCount} רשומות אורחים`,
         href: `#schedule-${row.id}`,
       });
     }
@@ -472,8 +507,8 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
     signals.push({
       id: `no_ask:${eventId}`,
       kind: 'no_ask_planned',
-      headline: 'No invitation or confirmation is dated',
-      detail: 'Nothing will ask guests to RSVP until the owner picks a date',
+      headline: 'לא נקבע תאריך להזמנה או לאישור הגעה',
+      detail: 'אף הודעה לא תבקש מהאורחים לאשר הגעה עד שבעלי האירוע יבחרו תאריך',
       href: `#schedule-${timeline.find((row) => !row.scheduledDate)?.id ?? ''}`,
     });
   }
@@ -481,8 +516,8 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
     signals.push({
       id: `failed:${eventId}`,
       kind: 'failed_delivery',
-      headline: `${failedCount} ${failedCount === 1 ? 'delivery' : 'deliveries'} failed${fallbackCount ? ` - ${fallbackCount} can fall back to SMS` : ''}`,
-      detail: 'Failed deliveries in the last 30 days not yet tried by SMS',
+      headline: `${failedCount === 1 ? 'שליחה אחת נכשלה' : `${failedCount} שליחות נכשלו`}${fallbackCount ? ` - ${fallbackCount} אפשר לנסות ב-SMS` : ''}`,
+      detail: 'שליחות שנכשלו ב-30 הימים האחרונים ועוד לא נוסו ב-SMS',
       href: `#schedule-${firstFailedSchedule.id}-failures`,
     });
   }

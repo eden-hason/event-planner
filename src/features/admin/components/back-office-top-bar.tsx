@@ -7,7 +7,7 @@ import { TestAccountsToggle } from './test-accounts-toggle';
  * The Back Office shell's header. Present on every page, because the search is
  * global and a bar that appeared only on some routes would read as a bug.
  *
- * The left slot defaults to the search. Drill-down routes pass a breadcrumb
+ * The leading slot defaults to the search. Drill-down routes pass a breadcrumb
  * instead - see docs/design/back-office-operations-brief.md section 3.2.
  */
 export function BackOfficeTopBar({
@@ -17,7 +17,7 @@ export function BackOfficeTopBar({
   children?: ReactNode;
   testAccountsVisible: boolean;
 }) {
-  const today = new Date().toLocaleDateString('en-GB', {
+  const today = new Date().toLocaleDateString('he-IL', {
     timeZone: 'Asia/Jerusalem',
     weekday: 'long',
     day: 'numeric',
@@ -29,8 +29,8 @@ export function BackOfficeTopBar({
       {/* The only way to the nav below `md`, where the sidebar is a drawer. */}
       <SidebarTrigger className="-ms-1 shrink-0" />
       {/*
-       * The slot owns the whole left region, so a route that carries an action
-       * can push it right with an auto margin instead of the bar having to know
+       * The slot owns the whole leading region, so a route that carries an
+       * action can push it to the end with an auto margin instead of the bar having to know
        * which routes have one.
        */}
       <div className="flex min-w-0 flex-1 items-center gap-3">{children ?? <OperatorSearch />}</div>

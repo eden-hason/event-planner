@@ -37,7 +37,7 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
 
     if (typeError || !callType) {
       console.error('No phone_call schedule type in the catalog:', typeError);
-      return { success: false, message: 'The catalog has no call round type' };
+      return { success: false, message: 'אין בקטלוג סוג של סבב שיחות' };
     }
 
     // A Draft Event cannot have schedules - it is interest, not an event.
@@ -48,25 +48,18 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
       .single();
 
     if (event?.status !== 'published') {
-      return { success: false, message: 'That event is not published' };
+      return { success: false, message: 'האירוע הזה לא פורסם' };
     }
     if (!event.can_create_schedules) {
-      return { success: false, message: 'Sending is not enabled for that event' };
+      return { success: false, message: 'השליחה לא מופעלת לאירוע הזה' };
     }
 
-    const { count: audienceCount, error: audienceError } = await supabase
-      .from('guests')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', input.eventId)
-      .eq('rsvp_status', input.targetStatus);
-    if (audienceError) throw audienceError;
-    if (!audienceCount) {
-      return { success: false, message: `That event has no ${input.targetStatus} guest records` };
-    }
+    // No audience check: a plan is only a date and a target. Who gets called
+    // is snapshotted when the round starts, so an empty list today is fine.
 
     const scheduledDate = israelWallClockToIso(input.scheduledDate, input.scheduledTime);
     if (!scheduledDate) {
-      return { success: false, message: 'That date and time are not valid' };
+      return { success: false, message: 'התאריך והשעה לא תקינים' };
     }
 
     const { error } = await supabase.from('schedules').insert({
@@ -82,13 +75,13 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
 
     if (error) {
       console.error('Failed to create call plan:', error);
-      return { success: false, message: 'Failed to create the plan' };
+      return { success: false, message: 'יצירת התוכנית נכשלה' };
     }
 
     revalidateOutreach(input.eventId);
-    return { success: true, message: 'Call plan created' };
+    return { success: true, message: 'תוכנית השיחות נוצרה' };
   } catch (error) {
     console.error('createCallPlan failed:', error);
-    return { success: false, message: 'Failed to create the plan' };
+    return { success: false, message: 'יצירת התוכנית נכשלה' };
   }
 }

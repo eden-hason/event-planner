@@ -18,32 +18,36 @@ import { CALL_OUTCOMES, type CallOutcome } from '@/features/calls/types';
 import type { RoundDetail, RoundGuestRow } from '@/features/admin/queries/call-round';
 import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
+import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { rsvpPresentation } from '@/features/guests';
 import { callOutcomePresentation } from '@/features/calls';
+import { audienceCountLabel, countLabel, rsvpLabel } from '../utils/labels';
 
 const OUTCOME_LABELS: Record<CallOutcome, string> = {
-  no_answer: 'No answer',
-  confirmed: 'Confirmed',
-  declined: 'Declined',
-  guest_will_update: 'Will update',
+  no_answer: 'לא ענו',
+  confirmed: 'אישרו',
+  declined: 'לא מגיעים',
+  guest_will_update: 'יעדכנו בעצמם',
 };
 
+/** The filter chips, and the label each one shows - the label is the identifier. */
+const ALL = 'הכול';
 const FILTERS = [
-  'All',
-  'Not called',
-  'No answer',
-  'Confirmed',
-  'Declined',
-  'Will update',
+  ALL,
+  'לא התקשרנו',
+  OUTCOME_LABELS.no_answer,
+  OUTCOME_LABELS.confirmed,
+  OUTCOME_LABELS.declined,
+  OUTCOME_LABELS.guest_will_update,
 ] as const;
 type Filter = (typeof FILTERS)[number];
 
-const FILTER_OUTCOME: Record<Exclude<Filter, 'All'>, CallOutcome | null> = {
-  'Not called': null,
-  'No answer': 'no_answer',
-  Confirmed: 'confirmed',
-  Declined: 'declined',
-  'Will update': 'guest_will_update',
+const FILTER_OUTCOME: Record<Exclude<Filter, typeof ALL>, CallOutcome | null> = {
+  'לא התקשרנו': null,
+  [OUTCOME_LABELS.no_answer]: 'no_answer',
+  [OUTCOME_LABELS.confirmed]: 'confirmed',
+  [OUTCOME_LABELS.declined]: 'declined',
+  [OUTCOME_LABELS.guest_will_update]: 'guest_will_update',
 };
 
 /*
@@ -169,7 +173,7 @@ function OutcomeCell({
               </PopoverTrigger>
               <PopoverContent align="start" className="w-auto p-3">
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-[12px] font-medium">How many guests are coming?</span>
+                  <span className="text-[12px] font-medium">כמה אורחים מגיעים?</span>
                   <div className="flex items-center gap-2">
                     <div className="border-input flex items-center rounded-md border">
                       <button
@@ -177,7 +181,7 @@ function OutcomeCell({
                         disabled={draft <= 1}
                         onClick={() => setDraft((n) => Math.max(1, n - 1))}
                         className="px-2 py-1.5 disabled:opacity-40"
-                        aria-label="One fewer guest"
+                        aria-label="אורח אחד פחות"
                       >
                         <Minus className="size-3.5" />
                       </button>
@@ -188,7 +192,7 @@ function OutcomeCell({
                         type="button"
                         onClick={() => setDraft((n) => n + 1)}
                         className="px-2 py-1.5"
-                        aria-label="One more guest"
+                        aria-label="אורח אחד יותר"
                       >
                         <Plus className="size-3.5" />
                       </button>
@@ -203,7 +207,7 @@ function OutcomeCell({
                         setOpen(false);
                       }}
                     >
-                      {confirmed ? 'Update' : 'Confirm'}
+                      {confirmed ? 'עדכון' : 'אישור'}
                     </Button>
                   </div>
                   {confirmed && (
@@ -214,9 +218,9 @@ function OutcomeCell({
                         onRecord(null);
                         setOpen(false);
                       }}
-                      className="text-muted-foreground hover:text-foreground text-left text-[12px] disabled:opacity-60"
+                      className="text-muted-foreground hover:text-foreground text-start text-[12px] disabled:opacity-60"
                     >
-                      Clear this outcome
+                      ניקוי התוצאה
                     </button>
                   )}
                 </div>
@@ -255,7 +259,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
   // the status change is swallowed - the operator has to click it twice.
   const [, startNoteTransition] = useTransition();
   const [term, setTerm] = useState('');
-  const [filter, setFilter] = useState<Filter>('All');
+  const [filter, setFilter] = useState<Filter>(ALL);
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const inProgress = round.completedAt === null;
@@ -288,7 +292,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
   const visible = useMemo(() => {
     const needle = term.trim().toLowerCase();
     return guests.filter((guest) => {
-      if (filter !== 'All' && guest.outcome !== FILTER_OUTCOME[filter]) return false;
+      if (filter !== ALL && guest.outcome !== FILTER_OUTCOME[filter]) return false;
       if (!needle) return true;
       return (
         guest.name.toLowerCase().includes(needle) || (guest.phone ?? '').includes(needle)
@@ -363,14 +367,13 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                 inProgress ? 'text-foreground' : 'text-muted-foreground',
               )}
             >
-              {inProgress ? 'In progress' : 'Completed'}
+              {inProgress ? 'בתהליך' : 'הושלם'}
             </span>
           </div>
           <p className="text-muted-foreground text-[13px]">
-            Snapshot of {total} {round.targetStatus ?? ''} guest {total === 1 ? 'record' : 'records'},
-            taken{' '}
-            {new Date(round.startedAt).toLocaleString('en-GB', {
-              timeZone: 'Asia/Jerusalem',
+            צילום מצב של {audienceCountLabel(round.targetStatus, total)}, נלקח
+            ב-{new Date(round.startedAt).toLocaleString('he-IL', {
+              timeZone: ADMIN_TIME_ZONE,
               day: 'numeric',
               month: 'short',
               hour: '2-digit',
@@ -389,7 +392,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                 disabled={pending}
                 onClick={() => roundAction(() => deleteCallRound(round.id), true)}
               >
-                Delete round
+                מחיקת הסבב
               </Button>
               <Button
                 type="button"
@@ -397,7 +400,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                 disabled={pending}
                 onClick={() => roundAction(() => finishCallRound(round.id))}
               >
-                Finish round
+                סיום הסבב
               </Button>
             </>
           ) : (
@@ -408,7 +411,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
               disabled={pending}
               onClick={() => roundAction(() => reopenCallRound(round.id))}
             >
-              Reopen round
+              פתיחה מחדש של הסבב
             </Button>
           )}
         </div>
@@ -416,8 +419,8 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
 
       {/* Progress without pressure: 40 of 120 is a fact, not a shortfall. */}
       <p className="text-muted-foreground text-[13px]">
-        <span className="text-foreground font-semibold tabular-nums">{called}</span> of{' '}
-        <span className="tabular-nums">{total}</span> called
+        התקשרנו ל-<span className="text-foreground font-semibold tabular-nums">{called}</span> מתוך{' '}
+        <span className="tabular-nums">{total}</span>
       </p>
 
       {/*
@@ -428,27 +431,27 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       {called > 0 && (
         <div className="flex flex-wrap gap-2">
           <Tally
-            label="Confirmed"
+            label={OUTCOME_LABELS.confirmed}
             value={tally.confirmed}
-            hint={`${tally.confirmedGuests} ${tally.confirmedGuests === 1 ? 'guest' : 'guests'}`}
+            hint={countLabel(tally.confirmedGuests, 'אורח אחד', 'אורחים')}
             className={callOutcomePresentation('confirmed').text}
           />
           <Tally
-            label="Declined"
+            label={OUTCOME_LABELS.declined}
             value={tally.declined}
             className={callOutcomePresentation('declined').text}
           />
           <Tally
-            label="No answer"
+            label={OUTCOME_LABELS.no_answer}
             value={tally.no_answer}
             className={callOutcomePresentation('no_answer').text}
           />
           <Tally
-            label="Will update"
+            label={OUTCOME_LABELS.guest_will_update}
             value={tally.guest_will_update}
             className={callOutcomePresentation('guest_will_update').text}
           />
-          <Tally label="Not called" value={total - called} className="text-muted-foreground" />
+          <Tally label="לא התקשרנו" value={total - called} className="text-muted-foreground" />
         </div>
       )}
 
@@ -458,7 +461,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
           <input
             value={term}
             onChange={(event) => setTerm(event.target.value)}
-            placeholder="Search this round"
+            placeholder="חיפוש בסבב"
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px]"
           />
         </div>
@@ -480,12 +483,12 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       <Surface className="overflow-x-auto">
         <table className="w-full min-w-[760px] border-collapse text-[13px]">
           <thead>
-            <tr className="text-muted-foreground border-b text-left text-[11.5px] font-semibold tracking-[0.06em] uppercase">
-              <th className="px-3 py-2 font-semibold">Guest record</th>
-              <th className="w-[150px] px-3 py-2 font-semibold">Phone</th>
-              <th className="w-[110px] px-3 py-2 font-semibold">RSVP now</th>
-              <th className="w-[280px] px-3 py-2 font-semibold">Call outcome</th>
-              <th className="px-3 py-2 font-semibold">Note, host visible</th>
+            <tr className="text-muted-foreground border-b text-start text-[11.5px] font-semibold tracking-[0.06em] uppercase">
+              <th className="px-3 py-2 font-semibold">רשומת אורח</th>
+              <th className="w-[150px] px-3 py-2 font-semibold">טלפון</th>
+              <th className="w-[110px] px-3 py-2 font-semibold">סטטוס עכשיו</th>
+              <th className="w-[280px] px-3 py-2 font-semibold">תוצאת השיחה</th>
+              <th className="px-3 py-2 font-semibold">הערה, גלויה למארחים</th>
             </tr>
           </thead>
           <tbody>
@@ -504,7 +507,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                   {guest.phone ? (
                     formatPhone(guest.phone)
                   ) : (
-                    <span className="text-muted-foreground font-sans">No phone number</span>
+                    <span className="text-muted-foreground font-sans">אין מספר טלפון</span>
                   )}
                 </td>
                 <td className="px-3 py-2">
@@ -514,7 +517,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                       rsvpPresentation(guest.currentRsvpStatus).outline,
                     )}
                   >
-                    {guest.currentRsvpStatus}
+                    {rsvpLabel(guest.currentRsvpStatus)}
                   </span>
                 </td>
                 <td className="px-3 py-2">
@@ -532,7 +535,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                       setNotes((current) => ({ ...current, [guest.guestId]: event.target.value }))
                     }
                     onBlur={() => commitNote(guest)}
-                    placeholder="What the couple should know"
+                    placeholder="מה בעלי האירוע צריכים לדעת"
                     className="h-8 text-[13px]"
                   />
                 </td>
@@ -541,7 +544,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             {visible.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-muted-foreground px-3 py-8 text-center text-[13px]">
-                  No records match this filter
+                  אין רשומות שמתאימות לסינון
                 </td>
               </tr>
             )}
@@ -552,10 +555,9 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       <p className="text-muted-foreground flex items-start gap-2 text-[12.5px]">
         <Info className="mt-px size-3.5 shrink-0" />
         <span>
-          Notes are visible to the couple in their app. RSVP now is what the guest record says
-          today, the outcome is what happened on the call. Will update means the guest answered
-          but would not commit, and will reply to the WhatsApp message themselves - it leaves the
-          RSVP untouched
+          ההערות גלויות לבעלי האירוע באפליקציה. &quot;סטטוס עכשיו&quot; הוא מה שרשום ברשומת האורח היום,
+          והתוצאה היא מה שקרה בשיחה. &quot;יעדכנו בעצמם&quot; אומר שהאורח ענה אבל לא התחייב, ויענה בעצמו
+          להודעת הוואטסאפ - אישור ההגעה לא משתנה
         </span>
       </p>
     </div>
