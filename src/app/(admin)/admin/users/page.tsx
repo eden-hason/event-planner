@@ -87,10 +87,10 @@ async function UsersDirectory({
     return (
       <div className="bg-card flex flex-col items-center gap-2 rounded-xl border px-6 py-14 text-center">
         <TriangleAlert className="text-destructive size-6" />
-        <h1 className="text-destructive text-[14.5px] font-medium">Users didn&apos;t load</h1>
+        <h1 className="text-destructive text-[14.5px] font-medium">המשתמשים לא נטענו</h1>
         <p className="text-muted-foreground max-w-sm text-[13px] leading-relaxed text-balance">
-          The directory is unavailable right now, so there is no count to show. Nothing here means
-          zero users
+          רשימת המשתמשים לא זמינה כרגע, כך שאין מספר להציג. זה לא אומר שאין
+          משתמשים
         </p>
         <RetryButton />
       </div>

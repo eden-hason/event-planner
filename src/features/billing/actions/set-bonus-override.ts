@@ -15,7 +15,7 @@ export async function setBonusOverride(input: unknown): Promise<BillingActionRes
 
   const parsed = SetBonusOverrideSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, message: parsed.error.issues[0]?.message ?? 'Invalid input' };
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'קלט לא תקין' };
   }
   const { eventId, bonus } = parsed.data;
 
@@ -29,13 +29,13 @@ export async function setBonusOverride(input: unknown): Promise<BillingActionRes
 
   if (error) {
     console.error('setBonusOverride failed:', error);
-    return { success: false, message: 'Could not update the bonus' };
+    return { success: false, message: 'לא הצלחנו לעדכן את הבונוס' };
   }
-  if (!data) return { success: false, message: 'That event no longer exists' };
+  if (!data) return { success: false, message: 'האירוע הזה כבר לא קיים' };
 
   revalidateOutreach(eventId);
   return {
     success: true,
-    message: bonus === null ? 'Bonus reset to automatic' : 'Bonus updated',
+    message: bonus === null ? 'הבונוס חזר לחישוב האוטומטי' : 'הבונוס עודכן',
   };
 }

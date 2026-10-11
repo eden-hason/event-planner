@@ -6,13 +6,13 @@ import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,20 +107,20 @@ export function RecordPaymentDialog({
       <DialogTrigger asChild>
         <Button type="button" size="sm" className="shrink-0 text-[13px]">
           <Plus className="size-3.5" />
-          Record payment
+          רישום תשלום
         </Button>
       </DialogTrigger>
-      <AdminDialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Record payment</DialogTitle>
+          <DialogTitle>רישום תשלום</DialogTitle>
           <DialogDescription>
-            Adds records to this event&apos;s package and turns sending on. A free event is a gift at ₪0
+            מוסיף רשומות לחבילה של האירוע ומפעיל את השליחה. אירוע בחינם נרשם כמתנה של ₪0
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="payment-records">Records</Label>
+            <Label htmlFor="payment-records">רשומות</Label>
             <Input
               id="payment-records"
               inputMode="numeric"
@@ -131,7 +131,7 @@ export function RecordPaymentDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="payment-channel">Channel</Label>
+            <Label htmlFor="payment-channel">ערוץ</Label>
             <Select value={channel} onValueChange={(v) => setChannel(v as RecordPackageChannel)}>
               <SelectTrigger id="payment-channel" className="w-full">
                 <SelectValue />
@@ -146,7 +146,7 @@ export function RecordPaymentDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="payment-method">Method</Label>
+            <Label htmlFor="payment-method">אמצעי תשלום</Label>
             <Select value={method} onValueChange={(v) => setMethod(v as BillingPaymentMethod)}>
               <SelectTrigger id="payment-method" className="w-full">
                 <SelectValue />
@@ -161,7 +161,7 @@ export function RecordPaymentDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="payment-amount">Amount (₪)</Label>
+            <Label htmlFor="payment-amount">סכום (₪)</Label>
             <Input
               id="payment-amount"
               inputMode="decimal"
@@ -173,27 +173,27 @@ export function RecordPaymentDialog({
             />
             {!isGift && listPrice !== null && (
               <p className="text-muted-foreground text-[12px] tabular-nums">
-                List price ₪{listPrice.toLocaleString('en-GB')}
+                מחיר מחירון ₪{listPrice.toLocaleString('he-IL')}
               </p>
             )}
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="payment-reference">Reference (optional)</Label>
+            <Label htmlFor="payment-reference">אסמכתה (לא חובה)</Label>
             <Input
               id="payment-reference"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              placeholder="Transfer or Bit confirmation number"
+              placeholder="מספר אישור העברה או ביט"
               maxLength={100}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="payment-note">Note (optional)</Label>
+            <Label htmlFor="payment-note">הערה (לא חובה)</Label>
             <Textarea
               id="payment-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Who approved it, what was agreed"
+              placeholder="מי אישר ומה סוכם"
               maxLength={500}
               rows={2}
             />
@@ -203,27 +203,27 @@ export function RecordPaymentDialog({
         <p className="bg-muted text-muted-foreground rounded-md px-3 py-2 text-[13px] tabular-nums">
           {after ? (
             <>
-              Package after this payment:{' '}
+              החבילה אחרי התשלום:{' '}
               <span className="text-foreground font-medium">
-                {after.paid.toLocaleString('en-GB')} + {after.bonus} bonus ={' '}
-                {after.size.toLocaleString('en-GB')}
+                {after.paid.toLocaleString('he-IL')} + {after.bonus} בונוס ={' '}
+                {after.size.toLocaleString('he-IL')}
               </span>
-              {after.bonusIsCustom && ' (custom bonus)'}
+              {after.bonusIsCustom && ' (בונוס מותאם)'}
             </>
           ) : (
-            'Enter the records to see the package after this payment'
+            'צריך להזין רשומות כדי לראות את החבילה אחרי התשלום'
           )}
         </p>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-            Cancel
+            ביטול
           </Button>
           <Button type="button" onClick={submit} disabled={pending || !validRecords}>
-            {pending ? 'Saving' : isGift ? 'Record gift' : 'Record payment'}
+            {pending ? 'שומרים' : isGift ? 'רישום מתנה' : 'רישום תשלום'}
           </Button>
         </DialogFooter>
-      </AdminDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

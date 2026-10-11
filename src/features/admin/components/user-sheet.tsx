@@ -3,18 +3,17 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ChevronRight, Copy, TriangleAlert } from '@/components/icons';
+import { ChevronLeft, Copy, TriangleAlert } from '@/components/icons';
 import { formatPhone } from '@/lib/phone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetDescription, SheetTitle } from '@/components/ui/sheet';
-import { AdminSheetContent } from './admin-sheet';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { ImpersonateOwnerButton } from './impersonate-owner-button';
 import { MarkTestAccountDialog } from './mark-test-account-dialog';
 import { RetryButton } from './retry-button';
 import type { UserDetail } from '../types';
-import { formatEventDate, formatFullDate } from '@/lib/date-time';
-import { ROLE_LABELS } from '@/features/collaborate/schemas';
+import { formatEventDate, formatFullDate } from '../utils/format';
+import { collaboratorRoleLabel } from '../utils/labels';
 import { avatarTint, initialsFor } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 
@@ -42,9 +41,9 @@ export function UserSheetShell({ children }: { children: React.ReactNode }) {
 
   return (
     <Sheet open onOpenChange={(open) => !open && close()}>
-      <AdminSheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
+      <SheetContent side="left" className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
         {children}
-      </AdminSheetContent>
+      </SheetContent>
     </Sheet>
   );
 }
@@ -58,7 +57,7 @@ export function UserSheet({
   testAccountsVisible: boolean;
 }) {
   const isNotFound = detail === 'not-found';
-  const title = isNotFound ? 'User not found' : detail.fullName || detail.email;
+  const title = isNotFound ? 'המשתמש לא נמצא' : detail.fullName || detail.email;
   const tint = avatarTint(isNotFound ? 'not-found' : detail.id);
 
   return (
@@ -75,27 +74,27 @@ export function UserSheet({
             <SheetTitle className="truncate text-[16px] font-semibold tracking-tight">{title}</SheetTitle>
             {!isNotFound && detail.isAdmin && (
               <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                ADMIN
+                מנהל
               </Badge>
             )}
             {!isNotFound && detail.isTestAccount && (
               <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
-                TEST
+                בדיקה
               </Badge>
             )}
           </div>
           <SheetDescription className="truncate text-[13px]">
             {isNotFound
               ? testAccountsVisible
-                ? 'Nothing in the directory carries that id'
-                : 'It may have been hidden by the test accounts toggle'
+                ? 'אין במערכת משתמש עם המזהה הזה'
+                : 'ייתכן שהוא מוסתר על ידי מתג חשבונות הבדיקה'
               : detail.fullName
                 ? detail.email
-                : 'No name provided'}
+                : 'לא הוזן שם'}
           </SheetDescription>
         </div>
         {!isNotFound && (
-          <ImpersonateOwnerButton ownerId={detail.id} ownerName={title} label="View as user" />
+          <ImpersonateOwnerButton ownerId={detail.id} ownerName={title} label="צפייה כמשתמש" />
         )}
       </div>
 
@@ -107,8 +106,8 @@ export function UserSheet({
            * cannot help.
            */}
           {testAccountsVisible
-            ? 'This user no longer exists. Test accounts are already showing, so nothing is being hidden from you here'
-            : 'This user no longer exists, or is a test account currently hidden by the top bar toggle'}
+            ? 'המשתמש הזה כבר לא קיים. חשבונות הבדיקה כבר מוצגים, כך ששום דבר לא מוסתר כאן'
+            : 'המשתמש הזה כבר לא קיים, או שהוא חשבון בדיקה שמוסתר כרגע על ידי המתג בסרגל העליון'}
         </div>
       ) : (
         <UserSheetBody detail={detail} title={title} testAccountsVisible={testAccountsVisible} />
@@ -131,10 +130,10 @@ export function UserSheetError() {
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <SheetTitle className="truncate text-[16px] font-semibold tracking-tight">
-            This user didn&apos;t load
+            המשתמש לא נטען
           </SheetTitle>
           <SheetDescription className="text-[13px]">
-            Nothing was read, so nothing here is missing - the lookup failed
+            שום דבר לא נקרא, כך ששום דבר לא חסר - החיפוש נכשל
           </SheetDescription>
         </div>
       </div>
@@ -166,45 +165,45 @@ function UserSheetBody({
     // id is on their clipboard.
     try {
       await navigator.clipboard.writeText(detail.id);
-      toast.success('User ID copied');
+      toast.success('מזהה המשתמש הועתק');
     } catch {
-      toast.error('Could not copy the user ID - select it and copy by hand');
+      toast.error('לא הצלחנו להעתיק את מזהה המשתמש - אפשר לסמן ולהעתיק ידנית');
     }
   }
 
   return (
     <>
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
-        <SheetSection label="Contact">
-          <SheetField label="Email" value={detail.email} />
+        <SheetSection label="פרטי קשר">
+          <SheetField label="אימייל" value={detail.email} />
           <SheetField
-            label="Phone"
-            value={detail.phone ? formatPhone(detail.phone) : 'Not provided'}
+            label="טלפון"
+            value={detail.phone ? formatPhone(detail.phone) : 'לא הוזן'}
             muted={!detail.phone}
           />
         </SheetSection>
 
-        <SheetSection label="Account">
-          <SheetField label="Joined" value={formatFullDate(detail.createdAt)} />
+        <SheetSection label="חשבון">
+          <SheetField label="הצטרפות" value={formatFullDate(detail.createdAt)} />
           <SheetField
-            label="Onboarding"
-            value={detail.onboardingFinished ? 'Finished' : 'Not finished'}
+            label="הרשמה"
+            value={detail.onboardingFinished ? 'הושלמה' : 'לא הושלמה'}
             muted={!detail.onboardingFinished}
           />
           <div className="grid grid-cols-[96px_1fr] items-baseline gap-3">
-            <span className="text-muted-foreground text-[12.5px]">User ID</span>
+            <span className="text-muted-foreground text-[12.5px]">מזהה משתמש</span>
             <div className="flex min-w-0 items-baseline gap-2">
               <span className="text-muted-foreground truncate font-mono text-[12.5px]">{detail.id}</span>
               <Button type="button" variant="link" size="xs" className="text-muted-foreground h-auto shrink-0 p-0" onClick={copyUserId}>
                 <Copy className="size-3" />
-                Copy
+                העתקה
               </Button>
             </div>
           </div>
         </SheetSection>
 
         {hasOwns && (
-          <SheetSection label={`Owns (${detail.ownedEvents.length})`}>
+          <SheetSection label={`בבעלות (${detail.ownedEvents.length})`}>
             <div className="overflow-hidden rounded-lg border">
               {ownsVisible.map((event, index) => (
                 <Link
@@ -217,30 +216,30 @@ function UserSheetBody({
                 >
                   <span className="min-w-0 flex-1 truncate text-[13.5px]">{event.title}</span>
                   <span className="text-muted-foreground shrink-0 text-[12.5px] tabular-nums">
-                    {event.eventDate ? formatEventDate(event.eventDate) : 'no date'}
+                    {formatEventDate(event.eventDate)}
                   </span>
                   <span
                     className={cn(
-                      'w-[62px] shrink-0 text-right text-[12.5px]',
+                      'w-[62px] shrink-0 text-end text-[12.5px]',
                       event.status === 'draft' ? 'text-muted-foreground/70' : 'text-muted-foreground',
                     )}
                   >
-                    {event.status === 'draft' ? 'Draft' : 'Published'}
+                    {event.status === 'draft' ? 'טיוטה' : 'פורסם'}
                   </span>
-                  <ChevronRight className="text-muted-foreground/70 size-4 shrink-0" />
+                  <ChevronLeft className="text-muted-foreground/70 size-4 shrink-0" />
                 </Link>
               ))}
             </div>
             {ownsHiddenCount > 0 && (
               <span className="text-muted-foreground/70 text-[12px]">
-                {ownsHiddenCount} more, scroll for the rest
+                ועוד {ownsHiddenCount}, אפשר לגלול לשאר
               </span>
             )}
           </SheetSection>
         )}
 
         {hasShared && (
-          <SheetSection label={`Shared with them (${detail.sharedEvents.length})`}>
+          <SheetSection label={`משותפים איתו (${detail.sharedEvents.length})`}>
             <div className="overflow-hidden rounded-lg border">
               {detail.sharedEvents.map((event, index) => (
                 <Link
@@ -252,8 +251,8 @@ function UserSheetBody({
                   )}
                 >
                   <span className="min-w-0 flex-1 truncate text-[13.5px]">{event.title}</span>
-                  <span className="text-muted-foreground shrink-0 text-[12.5px]">{ROLE_LABELS[event.role]}</span>
-                  <ChevronRight className="text-muted-foreground/70 size-4 shrink-0" />
+                  <span className="text-muted-foreground shrink-0 text-[12.5px]">{collaboratorRoleLabel(event.role)}</span>
+                  <ChevronLeft className="text-muted-foreground/70 size-4 shrink-0" />
                 </Link>
               ))}
             </div>
@@ -261,15 +260,15 @@ function UserSheetBody({
         )}
 
         {!hasOwns && !hasShared && (
-          <SheetSection label="Events">
-            <span className="text-muted-foreground text-[13.5px]">No events yet</span>
+          <SheetSection label="אירועים">
+            <span className="text-muted-foreground text-[13.5px]">עדיין אין אירועים</span>
           </SheetSection>
         )}
       </div>
 
       <div className="bg-muted flex items-center gap-2.5 border-t px-5 py-3">
         <span className="text-muted-foreground/70 text-[12px]">
-          {detail.isTestAccount ? 'Excluded from every Back Office count' : 'Counted everywhere in the Back Office'}
+          {detail.isTestAccount ? 'לא נספר באף מספר במערכת הניהול' : 'נספר בכל מקום במערכת הניהול'}
         </span>
         <MarkTestAccountDialog
           userId={detail.id}
@@ -279,7 +278,7 @@ function UserSheetBody({
         >
           {(open) => (
             <Button type="button" variant="outline" size="sm" className="text-muted-foreground ms-auto shrink-0" onClick={open}>
-              {detail.isTestAccount ? 'Remove test account mark' : 'Mark as test account'}
+              {detail.isTestAccount ? 'הסרת סימון חשבון בדיקה' : 'סימון כחשבון בדיקה'}
             </Button>
           )}
         </MarkTestAccountDialog>

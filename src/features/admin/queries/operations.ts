@@ -7,6 +7,8 @@ import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../type
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
 import { numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
+import { audienceCountLabel, eventTitle, scheduleTypeName } from '../utils/labels';
+import { daysText, formatShortDate, hoursText } from '../utils/format';
 
 const DAY_MS = 86_400_000;
 
@@ -17,7 +19,7 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 }
 
 function calendarParts(date: Date) {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('he-IL', {
     timeZone: ADMIN_TIME_ZONE,
     year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short',
   }).formatToParts(date).map((part) => [part.type, part.value]));
@@ -28,11 +30,11 @@ function groupLabel(scheduledDate: string, today: ReturnType<typeof calendarPart
   const date = new Date(scheduledDate);
   const scheduled = calendarParts(date);
   const offset = Math.round((Date.UTC(scheduled.year, scheduled.month - 1, scheduled.day) - Date.UTC(today.year, today.month - 1, today.day)) / DAY_MS);
-  const month = new Intl.DateTimeFormat('en-GB', { timeZone: ADMIN_TIME_ZONE, month: 'short' }).format(date);
-  const stamp = scheduled.year === today.year ? `${scheduled.weekday} ${scheduled.day} ${month}` : `${scheduled.weekday} ${scheduled.day} ${month} ${scheduled.year}`;
+  const month = new Intl.DateTimeFormat('he-IL', { timeZone: ADMIN_TIME_ZONE, month: 'short' }).format(date);
+  const stamp = scheduled.year === today.year ? `${scheduled.weekday} ${scheduled.day} ב${month}` : `${scheduled.weekday} ${scheduled.day} ב${month} ${scheduled.year}`;
 
-  if (offset === 0) return `Today, ${stamp}`;
-  if (offset === 1) return `Tomorrow, ${stamp}`;
+  if (offset === 0) return `היום, ${stamp}`;
+  if (offset === 1) return `מחר, ${stamp}`;
   return stamp;
 }
 
@@ -43,25 +45,16 @@ function groupLabel(scheduledDate: string, today: ReturnType<typeof calendarPart
  */
 function lateness(scheduledMs: number, now: number): string {
   const hours = Math.floor((now - scheduledMs) / 3_600_000);
-  if (hours < 1) return 'Overdue';
-  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} late`;
-  const days = Math.floor(hours / 24);
-  return `${days} ${days === 1 ? 'day' : 'days'} late`;
+  if (hours < 1) return 'באיחור';
+  return `באיחור של ${hours < 24 ? hoursText(hours) : daysText(Math.floor(hours / 24))}`;
 }
 
 function channelLabel(channel: string | null): string {
   if (channel === 'whatsapp') return 'WhatsApp';
   if (channel === 'sms') return 'SMS';
-  return 'Message';
+  return 'הודעה';
 }
 
-/** "pending records" / "confirmed records" - the unit is Guest Records, always named. */
-function audienceLabel(targetStatus: string | null, count: number): string {
-  const unit = count === 1 ? 'record' : 'records';
-  if (targetStatus === 'pending') return `${count} pending ${unit}`;
-  if (targetStatus === 'confirmed') return `${count} confirmed ${unit}`;
-  return `${count} guest ${unit}`;
-}
 
 /**
  * Guest Records per Event by RSVP status, counted by the database through three
@@ -92,7 +85,7 @@ type ScheduleRow = {
   target_status: string | null;
   schedule_type_id: string;
   events: { title: string | null } | null;
-  schedule_types: { name: string | null; execution_kind: string | null } | null;
+  schedule_types: { key: string | null; name: string | null; execution_kind: string | null } | null;
   message_templates: { channel: string | null } | null;
 };
 
@@ -119,7 +112,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       supabase
         .from('schedules')
         .select(
-          'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(name, execution_kind), message_templates(channel)',
+          'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(key, name, execution_kind), message_templates(channel)',
         )
         .is('status', null)
         // Not yet handed to the queue. A dispatched Schedule is done as far as
@@ -180,7 +173,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
 
   const rows: PlannedWorkRow[] = open.map((row) => {
     const isCall = row.schedule_types?.execution_kind === 'phone_call';
-    const baseName = row.schedule_types?.name ?? 'Schedule';
+    const baseName = scheduleTypeName(row.schedule_types?.key, row.schedule_types?.name);
 
     const number = numbers.get(row.id);
     const title = number && number.total > 1 ? `${baseName} ${number.index}` : baseName;
@@ -197,23 +190,19 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
           : counts.total;
 
     const time = israelWallClockParts(row.scheduled_date).time;
-    const audience_label = audienceLabel(row.target_status, audienceCount);
+    const audience_label = audienceCountLabel(row.target_status, audienceCount);
     const channel = isCall ? null : channelLabel(row.message_templates?.channel ?? null);
 
     let detail: string;
     if (isCall) {
-      const audience = `Calls to ${audience_label}`;
-      detail = lateBy === null ? audience : `${audience}, never started`;
+      const audience = `שיחות ל-${audience_label}`;
+      detail = lateBy === null ? audience : `${audience}, לא התחיל`;
     } else {
       if (lateBy !== null) {
-        const due = new Date(row.scheduled_date).toLocaleDateString('en-GB', {
-          timeZone: ADMIN_TIME_ZONE,
-          day: 'numeric',
-          month: 'short',
-        });
-        detail = `${channel}, was due ${due}${time ? ` ${time}` : ''}, never sent`;
+        const due = formatShortDate(row.scheduled_date, { year: false });
+        detail = `${channel}, היה אמור לצאת ב-${due}${time ? ` ${time}` : ''}, לא נשלח`;
       } else {
-        detail = time ? `${channel}, sends itself at ${time}` : `${channel}, sends itself on the day`;
+        detail = time ? `${channel}, יוצא אוטומטית ב-${time}` : `${channel}, יוצא אוטומטית ביום עצמו`;
       }
     }
 
@@ -221,7 +210,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       id: row.id,
       kind: isCall ? 'call' : 'message',
       eventId: row.event_id,
-      eventTitle: row.events?.title ?? 'Untitled event',
+      eventTitle: eventTitle(row.events?.title),
       title,
       detail,
       scheduledDate: row.scheduled_date,
@@ -236,7 +225,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   const groups: PlannedWorkGroup[] = [];
   const overdue = rows.filter((row) => row.lateBy !== null);
   if (overdue.length) {
-    groups.push({ key: 'overdue', label: 'Overdue', isOverdue: true, rows: overdue });
+    groups.push({ key: 'overdue', label: 'באיחור', isOverdue: true, rows: overdue });
   }
 
   // Rows arrive date-ordered, so a group breaks whenever the label changes.
@@ -281,10 +270,10 @@ export async function listEventsForPlanning(): Promise<
     ),
   ) as unknown as (AudienceRow & { title: string | null })[];
 
-  return events
-    .map((event) => {
-      const { pending, confirmed } = audienceCounts(event);
-      return { id: event.id, title: event.title ?? 'Untitled event', pending, confirmed };
-    })
-    .filter((event) => event.pending + event.confirmed > 0);
+  // Every event that can send, guests or not: the audience is snapshotted when
+  // a round starts, so an empty list today does not stop a plan.
+  return events.map((event) => {
+    const { pending, confirmed } = audienceCounts(event);
+    return { id: event.id, title: eventTitle(event.title), pending, confirmed };
+  });
 }

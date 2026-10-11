@@ -20,7 +20,7 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
 
   const parsed = RecordEventPaymentSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, message: parsed.error.issues[0]?.message ?? 'Invalid input' };
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'קלט לא תקין' };
   }
   const { eventId, records, channel, amount, method, reference, note } = parsed.data;
 
@@ -33,11 +33,11 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
     .maybeSingle();
   if (readError) {
     console.error('recordEventPayment read failed:', readError);
-    return { success: false, message: 'Could not load that event' };
+    return { success: false, message: 'לא הצלחנו לטעון את האירוע' };
   }
-  if (!event) return { success: false, message: 'That event no longer exists' };
+  if (!event) return { success: false, message: 'האירוע הזה כבר לא קיים' };
   if (event.status === 'draft') {
-    return { success: false, message: 'A draft event has no workspace to record a payment for' };
+    return { success: false, message: 'לאירוע בטיוטה אין סביבת עבודה לרשום עבורה תשלום' };
   }
 
   if (reference) {
@@ -49,15 +49,15 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
       .maybeSingle();
     if (error) {
       console.error('recordEventPayment reference check failed:', error);
-      return { success: false, message: 'Could not check the reference' };
+      return { success: false, message: 'לא הצלחנו לבדוק את האסמכתה' };
     }
     if (existing) {
       return {
         success: false,
         message:
           existing.event_id === eventId
-            ? 'This reference is already recorded for this event'
-            : 'This reference is already recorded for another event',
+            ? 'האסמכתה הזו כבר רשומה לאירוע הזה'
+            : 'האסמכתה הזו כבר רשומה לאירוע אחר',
       };
     }
   }
@@ -74,8 +74,8 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
     note: note || undefined,
     createdBy: operatorId,
   });
-  if (!result.ok) return { success: false, message: 'Could not record the payment' };
+  if (!result.ok) return { success: false, message: 'לא הצלחנו לרשום את התשלום' };
 
   revalidateOutreach(eventId);
-  return { success: true, message: method === 'gift' ? 'Gift recorded' : 'Payment recorded' };
+  return { success: true, message: method === 'gift' ? 'המתנה נרשמה' : 'התשלום נרשם' };
 }

@@ -34,6 +34,9 @@ export {
   numberPlan,
   planEntryFromRow,
   type PlanEntry,
+  dueTimeIssue,
+  isFollowUpConfirmation,
+  DEFAULT_SEND_TIME,
 } from './utils';
 
 // Schemas/Types

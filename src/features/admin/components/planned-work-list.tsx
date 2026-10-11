@@ -73,10 +73,10 @@ export function PlannedWorkList({ queue }: { queue: PlannedWorkQueue }) {
   if (!queue.groups.length) {
     return (
       <div className="bg-card flex flex-col items-start gap-1 rounded-xl border px-5 py-8">
-        <p className="text-[14px] font-medium">Nothing planned</p>
+        <p className="text-[14px] font-medium">אין עבודה מתוכננת</p>
         <p className="text-muted-foreground text-[13px]">
-          Every message has sent and every call round is finished. Sent and cancelled items live on
-          each event page
+          כל ההודעות נשלחו וכל סבבי השיחות הסתיימו. פריטים שנשלחו או בוטלו מופיעים בעמוד של כל
+          אירוע
         </p>
       </div>
     );
@@ -89,11 +89,11 @@ export function PlannedWorkList({ queue }: { queue: PlannedWorkQueue }) {
       <div className="text-muted-foreground flex flex-wrap items-center gap-x-[18px] gap-y-1 text-[12.5px]">
         <span>
           <span className="text-foreground font-semibold tabular-nums">{queue.callRounds}</span>{' '}
-          {queue.callRounds === 1 ? 'call round to start' : 'call rounds to start'}
+          {queue.callRounds === 1 ? 'סבב שיחות להתחיל' : 'סבבי שיחות להתחיל'}
         </span>
         <span>
           <span className="text-foreground font-semibold tabular-nums">{queue.messages}</span>{' '}
-          {queue.messages === 1 ? 'message scheduled' : 'messages scheduled'}
+          {queue.messages === 1 ? 'הודעה מתוזמנת' : 'הודעות מתוזמנות'}
         </span>
       </div>
 
@@ -109,7 +109,7 @@ export function PlannedWorkList({ queue }: { queue: PlannedWorkQueue }) {
               {group.label}
             </span>
             <span className="text-muted-foreground/70 text-[11.5px] tabular-nums">
-              {group.rows.length} {group.rows.length === 1 ? 'item' : 'items'}
+              {group.rows.length === 1 ? 'פריט אחד' : `${group.rows.length} פריטים`}
             </span>
           </div>
 
@@ -122,14 +122,14 @@ export function PlannedWorkList({ queue }: { queue: PlannedWorkQueue }) {
       ))}
 
       <p className="text-muted-foreground/70 px-0.5 text-[12px]">
-        Sent and cancelled items live on each event page
+        פריטים שנשלחו או בוטלו מופיעים בעמוד של כל אירוע
       </p>
     </div>
   );
 }
 
 export function PlannedWorkError() {
-  return <div className="text-destructive text-sm">Planned work didn&apos;t load</div>;
+  return <div className="text-destructive text-sm">העבודה המתוכננת לא נטענה</div>;
 }
 
 export function PlannedWorkSkeleton() {

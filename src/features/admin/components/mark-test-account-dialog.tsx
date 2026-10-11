@@ -5,12 +5,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
 import { setUserTestAccountFlag } from '../actions/users';
 
@@ -77,24 +77,24 @@ export function MarkTestAccountDialog({
     <>
       {children(() => setOpen(true))}
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
-        <AdminDialogContent className="sm:max-w-[428px]">
+        <DialogContent className="sm:max-w-[428px]">
           <DialogHeader>
             <DialogTitle>
-              {isTestAccount ? 'Remove test account mark?' : 'Mark as test account?'}
+              {isTestAccount ? 'להסיר את סימון חשבון הבדיקה?' : 'לסמן כחשבון בדיקה?'}
             </DialogTitle>
             <DialogDescription>
               {isTestAccount ? (
                 <>
-                  {userName} returns to every count in the Back Office, including the Overview
-                  cards and the events index
+                  {userName} יחזור להיספר בכל מקום במערכת הניהול, כולל כרטיסי הסקירה ורשימת
+                  האירועים
                 </>
               ) : (
                 <>
-                  {userName} will be treated as a Kululu account, not a customer. This removes
-                  them from every count in the Back Office
+                  {userName} ייחשב חשבון של Kululu ולא לקוח. הוא יוסר מכל המספרים במערכת
+                  הניהול
                   {!testAccountsVisible && (
                     <>
-                      , and from this directory until you switch test accounts back on
+                      , ומהרשימה הזו עד שתפעילו שוב את הצגת חשבונות הבדיקה
                     </>
                   )}
                 </>
@@ -103,17 +103,17 @@ export function MarkTestAccountDialog({
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              ביטול
             </Button>
             <Button type="button" onClick={confirm} disabled={pending}>
               {pending
-                ? 'Saving'
+                ? 'שומרים'
                 : isTestAccount
-                  ? 'Remove the mark'
-                  : 'Mark as test account'}
+                  ? 'הסרת הסימון'
+                  : 'סימון כחשבון בדיקה'}
             </Button>
           </DialogFooter>
-        </AdminDialogContent>
+        </DialogContent>
       </Dialog>
     </>
   );

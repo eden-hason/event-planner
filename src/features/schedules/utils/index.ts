@@ -51,7 +51,9 @@ export {
 } from './send-helpers';
 
 export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
-export { comparePlanOrder, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
+export { comparePlanOrder, DEFAULT_SEND_TIME, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
+export { dueTimeIssue } from './due-time-guards';
+export { isFollowUpConfirmation } from './confirmation-round';
 
 export {
   classifyWhatsAppFailure,

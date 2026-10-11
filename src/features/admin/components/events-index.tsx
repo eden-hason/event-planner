@@ -22,7 +22,7 @@ import {
 import { BILLING_STATUS_LABELS, RECORD_PACKAGE_CHANNEL_LABELS } from '@/features/billing';
 import type { EventBillingStatus } from '@/features/billing';
 import type { EventIndexRow, EventsIndexFilters, EventsIndexPage, EventsIndexSortKey } from '../types';
-import { countLabel } from '../utils/count-label';
+import { countLabel } from '../utils/labels';
 import {
   createdLabel,
   DEFAULT_EVENTS_INDEX_FILTERS,
@@ -34,7 +34,8 @@ import {
   STATUS_LABELS,
   TIMING_LABELS,
 } from '../utils/events-index';
-import { daysUntil, formatEventDate, israelToday, israelWallClockParts, relativeEventDate } from '@/lib/date-time';
+import { daysUntil, israelToday, israelWallClockParts } from '@/lib/date-time';
+import { formatEventDate, relativeEventDate } from '../utils/format';
 import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 
@@ -48,17 +49,17 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-xl font-semibold tracking-tight">Events</h1>
-        <p className="text-muted-foreground text-[13px]">{countLabel(data.totalEvents, 'event')}</p>
+        <h1 className="text-xl font-semibold tracking-tight">אירועים</h1>
+        <p className="text-muted-foreground text-[13px]">{countLabel(data.totalEvents, 'אירוע אחד', 'אירועים')}</p>
       </div>
 
       {data.totalEvents === 0 ? (
         <Empty className="bg-card min-h-80 border">
           <EmptyHeader>
             <EmptyMedia variant="icon"><CalendarDays /></EmptyMedia>
-            <EmptyTitle>No events yet</EmptyTitle>
+            <EmptyTitle>עדיין אין אירועים</EmptyTitle>
             <EmptyDescription>
-              Events appear here as soon as an owner starts onboarding
+              אירועים מופיעים כאן ברגע שבעלי אירוע מתחילים את ההרשמה
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -72,11 +73,11 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
             <Empty className="bg-card min-h-72 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon"><Search /></EmptyMedia>
-                <EmptyTitle>No events found</EmptyTitle>
-                <EmptyDescription>Try changing your search or filters</EmptyDescription>
+                <EmptyTitle>לא נמצאו אירועים</EmptyTitle>
+                <EmptyDescription>אפשר לשנות את החיפוש או הסינון</EmptyDescription>
               </EmptyHeader>
               <Button asChild variant="outline" size="sm">
-                <Link href={clearAllHref(filters)}><X data-icon="inline-start" />Clear all</Link>
+                <Link href={clearAllHref(filters)}><X data-icon="inline-start" />ניקוי הכול</Link>
               </Button>
             </Empty>
           ) : (
@@ -84,14 +85,14 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
               <Table className="min-w-[1040px]">
                 <TableHeader>
                   <TableRow className="bg-muted/35 hover:bg-muted/35">
-                    <SortableHead label="Event owner" sortKey="owner" filters={filters} className="w-[24%] pl-4" />
-                    <TableHead className={HEAD}>Phone</TableHead>
-                    <SortableHead label="Event date" sortKey="date" filters={filters} />
-                    <SortableHead label="Created" sortKey="created" filters={filters} />
-                    <TableHead className={HEAD}>Type</TableHead>
-                    <TableHead className={HEAD}>Payment</TableHead>
-                    <TableHead className={HEAD}>Package</TableHead>
-                    <SortableHead label="Records" sortKey="records" filters={filters} className="pr-4" align="right" />
+                    <SortableHead label="בעלי האירוע" sortKey="owner" filters={filters} className="w-[24%] ps-4" />
+                    <TableHead className={HEAD}>טלפון</TableHead>
+                    <SortableHead label="תאריך האירוע" sortKey="date" filters={filters} />
+                    <SortableHead label="נוצר" sortKey="created" filters={filters} />
+                    <TableHead className={HEAD}>סוג</TableHead>
+                    <TableHead className={HEAD}>תשלום</TableHead>
+                    <TableHead className={HEAD}>חבילה</TableHead>
+                    <SortableHead label="רשומות" sortKey="records" filters={filters} className="pe-4" align="end" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -105,7 +106,7 @@ export function EventsIndex({ data, filters }: { data: EventsIndexPage; filters:
                         key={row.id}
                         row={row}
                         ended={group === 1}
-                        groupLabel={startsGroup ? (group === 1 ? 'Ended' : 'No date set') : null}
+                        groupLabel={startsGroup ? (group === 1 ? 'הסתיימו' : 'ללא תאריך') : null}
                       />
                     );
                   })}
@@ -141,7 +142,7 @@ function ActiveFilters({ data, filters }: { data: EventsIndexPage; filters: Even
   if (filters.package) chip('package', RECORD_PACKAGE_CHANNEL_LABELS[filters.package], { package: null });
   const created = createdLabel(filters);
   if (created) {
-    chip('created', `Created ${filters.created === 'custom' ? created : created.toLocaleLowerCase('en')}`, {
+    chip('created', `נוצר ${created}`, {
       created: null,
       createdFrom: null,
       createdTo: null,
@@ -151,17 +152,17 @@ function ActiveFilters({ data, filters }: { data: EventsIndexPage; filters: Even
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px]">
-      <span className="text-muted-foreground mr-1">
-        Showing <strong className="text-foreground font-semibold tabular-nums">{data.totalRows.toLocaleString('en-GB')}</strong> of{' '}
-        {countLabel(data.totalEvents, 'event')}
+      <span className="text-muted-foreground me-1">
+        מוצגים <strong className="text-foreground font-semibold tabular-nums">{data.totalRows.toLocaleString('he-IL')}</strong> מתוך{' '}
+        {countLabel(data.totalEvents, 'אירוע אחד', 'אירועים')}
       </span>
       {chips.map((chip) => (
         <Link
           key={chip.key}
           href={chip.href}
           scroll={false}
-          aria-label={`Remove filter ${chip.label}`}
-          className="bg-card hover:bg-accent inline-flex h-7 items-center gap-1 rounded-full border pr-2 pl-3 text-[12.5px] font-medium transition-colors"
+          aria-label={`הסרת הסינון ${chip.label}`}
+          className="bg-card hover:bg-accent inline-flex h-7 items-center gap-1 rounded-full border ps-3 pe-2 text-[12.5px] font-medium transition-colors"
         >
           {chip.label}
           <X className="text-muted-foreground size-3.5" />
@@ -170,9 +171,9 @@ function ActiveFilters({ data, filters }: { data: EventsIndexPage; filters: Even
       <Link
         href={clearAllHref(filters)}
         scroll={false}
-        className="text-muted-foreground hover:text-foreground ml-1 text-[12.5px] font-medium underline-offset-4 hover:underline"
+        className="text-muted-foreground hover:text-foreground ms-1 text-[12.5px] font-medium underline-offset-4 hover:underline"
       >
-        Clear all
+        ניקוי הכול
       </Link>
     </div>
   );
@@ -183,20 +184,20 @@ function SortableHead({
   sortKey,
   filters,
   className,
-  align = 'left',
+  align = 'start',
 }: {
   label: string;
   sortKey: EventsIndexSortKey;
   filters: EventsIndexFilters;
   className?: string;
-  align?: 'left' | 'right';
+  align?: 'start' | 'end';
 }) {
   const active = filters.sort === sortKey;
   const nextDir = active ? (filters.dir === 'asc' ? 'desc' : 'asc') : DEFAULT_SORT_DIRECTION[sortKey];
   const Icon = !active ? ArrowUpDown : filters.dir === 'asc' ? ArrowUp : ArrowDown;
   return (
     <TableHead
-      className={cn(HEAD, align === 'right' && 'text-right', className)}
+      className={cn(HEAD, align === 'end' && 'text-end', className)}
       aria-sort={active ? (filters.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
       <Link
@@ -205,7 +206,7 @@ function SortableHead({
         className={cn(
           'hover:text-foreground -mx-1 inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors',
           active && 'text-foreground',
-          align === 'right' && 'flex-row-reverse',
+          align === 'end' && 'flex-row-reverse',
         )}
       >
         {label}
@@ -235,7 +236,7 @@ function EventTableRow({
       )}
       {/* The owner link's overlay spans the row, so the whole row opens the Event. */}
       <TableRow className="group relative">
-        <TableCell className="max-w-0 py-3 pl-4">
+        <TableCell className="max-w-0 py-3 ps-4">
           <div className="flex items-center gap-2">
             <Link
               href={`/admin/events/${row.id}`}
@@ -245,7 +246,7 @@ function EventTableRow({
             </Link>
             {row.status === 'draft' && (
               <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em] uppercase">
-                Draft
+                טיוטה
               </Badge>
             )}
           </div>
@@ -263,17 +264,17 @@ function EventTableRow({
               <div className="mt-0.5 text-[12px]">
                 {ended ? (
                   <Badge variant="outline" className="text-muted-foreground px-1.5 py-0 text-[10px] font-medium tracking-[0.05em] uppercase">
-                    Ended
+                    הסתיים
                   </Badge>
                 ) : (
                   <span className="text-muted-foreground">
-                    {relativeEventDate(daysUntil(row.eventDate), { futureStyle: 'in' })}
+                    {relativeEventDate(daysUntil(row.eventDate))}
                   </span>
                 )}
               </div>
             </>
           ) : (
-            <span className="text-muted-foreground">No date</span>
+            <span className="text-muted-foreground">ללא תאריך</span>
           )}
         </TableCell>
         <TableCell className="text-muted-foreground py-3 text-[13px] tabular-nums">
@@ -290,8 +291,8 @@ function EventTableRow({
             <span className="text-muted-foreground">-</span>
           )}
         </TableCell>
-        <TableCell className={cn('py-3 pr-4 text-right text-[13px] tabular-nums', row.guestRecords === 0 && 'text-muted-foreground')}>
-          {row.guestRecords.toLocaleString('en-GB')}
+        <TableCell className={cn('py-3 pe-4 text-end text-[13px] tabular-nums', row.guestRecords === 0 && 'text-muted-foreground')}>
+          {row.guestRecords.toLocaleString('he-IL')}
         </TableCell>
       </TableRow>
     </>
@@ -305,8 +306,8 @@ function EventTableRow({
  */
 const PAYMENT_STATUS: Record<EventBillingStatus, { label: string; text: string; dot: string }> = {
   paid: { label: BILLING_STATUS_LABELS.paid, text: 'text-foreground', dot: 'bg-success' },
-  free: { label: 'Unpaid', text: 'text-warning-strong font-medium', dot: 'bg-warning-solid' },
-  payment_pending: { label: 'Pending', text: 'text-warning-strong font-medium', dot: 'bg-warning-solid' },
+  free: { label: 'לא שולם', text: 'text-warning-strong font-medium', dot: 'bg-warning-solid' },
+  payment_pending: { label: 'ממתין', text: 'text-warning-strong font-medium', dot: 'bg-warning-solid' },
   canceled: { label: BILLING_STATUS_LABELS.canceled, text: 'text-muted-foreground', dot: 'bg-muted-foreground/50' },
 };
 
@@ -326,15 +327,15 @@ function Pagination({ data, filters }: { data: EventsIndexPage; filters: EventsI
   return (
     <div className="text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-3 text-[12.5px]">
       <span className="tabular-nums">
-        {first.toLocaleString('en-GB')}-{last.toLocaleString('en-GB')} of {countLabel(data.totalRows, 'event')}
+        {first.toLocaleString('he-IL')}-{last.toLocaleString('he-IL')} מתוך {countLabel(data.totalRows, 'אירוע אחד', 'אירועים')}
       </span>
       <div className="flex items-center gap-3">
         {data.pageCount > 1 && (
-          <span className="tabular-nums">Page {data.page} of {data.pageCount}</span>
+          <span className="tabular-nums">עמוד {data.page} מתוך {data.pageCount}</span>
         )}
         <div className="flex gap-2">
-          <PageLink label="Previous" page={data.page - 1} data={data} filters={filters} />
-          <PageLink label="Next" page={data.page + 1} data={data} filters={filters} />
+          <PageLink label="הקודם" page={data.page - 1} data={data} filters={filters} />
+          <PageLink label="הבא" page={data.page + 1} data={data} filters={filters} />
         </div>
       </div>
     </div>

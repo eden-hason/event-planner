@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { EventSearchResult } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
+import { eventTitle, UNKNOWN_OWNER } from '../utils/labels';
 
 /**
  * Enough rows to recognise the one you meant, few enough to scan without
@@ -90,10 +91,10 @@ export async function searchEvents(term: string): Promise<EventSearchResult[]> {
 
     return {
       id: event.id,
-      title: event.title ?? 'Untitled event',
+      title: eventTitle(event.title),
       eventDate: event.event_date,
       isDraft: event.status === 'draft',
-      ownerName: owner?.full_name || owner?.email || 'Unknown owner',
+      ownerName: owner?.full_name || owner?.email || UNKNOWN_OWNER,
       ownerEmail: owner?.email ?? null,
     };
   });

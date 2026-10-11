@@ -1,4 +1,5 @@
-import { formatEventDate, israelToday, israelWallClockParts } from '@/lib/date-time';
+import { israelToday, israelWallClockParts } from '@/lib/date-time';
+import { formatEventDate } from './format';
 // The utils barrel rather than the feature barrel, which also carries Server
 // Actions - this stays pure, so the client toolbar and the tests can import it.
 import { RECORD_PACKAGE_CHANNELS } from '@/features/billing/utils';
@@ -105,17 +106,17 @@ export function eventsIndexHref(filters: EventsIndexFilters, patch: Partial<Even
   return query ? `/admin/events?${query}` : '/admin/events';
 }
 
-export const PAYMENT_LABELS: Record<EventsIndexPayment, string> = { paid: 'Paid', unpaid: 'Unpaid' };
-export const TIMING_LABELS: Record<EventsIndexTiming, string> = { upcoming: 'Upcoming', ended: 'Ended' };
+export const PAYMENT_LABELS: Record<EventsIndexPayment, string> = { paid: 'שולם', unpaid: 'לא שולם' };
+export const TIMING_LABELS: Record<EventsIndexTiming, string> = { upcoming: 'קרובים', ended: 'הסתיימו' };
 export const CREATED_LABELS: Record<EventsIndexCreated, string> = {
-  week: 'This week',
-  month: 'This month',
-  custom: 'Custom range',
+  week: 'השבוע',
+  month: 'החודש',
+  custom: 'טווח מותאם',
 };
 
 export const STATUS_LABELS: Record<EventsIndexStatus, string> = {
-  published: 'Published',
-  draft: 'Draft',
+  published: 'פורסם',
+  draft: 'טיוטה',
 };
 
 /** Search or any filter narrows the list; sorting and paging do not. */
@@ -147,7 +148,7 @@ export function eventTiming(eventDate: string | null, today: string): EventsInde
   return eventDateGroup(eventDate, today) === 1 ? 'ended' : 'upcoming';
 }
 
-/** "8 Oct 2026" or "1 Oct 2026 - 8 Oct 2026", from inclusive YYYY-MM-DD bounds. */
+/** "8 באוק׳ 2026" or a "from - to" range, from inclusive YYYY-MM-DD bounds. */
 export function dateRangeLabel(from: string | null, to: string | null): string {
   const start = from ? formatEventDate(from) : null;
   const end = to ? formatEventDate(to) : null;

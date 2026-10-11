@@ -22,20 +22,20 @@ export type WhatsAppFailureSide = 'guest' | 'system';
  */
 const GUEST_LEVEL_CODES = new Map<number, string>([
   // Message undeliverable: the number is not on WhatsApp, or on a client too old.
-  [131026, 'Not reachable on WhatsApp'],
+  [131026, 'לא זמין בוואטסאפ'],
   // Per-user marketing cap: Meta withheld it "to maintain healthy ecosystem engagement".
-  [131049, 'WhatsApp withheld the message'],
+  [131049, 'וואטסאפ עיכב את ההודעה'],
   // The guest stopped marketing messages from Kululu. Still falls back (ADR 0012).
-  [131050, 'Guest stopped WhatsApp messages'],
+  [131050, 'האורח חסם הודעות בוואטסאפ'],
   // The number is in a Meta marketing-message experiment holdout.
-  [130472, 'WhatsApp withheld the message'],
+  [130472, 'וואטסאפ עיכב את ההודעה'],
   // Recipient cannot be sender: the guest's number is Kululu's own business number.
-  [131021, 'Invalid recipient number'],
+  [131021, 'מספר נמען לא תקין'],
   // Meta's generic "Something went wrong". Its cause is unknown, so it is not
   // retried, but it has struck one guest at a time - and should it ever hit a
   // whole audience, counting it as guest-level is what lets the Fallback
   // Freeze catch the spike.
-  [131000, 'WhatsApp could not deliver it'],
+  [131000, 'וואטסאפ לא הצליח למסור את ההודעה'],
 ]);
 
 export function classifyWhatsAppFailure(

@@ -54,7 +54,7 @@ async function EventCrumb({ eventId }: { eventId: string }) {
       <TopBarBreadcrumb>
         <EventsCrumbLink />
         <BreadcrumbSeparator />
-        <span className="text-foreground truncate font-medium">{event?.title ?? 'Event'}</span>
+        <span className="text-foreground truncate font-medium">{event?.title ?? 'אירוע'}</span>
       </TopBarBreadcrumb>
       {event && (
         <div className="ms-auto shrink-0">
@@ -76,10 +76,10 @@ async function RoundCrumb({ eventId, roundId }: { eventId: string; roundId: stri
         href={`/admin/events/${round?.eventId ?? eventId}`}
         className="hover:text-foreground truncate"
       >
-        {round?.eventTitle ?? 'Event'}
+        {round?.eventTitle ?? 'אירוע'}
       </Link>
       <BreadcrumbSeparator />
-      <span className="text-foreground truncate font-medium">{round?.title ?? 'Call round'}</span>
+      <span className="text-foreground truncate font-medium">{round?.title ?? 'סבב שיחות'}</span>
     </TopBarBreadcrumb>
   );
 }
@@ -119,7 +119,7 @@ function RoundCrumbSkeleton() {
 function EventsCrumbLink() {
   return (
     <Link href="/admin/events" className="hover:text-foreground">
-      Events
+      אירועים
     </Link>
   );
 }

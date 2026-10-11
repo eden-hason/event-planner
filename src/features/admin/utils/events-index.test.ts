@@ -189,10 +189,10 @@ test('owner, created and records sort both ways', () => {
 
 test('the Created label names a preset or the custom range', () => {
   assert.equal(createdLabel({ created: null, createdFrom: null, createdTo: null }), null);
-  assert.equal(createdLabel({ created: 'week', createdFrom: null, createdTo: null }), 'This week');
-  assert.equal(createdLabel({ created: 'custom', createdFrom: '2026-10-01', createdTo: '2026-10-01' }), '1 Oct 2026');
+  assert.equal(createdLabel({ created: 'week', createdFrom: null, createdTo: null }), 'השבוע');
+  assert.equal(createdLabel({ created: 'custom', createdFrom: '2026-10-01', createdTo: '2026-10-01' }), '1 באוק׳ 2026');
   assert.equal(
     createdLabel({ created: 'custom', createdFrom: '2026-10-01', createdTo: '2026-10-08' }),
-    '1 Oct 2026 - 8 Oct 2026',
+    '1 באוק׳ 2026 - 8 באוק׳ 2026',
   );
 });

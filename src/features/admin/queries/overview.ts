@@ -5,7 +5,9 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
 import type { OverviewStats, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
-import { eventDaysFromToday, formatScheduleDateTime } from '@/lib/date-time';
+import { eventDaysFromToday } from '@/lib/date-time';
+import { daysText, formatDateTime, hoursText } from '../utils/format';
+import { eventTitle, eventTypeName, scheduleTypeName, UNKNOWN_OWNER } from '../utils/labels';
 import { ASK_TYPE_KEYS } from '@/features/schedules/utils/ask-plan';
 import { planEntryFromRow } from '@/features/schedules/utils/timeline';
 import { isNoAskPlanned, NO_ASK_PLANNED_DAYS } from '../utils/no-ask-planned';
@@ -23,15 +25,21 @@ function daysAgo(days: number): string {
   return new Date(Date.now() - days * 86_400_000).toISOString();
 }
 
-/** "6 hours" / "2 days" - the age an Operator reads in the headline. */
+/** "6 שעות" / "יומיים" - the age an Operator reads in the headline. */
 function duration(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const hours = Math.floor(ms / 3_600_000);
-  if (hours < 1) return 'under an hour';
-  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
-  const days = Math.floor(hours / 24);
-  return `${days} ${days === 1 ? 'day' : 'days'}`;
+  if (hours < 1) return 'פחות משעה';
+  return hours < 24 ? hoursText(hours) : daysText(Math.floor(hours / 24));
 }
+
+/** The Dispatcher's outcome words, from `schedule_dispatch_attempts.outcome`. */
+const DISPATCH_OUTCOME: Record<string, string> = {
+  dispatched: 'נשלח',
+  held: 'הושהה',
+  expired: 'פג תוקף',
+  failed: 'נכשל',
+};
 
 /**
  * Never let a failed read fall through as an empty result. A Signal list that
@@ -154,7 +162,7 @@ export async function getSignals(): Promise<Signal[]> {
       supabase
         .from('schedules')
         .select(
-          'id, scheduled_date, event_id, events(title), schedule_types(name), schedule_dispatch_attempts(outcome, reason, attempted_at)',
+          'id, scheduled_date, event_id, events(title), schedule_types(key, name), schedule_dispatch_attempts(outcome, reason, attempted_at)',
         )
         .is('status', null)
         .is('dispatched_at', null)
@@ -212,8 +220,8 @@ export async function getSignals(): Promise<Signal[]> {
 
   for (const row of unwrap(overdue)) {
     const event = row.events as unknown as { title: string | null } | null;
-    const type = row.schedule_types as unknown as { name: string | null } | null;
-    const stage = type?.name ?? 'Schedule';
+    const type = row.schedule_types as unknown as { key: string | null; name: string | null } | null;
+    const stage = scheduleTypeName(type?.key, type?.name);
 
     // The Dispatcher records why every time it looks at a Schedule and decides
     // not to send, so an Overdue Schedule can finally say what is holding it
@@ -230,16 +238,16 @@ export async function getSignals(): Promise<Signal[]> {
       null,
     );
     const why = latest
-      ? `last dispatch ${latest.outcome}${latest.reason ? ` - ${latest.reason}` : ''}`
-      : 'the dispatcher has not reached it yet';
+      ? `ניסיון אחרון: ${DISPATCH_OUTCOME[latest.outcome] ?? latest.outcome}${latest.reason ? ` - ${latest.reason}` : ''}`
+      : 'מנגנון השליחה עוד לא הגיע אליו';
 
     signals.push({
       id: `overdue_schedule:${row.id}`,
       kind: 'overdue_schedule',
       eventId: row.event_id,
-      eventTitle: event?.title ?? 'Untitled event',
-      headline: `${stage} send overdue ${duration(row.scheduled_date)}`,
-      detail: `Scheduled ${formatScheduleDateTime(row.scheduled_date)}, ${why}`,
+      eventTitle: eventTitle(event?.title),
+      headline: `${stage} באיחור של ${duration(row.scheduled_date)}`,
+      detail: `תוזמן ל-${formatDateTime(row.scheduled_date)}, ${why}`,
       occurredAt: row.scheduled_date,
       href: `/admin/events/${row.event_id}#schedule-${row.id}`,
     });
@@ -263,7 +271,7 @@ export async function getSignals(): Promise<Signal[]> {
     if (attempts.some((attempt) => attempt.channel === 'sms')) continue;
 
     const entry = byEvent.get(schedule.event_id) ?? {
-      title: schedule.events?.title ?? 'Untitled event',
+      title: eventTitle(schedule.events?.title),
       count: 0,
       codes: new Map<number, number>(),
       oldest: row.created_at,
@@ -280,15 +288,15 @@ export async function getSignals(): Promise<Signal[]> {
   for (const [eventId, entry] of byEvent) {
     const codes = [...entry.codes.entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([code, n]) => (n > 1 ? `error ${code} x${n}` : `error ${code}`))
+      .map(([code, n]) => (n > 1 ? `שגיאה ${code} x${n}` : `שגיאה ${code}`))
       .join(', ');
     signals.push({
       id: `failed_delivery:${eventId}`,
       kind: 'failed_delivery',
       eventId,
       eventTitle: entry.title,
-      headline: `${entry.count} ${entry.count === 1 ? 'delivery' : 'deliveries'} failed`,
-      detail: codes || 'No error code recorded',
+      headline: entry.count === 1 ? 'שליחה אחת נכשלה' : `${entry.count} שליחות נכשלו`,
+      detail: codes || 'לא נרשם קוד שגיאה',
       occurredAt: entry.oldest,
       href: `/admin/events/${eventId}#schedule-${entry.scheduleId}-failures`,
     });
@@ -301,7 +309,7 @@ export async function getSignals(): Promise<Signal[]> {
     const siblingRows = unwrap(
       await supabase
         .from('schedules')
-        .select('id, event_id, schedule_type_id, schedule_types(name)')
+        .select('id, event_id, schedule_type_id, schedule_types(key, name)')
         .in('event_id', [...new Set(staleRounds.map((round) => round.event_id))])
         .order('scheduled_date', { ascending: true }),
     );
@@ -310,8 +318,8 @@ export async function getSignals(): Promise<Signal[]> {
       const schedule = siblingRows.find((row) => row.id === round.schedule_id);
       if (!schedule) continue;
       const sameType = siblingRows.filter((row) => row.event_id === schedule.event_id && row.schedule_type_id === schedule.schedule_type_id);
-      const type = schedule.schedule_types as unknown as { name: string | null } | null;
-      const base = type?.name ?? 'Call Round';
+      const type = schedule.schedule_types as unknown as { key: string | null; name: string | null } | null;
+      const base = scheduleTypeName(type?.key, type?.name);
       labels.set(round.id, sameType.length > 1 ? `${base} ${sameType.findIndex((row) => row.id === schedule.id) + 1}` : base);
     }
   }
@@ -320,14 +328,14 @@ export async function getSignals(): Promise<Signal[]> {
     const event = row.events as unknown as { title: string | null } | null;
     const called = embeddedCount(row.called);
     const total = embeddedCount(row.snapshot);
-    const label = labels.get(row.id) ?? 'Call Round';
+    const label = labels.get(row.id) ?? scheduleTypeName('phone_call');
     signals.push({
       id: `stale_call_round:${row.id}`,
       kind: 'stale_call_round',
       eventId: row.event_id,
-      eventTitle: event?.title ?? 'Untitled event',
-      headline: `${label} open ${duration(row.created_at)}`,
-      detail: `${called} of ${total} guest records called`,
+      eventTitle: eventTitle(event?.title),
+      headline: `${label} פתוח כבר ${duration(row.created_at)}`,
+      detail: `התקשרנו ל-${called} מתוך ${total} רשומות אורחים`,
       occurredAt: row.created_at,
       href: `/admin/events/${row.event_id}#schedule-${row.schedule_id}`,
     });
@@ -350,9 +358,9 @@ export async function getSignals(): Promise<Signal[]> {
       id: `no_ask_planned:${event.id}`,
       kind: 'no_ask_planned',
       eventId: event.id,
-      eventTitle: event.title ?? 'Untitled event',
-      headline: `No invitation or confirmation dated, ${days} ${days === 1 ? 'day' : 'days'} to the event`,
-      detail: 'Nothing will ask guests to RSVP until the owner picks a date',
+      eventTitle: eventTitle(event.title),
+      headline: `לא נקבע תאריך להזמנה או לאישור הגעה, ${daysText(days)} לאירוע`,
+      detail: 'אף הודעה לא תבקש מהאורחים לאשר הגעה עד שבעלי האירוע יבחרו תאריך',
       // When the window opened for it - the age is how long it has gone unasked.
       occurredAt: new Date(
         Date.parse(event.event_date as string) - NO_ASK_PLANNED_DAYS * 86_400_000,
@@ -383,7 +391,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
         .from('events')
         // Counted in the database: reading the guest rows to tally them here
         // ran into PostgREST's 1,000-row cap and undercounted.
-        .select('id, title, event_date, user_id, event_types(name), total:guests(count), confirmed:guests(count)')
+        .select('id, title, event_date, user_id, event_types(key, name), total:guests(count), confirmed:guests(count)')
         .eq('status', 'published')
         .eq('confirmed.rsvp_status', 'confirmed')
         .gte('event_date', todayUtc.toISOString())
@@ -411,15 +419,15 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
 
   return events.map((event) => {
     const counts = { total: embeddedCount(event.total), confirmed: embeddedCount(event.confirmed) };
-    const type = event.event_types as unknown as { name: string | null } | null;
+    const type = event.event_types as unknown as { key: string | null; name: string | null } | null;
     const owner = ownerById.get(event.user_id);
 
     return {
       id: event.id,
-      title: event.title ?? 'Untitled event',
+      title: eventTitle(event.title),
       eventDate: event.event_date,
-      eventTypeName: type?.name ?? 'Event',
-      ownerName: owner?.full_name || owner?.email || 'Unknown owner',
+      eventTypeName: eventTypeName(type?.key, type?.name),
+      ownerName: owner?.full_name || owner?.email || UNKNOWN_OWNER,
       guestRecords: counts.total,
       confirmed: counts.confirmed,
       // Null, not zero: an empty guest list has no rate, and rendering 0%

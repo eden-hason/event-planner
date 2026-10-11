@@ -18,7 +18,7 @@ type StatCard = {
 };
 
 function integer(value: number): string {
-  return value.toLocaleString('en-GB');
+  return value.toLocaleString('he-IL');
 }
 
 export function StatCards({ stats }: { stats: OverviewStats }) {
@@ -34,33 +34,33 @@ export function StatCards({ stats }: { stats: OverviewStats }) {
 
   const cards: StatCard[] = [
     {
-      label: 'Users',
+      label: 'משתמשים',
       value: integer(stats.users),
-      sub: `${integer(stats.usersJoinedThisWeek)} joined this week`,
+      sub: `${integer(stats.usersJoinedThisWeek)} הצטרפו השבוע`,
       icon: Users,
       tone: 'brand',
     },
     {
-      label: 'Events',
+      label: 'אירועים',
       value: integer(stats.events),
-      sub: `${integer(stats.eventsUpcoming)} in the next 30 days`,
+      sub: `${integer(stats.eventsUpcoming)} ב-30 הימים הקרובים`,
       icon: CalendarDays,
       tone: 'brand',
     },
     {
-      label: 'Guest records',
+      label: 'רשומות אורחים',
       value: integer(stats.guestRecords),
-      sub: `${integer(perEvent)} average per event`,
+      sub: `${integer(perEvent)} בממוצע לאירוע`,
       icon: ListChecks,
       tone: 'brand',
     },
     {
-      label: 'Confirmed',
+      label: 'אישרו הגעה',
       value: rate === null ? '-' : `${rate}%`,
       sub:
         rate === null
-          ? 'No guest lists yet'
-          : `${integer(stats.confirmed)} of ${integer(stats.guestRecords)} guests`,
+          ? 'עדיין אין רשימות אורחים'
+          : `${integer(stats.confirmed)} מתוך ${integer(stats.guestRecords)} אורחים`,
       icon: CircleCheck,
       tone: 'success',
     },
@@ -104,7 +104,7 @@ export function StatCards({ stats }: { stats: OverviewStats }) {
 
 export function StatCardsError() {
   return (
-    <div className="text-destructive text-sm">Stats didn&apos;t load</div>
+    <div className="text-destructive text-sm">הנתונים לא נטענו</div>
   );
 }
 

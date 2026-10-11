@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,19 +64,19 @@ export function BonusOverrideDialog({
     >
       <DialogTrigger asChild>
         <Button type="button" variant="link" size="sm" className="h-auto p-0 text-[12px]">
-          Edit bonus
+          עריכת בונוס
         </Button>
       </DialogTrigger>
-      <AdminDialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Bonus records</DialogTitle>
+          <DialogTitle>רשומות בונוס</DialogTitle>
           <DialogDescription>
-            Automatic gives {automaticBonus} for this package. A custom bonus stays through later
-            top-ups until it is reset
+            החישוב האוטומטי נותן {automaticBonus} לחבילה הזו. בונוס מותאם נשאר גם אחרי הגדלות
+            חבילה עד שמאפסים אותו
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="bonus-override">Bonus records</Label>
+          <Label htmlFor="bonus-override">רשומות בונוס</Label>
           <Input
             id="bonus-override"
             inputMode="numeric"
@@ -92,13 +92,13 @@ export function BonusOverrideDialog({
             onClick={() => save(null)}
             disabled={pending || !isCustom}
           >
-            Reset to automatic ({automaticBonus})
+            איפוס לאוטומטי ({automaticBonus})
           </Button>
           <Button type="button" onClick={() => save(parsed)} disabled={pending || !valid}>
-            {pending ? 'Saving' : 'Save'}
+            {pending ? 'שומרים' : 'שמירה'}
           </Button>
         </DialogFooter>
-      </AdminDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

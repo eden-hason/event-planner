@@ -5,13 +5,13 @@ import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import {
   Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AdminDialogContent } from './admin-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,13 +24,19 @@ import {
 } from '@/components/ui/select';
 import { createCallPlan } from '@/features/calls/actions/call-plans';
 import { cn } from '@/lib/utils';
+import { audienceCountLabel } from '../utils/labels';
 
 export type PlanningEvent = { id: string; title: string; pending: number; confirmed: number };
 
 const TARGETS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'pending', label: 'ממתינים לתשובה' },
+  { value: 'confirmed', label: 'אישרו הגעה' },
 ] as const;
+
+/** Pending unless only confirmed guests exist - an empty list chases the pending. */
+function defaultTarget(event: PlanningEvent | undefined): 'pending' | 'confirmed' {
+  return !event?.pending && event?.confirmed ? 'confirmed' : 'pending';
+}
 
 /**
  * Creates the plan only. Starting it is a separate act, and the dialog says so
@@ -38,7 +44,8 @@ const TARGETS = [
  *
  * The audience helper is deliberately phrased as "today": the snapshot happens
  * at Start, so this number is context for choosing a target, not a promise
- * about who will be called.
+ * about who will be called. For the same reason a plan can be made while the
+ * target is empty: guests added before Start are in the snapshot.
  */
 export function AddCallRoundDialog({
   events,
@@ -55,7 +62,7 @@ export function AddCallRoundDialog({
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
   const [target, setTarget] = useState<'pending' | 'confirmed'>(
-    events.find((event) => event.id === (eventId ?? events[0]?.id))?.pending ? 'pending' : 'confirmed',
+    defaultTarget(events.find((event) => event.id === (eventId ?? events[0]?.id))),
   );
 
   const chosen = events.find((event) => event.id === selectedEvent);
@@ -63,7 +70,7 @@ export function AddCallRoundDialog({
 
   function submit() {
     if (!selectedEvent || !date) {
-      toast.error('Pick an event and a date');
+      toast.error('צריך לבחור אירוע ותאריך');
       return;
     }
 
@@ -90,32 +97,32 @@ export function AddCallRoundDialog({
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="shrink-0 text-[13px]">
           <Plus className="size-[15px]" />
-          Add call round
+          הוספת סבב שיחות
         </Button>
       </DialogTrigger>
 
-      <AdminDialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle>Add call round</DialogTitle>
+          <DialogTitle>הוספת סבב שיחות</DialogTitle>
           <DialogDescription>
-            Creates the plan only. You start it when you are ready to call
+            יוצר רק את התוכנית. מתחילים אותה כשמוכנים להתקשר
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="call-plan-event">Event</Label>
+            <Label htmlFor="call-plan-event">אירוע</Label>
             <Select
               value={selectedEvent}
               onValueChange={(value) => {
                 setSelectedEvent(value);
                 const next = events.find((event) => event.id === value);
-                setTarget(next?.pending ? 'pending' : 'confirmed');
+                setTarget(defaultTarget(next));
               }}
               disabled={!!eventId}
             >
               <SelectTrigger id="call-plan-event" className="w-full">
-                <SelectValue placeholder="Pick an event" />
+                <SelectValue placeholder="בחירת אירוע" />
               </SelectTrigger>
               <SelectContent>
                 {events.map((event) => (
@@ -129,7 +136,7 @@ export function AddCallRoundDialog({
 
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1.5">
-              <Label htmlFor="call-plan-date">Date</Label>
+              <Label htmlFor="call-plan-date">תאריך</Label>
               <Input
                 id="call-plan-date"
                 type="date"
@@ -138,7 +145,7 @@ export function AddCallRoundDialog({
               />
             </div>
             <div className="flex w-32 flex-col gap-1.5">
-              <Label htmlFor="call-plan-time">Time</Label>
+              <Label htmlFor="call-plan-time">שעה</Label>
               <Input
                 id="call-plan-time"
                 type="time"
@@ -149,16 +156,15 @@ export function AddCallRoundDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Target audience</Label>
+            <Label>קהל היעד</Label>
             <div className="flex gap-2">
               {TARGETS.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  disabled={(option.value === 'pending' ? chosen?.pending : chosen?.confirmed) === 0}
                   onClick={() => setTarget(option.value)}
                   className={cn(
-                    'flex-1 rounded-md border px-3 py-1.5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-40',
+                    'flex-1 rounded-md border px-3 py-1.5 text-[13px] font-medium',
                     target === option.value
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'bg-card hover:bg-accent',
@@ -169,21 +175,21 @@ export function AddCallRoundDialog({
               ))}
             </div>
             <p className="text-muted-foreground text-[12.5px]">
-              {audience} guest {audience === 1 ? 'record is' : 'records are'} {target} today. The
-              audience is snapshotted at start, not now
+              היום: {audienceCountLabel(target, audience)}.
+              קהל היעד נקבע ברגע שהסבב מתחיל, לא עכשיו
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-            Cancel
+            ביטול
           </Button>
           <Button type="button" onClick={submit} disabled={pending}>
-            Create plan
+            יצירת תוכנית
           </Button>
         </DialogFooter>
-      </AdminDialogContent>
+      </DialogContent>
     </Dialog>
   );
 }

@@ -39,7 +39,7 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
       .single();
 
     if (planError || !plan) {
-      return { success: false, message: 'That plan no longer exists' };
+      return { success: false, message: 'התוכנית הזו כבר לא קיימת' };
     }
 
     const type = (
@@ -47,10 +47,10 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     ) as { execution_kind: string } | null;
 
     if (type?.execution_kind !== 'phone_call') {
-      return { success: false, message: 'That schedule is not a call round' };
+      return { success: false, message: 'התזמון הזה הוא לא סבב שיחות' };
     }
     if (plan.status === 'cancelled') {
-      return { success: false, message: 'That plan was cancelled' };
+      return { success: false, message: 'התוכנית הזו בוטלה' };
     }
 
     const { data: claimed, error: claimError } = await supabase
@@ -63,10 +63,10 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
 
     if (claimError) {
       console.error('Failed to claim call plan:', claimError);
-      return { success: false, message: 'Failed to start the round' };
+      return { success: false, message: 'לא הצלחנו להתחיל את הסבב' };
     }
     if (!claimed) {
-      return { success: false, message: 'That round was already started' };
+      return { success: false, message: 'הסבב הזה כבר התחיל' };
     }
 
     // The audience is the plan's own target_status, never a hardcoded
@@ -84,17 +84,30 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     if (guestsError) {
       await releasePlan(supabase, scheduleId);
       console.error('Failed to read the round audience:', guestsError);
-      return { success: false, message: 'Failed to start the round' };
+      return { success: false, message: 'לא הצלחנו להתחיל את הסבב' };
     }
     if (!outsideIds) {
       await releasePlan(supabase, scheduleId);
-      return { success: false, message: 'Could not check the record package' };
+      return { success: false, message: 'לא הצלחנו לבדוק את חבילת הרשומות' };
     }
 
     // A call is a send like any other, so a round calls only Guest Records inside the
     // Record Package (ADR 0027). The rest are left out of the snapshot, not called.
     const guests = (targeted ?? []).filter((guest) => !outsideIds.has(guest.id));
     const leftOut = (targeted?.length ?? 0) - guests.length;
+
+    // A plan may be made before there is anyone to call (the audience is taken
+    // here, at Start), but a round with an empty roster would sit "in progress"
+    // with nothing to work. Refuse it and hand the plan back unstarted.
+    if (!guests.length) {
+      await releasePlan(supabase, scheduleId);
+      return {
+        success: false,
+        message: leftOut
+          ? 'אין את מי להתקשר: כל הרשומות בקהל היעד מחוץ לחבילת הרשומות'
+          : 'אין את מי להתקשר: אין עדיין רשומות אורחים בקהל היעד',
+      };
+    }
 
     const { data: round, error: roundError } = await supabase
       .from('call_rounds')
@@ -110,21 +123,19 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     if (roundError || !round) {
       await releasePlan(supabase, scheduleId);
       console.error('Failed to create the round:', roundError);
-      return { success: false, message: 'Failed to start the round' };
+      return { success: false, message: 'לא הצלחנו להתחיל את הסבב' };
     }
 
-    if (guests.length) {
-      const { error: logsError } = await supabase.from('call_logs').insert(
-        guests.map((guest) => ({ round_id: round.id, guest_id: guest.id })),
-      );
-      if (logsError) {
-        // The round exists but has no roster, which is worse than no round at
-        // all - it would sit "in progress" with nothing to call.
-        await supabase.from('call_rounds').delete().eq('id', round.id);
-        await releasePlan(supabase, scheduleId);
-        console.error('Failed to snapshot the round audience:', logsError);
-        return { success: false, message: 'Failed to start the round' };
-      }
+    const { error: logsError } = await supabase.from('call_logs').insert(
+      guests.map((guest) => ({ round_id: round.id, guest_id: guest.id })),
+    );
+    if (logsError) {
+      // The round exists but has no roster, which is worse than no round at
+      // all - it would sit "in progress" with nothing to call.
+      await supabase.from('call_rounds').delete().eq('id', round.id);
+      await releasePlan(supabase, scheduleId);
+      console.error('Failed to snapshot the round audience:', logsError);
+      return { success: false, message: 'לא הצלחנו להתחיל את הסבב' };
     }
 
     revalidateOutreach(plan.event_id);
@@ -132,14 +143,14 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     return {
       success: true,
       message:
-        `Round started with ${guests.length} ${guests.length === 1 ? 'guest record' : 'guest records'}` +
-        (leftOut ? `, ${leftOut} outside the record package left out` : ''),
+        `הסבב התחיל עם ${guests.length === 1 ? 'רשומת אורח אחת' : `${guests.length} רשומות אורחים`}` +
+        (leftOut ? `, ${leftOut} מחוץ לחבילת הרשומות לא נכללו` : ''),
       roundId: round.id,
       eventId: plan.event_id,
     };
   } catch (error) {
     console.error('startCallRound failed:', error);
-    return { success: false, message: 'Failed to start the round' };
+    return { success: false, message: 'לא הצלחנו להתחיל את הסבב' };
   }
 }
 
@@ -165,7 +176,7 @@ export async function deleteCallRound(roundId: string): Promise<DeleteCallRoundR
       .single();
 
     if (roundError || !round) {
-      return { success: false, message: 'That round no longer exists' };
+      return { success: false, message: 'הסבב הזה כבר לא קיים' };
     }
 
     // call_logs cascade on the round's delete.
@@ -176,16 +187,16 @@ export async function deleteCallRound(roundId: string): Promise<DeleteCallRoundR
 
     if (deleteError) {
       console.error('Failed to delete the round:', deleteError);
-      return { success: false, message: 'Failed to delete the round' };
+      return { success: false, message: 'מחיקת הסבב נכשלה' };
     }
 
     if (round.schedule_id) await releasePlan(supabase, round.schedule_id);
 
     revalidateOutreach(round.event_id);
-    return { success: true, message: 'Round deleted, the plan is restartable' };
+    return { success: true, message: 'הסבב נמחק, אפשר להתחיל את התוכנית מחדש' };
   } catch (error) {
     console.error('deleteCallRound failed:', error);
-    return { success: false, message: 'Failed to delete the round' };
+    return { success: false, message: 'מחיקת הסבב נכשלה' };
   }
 }
 
@@ -207,12 +218,12 @@ async function releasePlan(supabase: ServiceClient, scheduleId: string) {
  * "every log has an outcome" would mark a round done that nobody finished.
  */
 export async function finishCallRound(roundId: string): Promise<DeleteCallRoundResult> {
-  return setRoundCompletion(roundId, new Date().toISOString(), 'Round finished');
+  return setRoundCompletion(roundId, new Date().toISOString(), 'הסבב הסתיים');
 }
 
 /** Reopens a finished round, because finishing early is an easy mistake to make. */
 export async function reopenCallRound(roundId: string): Promise<DeleteCallRoundResult> {
-  return setRoundCompletion(roundId, null, 'Round reopened');
+  return setRoundCompletion(roundId, null, 'הסבב נפתח מחדש');
 }
 
 async function setRoundCompletion(
@@ -233,13 +244,13 @@ async function setRoundCompletion(
 
     if (error || !round) {
       console.error('Failed to change round completion:', error);
-      return { success: false, message: 'Failed to update the round' };
+      return { success: false, message: 'עדכון הסבב נכשל' };
     }
 
     revalidateOutreach(round.event_id);
     return { success: true, message };
   } catch (error) {
     console.error('setRoundCompletion failed:', error);
-    return { success: false, message: 'Failed to update the round' };
+    return { success: false, message: 'עדכון הסבב נכשל' };
   }
 }

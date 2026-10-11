@@ -17,8 +17,8 @@ export function UserSheetSkeleton() {
       <div className="flex items-start gap-3 border-b px-5 py-4 pe-12">
         <Skeleton className="size-[38px] shrink-0 rounded-full" />
         <div className="flex min-w-0 flex-1 flex-col gap-2 pt-1">
-          <SheetTitle className="sr-only">Loading user</SheetTitle>
-          <SheetDescription className="sr-only">Fetching this account from the directory</SheetDescription>
+          <SheetTitle className="sr-only">טוען משתמש</SheetTitle>
+          <SheetDescription className="sr-only">טוען את החשבון מהמערכת</SheetDescription>
           <Skeleton className="h-3.5 w-40" />
           <Skeleton className="h-3 w-52" />
         </div>

@@ -140,12 +140,12 @@ async function resolveSmsTemplates(
 ): Promise<Resolution> {
   const { schedule, event } = loaded;
   if (!isMessageSchedule(schedule)) {
-    return { ok: false, reason: 'Only message schedules can fall back to SMS' };
+    return { ok: false, reason: 'רק תזמוני הודעות יכולים לעבור ל-SMS' };
   }
   const anchor = schedule.template;
-  if (!anchor) return { ok: false, reason: 'This schedule has no template' };
+  if (!anchor) return { ok: false, reason: 'לתזמון הזה אין תבנית' };
   if (anchor.channel === 'sms') {
-    return { ok: false, reason: 'This schedule already sends by SMS' };
+    return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
   }
 
   const { data, error } = await supabase
@@ -156,9 +156,9 @@ async function resolveSmsTemplates(
     .eq('variant', anchor.variant)
     .eq('language_code', anchor.languageCode)
     .limit(1);
-  if (error) return { ok: false, reason: 'Could not load message templates' };
+  if (error) return { ok: false, reason: 'לא הצלחנו לטעון את תבניות ההודעה' };
   if (!data?.length) {
-    return { ok: false, reason: `No SMS version of ${anchor.key}` };
+    return { ok: false, reason: `אין גרסת SMS ל-${anchor.key}` };
   }
 
   const resolution = await resolveTemplatesForEvent({
@@ -271,12 +271,12 @@ export function classifySmsFallbackCandidates(
       const accepted = attempts.find((a) => a.channel === 'whatsapp' && a.status === 'sent');
       const hours = stuckForHours(accepted?.sent_at ?? null, window);
       if (hours == null) continue;
-      reason = `WhatsApp accepted ${Math.floor(hours)}h ago but never confirmed delivered`;
+      reason = `וואטסאפ קיבל את ההודעה לפני ${Math.floor(hours)} שעות אבל לא אישר מסירה`;
     } else if (hasSms) {
-      excluded.push({ ...base, exclusion: 'already_sms', reason: 'Already tried by SMS' });
+      excluded.push({ ...base, exclusion: 'already_sms', reason: 'כבר נוסה ב-SMS' });
       continue;
     } else if (!lastWhatsAppFailure) {
-      excluded.push({ ...base, exclusion: 'not_whatsapp', reason: 'No failed WhatsApp attempt' });
+      excluded.push({ ...base, exclusion: 'not_whatsapp', reason: 'אין ניסיון וואטסאפ שנכשל' });
       continue;
     } else if (classifyWhatsAppFailure(lastWhatsAppFailure.error_code) === 'system') {
       excluded.push({
@@ -284,16 +284,16 @@ export function classifySmsFallbackCandidates(
         exclusion: 'system_failure',
         reason:
           lastWhatsAppFailure.error_code == null
-            ? 'Failure with no error code - resend on WhatsApp once the cause is fixed'
-            : `Error ${lastWhatsAppFailure.error_code} is not a guest-level failure - resend on WhatsApp once the cause is fixed`,
+            ? 'כשל בלי קוד שגיאה - לשלוח שוב בוואטסאפ אחרי שהגורם יתוקן'
+            : `שגיאה ${lastWhatsAppFailure.error_code} היא לא כשל של האורח - לשלוח שוב בוואטסאפ אחרי שהגורם יתוקן`,
       });
       continue;
     } else {
-      reason = describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'WhatsApp failed';
+      reason = describeGuestLevelFailure(lastWhatsAppFailure.error_code) ?? 'וואטסאפ נכשל';
     }
 
     if (!validatePhoneNumber(base.guestPhone)) {
-      excluded.push({ ...base, exclusion: 'no_phone', reason: 'No usable phone number' });
+      excluded.push({ ...base, exclusion: 'no_phone', reason: 'אין מספר טלפון תקין' });
     } else {
       eligible.push({ ...base, reason });
     }
@@ -378,7 +378,7 @@ export async function buildSmsFallbackPlan(
 ): Promise<SmsFallbackPlan> {
   const loaded = await loadSchedule(supabase, scheduleId);
   if (!loaded) {
-    return { scheduleId, unavailableReason: 'That schedule no longer exists', eligible: [], excluded: [], preview: null };
+    return { scheduleId, unavailableReason: 'התזמון הזה כבר לא קיים', eligible: [], excluded: [], preview: null };
   }
 
   const [resolution, rows] = await Promise.all([
@@ -434,7 +434,7 @@ export async function sendSmsFallback(
   const empty = { sentCount: 0, failedCount: 0, skippedCount: 0 };
 
   const loaded = await loadSchedule(supabase, scheduleId);
-  if (!loaded) return { success: false, message: 'That schedule no longer exists', ...empty };
+  if (!loaded) return { success: false, message: 'התזמון הזה כבר לא קיים', ...empty };
 
   const resolution = await resolveSmsTemplates(supabase, loaded);
   if (!resolution.ok) return { success: false, message: resolution.reason, ...empty };
@@ -443,7 +443,7 @@ export async function sendSmsFallback(
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));
   const batch = classifySmsFallbackCandidates(rows, stuckWindow()).eligible.slice(0, Math.max(0, options.limit));
   if (batch.length === 0) {
-    return { success: false, message: 'No deliveries are eligible for SMS fallback', ...empty };
+    return { success: false, message: 'אין שליחות שאפשר לשלוח להן SMS', ...empty };
   }
 
   const { guests, tables } = await loadGuestsAndTables(
@@ -532,8 +532,8 @@ export async function sendSmsFallback(
     success: sentCount > 0,
     message:
       sentCount > 0
-        ? `${sentCount} SMS sent${failedCount ? `, ${failedCount} failed` : ''}`
-        : 'No SMS were sent',
+        ? `${sentCount} הודעות SMS נשלחו${failedCount ? `, ${failedCount} נכשלו` : ''}`
+        : 'לא נשלחו הודעות SMS',
     sentCount,
     failedCount,
     skippedCount,

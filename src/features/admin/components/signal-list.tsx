@@ -4,6 +4,7 @@ import { Band, BandRow, Surface } from './band';
 import { SignalRow } from './signal-row';
 import { RetryButton } from './retry-button';
 import type { Signal, SignalKind } from '../types';
+import { SIGNAL_GROUP_LABELS } from '../utils/labels';
 
 /**
  * Past this many Signals a flat list stops being scannable, so rows group by
@@ -12,13 +13,6 @@ import type { Signal, SignalKind } from '../types';
  */
 const GROUP_ABOVE = 6;
 const CAP_PER_GROUP = 4;
-
-const GROUP_LABEL: Record<SignalKind, string> = {
-  overdue_schedule: 'Overdue schedules',
-  failed_delivery: 'Failed deliveries',
-  no_ask_planned: 'No ask planned',
-  stale_call_round: 'Stale call rounds',
-};
 
 const RANK: SignalKind[] = [
   'overdue_schedule',
@@ -30,16 +24,16 @@ const RANK: SignalKind[] = [
 export function SignalList({ signals }: { signals: Signal[] }) {
   if (signals.length === 0) {
     return (
-      <Band title="Needs attention">
+      <Band title="דורש טיפול">
         <BandRow className="flex items-start gap-3 pb-[18px]">
           <CircleCheckBig
             className="text-success mt-0.5 size-[18px] shrink-0"
             aria-hidden
           />
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">Nothing needs your attention</span>
+            <span className="text-sm font-medium">אין כרגע משהו שדורש טיפול</span>
             <span className="text-muted-foreground text-[13px]">
-              No overdue schedules, failed deliveries, unplanned asks, or stale call rounds
+              אין תזמונים באיחור, שליחות שנכשלו, אירועים בלי בקשת אישור או סבבי שיחות תקועים
             </span>
           </div>
         </BandRow>
@@ -47,7 +41,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
     );
   }
 
-  const title = `Needs attention (${signals.length})`;
+  const title = `דורש טיפול (${signals.length})`;
 
   if (signals.length <= GROUP_ABOVE) {
     return (
@@ -70,7 +64,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
         return (
           <div key={kind} className="flex flex-col">
             <div className="text-secondary-foreground border-t px-4 pt-3 pb-1.5 text-xs font-semibold">
-              {GROUP_LABEL[kind]} ({rows.length})
+              {SIGNAL_GROUP_LABELS[kind]} ({rows.length})
             </div>
             {shown.map((signal) => (
               <SignalRow key={signal.id} signal={signal} />
@@ -78,9 +72,9 @@ export function SignalList({ signals }: { signals: Signal[] }) {
             {hidden > 0 && (
               <Link
                 href="/admin/operations"
-                className="text-muted-foreground hover:bg-accent hover:text-foreground border-t py-2.5 pr-4 pl-[46px] text-[13px] font-medium transition-colors"
+                className="text-muted-foreground hover:bg-accent hover:text-foreground border-t py-2.5 ps-[46px] pe-4 text-[13px] font-medium transition-colors"
               >
-                {hidden} more in Operations →
+                עוד {hidden} בתפעול ←
               </Link>
             )}
           </div>
@@ -96,7 +90,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
  */
 export function SignalListError() {
   return (
-    <Band title="Needs attention">
+    <Band title="דורש טיפול">
       <BandRow className="flex items-start gap-3">
         <TriangleAlert
           className="text-destructive mt-0.5 size-[18px] shrink-0"
@@ -104,11 +98,11 @@ export function SignalListError() {
         />
         <div className="flex flex-1 flex-col gap-0.5">
           <span className="text-destructive text-sm font-medium">
-            Signals didn&apos;t load
+            ההתראות לא נטענו
           </span>
           <span className="text-muted-foreground text-[13px]">
-            There may be Signals we can&apos;t show right now. Counts and upcoming
-            events are unaffected
+            ייתכן שיש התראות שאי אפשר להציג כרגע. המספרים והאירועים הקרובים לא
+            מושפעים
           </span>
         </div>
         <RetryButton />

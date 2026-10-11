@@ -231,6 +231,14 @@ export type EventTimelineRow = {
   roundGuestCount: number;
   notesCount: number;
   deliveries: EventTimelineDelivery[];
+  /** Whether an Operator may still change the Due Time (see dueTimeRejection). */
+  dueTimeEditable: boolean;
+  /** Whether this is an Initial Invitation that can still become a Confirmation. */
+  convertible: boolean;
+  /** Whether, once converted, it would send as a follow-up round (a Confirmation is due before it). */
+  convertsToFollowUp: boolean;
+  /** Titles of the Confirmations converting it would narrow to pending guests. Empty unless convertible. */
+  convertNarrows: string[];
 };
 
 /**
