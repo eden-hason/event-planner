@@ -57,25 +57,16 @@ const NOT_REACHED: GuestDeliveryOutcome[] = [
   'outside_package',
 ];
 
-export type NotReachedFilter =
-  | 'on_its_way'
-  | 'sms_on_its_way'
-  | 'not_delivered'
-  | 'no_phone'
-  | 'outside_package';
-
 export type GuestFilter =
   | 'all'
   | 'notReached'
   | 'noResponse'
   | 'confirmed'
-  | 'unseen'
-  | NotReachedFilter;
+  | 'unseen';
 
 /**
  * The filter chips a schedule offers. Answer filters only where the schedule
- * collects RSVPs, and "no read receipt" only where a read receipt can exist. The
- * per-reason filters are reached from the not-reached card, not from a chip.
+ * collects RSVPs, and "no read receipt" only where a read receipt can exist.
  */
 export function availableFilters(options: {
   collectsRsvp: boolean;
@@ -101,8 +92,6 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
       return row.response === 'rsvp_confirm';
     case 'unseen':
       return row.delivery === 'whatsapp' && !row.seen;
-    default:
-      return row.delivery === filter;
   }
 }
 

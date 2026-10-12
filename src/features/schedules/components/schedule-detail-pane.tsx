@@ -6,6 +6,7 @@ import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
 import type { OutreachItemStatus } from '../types';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
+import { ScheduleResultsGhost } from './schedule-results';
 import { ScheduleTabContent } from './schedule-tab-content';
 
 interface ScheduleDetailPaneProps {
@@ -23,8 +24,8 @@ interface ScheduleDetailPaneProps {
 /**
  * One message Schedule, opened.
  *
- * A Schedule that has gone out grows a results tab; one that has not is only
- * its settings, because a funnel of zeroes is noise rather than information.
+ * Settings and results, always both. Until the Schedule has gone out the
+ * results tab shows what it will hold, faded, rather than a funnel of zeroes.
  */
 export async function ScheduleDetailPane({
   schedule,
@@ -54,7 +55,7 @@ export async function ScheduleDetailPane({
     />
   );
 
-  if (status !== 'sent') return settings;
+  const collectsRsvp = schedule.scheduleTypeKey === 'confirmation';
 
   return (
     <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
@@ -71,12 +72,19 @@ export async function ScheduleDetailPane({
       </TabsList>
       <TabsContent value="overview">{settings}</TabsContent>
       <TabsContent value="results">
-        <ScheduleInteractionsCard
-          scheduleId={schedule.id}
-          collectsRsvp={schedule.scheduleTypeKey === 'confirmation'}
-          channel={schedule.deliveryMethod}
-          sentAt={schedule.sentAt}
-        />
+        {status === 'sent' ? (
+          <ScheduleInteractionsCard
+            scheduleId={schedule.id}
+            collectsRsvp={collectsRsvp}
+            channel={schedule.deliveryMethod}
+            sentAt={schedule.sentAt}
+          />
+        ) : (
+          <ScheduleResultsGhost
+            collectsRsvp={collectsRsvp}
+            channel={schedule.deliveryMethod}
+          />
+        )}
       </TabsContent>
     </Tabs>
   );

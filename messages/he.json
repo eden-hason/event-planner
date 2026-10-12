@@ -1713,9 +1713,11 @@
       }
     },
     "results": {
-      "empty": {
-        "title": "אין תוצאות עדיין",
-        "description": "הן יופיעו כאן לאחר שההודעות יתחילו לצאת, ויתעדכנו בזמן שהן נוחתות"
+      "ghost": {
+        "funnel": "כאן יופיע למי ההודעה הגיעה, ממש כשהיא נוחתת",
+        "channels": "כאן יופיע איך ההודעה הגיעה",
+        "rsvp": "תשובות האורחים יופיעו כאן כשיתחילו להגיע",
+        "guests": "כאן יופיעו המסירה והתשובה של כל אורח"
       },
       "live": {
         "liveTitle": "התוצאות מתעדכנות",
@@ -1765,20 +1767,6 @@
         "declined": "סירבו",
         "noResponse": "טרם הגיבו"
       },
-      "notReached": {
-        "title": "מי לא קיבל",
-        "total": "{count, plural, one {רשומה אחת} other {# רשומות}}",
-        "onItsWay": "בדרך",
-        "onItsWayWhy": "וואטסאפ קיבל, הטלפון עוד לא אישר",
-        "smsOnItsWay": "SMS בדרך",
-        "smsOnItsWayWhy": "וואטסאפ לא הגיע · נשלח SMS",
-        "notDelivered": "לא נמסר",
-        "notDeliveredWhy": "כדאי להתקשר אליהם",
-        "noPhone": "אין מספר טלפון",
-        "noPhoneWhy": "לא נשלח · אפשר להשלים מספר",
-        "outsidePackage": "מחוץ לחבילה",
-        "outsidePackageWhy": "לא נשלח · אפשר להוסיף רשומות לחבילה"
-      },
       "guests": {
         "title": "אורחים",
         "count": "{count, plural, one {רשומה אחת} other {# רשומות}}",
@@ -1790,12 +1778,7 @@
           "notReached": "לא קיבלו",
           "noResponse": "לא הגיבו",
           "confirmed": "אישרו",
-          "unseen": "אין אישור קריאה",
-          "on_its_way": "בדרך",
-          "sms_on_its_way": "SMS בדרך",
-          "not_delivered": "לא נמסר",
-          "no_phone": "אין מספר טלפון",
-          "outside_package": "מחוץ לחבילה"
+          "unseen": "אין אישור קריאה"
         },
         "columns": {
           "guest": "אורח",

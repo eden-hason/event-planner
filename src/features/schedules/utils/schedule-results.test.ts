@@ -70,7 +70,6 @@ test('filtering narrows by state and by a name search together', () => {
   ) => filterGuests(rows, { filter, query }).map((r: Row) => r.guestName);
 
   assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
-  assert.deepEqual(names('not_delivered'), ['רון גבאי']);
   assert.deepEqual(names('noResponse'), ['יעל ביטון']);
   assert.deepEqual(names('confirmed'), ['נועה לוי']);
   assert.deepEqual(names('all', ' גבאי '), ['רון גבאי']);
@@ -182,7 +181,6 @@ test('an SMS on its way is not reached yet, and has no read receipt to miss', ()
   const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
     filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
   assert.deepEqual(names('notReached'), ['a', 'b']);
-  assert.deepEqual(names('sms_on_its_way'), ['a']);
   assert.equal(guestStatus(rows[0]), 'sms_on_its_way');
   assert.equal(seenState(rows[0]), 'na');
 });
@@ -302,7 +300,7 @@ test('a record outside the package keeps its own status and journey', () => {
   );
 });
 
-test('records outside the package count as not reached and filter on their own', () => {
+test('records outside the package count as not reached', () => {
   const rows = [
     row({ guestName: 'נועה לוי' }),
     row({ guestName: 'דוד פרץ', delivery: 'outside_package' }),
@@ -312,5 +310,4 @@ test('records outside the package count as not reached and filter on their own',
     filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
 
   assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
-  assert.deepEqual(names('outside_package'), ['דוד פרץ']);
 });
