@@ -49,7 +49,9 @@ const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   health: (f) =>
     f.guestRecords >= HEALTH_CHECK_MIN_RECORDS &&
     (f.duplicateRecords > 0 || f.noPhoneRecords > 0),
-  test: (f) => f.canReceiveTestMessage,
+  // Temporarily hidden until the test message issue is fixed. To restore, return
+  // `f.canReceiveTestMessage` again.
+  test: () => false,
   seating: (f) => f.confirmedHeads > 0 && f.tableCount === 0,
   gifting: (f) => !f.giftingConfigured,
   preview: (f) => f.hasPreviewToken,
