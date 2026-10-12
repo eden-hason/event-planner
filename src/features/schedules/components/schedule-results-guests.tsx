@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type Ref } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   IconChevronLeft,
@@ -70,7 +70,6 @@ interface ScheduleResultsGuestsProps {
   now: Date;
   locale: string;
   isRTL: boolean;
-  ref?: Ref<HTMLElement>;
 }
 
 /**
@@ -93,7 +92,6 @@ export function ScheduleResultsGuests({
   now,
   locale,
   isRTL,
-  ref,
 }: ScheduleResultsGuestsProps) {
   const t = useTranslations('schedules.results.guests');
   const tPeople = useTranslations('schedules.results');
@@ -102,11 +100,6 @@ export function ScheduleResultsGuests({
   const [shown, setShown] = useState(FIRST);
 
   const chips = availableFilters({ collectsRsvp, showSeen });
-  // A reason picked from the not-reached card is not one of the chips, so it
-  // shows as an extra, active chip until the Owner picks another.
-  const allChips: GuestFilter[] = chips.includes(filter)
-    ? chips
-    : [...chips, filter];
   const rows = useMemo(
     () => filterGuests(guests, { filter, query }),
     [guests, filter, query],
@@ -198,10 +191,7 @@ export function ScheduleResultsGuests({
   ].join(' ');
 
   return (
-    <section
-      ref={ref}
-      className="bg-card flex scroll-mt-4 flex-col overflow-hidden rounded-2xl border"
-    >
+    <section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
       <div className="flex flex-col gap-2.5 px-4 pt-3.5 pb-3 @3xl:flex-row @3xl:flex-wrap @3xl:items-center @3xl:gap-3">
         <div className="flex items-baseline justify-between gap-2 @3xl:justify-start">
           <h3 className="text-sm font-bold @3xl:text-[15px]">{t('title')}</h3>
@@ -225,7 +215,7 @@ export function ScheduleResultsGuests({
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto">
-          {allChips.map((key) => (
+          {chips.map((key) => (
             <button
               key={key}
               type="button"

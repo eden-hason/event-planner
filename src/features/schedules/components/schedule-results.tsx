@@ -1,11 +1,17 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { IconChevronLeft, IconChevronRight, IconClock } from '@tabler/icons-react';
+import {
+  IconMessage,
+  IconSend,
+  IconUserCheck,
+  IconUsers,
+} from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
 import { AutoRefresh } from '@/components/auto-refresh';
+import { GHOST_BAR, GhostEmpty } from '@/components/ghost-empty';
 import { RefreshButton } from '@/components/refresh-button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
@@ -15,7 +21,6 @@ import {
   percent,
   resultsLiveness,
   type GuestFilter,
-  type NotReachedFilter,
 } from '../utils/schedule-results';
 import { GuestJourney } from './guest-journey';
 import { RESULT_TONE } from './results-presentation';
@@ -60,7 +65,6 @@ export function ScheduleResults({
   sentAt,
   renderedAt,
 }: ScheduleResultsProps) {
-  const t = useTranslations('schedules.results');
   const locale = useLocale();
   const isRTL = locale === 'he';
   const now = useMemo(() => new Date(renderedAt), [renderedAt]);
@@ -68,7 +72,6 @@ export function ScheduleResults({
 
   const [filter, setFilter] = useState<GuestFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const guestsRef = useRef<HTMLElement>(null);
   const [rootRef, wide] = useIsWide();
 
   const isSms = channel === 'sms';
@@ -89,11 +92,6 @@ export function ScheduleResults({
 
   const selected = guests.find((g) => g.guestId === selectedId) ?? null;
 
-  const pickReason = (reason: NotReachedFilter) => {
-    setFilter(reason);
-    guestsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const live = (
     <LiveStrip
       liveness={liveness}
@@ -106,38 +104,27 @@ export function ScheduleResults({
 
   if (guests.length === 0) {
     return (
-      <div ref={rootRef} className="flex flex-col gap-3">
+      <div ref={rootRef} className="flex flex-col gap-3.5">
         {live}
-        <section className="bg-card flex flex-col items-center gap-3 rounded-2xl border px-5 py-8 text-center">
-          <span className="bg-muted text-muted-foreground flex size-[60px] items-center justify-center rounded-[18px]">
-            <IconClock size={28} stroke={1.7} />
-          </span>
-          <span className="text-base font-bold">{t('empty.title')}</span>
-          <span className="text-muted-foreground max-w-[280px] text-[13px] leading-relaxed">
-            {t('empty.description')}
-          </span>
-        </section>
+        <ScheduleResultsGhost collectsRsvp={collectsRsvp} channel={channel} />
       </div>
     );
   }
 
-  const hasNotReached = Object.values(summary.notReached).some((n) => n > 0);
-
-  const notReached = (
-    <NotReachedCard
-      counts={summary.notReached}
-      active={filter}
-      onPick={pickReason}
-      isRTL={isRTL}
-    />
-  );
+  // The rail holds the open guest's journey, so it takes room only while one is open.
+  const railOpen = !!selected && wide;
 
   return (
     <div ref={rootRef} className="@container">
       <div className="flex flex-col gap-3.5">
         {live}
 
-        <div className="grid gap-3.5 @4xl:grid-cols-[minmax(0,1fr)_250px] @4xl:items-start">
+        <div
+          className={cn(
+            'grid gap-3.5 @4xl:items-start',
+            railOpen && '@4xl:grid-cols-[minmax(0,1fr)_250px]',
+          )}
+        >
           <div className="flex min-w-0 flex-col gap-3.5">
             {/* Masonry, not rows: a short card never leaves a gap beside a tall
                 one. Padding, not margin, spaces it - a column drops margin at
@@ -158,12 +145,9 @@ export function ScheduleResults({
                   <RsvpCard summary={summary} />
                 </div>
               )}
-              {/* Below the rail's width, what the rail holds flows in here */}
-              {hasNotReached && <div className="@4xl:hidden">{notReached}</div>}
             </div>
 
             <ScheduleResultsGuests
-              ref={guestsRef}
               guests={guests}
               collectsRsvp={collectsRsvp}
               showSeen={showSeen}
@@ -177,19 +161,16 @@ export function ScheduleResults({
             />
           </div>
 
-          <div className="hidden flex-col gap-3.5 @4xl:flex">
-            {selected && wide && (
-              <section className="bg-card border-primary/30 rounded-2xl border p-4 shadow-[0_10px_26px_rgba(42,12,58,0.1)]">
-                <GuestJourney
-                  row={selected}
-                  now={now}
-                  locale={locale}
-                  onClose={() => setSelectedId(null)}
-                />
-              </section>
-            )}
-            {notReached}
-          </div>
+          {selected && railOpen && (
+            <section className="bg-card border-primary/30 hidden rounded-2xl border p-4 shadow-[0_10px_26px_rgba(42,12,58,0.1)] @4xl:block">
+              <GuestJourney
+                row={selected}
+                now={now}
+                locale={locale}
+                onClose={() => setSelectedId(null)}
+              />
+            </section>
+          )}
         </div>
       </div>
 
@@ -609,90 +590,211 @@ function RsvpCard({ summary }: { summary: Summary }) {
 }
 
 /**
- * Who the message has not reached, by reason. Each reason filters the guest
- * list to the people behind it - the ones worth a personal call.
+ * The Results tab before there is anything to report: a schedule that has not
+ * gone out, or one whose first messages have not landed yet. Each card keeps
+ * its title and shows a faded ghost of what it will hold, the same empty state
+ * as the Home cards, so the tab reads as "not yet" rather than as zeroes.
  */
-function NotReachedCard({
-  counts,
-  active,
-  onPick,
-  isRTL,
+export function ScheduleResultsGhost({
+  collectsRsvp,
+  channel,
 }: {
-  counts: Summary['notReached'];
-  active: GuestFilter;
-  onPick: (reason: NotReachedFilter) => void;
-  isRTL: boolean;
+  collectsRsvp: boolean;
+  channel: 'whatsapp' | 'sms' | null;
 }) {
-  const t = useTranslations('schedules.results.notReached');
-  const rows = [
-    {
-      key: 'on_its_way' as const,
-      label: t('onItsWay'),
-      why: t('onItsWayWhy'),
-      n: counts.onItsWay,
-      dot: 'bg-warning-solid',
-    },
-    {
-      key: 'sms_on_its_way' as const,
-      label: t('smsOnItsWay'),
-      why: t('smsOnItsWayWhy'),
-      n: counts.smsOnItsWay,
-      dot: 'bg-channel-sms',
-    },
-    {
-      key: 'not_delivered' as const,
-      label: t('notDelivered'),
-      why: t('notDeliveredWhy'),
-      n: counts.notDelivered,
-      dot: 'bg-destructive',
-    },
-    {
-      key: 'no_phone' as const,
-      label: t('noPhone'),
-      why: t('noPhoneWhy'),
-      n: counts.noPhone,
-      dot: 'bg-muted-foreground/50',
-    },
-    {
-      key: 'outside_package' as const,
-      label: t('outsidePackage'),
-      why: t('outsidePackageWhy'),
-      n: counts.outsidePackage,
-      dot: 'bg-warning-solid',
-    },
-  ].filter((row) => row.n > 0);
-  if (rows.length === 0) return null;
+  const t = useTranslations('schedules.results');
+  const isSms = channel === 'sms';
 
-  const total = rows.reduce((sum, row) => sum + row.n, 0);
-  const Chevron = isRTL ? IconChevronLeft : IconChevronRight;
+  const funnelRows = [
+    { key: 'audience', bar: 'bg-muted-foreground/20', width: 'w-full' },
+    { key: 'reached', bar: 'bg-primary/30', width: 'w-[82%]' },
+    ...(isSms ? [] : [{ key: 'seen', bar: 'bg-primary/20', width: 'w-[60%]' }]),
+    ...(collectsRsvp
+      ? [{ key: 'answered', bar: 'bg-rsvp-confirmed/35', width: 'w-[38%]' }]
+      : []),
+  ];
+
+  const channelRows = [
+    ...(isSms
+      ? []
+      : [{ key: 'wa', color: 'bg-channel-whatsapp/35', width: 'w-[62%]' }]),
+    {
+      key: 'sms',
+      color: 'bg-channel-sms/35',
+      width: isSms ? 'w-[78%]' : 'w-[22%]',
+    },
+    { key: 'way', color: 'bg-warning-solid/35', width: 'flex-1' },
+  ];
+
+  const fade = ['opacity-100', 'opacity-75', 'opacity-50', 'opacity-30'];
+  // The ghosts grow with their rows, and the message sits a little below each
+  // one's middle, over the faded part, as on the Home cards.
+  const offset = (height: number) => `${Math.round(height * 0.28)}px`;
 
   return (
-    <section className="bg-card overflow-hidden rounded-2xl border">
-      <div className="px-4 pt-3.5 pb-2.5">
-        <CardTitle title={t('title')} note={t('total', { count: total })} />
-      </div>
-      {rows.map((row) => (
-        <button
-          key={row.key}
-          type="button"
-          aria-pressed={active === row.key}
-          onClick={() => onPick(row.key)}
-          className={cn(
-            'hover:bg-muted/50 flex w-full items-center gap-2.5 border-t px-4 py-[11px] text-start transition-colors',
-            active === row.key && 'bg-muted/60',
-          )}
-        >
-          <span className={cn('size-2 shrink-0 rounded-full', row.dot)} />
-          <div className="flex min-w-0 flex-1 flex-col gap-px">
-            <span className="text-[13.5px] font-semibold">{row.label}</span>
-            <span className="text-muted-foreground text-[11.5px]">
-              {row.why}
-            </span>
+    <div className="@container">
+      <div className="flex flex-col gap-3.5">
+        <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
+          <div>
+            <section className="bg-card flex flex-col gap-3.5 rounded-2xl border p-4 @2xl:p-[18px]">
+              <CardTitle title={t('funnel.title')} />
+              <GhostEmpty
+                icon={<IconSend className="size-[18px]" strokeWidth={1.9} />}
+                message={t('ghost.funnel')}
+                overlayOffset={offset(44 * funnelRows.length + 10)}
+                className="pb-6"
+              >
+                <div className="flex flex-col gap-3.5">
+                  {funnelRows.map((row, i) => (
+                    <div
+                      key={row.key}
+                      className={cn('flex flex-col gap-1.5', fade[i])}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={cn(GHOST_BAR, 'h-[9px] w-14')} />
+                        <span className={cn(GHOST_BAR, 'h-[7px] w-20')} />
+                        <span className={cn(GHOST_BAR, 'ms-auto h-3.5 w-7')} />
+                      </div>
+                      <span className="bg-muted block h-2.5 overflow-hidden rounded-full @2xl:h-3">
+                        <span
+                          className={cn(
+                            'block h-full rounded-full',
+                            row.bar,
+                            row.width,
+                          )}
+                        />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </GhostEmpty>
+            </section>
           </div>
-          <span className="text-base font-extrabold tabular-nums">{row.n}</span>
-          <Chevron size={15} className="text-muted-foreground/50 shrink-0" />
-        </button>
-      ))}
-    </section>
+
+          <div>
+            <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4 @2xl:p-[18px]">
+              <CardTitle title={t('channels.title')} />
+              <GhostEmpty
+                icon={<IconMessage className="size-[18px]" strokeWidth={1.9} />}
+                message={t('ghost.channels')}
+                overlayOffset={offset(32 * channelRows.length + 38)}
+                className="pb-6"
+              >
+                <div className="flex flex-col gap-3">
+                  <span className="flex h-3 gap-0.5 overflow-hidden rounded-full">
+                    {channelRows.map((row) => (
+                      <span
+                        key={row.key}
+                        className={cn('block h-full', row.color, row.width)}
+                      />
+                    ))}
+                  </span>
+                  <div className="flex flex-col gap-2.5">
+                    {channelRows.map((row, i) => (
+                      <div
+                        key={row.key}
+                        className={cn('flex items-center gap-2.5', fade[i])}
+                      >
+                        <span
+                          className={cn(
+                            'size-[9px] shrink-0 rounded-[3px]',
+                            row.color,
+                          )}
+                        />
+                        <div className="flex flex-1 flex-col gap-1.5">
+                          <span className={cn(GHOST_BAR, 'h-[9px] w-16')} />
+                          <span className={cn(GHOST_BAR, 'h-[7px] w-28')} />
+                        </div>
+                        <span className={cn(GHOST_BAR, 'h-3.5 w-6')} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </GhostEmpty>
+            </section>
+          </div>
+
+          {collectsRsvp && (
+            <div>
+              <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4 @2xl:p-[18px]">
+                <CardTitle title={t('rsvp.title')} />
+                <GhostEmpty
+                  icon={
+                    <IconUserCheck className="size-[18px]" strokeWidth={1.9} />
+                  }
+                  message={t('ghost.rsvp')}
+                  overlayOffset={offset(160)}
+                  className="pb-6"
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="bg-rsvp-confirmed-tint flex items-end gap-3 rounded-[14px] px-3.5 py-3">
+                      <div className="flex flex-col gap-2">
+                        <span className="bg-rsvp-confirmed/30 h-7 w-12 rounded-lg" />
+                        <span className="bg-rsvp-confirmed/25 h-2 w-20 rounded-full" />
+                      </div>
+                      <span className="bg-rsvp-confirmed/25 ms-auto h-2 w-28 rounded-full" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        ['bg-rsvp-confirmed-tint', 'bg-rsvp-confirmed/30'],
+                        ['bg-rsvp-declined-tint', 'bg-rsvp-declined/30'],
+                        ['bg-muted', 'bg-muted-foreground/20'],
+                      ].map(([tint, bar], i) => (
+                        <div
+                          key={tint}
+                          className={cn(
+                            'flex flex-col items-center gap-2 rounded-xl px-1.5 py-3',
+                            tint,
+                            fade[i],
+                          )}
+                        >
+                          <span className={cn('h-4 w-6 rounded-md', bar)} />
+                          <span className={cn('h-[7px] w-12 rounded-full', bar)} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </GhostEmpty>
+              </section>
+            </div>
+          )}
+        </div>
+
+        <section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
+          <div className="px-4 pt-3.5 pb-3">
+            <h3 className="text-sm font-bold @3xl:text-[15px]">
+              {t('guests.title')}
+            </h3>
+          </div>
+          <GhostEmpty
+            icon={<IconUsers className="size-[18px]" strokeWidth={1.9} />}
+            message={t('ghost.guests')}
+            overlayOffset={offset(212)}
+            className="pb-6"
+          >
+            {[
+              [RESULT_TONE.ok, 'w-[34%]', 'w-[22%]'],
+              [RESULT_TONE.info, 'w-[28%]', 'w-[18%]'],
+              [RESULT_TONE.pending, 'w-[40%]', 'w-[26%]'],
+              [RESULT_TONE.bad, 'w-[24%]', 'w-[20%]'],
+            ].map(([tone, name, sub], i) => (
+              <div
+                key={tone}
+                className={cn(
+                  'flex items-center gap-3 border-t px-4 py-3',
+                  fade[i],
+                )}
+              >
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span className={cn(GHOST_BAR, 'h-[9px]', name)} />
+                  <span className={cn(GHOST_BAR, 'h-[7px]', sub)} />
+                </div>
+                <span className={cn('h-5 w-16 rounded-full', tone)} />
+              </div>
+            ))}
+          </GhostEmpty>
+        </section>
+      </div>
+    </div>
   );
 }
