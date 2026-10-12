@@ -1538,6 +1538,7 @@
         "afterEvent": "Pick a date on or before the event day",
         "expires": "This time is more than {hours} hours ago, so the message would expire instead of sending - pick a later time"
       },
+      "eventDayHelper": "The date follows the event - only the time can change",
       "undatedHelper": "Pick a date to schedule this message"
     },
     "audience": {

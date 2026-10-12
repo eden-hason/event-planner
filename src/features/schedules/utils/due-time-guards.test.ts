@@ -6,6 +6,7 @@ import {
   isDueAfterEvent,
   lastDueDay,
   pastDueTime,
+  pinnedDueDay,
   // @ts-expect-error Node's type-stripping test runner requires the source extension
 } from './due-time-guards.ts';
 
@@ -22,6 +23,13 @@ test('lastDueDay is the Event day, and none for the Thank You or an undated Even
   assert.equal(lastDueDay(EVENT, 'initial_invitation'), '2026-09-26');
   assert.equal(lastDueDay(EVENT, 'post_event'), null);
   assert.equal(lastDueDay(null, 'initial_invitation'), null);
+});
+
+test('pinnedDueDay pins only the Event Reminder, to the Event day', () => {
+  assert.equal(pinnedDueDay(EVENT, 'event_reminder'), '2026-09-26');
+  assert.equal(pinnedDueDay(EVENT, 'initial_invitation'), null);
+  assert.equal(pinnedDueDay(EVENT, 'post_event'), null);
+  assert.equal(pinnedDueDay(null, 'event_reminder'), null);
 });
 
 test('isDueAfterEvent allows the Event day itself, at any hour', () => {

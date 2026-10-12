@@ -23,7 +23,7 @@ import {
   offsetPhrase,
   sendWindowHours,
 } from '../utils/timeline';
-import { firstSendableDay, lastDueDay } from '../utils/due-time-guards';
+import { firstSendableDay, lastDueDay, pinnedDueDay } from '../utils/due-time-guards';
 import { SettingsCard } from './settings-card';
 import { useScheduleSettings } from './schedule-settings-context';
 
@@ -80,6 +80,9 @@ export function ScheduleDetailsCard({
     dueTimeIssue,
   } = useScheduleSettings();
   const disabled = !editable || isSaving;
+  // A Schedule whose copy is written for the Event day (the reminder says
+  // "today") keeps that day: the date shows read-only and only the hour moves.
+  const pinnedDay = pinnedDueDay(eventDate, scheduleTypeKey);
 
   // Days that could never hold a valid Due Time are not offered at all: after
   // the Event day (the Thank You aside), and so far back that the Dispatcher
@@ -102,10 +105,10 @@ export function ScheduleDetailsCard({
   // The Israel calendar day of the Due Time, as a Date the picker can show.
   // Built from the wall-clock parts rather than from `new Date(iso)` so a Due
   // Time just after midnight Israel is not shown as the previous day.
-  const pickerDate = useMemo(
-    () => (scheduledDate ? pickerDay(israelWallClockParts(scheduledDate).date) : undefined),
-    [scheduledDate],
-  );
+  const pickerDate = useMemo(() => {
+    if (scheduledDate) return pickerDay(israelWallClockParts(scheduledDate).date);
+    return pinnedDay ? pickerDay(pinnedDay) : undefined;
+  }, [scheduledDate, pinnedDay]);
 
   // Both handlers rebuild the instant from an Israel calendar date and an
   // Israel wall clock, which is the only way to author a Due Time. Setting UTC
@@ -124,12 +127,14 @@ export function ScheduleDetailsCard({
 
   const handleTimeChange = (value: string) => {
     // An Undated Schedule keeps no date until the Owner picks one: choosing the
-    // hour first only sets the hour, never a day nobody chose (ADR 0029).
-    if (!scheduledDate) {
+    // hour first only sets the hour, never a day nobody chose (ADR 0029). A
+    // pinned Schedule's day is not a choice, so the hour lands on it - which
+    // also brings a reminder stranded by a moved Event back to the Event day.
+    if (!scheduledDate && !pinnedDay) {
       setScheduledTime(value);
       return;
     }
-    const day = israelWallClockParts(scheduledDate).date;
+    const day = pinnedDay ?? israelWallClockParts(scheduledDate).date;
     const iso = israelWallClockToIso(day, value);
     if (!iso) return;
     setScheduledDate(iso);
@@ -158,14 +163,14 @@ export function ScheduleDetailsCard({
           <div
             className={cn(
               '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
-              !editable && '[&_button]:bg-muted/60',
+              (!editable || pinnedDay) && '[&_button]:bg-muted/60',
               dueTimeIssue === 'afterEvent' && '[&_button]:border-destructive',
             )}
           >
             <DatePicker
               date={pickerDate}
               onDateChange={handleDateChange}
-              disabled={disabled}
+              disabled={disabled || pinnedDay !== null}
               disabledDays={disabledDays}
               placeholder={t('scheduledDate')}
             />
@@ -224,7 +229,8 @@ export function ScheduleDetailsCard({
       )}
 
       <p className="text-muted-foreground text-xs">
-        {!scheduledDate && `${t('undatedHelper')} · `}
+        {pinnedDay && `${t('eventDayHelper')} · `}
+        {!scheduledDate && !pinnedDay && `${t('undatedHelper')} · `}
         {relativeNote}
         {relativeNote ? ' · ' : ''}
         {t('sendWindowHelper', {

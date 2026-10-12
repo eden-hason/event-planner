@@ -16,6 +16,13 @@ const HOUR_MS = 3_600_000;
 /** The one Schedule that is meant to go out after the Event. */
 const AFTER_EVENT_TYPE_KEY = 'post_event';
 
+/**
+ * Schedules whose copy is written for one day relative to the Event, so the
+ * day is not the organiser's to move - only the hour. The Event Reminder says
+ * "today", and would be wrong on any other day.
+ */
+const EVENT_DAY_TYPE_KEYS = new Set(['event_reminder']);
+
 export type DueTimeRules = {
   sendWindow: SendWindow;
   /** How long past its Due Time a Schedule may be before it expires unsent. */
@@ -43,6 +50,18 @@ export function lastDueDay(
   if (!eventDate || scheduleTypeKey === AFTER_EVENT_TYPE_KEY) return null;
   // event_date is a calendar date pinned at 00:00 UTC, so its UTC day is the
   // day the organiser picked.
+  return eventDate.slice(0, 10);
+}
+
+/**
+ * The calendar day, "YYYY-MM-DD", this schedule type must go out on, or `null`
+ * when the organiser picks it. Only the hour of a pinned Schedule is editable.
+ */
+export function pinnedDueDay(
+  eventDate: string | null,
+  scheduleTypeKey: string,
+): string | null {
+  if (!eventDate || !EVENT_DAY_TYPE_KEYS.has(scheduleTypeKey)) return null;
   return eventDate.slice(0, 10);
 }
 
