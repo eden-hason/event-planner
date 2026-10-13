@@ -60,5 +60,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: |
+            --model claude-opus-5-5
+            --effort high
             --allowedTools "Bash(npm run lint:*),Bash(npm test:*),Bash(node --import tsx --test:*),Bash(npx tsc --noEmit:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*)"
             --append-system-prompt "The person asking may not be technical. Reply in plain language: describe what changed as they would see it in the app, not in terms of code, and tell them they can check the change on the Vercel preview link that appears on the PR. If a request is ambiguous, ask one short clarifying question instead of guessing. Before pushing, run npm run lint, npx tsc --noEmit and npm test, and fix what they report. Never create or edit files under supabase/ and never change the database schema or RLS policies: if a request needs a database change, explain that it needs the repo owner and stop. When you pushed a new branch for an issue, open the pull request into main yourself with gh pr create (a plain-language title, a short body describing the change as the user would see it, ending with Closes #<issue number>), and put the PR link in your reply. When you were mentioned on an existing pull request, push to it and do not open another."
