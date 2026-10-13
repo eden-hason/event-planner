@@ -158,7 +158,6 @@ export async function getFeaturedActionFacts(
     testable,
     tableCount,
     expenseCount,
-    previewToken,
     noAskPlanned,
   ] = await Promise.all([
     getHomeGuests(event.id),
@@ -167,7 +166,6 @@ export async function getFeaturedActionFacts(
     canReceiveTestMessage(event.id, viewer),
     countRows('tables', event.id),
     countRows('expenses', event.id),
-    getPreviewToken(event.id),
     hasNoAskPlannedForEvent(event),
   ]);
 
@@ -185,23 +183,10 @@ export async function getFeaturedActionFacts(
     confirmedHeads: countHeads(guests).confirmed,
     tableCount,
     giftingConfigured: isGiftingEnabled(event.eventSettings),
-    hasPreviewToken: previewToken !== null,
     expenseCount,
     noAskPlanned,
   };
 }
-
-export const getPreviewToken = cache(async function getPreviewToken(
-  eventId: string,
-): Promise<string | null> {
-  const { supabase } = await getEffectiveClient();
-  const { data } = await supabase
-    .from('events')
-    .select('preview_token')
-    .eq('id', eventId)
-    .maybeSingle();
-  return (data?.preview_token as string | undefined) ?? null;
-});
 
 export async function getStatusStrip(event: EventApp): Promise<StatusStripData> {
   const { supabase } = await getEffectiveClient();

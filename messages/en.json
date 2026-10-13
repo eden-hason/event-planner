@@ -1203,7 +1203,6 @@
         "link": "Personal invitation link",
         "copy": "Copy",
         "copied": "Copied",
-        "preview": "Preview",
         "notesPlaceholder": "Internal note, the guest never sees it",
         "namePlaceholder": "Guest or family name",
         "phonePlaceholder": "050-000-0000",
@@ -1373,13 +1372,6 @@
         "gifting": {
           "label": "Turn on digital gifts",
           "why": "Guests give straight from the invitation"
-        },
-        "preview": {
-          "label": "Share an invitation preview",
-          "why": "A link to the RSVP page exactly as a guest sees it",
-          "copiedLabel": "Link copied",
-          "copiedWhy": "Send it to anyone you want to show the invitation to",
-          "shareTitle": "Invitation preview"
         },
         "budget": {
           "label": "Log your first expense",

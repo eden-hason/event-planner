@@ -34,7 +34,7 @@ const LATER_TIERS: ReadonlyArray<readonly RankedActionKey[]> = [
   // Urgent ongoing
   ['health'],
   // Discovery
-  ['test', 'seating', 'gifting', 'preview', 'budget'],
+  ['test', 'seating', 'gifting', 'budget'],
 ];
 
 const FALLBACK: readonly FallbackActionKey[] = ['addGuest', 'ai', 'viewList'];
@@ -54,7 +54,6 @@ const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   test: () => false,
   seating: (f) => f.confirmedHeads > 0 && f.tableCount === 0,
   gifting: (f) => !f.giftingConfigured,
-  preview: (f) => f.hasPreviewToken,
   budget: (f) => f.expenseCount === 0,
 };
 

@@ -11,7 +11,6 @@ import {
   IconCloudUpload,
   IconCoin,
   IconGift,
-  IconLink,
   IconList,
   IconMessage,
   IconPhoto,
@@ -55,7 +54,6 @@ const ACTION_UI: Record<
   test: { icon: IconMessage },
   seating: { icon: IconUsers, path: 'seating' },
   gifting: { icon: IconGift, path: 'gifting' },
-  preview: { icon: IconLink },
   budget: { icon: IconCoin, path: 'budget' },
   addGuest: { icon: IconPlus, path: 'guests?add=1' },
   ai: { icon: IconSparkles },
@@ -117,7 +115,6 @@ export function FeaturedActionList({
   subtitle,
   actions,
   maskedPhone,
-  previewUrl,
   health,
 }: {
   eventId: string;
@@ -125,7 +122,6 @@ export function FeaturedActionList({
   subtitle: string;
   actions: FeaturedActionView[];
   maskedPhone: string | null;
-  previewUrl: string | null;
   health: { duplicates: number; noPhone: number };
 }) {
   const t = useTranslations('home.mobile');
@@ -133,7 +129,6 @@ export function FeaturedActionList({
   const [healthOpen, setHealthOpen] = useState(false);
   const { openSheet: openPackageSheet } = useRecordPackage();
   const router = useRouter();
-  const [copied, setCopied] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [sending, startSending] = useTransition();
   const { isVisitor, openSave, requireSaved } = useSaveEvent();
@@ -152,30 +147,6 @@ export function FeaturedActionList({
     });
   };
 
-  const sharePreview = async () => {
-    if (!previewUrl) return;
-    // A Visitor's invite link reaches nobody until they save (ADR 0028).
-    if (!requireSaved('share')) return;
-    // The native sheet first on a phone - it is where WhatsApp lives. Only a
-    // missing or failing share falls back to the clipboard; a dismissed sheet
-    // is the Owner's choice and ends there.
-    if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title: t('actions.preview.shareTitle'), url: previewUrl });
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(previewUrl);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
-    } catch {
-      // Nothing to fall back to; the card simply does not flip.
-    }
-  };
-
   const onInlineClick = (key: FeaturedActionKey) => {
     if (key === 'test') {
       // A test goes to a real phone: a Visitor saves first (ADR 0028).
@@ -183,8 +154,6 @@ export function FeaturedActionList({
       setTest((prev) => (prev.step === 'closed' ? { step: 'confirm' } : { step: 'closed' }));
     } else if (key === 'health') {
       setHealthOpen((open) => !open);
-    } else if (key === 'preview') {
-      void sharePreview();
     } else if (key === 'package') {
       openPackageSheet({ onShowOutside: () => router.push(`${listHref}?package=outside`) });
     } else if (key === 'ai') {
@@ -233,11 +202,10 @@ export function FeaturedActionList({
         // as half empty.
         const fullRow = actions.length % 2 === 1 && i === actions.length - 1;
         const href = path ? `/app/${eventId}/${path}` : null;
-        const isCopied = action.key === 'preview' && copied;
         const open =
           (action.key === 'test' && test.step !== 'closed') ||
           (action.key === 'health' && healthOpen);
-        const badge = isCopied ? '✓' : action.key === 'test' ? t('actions.test.badge') : null;
+        const badge = action.key === 'test' ? t('actions.test.badge') : null;
 
         const inner = (
           <>
@@ -252,7 +220,7 @@ export function FeaturedActionList({
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[15px] font-bold">
-                  {isCopied ? t('actions.preview.copiedLabel') : action.label}
+                  {action.label}
                 </span>
                 {urgent && (
                   <span className="bg-warning-tint text-warning-strong rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap">
@@ -266,7 +234,7 @@ export function FeaturedActionList({
                 )}
               </div>
               <span className="text-muted-foreground text-[13px] leading-[1.45]">
-                {isCopied ? t('actions.preview.copiedWhy') : action.why}
+                {action.why}
               </span>
             </div>
             <IconChevronRight className="text-muted-foreground size-[18px] shrink-0 rtl:rotate-180" />

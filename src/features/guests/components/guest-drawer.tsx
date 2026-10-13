@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import {
   IconCheck,
   IconCopy,
-  IconEye,
   IconLink,
   IconTrash,
   IconX,
@@ -259,15 +258,6 @@ function InvitationLink({ token }: { token: string }) {
         )}
         {copied ? t('list.drawer.copied') : t('list.drawer.copy')}
       </button>
-      <a
-        href={`/c/${token}`}
-        target="_blank"
-        rel="noreferrer"
-        className="bg-muted hover:bg-muted/70 flex h-[30px] items-center gap-[5px] rounded-lg px-2.5 text-[12.5px] font-semibold"
-      >
-        <IconEye size={14} />
-        {t('list.drawer.preview')}
-      </a>
     </div>
   );
 }
