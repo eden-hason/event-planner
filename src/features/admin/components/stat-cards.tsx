@@ -6,7 +6,7 @@ import type { OverviewStats } from '../types';
 /**
  * The headline of the Overview: four stat cards the Operator reads first. Every
  * number carries a supporting sub-line. Paid Users counts Owners and Payments
- * counts payments, so an Owner who tops up adds a payment but not a user.
+ * sums what they paid, so an Owner who tops up adds money but not a user.
  */
 type StatCard = {
   label: string;
@@ -19,6 +19,11 @@ type StatCard = {
 
 function integer(value: number): string {
   return value.toLocaleString('he-IL');
+}
+
+/** Whole shekels: agorot are noise at this altitude. */
+function shekels(value: number): string {
+  return `₪${Math.round(value).toLocaleString('he-IL')}`;
 }
 
 export function StatCards({ stats }: { stats: OverviewStats }) {
@@ -46,8 +51,8 @@ export function StatCards({ stats }: { stats: OverviewStats }) {
     },
     {
       label: 'תשלומים',
-      value: integer(stats.payments),
-      sub: `${integer(stats.paymentsThisMonth)} החודש`,
+      value: shekels(stats.paymentsTotal),
+      sub: `${shekels(stats.paymentsTotalThisMonth)} החודש`,
       icon: CreditCard,
       tone: 'brand',
     },

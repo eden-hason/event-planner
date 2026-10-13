@@ -89,7 +89,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     excludeIds(
       supabase
         .from('event_billing_events')
-        .select('id, occurred_at, events!inner(user_id)')
+        .select('id, amount, occurred_at, events!inner(user_id)')
         .not('record_count', 'is', null)
         .neq('payment_method', 'gift'),
       'event_id',
@@ -142,6 +142,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     ...tallyPayments(
       payments.map((row) => ({
         ownerId: (row.events as unknown as { user_id: string }).user_id,
+        amount: Number(row.amount),
         occurredAt: row.occurred_at as string,
       })),
       israelMonthStart(now),
