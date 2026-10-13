@@ -28,7 +28,6 @@ export type RankedActionKey =
   | 'test'
   | 'seating'
   | 'gifting'
-  | 'preview'
   | 'budget';
 
 /** Always eligible; fills whatever slots the ranked actions leave. */
@@ -50,8 +49,6 @@ export type FeaturedActionFacts = {
   confirmedHeads: number;
   tableCount: number;
   giftingConfigured: boolean;
-  /** The Owner picked a landing template rather than leaving the default. */
-  hasPreviewToken: boolean;
   expenseCount: number;
   /** Guest Records beyond the Record Package, which no Schedule will reach (ADR 0027). */
   recordsOverPackage: number;

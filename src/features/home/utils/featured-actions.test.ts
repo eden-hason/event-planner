@@ -17,7 +17,6 @@ const settled: FeaturedActionFacts = {
   confirmedHeads: 0,
   tableCount: 0,
   giftingConfigured: true,
-  hasPreviewToken: false,
   expenseCount: 1,
   recordsOverPackage: 0,
   noAskPlanned: false,

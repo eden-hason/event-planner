@@ -2,16 +2,10 @@ import { getTranslations } from 'next-intl/server';
 import { formatPhone } from '@/lib/phone';
 import { RecordPackageProvider } from '@/features/billing';
 import { getGuestPackageView } from '@/features/billing/queries';
-import { getFeaturedActionFacts, getHomeEvent, getHomeViewer, getPreviewToken } from '../queries';
+import { getFeaturedActionFacts, getHomeEvent, getHomeViewer } from '../queries';
 import { rankFeaturedActions } from '../utils/featured-actions';
 import type { FeaturedActionKey } from '../types';
 import { FeaturedActionList, type FeaturedActionView } from './featured-action-list';
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.NEXT_PUBLIC_VERCEL_URL
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : 'http://localhost:3000');
 
 /** Masks all but the last four digits: 052-•••-3341. */
 function maskPhone(e164: string): string {
@@ -22,11 +16,10 @@ function maskPhone(e164: string): string {
 }
 
 export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
-  const [t, event, viewer, previewToken] = await Promise.all([
+  const [t, event, viewer] = await Promise.all([
     getTranslations('home.mobile.actions'),
     getHomeEvent(eventId),
     getHomeViewer(eventId),
-    getPreviewToken(eventId),
   ]);
   // Seating Managers get Hero and analytics only - nearly every action leads
   // somewhere they cannot go.
@@ -76,7 +69,6 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
         subtitle={t('subtitle')}
         actions={actions}
         maskedPhone={viewer.phone ? maskPhone(viewer.phone) : null}
-        previewUrl={previewToken ? `${SITE_URL}/p/${previewToken}` : null}
         health={{ duplicates: facts.duplicateRecords, noPhone: facts.noPhoneRecords }}
       />
     </RecordPackageProvider>

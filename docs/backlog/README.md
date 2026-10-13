@@ -50,3 +50,5 @@ in the diff, not here.
 | [0016](0016-enforce-the-package-channel.md) | The channel a Record Package was bought for is not enforced | billing / outreach | open |
 | [0017](0017-import-guests-from-whatsapp.md) | Guests cannot be imported from the Owner's WhatsApp contacts and groups | guests / import | in progress |
 | [0018](0018-captcha-on-auth-endpoints.md) | Nothing but a per-IP rate limit protects the public auth endpoints | auth / abuse | open |
+| [0019](0019-guest-link-description-and-preview.md) | The guest drawer's invitation link is unexplained, and its Preview button was removed | guests / confirmation | open |
+| [0020](0020-test-message-is-whatsapp-only.md) | A Test Message can still go out as an SMS | schedules / home | open |
