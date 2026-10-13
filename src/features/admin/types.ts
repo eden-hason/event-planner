@@ -23,10 +23,10 @@ export type OverviewStats = {
   paidUsers: number;
   /** Distinct Owners with a payment made this calendar month, Israel time - the sub-line. */
   paidUsersThisMonth: number;
-  /** Recorded payments, top-ups included. Gifts do not count. */
-  payments: number;
-  /** Payments made this calendar month, Israel time - the sub-line. */
-  paymentsThisMonth: number;
+  /** Sum of every recorded payment in shekels, top-ups included. */
+  paymentsTotal: number;
+  /** Sum of the payments made this calendar month, Israel time - the sub-line. */
+  paymentsTotalThisMonth: number;
 };
 
 export type SignalKind =
