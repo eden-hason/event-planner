@@ -78,6 +78,17 @@ export function ActiveFilterChips({
           },
         ]
       : []),
+    ...(params.transport
+      ? [
+          {
+            key: 'transport',
+            label: t('list.chips.transport', {
+              answer: t(`list.transport.${params.transport}`),
+            }),
+            remove: () => onChange({ transport: null }),
+          },
+        ]
+      : []),
   ];
 
   if (chips.length === 0 && !leading) return null;

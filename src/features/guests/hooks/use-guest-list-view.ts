@@ -20,6 +20,7 @@ const filterOf = (view: GuestListParams): GuestFilterParams => ({
   statuses: view.status ? [view.status] : [],
   sides: view.side ? [view.side] : [],
   noPhoneOnly: view.noPhone,
+  transport: view.transport,
   sortKey: view.sort,
 });
 
@@ -109,6 +110,7 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     params.groups.length > 0 ||
     !!params.side ||
     params.noPhone ||
+    !!params.transport ||
     !!params.issue ||
     outsideOnly;
 

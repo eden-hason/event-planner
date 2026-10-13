@@ -1046,7 +1046,7 @@
       "countFiltered": "מוצגות {shown} מתוך {total}",
       "meter": {
         "confirmed": "אישרו",
-        "line": "{guests} אורחים · {records} רשומות אורחים"
+        "line": "{guests} אורחים"
       },
       "status": {
         "all": "הכל",
@@ -1060,6 +1060,8 @@
         "group": "קבוצה",
         "side": "צד",
         "sideAll": "הכל",
+        "transport": "הסעה",
+        "transportAll": "הכל",
         "noPhoneOnly": "בלי מספר טלפון",
         "noGroups": "עוד אין קבוצות"
       },
@@ -1073,6 +1075,7 @@
         "group": "קבוצה: {name}",
         "side": "צד: {side}",
         "noPhone": "בלי טלפון",
+        "transport": "הסעה: {answer}",
         "clearAll": "ניקוי הכל",
         "remove": "הסרת {label}"
       },

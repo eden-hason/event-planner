@@ -34,6 +34,7 @@ test('every filter reads back from the query', () => {
       sort: 'name_desc',
       issue: null,
       outside: false,
+      transport: null,
     },
   );
 });
@@ -44,9 +45,16 @@ test('the outside-the-package filter round-trips through the URL', () => {
   assert.equal(write({ ...DEFAULT_GUEST_LIST_PARAMS, outside: true }), 'package=outside');
 });
 
+test('the transportation filter round-trips through the URL', () => {
+  for (const answer of ['yes', 'no', 'unanswered'] as const) {
+    assert.equal(parse(`transport=${answer}`).transport, answer);
+    assert.equal(write({ ...DEFAULT_GUEST_LIST_PARAMS, transport: answer }), `transport=${answer}`);
+  }
+});
+
 test('values that are not ours are ignored rather than trusted', () => {
   assert.deepEqual(
-    parse('status=maybe&side=both&sort=random&group='),
+    parse('status=maybe&side=both&sort=random&group=&transport=maybe'),
     DEFAULT_GUEST_LIST_PARAMS,
   );
 });
@@ -92,6 +100,7 @@ test('a written view reads back as itself', () => {
     sort: 'amount_desc' as const,
     issue: 'duplicates' as const,
     outside: true,
+    transport: 'unanswered' as const,
   };
   assert.deepEqual(parse(write(view)), view);
 });
@@ -105,7 +114,7 @@ test('the name sort an issue implies is not written out', () => {
   assert.equal(query, 'issue=duplicates');
 });
 
-test('the filter badge counts group, side and no-phone, never status or search', () => {
+test('the filter badge counts group, side, no-phone and transportation, never status or search', () => {
   assert.equal(activeFilterCount(DEFAULT_GUEST_LIST_PARAMS), 0);
   assert.equal(
     activeFilterCount({
@@ -115,7 +124,8 @@ test('the filter badge counts group, side and no-phone, never status or search',
       groups: ['a', 'b'],
       side: 'groom',
       noPhone: true,
+      transport: 'yes',
     }),
-    4,
+    5,
   );
 });

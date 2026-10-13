@@ -298,6 +298,7 @@ export function GuestsDesktop({
         }
       />
       <GuestToolbar
+        showTransportation={showTransportation}
         params={params}
         onChange={handleFilterChange}
         statusCounts={statusCounts}

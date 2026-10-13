@@ -37,6 +37,7 @@ import {
   headcountShare,
   rsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
+import { RsvpStatusLegend } from '../rsvp-status-legend';
 import { TransportationLine } from '../transportation-line';
 import {
   hiddenCount,
@@ -494,6 +495,7 @@ export function GuestsMobile({
       )}
 
       <GuestFiltersSheet
+        showTransportation={showTransportation}
         open={sheet?.kind === 'filters'}
         onClose={closeSheet}
         params={params}
@@ -595,7 +597,7 @@ function Meter({
   footer,
 }: {
   guests: GuestWithGroupApp[];
-  /** The Event asks the transportation question: its answers sit under the bar. */
+  /** The Event asks the transportation question: its answers sit under the status legend. */
   showTransportation: boolean;
   /** The Record Package line, inside the same card rather than a second meter. */
   footer?: ReactNode;
@@ -606,20 +608,21 @@ function Meter({
   return (
     <div className="bg-card overflow-hidden rounded-[14px] border">
     <div className="flex flex-col gap-2 px-3.5 py-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="flex items-baseline gap-[5px]">
-          <b className="text-xl font-extrabold tabular-nums">
-            {Math.round(headcountShare(counts, 'confirmed'))}%
-          </b>
-          <span className="text-muted-foreground text-[12.5px]">
-            {t('meter.confirmed')}
-          </span>
+      <span className="flex items-baseline gap-[5px]">
+        <b className="text-xl font-extrabold tabular-nums">
+          {Math.round(headcountShare(counts, 'confirmed'))}%
+        </b>
+        <span className="text-muted-foreground text-[12.5px]">
+          {t('meter.confirmed')}
         </span>
-        <span className="text-muted-foreground truncate text-xs">
-          {t('meter.line', {
-            guests: counts.total.toLocaleString(),
-            records: guests.length.toLocaleString(),
-          })}
+      </span>
+      {/* The status counts and the total they add up to, on one line. */}
+      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <RsvpStatusLegend counts={counts} />
+        </span>
+        <span className="whitespace-nowrap">
+          {t('meter.line', { guests: counts.total.toLocaleString() })}
         </span>
       </div>
       <div className="bg-muted flex h-[7px] gap-0.5 overflow-hidden rounded-full">
@@ -631,7 +634,12 @@ function Meter({
           />
         ))}
       </div>
-      {showTransportation && <TransportationLine guests={guests} className="text-xs" />}
+      {showTransportation && (
+        <TransportationLine
+          guests={guests}
+          className="gap-x-3.5 text-xs"
+        />
+      )}
     </div>
     {footer}
     </div>

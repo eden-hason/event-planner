@@ -8,15 +8,15 @@ import {
   headcountShare,
   rsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
-import { cn } from '@/lib/utils';
+import { RsvpStatusLegend } from '../rsvp-status-legend';
 import { TransportationLine } from '../transportation-line';
 
 /**
  * The slim RSVP meter above the list: one stacked bar, the share confirmed, and
- * guests alongside guest records. Counts are Guests (sum of amounts); the list
+ * the total Guests. Counts are Guests (sum of amounts); the list
  * below counts rows. Information only - filtering lives in the status chips.
  * `aside` sits at the row's end: the Record Package card, when there is one.
- * `showTransportation` adds the transportation answers under the legend.
+ * `showTransportation` adds the transportation answers to the status legend.
  */
 export function RsvpMeter({
   guests,
@@ -53,29 +53,20 @@ export function RsvpMeter({
         </div>
         <div className="text-muted-foreground flex flex-wrap justify-between gap-x-3 gap-y-1 text-[12.5px]">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {RSVP_STATUSES.map((status) => (
-              <span key={status} className="inline-flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    'size-[7px] rounded-full',
-                    rsvpPresentation(status).solid,
-                  )}
-                />
-                {t(`status.${status}`)}
-                <b className="text-foreground font-bold tabular-nums">
-                  {counts[status].toLocaleString()}
-                </b>
-              </span>
-            ))}
+            <RsvpStatusLegend counts={counts} />
+            {/* The transportation answers share the status row, set apart by a
+                rule; they wrap as one group when the row runs out of room. */}
+            {showTransportation && (
+              <>
+                <span aria-hidden className="bg-border h-3.5 w-px self-center" />
+                <TransportationLine guests={guests} />
+              </>
+            )}
           </div>
           <span>
-            {t('meter.line', {
-              guests: total.toLocaleString(),
-              records: guests.length.toLocaleString(),
-            })}
+            {t('meter.line', { guests: total.toLocaleString() })}
           </span>
         </div>
-        {showTransportation && <TransportationLine guests={guests} />}
       </div>
       {aside}
     </div>

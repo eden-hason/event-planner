@@ -1046,7 +1046,7 @@
       "countFiltered": "Showing {shown} of {total}",
       "meter": {
         "confirmed": "confirmed",
-        "line": "{guests} guests · {records} guest records"
+        "line": "{guests} guests"
       },
       "status": {
         "all": "All",
@@ -1060,6 +1060,8 @@
         "group": "Group",
         "side": "Side",
         "sideAll": "All",
+        "transport": "Transportation",
+        "transportAll": "All",
         "noPhoneOnly": "No phone number",
         "noGroups": "No groups yet"
       },
@@ -1073,6 +1075,7 @@
         "group": "Group: {name}",
         "side": "Side: {side}",
         "noPhone": "No phone",
+        "transport": "Transportation: {answer}",
         "clearAll": "Clear all",
         "remove": "Remove {label}"
       },
