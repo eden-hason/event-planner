@@ -19,13 +19,14 @@ export type OverviewStats = {
   events: number;
   /** Published events dated within the next 30 days - the sub-line. */
   eventsUpcoming: number;
-  /** Guest Records: one row per guest list entry, the billable unit. */
-  guestRecords: number;
-  /**
-   * Confirmed Guest Records across all published events. Its share of
-   * guestRecords is the headline percentage on the Confirmed card.
-   */
-  confirmed: number;
+  /** Distinct Owners with at least one payment. Gifts (payments of 0) do not count. */
+  paidUsers: number;
+  /** Distinct Owners with a payment made this calendar month, Israel time - the sub-line. */
+  paidUsersThisMonth: number;
+  /** Recorded payments, top-ups included. Gifts do not count. */
+  payments: number;
+  /** Payments made this calendar month, Israel time - the sub-line. */
+  paymentsThisMonth: number;
 };
 
 export type SignalKind =

@@ -11,6 +11,7 @@ import { eventTitle, eventTypeName, scheduleTypeName, UNKNOWN_OWNER } from '../u
 import { ASK_TYPE_KEYS } from '@/features/schedules/utils/ask-plan';
 import { planEntryFromRow } from '@/features/schedules/utils/timeline';
 import { isNoAskPlanned, NO_ASK_PLANNED_DAYS } from '../utils/no-ask-planned';
+import { israelMonthStart, tallyPayments } from '../utils/payments';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -70,9 +71,8 @@ export async function getOverviewStats(): Promise<OverviewStats> {
   const supabase = createServiceClient();
 
   // Draft Events are interest, not events the user has, so they are excluded
-  // from every business count. Guest Records are counted per row: `amount` is
-  // how many humans a record covers and would be a different, larger number.
-  // Test accounts are excluded for the same reason - see test-accounts.ts.
+  // from the event counts. Test accounts are excluded from every count, since
+  // they would make the business read bigger than it is - see test-accounts.ts.
   const test = await getTestScope();
 
   // Upcoming window: published events dated from today through the next 30 days,
@@ -81,17 +81,25 @@ export async function getOverviewStats(): Promise<OverviewStats> {
   const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const upcomingEndUtc = new Date(todayUtc.getTime() + UPCOMING_WINDOW_DAYS * 86_400_000);
 
-  // Guest Records are counted through their Event rather than against a list of
-  // published event ids: that list was itself a row read, capped at 1,000.
-  const guestsOnPublished = (rsvpStatus?: string) => {
-    const query = supabase
-      .from('guests')
-      .select('id, events!inner(status)', { count: 'exact', head: true })
-      .eq('events.status', 'published');
-    return excludeIds(rsvpStatus ? query.eq('rsvp_status', rsvpStatus) : query, 'event_id', test.eventIds);
-  };
+  // A payment is a billing log row that carries records (ADR 0027). Gifts are
+  // payments of 0 and say nothing about who paid, so they are left out. The rows
+  // are read rather than counted because Paid Users is a distinct count of
+  // Owners, which PostgREST cannot do; the Owner is reached through the Event.
+  const paymentRows = pageAll((from, to) =>
+    excludeIds(
+      supabase
+        .from('event_billing_events')
+        .select('id, occurred_at, events!inner(user_id)')
+        .not('record_count', 'is', null)
+        .neq('payment_method', 'gift'),
+      'event_id',
+      test.eventIds,
+    )
+      .order('id')
+      .range(from, to),
+  );
 
-  const [users, joinedThisWeek, events, eventsUpcoming, guestRecords, confirmed] = await Promise.all([
+  const [users, joinedThisWeek, events, eventsUpcoming, payments] = await Promise.all([
     excludeIds(
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       'id',
@@ -123,8 +131,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       'user_id',
       test.userIds,
     ),
-    guestsOnPublished(),
-    guestsOnPublished('confirmed'),
+    paymentRows,
   ]);
 
   return {
@@ -132,8 +139,13 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     usersJoinedThisWeek: unwrapCount(joinedThisWeek),
     events: unwrapCount(events),
     eventsUpcoming: unwrapCount(eventsUpcoming),
-    guestRecords: unwrapCount(guestRecords),
-    confirmed: unwrapCount(confirmed),
+    ...tallyPayments(
+      payments.map((row) => ({
+        ownerId: (row.events as unknown as { user_id: string }).user_id,
+        occurredAt: row.occurred_at as string,
+      })),
+      israelMonthStart(now),
+    ),
   };
 }
 
