@@ -37,6 +37,7 @@ import {
   headcountShare,
   rsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
+import { TransportationLine } from '../transportation-line';
 import {
   hiddenCount,
   toggleAllVisible,
@@ -90,6 +91,7 @@ interface GuestsMobileProps {
   /** Guest Records a Delivery has reached - named in the delete confirm. */
   messagedGuestIds: string[];
   showDietary: boolean;
+  showTransportation: boolean;
   tables: TableOption[];
   drawer: {
     open: boolean;
@@ -116,6 +118,7 @@ export function GuestsMobile({
   eventName,
   messagedGuestIds,
   showDietary,
+  showTransportation,
   tables,
   drawer,
   onOpenGuest,
@@ -244,6 +247,7 @@ export function GuestsMobile({
       groups={groups}
       tables={tables}
       showDietary={showDietary}
+      showTransportation={showTransportation}
       onOpenChange={drawer.onOpenChange}
       onSaved={() => drawer.onOpenChange(false)}
       onDelete={(guest) => deleteIds([guest.id], guest.name)}
@@ -298,6 +302,7 @@ export function GuestsMobile({
       {!selecting && !hasChipRow && (
         <Meter
           guests={guests}
+          showTransportation={showTransportation}
           footer={
             <PackageLine
               variant="mobile"
@@ -586,9 +591,12 @@ export function GuestsMobile({
  */
 function Meter({
   guests,
+  showTransportation,
   footer,
 }: {
   guests: GuestWithGroupApp[];
+  /** The Event asks the transportation question: its answers sit under the bar. */
+  showTransportation: boolean;
   /** The Record Package line, inside the same card rather than a second meter. */
   footer?: ReactNode;
 }) {
@@ -623,6 +631,7 @@ function Meter({
           />
         ))}
       </div>
+      {showTransportation && <TransportationLine guests={guests} className="text-xs" />}
     </div>
     {footer}
     </div>

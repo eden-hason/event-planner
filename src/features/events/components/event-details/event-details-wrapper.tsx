@@ -53,6 +53,7 @@ const FIELD_PATHS: Record<ChangeKey, FieldPath<EventDetailsFormValues>> = {
   meals: 'guestExperience.dietaryTypes',
   lockGuestCount: 'guestExperience.lockGuestCount',
   sendTableNumbers: 'guestExperience.sendTableNumbers',
+  askTransportation: 'guestExperience.askTransportation',
 };
 
 interface EventDetailsWrapperProps {

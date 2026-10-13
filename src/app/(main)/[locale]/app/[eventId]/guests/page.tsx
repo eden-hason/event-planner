@@ -34,6 +34,7 @@ export default async function GuestsPage({
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
+  const showTransportation = event?.guestExperience?.askTransportation ?? false;
 
   return (
     <GuestsPageComponent
@@ -43,6 +44,7 @@ export default async function GuestsPage({
       groups={groups}
       existingPhones={existingPhones}
       showDietary={showDietary}
+      showTransportation={showTransportation}
       tables={tables}
       messagedGuestIds={messagedGuestIds}
       recordPackage={recordPackage}

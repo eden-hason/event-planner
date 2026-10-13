@@ -32,6 +32,8 @@ export type ConversationGuest = {
   rsvpStatus: 'pending' | 'confirmed' | 'declined';
   amount: number;
   mealCounts: MealCounts;
+  /** The transportation answer: null until the Guest gives one. */
+  needsTransportation: boolean | null;
 };
 
 export type ConversationEvent = {
@@ -40,6 +42,8 @@ export type ConversationEvent = {
   lockGuestCount: boolean;
   /** Empty when the Event has Special Meals switched off. */
   mealOptions: MealOption[];
+  /** Whether the Owner switched on the transportation question. */
+  askTransportation: boolean;
   /** False past the RSVP Cutoff. */
   rsvpOpen: boolean;
 };
@@ -48,6 +52,7 @@ export type RsvpUpdate = {
   rsvpStatus?: 'confirmed' | 'declined';
   amount?: number;
   mealCounts?: MealCounts;
+  needsTransportation?: boolean | null;
 };
 
 export type ReplyButton = { id: string; title: string };
@@ -104,6 +109,10 @@ function applyUpdate(guest: ConversationGuest, update: RsvpUpdate | null): Conve
     rsvpStatus: update.rsvpStatus ?? guest.rsvpStatus,
     amount: update.amount ?? guest.amount,
     mealCounts: update.mealCounts ?? guest.mealCounts,
+    needsTransportation:
+      update.needsTransportation !== undefined
+        ? update.needsTransportation
+        : guest.needsTransportation,
   };
 }
 
@@ -165,10 +174,10 @@ function askCountList(ctx: Ctx): OutgoingMessage {
   };
 }
 
-/** The meal step, or the summary when the Event offers no Special Meals. */
-function mealStepOrSummary(ctx: Ctx): OutgoingMessage {
+/** The meal step, or whatever follows it when the Event offers no Special Meals. */
+function mealStep(ctx: Ctx): OutgoingMessage {
   const options = ctx.event.mealOptions;
-  if (options.length === 0) return summary(ctx);
+  if (options.length === 0) return afterMeals(ctx);
 
   return {
     kind: 'buttons',
@@ -189,7 +198,7 @@ function remainingTypes(ctx: Ctx): MealOption[] {
 
 function askMealType(ctx: Ctx): OutgoingMessage {
   const types = remainingTypes(ctx);
-  if (types.length === 0) return summary(ctx);
+  if (types.length === 0) return afterMeals(ctx);
   return {
     kind: 'list',
     body: 'איזו מנה מיוחדת?',
@@ -221,13 +230,29 @@ function askMealCount(ctx: Ctx, meal: MealChoice): OutgoingMessage {
 }
 
 function askMoreMeals(ctx: Ctx): OutgoingMessage {
-  if (mealsLeft(ctx) <= 0 || remainingTypes(ctx).length === 0) return summary(ctx);
+  if (mealsLeft(ctx) <= 0 || remainingTypes(ctx).length === 0) return afterMeals(ctx);
   return {
     kind: 'buttons',
     body: `רשמנו: ${formatMealCounts(ctx.guest.mealCounts)}.\nצריך עוד סוג של מנה מיוחדת?`,
     buttons: [
       { id: id(ctx, { type: 'mealMore', more: true }), title: 'מנה נוספת' },
       { id: id(ctx, { type: 'mealMore', more: false }), title: 'זהו, סיימנו' },
+    ],
+  };
+}
+
+/**
+ * The last question before the summary, when the Owner switched it on. Exactly
+ * two answers: an unanswered question stays null, never a "no".
+ */
+function afterMeals(ctx: Ctx): OutgoingMessage {
+  if (!ctx.event.askTransportation) return summary(ctx);
+  return {
+    kind: 'buttons',
+    body: 'מעוניינים בהסעה לאירוע? 🚌',
+    buttons: [
+      { id: id(ctx, { type: 'transport', answer: true }), title: 'כן' },
+      { id: id(ctx, { type: 'transport', answer: false }), title: 'לא' },
     ],
   };
 }
@@ -254,6 +279,9 @@ function summary(ctx: Ctx): OutgoingMessage {
   if (event.mealOptions.length > 0) {
     const meals = formatMealCounts(guest.mealCounts);
     lines.push(`מנות מיוחדות: ${meals || 'ללא'}`);
+  }
+  if (event.askTransportation && guest.needsTransportation !== null) {
+    lines.push(`הסעה: ${guest.needsTransportation ? 'כן' : 'לא'}`);
   }
 
   return { kind: 'buttons', body: lines.join('\n'), buttons: [change] };
@@ -300,11 +328,12 @@ export function conversationStep(params: {
       };
       // Asked of every Guest, a party of one included: the invited amount is
       // not a hint the Guest sees, so it cannot decide who is asked (ADR 0023).
-      return respond(update, event.lockGuestCount ? mealStepOrSummary : askCount);
+      return respond(update, event.lockGuestCount ? mealStep : askCount);
     }
 
     case 'no':
-      return respond({ rsvpStatus: 'declined', mealCounts: {} }, summary);
+      // Not coming leaves nothing to travel to: the answer goes back to unanswered.
+      return respond({ rsvpStatus: 'declined', mealCounts: {}, needsTransportation: null }, summary);
 
     case 'change':
       return respond(null, (ctx) => askComing(ctx, 'בשמחה! מה התשובה המעודכנת?'));
@@ -323,7 +352,7 @@ export function conversationStep(params: {
 
   switch (action.type) {
     case 'count': {
-      if (event.lockGuestCount) return respond(null, mealStepOrSummary);
+      if (event.lockGuestCount) return respond(null, mealStep);
       if (action.count === 'other') return respond(null, askCountList);
       // The shortcut button offers the invited amount, which may be above the
       // list's ten, so only an absurd number is capped.
@@ -335,28 +364,28 @@ export function conversationStep(params: {
           // cleared, and the meal question follows straight after anyway.
           mealCounts: normalizeMealCounts(before.guest.mealCounts, { amount, allowed }),
         },
-        mealStepOrSummary,
+        mealStep,
       );
     }
 
     case 'mealQuestion':
       // Both answers start the meal list from scratch: "yes" is the beginning
       // of a fresh count, not an addition to whatever an earlier pass left.
-      return respond({ mealCounts: {} }, action.answer ? askMealType : summary);
+      return respond({ mealCounts: {} }, action.answer ? askMealType : afterMeals);
 
     case 'mealType': {
       // No longer offered, but still tappable in lists already sitting in chats.
-      if (action.meal === 'none') return respond({ mealCounts: {} }, summary);
-      if (!allowed.includes(action.meal)) return respond(null, mealStepOrSummary);
+      if (action.meal === 'none') return respond({ mealCounts: {} }, afterMeals);
+      if (!allowed.includes(action.meal)) return respond(null, mealStep);
       if (before.guest.amount === 1) {
-        return respond({ mealCounts: { [action.meal]: 1 } }, summary);
+        return respond({ mealCounts: { [action.meal]: 1 } }, afterMeals);
       }
       const meal = action.meal;
       return respond(null, (ctx) => askMealCount(ctx, meal));
     }
 
     case 'mealCount': {
-      if (!allowed.includes(action.meal)) return respond(null, mealStepOrSummary);
+      if (!allowed.includes(action.meal)) return respond(null, mealStep);
       const mealCounts = normalizeMealCounts(
         { ...before.guest.mealCounts, [action.meal]: action.count },
         { amount: before.guest.amount, allowed },
@@ -365,7 +394,12 @@ export function conversationStep(params: {
     }
 
     case 'mealMore':
-      return respond(null, action.more ? askMealType : summary);
+      return respond(null, action.more ? askMealType : afterMeals);
+
+    case 'transport':
+      // Still tappable in chats after the Owner switched the question off.
+      if (!event.askTransportation) return respond(null, summary);
+      return respond({ needsTransportation: action.answer }, summary);
   }
 }
 

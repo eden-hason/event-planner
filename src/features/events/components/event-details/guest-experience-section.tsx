@@ -19,7 +19,7 @@ const MEAL_OPTIONS: readonly { value: MealChoice; labelKey: string }[] = [
 ];
 
 /**
- * The three switches that change what a Guest is asked or told.
+ * The switches that change what a Guest is asked or told.
  *
  * None of them touch what the product can do - seating works whether or not
  * table numbers are sent, and the RSVP conversation runs without the meal
@@ -29,7 +29,8 @@ const MEAL_OPTIONS: readonly { value: MealChoice; labelKey: string }[] = [
 type ToggleName =
   | 'guestExperience.dietaryOptions'
   | 'guestExperience.lockGuestCount'
-  | 'guestExperience.sendTableNumbers';
+  | 'guestExperience.sendTableNumbers'
+  | 'guestExperience.askTransportation';
 
 /** One setting: what it is, what it changes for a Guest, and its switch. */
 function ToggleRow({
@@ -70,7 +71,7 @@ function ToggleRow({
 }
 
 /**
- * The three switches that change what a Guest is asked or told.
+ * The switches that change what a Guest is asked or told.
  *
  * None of them touch what the product can do - seating works whether or not
  * table numbers are sent, and the RSVP conversation runs without the meal
@@ -90,10 +91,17 @@ export function GuestExperienceSection() {
       id={SECTION_IDS.experience}
       icon={<MessageSquareText className="text-success" />}
       title={t('title')}
-      description={t('description')}
       className="gap-1.5 lg:gap-1"
       contentClassName="pt-1.5 lg:pt-2"
     >
+      <div className={rowClasses}>
+        <ToggleRow
+          name="guestExperience.sendTableNumbers"
+          title={t('sendTableNumbers')}
+          description={t('sendTableNumbersDescription')}
+        />
+      </div>
+
       <div className={cn('flex flex-col gap-2.5 lg:gap-3', rowClasses)}>
         <ToggleRow
           name="guestExperience.dietaryOptions"
@@ -171,9 +179,9 @@ export function GuestExperienceSection() {
 
       <div className={rowClasses}>
         <ToggleRow
-          name="guestExperience.sendTableNumbers"
-          title={t('sendTableNumbers')}
-          description={t('sendTableNumbersDescription')}
+          name="guestExperience.askTransportation"
+          title={t('askTransportation')}
+          description={t('askTransportationDescription')}
         />
       </div>
     </SectionCard>

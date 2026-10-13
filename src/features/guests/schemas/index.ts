@@ -60,6 +60,9 @@ export const GuestAppSchema = z.object({
     })
     .default('pending'),
   mealCounts: MealCountsSchema.default({}),
+  // The answer to the Event's optional transportation question. Null is "not
+  // answered", kept apart from an explicit "no" (false).
+  needsTransportation: z.boolean().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').default(1),
   // How many the Owner invited. `amount` is how many are coming; a Guest who
   // answers above this is flagged (ADR 0023). Read-only here - see upsertGuest.
@@ -119,6 +122,7 @@ export const GuestDbSchema = z.object({
   // Read leniently: a stored map the app no longer recognises must not make the
   // whole guest list unreadable. Unknown keys are dropped on the way in.
   meal_counts: z.unknown().optional(),
+  needs_transportation: z.boolean().nullable().optional(),
   amount: z.number().int().default(1),
   invited_amount: z.number().int().nullable().optional(),
   notes: z.string().nullable(),
@@ -162,6 +166,7 @@ export const DbToAppTransformerSchema = GuestDbSchema.transform((dbData) => {
         ).filter(([key]) => (MEAL_CHOICES as readonly string[]).includes(key)),
       ),
     ),
+    needsTransportation: dbData.needs_transportation ?? null,
     amount: dbData.amount,
     invitedAmount: dbData.invited_amount ?? dbData.amount,
     notes: dbData.notes ?? undefined,
@@ -199,6 +204,7 @@ export const GuestUpsertSchema = z.object({
     })
     .optional(),
   mealCounts: MealCountsSchema.optional(),
+  needsTransportation: z.boolean().nullable().optional(),
   amount: z.number().int().min(1, 'Amount must be at least 1').optional(),
   /**
    * How many the Owner invited, when the caller keeps it apart from `amount`
@@ -243,6 +249,9 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     }
     if (appData.mealCounts !== undefined) {
       dbData.meal_counts = appData.mealCounts;
+    }
+    if (appData.needsTransportation !== undefined) {
+      dbData.needs_transportation = appData.needsTransportation;
     }
     if (appData.amount !== undefined) {
       dbData.amount = appData.amount;

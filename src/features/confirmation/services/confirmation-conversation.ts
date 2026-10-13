@@ -174,6 +174,7 @@ type EventRow = {
     dietary_options?: boolean;
     dietary_types?: string[];
     lock_guest_count?: boolean;
+    ask_transportation?: boolean;
   } | null;
   event_types: unknown;
 };
@@ -195,6 +196,7 @@ function toConversationEvent(event: EventRow): ConversationEvent {
           }
         : null,
     ),
+    askTransportation: event.guests_experience?.ask_transportation ?? false,
     rsvpOpen: isRsvpOpen(event.event_date),
   };
 }
@@ -207,6 +209,7 @@ function sampleGuest(confirmed: boolean, amount: number | null): ConversationGue
     rsvpStatus: confirmed ? 'confirmed' : 'pending',
     amount: amount ?? SAMPLE_AMOUNT,
     mealCounts: {},
+    needsTransportation: null,
   };
 }
 
@@ -239,7 +242,7 @@ async function loadDelivery(
     .from('message_deliveries')
     .select(
       `id, schedule_id, confirmation_token,
-       guests!inner (id, rsvp_status, amount, meal_counts),
+       guests!inner (id, rsvp_status, amount, meal_counts, needs_transportation),
        schedules!inner (events!inner (${EVENT_COLUMNS}))`,
     )
     .eq(filter.column, filter.value)
@@ -251,6 +254,7 @@ async function loadDelivery(
     rsvp_status: 'pending' | 'confirmed' | 'declined';
     amount: number | null;
     meal_counts: unknown;
+    needs_transportation: boolean | null;
   };
   const eventRow = (delivery.schedules as unknown as { events: EventRow }).events;
   const token = delivery.confirmation_token as string;
@@ -264,6 +268,7 @@ async function loadDelivery(
       rsvpStatus: guestRow.rsvp_status ?? 'pending',
       amount: guestRow.amount ?? 1,
       mealCounts: parseMealCounts(guestRow.meal_counts),
+      needsTransportation: guestRow.needs_transportation ?? null,
     },
     event: toConversationEvent(eventRow),
   };

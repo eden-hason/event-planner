@@ -41,6 +41,7 @@ export function buildDefaultValues(event: EventApp): EventDetailsFormValues {
         event.guestExperience?.dietaryTypes ?? [...DEFAULT_MEAL_CHOICES],
       lockGuestCount: event.guestExperience?.lockGuestCount ?? false,
       sendTableNumbers: event.guestExperience?.sendTableNumbers ?? false,
+      askTransportation: event.guestExperience?.askTransportation ?? false,
     },
   };
 }
@@ -67,7 +68,8 @@ export type ChangeKey =
   | 'specialMeal'
   | 'meals'
   | 'lockGuestCount'
-  | 'sendTableNumbers';
+  | 'sendTableNumbers'
+  | 'askTransportation';
 
 /** In the order the page renders the fields, so the bar counts top to bottom. */
 const CHANGE_PATHS: ReadonlyArray<readonly [ChangeKey, readonly string[]]> = [
@@ -82,10 +84,11 @@ const CHANGE_PATHS: ReadonlyArray<readonly [ChangeKey, readonly string[]]> = [
   ['ceremonyTime', ['ceremonyTime']],
   ['location', ['location']],
   ['invitation', ['invitations']],
+  ['sendTableNumbers', ['guestExperience', 'sendTableNumbers']],
   ['specialMeal', ['guestExperience', 'dietaryOptions']],
   ['meals', ['guestExperience', 'dietaryTypes']],
   ['lockGuestCount', ['guestExperience', 'lockGuestCount']],
-  ['sendTableNumbers', ['guestExperience', 'sendTableNumbers']],
+  ['askTransportation', ['guestExperience', 'askTransportation']],
 ];
 
 /**
@@ -150,6 +153,7 @@ const CHANGE_FIELDS: Record<ChangeKey, string> = {
   meals: 'guestExperience',
   lockGuestCount: 'guestExperience',
   sendTableNumbers: 'guestExperience',
+  askTransportation: 'guestExperience',
 };
 
 /**

@@ -1212,7 +1212,11 @@
         "coming": "Coming",
         "noMeals": "None",
         "addMeal": "Add",
-        "meals": "Special meals"
+        "meals": "Special meals",
+        "transport": "Transportation",
+        "transportYes": "Yes",
+        "transportNo": "No",
+        "transportUnanswered": "Not answered"
       },
       "activity": {
         "schedule": {
@@ -1287,6 +1291,12 @@
         "download": "Download the file",
         "close": "Close",
         "clearSearch": "Clear search"
+      },
+      "transport": {
+        "title": "Transportation",
+        "yes": "Yes",
+        "no": "No",
+        "unanswered": "Not answered"
       }
     },
     "package": {
@@ -2110,16 +2120,17 @@
       "pickAnother": "Pick another image"
     },
     "guestExperience": {
-      "title": "What guests are asked",
-      "description": "Three settings that change the conversation guests have with you",
-      "specialMeal": "Special meal selection",
+      "title": "Additional Details",
+      "specialMeal": "Special meal",
       "specialMealDescription": "Guests are asked whether they need a special meal in the RSVP conversation",
       "mealsLabel": "Which meals to offer",
       "mealsEmpty": "Pick at least one meal",
       "lockGuestCount": "Lock the invited count",
       "lockGuestCountDescription": "Guests cannot change the number of seats allocated to them",
-      "sendTableNumbers": "Send table numbers",
+      "sendTableNumbers": "Table number",
       "sendTableNumbersDescription": "In the day-of reminder each guest gets their table number",
+      "askTransportation": "Transportation",
+      "askTransportationDescription": "Guests who confirm are asked whether they want transportation to the event",
       "meal": {
         "vegetarian": "Vegetarian",
         "vegan": "Vegan",
@@ -2149,7 +2160,8 @@
         "specialMeal": "Special meal selection",
         "meals": "Which meals to offer",
         "lockGuestCount": "Lock the invited count",
-        "sendTableNumbers": "Send table numbers"
+        "sendTableNumbers": "Send table numbers",
+        "askTransportation": "Ask about transportation"
       }
     }
   },

@@ -14,6 +14,7 @@ import {
   type MealCounts,
 } from '../utils/meal-counts';
 import { isRsvpOpen, RSVP_CLOSED_MESSAGE } from '../utils/rsvp-cutoff';
+import { pageTransportationUpdate } from '../utils/transportation';
 
 export async function submitConfirmation(
   _prevState: ConfirmationActionState | null,
@@ -24,6 +25,7 @@ export async function submitConfirmation(
     rsvpStatus: formData.get('rsvpStatus'),
     guestCount: formData.get('guestCount') ?? undefined,
     mealCounts: formData.get('mealCounts') ?? undefined,
+    needsTransportation: formData.get('needsTransportation') ?? undefined,
   };
 
   const parsed = ConfirmationFormSchema.safeParse(raw);
@@ -31,7 +33,7 @@ export async function submitConfirmation(
     return { success: false, message: 'נתונים לא תקינים' };
   }
 
-  const { token, rsvpStatus, guestCount, mealCounts } = parsed.data;
+  const { token, rsvpStatus, guestCount, mealCounts, needsTransportation } = parsed.data;
 
   const supabase = createServiceClient();
 
@@ -45,7 +47,11 @@ export async function submitConfirmation(
     amount: number | null;
     events: {
       event_date: string | null;
-      guests_experience: { dietary_options?: boolean; dietary_types?: string[] } | null;
+      guests_experience: {
+        dietary_options?: boolean;
+        dietary_types?: string[];
+        ask_transportation?: boolean;
+      } | null;
     };
   };
   let scheduleId: string | null = null;
@@ -103,6 +109,11 @@ export async function submitConfirmation(
     rsvpStatus,
     ...(confirmed && guestCount ? { amount: guestCount } : {}),
     mealCounts: meals,
+    needsTransportation: pageTransportationUpdate({
+      asked: guest.events.guests_experience?.ask_transportation ?? false,
+      confirmed,
+      answer: needsTransportation,
+    }),
     channel: 'page',
   });
   if (!result.ok) return { success: false, message: result.message };

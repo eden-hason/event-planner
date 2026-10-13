@@ -25,6 +25,8 @@ export type RecordRsvpInput = {
   rsvpStatus?: 'confirmed' | 'declined';
   amount?: number;
   mealCounts?: MealCounts;
+  /** The transportation answer; null clears it back to unanswered. */
+  needsTransportation?: boolean | null;
   channel: RsvpChannel;
 };
 
@@ -45,6 +47,9 @@ export async function recordGuestRsvp(
   }
   if (input.amount !== undefined) update.amount = input.amount;
   if (input.mealCounts !== undefined) update.meal_counts = input.mealCounts;
+  if (input.needsTransportation !== undefined) {
+    update.needs_transportation = input.needsTransportation;
+  }
 
   if (Object.keys(update).length === 0) return { ok: true };
 

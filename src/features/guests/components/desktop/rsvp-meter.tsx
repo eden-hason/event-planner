@@ -9,19 +9,23 @@ import {
   rsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
 import { cn } from '@/lib/utils';
+import { TransportationLine } from '../transportation-line';
 
 /**
  * The slim RSVP meter above the list: one stacked bar, the share confirmed, and
  * guests alongside guest records. Counts are Guests (sum of amounts); the list
  * below counts rows. Information only - filtering lives in the status chips.
  * `aside` sits at the row's end: the Record Package card, when there is one.
+ * `showTransportation` adds the transportation answers under the legend.
  */
 export function RsvpMeter({
   guests,
   aside,
+  showTransportation = false,
 }: {
   guests: GuestWithGroupApp[];
   aside?: ReactNode;
+  showTransportation?: boolean;
 }) {
   const t = useTranslations('guests.list');
   const counts = rsvpHeadcounts(guests);
@@ -71,6 +75,7 @@ export function RsvpMeter({
             })}
           </span>
         </div>
+        {showTransportation && <TransportationLine guests={guests} />}
       </div>
       {aside}
     </div>

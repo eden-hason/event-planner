@@ -25,6 +25,9 @@ const event = (overrides: Partial<ConversationEvent> = {}): ConversationEvent =>
   occasionPhrase: 'חתונה של נועה ודורון',
   lockGuestCount: false,
   mealOptions: buildMealOptions({ dietaryOptions: true, dietaryTypes: ['vegetarian', 'vegan'] }),
+  // Off by default, so every test that does not mention it is the flow as it
+  // was before the transportation question existed.
+  askTransportation: false,
   rsvpOpen: true,
   ...overrides,
 });
@@ -33,6 +36,7 @@ const guest = (overrides: Partial<ConversationGuest> = {}): ConversationGuest =>
   rsvpStatus: 'pending',
   amount: 3,
   mealCounts: {},
+  needsTransportation: null,
   ...overrides,
 });
 
@@ -59,6 +63,8 @@ describe('conversation ids', () => {
       { type: 'mealType', meal: 'gluten_free' },
       { type: 'mealCount', meal: 'vegan', count: 2 },
       { type: 'mealMore', more: false },
+      { type: 'transport', answer: true },
+      { type: 'transport', answer: false },
     ];
     for (const action of actions) {
       const parsed = parseConversationId(encodeConversationId(TOKEN, action, 3));
@@ -229,7 +235,7 @@ describe('conversationStep', () => {
 
   it('declines and clears meals on "Not coming"', () => {
     const { update, reply } = step({ type: 'no' }, guest({ rsvpStatus: 'confirmed', mealCounts: { vegan: 1 } }));
-    assert.deepEqual(update, { rsvpStatus: 'declined', mealCounts: {} });
+    assert.deepEqual(update, { rsvpStatus: 'declined', mealCounts: {}, needsTransportation: null });
     assert.match(reply.body, /לא תוכלו להגיע/);
   });
 
@@ -272,6 +278,94 @@ describe('conversationStep', () => {
         }
       }
     }
+  });
+});
+
+describe('transportation question', () => {
+  const asks = event({ askTransportation: true });
+  const confirmed = guest({ rsvpStatus: 'confirmed', amount: 2 });
+  const transportChoices = [
+    { type: 'transport', answer: true },
+    { type: 'transport', answer: false },
+  ];
+
+  it('is never asked when the Event has it switched off', () => {
+    const paths = [
+      step({ type: 'mealQuestion', answer: false }, confirmed),
+      step({ type: 'mealMore', more: false }, guest({ rsvpStatus: 'confirmed', mealCounts: { vegan: 1 } })),
+      step({ type: 'count', count: 2 }, confirmed, event({ mealOptions: [] })),
+      step({ type: 'yes' }, guest(), event({ lockGuestCount: true, mealOptions: [] })),
+    ];
+    for (const { reply } of paths) {
+      assert.deepEqual(offered(reply), [{ type: 'change' }]);
+      assert.doesNotMatch(reply.body, /הסעה/);
+    }
+  });
+
+  it('is asked after the meal step, with exactly "yes" and "no"', () => {
+    const { reply } = step({ type: 'mealQuestion', answer: false }, confirmed, asks);
+    assert.equal(reply.kind, 'buttons');
+    assert.match(reply.body, /הסעה/);
+    assert.deepEqual(offered(reply), transportChoices);
+    assert.deepEqual(
+      reply.kind === 'buttons' && reply.buttons.map((b) => b.title),
+      ['כן', 'לא'],
+    );
+  });
+
+  it('follows every way out of the meal loop', () => {
+    const replies = [
+      step({ type: 'mealMore', more: false }, guest({ rsvpStatus: 'confirmed', mealCounts: { vegan: 1 } }), asks).reply,
+      step({ type: 'mealCount', meal: 'vegan', count: 2 }, confirmed, asks).reply,
+      step({ type: 'mealType', meal: 'vegan' }, guest({ rsvpStatus: 'confirmed', amount: 1 }), asks).reply,
+      step({ type: 'mealType', meal: 'none' }, confirmed, asks).reply,
+    ];
+    for (const reply of replies) assert.deepEqual(offered(reply), transportChoices);
+  });
+
+  it('follows the count straight away when the Event has no Special Meals', () => {
+    const { reply } = step({ type: 'count', count: 2 }, confirmed, event({ askTransportation: true, mealOptions: [] }));
+    assert.deepEqual(offered(reply), transportChoices);
+
+    const typed = typedCountStep({ token: TOKEN, text: '2', attempt: 0, guest: confirmed, event: event({ askTransportation: true, mealOptions: [] }) });
+    assert.deepEqual(offered(typed.reply), transportChoices);
+  });
+
+  it('records "yes" and "no" apart, and shows the answer in the summary', () => {
+    const yes = step({ type: 'transport', answer: true }, confirmed, asks);
+    assert.deepEqual(yes.update, { needsTransportation: true });
+    assert.match(yes.reply.body, /הסעה: כן/);
+    assert.deepEqual(offered(yes.reply), [{ type: 'change' }]);
+
+    const no = step({ type: 'transport', answer: false }, confirmed, asks);
+    assert.deepEqual(no.update, { needsTransportation: false });
+    assert.match(no.reply.body, /הסעה: לא/);
+  });
+
+  it('leaves an unanswered question out of the summary rather than calling it "no"', () => {
+    const { reply } = step({ type: 'mealCount', meal: 'vegan', count: 2 }, confirmed, event({ askTransportation: false }));
+    assert.doesNotMatch(reply.body, /הסעה/);
+  });
+
+  it('ignores an old tap once the Owner switched the question off', () => {
+    const { update, reply } = step({ type: 'transport', answer: true }, confirmed);
+    assert.equal(update, null);
+    assert.doesNotMatch(reply.body, /הסעה/);
+  });
+
+  it('does not let an old tap change a declined record', () => {
+    const { update } = step({ type: 'transport', answer: true }, guest({ rsvpStatus: 'declined' }), asks);
+    assert.equal(update, null);
+  });
+
+  it('clears the answer back to unanswered on "Not coming"', () => {
+    const { update } = step({ type: 'no' }, guest({ rsvpStatus: 'confirmed', needsTransportation: true }), asks);
+    assert.deepEqual(update, { rsvpStatus: 'declined', mealCounts: {}, needsTransportation: null });
+  });
+
+  it('keeps an earlier answer when the Guest confirms again', () => {
+    const { update } = step({ type: 'yes' }, guest({ rsvpStatus: 'confirmed', needsTransportation: false }), asks);
+    assert.equal(update?.needsTransportation, undefined);
   });
 });
 

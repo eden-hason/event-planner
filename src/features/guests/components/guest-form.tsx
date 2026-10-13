@@ -57,6 +57,7 @@ import type { MealChoice } from '@/lib/meal-choices';
 import {
   normalizeMealCounts,
   totalMeals,
+  toTransportationField,
   type MealCounts,
 } from '@/features/confirmation';
 import posthog from 'posthog-js';
@@ -75,6 +76,8 @@ interface GuestFormProps {
   hideActions?: boolean;
   onPendingChange?: (pending: boolean) => void;
   showDietary?: boolean;
+  /** The Event asks the transportation question, so the drawer shows the answer. */
+  showTransportation?: boolean;
   tables?: TableOption[];
   /**
    * `cards` (default) boxes each section; `sections` is the drawer's flat
@@ -95,6 +98,7 @@ export function GuestForm({
   hideActions = false,
   onPendingChange,
   showDietary = false,
+  showTransportation = false,
   tables = [],
   layout = 'cards',
   compact = false,
@@ -133,6 +137,7 @@ export function GuestForm({
         (guest?.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
         'pending',
       mealCounts: guest?.mealCounts ?? {},
+      needsTransportation: guest?.needsTransportation ?? null,
       amount: guest?.amount || 1,
       invitedAmount: guest?.invitedAmount ?? guest?.amount ?? 1,
       notes: guest?.notes || '',
@@ -151,6 +156,7 @@ export function GuestForm({
           (guest.rsvpStatus as 'pending' | 'confirmed' | 'declined') ||
           'pending',
         mealCounts: guest.mealCounts ?? {},
+        needsTransportation: guest.needsTransportation ?? null,
         amount: guest.amount || 1,
         invitedAmount: guest.invitedAmount ?? guest.amount ?? 1,
         notes: guest.notes || '',
@@ -278,6 +284,14 @@ export function GuestForm({
       if (key === 'mealCounts') {
         // Trimmed to the amount on screen, so what is saved is what was shown.
         formData.append(key, JSON.stringify(normalizeMealCounts(mealCounts, { amount: savedAmount })));
+        return;
+      }
+      if (key === 'needsTransportation') {
+        // Only an Event that asks the question has an answer to edit here; any
+        // other save leaves the column as it is.
+        if (showTransportation) {
+          formData.append(key, toTransportationField(value as boolean | null) ?? 'null');
+        }
         return;
       }
       if (key === 'notes') {
@@ -831,6 +845,55 @@ export function GuestForm({
     </FormItem>
   );
 
+  // Yes, no, or not answered - tapping the picked answer again takes it back.
+  const transportField = (
+    <FormField
+      control={form.control}
+      name="needsTransportation"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{t('list.drawer.transport')}</FormLabel>
+          <FormControl>
+            <div className="flex items-center gap-2.5">
+              <div
+                role="radiogroup"
+                aria-label={t('list.drawer.transport')}
+                className="bg-muted grid h-9 w-40 grid-cols-2 gap-0.5 rounded-[10px] p-[3px]"
+              >
+                {([true, false] as const).map((option) => {
+                  const isSelected = field.value === option;
+                  return (
+                    <button
+                      key={String(option)}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      disabled={!isConfirmed}
+                      onClick={() => field.onChange(isSelected ? null : option)}
+                      className={cn(
+                        'rounded-[7px] text-[13px] transition-colors focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
+                        isSelected
+                          ? 'bg-card font-bold text-foreground shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
+                          : 'font-medium text-muted-foreground',
+                      )}
+                    >
+                      {t(option ? 'list.drawer.transportYes' : 'list.drawer.transportNo')}
+                    </button>
+                  );
+                })}
+              </div>
+              {field.value == null && (
+                <span className="text-muted-foreground text-xs">
+                  {t('list.drawer.transportUnanswered')}
+                </span>
+              )}
+            </div>
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  );
+
   const actions = !hideActions && (
     <div className="flex gap-2">
       <Button type="submit" disabled={isPending}>
@@ -899,6 +962,7 @@ export function GuestForm({
                 {comingField}
               </div>
             )}
+            {showTransportation && transportField}
           </FormSection>
           <FormSection title={t('list.drawerSections.seating')}>
             {/* One row, per the design: a narrow table picker beside a one-line note. */}

@@ -23,6 +23,7 @@ const FIELD_KEYS: Record<ChangeKey, string> = {
   meals: 'meals',
   lockGuestCount: 'lockGuestCount',
   sendTableNumbers: 'sendTableNumbers',
+  askTransportation: 'askTransportation',
 };
 
 /**

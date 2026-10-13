@@ -193,5 +193,29 @@ test('any guest experience edit sends the whole object', () => {
     dietaryTypes: [...DEFAULT_MEAL_CHOICES],
     lockGuestCount: true,
     sendTableNumbers: false,
+    askTransportation: false,
   });
+});
+
+test('the transportation question is its own change and keeps the rest', () => {
+  const values = buildDefaultValues(
+    makeEvent({ guestExperience: { lockGuestCount: true } }),
+  );
+  values.guestExperience.askTransportation = true;
+  assert.deepEqual(
+    changedKeys({ guestExperience: { askTransportation: true } }, { couple: true, hasCeremony: true }),
+    ['askTransportation'],
+  );
+  const fields = buildUpdateFields(values, ['askTransportation'], { couple: true });
+  assert.deepEqual(JSON.parse(fields.guestExperience), {
+    dietaryOptions: false,
+    dietaryTypes: [...DEFAULT_MEAL_CHOICES],
+    lockGuestCount: true,
+    sendTableNumbers: false,
+    askTransportation: true,
+  });
+});
+
+test('an event that never set the transportation question starts with it off', () => {
+  assert.equal(buildDefaultValues(makeEvent()).guestExperience.askTransportation, false);
 });
