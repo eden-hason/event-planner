@@ -299,6 +299,51 @@ export type PlannedWorkQueue = {
   messages: number;
 };
 
+/** One pickable day in the Overview's Call Rounds band. */
+export type CallRoundDay = {
+  /** Israel calendar date, YYYY-MM-DD */
+  key: string;
+  /** The chip: "היום", "מחר", "מחרתיים", then "יום ה׳ 16.10" */
+  label: string;
+  /** "יום שישי, 16 באוקטובר" */
+  fullLabel: string;
+  /** Reads after "אין סבבי שיחות": "היום", "מחר", "ביום שישי, 16 באוקטובר" */
+  phrase: string;
+};
+
+/** Same words as the event timeline's call rows. */
+export type CallRoundStatus = 'planned' | 'in_progress' | 'completed';
+
+/**
+ * A call plan (a `schedules` row whose type is a phone call) dated inside the
+ * Overview's window, with the round started from it if there is one.
+ */
+export type OverviewCallRound = {
+  /** The plan's schedule id */
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  /** Catalog name plus positional index, matching the Owner's label */
+  title: string;
+  /** The `CallRoundDay` key it falls on */
+  day: string;
+  /** Israel wall clock of the Due Time */
+  scheduledTime: string;
+  status: CallRoundStatus;
+  /** Not started and its Due Time has passed */
+  late: boolean;
+  /** Who it targets, or how far the round has got */
+  detail: string;
+  /** The plan's Start button on the event page, or the round's calling surface */
+  href: string;
+};
+
+export type OverviewCallRounds = {
+  days: CallRoundDay[];
+  /** Due Time order across every day */
+  rounds: OverviewCallRound[];
+};
+
 /**
  * A directory, not a scoreboard - see docs/design/back-office-users-brief.md
  * section 3. Most rows are partly empty and that is ordinary, not a defect, so

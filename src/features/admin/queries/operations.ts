@@ -3,12 +3,19 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
-import type { PlannedWorkGroup, PlannedWorkQueue, PlannedWorkRow } from '../types';
+import type {
+  OverviewCallRound,
+  OverviewCallRounds,
+  PlannedWorkGroup,
+  PlannedWorkQueue,
+  PlannedWorkRow,
+} from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
 import { numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
 import { audienceCountLabel, eventTitle, scheduleTypeName } from '../utils/labels';
 import { daysText, formatShortDate, hoursText } from '../utils/format';
+import { callRoundDayKey, callRoundDays, callRoundWindow } from '../utils/call-round-days';
 
 const DAY_MS = 86_400_000;
 
@@ -78,6 +85,61 @@ function audienceCounts(row: AudienceRow) {
   };
 }
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+/**
+ * Labels must match what the Owner sees in their own app, and that index runs
+ * over every schedule of the type - sent and cancelled included - in plan
+ * order. Indexing only the rows on screen would number the same plan
+ * differently on the two sides, so both number through numberPlan, one Event
+ * at a time.
+ */
+async function planNumbers(supabase: ServiceClient, eventIds: string[]) {
+  const siblings = await pageAll((from, to) =>
+    supabase
+      .from('schedules')
+      .select('id, event_id, scheduled_date, target_status, schedule_types(key)')
+      .in('event_id', eventIds)
+      .order('id')
+      .range(from, to),
+  );
+  const entriesByEvent = new Map<string, PlanEntry[]>();
+  for (const row of siblings) {
+    const entries = entriesByEvent.get(row.event_id) ?? [];
+    entries.push(planEntryFromRow(row));
+    entriesByEvent.set(row.event_id, entries);
+  }
+  return new Map(
+    [...entriesByEvent.values()].flatMap((entries) => [...numberPlan(entries)]),
+  );
+}
+
+/**
+ * Counted in the database, one query for every Event. Reading the guest rows
+ * to tally them here ran into PostgREST's 1,000-row cap and undercounted.
+ */
+async function audienceTallies(supabase: ServiceClient, eventIds: string[]) {
+  const audiences = unwrap(
+    await supabase
+      .from('events')
+      .select(AUDIENCE_COUNTS)
+      .in('id', eventIds)
+      .eq('pending.rsvp_status', 'pending')
+      .eq('confirmed.rsvp_status', 'confirmed'),
+  ) as unknown as AudienceRow[];
+  return new Map(audiences.map((row) => [row.id, audienceCounts(row)]));
+}
+
+function audienceFor(
+  counts: ReturnType<typeof audienceCounts> | undefined,
+  targetStatus: string | null,
+): number {
+  if (!counts) return 0;
+  if (targetStatus === 'pending') return counts.pending;
+  if (targetStatus === 'confirmed') return counts.confirmed;
+  return counts.total;
+}
+
 type ScheduleRow = {
   id: string;
   event_id: string;
@@ -133,40 +195,8 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   if (!open.length) return { groups: [], callRounds: 0, messages: 0 };
 
   const eventIds = [...new Set(open.map((row) => row.event_id))];
-
-  // Labels must match what the Owner sees in their own app, and that index runs
-  // over every schedule of the type - sent and cancelled included - in plan
-  // order. Indexing only the open rows would number the same plan differently
-  // on the two sides, so both number through numberPlan, one Event at a time.
-  const siblings = await pageAll((from, to) =>
-    supabase
-      .from('schedules')
-      .select('id, event_id, scheduled_date, target_status, schedule_types(key)')
-      .in('event_id', eventIds)
-      .order('id')
-      .range(from, to),
-  );
-  const entriesByEvent = new Map<string, PlanEntry[]>();
-  for (const row of siblings) {
-    const entries = entriesByEvent.get(row.event_id) ?? [];
-    entries.push(planEntryFromRow(row));
-    entriesByEvent.set(row.event_id, entries);
-  }
-  const numbers = new Map(
-    [...entriesByEvent.values()].flatMap((entries) => [...numberPlan(entries)]),
-  );
-
-  // Counted in the database, one query for every Event. Reading the guest rows
-  // to tally them here ran into PostgREST's 1,000-row cap and undercounted.
-  const audiences = unwrap(
-    await supabase
-      .from('events')
-      .select(AUDIENCE_COUNTS)
-      .in('id', eventIds)
-      .eq('pending.rsvp_status', 'pending')
-      .eq('confirmed.rsvp_status', 'confirmed'),
-  ) as unknown as AudienceRow[];
-  const tally = new Map(audiences.map((row) => [row.id, audienceCounts(row)]));
+  const numbers = await planNumbers(supabase, eventIds);
+  const tally = await audienceTallies(supabase, eventIds);
 
   const now = Date.now();
   const today = calendarParts(new Date(now));
@@ -181,13 +211,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
     const scheduledMs = new Date(row.scheduled_date).getTime();
     const lateBy = scheduledMs < now ? lateness(scheduledMs, now) : null;
 
-    const counts = tally.get(row.event_id) ?? { pending: 0, confirmed: 0, total: 0 };
-    const audienceCount =
-      row.target_status === 'pending'
-        ? counts.pending
-        : row.target_status === 'confirmed'
-          ? counts.confirmed
-          : counts.total;
+    const audienceCount = audienceFor(tally.get(row.event_id), row.target_status);
 
     const time = israelWallClockParts(row.scheduled_date).time;
     const audience_label = audienceCountLabel(row.target_status, audienceCount);
@@ -245,6 +269,112 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
     callRounds: rows.filter((row) => row.kind === 'call').length,
     messages: rows.filter((row) => row.kind === 'message').length,
   };
+}
+
+type CallPlanRow = {
+  id: string;
+  event_id: string;
+  scheduled_date: string;
+  target_status: string | null;
+  status: string | null;
+  events: { title: string | null; can_create_schedules: boolean | null } | null;
+  schedule_types: { key: string | null; name: string | null } | null;
+};
+
+/**
+ * The Overview's Call Rounds band: every call plan dated from today through the
+ * window in `callRoundDays`, with the round started from it if there is one.
+ *
+ * The plan is the `schedules` row and its Due Time is the day it belongs to, so
+ * this reads the same rows the Operations queue and the event timeline do - it
+ * keeps nothing of its own. Cancelled plans are left out. So are unstarted
+ * plans on events that cannot send, which offer no Start button anywhere; a
+ * round already under way stays, since its calling surface still works.
+ */
+export async function getOverviewCallRounds(): Promise<OverviewCallRounds> {
+  await assertAdmin();
+  const supabase = createServiceClient();
+  const test = await getTestScope();
+
+  const days = callRoundDays();
+  const range = callRoundWindow(days);
+
+  const plans = unwrap(
+    await excludeIds(
+      supabase
+        .from('schedules')
+        .select(
+          'id, event_id, scheduled_date, target_status, status, events!inner(title, status, can_create_schedules), schedule_types!inner(key, name, execution_kind)',
+        )
+        .eq('schedule_types.execution_kind', 'phone_call')
+        .eq('events.status', 'published')
+        .or('status.is.null,status.neq.cancelled')
+        .gte('scheduled_date', range.from)
+        .lt('scheduled_date', range.to)
+        .order('scheduled_date', { ascending: true })
+        .order('id', { ascending: true }),
+      'event_id',
+      test.eventIds,
+    ),
+  ) as unknown as CallPlanRow[];
+
+  if (!plans.length) return { days, rounds: [] };
+
+  const eventIds = [...new Set(plans.map((row) => row.event_id))];
+
+  // A round's call_logs are its audience snapshot, counted here because one
+  // round of a large Event can pass the 1,000-row cap.
+  const [numbers, tally, startedResult] = await Promise.all([
+    planNumbers(supabase, eventIds),
+    audienceTallies(supabase, eventIds),
+    supabase
+      .from('call_rounds')
+      .select('id, schedule_id, completed_at, snapshot:call_logs(count), called:call_logs(count)')
+      .in('schedule_id', plans.map((row) => row.id))
+      .not('called.outcome', 'is', null),
+  ]);
+  const roundBySchedule = new Map(unwrap(startedResult).map((round) => [round.schedule_id, round]));
+
+  const now = Date.now();
+
+  const rounds = plans.flatMap((row): OverviewCallRound[] => {
+    const round = roundBySchedule.get(row.id);
+    // Claimed without a round left behind: nothing to start and nothing to open.
+    if (!round && row.status !== null) return [];
+    if (!round && !row.events?.can_create_schedules) return [];
+
+    const baseName = scheduleTypeName(row.schedule_types?.key, row.schedule_types?.name);
+    const number = numbers.get(row.id);
+    const title = number && number.total > 1 ? `${baseName} ${number.index}` : baseName;
+
+    const audience = audienceCountLabel(
+      row.target_status,
+      audienceFor(tally.get(row.event_id), row.target_status),
+    );
+
+    return [
+      {
+        id: row.id,
+        eventId: row.event_id,
+        eventTitle: eventTitle(row.events?.title),
+        title,
+        day: callRoundDayKey(row.scheduled_date),
+        scheduledTime: israelWallClockParts(row.scheduled_date).time,
+        status: round ? (round.completed_at ? 'completed' : 'in_progress') : 'planned',
+        late: !round && new Date(row.scheduled_date).getTime() < now,
+        detail: round
+          ? `התקשרנו ל-${embeddedCount(round.called)} מתוך ${embeddedCount(round.snapshot)} רשומות אורחים`
+          : `שיחות ל-${audience}`,
+        // The plan's row on the event page carries its Start button; once
+        // started, the round has a page of its own.
+        href: round
+          ? `/admin/events/${row.event_id}/rounds/${round.id}`
+          : `/admin/events/${row.event_id}#schedule-${row.id}`,
+      },
+    ];
+  });
+
+  return { days, rounds };
 }
 
 /** Published events an Operator can plan a call round against, with today's audience sizes. */

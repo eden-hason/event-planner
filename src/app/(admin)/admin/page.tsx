@@ -1,19 +1,19 @@
 import { Suspense } from 'react';
 import {
   getOverviewStats,
-  getSignals,
   getUpcomingEvents,
 } from '@/features/admin/queries/overview';
+import { getOverviewCallRounds } from '@/features/admin/queries/operations';
 import {
   StatCards,
   StatCardsError,
   StatCardsSkeleton,
 } from '@/features/admin/components/stat-cards';
 import {
-  SignalList,
-  SignalListError,
-  SignalListSkeleton,
-} from '@/features/admin/components/signal-list';
+  CallRounds,
+  CallRoundsError,
+  CallRoundsSkeleton,
+} from '@/features/admin/components/call-rounds';
 import {
   UpcomingEvents,
   UpcomingEventsError,
@@ -35,8 +35,8 @@ export default function OverviewPage() {
         <StatsBand />
       </Suspense>
 
-      <Suspense fallback={<SignalListSkeleton />}>
-        <SignalsBand />
+      <Suspense fallback={<CallRoundsSkeleton />}>
+        <CallRoundsBand />
       </Suspense>
 
       <Suspense fallback={<UpcomingEventsSkeleton />}>
@@ -55,12 +55,13 @@ async function StatsBand() {
   }
 }
 
-async function SignalsBand() {
+async function CallRoundsBand() {
   try {
-    return <SignalList signals={await getSignals()} />;
+    const { days, rounds } = await getOverviewCallRounds();
+    return <CallRounds days={days} rounds={rounds} />;
   } catch (error) {
-    console.error('Overview signals failed:', error);
-    return <SignalListError />;
+    console.error('Overview call rounds failed:', error);
+    return <CallRoundsError />;
   }
 }
 
