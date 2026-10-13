@@ -1,19 +1,19 @@
-import { CalendarDays, CircleCheck, ListChecks, Users } from 'lucide-react';
+import { BadgeCheck, CalendarDays, CreditCard, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OverviewStats } from '../types';
 
 /**
  * The headline of the Overview: four stat cards the Operator reads first. Every
- * number carries its unit and a supporting sub-line - "guest records" is the
- * billable unit and is a different quantity from the number of guests.
+ * number carries a supporting sub-line. Paid Users counts Owners and Payments
+ * counts payments, so an Owner who tops up adds a payment but not a user.
  */
 type StatCard = {
   label: string;
   value: string;
   sub: string;
   icon: LucideIcon;
-  /** Confirmed reads as an outcome, so it takes the success tint; the rest the brand. */
+  /** Paid Users reads as an outcome, so it takes the success tint; the rest the brand. */
   tone: 'brand' | 'success';
 };
 
@@ -22,16 +22,6 @@ function integer(value: number): string {
 }
 
 export function StatCards({ stats }: { stats: OverviewStats }) {
-  // Null, not zero: with no guest records there is no rate, and "0%" would read
-  // as a failing campaign rather than as "no lists yet".
-  const rate =
-    stats.guestRecords > 0
-      ? Math.round((stats.confirmed / stats.guestRecords) * 100)
-      : null;
-
-  const perEvent =
-    stats.events > 0 ? Math.round(stats.guestRecords / stats.events) : 0;
-
   const cards: StatCard[] = [
     {
       label: 'משתמשים',
@@ -48,21 +38,18 @@ export function StatCards({ stats }: { stats: OverviewStats }) {
       tone: 'brand',
     },
     {
-      label: 'רשומות אורחים',
-      value: integer(stats.guestRecords),
-      sub: `${integer(perEvent)} בממוצע לאירוע`,
-      icon: ListChecks,
-      tone: 'brand',
+      label: 'משתמשים משלמים',
+      value: integer(stats.paidUsers),
+      sub: `${integer(stats.paidUsersThisMonth)} שילמו החודש`,
+      icon: BadgeCheck,
+      tone: 'success',
     },
     {
-      label: 'אישרו הגעה',
-      value: rate === null ? '-' : `${rate}%`,
-      sub:
-        rate === null
-          ? 'עדיין אין רשימות אורחים'
-          : `${integer(stats.confirmed)} מתוך ${integer(stats.guestRecords)} אורחים`,
-      icon: CircleCheck,
-      tone: 'success',
+      label: 'תשלומים',
+      value: integer(stats.payments),
+      sub: `${integer(stats.paymentsThisMonth)} החודש`,
+      icon: CreditCard,
+      tone: 'brand',
     },
   ];
 
