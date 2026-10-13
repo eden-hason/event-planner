@@ -14,6 +14,7 @@ export {
   type MealCounts,
 } from './utils/meal-counts';
 export { isRsvpOpen } from './utils/rsvp-cutoff';
+export { fromTransportationField, toTransportationField } from './utils/transportation';
 
 // Schemas/Types
 export {

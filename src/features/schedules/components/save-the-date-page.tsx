@@ -8,7 +8,7 @@ import {
   EventTitle,
   GuestEventPageShell,
 } from './guest-event-page';
-import { InvitationImageViewer } from './invitation-image-viewer';
+import { InvitationImageViewer } from '@/components/invitation-image-viewer';
 
 /**
  * The page the save-the-date SMS links to - the SMS counterpart of the

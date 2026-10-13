@@ -1,6 +1,10 @@
 import type { GroupSide } from '@/features/guests/schemas';
 import type { RsvpStatus } from './rsvp-presentation';
 import {
+  TRANSPORTATION_ANSWERS,
+  type TransportationAnswer,
+} from './transportation-summary';
+import {
   NO_PHONE_ISSUE,
   parseGuestIssue,
   type GuestIssue,
@@ -34,6 +38,8 @@ export type GuestListParams = {
    * turns it off.
    */
   outside: boolean;
+  /** Confirmed records by their transportation answer - see transportationAnswer. */
+  transport: TransportationAnswer | null;
 };
 
 export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
@@ -45,6 +51,7 @@ export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
   sort: 'created_asc',
   issue: null,
   outside: false,
+  transport: null,
 };
 
 const STATUSES: readonly RsvpStatus[] = ['confirmed', 'pending', 'declined'];
@@ -72,6 +79,7 @@ const KEYS = [
   'sort',
   'issue',
   'package',
+  'transport',
 ] as const;
 
 /** An issue scope sorts by name, so likely duplicates sit side by side. */
@@ -99,6 +107,7 @@ export function parseGuestListParams(search: URLSearchParams): GuestListParams {
     sort: oneOf(GUEST_SORT_KEYS, search.get('sort')) ?? defaultSortFor(issue),
     issue,
     outside: search.get('package') === 'outside',
+    transport: oneOf(TRANSPORTATION_ANSWERS, search.get('transport')),
   };
 }
 
@@ -120,11 +129,15 @@ export function writeGuestListParams(
     search.set('sort', params.sort);
   if (params.issue) search.set('issue', params.issue);
   if (params.outside) search.set('package', 'outside');
+  if (params.transport) search.set('transport', params.transport);
 }
 
 /** What the Filters button's badge counts: everything but status and search. */
 export function activeFilterCount(params: GuestListParams): number {
   return (
-    params.groups.length + (params.side ? 1 : 0) + (params.noPhone ? 1 : 0)
+    params.groups.length +
+    (params.side ? 1 : 0) +
+    (params.noPhone ? 1 : 0) +
+    (params.transport ? 1 : 0)
   );
 }

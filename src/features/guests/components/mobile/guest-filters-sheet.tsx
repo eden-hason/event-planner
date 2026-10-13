@@ -11,16 +11,18 @@ import {
   GUEST_SORT_KEYS,
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
+import { TRANSPORTATION_ANSWERS } from '@/features/guests/utils/transportation-summary';
 import { cn } from '@/lib/utils';
 import { MobileSheet } from './mobile-sheet';
 
-type Draft = Pick<GuestListParams, 'sort' | 'groups' | 'side' | 'noPhone'>;
+type Draft = Pick<GuestListParams, 'sort' | 'groups' | 'side' | 'noPhone' | 'transport'>;
 
 const draftOf = (params: GuestListParams): Draft => ({
   sort: params.sort,
   groups: params.groups,
   side: params.side,
   noPhone: params.noPhone,
+  transport: params.transport,
 });
 
 /**
@@ -33,6 +35,7 @@ export function GuestFiltersSheet({
   onClose,
   params,
   groups,
+  showTransportation,
   countFor,
   onApply,
 }: {
@@ -40,6 +43,8 @@ export function GuestFiltersSheet({
   onClose: () => void;
   params: GuestListParams;
   groups: GroupWithGuestsApp[];
+  /** The Event asks the transportation question, so its answers can filter the list. */
+  showTransportation: boolean;
   /** Records the list would show with these filters, for the apply button. */
   countFor: (params: GuestListParams) => number;
   onApply: (patch: Draft) => void;
@@ -114,6 +119,22 @@ export function GuestFiltersSheet({
           </Chip>
         ))}
       </Section>
+
+      {showTransportation && (
+        <Section title={t('list.filters.transport')}>
+          {TRANSPORTATION_ANSWERS.map((answer) => (
+            <Chip
+              key={answer}
+              on={draft.transport === answer}
+              onClick={() =>
+                patch({ transport: draft.transport === answer ? null : answer })
+              }
+            >
+              {t(`list.transport.${answer}`)}
+            </Chip>
+          ))}
+        </Section>
+      )}
 
       <label className="flex min-h-[50px] items-center justify-between gap-3 text-[15px] font-medium">
         {t('list.filters.noPhoneOnly')}

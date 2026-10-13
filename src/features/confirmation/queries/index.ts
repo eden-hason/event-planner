@@ -26,7 +26,7 @@ export function isGuestInvitationToken(token: string): boolean {
  */
 const EVENT_COLUMNS = `
   id, title, event_date, ceremony_time, reception_time,
-  location, host_details, guests_experience, event_types (key)
+  location, host_details, guests_experience, invitations, event_types (key)
 `;
 
 type EventRow = {
@@ -41,7 +41,9 @@ type EventRow = {
     dietary_options?: boolean;
     dietary_types?: string[];
     lock_guest_count?: boolean;
+    ask_transportation?: boolean;
   } | null;
+  invitations: { image_url?: string } | null;
   event_types: { key: string } | null;
 };
 
@@ -51,6 +53,7 @@ type GuestRow = {
   amount: number;
   rsvp_status: string;
   meal_counts: unknown;
+  needs_transportation: boolean | null;
 };
 
 /**
@@ -85,9 +88,11 @@ function toEventView(event: EventRow): ConfirmationPageData['event'] {
           dietaryOptions: event.guests_experience.dietary_options,
           dietaryTypes: event.guests_experience.dietary_types,
           lockGuestCount: event.guests_experience.lock_guest_count,
+          askTransportation: event.guests_experience.ask_transportation,
         }
       : undefined,
     eventType: eventType.success ? eventType.data : undefined,
+    invitationImageUrl: event.invitations?.image_url?.trim() || null,
     rsvpOpen: isRsvpOpen(event.event_date),
   };
 }
@@ -99,6 +104,7 @@ function toGuestView(guest: GuestRow): ConfirmationPageData['guest'] {
     amount: guest.amount,
     rsvpStatus: guest.rsvp_status as 'pending' | 'confirmed' | 'declined',
     mealCounts: parseMealCounts(guest.meal_counts),
+    needsTransportation: guest.needs_transportation ?? null,
   };
 }
 
@@ -144,7 +150,7 @@ export async function getConfirmationDataByToken(
       id,
       schedule_id,
       guests!inner (
-        id, name, amount, rsvp_status, meal_counts
+        id, name, amount, rsvp_status, meal_counts, needs_transportation
       ),
       schedules!inner (
         id,
@@ -205,7 +211,7 @@ export async function getConfirmationDataByGuestToken(
     .from('guests')
     .select(
       `
-      id, name, amount, rsvp_status, meal_counts,
+      id, name, amount, rsvp_status, meal_counts, needs_transportation,
       events!inner (${EVENT_COLUMNS})
     `,
     )
@@ -262,6 +268,7 @@ export async function getConfirmationPreviewData(
       amount: 2,
       rsvpStatus: 'pending',
       mealCounts: {},
+      needsTransportation: null,
     },
     event: toEventView(data as unknown as EventRow),
     scheduleId: null,

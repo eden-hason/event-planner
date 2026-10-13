@@ -10,6 +10,8 @@ export const ConfirmationFormSchema = z.object({
   guestCount: z.coerce.number().int().min(1).optional(),
   /** JSON of a MealCounts map; parsed and normalised by the action. */
   mealCounts: z.string().optional(),
+  /** Absent when the Event does not ask, or the Guest left it unanswered. */
+  needsTransportation: z.enum(['yes', 'no']).optional(),
 });
 
 export type ConfirmationFormData = z.infer<typeof ConfirmationFormSchema>;
@@ -29,6 +31,8 @@ export type ConfirmationPageData = {
   } | null;
   guest: Pick<GuestApp, 'id' | 'name' | 'amount' | 'rsvpStatus'> & {
     mealCounts: MealCounts;
+    /** Null until the Guest answers the transportation question. */
+    needsTransportation: boolean | null;
   };
   event: Pick<
     EventApp,
@@ -48,6 +52,8 @@ export type ConfirmationPageData = {
     hosts: string[];
     /** False past the RSVP Cutoff - the answer is shown, no longer editable. */
     rsvpOpen: boolean;
+    /** The uploaded invitation, shown under the names; null when there is none. */
+    invitationImageUrl: string | null;
   };
   scheduleId: string | null;
 };

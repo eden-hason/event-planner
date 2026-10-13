@@ -44,7 +44,9 @@ export type ConversationAction =
   /** How many of one meal type. */
   | { type: 'mealCount'; meal: MealChoice; count: number }
   /** After a meal count: add another type, or finish. */
-  | { type: 'mealMore'; more: boolean };
+  | { type: 'mealMore'; more: boolean }
+  /** "Do you want transportation to the Event?" - only when the Event asks it. */
+  | { type: 'transport'; answer: boolean };
 
 export type ParsedConversationId = {
   token: string;
@@ -81,6 +83,8 @@ function encodeAction(action: ConversationAction): string[] {
       return ['mc', `${action.meal}:${action.count}`];
     case 'mealMore':
       return ['mm', action.more ? 'y' : 'n'];
+    case 'transport':
+      return ['tr', action.answer ? 'y' : 'n'];
   }
 }
 
@@ -121,6 +125,8 @@ function decodeAction(name: string | undefined, arg: string | undefined): Conver
     }
     case 'mm':
       return arg === 'y' || arg === 'n' ? { type: 'mealMore', more: arg === 'y' } : null;
+    case 'tr':
+      return arg === 'y' || arg === 'n' ? { type: 'transport', answer: arg === 'y' } : null;
     default:
       return null;
   }

@@ -38,6 +38,10 @@ import {
   GUEST_STATUS_FILTERS,
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
+import {
+  TRANSPORTATION_ANSWERS,
+  type TransportationAnswer,
+} from '@/features/guests/utils/transportation-summary';
 import { cn } from '@/lib/utils';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { SelectBox } from './select-box';
@@ -55,6 +59,8 @@ interface GuestToolbarProps {
   outsideCount: number;
   outsideOnly: boolean;
   groups: GroupWithGuestsApp[];
+  /** The Event asks the transportation question, so its answers can filter the list. */
+  showTransportation: boolean;
   onAddGuest: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
@@ -68,6 +74,7 @@ export function GuestToolbar({
   outsideCount,
   outsideOnly,
   groups,
+  showTransportation,
   onAddGuest,
   onImportFile,
   onImportDrive,
@@ -305,6 +312,38 @@ export function GuestToolbar({
               )}
             </div>
           </div>
+
+          {showTransportation && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-muted-foreground text-xs font-bold">
+                {t('list.filters.transport')}
+              </span>
+              <div className="bg-muted flex gap-0.5 rounded-[9px] p-[3px]">
+                {([null, ...TRANSPORTATION_ANSWERS] as (TransportationAnswer | null)[]).map(
+                  (answer) => {
+                    const on = params.transport === answer;
+                    return (
+                      <button
+                        key={answer ?? 'all'}
+                        type="button"
+                        onClick={() => onChange({ transport: answer })}
+                        className={cn(
+                          'h-7 flex-1 rounded-[7px] text-[13px] whitespace-nowrap',
+                          on
+                            ? 'bg-card text-foreground font-bold shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
+                            : 'text-muted-foreground font-medium',
+                        )}
+                      >
+                        {answer
+                          ? t(`list.transport.${answer}`)
+                          : t('list.filters.transportAll')}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+          )}
 
           <label className="flex items-center justify-between border-t pt-3 text-[13.5px] font-medium">
             {t('list.filters.noPhoneOnly')}

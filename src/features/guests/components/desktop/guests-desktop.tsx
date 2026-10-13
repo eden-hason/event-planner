@@ -48,6 +48,7 @@ interface GuestsDesktopProps {
   /** Guest Records a Delivery has reached - named in the delete confirm. */
   messagedGuestIds: string[];
   showDietary: boolean;
+  showTransportation: boolean;
   tables: TableOption[];
   drawer: {
     open: boolean;
@@ -72,6 +73,7 @@ export function GuestsDesktop({
   existingPhones,
   messagedGuestIds,
   showDietary,
+  showTransportation,
   tables,
   drawer,
   onOpenGuest,
@@ -221,6 +223,7 @@ export function GuestsDesktop({
       groups={groups}
       tables={tables}
       showDietary={showDietary}
+      showTransportation={showTransportation}
       onOpenChange={drawer.onOpenChange}
       onSaved={(guestId) => {
         drawer.onOpenChange(false);
@@ -286,6 +289,7 @@ export function GuestsDesktop({
     <div className="@container/guests flex flex-col">
       <RsvpMeter
         guests={guests}
+        showTransportation={showTransportation}
         aside={
           <PackageLine
             variant="desktop"
@@ -294,6 +298,7 @@ export function GuestsDesktop({
         }
       />
       <GuestToolbar
+        showTransportation={showTransportation}
         params={params}
         onChange={handleFilterChange}
         statusCounts={statusCounts}

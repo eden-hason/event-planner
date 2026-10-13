@@ -105,6 +105,9 @@ export const GuestExperienceSchema = z.object({
   // message content only - the seating page and the guest form's table picker
   // are available regardless.
   sendTableNumbers: z.boolean().optional(),
+  // Whether a confirming Guest is asked if they want transportation to the
+  // Event. The answer lands on guests.needs_transportation.
+  askTransportation: z.boolean().optional(),
 });
 
 export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
@@ -115,6 +118,7 @@ export const GuestExperienceDbSchema = z.object({
   dietary_types: z.array(z.string()).optional(),
   lock_guest_count: z.boolean().optional(),
   send_table_numbers: z.boolean().optional(),
+  ask_transportation: z.boolean().optional(),
 });
 
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
@@ -277,6 +281,7 @@ export function dbToAppTransformer(dbData: {
       dietaryTypes: dbData.guests_experience.dietary_types,
       lockGuestCount: dbData.guests_experience.lock_guest_count,
       sendTableNumbers: dbData.guests_experience.send_table_numbers,
+      askTransportation: dbData.guests_experience.ask_transportation,
     }
     : undefined;
 
@@ -380,6 +385,7 @@ export const EventDetailsFormSchema = z.object({
     dietaryTypes: z.array(z.string()),
     lockGuestCount: z.boolean(),
     sendTableNumbers: z.boolean(),
+    askTransportation: z.boolean(),
   }),
 });
 

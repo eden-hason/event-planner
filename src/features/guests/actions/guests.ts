@@ -13,7 +13,11 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { toE164, phoneComparisonKey } from '@/lib/phone';
 import { getEventGuestPhones } from '@/features/guests/queries';
-import { normalizeMealCounts, parseMealCounts } from '@/features/confirmation';
+import {
+  fromTransportationField,
+  normalizeMealCounts,
+  parseMealCounts,
+} from '@/features/confirmation';
 import { z } from 'zod';
 import { isOwnerOverride } from '@/features/guests/utils/guest-amount';
 
@@ -66,6 +70,10 @@ export async function upsertGuest(
     // Explicit null for tableId unseats the guest
     if (parsedData.tableId === 'null') {
       parsedData.tableId = null;
+    }
+    // The transportation answer travels as yes / no / null (unanswered).
+    if (typeof parsedData.needsTransportation === 'string') {
+      parsedData.needsTransportation = fromTransportationField(parsedData.needsTransportation);
     }
     // Meal counts travel as JSON - a map does not fit a FormData field.
     if (typeof parsedData.mealCounts === 'string') {

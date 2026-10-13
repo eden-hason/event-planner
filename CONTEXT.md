@@ -116,8 +116,9 @@ RSVP page. After it, only the Owner or an Operator can.
 
 The guided exchange in WhatsApp that collects an RSVP without leaving the chat. It starts
 when a Guest taps "Coming" or "Not coming" on a Confirmation message, and continues
-with Kululu asking how many are coming (typed, never showing the invited amount) and about
-Special Meals, then closes with a summary the Guest can reopen to change their answer.
+with Kululu asking how many are coming (typed, never showing the invited amount), about
+Special Meals and, when the Owner asks it, the **Transportation Question**, then closes with a
+summary the Guest can reopen to change their answer.
 
 Every answer counts the moment it is given. A Guest who taps "Coming" and stops there is
 confirmed; the conversation being unfinished does not make the RSVP incomplete.
@@ -134,6 +135,15 @@ A meal other than the standard one, of a type the Owner has switched on for the 
 (vegetarian, vegan, gluten-free, strictly kosher). Counted per type within a Guest Record:
 a family of five may need one vegan and one gluten-free meal. The number of Special Meals
 never exceeds the number of Guests confirmed.
+
+## Transportation Question
+
+An optional question the Owner switches on for the Event: does a confirmed Guest Record want
+transportation to the Event, yes or no. Asked after Special Meals, in the Confirmation
+Conversation (a yes / no question) and on the RSVP page (an opt-in checkbox; submitting the
+page with it unticked is a "no"). Unanswered is its own state, never a "no": a Guest who
+stops the conversation before it, or one confirmed some other way. A Guest Record that
+declines goes back to unanswered.
 
 ## Occasion Phrase
 

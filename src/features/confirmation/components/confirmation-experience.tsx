@@ -2,11 +2,14 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { InvitationImageViewer } from '@/components/invitation-image-viewer';
 import {
   Calendar,
   Check,
   ChevronDown,
+  ChevronLeft,
   Clock,
+  ImageIcon,
   MapPin,
   Minus,
   Plus,
@@ -114,6 +117,7 @@ export function ConfirmationExperience({
 
   const mealOptions = buildMealOptions(event.guestExperience);
   const lockGuestCount = event.guestExperience?.lockGuestCount ?? false;
+  const askTransportation = event.guestExperience?.askTransportation ?? false;
   const timeRows = buildTimeRows(event);
 
   // UTC keeps the rendered day stable: event_date is stored as midnight UTC,
@@ -159,6 +163,8 @@ export function ConfirmationExperience({
       else delete updated[type];
       return updated;
     });
+  // Unticked unless the Guest already asked for it - here or in the chat.
+  const [wantsTransport, setWantsTransport] = useState(guest.needsTransportation === true);
   // A guest who already answered lands on their answer, not on a form asking
   // again - the reason they reopened the link is usually to check or change it.
   const [done, setDone] = useState(guest.rsvpStatus !== 'pending');
@@ -185,6 +191,9 @@ export function ConfirmationExperience({
     if (choice === 'confirmed') {
       formData.set('guestCount', String(count));
       formData.set('mealCounts', JSON.stringify(visibleMeals));
+      // Only read by the server when the Event asks the question. The Guest
+      // saw it and submitted, so an unticked box is their "no".
+      formData.set('needsTransportation', wantsTransport ? 'yes' : 'no');
     }
 
     try {
@@ -304,6 +313,27 @@ export function ConfirmationExperience({
               {event.location.name}
             </DetailRow>
           ) : null}
+
+          {event.invitationImageUrl ? (
+            // A row rather than the image itself, so the answer stays near the
+            // top. Guests often arrive from an SMS, which cannot carry it.
+            <DetailRow
+              icon={<ImageIcon className="text-primary size-[19px] shrink-0" />}
+              label="הזמנה"
+            >
+              <InvitationImageViewer src={event.invitationImageUrl}>
+                {/* Padded out to a full thumb target, then pulled back so the
+                    row keeps the height of the others. */}
+                <button
+                  type="button"
+                  className="text-primary -mx-2 -my-3 inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 font-semibold underline-offset-4 hover:underline focus-visible:ring-[3px] focus-visible:ring-primary/40 focus-visible:outline-none [-webkit-tap-highlight-color:transparent] active:opacity-70"
+                >
+                  צפייה בהזמנה
+                  <ChevronLeft className="size-4 shrink-0" aria-hidden />
+                </button>
+              </InvitationImageViewer>
+            </DetailRow>
+          ) : null}
         </div>
 
         {done ? (
@@ -362,6 +392,9 @@ export function ConfirmationExperience({
                     <DetailRow label="מנות מיוחדות">
                       {formatMealCounts(visibleMeals)}
                     </DetailRow>
+                  ) : null}
+                  {askTransportation && wantsTransport ? (
+                    <DetailRow label="הסעה">כן</DetailRow>
                   ) : null}
                 </>
               ) : null}
@@ -590,6 +623,31 @@ export function ConfirmationExperience({
                       </div>
                     </div>
                   </div>
+                ) : null}
+
+                {askTransportation ? (
+                  // An opt-in, so a checkbox rather than a yes/no pair: the
+                  // form saves on submit, and unticked is sent as "no".
+                  <label className="border-border mx-1 mt-[22px] flex min-h-[54px] cursor-pointer items-center gap-3 rounded-xl border bg-white px-4">
+                    <input
+                      type="checkbox"
+                      checked={wantsTransport}
+                      tabIndex={detailsOpen ? undefined : -1}
+                      onChange={(e) => setWantsTransport(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <span
+                      aria-hidden
+                      className={`flex size-[22px] shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-200 peer-focus-visible:ring-[3px] peer-focus-visible:ring-primary/40 ${
+                        wantsTransport
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-[oklch(0.75_0.01_285.9)] bg-white'
+                      }`}
+                    >
+                      {wantsTransport ? <Check className="size-4" strokeWidth={3} /> : null}
+                    </span>
+                    <span className="text-[15px] font-medium">מעוניינים בהסעה לאירוע</span>
+                  </label>
                 ) : null}
               </div>
             </div>

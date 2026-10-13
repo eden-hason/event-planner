@@ -50,6 +50,7 @@ interface GuestsPageProps {
   groups: GroupWithGuestsApp[];
   existingPhones: Map<string, string>;
   showDietary?: boolean;
+  showTransportation?: boolean;
   tables?: TableOption[];
   messagedGuestIds?: string[];
   /** The Record Package, counts only; null when the event has none. */
@@ -72,6 +73,7 @@ export function GuestsPage({
   groups,
   existingPhones,
   showDietary = false,
+  showTransportation = false,
   tables = [],
   messagedGuestIds = [],
   recordPackage = null,
@@ -436,6 +438,7 @@ export function GuestsPage({
               eventName={eventName}
               messagedGuestIds={messagedGuestIds}
               showDietary={showDietary}
+              showTransportation={showTransportation}
               tables={tables}
               drawer={{
                 open: isDrawerOpen,
@@ -457,6 +460,7 @@ export function GuestsPage({
               existingPhones={existingPhones}
               messagedGuestIds={messagedGuestIds}
               showDietary={showDietary}
+              showTransportation={showTransportation}
               tables={tables}
               drawer={{
                 open: isDrawerOpen,

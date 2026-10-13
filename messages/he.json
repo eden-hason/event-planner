@@ -1046,7 +1046,7 @@
       "countFiltered": "מוצגות {shown} מתוך {total}",
       "meter": {
         "confirmed": "אישרו",
-        "line": "{guests} אורחים · {records} רשומות אורחים"
+        "line": "{guests} אורחים"
       },
       "status": {
         "all": "הכל",
@@ -1060,6 +1060,8 @@
         "group": "קבוצה",
         "side": "צד",
         "sideAll": "הכל",
+        "transport": "הסעה",
+        "transportAll": "הכל",
         "noPhoneOnly": "בלי מספר טלפון",
         "noGroups": "עוד אין קבוצות"
       },
@@ -1073,6 +1075,7 @@
         "group": "קבוצה: {name}",
         "side": "צד: {side}",
         "noPhone": "בלי טלפון",
+        "transport": "הסעה: {answer}",
         "clearAll": "ניקוי הכל",
         "remove": "הסרת {label}"
       },
@@ -1211,7 +1214,11 @@
         "coming": "מגיעים",
         "noMeals": "אין",
         "addMeal": "הוספה",
-        "meals": "מנות מיוחדות"
+        "meals": "מנות מיוחדות",
+        "transport": "הסעה",
+        "transportYes": "כן",
+        "transportNo": "לא",
+        "transportUnanswered": "לא ענו"
       },
       "activity": {
         "schedule": {
@@ -1286,6 +1293,12 @@
         "download": "הורדת הקובץ",
         "close": "סגירה",
         "clearSearch": "ניקוי החיפוש"
+      },
+      "transport": {
+        "title": "הסעה",
+        "yes": "כן",
+        "no": "לא",
+        "unanswered": "לא ענו"
       }
     },
     "package": {
@@ -2102,16 +2115,17 @@
       "pickAnother": "בחירת תמונה אחרת"
     },
     "guestExperience": {
-      "title": "מה האורחים נשאלים",
-      "description": "שלוש הגדרות שמשנות את תוכן השיחה עם האורחים",
-      "specialMeal": "בחירת מנה מיוחדת",
+      "title": "פרטים נוספים",
+      "specialMeal": "מנה מיוחדת",
       "specialMealDescription": "האורחים נשאלים אם הם צריכים מנה מיוחדת בשיחת אישור ההגעה",
       "mealsLabel": "אילו מנות להציע",
       "mealsEmpty": "צריך לבחור לפחות מנה אחת",
       "lockGuestCount": "נעילת מספר המוזמנים",
       "lockGuestCountDescription": "האורחים לא יכולים לשנות את מספר המוזמנים שהוקצה להם",
-      "sendTableNumbers": "שליחת מספרי שולחן",
+      "sendTableNumbers": "מספר שולחן",
       "sendTableNumbersDescription": "בתזכורת ליום האירוע כל אורח מקבל את מספר השולחן שלו",
+      "askTransportation": "הסעה",
+      "askTransportationDescription": "אורחים שמאשרים הגעה נשאלים אם הם מעוניינים בהסעה לאירוע",
       "meal": {
         "vegetarian": "צמחוני",
         "vegan": "טבעוני",
@@ -2141,7 +2155,8 @@
         "specialMeal": "בחירת מנה מיוחדת",
         "meals": "אילו מנות להציע",
         "lockGuestCount": "נעילת מספר המוזמנים",
-        "sendTableNumbers": "שליחת מספרי שולחן"
+        "sendTableNumbers": "שליחת מספרי שולחן",
+        "askTransportation": "שאלה על הסעה"
       }
     }
   },

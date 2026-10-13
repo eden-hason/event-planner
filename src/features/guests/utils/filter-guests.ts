@@ -1,5 +1,6 @@
 import { GuestWithGroupApp, GroupSide } from '@/features/guests/schemas';
 import type { GuestSortKey } from './guest-list-params';
+import { transportationAnswer, type TransportationAnswer } from './transportation-summary';
 
 const RSVP_ORDER: Record<string, number> = {
   confirmed: 0,
@@ -13,13 +14,14 @@ export interface GuestFilterParams {
   statuses: string[];
   sides: GroupSide[];
   noPhoneOnly: boolean;
+  transport: TransportationAnswer | null;
   sortKey: GuestSortKey;
 }
 
 /** The filter half of `filterAndSortGuests` - enough when only the count matters. */
 export function filterGuests(
   guests: GuestWithGroupApp[],
-  { searchTerm, groupIds, statuses, sides, noPhoneOnly }: Omit<GuestFilterParams, 'sortKey'>,
+  { searchTerm, groupIds, statuses, sides, noPhoneOnly, transport }: Omit<GuestFilterParams, 'sortKey'>,
 ): GuestWithGroupApp[] {
   const search = searchTerm.trim().toLowerCase();
 
@@ -30,6 +32,10 @@ export function filterGuests(
     }
     // No-phone filter
     if (noPhoneOnly && guest.phone) {
+      return false;
+    }
+    // Transportation filter - the same records the summary line counts
+    if (transport && transportationAnswer(guest) !== transport) {
       return false;
     }
     // Group filter

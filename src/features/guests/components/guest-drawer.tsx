@@ -46,6 +46,7 @@ export function GuestDrawer({
   groups,
   tables,
   showDietary,
+  showTransportation,
   onOpenChange,
   onSaved,
   onDelete,
@@ -59,6 +60,7 @@ export function GuestDrawer({
   groups: GroupWithGuestsApp[];
   tables: TableOption[];
   showDietary: boolean;
+  showTransportation: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: (guestId: string | null) => void;
   onDelete: (guest: GuestWithGroupApp) => void;
@@ -101,6 +103,7 @@ export function GuestDrawer({
             hideActions
             onPendingChange={setSubmitting}
             showDietary={showDietary}
+            showTransportation={showTransportation}
             tables={tables}
             onSuccess={() => onSaved(guest?.id ?? null)}
             onCancel={() => onOpenChange(false)}
