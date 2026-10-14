@@ -43,7 +43,6 @@ const DIMS: Record<
     title: string;
     eyebrow: string;
     chip: string;
-    illu: string;
     wash: string;
   }
 > = {
@@ -56,7 +55,6 @@ const DIMS: Record<
     title: 'text-[17px]',
     eyebrow: 'text-[11px]',
     chip: 'text-[11.5px]',
-    illu: 'h-11',
     wash: 'h-[76px]',
   },
   full: {
@@ -66,7 +64,6 @@ const DIMS: Record<
     title: 'text-[20px]',
     eyebrow: 'text-[12px]',
     chip: 'text-[12.5px]',
-    illu: 'h-16',
     wash: 'h-[104px]',
   },
   hero: {
@@ -76,7 +73,6 @@ const DIMS: Record<
     title: 'text-2xl',
     eyebrow: 'text-[13px]',
     chip: 'text-[13px]',
-    illu: 'h-21',
     wash: 'h-[132px]',
   },
   dash: {
@@ -86,7 +82,6 @@ const DIMS: Record<
     title: 'text-[18px]',
     eyebrow: 'text-[11px]',
     chip: 'text-[12px]',
-    illu: 'h-14',
     wash: 'h-[92px]',
   },
 };
@@ -150,10 +145,6 @@ export function EventCard({
   const typeLabel = data.eventType
     ? t(`typeLabel.${data.eventType}` as 'typeLabel.wedding')
     : t('typeFallback');
-  const illustration =
-    data.eventType === 'bar_mitzva' || data.eventType === 'bat_mitzva'
-      ? '/hero-mitzva.svg'
-      : '/hero-wedding.svg';
 
   const hasChips = hasDate || data.noDate || !!data.venue;
 
@@ -209,16 +200,6 @@ export function EventCard({
             </div>
           )}
         </div>
-        {/* Hidden on the strip once there is a title: at that height the
-            illustration and the names compete for the same line. */}
-        {(size !== 'strip' || !data.title) && (
-          <img
-            src={illustration}
-            alt=""
-            aria-hidden="true"
-            className={cn('relative w-auto shrink-0 select-none', d.illu)}
-          />
-        )}
       </div>
 
       {hasChips && (

@@ -232,7 +232,7 @@ export function AuthTakeover({
     <TakeoverShell>
       {/* The corner mark, landing where /start puts it so the two screens are
           stamped the same way. Absolute rather than a header row: the
-          illustration panel runs the full height of the split, and a header
+          side panel runs the full height of the split, and a header
           above the grid would push it down off the top edge. Physical `left`
           because the corner is the corner in either direction, and `h-10` is
           /start's back-button row, which is what centres the mark there. */}
@@ -240,7 +240,7 @@ export function AuthTakeover({
         <TakeoverLogo />
       </header>
 
-      {/* Split on desktop, single column on the phone - the illustration panel
+      {/* Split on desktop, single column on the phone - the side panel
           is the first thing to go when there is no room for it. */}
       <div className="grid flex-1 md:grid-cols-2">
         <div className="flex animate-[kt-fade-up_0.5s_cubic-bezier(0.16,1,0.3,1)_both] flex-col justify-center gap-2 px-7 py-16 md:px-[88px]">
@@ -271,12 +271,6 @@ export function AuthTakeover({
         </div>
 
         <div className="relative hidden flex-col items-center justify-center gap-6 overflow-hidden bg-[linear-gradient(150deg,#FFE7F8_0%,#F1E8FF_50%,#FFE6DC_100%)] p-12 md:flex">
-          <img
-            src="/hero-wedding.svg"
-            alt=""
-            aria-hidden="true"
-            className="w-[280px] animate-[kt-fade-up_0.6s_cubic-bezier(0.16,1,0.3,1)_0.15s_both]"
-          />
           <div className="animate-[kt-fade-up_0.6s_cubic-bezier(0.16,1,0.3,1)_0.3s_both] text-center">
             <div className="text-xl font-bold text-[var(--kt-ink)]">
               {t('heroTitle')}
