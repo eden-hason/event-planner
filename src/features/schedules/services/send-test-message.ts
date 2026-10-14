@@ -34,8 +34,8 @@ export type SendTestMessageOutcome =
  *
  * The recipient stands in for a Guest only inside parameter resolution: no
  * Guest Record is read or written, nothing lands in message_deliveries, and
- * the RSVP link carries the event's preview token, so tapping it opens the
- * preview page instead of answering for anyone. The send is logged in
+ * the RSVP link carries the event's preview token, so tapping it cannot answer
+ * for anyone. The guest-facing RSVP page does not open for a preview token. The send is logged in
  * test_messages, which is also what enforces TEST_MESSAGE_CAP.
  *
  * Expects a service-role client: the caller has already checked that the
