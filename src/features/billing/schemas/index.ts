@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RECORD_PACKAGE_CHANNELS } from '../utils/record-package';
+import { PRICING_CHANNELS } from '../utils/pricing';
 
 /**
  * The commercial state of an Event - the "Free to Plan, Pay to Send" boundary,
@@ -60,7 +60,8 @@ export const RecordEventPaymentSchema = z
       .int('מספר הרשומות צריך להיות שלם')
       .min(1, 'לפחות רשומה אחת')
       .max(MAX_RECORDS_PER_PAYMENT, `At most ${MAX_RECORDS_PER_PAYMENT.toLocaleString('en-GB')} records in one payment`),
-    channel: z.enum(RECORD_PACKAGE_CHANNELS),
+    // Only the Plans on sale (ADR 0034): past `sms` payments keep their channel, but no new one is recorded on it.
+    channel: z.enum(PRICING_CHANNELS),
     amount: z
       .number({ error: 'צריך להזין את הסכום שהתקבל' })
       .min(0, 'הסכום לא יכול להיות שלילי')
