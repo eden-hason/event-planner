@@ -43,7 +43,8 @@ free Owner decides to upgrade, so the choice can be seen again at the moment of 
 SMS stops being sold, but `sms` stays in the `record_package_channel` enum and in
 `RECORD_PACKAGE_CHANNELS`/`RECORD_PACKAGE_RATES` for now. Removing it is a migration with no
 payment to carry, worth doing when the channel is enforced (backlog 0016), not before.
-The homepage hides it.
+The homepage hides it, and the Back Office's payment form no longer offers it, so no new
+payment is recorded on SMS.
 
 ## Consequences
 

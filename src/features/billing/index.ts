@@ -30,6 +30,8 @@ export {
   nextBonusStep,
   packageAside,
   packageState,
+  PRICING_CHANNELS,
+  type PricingChannel,
   recordPackage,
   splitByPackage,
   UPSELL_CTA_CLASS,

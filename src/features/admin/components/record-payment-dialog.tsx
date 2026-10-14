@@ -26,16 +26,22 @@ import {
 } from '@/components/ui/select';
 import {
   PAYMENT_METHOD_LABELS,
+  PRICING_CHANNELS,
   RECORD_PACKAGE_CHANNEL_LABELS,
-  RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   recordEventPayment,
   recordPackage,
   type BillingPaymentMethod,
+  type PricingChannel,
   type RecordPackageChannel,
 } from '@/features/billing';
 
 const METHODS = Object.keys(PAYMENT_METHOD_LABELS) as BillingPaymentMethod[];
+
+/** A past payment's channel, if it is still on sale (ADR 0034: SMS is not). */
+function onSale(channel: RecordPackageChannel | null): PricingChannel | null {
+  return PRICING_CHANNELS.find((c) => c === channel) ?? null;
+}
 
 /**
  * Records a payment taken outside the system (ADR 0021, ADR 0027). Every payment adds to
@@ -57,7 +63,7 @@ export function RecordPaymentDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [records, setRecords] = useState('');
-  const [channel, setChannel] = useState<RecordPackageChannel>(defaultChannel ?? 'whatsapp');
+  const [channel, setChannel] = useState<PricingChannel>(onSale(defaultChannel) ?? 'whatsapp');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<BillingPaymentMethod>('bank_transfer');
   const [reference, setReference] = useState('');
@@ -132,12 +138,12 @@ export function RecordPaymentDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="payment-channel">ערוץ</Label>
-            <Select value={channel} onValueChange={(v) => setChannel(v as RecordPackageChannel)}>
+            <Select value={channel} onValueChange={(v) => setChannel(v as PricingChannel)}>
               <SelectTrigger id="payment-channel" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {RECORD_PACKAGE_CHANNELS.map((c) => (
+                {PRICING_CHANNELS.map((c) => (
                   <SelectItem key={c} value={c}>
                     {RECORD_PACKAGE_CHANNEL_LABELS[c]} · ₪{RECORD_PACKAGE_RATES[c]} per record
                   </SelectItem>

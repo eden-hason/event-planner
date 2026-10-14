@@ -32,6 +32,14 @@ describe('RecordEventPaymentSchema', () => {
     assert.equal(RecordEventPaymentSchema.safeParse({ ...base, amount: 0 }).success, false);
   });
 
+  it('accepts both Plans on sale', () => {
+    assert.equal(RecordEventPaymentSchema.safeParse({ ...base, channel: 'whatsapp_calls' }).success, true);
+  });
+
+  it('refuses SMS, which is no longer sold', () => {
+    assert.equal(RecordEventPaymentSchema.safeParse({ ...base, channel: 'sms' }).success, false);
+  });
+
   it('refuses zero or fractional records', () => {
     assert.equal(RecordEventPaymentSchema.safeParse({ ...base, records: 0 }).success, false);
     assert.equal(RecordEventPaymentSchema.safeParse({ ...base, records: 1.5 }).success, false);
