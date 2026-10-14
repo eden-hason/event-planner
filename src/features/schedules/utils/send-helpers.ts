@@ -247,6 +247,18 @@ export function smsFallbackReason(
 }
 
 /**
+ * The fallback reason to show beside a Delivery's rolled-up outcome. Only
+ * when that outcome is the SMS itself: once a later WhatsApp resend wins the
+ * roll-up, "SMS sent instead" no longer describes what the guest got.
+ */
+export function deliveryFallbackReason(
+  deliveryMethod: string | null,
+  attempts: { channel: string; status: string; triggered_by: string | null }[],
+): SmsFallbackReason | null {
+  return deliveryMethod === 'sms' ? smsFallbackReason(attempts) : null;
+}
+
+/**
  * One message_delivery_attempts row. The parent message_deliveries row is
  * never written from a send result - its status is rolled up from its attempts
  * in the database (ADR 0011).

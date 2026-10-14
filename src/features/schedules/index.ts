@@ -25,6 +25,7 @@ export {
   type WhatsAppFailureSide,
   isSmsFallbackTrigger,
   smsFallbackReason,
+  deliveryFallbackReason,
   type SmsFallbackReason,
   buildCalendarEntry,
   toIcs,

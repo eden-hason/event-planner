@@ -3,7 +3,7 @@ import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
 import { awaitingSmsFallback, classifySmsFallbackCandidates, stuckForHours } from './send-sms-fallback.ts';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { smsFallbackReason } from '../utils/send-helpers.ts';
+import { deliveryFallbackReason, smsFallbackReason } from '../utils/send-helpers.ts';
 
 const NOW = new Date('2026-10-07T16:00:00Z');
 const WINDOW = { now: NOW, minHours: 2, maxHours: 72 };
@@ -147,6 +147,25 @@ test('a late WhatsApp receipt keeps the fallback unconfirmed, never failed', () 
 test('no fallback attempt means no reason', () => {
   assert.equal(
     smsFallbackReason([{ channel: 'whatsapp', status: 'sent', triggered_by: 'scheduled' }]),
+    null,
+  );
+});
+
+const FAILED_THEN_SMS = [
+  { channel: 'whatsapp', status: 'failed', triggered_by: 'scheduled' },
+  { channel: 'sms', status: 'sent', triggered_by: 'fallback_auto' },
+];
+
+test('a delivery whose outcome is the fallback SMS keeps its reason', () => {
+  assert.equal(deliveryFallbackReason('sms', FAILED_THEN_SMS), 'failed');
+});
+
+test('a WhatsApp resend that wins the roll-up drops the fallback reason', () => {
+  assert.equal(
+    deliveryFallbackReason('whatsapp', [
+      ...FAILED_THEN_SMS,
+      { channel: 'whatsapp', status: 'delivered', triggered_by: 'manual' },
+    ]),
     null,
   );
 });
