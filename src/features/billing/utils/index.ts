@@ -10,6 +10,7 @@ export {
   RECORD_PACKAGE_RATES,
   BONUS_STEPS,
   bonusRecords,
+  includesCallRounds,
   nextBonusStep,
   packageAside,
   packageState,

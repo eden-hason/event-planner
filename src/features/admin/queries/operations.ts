@@ -10,6 +10,7 @@ import type {
   PlannedWorkQueue,
   PlannedWorkRow,
 } from '../types';
+import { loadCallRoundEventIds } from '@/features/billing/services';
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
 import { numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
@@ -23,6 +24,16 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
   if (result.error) throw new Error(result.error.message);
   if (result.data === null) throw new Error('Query returned no data');
   return result.data;
+}
+
+/** The Events among these whose Plan includes Call Rounds (ADR 0034). Throws when unread. */
+async function callRoundEventIds(
+  supabase: ReturnType<typeof createServiceClient>,
+  eventIds: string[],
+): Promise<ReadonlySet<string>> {
+  const callEvents = await loadCallRoundEventIds(supabase, [...new Set(eventIds)]);
+  if (!callEvents) throw new Error('Could not read the Events\' Plans');
+  return callEvents;
 }
 
 function calendarParts(date: Date) {
@@ -169,7 +180,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
   const supabase = createServiceClient();
   const test = await getTestScope();
 
-  const open = unwrap(
+  const queued = unwrap(
     await excludeIds(
       supabase
         .from('schedules')
@@ -191,6 +202,16 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       test.eventIds,
     ),
   ) as unknown as ScheduleRow[];
+
+  // A call plan is work only on the WhatsApp + calls Plan (ADR 0034). Everything
+  // here is unstarted, so a call plan on any other Event has nothing to do.
+  const callEvents = await callRoundEventIds(
+    supabase,
+    queued.filter((row) => row.schedule_types?.execution_kind === 'phone_call').map((row) => row.event_id),
+  );
+  const open = queued.filter(
+    (row) => row.schedule_types?.execution_kind !== 'phone_call' || callEvents.has(row.event_id),
+  );
 
   if (!open.length) return { groups: [], callRounds: 0, messages: 0 };
 
@@ -288,8 +309,9 @@ type CallPlanRow = {
  * The plan is the `schedules` row and its Due Time is the day it belongs to, so
  * this reads the same rows the Operations queue and the event timeline do - it
  * keeps nothing of its own. Cancelled plans are left out. So are unstarted
- * plans on events that cannot send, which offer no Start button anywhere; a
- * round already under way stays, since its calling surface still works.
+ * plans on events that cannot send or whose Plan has no calls, which offer no
+ * Start button anywhere; a round already under way stays, since its calling
+ * surface still works.
  */
 export async function getOverviewCallRounds(): Promise<OverviewCallRounds> {
   await assertAdmin();
@@ -324,7 +346,7 @@ export async function getOverviewCallRounds(): Promise<OverviewCallRounds> {
 
   // A round's call_logs are its audience snapshot, counted here because one
   // round of a large Event can pass the 1,000-row cap.
-  const [numbers, tally, startedResult] = await Promise.all([
+  const [numbers, tally, startedResult, callEvents] = await Promise.all([
     planNumbers(supabase, eventIds),
     audienceTallies(supabase, eventIds),
     supabase
@@ -332,6 +354,7 @@ export async function getOverviewCallRounds(): Promise<OverviewCallRounds> {
       .select('id, schedule_id, completed_at, snapshot:call_logs(count), called:call_logs(count)')
       .in('schedule_id', plans.map((row) => row.id))
       .not('called.outcome', 'is', null),
+    callRoundEventIds(supabase, eventIds),
   ]);
   const roundBySchedule = new Map(unwrap(startedResult).map((round) => [round.schedule_id, round]));
 
@@ -342,6 +365,8 @@ export async function getOverviewCallRounds(): Promise<OverviewCallRounds> {
     // Claimed without a round left behind: nothing to start and nothing to open.
     if (!round && row.status !== null) return [];
     if (!round && !row.events?.can_create_schedules) return [];
+    // Not on the WhatsApp + calls Plan (ADR 0034): Start would refuse it.
+    if (!round && !callEvents.has(row.event_id)) return [];
 
     const baseName = scheduleTypeName(row.schedule_types?.key, row.schedule_types?.name);
     const number = numbers.get(row.id);
@@ -400,9 +425,11 @@ export async function listEventsForPlanning(): Promise<
     ),
   ) as unknown as (AudienceRow & { title: string | null })[];
 
-  // Every event that can send, guests or not: the audience is snapshotted when
-  // a round starts, so an empty list today does not stop a plan.
-  return events.map((event) => {
+  // Every event that can send and is on the WhatsApp + calls Plan (ADR 0034),
+  // guests or not: the audience is snapshotted when a round starts, so an empty
+  // list today does not stop a plan.
+  const callEvents = await callRoundEventIds(supabase, events.map((event) => event.id));
+  return events.filter((event) => callEvents.has(event.id)).map((event) => {
     const { pending, confirmed } = audienceCounts(event);
     return { id: event.id, title: eventTitle(event.title), pending, confirmed };
   });

@@ -15,8 +15,14 @@ SMS was sold at 1 ₪ until ADR 0034 and never bought. `sms` is still a value of
 ## What is true today
 
 - Price is `records × rate`, and the rate depends only on the channel (ADR 0002).
-- The channel exists only on the recorded payment. The send queue (ADR 0013), SMS Fallback
-  (ADR 0012/0016) and Call Rounds know nothing about it.
+- The channel exists only on the recorded payment. The send queue (ADR 0013) and SMS
+  Fallback (ADR 0012/0016) know nothing about it.
+- Call Rounds do (issue #489). The Plan is the channel of the newest payment, and only
+  `whatsapp_calls` includes them (`includesCallRounds`, `loadCallRoundEventIds`):
+  `createCallPlan` and `startCallRound` refuse any other Event, and the Owner's page, Home
+  and the Back Office leave out its unstarted call plans. The seed still writes the
+  wedding's two call plans for every Event, so an upgrade brings them back; a round that
+  already ran stays visible. Free Events, with no payment, show no call plans either.
 - Payment is manual, so an Operator choosing the wrong channel is caught by a person, not
   by the system.
 

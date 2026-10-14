@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
 import {
   listEventPayments,
+  loadCallRoundEventIds,
   loadRecordPackage,
   type LoadedRecordPackage,
 } from '../services';
@@ -37,6 +38,27 @@ export async function getGuestPackageView(eventId: string): Promise<GuestPackage
 
   const loaded = await loadRecordPackage(createServiceClient(), eventId);
   return loaded?.package ? toGuestPackageView(loaded, loaded.package) : null;
+}
+
+/**
+ * Whether the current Event's Plan includes Call Rounds (ADR 0034), for the Owner's pages.
+ *
+ * Read with the service client after the viewer's own client has proven they can see the
+ * event, for the reason `getGuestPackageView` gives: payments are Owner-only under RLS, and
+ * a collaborator must see the same plan the Owner does. False when it cannot be worked out,
+ * so a WhatsApp Event never shows a round on a failed read.
+ */
+export async function getIncludesCallRounds(eventId: string): Promise<boolean> {
+  const { supabase } = await getEffectiveClient();
+  const { data: event, error } = await supabase
+    .from('events')
+    .select('id')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (error || !event) return false;
+
+  const callEvents = await loadCallRoundEventIds(createServiceClient(), [eventId]);
+  return callEvents?.has(eventId) ?? false;
 }
 
 function toGuestPackageView(

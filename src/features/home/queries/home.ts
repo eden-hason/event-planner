@@ -4,6 +4,7 @@ import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
 import { getEffectiveUser, getUserProfile } from '@/features/auth/queries';
 import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getIncludesCallRounds } from '@/features/billing/queries';
 import { getGlobalProgressCounts } from '@/features/seating/queries';
 import { findGuestIssues } from '@/features/guests';
 import {
@@ -190,22 +191,24 @@ export async function getFeaturedActionFacts(
 
 export async function getStatusStrip(event: EventApp): Promise<StatusStripData> {
   const { supabase } = await getEffectiveClient();
+  // A call plan is outreach only on the WhatsApp + calls Plan (ADR 0034).
+  const callRounds = await getIncludesCallRounds(event.id);
+
+  let nextQuery = supabase
+    .from('schedules')
+    .select('scheduled_date, schedule_types!inner (key, execution_kind)')
+    .eq('event_id', event.id)
+    .is('status', null)
+    // An Undated Schedule is not next - nothing goes out until it is dated.
+    .not('scheduled_date', 'is', null);
+  if (!callRounds) nextQuery = nextQuery.eq('schedule_types.execution_kind', 'message');
 
   const [expensesResult, tableCount, progress, nextResult, pendingCount, sentResult] = await Promise.all([
     supabase.from('expenses').select('estimate').eq('event_id', event.id),
     countRows('tables', event.id),
     getGlobalProgressCounts(event.id),
-    supabase
-      .from('schedules')
-      .select('scheduled_date, schedule_types!inner (key)')
-      .eq('event_id', event.id)
-      .is('status', null)
-      // An Undated Schedule is not next - nothing goes out until it is dated.
-      .not('scheduled_date', 'is', null)
-      .order('scheduled_date', { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-    getPendingSchedulesCount(event.id),
+    nextQuery.order('scheduled_date', { ascending: true }).limit(1).maybeSingle(),
+    getPendingSchedulesCount(event.id, { messagesOnly: !callRounds }),
     supabase
       .from('schedules')
       .select('id', { count: 'exact', head: true })

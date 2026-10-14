@@ -25,6 +25,14 @@ export const RECORD_PACKAGE_RATES: Record<RecordPackageChannel, number> = {
 };
 
 /**
+ * Whether a package's channel includes Call Rounds (ADR 0034). Only WhatsApp + calls does:
+ * the WhatsApp Plan, a past SMS package and an Event with no package (null) do not.
+ */
+export function includesCallRounds(channel: RecordPackageChannel | null): boolean {
+  return channel === 'whatsapp_calls';
+}
+
+/**
  * The bonus grows in steps on total Paid Records (ADR 0035): each step replaces the one
  * before it, never adds to it. A flat number per step, never a percentage.
  */

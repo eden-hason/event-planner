@@ -3,11 +3,24 @@ import { describe, it } from 'node:test';
 
 import {
   bonusRecords,
+  includesCallRounds,
   nextBonusStep,
   packageState,
   recordPackage,
   splitByPackage,
 } from './record-package';
+
+describe('includesCallRounds', () => {
+  it('is true only for the WhatsApp + calls Plan', () => {
+    assert.equal(includesCallRounds('whatsapp_calls'), true);
+    assert.equal(includesCallRounds('whatsapp'), false);
+    assert.equal(includesCallRounds('sms'), false);
+  });
+
+  it('is false for an Event with no package', () => {
+    assert.equal(includesCallRounds(null), false);
+  });
+});
 
 describe('bonusRecords', () => {
   it('gives nothing below 200 paid records', () => {
