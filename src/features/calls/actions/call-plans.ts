@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import { israelWallClockToIso } from '@/lib/date-time';
+import { loadCallRoundEventIds } from '@/features/billing/services';
 
 export type CallPlanResult = { success: boolean; message: string };
 
@@ -52,6 +53,15 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
     }
     if (!event.can_create_schedules) {
       return { success: false, message: 'השליחה לא מופעלת לאירוע הזה' };
+    }
+
+    // Call Rounds are what the WhatsApp + calls Plan adds (ADR 0034).
+    const callEvents = await loadCallRoundEventIds(supabase, [input.eventId]);
+    if (!callEvents) {
+      return { success: false, message: 'לא הצלחנו לבדוק את חבילת הרשומות' };
+    }
+    if (!callEvents.has(input.eventId)) {
+      return { success: false, message: 'החבילה של האירוע הזה היא וואטסאפ בלי שיחות' };
     }
 
     // No audience check: a plan is only a date and a target. Who gets called

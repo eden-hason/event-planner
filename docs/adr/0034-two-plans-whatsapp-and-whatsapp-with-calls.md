@@ -54,5 +54,9 @@ as the one thing the dearer Plan adds, which is what they are.
 one for it: the Plan is recorded on the payment and not enforced (backlog 0016). Until it
 is, keeping to the Plan is the Operator's job.
 
+> Amended 2026-10-14: Call Rounds are now enforced (issue #489). Only an Event whose
+> newest payment is `whatsapp_calls` can have a call plan created or a round started, and
+> its unstarted call plans are hidden everywhere else. See backlog 0016.
+
 SMS Fallback still runs on both Plans. It rescues failed WhatsApp sends and is not part of
 what either Plan sells, so customer copy should neither promise it nor deny it.

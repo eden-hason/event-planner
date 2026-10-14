@@ -3,7 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
-import { loadOutsidePackageIds } from '@/features/billing/services';
+import { loadCallRoundEventIds, loadOutsidePackageIds } from '@/features/billing/services';
 
 export type StartCallRoundResult = {
   success: boolean;
@@ -51,6 +51,16 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     }
     if (plan.status === 'cancelled') {
       return { success: false, message: 'התוכנית הזו בוטלה' };
+    }
+
+    // Call Rounds are what the WhatsApp + calls Plan adds (ADR 0034). Checked before the
+    // claim, so a refused plan is left exactly as it was and starts if the Event upgrades.
+    const callEvents = await loadCallRoundEventIds(supabase, [plan.event_id]);
+    if (!callEvents) {
+      return { success: false, message: 'לא הצלחנו לבדוק את חבילת הרשומות' };
+    }
+    if (!callEvents.has(plan.event_id)) {
+      return { success: false, message: 'החבילה של האירוע הזה היא וואטסאפ בלי שיחות' };
     }
 
     const { data: claimed, error: claimError } = await supabase

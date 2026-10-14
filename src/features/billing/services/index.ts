@@ -9,3 +9,4 @@ export {
   type LoadedRecordPackage,
 } from './load-record-package';
 export { listEventPayments } from './list-event-payments';
+export { loadCallRoundEventIds } from './call-round-events';

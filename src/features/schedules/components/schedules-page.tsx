@@ -5,6 +5,7 @@ import { getEventGuests } from '@/features/guests/queries/guests';
 import { callPaneState } from '@/features/calls';
 import { CallRoundPane } from '@/features/calls/components';
 import { getCallRoundsByScheduleId } from '@/features/calls/queries';
+import { getIncludesCallRounds } from '@/features/billing/queries';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import {
   SCHEDULE_TYPE_KEYS,
@@ -76,7 +77,7 @@ export async function SchedulesPage({
     );
   }
 
-  const [guests, roundsBySchedule, sentCounts] = await Promise.all([
+  const [guests, roundsBySchedule, sentCounts, callRounds] = await Promise.all([
     getEventGuests(eventId),
     // RLS-bound: a viewer without Owner access gets an empty map, so a call
     // plan renders as planned rather than exposing its results.
@@ -84,7 +85,17 @@ export async function SchedulesPage({
     // One aggregate for the whole Event, so a seven-card timeline costs one
     // round trip rather than seven.
     getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
+    getIncludesCallRounds(eventId),
   ]);
+
+  // Call Rounds are what the WhatsApp + calls Plan adds (ADR 0034), so on any
+  // other Plan a call plan nobody started is not shown. A round that already ran
+  // stays, with its results.
+  const planned = callRounds
+    ? schedules
+    : schedules.filter(
+        (schedule) => isMessageSchedule(schedule) || roundsBySchedule.has(schedule.id),
+      );
 
   // schedule.template is only the family anchor. Resolve what would actually be
   // sent, using the same resolver the send engine runs, so the preview the
@@ -93,7 +104,7 @@ export async function SchedulesPage({
   const invitationImage = hasInvitationImage(event?.invitations);
 
   const resolved = await Promise.all(
-    schedules.map(async (schedule): Promise<ScheduleWithTemplate> => {
+    planned.map(async (schedule): Promise<ScheduleWithTemplate> => {
       if (!schedule.template) {
         return {
           schedule,
@@ -112,7 +123,7 @@ export async function SchedulesPage({
         ),
         tableNumbers,
         note: Boolean(schedule.customText?.trim()),
-        followUp: isFollowUpConfirmation(schedule, schedules),
+        followUp: isFollowUpConfirmation(schedule, planned),
         invitationImage,
       });
 

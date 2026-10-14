@@ -30,6 +30,7 @@ import { VenueNameDialog } from './venue-name-dialog';
 import {
   getEventGuestSummary,
   getEventIdentity,
+  getEventIncludesCallRounds,
   getEventSignals,
   getEventTimeline,
 } from '../queries/events';
@@ -325,7 +326,11 @@ function provenanceLabel(label: string) {
 
 export async function EventOutreachBand({ eventId }: { eventId: string }) {
   try {
-    const [event, rows] = await Promise.all([getEventIdentity(eventId), getEventTimeline(eventId)]);
+    const [event, rows, callRounds] = await Promise.all([
+      getEventIdentity(eventId),
+      getEventTimeline(eventId),
+      getEventIncludesCallRounds(eventId),
+    ]);
     if (!event) return <BandFailure title="ציר התקשורת" />;
     // The timeline shows either way, so an Operator can date the plan and shape
     // it before payment; call rounds wait for sending like everything else. An
@@ -339,8 +344,9 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
         className="scroll-mt-20"
         // Bulk sending is gone (ADR 0013): a Schedule sends when its Due Time
         // comes, and the one manual path left is the per-delivery send on the
-        // timeline itself, capped at ten guest records.
-        action={guestSummary ? (
+        // timeline itself, capped at ten guest records. A round is added only
+        // on the WhatsApp + calls Plan (ADR 0034).
+        action={guestSummary && callRounds ? (
           <div className="flex shrink-0 gap-2">
             <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
           </div>
@@ -360,7 +366,7 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
           {rows.length ? (
             <EventTimeline rows={rows} eventId={event.id} sendingEnabled={sendingEnabled} />
           ) : (
-            <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>לא מתוכננת תקשורת</EmptyTitle><EmptyDescription>{!sendingEnabled ? 'התוכנית נוצרת ברגע שלאירוע יש סוג ותאריך' : 'אפשר להוסיף סבב שיחות או לחכות שבעלי האירוע יגדירו הודעות'}</EmptyDescription></EmptyHeader></Empty>
+            <Empty className="min-h-44 border-0 p-4"><EmptyHeader><EmptyTitle>לא מתוכננת תקשורת</EmptyTitle><EmptyDescription>{!sendingEnabled ? 'התוכנית נוצרת ברגע שלאירוע יש סוג ותאריך' : callRounds ? 'אפשר להוסיף סבב שיחות או לחכות שבעלי האירוע יגדירו הודעות' : 'אפשר לחכות שבעלי האירוע יגדירו הודעות'}</EmptyDescription></EmptyHeader></Empty>
           )}
         </BandRow>
       </Band>

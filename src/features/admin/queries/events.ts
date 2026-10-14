@@ -13,6 +13,7 @@ import {
   validatePhoneNumber,
 } from '@/features/schedules';
 import type { EventBillingStatus, RecordPackageChannel } from '@/features/billing';
+import { loadCallRoundEventIds } from '@/features/billing/services';
 import type {
   EventGuestSummary,
   EventIdentity,
@@ -299,7 +300,21 @@ type ScheduleJoinRow = {
   target_status: string | null;
   schedule_types: unknown;
   message_templates: unknown;
+  call_rounds: { id: string }[];
 };
+
+/**
+ * Whether the Event's Plan includes Call Rounds (ADR 0034): only WhatsApp + calls does.
+ * Cached per render: the timeline and the outreach band's add button both read it.
+ */
+export const getEventIncludesCallRounds = cache(async function getEventIncludesCallRounds(
+  eventId: string,
+): Promise<boolean> {
+  await assertAdmin();
+  const callEvents = await loadCallRoundEventIds(createServiceClient(), [eventId]);
+  if (!callEvents) throw new Error('Could not read the Event\'s Plan');
+  return callEvents.has(eventId);
+});
 
 // Cached per render: the signals band and the outreach band both read it.
 export const getEventTimeline = cache(async function getEventTimeline(
@@ -307,12 +322,21 @@ export const getEventTimeline = cache(async function getEventTimeline(
 ): Promise<EventTimelineRow[]> {
   await assertAdmin();
   const supabase = createServiceClient();
-  const schedules = unwrap(
-    await supabase
+  const [schedulesResult, callRounds] = await Promise.all([
+    supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(key, name, execution_kind), message_templates(channel)')
+      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(key, name, execution_kind), message_templates(channel), call_rounds(id)')
       .eq('event_id', eventId),
-  ) as unknown as ScheduleJoinRow[];
+    getEventIncludesCallRounds(eventId),
+  ]);
+  // A call plan nobody started is left out unless the Plan includes Call Rounds
+  // (ADR 0034), so a WhatsApp Event offers no round to start. A round already
+  // under way stays, with its results.
+  const schedules = (unwrap(schedulesResult) as unknown as ScheduleJoinRow[]).filter(
+    (row) => callRounds
+      ||(eventType(row.schedule_types) as { execution_kind?: string | null } | null)?.execution_kind !== 'phone_call'
+      || (row.call_rounds ?? []).length > 0,
+  );
   if (!schedules.length) return [];
 
   // The Owner's plan order and numbering (ADR 0029), so "Confirmation 2" here
