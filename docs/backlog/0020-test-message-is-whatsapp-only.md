@@ -42,8 +42,9 @@ the glossary should say so as well.
 - **The SMS path is not test-aware.** `sendSmsToGuest` is shared with the Operator SMS Fallback
   (`services/send-sms-fallback.ts`), so it cannot be removed. It only has to stop being called
   for tests. No status or reply handling knows that an SMS was a test.
-- **The RSVP link** in either channel carries the event's `preview_token`, so tapping it opens
-  the Live Invite Preview Link and records nothing. This is not affected.
+- **The RSVP link** in either channel carries the event's `preview_token`, so tapping it records
+  nothing. Since issue #491 the RSVP page no longer opens for a preview token (an Owner does
+  not see the guest-facing page), so the link shows the invalid-link page. This is not affected.
 
 ## Open questions
 
