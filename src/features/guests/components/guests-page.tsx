@@ -470,6 +470,7 @@ export function GuestsPage({
               onOpenGuest={(guest) => openGuestDrawer(guest.id)}
               onAddGuest={handleAddGuest}
               onImportDrive={() => goToImportRoute('drive')}
+              onImportWhatsApp={() => goToImportRoute('whatsapp')}
             />
           )}
         </TabsContent>

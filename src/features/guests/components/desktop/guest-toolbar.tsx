@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   IconArrowsSort,
   IconBrandGoogleDrive,
+  IconBrandWhatsapp,
   IconCheck,
   IconChevronDown,
   IconDots,
@@ -64,6 +65,7 @@ interface GuestToolbarProps {
   onAddGuest: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
+  onImportWhatsApp: () => void;
   onExport: (scope: IplanScope) => void;
 }
 
@@ -78,6 +80,7 @@ export function GuestToolbar({
   onAddGuest,
   onImportFile,
   onImportDrive,
+  onImportWhatsApp,
   onExport,
 }: GuestToolbarProps) {
   const t = useTranslations('guests');
@@ -410,6 +413,10 @@ export function GuestToolbar({
           <DropdownMenuItem onClick={onImportDrive} className="gap-2">
             <IconBrandGoogleDrive size={16} />
             {t('list.importDrive')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onImportWhatsApp} className="gap-2">
+            <IconBrandWhatsapp size={16} />
+            {t('list.importWhatsapp')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-muted-foreground text-xs">

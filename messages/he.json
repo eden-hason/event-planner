@@ -1069,6 +1069,7 @@
       "more": "עוד פעולות",
       "importFile": "ייבוא מקובץ",
       "importDrive": "ייבוא מ-Google Drive",
+      "importWhatsapp": "ייבוא מוואטסאפ",
       "exportHeading": "ייצוא ל-iPlan",
       "addGuest": "הוספת אורח",
       "chips": {
@@ -1094,7 +1095,8 @@
         "body": "העלו את רשימת האורחים מקובץ Excel או CSV ונסדר אותה בשבילכם. אפשר גם להוסיף אורח אחד בכל פעם",
         "upload": "העלאת קובץ",
         "add": "הוספת אורח",
-        "drive": "Google Drive"
+        "drive": "Google Drive",
+        "whatsapp": "וואטסאפ"
       },
       "columns": {
         "name": "שם",
