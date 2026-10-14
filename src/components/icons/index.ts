@@ -25,6 +25,7 @@ export {
   Phone,
   PhoneOff,
   Search,
+  Trash2,
   TriangleAlert,
   Users,
   X,

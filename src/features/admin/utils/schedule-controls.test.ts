@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   conversionRejection,
+  deletionRejection,
   dueTimeRejection,
   type ScheduleControlState,
 } from './schedule-controls';
@@ -52,5 +53,25 @@ describe('conversionRejection', () => {
   it('refuses an invitation that went out or expired', () => {
     assert.ok(conversionRejection({ ...invitation, sentAt: '2026-10-01T07:00:00Z' }));
     assert.ok(conversionRejection({ ...invitation, status: 'expired' }));
+  });
+});
+
+describe('deletionRejection', () => {
+  it('deletes an Initial Invitation that has not gone out, in any unsent state', () => {
+    assert.equal(deletionRejection(invitation), null);
+    assert.equal(deletionRejection({ ...invitation, status: 'disabled' }), null);
+    assert.equal(deletionRejection({ ...invitation, status: 'cancelled' }), null);
+    assert.equal(deletionRejection({ ...invitation, status: 'expired' }), null);
+  });
+
+  it('refuses any other schedule type', () => {
+    assert.ok(deletionRejection({ ...invitation, scheduleTypeKey: 'confirmation' }));
+    assert.ok(deletionRejection({ ...invitation, scheduleTypeKey: 'phone_call', kind: 'call' }));
+  });
+
+  it('refuses an invitation that went out, by status, send or claim', () => {
+    assert.ok(deletionRejection({ ...invitation, status: 'sent' }));
+    assert.ok(deletionRejection({ ...invitation, sentAt: '2026-10-01T07:00:00Z' }));
+    assert.ok(deletionRejection({ ...invitation, dispatchedAt: '2026-10-01T07:00:00Z' }));
   });
 });

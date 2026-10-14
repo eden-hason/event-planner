@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarClock, Ellipsis, MessageSquare, TriangleAlert } from '@/components/icons';
+import { CalendarClock, Ellipsis, MessageSquare, Trash2, TriangleAlert } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,17 +16,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
 import { DEFAULT_SEND_TIME } from '@/features/schedules';
-import { convertInvitationToConfirmationAdmin, setScheduleDueTimeAdmin } from '../actions/event-controls';
+import {
+  convertInvitationToConfirmationAdmin,
+  deleteInitialInvitationAdmin,
+  setScheduleDueTimeAdmin,
+} from '../actions/event-controls';
 import { useControlAction } from './use-control-action';
 import type { EventTimelineRow } from '../types';
 
-type Dialogs = 'dueTime' | 'convert' | null;
+type Dialogs = 'dueTime' | 'convert' | 'delete' | null;
 
 /**
  * The per-row overflow menu on the Back Office outreach timeline. Renders
@@ -41,7 +46,7 @@ export function ScheduleControls({
   sendingEnabled: boolean;
 }) {
   const [open, setOpen] = useState<Dialogs>(null);
-  if (!row.dueTimeEditable && !row.convertible) return null;
+  if (!row.dueTimeEditable && !row.convertible && !row.deletable) return null;
   return (
     <>
       <DropdownMenu>
@@ -63,6 +68,15 @@ export function ScheduleControls({
               המרה להזמנה עם אישור הגעה
             </DropdownMenuItem>
           )}
+          {row.deletable && (
+            <>
+              {(row.dueTimeEditable || row.convertible) && <DropdownMenuSeparator />}
+              <DropdownMenuItem variant="destructive" onSelect={() => setOpen('delete')}>
+                <Trash2 />
+                מחיקת ההזמנה
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       {row.dueTimeEditable && (
@@ -70,6 +84,9 @@ export function ScheduleControls({
       )}
       {row.convertible && (
         <ConvertDialog row={row} open={open === 'convert'} onOpenChange={(next) => setOpen(next ? 'convert' : null)} />
+      )}
+      {row.deletable && (
+        <DeleteDialog row={row} open={open === 'delete'} onOpenChange={(next) => setOpen(next ? 'delete' : null)} />
       )}
     </>
   );
@@ -194,6 +211,42 @@ function ConvertDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>ביטול</Button>
           <Button type="button" onClick={() => run(() => convertInvitationToConfirmationAdmin(row.id))} disabled={pending}>
             {pending ? 'ממירים' : 'המרה'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteDialog({
+  row,
+  open,
+  onOpenChange,
+}: {
+  row: EventTimelineRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { pending, run } = useControlAction(() => onOpenChange(false));
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
+      <DialogContent className="sm:max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>למחוק את {row.title}?</DialogTitle>
+          <DialogDescription>
+            ההזמנה תוסר מתוכנית השליחות של האירוע ולא תישלח לאורחים. שאר התזמונים נשארים כמו שהם
+          </DialogDescription>
+        </DialogHeader>
+        <Alert variant="destructive">
+          <TriangleAlert />
+          <AlertTitle>אי אפשר לבטל את המחיקה</AlertTitle>
+          <AlertDescription>אי אפשר להחזיר את ההזמנה אחרי המחיקה, לא ממערכת הניהול ולא מצד בעלי האירוע</AlertDescription>
+        </Alert>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>ביטול</Button>
+          <Button type="button" variant="destructive" onClick={() => run(() => deleteInitialInvitationAdmin(row.id))} disabled={pending}>
+            {pending ? 'מוחקים' : 'מחיקה'}
           </Button>
         </DialogFooter>
       </DialogContent>

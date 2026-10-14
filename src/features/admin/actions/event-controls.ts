@@ -7,7 +7,12 @@ import { dueTimeIssue } from '@/features/schedules';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import type { Location } from '@/features/events/schemas';
 import { VENUE_NAME_MAX } from '../utils/venue';
-import { conversionRejection, dueTimeRejection, type ScheduleControlState } from '../utils/schedule-controls';
+import {
+  conversionRejection,
+  deletionRejection,
+  dueTimeRejection,
+  type ScheduleControlState,
+} from '../utils/schedule-controls';
 
 export type EventControlResult = { success: boolean; message: string };
 
@@ -129,6 +134,57 @@ export async function convertInvitationToConfirmationAdmin(
   } catch (error) {
     console.error('convertInvitationToConfirmationAdmin failed:', error);
     return { success: false, message: 'לא הצלחנו להמיר את ההזמנה' };
+  }
+}
+
+/**
+ * Deletes an Initial Invitation that has not gone out. Its Deliveries, Guest
+ * replies and Dispatcher log cascade with it, so it also refuses one with any
+ * Delivery or reply on record - those stay as history. The plan then reads
+ * without an Initial Invitation, as it does after a conversion (ADR 0036).
+ */
+export async function deleteInitialInvitationAdmin(
+  scheduleId: string,
+): Promise<EventControlResult> {
+  await assertAdmin();
+  try {
+    const schedule = await readScheduleControlState(scheduleId);
+    if (!schedule) return { success: false, message: 'התזמון לא נמצא' };
+
+    const rejection = deletionRejection(schedule.state);
+    if (rejection) return { success: false, message: rejection };
+
+    const supabase = createServiceClient();
+    const [deliveries, interactions] = await Promise.all([
+      supabase.from('message_deliveries').select('id', { count: 'exact', head: true }).eq('schedule_id', scheduleId),
+      supabase.from('guest_interactions').select('id', { count: 'exact', head: true }).eq('schedule_id', scheduleId),
+    ]);
+    if (deliveries.error) throw new Error(deliveries.error.message);
+    if (interactions.error) throw new Error(interactions.error.message);
+    if ((deliveries.count ?? 0) > 0 || (interactions.count ?? 0) > 0) {
+      return { success: false, message: 'כבר יש שליחות או תשובות של אורחים להזמנה הזו' };
+    }
+
+    // Guarded again in the delete itself, so a claim by the Dispatcher since the
+    // read above leaves the row in place.
+    const { data: deleted, error } = await supabase
+      .from('schedules')
+      .delete()
+      .eq('id', scheduleId)
+      .is('dispatched_at', null)
+      .is('sent_at', null)
+      .select('id');
+    if (error) {
+      console.error('deleteInitialInvitationAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו למחוק את ההזמנה' };
+    }
+    if (!deleted?.length) return { success: false, message: 'ההזמנה הזו כבר נשלחה' };
+
+    revalidateOutreach(schedule.eventId);
+    return { success: true, message: 'ההזמנה נמחקה' };
+  } catch (error) {
+    console.error('deleteInitialInvitationAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו למחוק את ההזמנה' };
   }
 }
 
