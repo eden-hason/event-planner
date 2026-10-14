@@ -56,3 +56,20 @@ export function conversionRejection(schedule: ScheduleControlState): string | nu
   if (schedule.status === 'expired') return 'פג התוקף של ההזמנה הזו והיא לא תישלח';
   return null;
 }
+
+/**
+ * Why this Schedule cannot be deleted, or null when it can. Only an Initial
+ * Invitation that has not gone out: deleting a Schedule cascades its Deliveries
+ * and Guest replies, so one that reached Guests keeps its history. An expired
+ * one never reached anyone, so it may go. The action also refuses one with any
+ * Delivery or reply on record, which a manual send can leave without a claim.
+ */
+export function deletionRejection(schedule: ScheduleControlState): string | null {
+  if (schedule.scheduleTypeKey !== 'initial_invitation') {
+    return 'אפשר למחוק רק הזמנה ראשונית';
+  }
+  if (wentOut(schedule)) {
+    return 'ההזמנה הזו כבר נשלחה';
+  }
+  return null;
+}

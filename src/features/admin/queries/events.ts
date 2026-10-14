@@ -28,7 +28,12 @@ import { getTestScope } from './test-accounts';
 import { isNoAskPlanned } from '../utils/no-ask-planned';
 import { filterEventRows, sortEventRows } from '../utils/events-index';
 import { eventTitle, eventTypeName, scheduleTypeName, UNKNOWN_OWNER } from '../utils/labels';
-import { conversionRejection, dueTimeRejection, type ScheduleControlState } from '../utils/schedule-controls';
+import {
+  conversionRejection,
+  deletionRejection,
+  dueTimeRejection,
+  type ScheduleControlState,
+} from '../utils/schedule-controls';
 
 const PAGE_SIZE = 50;
 const STALE_ROUND_MS = 3 * 86_400_000;
@@ -424,6 +429,8 @@ export const getEventTimeline = cache(async function getEventTimeline(
       }),
       dueTimeEditable: dueTimeRejection(controlState) === null,
       convertible,
+      // A Delivery or reply on record also blocks it; the action checks those.
+      deletable: deletionRejection(controlState) === null && scheduleDeliveries.length === 0,
       convertsToFollowUp: convertible && isFollowUpConfirmation(
         { ...entries.get(schedule.id)!, scheduleTypeKey: 'confirmation', targetStatus: null },
         roundEntries,
