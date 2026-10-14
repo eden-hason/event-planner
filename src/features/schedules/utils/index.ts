@@ -44,6 +44,7 @@ export {
   generateConfirmationToken,
   isSmsFallbackTrigger,
   smsFallbackReason,
+  deliveryFallbackReason,
   type SmsFallbackReason,
   type AttemptTrigger,
   type SmsFallbackTrigger,
