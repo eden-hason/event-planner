@@ -4,11 +4,11 @@ import { GuestImportFlow } from '@/features/guests';
 import { formatPhone } from '@/lib/phone';
 
 /**
- * The mobile guest-import wizard - a full-screen takeover, not a page inside
- * the app shell (see `isGuestImportRoute` and `ImportWizardShell`). Reachable
- * only from mobile entry points; nothing here excludes a desktop visitor, but
- * none of the app's own navigation offers this URL below `md`'s hidden
- * source-sheet trigger.
+ * The guest-import wizard - a full-screen takeover, not a page inside the app
+ * shell (see `isGuestImportRoute` and `ImportWizardShell`). Mobile reaches it
+ * for every source through the Add guests sheet; desktop keeps its own
+ * `ImportGuestsDialog` for files and comes here only for Google Drive and
+ * WhatsApp.
  */
 export default async function GuestImportPage({
   params,

@@ -5,6 +5,7 @@ import { usePublishedHeight } from '@/hooks/use-published-height';
 import { useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
+  IconBrandWhatsapp,
   IconSearch,
   IconUpload,
   IconUserPlus,
@@ -58,6 +59,7 @@ interface GuestsDesktopProps {
   onOpenGuest: (guest: GuestWithGroupApp) => void;
   onAddGuest: () => void;
   onImportDrive: () => void;
+  onImportWhatsApp: () => void;
 }
 
 /**
@@ -79,6 +81,7 @@ export function GuestsDesktop({
   onOpenGuest,
   onAddGuest,
   onImportDrive,
+  onImportWhatsApp,
 }: GuestsDesktopProps) {
   const t = useTranslations('guests');
   const {
@@ -274,6 +277,10 @@ export function GuestsDesktop({
                 <IconBrandGoogleDrive size={18} />
                 {t('list.empty.drive')}
               </Button>
+              <Button variant="outline" onClick={onImportWhatsApp}>
+                <IconBrandWhatsapp size={18} />
+                {t('list.empty.whatsapp')}
+              </Button>
             </div>
           </div>
         </div>
@@ -308,6 +315,7 @@ export function GuestsDesktop({
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}
         onImportDrive={onImportDrive}
+        onImportWhatsApp={onImportWhatsApp}
         onExport={(scope) => writes.exportGuests(allGuests, scope)}
       />
       <ActiveFilterChips
