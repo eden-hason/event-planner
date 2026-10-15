@@ -84,9 +84,10 @@ export type GuestActivityItem =
       countOnly: boolean;
     } & ActivityManualChange);
 
+// Both channels now confirm delivery, so the channel no longer changes the
+// outcome; it stays in the signature so callers keep passing the whole Delivery.
 export function deliveryOutcome({
   status,
-  channel,
 }: Pick<ActivityDelivery, 'status' | 'channel'>): DeliveryOutcome {
   switch (status) {
     case 'read':
@@ -94,9 +95,8 @@ export function deliveryOutcome({
     case 'delivered':
       return 'reached';
     case 'sent':
-      // SMS never reports past accepted, so accepted is as reached as SMS gets.
-      return channel === 'sms' ? 'reached' : 'on_its_way';
     case 'pending':
+      // Accepted, not confirmed yet - on either channel.
       return 'on_its_way';
     case 'failed':
       return 'not_delivered';

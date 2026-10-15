@@ -321,9 +321,11 @@ was already reached.
 The channel that reached the Guest is an attribute of a Delivery ("delivered via SMS"),
 never a state of its own.
 
-A Guest is **Reached** by a Schedule when their Delivery is Delivered or Read, or when an
-SMS attempt was accepted - SMS never reports further than that, so accepted is as reached
-as SMS gets. "Reached" is the word the Owner sees; the five states are not.
+A Guest is **Reached** by a Schedule when their Delivery is Delivered or Read, on either
+channel. An SMS reports delivery by being asked: the SMS Poll reads ActiveTrail's report for
+each Sent SMS, since there is no SMS webhook. Until it answers, an SMS is Sent - on its
+way, like an unconfirmed WhatsApp. "Reached" is the word the Owner sees; the five states
+are not.
 
 _Avoid_: Delivery outcome (collides with Call Outcome), message status
 

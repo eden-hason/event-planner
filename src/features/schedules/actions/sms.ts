@@ -1,3 +1,5 @@
+import type { SmsCampaignReport } from '../utils/sms-delivery-report';
+
 const BASE_URL = 'https://webapi.mymarketing.co.il';
 
 /**
@@ -68,5 +70,42 @@ export async function sendSmsMessage({
   } catch (error) {
     console.error('SMS send error:', error);
     return { success: false, message: 'Failed to send SMS message' };
+  }
+}
+
+/**
+ * Reads ActiveTrail's report for one sent SMS - its own one-recipient campaign,
+ * addressed by the id `sendSmsMessage` returned.
+ *
+ * Null when the report could not be read (network, auth, a 404 for an id the
+ * provider no longer keeps): the caller leaves the attempt as it is and asks
+ * again next time. `rateLimited` lets a batch stop instead of hammering on.
+ */
+export async function getSmsCampaignReport(
+  messageId: string,
+): Promise<{ report: SmsCampaignReport | null; rateLimited: boolean }> {
+  const apiKey = process.env.ACTIVE_TRAIL_API_KEY;
+  if (!apiKey) return { report: null, rateLimited: false };
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/api/smscampaignreport/${encodeURIComponent(messageId)}`,
+      { headers: { Authorization: apiKey }, cache: 'no-store' },
+    );
+    if (response.status === 429) return { report: null, rateLimited: true };
+    if (!response.ok) {
+      console.error('ActiveTrail SMS report error:', {
+        status: response.status,
+        messageId,
+      });
+      return { report: null, rateLimited: false };
+    }
+    return {
+      report: (await response.json()) as SmsCampaignReport,
+      rateLimited: false,
+    };
+  } catch (error) {
+    console.error('ActiveTrail SMS report request failed:', messageId, error);
+    return { report: null, rateLimited: false };
   }
 }

@@ -12,12 +12,13 @@ import { scheduleFreeze } from '../services/sweep-sms-fallback';
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
  *
- * - `whatsapp` / `sms`: Reached, over that channel. An accepted SMS counts -
- *   SMS never reports further than accepted.
+ * - `whatsapp` / `sms`: Reached, over that channel - the provider confirmed
+ *   delivery. For SMS that is the ActiveTrail report the SMS poll reads.
  * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
- * - `sms_on_its_way`: WhatsApp failed and the automatic SMS Fallback will
- *   reach them - the SMS is being sent, or the sweeper sends it once the
- *   Schedule settles. Never while a Fallback Freeze holds the batch.
+ * - `sms_on_its_way`: an SMS is on its way and not confirmed yet - either
+ *   accepted by ActiveTrail with no report back, or, after WhatsApp failed, an
+ *   automatic SMS Fallback being sent or due once the Schedule settles. Never
+ *   the second while a Fallback Freeze holds the batch.
  * - `not_delivered`: every attempt failed and no SMS is coming by itself - a
  *   System-level Failure, a frozen Schedule, or an SMS that failed too.
  * - `no_phone`: targeted, but no attempt was possible, so no send ever
@@ -65,9 +66,9 @@ export type GuestInteractionRow = {
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**
-   * WhatsApp read receipt - the guest opened the message itself. SMS never
-   * reports past accepted, so an SMS guest stays false here forever and the UI
-   * shows those as not-applicable rather than unseen.
+   * WhatsApp read receipt - the guest opened the message itself. SMS reports
+   * delivery at most, never reading, so an SMS guest stays false here forever
+   * and the UI shows those as not-applicable rather than unseen.
    */
   seen: boolean;
   seenAt?: string;
@@ -136,7 +137,8 @@ function toOutcome(
     case 'read':
       return channel === 'sms' ? 'sms' : 'whatsapp';
     case 'sent':
-      return channel === 'sms' ? 'sms' : 'on_its_way';
+      // Accepted, not confirmed - on either channel.
+      return channel === 'sms' ? 'sms_on_its_way' : 'on_its_way';
     case 'failed':
       return 'not_delivered';
     case 'not_sent':

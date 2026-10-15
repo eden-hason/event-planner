@@ -185,7 +185,7 @@ test('an SMS on its way is not reached yet, and has no read receipt to miss', ()
   assert.equal(seenState(rows[0]), 'na');
 });
 
-test('SMS never claims delivered or seen', () => {
+test('a confirmed SMS shows as delivered, and never as seen', () => {
   const journey = buildJourney(
     row({
       delivery: 'sms',
@@ -195,13 +195,27 @@ test('SMS never claims delivered or seen', () => {
           fallback: null,
           sentAt: '2026-09-20T15:00:00Z',
           deliveredAt: '2026-09-20T15:01:00Z',
+          readAt: '2026-09-20T15:02:00Z',
         },
       ],
     }),
   );
   assert.deepEqual(
-    journey.map((s: { kind: string }) => s.kind),
-    ['sent'],
+    journey.map((s: { kind: string; channel?: string }) => `${s.kind}:${s.channel}`),
+    ['sent:sms', 'delivered:sms'],
+  );
+});
+
+test('an SMS the provider has not confirmed ends in an open SMS step', () => {
+  const journey = buildJourney(
+    row({
+      delivery: 'sms_on_its_way',
+      steps: [{ channel: 'sms', fallback: null, sentAt: '2026-10-14T10:00:00Z' }],
+    }),
+  );
+  assert.deepEqual(
+    journey.map((s: { kind: string; channel?: string }) => `${s.kind}:${s.channel}`),
+    ['sent:sms', 'sms_on_its_way:sms'],
   );
 });
 

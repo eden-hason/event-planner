@@ -1762,6 +1762,7 @@
         "onItsWaySub": "WhatsApp accepted it, the phone hasn't confirmed yet",
         "smsOnItsWay": "SMS on the way",
         "smsOnItsWaySub": "WhatsApp couldn't reach them, so an SMS is going out",
+        "smsOnItsWayScheduleSub": "Sent, the phone hasn't confirmed yet",
         "notDelivered": "Not delivered",
         "notDeliveredSub": "Couldn't reach them",
         "fallbackNote": "{count, plural, one {WhatsApp couldn't reach # guest, so we sent them an SMS} other {WhatsApp couldn't reach # guests, so we sent them an SMS}}"
@@ -1829,7 +1830,6 @@
         "sentSms": "Sent by SMS",
         "sentFallbackMeta": "Because WhatsApp couldn't reach them",
         "sentFallbackUnconfirmedMeta": "Because WhatsApp hadn't confirmed delivery",
-        "smsMeta": "SMS doesn't report delivery or reading",
         "delivered": "Delivered",
         "deliveredMeta": "The phone confirmed it",
         "seen": "Seen",

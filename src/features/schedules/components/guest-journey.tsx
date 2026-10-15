@@ -70,10 +70,13 @@ export function useChannelLabel() {
     if (row.delivery === 'no_phone' || row.delivery === 'outside_package') {
       return t('notSent');
     }
-    if (row.viaFallback || row.delivery === 'sms_on_its_way') {
+    // An SMS-only Schedule's unconfirmed SMS is on its way too, but no
+    // WhatsApp came before it, so it is not a Fallback.
+    const afterWhatsApp = row.steps.some((step) => step.channel === 'whatsapp');
+    if (row.viaFallback || (row.delivery === 'sms_on_its_way' && afterWhatsApp)) {
       return t('fallback');
     }
-    if (row.delivery === 'sms') return t('sms');
+    if (row.delivery === 'sms' || row.delivery === 'sms_on_its_way') return t('sms');
     if (row.delivery === null) return null;
     return t('whatsapp');
   };
@@ -100,6 +103,11 @@ export function GuestJourney({
   const answerMeta = useAnswerMeta();
   const channelLabel = useChannelLabel();
   const steps = buildJourney(row);
+  // An SMS already accepted and waiting on its report, as opposed to a
+  // Fallback the sweeper has yet to send.
+  const smsAwaitingReport = row.steps.some(
+    (step) => step.channel === 'sms' && !step.failedAt && !step.deliveredAt,
+  );
 
   const describe = (step: JourneyStep): { label: string; meta: string } => {
     switch (step.kind) {
@@ -109,7 +117,7 @@ export function GuestJourney({
               label: t('journey.sentSms'),
               // An unconfirmed WhatsApp may still arrive, and its receipt can
               // land after this step, so it never claims WhatsApp failed.
-              meta: t(step.fallback ? FALLBACK_META[step.fallback] : 'journey.smsMeta'),
+              meta: step.fallback ? t(FALLBACK_META[step.fallback]) : '',
             }
           : { label: t('journey.sentWhatsapp'), meta: '' };
       case 'delivered':
@@ -135,7 +143,9 @@ export function GuestJourney({
       case 'sms_on_its_way':
         return {
           label: t('journey.smsOnItsWay'),
-          meta: t('journey.smsOnItsWayMeta'),
+          meta: smsAwaitingReport
+            ? t('journey.onItsWayMeta')
+            : t('journey.smsOnItsWayMeta'),
         };
       case 'no_phone':
         return { label: t('journey.noPhone'), meta: t('journey.noPhoneMeta') };

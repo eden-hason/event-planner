@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/sweep",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/poll-sms",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
