@@ -1,9 +1,26 @@
 # SMS delivery is invisible after the provider accepts it
 
-Status: open
+Status: in progress - the poll is built (`src/features/schedules/services/poll-sms-status.ts`); the ADR on what a failed SMS reopens is not
 Area: schedules / outreach
 Related: `docs/adr/0011-a-delivery-is-rolled-up-from-its-attempts.md`,
 `docs/adr/0012-sms-fallback-is-operator-launched-and-guest-level-only.md`
+
+## Findings, 2026-10-15
+
+The open questions below were answered by checking all 1,171 production SMS:
+
+1. Per-message state comes from `GET /api/smscampaignreport/{id}`, not from
+   `OperationalMessage/{id}` (which returns only the content). Each Operational SMS is its
+   own one-recipient campaign, so `delivered: 1` / `errors: 1` / both 0 is that message's
+   state. No reason and no timestamp are given, even from `/Failed`.
+2. Both 0 is "not answered yet", never failed - one SMS sat there for a day.
+3. 1,171 calls at six at a time hit no rate limit.
+4. Not answered - opt-out suppression is still unchecked.
+5. SMS from 2026-08-09 were still reportable two months later.
+
+Result: 1,123 delivered, 47 failed, 1 unknown. The 20 failures at three upcoming events
+were fixed by hand (`supabase/migrations/20261015000000_mark_undelivered_sms_attempts_failed.sql`);
+the rest wait for the poll's one-off catch-up run (`/api/cron/poll-sms?days=120`).
 
 ## The problem
 

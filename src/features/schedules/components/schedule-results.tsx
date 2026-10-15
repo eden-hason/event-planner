@@ -467,7 +467,7 @@ function ChannelsCard({
     {
       key: 'smsWay',
       label: t('smsOnItsWay'),
-      sub: t('smsOnItsWaySub'),
+      sub: isSms ? t('smsOnItsWayScheduleSub') : t('smsOnItsWaySub'),
       n: summary.notReached.smsOnItsWay,
       color: 'bg-channel-sms/45',
     },

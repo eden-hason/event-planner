@@ -39,8 +39,9 @@ test('a WhatsApp Delivery reads by how far it got', () => {
   );
 });
 
-test('an accepted SMS is as reached as SMS gets', () => {
-  assert.equal(deliveryOutcome({ status: 'sent', channel: 'sms' }), 'reached');
+test('an SMS is reached once confirmed, and on its way until then', () => {
+  assert.equal(deliveryOutcome({ status: 'delivered', channel: 'sms' }), 'reached');
+  assert.equal(deliveryOutcome({ status: 'sent', channel: 'sms' }), 'on_its_way');
 });
 
 test('nothing at all is an empty timeline', () => {
@@ -59,7 +60,7 @@ test('everything that happened to a Guest Record is merged newest first', () => 
       },
       {
         scheduleTypeKey: 'confirmation',
-        status: 'sent',
+        status: 'delivered',
         channel: 'sms',
         fallback: 'failed',
         at: '2026-09-10T07:00:00Z',

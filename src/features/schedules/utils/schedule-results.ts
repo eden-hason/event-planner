@@ -10,9 +10,9 @@ import type {
 /**
  * Where one guest stands on the Delivery ladder, in the Owner's words.
  *
- * The channel is not a rung: `sms` is here only because SMS stops at accepted
- * and has nothing further to say about delivery, so "reached by SMS" is its
- * final delivery state. `none` is a guest with no Delivery at all - someone who
+ * The channel is not a rung: `sms` is here only because SMS stops at delivered
+ * and has no read receipt to climb to, so "reached by SMS" is its final
+ * delivery state. `none` is a guest with no Delivery at all - someone who
  * answered through a shared link.
  */
 export type GuestStatus =
@@ -162,8 +162,8 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
       channel: step.channel,
       fallback: step.fallback,
     });
-    // SMS reports nothing past accepted, so an SMS message is only ever sent.
-    if (step.channel === 'whatsapp' && step.deliveredAt) {
+    // Both channels report delivery; only WhatsApp reports reading.
+    if (step.deliveredAt) {
       steps.push({
         kind: 'delivered',
         at: step.deliveredAt,

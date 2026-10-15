@@ -205,9 +205,9 @@ async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promis
   if (stuck.error) throw stuck.error;
   if (failed.error) throw failed.error;
 
-  // SMS reports nothing past accepted, so a stuck delivery the Fallback already
-  // reached stays Sent and would match for the rest of the window. Leaving it
-  // out keeps handled schedules from taking the per-sweep slots.
+  // A stuck delivery the Fallback already sent to can stay Sent - its SMS may
+  // be unconfirmed or failed - and would match for the rest of the window.
+  // Leaving it out keeps handled schedules from taking the per-sweep slots.
   const stuckIds = ((stuck.data ?? []) as unknown as StuckCandidateRow[])
     .map((row) => row.message_deliveries)
     .filter((delivery) => !delivery.message_delivery_attempts.some((a) => a.channel === 'sms'))

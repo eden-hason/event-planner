@@ -1762,6 +1762,7 @@
         "onItsWaySub": "וואטסאפ קיבל, הטלפון עוד לא אישר",
         "smsOnItsWay": "SMS בדרך",
         "smsOnItsWaySub": "וואטסאפ לא הגיע, אז נשלח SMS",
+        "smsOnItsWayScheduleSub": "נשלח, הטלפון עוד לא אישר קבלה",
         "notDelivered": "לא נמסר",
         "notDeliveredSub": "לא הצליח להגיע",
         "fallbackNote": "{count, plural, one {וואטסאפ לא הגיע לאורח אחד, אז שלחנו לו SMS} other {וואטסאפ לא הגיע ל-# אורחים, אז שלחנו להם SMS}}"
@@ -1829,7 +1830,6 @@
         "sentSms": "נשלח ב-SMS",
         "sentFallbackMeta": "כי וואטסאפ לא הגיע",
         "sentFallbackUnconfirmedMeta": "כי וואטסאפ עדיין לא אישר מסירה",
-        "smsMeta": "SMS לא מדווח על מסירה או קריאה",
         "delivered": "נמסר",
         "deliveredMeta": "הטלפון אישר קבלה",
         "seen": "נקרא",
