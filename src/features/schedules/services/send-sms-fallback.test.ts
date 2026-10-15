@@ -112,6 +112,95 @@ test('a stuck WhatsApp with no usable phone is excluded, not sent', () => {
   assert.equal(excluded[0]?.exclusion, 'no_phone');
 });
 
+// ─── An Operator retrying a failed SMS ────────────────────────────────────────
+
+const whatsAppFailedThenSms = (smsStatus: string) =>
+  row({
+    status: 'failed',
+    attempts: [
+      { channel: 'whatsapp', status: 'failed', error_code: 131026, created_at: hoursAgo(30) },
+      { channel: 'sms', status: smsStatus, sent_at: hoursAgo(29), created_at: hoursAgo(29) },
+    ],
+  });
+
+/** Which list the one row landed in, by exclusion - `eligible` when it was not excluded. */
+const landing = (result: { eligible: unknown[]; excluded: { exclusion: string }[] }) =>
+  result.excluded[0]?.exclusion ?? (result.eligible.length ? 'eligible' : 'skipped');
+
+test('a guest whose SMS failed stays out of the automatic Fallback', () => {
+  assert.equal(
+    landing(classifySmsFallbackCandidates([whatsAppFailedThenSms('failed')], WINDOW)),
+    'already_sms',
+  );
+});
+
+test('an Operator can retry a guest whose every SMS failed', () => {
+  // Lands in eligible in the app; `no_phone` here only because phones read as
+  // invalid under the test runner (see the first classification test).
+  const result = classifySmsFallbackCandidates([whatsAppFailedThenSms('failed')], WINDOW, {
+    retryFailedSms: true,
+  });
+  assert.notEqual(landing(result), 'already_sms');
+  assert.equal(result.eligible.length + result.excluded.length, 1);
+});
+
+test('an SMS still on its way or delivered is never retried', () => {
+  for (const status of ['pending', 'sent', 'delivered']) {
+    assert.equal(
+      landing(
+        classifySmsFallbackCandidates([whatsAppFailedThenSms(status)], WINDOW, {
+          retryFailedSms: true,
+        }),
+      ),
+      'already_sms',
+      status,
+    );
+  }
+});
+
+test('a retry is offered even when the WhatsApp failure was system-level', () => {
+  // The first SMS already went out, so the WhatsApp reason no longer decides.
+  const result = classifySmsFallbackCandidates(
+    [
+      row({
+        status: 'failed',
+        attempts: [
+          { channel: 'whatsapp', status: 'failed', error_code: null, created_at: hoursAgo(30) },
+          { channel: 'sms', status: 'failed', sent_at: hoursAgo(29), created_at: hoursAgo(29) },
+        ],
+      }),
+    ],
+    WINDOW,
+    { retryFailedSms: true },
+  );
+  assert.notEqual(landing(result), 'system_failure');
+});
+
+test('a Sent delivery whose SMS failed can be retried, however old its WhatsApp', () => {
+  // WhatsApp accepted and never confirmed, then the SMS failed: the Delivery
+  // still reads Sent, and the Stuck window has long closed on it.
+  const stale = row({
+    status: 'sent',
+    attempts: [
+      { channel: 'whatsapp', status: 'sent', sent_at: hoursAgo(24 * 10), created_at: hoursAgo(24 * 10) },
+      { channel: 'sms', status: 'failed', sent_at: hoursAgo(24 * 10 - 2), created_at: hoursAgo(24 * 10 - 2) },
+    ],
+  });
+  assert.equal(landing(classifySmsFallbackCandidates([stale], WINDOW)), 'skipped');
+  assert.notEqual(
+    landing(classifySmsFallbackCandidates([stale], WINDOW, { retryFailedSms: true })),
+    'skipped',
+  );
+});
+
+test('the results never promise a retry the sweeper will not send', () => {
+  const awaiting = awaitingSmsFallback([whatsAppFailedThenSms('failed')], {
+    frozen: false,
+    window: WINDOW,
+  });
+  assert.equal(awaiting.size, 0);
+});
+
 // ─── Why a fallback went out ──────────────────────────────────────────────────
 
 test('a fallback after a failed WhatsApp reads as failed', () => {
