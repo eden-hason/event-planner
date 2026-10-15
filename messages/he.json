@@ -1764,8 +1764,7 @@
         "smsOnItsWaySub": "וואטסאפ לא הגיע, אז נשלח SMS",
         "smsOnItsWayScheduleSub": "נשלח, הטלפון עוד לא אישר קבלה",
         "notDelivered": "לא נמסר",
-        "notDeliveredSub": "לא הצליח להגיע",
-        "fallbackNote": "{count, plural, one {וואטסאפ לא הגיע לאורח אחד, אז שלחנו לו SMS} other {וואטסאפ לא הגיע ל-# אורחים, אז שלחנו להם SMS}}"
+        "notDeliveredSub": "לא הצליח להגיע"
       },
       "rsvp": {
         "title": "מי מגיע",
