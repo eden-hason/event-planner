@@ -1764,8 +1764,7 @@
         "smsOnItsWaySub": "WhatsApp couldn't reach them, so an SMS is going out",
         "smsOnItsWayScheduleSub": "Sent, the phone hasn't confirmed yet",
         "notDelivered": "Not delivered",
-        "notDeliveredSub": "Couldn't reach them",
-        "fallbackNote": "{count, plural, one {WhatsApp couldn't reach # guest, so we sent them an SMS} other {WhatsApp couldn't reach # guests, so we sent them an SMS}}"
+        "notDeliveredSub": "Couldn't reach them"
       },
       "rsvp": {
         "title": "Who's coming",

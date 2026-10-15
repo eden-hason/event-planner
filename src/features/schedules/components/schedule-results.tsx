@@ -436,8 +436,8 @@ function Funnel({
 /**
  * How the schedule arrived: WhatsApp, SMS, and what has not arrived yet. On a
  * WhatsApp schedule the SMS row is SMS Fallback - Kululu taking care of the
- * guests WhatsApp could not reach - and says so, once it has happened. Before
- * it has, those guests are an SMS on its way rather than not delivered.
+ * guests WhatsApp could not reach. Before it has happened, those guests are an
+ * SMS on its way rather than not delivered.
  */
 function ChannelsCard({
   summary,
@@ -520,11 +520,6 @@ function ChannelsCard({
           </div>
         ))}
       </div>
-      {!isSms && summary.reachedByFallback > 0 && (
-        <span className="bg-info-tint text-info-strong rounded-[10px] px-3 py-2.5 text-xs leading-relaxed">
-          {t('fallbackNote', { count: summary.reachedByFallback })}
-        </span>
-      )}
     </section>
   );
 }
