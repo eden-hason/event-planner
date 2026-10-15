@@ -1,6 +1,6 @@
 # SMS delivery is invisible after the provider accepts it
 
-Status: in progress - the poll is built (`src/features/schedules/services/poll-sms-status.ts`); the ADR on what a failed SMS reopens is not
+Status: in progress - the poll is built (`src/features/schedules/services/poll-sms-status.ts`) and a failed SMS reopens to an Operator retry (ADR 0038); the opt-out question (4) is still open
 Area: schedules / outreach
 Related: `docs/adr/0011-a-delivery-is-rolled-up-from-its-attempts.md`,
 `docs/adr/0012-sms-fallback-is-operator-launched-and-guest-level-only.md`

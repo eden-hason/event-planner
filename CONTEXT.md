@@ -350,7 +350,9 @@ it stands in for. It is part of what the Owner already paid for and is never bil
 own.
 
 Only a Delivery that failed for a **Guest-level Failure** and has had no SMS attempt is
-eligible for an SMS Fallback.
+eligible for an SMS Fallback. The one exception is an Operator retry: once every SMS
+attempt on a Delivery has failed, the Back Office offers it again (ADR 0038). The automatic
+Fallback never retries.
 
 An SMS Fallback runs by itself once a Schedule has finished failing - every attempt
 resolved and every retry exhausted - unless a **Fallback Freeze** holds it. An Operator may

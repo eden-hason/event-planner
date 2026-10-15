@@ -42,6 +42,11 @@ import { sendingConfig } from '@/lib/config/sending';
  *      enough that an SMS is still worth having
  *   3. either way, it has no SMS attempt yet
  * RSVP is deliberately not considered.
+ *
+ * An Operator may also retry a Delivery whose every SMS attempt failed (ADR
+ * 0038) - the SMS poll can now find that out after the fact. The automatic
+ * sweeper never does: a retry costs another SMS on a number that just refused
+ * one, so it waits for a person to decide.
  */
 
 export type SmsFallbackExclusionReason =
@@ -239,6 +244,7 @@ export function stuckForHours(
 export function classifySmsFallbackCandidates(
   rows: FallbackDeliveryRow[],
   window: StuckWindow,
+  options: { retryFailedSms?: boolean } = {},
 ) {
   const eligible: SmsFallbackRecipient[] = [];
   const excluded: SmsFallbackPlan['excluded'] = [];
@@ -247,7 +253,11 @@ export function classifySmsFallbackCandidates(
     const attempts = [...row.message_delivery_attempts].sort((a, b) =>
       b.created_at.localeCompare(a.created_at),
     );
-    const hasSms = attempts.some((a) => a.channel === 'sms');
+    const smsAttempts = attempts.filter((a) => a.channel === 'sms');
+    const hasSms = smsAttempts.length > 0;
+    // Every SMS so far failed: a retry the Operator may choose, never automatic.
+    const retry =
+      Boolean(options.retryFailedSms) && hasSms && smsAttempts.every((a) => a.status === 'failed');
     const lastWhatsAppFailure =
       row.status === 'failed'
         ? attempts.find((a) => a.channel === 'whatsapp' && a.status === 'failed')
@@ -262,7 +272,11 @@ export function classifySmsFallbackCandidates(
     };
 
     let reason: string;
-    if (row.status === 'sent') {
+    if (retry) {
+      // The first SMS already went out on the WhatsApp's account, so neither
+      // the WhatsApp failure nor the Stuck window decides a second one.
+      reason = 'ה-SMS הקודם לא נמסר';
+    } else if (row.status === 'sent') {
       // A Sent delivery is only a candidate while its WhatsApp is stuck. Every
       // other Sent delivery - one an SMS already reached, one still inside the
       // window, one too old to bother - is simply not a fallback case, so it is
@@ -385,7 +399,10 @@ export async function buildSmsFallbackPlan(
     resolveSmsTemplates(supabase, loaded),
     loadFallbackDeliveries(supabase, scheduleId),
   ]);
-  const { eligible, excluded } = classifySmsFallbackCandidates(rows, stuckWindow());
+  // The plan is only ever drawn for the Back Office dialog, so it offers retries.
+  const { eligible, excluded } = classifySmsFallbackCandidates(rows, stuckWindow(), {
+    retryFailedSms: true,
+  });
 
   let preview: string | null = null;
   if (resolution.ok && eligible.length > 0) {
@@ -421,9 +438,9 @@ const SEND_CONCURRENCY = 10;
  * Sends the SMS Fallback to up to `limit` eligible deliveries.
  *
  * Each delivery is claimed before its SMS goes out, by inserting a pending
- * fallback attempt: the database allows one per delivery, so a second Operator
- * (or a later automatic trigger) pressing at the same moment skips it instead
- * of sending twice. The SMS carries the delivery's existing RSVP token, so it
+ * fallback attempt: the database allows one live (not failed) fallback per
+ * delivery, so a second Operator (or a later automatic trigger) pressing at
+ * the same moment skips it instead of sending twice. The SMS carries the delivery's existing RSVP token, so it
  * is the same link the WhatsApp message would have held.
  */
 export async function sendSmsFallback(
@@ -441,7 +458,9 @@ export async function sendSmsFallback(
 
   const rows = await loadFallbackDeliveries(supabase, scheduleId);
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));
-  const batch = classifySmsFallbackCandidates(rows, stuckWindow()).eligible.slice(0, Math.max(0, options.limit));
+  const batch = classifySmsFallbackCandidates(rows, stuckWindow(), {
+    retryFailedSms: options.triggeredBy === 'fallback',
+  }).eligible.slice(0, Math.max(0, options.limit));
   if (batch.length === 0) {
     return { success: false, message: 'אין שליחות שאפשר לשלוח להן SMS', ...empty };
   }
