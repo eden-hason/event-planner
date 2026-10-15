@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { freezeDecision, lastFailureActivityAt, scheduleFreeze, settleDecision } from './sweep-sms-fallback.ts';
+import { failedCandidateScheduleIds, freezeDecision, lastFailureActivityAt, scheduleFreeze, settleDecision } from './sweep-sms-fallback.ts';
 
 const THRESHOLDS = { freezePct: 30, freezeMin: 10 };
 
@@ -207,4 +207,91 @@ test('a new attempt counts from when it was made', () => {
 
 test('no attempts means no activity', () => {
   assert.equal(lastFailureActivityAt([]), null);
+});
+
+// ─── Which failed Schedules take a slot ───────────────────────────────────────
+
+const WINDOW = { now, minHours: 2, maxHours: 72 };
+const hoursAgo = (n: number) => new Date(now.getTime() - n * 3_600_000).toISOString();
+
+function failed(
+  scheduleId: string,
+  attempts: { channel: 'whatsapp' | 'sms'; status: string; error_code?: number | null }[],
+  overrides: { updatedAt?: string; phone?: string | null } = {},
+) {
+  return {
+    id: `${scheduleId}-delivery`,
+    schedule_id: scheduleId,
+    status: 'failed' as const,
+    guest_id: 'guest-1',
+    confirmation_token: 'token',
+    updated_at: overrides.updatedAt ?? hoursAgo(1),
+    guests: {
+      name: 'Dana',
+      phone_number: overrides.phone === undefined ? '0521234567' : overrides.phone,
+    },
+    message_delivery_attempts: attempts.map((a) => ({
+      error_code: null,
+      error_message: null,
+      sent_at: null,
+      created_at: hoursAgo(1),
+      ...a,
+    })),
+  };
+}
+
+const guestLevel = { channel: 'whatsapp' as const, status: 'failed', error_code: 131049 };
+
+test('a fresh guest-level WhatsApp failure takes a slot', () => {
+  assert.deepEqual(failedCandidateScheduleIds([failed('fresh', [guestLevel])], WINDOW), ['fresh']);
+});
+
+test('a schedule sent by SMS never takes a slot', () => {
+  // The five Schedules that held every slot on 2026-10-15: their anchor
+  // template was SMS, so each failure is an SMS attempt and nothing can follow.
+  const rows = [failed('sms-anchored', [{ channel: 'sms', status: 'failed' }])];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), []);
+});
+
+test('a failure an SMS was already tried for never takes a slot', () => {
+  // The sweeper never retries a failed SMS - that waits on an Operator.
+  const rows = [failed('handled', [guestLevel, { channel: 'sms', status: 'failed' }])];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), []);
+});
+
+test('a system-level failure never takes a slot', () => {
+  const rows = [failed('system', [{ channel: 'whatsapp', status: 'failed', error_code: 132000 }])];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), []);
+});
+
+test('a guest with no phone keeps the slot - an Owner can still fix the number', () => {
+  // Also what lets these tests see eligible guests at all: under the tsx test
+  // runner every phone reads as invalid (see send-sms-fallback.test.ts).
+  assert.deepEqual(
+    failedCandidateScheduleIds([failed('no-phone', [guestLevel], { phone: null })], WINDOW),
+    ['no-phone'],
+  );
+});
+
+test('one eligible delivery is enough for the schedule', () => {
+  const rows = [
+    failed('mixed', [guestLevel, { channel: 'sms', status: 'failed' }]),
+    failed('mixed', [guestLevel]),
+  ];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), ['mixed']);
+});
+
+test('failures older than the window are left alone', () => {
+  const rows = [failed('old', [guestLevel], { updatedAt: hoursAgo(73) })];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), []);
+});
+
+test('the newest failure comes first, each schedule once', () => {
+  const rows = [
+    failed('older', [guestLevel], { updatedAt: hoursAgo(30) }),
+    failed('newest', [guestLevel], { updatedAt: hoursAgo(1) }),
+    failed('older', [guestLevel], { updatedAt: hoursAgo(20) }),
+    failed('middle', [guestLevel], { updatedAt: hoursAgo(10) }),
+  ];
+  assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), ['newest', 'middle', 'older']);
 });

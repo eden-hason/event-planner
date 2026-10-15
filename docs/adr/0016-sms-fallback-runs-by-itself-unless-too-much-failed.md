@@ -65,3 +65,15 @@ Freeze holds the Schedule - that waits on an Operator, so nothing is on its way.
 failed once in production, on one guest, and left that guest unreached. Its cause is
 unknown, which is why it is still not retried, and why counting it toward the Freeze
 matters: should it ever hit a whole audience, the Freeze holds the batch.
+
+**Amended 2026-10-15:** the sweeper looks at five Schedules per run, and it picked them from
+every Schedule with a failed Delivery, in no order. Once the SMS delivery poll started
+marking undelivered SMS as failed, five old Schedules sent by SMS took all five slots on
+every run, each answering "already sent by SMS", and a WhatsApp Schedule (`77e9ac73`) with
+two fresh guest-level failures was never looked at. A failed Delivery now takes a slot
+only while the engine's own classifier might still send to it: not once an SMS was tried
+(which covers every Delivery of a Schedule sent by SMS), not without a failed WhatsApp,
+and not for a system-level failure. Failures are taken newest first and only within the
+Stuck window's 72-hour ceiling, so whatever the classifier cannot rule out - a template
+with no SMS version, a Freeze - cannot hold the slots for long. A failure older than that
+is left to an Operator, as a Stuck WhatsApp already was.
