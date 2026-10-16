@@ -15,6 +15,7 @@ import sharingShot from '@/assets/sharing.png';
 import whatsappShot from '@/assets/whatsapp.png';
 
 import { PricingSimulator } from './pricing-simulator';
+import { Testimonials } from './testimonials';
 import { BONUS_STEPS } from '@/features/billing/utils';
 
 const WHATSAPP_NUMBER = '972552639234';
@@ -278,6 +279,49 @@ export function HomepageClient() {
         @keyframes spin{to{transform:rotate(360deg)}}
         .step h3{font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-0.01em}
         .step p{font-size:15px;color:var(--ink-2);line-height:1.55;margin:0}
+        /* ===== REVIEWS ===== */
+        .reviews{overflow:hidden}
+        .reviews .section-head{margin-bottom:44px}
+        /* Drifts left-to-right: in RTL the next card comes in from the left, where the eye goes next */
+        .rv-marquee{--rv-card:380px;--rv-gap:24px;overflow:hidden;padding:12px 0 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
+        .rv-track{display:flex;width:max-content;animation:rv-drift 110s linear infinite}
+        .rv-marquee:hover .rv-track,.rv-marquee:focus-within .rv-track,.rv-marquee.paused .rv-track{animation-play-state:paused}
+        @keyframes rv-drift{from{transform:translateX(0)}to{transform:translateX(50%)}}
+        .rv-group{display:flex;gap:var(--rv-gap);padding:0;padding-inline-end:var(--rv-gap);margin:0;list-style:none}
+        .rv-item{display:flex;width:var(--rv-card);flex-shrink:0}
+        .rv-card{display:flex;flex-direction:column;gap:14px;width:100%;margin:0;padding:26px 26px 28px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);transition:box-shadow .25s ease,border-color .25s ease}
+        .rv-card:hover{box-shadow:var(--shadow-md);border-color:rgba(210,60,194,0.18)}
+        .rv-author{display:flex;align-items:center;gap:12px}
+        .rv-avatar{width:44px;height:44px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:18px;font-weight:700}
+        .rv-avatar.magenta{background:linear-gradient(135deg,#D23CC2,#B92AAB)}
+        .rv-avatar.lavender{background:linear-gradient(135deg,#A78BFA,#7F5AF0)}
+        .rv-avatar.peach{background:linear-gradient(135deg,#FFBCAD,#FF8E73);color:#5a1b0c}
+        .rv-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+        .rv-name{font-size:16px;font-weight:700;color:var(--ink);text-align:right}
+        .rv-src{font-size:13px;color:var(--ink-3)}
+        .rv-g{display:inline-flex;flex-shrink:0}
+        .rv-stars{display:flex;gap:2px;color:#FBBC05}
+        .rv-text{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2)}
+        .rv-text p{margin:0}
+        .rv-text p+p{margin-top:10px}
+        .rv-controls{display:flex;justify-content:center}
+        .rv-toggle{font-size:14px}
+        @media(max-width:720px){
+          .reviews .section-head{margin-bottom:28px}
+          .rv-marquee{--rv-card:min(300px,82vw);--rv-gap:16px;-webkit-mask-image:none;mask-image:none}
+          .rv-track{animation-duration:90s}
+          .rv-card{padding:20px 20px 22px}
+          .rv-text{font-size:14.5px}
+        }
+        /* No drift: one copy of each review in a row people can scroll themselves */
+        @media(prefers-reduced-motion:reduce){
+          .rv-track{animation:none;width:auto}
+          .rv-marquee{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-mask-image:none;mask-image:none}
+          .rv-group{margin:0 auto;padding-inline:28px}
+          .rv-item{scroll-snap-align:center}
+          .rv-dup,.rv-group+.rv-group,.rv-controls{display:none}
+        }
+
         .pricing{background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06)),#FAFAFA}
         .ps-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:stretch}
         .ps-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md)}
@@ -671,6 +715,18 @@ export function HomepageClient() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* REVIEWS */}
+      <section className="section reviews" id="reviews" dir="rtl">
+        <div className="wrap">
+          <div className="section-head reveal">
+            <div className="eyebrow">ביקורות</div>
+            <h2 className="section-title">מה הלקוחות שלנו אומרים</h2>
+            <p className="section-sub">ביקורות אמיתיות של לקוחות Kululu, כפי שנכתבו ב-Google</p>
+          </div>
+        </div>
+        <Testimonials />
       </section>
 
       {/* PRICING */}
