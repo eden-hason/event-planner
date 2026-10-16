@@ -285,7 +285,7 @@ export function HomepageClient() {
         /* Drifts left-to-right: in RTL the next card comes in from the left, where the eye goes next */
         .rv-marquee{--rv-card:380px;--rv-gap:24px;overflow:hidden;padding:12px 0 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
         .rv-track{display:flex;width:max-content;animation:rv-drift 110s linear infinite}
-        .rv-marquee:hover .rv-track,.rv-marquee:focus-within .rv-track,.rv-marquee.paused .rv-track{animation-play-state:paused}
+        .rv-marquee:hover .rv-track,.rv-marquee:focus-within .rv-track{animation-play-state:paused}
         @keyframes rv-drift{from{transform:translateX(0)}to{transform:translateX(50%)}}
         .rv-group{display:flex;gap:var(--rv-gap);padding:0;padding-inline-end:var(--rv-gap);margin:0;list-style:none}
         .rv-item{display:flex;width:var(--rv-card);flex-shrink:0}
@@ -304,8 +304,6 @@ export function HomepageClient() {
         .rv-text{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2)}
         .rv-text p{margin:0}
         .rv-text p+p{margin-top:10px}
-        .rv-controls{display:flex;justify-content:center}
-        .rv-toggle{font-size:14px}
         @media(max-width:720px){
           .reviews .section-head{margin-bottom:28px}
           .rv-marquee{--rv-card:min(300px,82vw);--rv-gap:16px;-webkit-mask-image:none;mask-image:none}
@@ -319,7 +317,7 @@ export function HomepageClient() {
           .rv-marquee{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-mask-image:none;mask-image:none}
           .rv-group{margin:0 auto;padding-inline:28px}
           .rv-item{scroll-snap-align:center}
-          .rv-dup,.rv-group+.rv-group,.rv-controls{display:none}
+          .rv-dup,.rv-group+.rv-group{display:none}
         }
 
         .pricing{background:linear-gradient(160deg,rgba(210,60,194,0.06),rgba(167,139,250,0.06)),#FAFAFA}

@@ -1,11 +1,4 @@
-'use client';
-
-import { useState } from 'react';
-import {
-  IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-  IconStarFilled,
-} from '@tabler/icons-react';
+import { IconStarFilled } from '@tabler/icons-react';
 
 import { GoogleIcon } from '@/components/icons';
 
@@ -85,44 +78,26 @@ function ReviewCard({ review }: { review: Review }) {
 }
 
 export function Testimonials() {
-  const [paused, setPaused] = useState(false);
-
   return (
-    <>
-      <div className={`rv-marquee reveal${paused ? ' paused' : ''}`}>
-        <div className="rv-track">
-          {[0, 1].map((g) => (
-            <ul key={g} className="rv-group">
-              {GROUP.map((review, i) => {
-                const duplicate = g > 0 || i >= REVIEWS.length;
-                return (
-                  <li
-                    key={i}
-                    className={duplicate ? 'rv-item rv-dup' : 'rv-item'}
-                    aria-hidden={duplicate || undefined}
-                  >
-                    <ReviewCard review={review} />
-                  </li>
-                );
-              })}
-            </ul>
-          ))}
-        </div>
+    <div className="rv-marquee reveal">
+      <div className="rv-track">
+        {[0, 1].map((g) => (
+          <ul key={g} className="rv-group">
+            {GROUP.map((review, i) => {
+              const duplicate = g > 0 || i >= REVIEWS.length;
+              return (
+                <li
+                  key={i}
+                  className={duplicate ? 'rv-item rv-dup' : 'rv-item'}
+                  aria-hidden={duplicate || undefined}
+                >
+                  <ReviewCard review={review} />
+                </li>
+              );
+            })}
+          </ul>
+        ))}
       </div>
-      <div className="rv-controls">
-        <button
-          type="button"
-          className="btn btn-quiet rv-toggle"
-          onClick={() => setPaused((p) => !p)}
-        >
-          {paused ? (
-            <IconPlayerPlayFilled size={14} aria-hidden="true" />
-          ) : (
-            <IconPlayerPauseFilled size={14} aria-hidden="true" />
-          )}
-          {paused ? 'הפעלת התנועה' : 'עצירת התנועה'}
-        </button>
-      </div>
-    </>
+    </div>
   );
 }
