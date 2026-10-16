@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import {
   IconCheck,
   IconListCheck,
@@ -15,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { GuestApp, GroupSide } from '@/features/guests/schemas';
-import { updateGroupMembers } from '@/features/guests/actions/groups';
+import { useGroupWrites } from '@/features/guests/hooks/use-group-writes';
 import { cn } from '@/lib/utils';
 import { SideBadge } from '../../side-badge';
 import { avatarTintFor } from '@/lib/avatar-tint';
@@ -62,6 +61,7 @@ export function AssignGuestsScreen({
 }: AssignGuestsScreenProps) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
+  const groupWrites = useGroupWrites(eventId);
 
   const [tab, setTab] = useState<Tab>('out');
   const [qOut, setQOut] = useState('');
@@ -175,27 +175,7 @@ export function AssignGuestsScreen({
 
     onOpenChange(false);
 
-    const memberGuestIds = [...draftIn];
-    const previousMemberIds = [...originalMemberIds];
-
-    const promise = updateGroupMembers(
-      eventId,
-      group.id,
-      memberGuestIds,
-      previousMemberIds,
-    ).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('groups.assign.membersFailed'));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('groups.assign.updatingMembers', { name: group.name }),
-      success: () => t('groups.assign.membersUpdated'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('groups.assign.membersFailed'),
-    });
+    void groupWrites.saveMembers(group, [...draftIn], [...originalMemberIds]);
   };
 
   if (!rendered) return null;

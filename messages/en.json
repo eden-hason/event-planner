@@ -618,10 +618,7 @@
       "guestDeleteFailed": "Failed to delete guest. Please try again"
     },
     "filters": {
-      "filterBySide": "Side",
-      "sidesSelected": "{count} sides selected",
-      "noPhone": "No phone",
-      "selectAll": "Select All"
+      "noPhone": "No phone"
     },
     "search": {
       "placeholder": "Search guests..."
@@ -642,37 +639,14 @@
     "groups": {
       "createNew": "Create new group",
       "createNewDescription": "Add a new segment to your guests",
-      "searchPlaceholder": "Search groups...",
-      "selected": "{count} group selected",
-      "selectedPlural": "{count} groups selected",
       "openMenu": "Open menu",
-      "select": "Select",
-      "deleteGroup": "Delete group",
-      "guestCount": "{count} guests",
-      "noGuests": "No guests assigned yet",
-      "assignGuests": "Assign guests",
       "dialog": {
-        "title": "Create New Group",
-        "description": "Add a new group to organize your guests",
         "nameLabel": "Group Name",
-        "namePlaceholder": "e.g., Family, Friends, Colleagues",
         "sideLabel": "Side (optional)",
-        "sidePlaceholder": "Select a side",
         "descriptionLabel": "Description (optional)",
-        "descriptionPlaceholder": "Add a brief description for this group...",
-        "iconLabel": "Icon",
-        "create": "Create Group"
+        "iconLabel": "Icon"
       },
       "assign": {
-        "manageMembers": "Manage Members",
-        "groupTitle": "{name} Group",
-        "assignDescription": "Assign guests to this group for easier management",
-        "availableGuests": "Available Guests",
-        "guestsInGroup": "Guests in Group",
-        "guestsLabel": "Guests",
-        "membersLabel": "Members",
-        "selectedToMove": "{count} guests selected to move",
-        "saveChanges": "Save Changes",
         "updatingMembers": "Updating {name} members...",
         "membersUpdated": "Group members updated successfully.",
         "membersFailed": "Failed to update group members. Please try again"
@@ -747,12 +721,33 @@
         "groupUpdated": "Group updated",
         "groupUpdateFailed": "Could not update the group"
       },
+      "desktop": {
+        "newGroupForRecords": "New group · {count, plural, one {# record joins it} other {# records join it}}",
+        "discardTitle": "Discard unsaved changes?",
+        "discardBody": "\"{name}\" has {added} added and {removed} removed, and the changes aren't saved yet.",
+        "keepEditing": "Keep editing",
+        "discardChanges": "Discard changes",
+        "removeChecked": "Remove {count}",
+        "removedOnSave": "Removed on save",
+        "addOne": "Add {name} to the group",
+        "removeOne": "Remove {name} from the group",
+        "emptyGroupHint": "Add guests from the \"No group\" column",
+        "unassignedSub": "{count, plural, one {# guest record is} other {# guest records are}} still without a group. Assign one at a time or tick several together",
+        "unassignedRowSub": "Records not assigned yet",
+        "searchNameOrPhone": "Search name or phone",
+        "nameSelectAll": "Name · Select all ({count})",
+        "colPhone": "Phone",
+        "colSeats": "Guests",
+        "pickGroupTitleMany": "Assign {count} records to a group",
+        "assignToGroup": "Assign to group",
+        "clear": "Clear",
+        "showInGuests": "Show in Guests tab",
+        "legendShared": "Shared",
+        "meterLine": "{groups} groups · {total} guest records",
+        "assignedManyToast": "{count} records assigned to {group}",
+        "createdWithRecords": "{name} created with {count} records"
+      },
       "toast": {
-        "deletingGroups": "Deleting {count} groups...",
-        "groupsDeleted": "Groups deleted successfully",
-        "groupsDeleteFailed": "Failed to delete groups. Please try again",
-        "deletingGroup": "Deleting {name}...",
-        "groupDeleted": "Group deleted successfully",
         "groupDeleteFailed": "Failed to delete group. Please try again"
       }
     },

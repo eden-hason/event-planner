@@ -19,12 +19,20 @@ import {
   GroupSide,
 } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
+import {
+  groupAssignmentStats,
+  withoutPendingDeletes,
+} from '@/features/guests/utils/group-assignment';
 import { formatPhone } from '@/lib/phone';
 import { GroupMobileCard } from './group-mobile-card';
 import { PickGroupSheet } from './pick-group-sheet';
 import { GroupActionsSheet } from './group-actions-sheet';
 import { DeleteGroupSheet } from './delete-group-sheet';
-import { GroupUndoToast } from './group-undo-toast';
+import { GroupUndoToast } from '../group-undo-toast';
+
+/** Floating above the app's bottom nav. */
+const UNDO_TOAST_CLASS =
+  'fixed inset-x-3 bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom)+12px)]';
 import { useDeferredGroupDelete } from '@/features/guests/hooks/use-deferred-group-delete';
 import { cn } from '@/lib/utils';
 import { sideSolidClass } from '../../side-badge';
@@ -61,18 +69,9 @@ export function GroupsMobile({
 
   // While the delete is held, the group is gone and its records read as
   // unassigned, so the meter and chips already show the result.
-  const groups = useMemo(
-    () => allGroups.filter((g) => !hiddenIds.has(g.id)),
-    [allGroups, hiddenIds],
-  );
-  const guests = useMemo(
-    () =>
-      hiddenIds.size > 0
-        ? allGuests.map((g) =>
-            g.groupId && hiddenIds.has(g.groupId) ? { ...g, groupId: null } : g,
-          )
-        : allGuests,
-    [allGuests, hiddenIds],
+  const { groups, guests } = useMemo(
+    () => withoutPendingDeletes(allGroups, allGuests, hiddenIds),
+    [allGroups, allGuests, hiddenIds],
   );
 
   const [menuGroup, setMenuGroup] = useState<GroupWithGuestsApp | null>(null);
@@ -83,35 +82,14 @@ export function GroupsMobile({
   const [filter, setFilter] = useState<ChipKey>('all');
   const [assignGuest, setAssignGuest] = useState<GuestApp | null>(null);
 
-  // Counted by which group's side a guest belongs to - not the guest's own
-  // `side` field, which is a separate concept used on the Guests tab. This
-  // matches how the desktop side filter already reads groups (`group.side`),
-  // just applied to their members here.
-  const { bride, groom, unassigned, total } = useMemo(() => {
-    const sideByGroupId = new Map(groups.map((g) => [g.id, g.side]));
-    let brideCount = 0;
-    let groomCount = 0;
-    let unassignedCount = 0;
-    for (const guest of guests) {
-      if (!guest.groupId) {
-        unassignedCount++;
-        continue;
-      }
-      const side = sideByGroupId.get(guest.groupId);
-      if (side === 'bride') brideCount++;
-      else if (side === 'groom') groomCount++;
-    }
-    return {
-      bride: brideCount,
-      groom: groomCount,
-      unassigned: unassignedCount,
-      total: guests.length,
-    };
-  }, [guests, groups]);
-
-  const assignedPct =
-    total > 0 ? Math.round(((total - unassigned) / total) * 100) : 0;
-  const other = Math.max(0, total - bride - groom - unassigned);
+  const {
+    bride,
+    groom,
+    shared: other,
+    unassigned,
+    total,
+    assignedPct,
+  } = useMemo(() => groupAssignmentStats(guests, groups), [guests, groups]);
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   const unassignedGuests = useMemo(
@@ -150,7 +128,11 @@ export function GroupsMobile({
             </Button>
           </EmptyContent>
         </Empty>
-        <GroupUndoToast pending={pending} onUndo={undoDelete} />
+        <GroupUndoToast
+          pending={pending}
+          onUndo={undoDelete}
+          className={UNDO_TOAST_CLASS}
+        />
       </>
     );
   }
@@ -382,7 +364,11 @@ export function GroupsMobile({
         }}
       />
 
-      <GroupUndoToast pending={pending} onUndo={undoDelete} />
+      <GroupUndoToast
+        pending={pending}
+        onUndo={undoDelete}
+        className={UNDO_TOAST_CLASS}
+      />
 
       <PickGroupSheet
         eventId={eventId}

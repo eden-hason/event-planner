@@ -8,6 +8,13 @@
 export type Selection = ReadonlySet<string>;
 export type HeaderState = 'all' | 'some' | 'none';
 
+/** The selection less `ids` - what an action leaves once they are gone. */
+export function withoutIds(selected: Selection, ids: Iterable<string>): Set<string> {
+  const next = new Set(selected);
+  for (const id of ids) next.delete(id);
+  return next;
+}
+
 export function toggleOne(selected: Selection, id: string): Set<string> {
   const next = new Set(selected);
   if (next.has(id)) next.delete(id);

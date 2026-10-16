@@ -618,10 +618,7 @@
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית"
     },
     "filters": {
-      "filterBySide": "צד",
-      "sidesSelected": "{count} צדדים נבחרו",
-      "noPhone": "ללא טלפון",
-      "selectAll": "בחר הכל"
+      "noPhone": "ללא טלפון"
     },
     "search": {
       "placeholder": "חפש אורחים..."
@@ -642,37 +639,14 @@
     "groups": {
       "createNew": "צור קבוצה חדשה",
       "createNewDescription": "הוסף מקטע חדש לאורחים שלך",
-      "searchPlaceholder": "חפש קבוצות...",
-      "selected": "{count} קבוצה נבחרה",
-      "selectedPlural": "{count} קבוצות נבחרו",
       "openMenu": "פתח תפריט",
-      "select": "בחר",
-      "deleteGroup": "מחק קבוצה",
-      "guestCount": "{count} אורחים",
-      "noGuests": "טרם שויכו אורחים",
-      "assignGuests": "שייך אורחים",
       "dialog": {
-        "title": "יצירת קבוצה חדשה",
-        "description": "הוסף קבוצה חדשה לארגון האורחים",
         "nameLabel": "שם הקבוצה",
-        "namePlaceholder": "למשל: משפחה, חברים, עמיתים",
         "sideLabel": "צד (אופציונלי)",
-        "sidePlaceholder": "בחר צד",
         "descriptionLabel": "תיאור (אופציונלי)",
-        "descriptionPlaceholder": "הוסף תיאור קצר לקבוצה...",
-        "iconLabel": "אייקון",
-        "create": "צור קבוצה"
+        "iconLabel": "אייקון"
       },
       "assign": {
-        "manageMembers": "ניהול חברים",
-        "groupTitle": "קבוצת {name}",
-        "assignDescription": "שייך אורחים לקבוצה לניהול נוח יותר",
-        "availableGuests": "אורחים זמינים",
-        "guestsInGroup": "אורחים בקבוצה",
-        "guestsLabel": "אורחים",
-        "membersLabel": "חברים",
-        "selectedToMove": "{count} אורחים נבחרו להזזה",
-        "saveChanges": "שמור שינויים",
         "updatingMembers": "מעדכן חברי {name}...",
         "membersUpdated": "חברי הקבוצה עודכנו בהצלחה",
         "membersFailed": "עדכון חברי הקבוצה נכשל. נסה שנית"
@@ -747,12 +721,33 @@
         "groupUpdated": "הקבוצה עודכנה",
         "groupUpdateFailed": "עדכון הקבוצה נכשל"
       },
+      "desktop": {
+        "newGroupForRecords": "קבוצה חדשה · {count, plural, one {רשומה אחת תשויך אליה} other {# רשומות ישויכו אליה}}",
+        "discardTitle": "לבטל את השינויים שלא נשמרו?",
+        "discardBody": "בקבוצה \"{name}\" {added} נוספו ו-{removed} יוסרו, והשינויים עוד לא נשמרו.",
+        "keepEditing": "המשך עריכה",
+        "discardChanges": "ביטול השינויים",
+        "removeChecked": "הסרת {count}",
+        "removedOnSave": "יוסר בשמירה",
+        "addOne": "הוספת {name} לקבוצה",
+        "removeOne": "הסרת {name} מהקבוצה",
+        "emptyGroupHint": "הוסיפו אורחים מהטור \"בלי קבוצה\"",
+        "unassignedSub": "{count} רשומות אורחים עדיין בלי קבוצה. שייכו אחת אחת או סמנו כמה יחד",
+        "unassignedRowSub": "רשומות שעוד לא שויכו",
+        "searchNameOrPhone": "חיפוש שם או טלפון",
+        "nameSelectAll": "שם · בחירת הכל ({count})",
+        "colPhone": "טלפון",
+        "colSeats": "מוזמנים",
+        "pickGroupTitleMany": "שיוך {count} רשומות לקבוצה",
+        "assignToGroup": "שיוך לקבוצה",
+        "clear": "ניקוי",
+        "showInGuests": "הצגה בטאב אורחים",
+        "legendShared": "משותפות",
+        "meterLine": "{groups} קבוצות · {total} רשומות אורחים",
+        "assignedManyToast": "{count} רשומות שויכו לקבוצה {group}",
+        "createdWithRecords": "הקבוצה {name} נוצרה עם {count} רשומות"
+      },
       "toast": {
-        "deletingGroups": "מוחק {count} קבוצות...",
-        "groupsDeleted": "הקבוצות נמחקו בהצלחה",
-        "groupsDeleteFailed": "מחיקת הקבוצות נכשלה. נסה שנית",
-        "deletingGroup": "מוחק את {name}...",
-        "groupDeleted": "הקבוצה נמחקה בהצלחה",
         "groupDeleteFailed": "מחיקת הקבוצה נכשלה. נסה שנית"
       }
     },

@@ -70,10 +70,7 @@ export function BulkActionBar({
     <div
       role="toolbar"
       aria-label={t('bar.selected', { count })}
-      className={cn(
-        'bg-foreground text-background pointer-events-auto flex h-[52px] items-center gap-1 rounded-[14px] px-2 whitespace-nowrap',
-        'animate-in fade-in slide-in-from-bottom-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200',
-      )}
+      className={SELECTION_BAR_CLASS}
     >
       <BarButton
         aria-label={t('bar.clear')}
@@ -97,7 +94,7 @@ export function BulkActionBar({
           </button>
         </>
       )}
-      <Divider />
+      <BarDivider />
 
       <DropdownMenu dir={dir}>
         <DropdownMenuTrigger asChild>
@@ -194,7 +191,7 @@ export function BulkActionBar({
         {t('bar.export')}
       </BarButton>
 
-      <Divider />
+      <BarDivider />
       <button
         type="button"
         onClick={() => onAction({ type: 'delete' })}
@@ -207,11 +204,17 @@ export function BulkActionBar({
   );
 }
 
-function Divider() {
+/** The floating selection bar's shell - dark, pill-shaped, rising in. */
+export const SELECTION_BAR_CLASS = cn(
+  'bg-foreground text-background pointer-events-auto flex h-[52px] items-center gap-1 rounded-[14px] px-2 whitespace-nowrap',
+  'animate-in fade-in slide-in-from-bottom-3 shadow-[0_16px_40px_rgba(26,11,46,0.3)] duration-200',
+);
+
+export function BarDivider() {
   return <span className="bg-background/20 mx-2 h-[26px] w-px" />;
 }
 
-function BarButton({
+export function BarButton({
   children,
   className,
   ...props
