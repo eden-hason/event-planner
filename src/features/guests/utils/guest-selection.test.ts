@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { headerState, hiddenCount, pruneSelection, selectRange, toggleAllVisible, toggleOne } from './guest-selection.ts';
+import { headerState, hiddenCount, pruneSelection, selectRange, toggleAllVisible, toggleOne, withoutIds } from './guest-selection.ts';
 
 const ids = (set: ReadonlySet<string>) => [...set].sort();
 
@@ -77,4 +77,10 @@ test('records that no longer exist drop out of the selection', () => {
 test('pruning a selection with nothing missing keeps the same set', () => {
   const selected = new Set(['a']);
   assert.equal(pruneSelection(selected, ['a', 'b']), selected);
+});
+
+test('withoutIds drops the given ids and leaves the original alone', () => {
+  const before = new Set(['a', 'b', 'c']);
+  assert.deepEqual(ids(withoutIds(before, ['a', 'c', 'x'])), ['b']);
+  assert.deepEqual(ids(before), ['a', 'b', 'c']);
 });

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconX } from '@tabler/icons-react';
 import {
@@ -11,15 +10,9 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/toggle-switch';
-import {
-  GROUP_ICONS,
-  GROUP_SIDES,
-  GroupSide,
-  GroupWithGuestsApp,
-} from '@/features/guests/schemas';
+import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
+import { GroupFormFields, useGroupForm } from '../group-form';
 import { cn } from '@/lib/utils';
 import { SideBadge, sideTintClass } from '../../side-badge';
 
@@ -47,61 +40,19 @@ export function CreateGroupSheet({
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
 
-  const [fName, setFName] = useState('');
-  const [fDesc, setFDesc] = useState('');
-  const [fSide, setFSide] = useState<GroupSide | null>(null);
-  const [fAssign, setFAssign] = useState(true);
-  const [fIcon, setFIcon] = useState<(typeof GROUP_ICONS)[number]>('IconUsers');
-
-  const isEdit = group !== null;
-
-  // Seed the form from the group being edited each time the sheet opens on one.
-  useEffect(() => {
-    if (!open || !group) return;
-    setFName(group.name);
-    setFDesc(group.description ?? '');
-    setFSide(group.side);
-    setFIcon((group.icon as (typeof GROUP_ICONS)[number]) ?? 'IconUsers');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, group?.id]);
-
-  const canCreate = fName.trim().length > 0;
-
-  const reset = () => {
-    setFName('');
-    setFDesc('');
-    setFSide(null);
-    setFIcon('IconUsers');
-    setFAssign(true);
-  };
-
-  const buildFormData = () => {
-    const formData = new FormData();
-    formData.append('name', fName.trim());
-    formData.append('icon', fIcon);
-    if (isEdit) {
-      // An edit must be able to clear these, so they are always sent: an
-      // empty value is read as "none" by the action.
-      formData.append('id', group.id);
-      formData.append('description', fDesc.trim());
-      formData.append('side', fSide ?? '');
-    } else {
-      if (fDesc.trim()) formData.append('description', fDesc.trim());
-      if (fSide) formData.append('side', fSide);
-    }
-    return formData;
-  };
+  const form = useGroupForm(group, open);
+  const { isEdit, canSubmit: canCreate } = form;
 
   const handleClose = (isOpen: boolean) => {
     onOpenChange(isOpen);
-    if (!isOpen) reset();
+    if (!isOpen) form.reset();
   };
 
-  const assignAfter = !isEdit && fAssign && unassignedCount > 0;
+  const assignAfter = !isEdit && form.assignAfter && unassignedCount > 0;
 
   const handleSubmit = () => {
     if (!canCreate) return;
-    const formData = buildFormData();
+    const formData = form.buildFormData();
     handleClose(false);
     if (isEdit) onUpdateGroup?.(formData);
     else if (assignAfter) onCreateAndAssign(formData);
@@ -118,10 +69,10 @@ export function CreateGroupSheet({
           <span
             className={cn(
               'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors',
-              sideTintClass(fSide),
+              sideTintClass(form.side),
             )}
           >
-            <GroupIcon iconName={fIcon} size="lg" />
+            <GroupIcon iconName={form.icon} size="lg" />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex min-w-0 items-center gap-1.5">
@@ -131,12 +82,12 @@ export function CreateGroupSheet({
                   !canCreate && 'text-muted-foreground',
                 )}
               >
-                {fName.trim() || t('groups.mobile.previewNamePlaceholder')}
+                {form.name.trim() || t('groups.mobile.previewNamePlaceholder')}
               </SheetTitle>
-              <SideBadge side={fSide} />
+              <SideBadge side={form.side} />
             </div>
             <span className="text-muted-foreground text-[12.5px]">
-              {isEdit
+              {isEdit && group
                 ? t('groups.mobile.editSubtitle', { count: group.guestCount })
                 : t('groups.mobile.newGroupSubtitle')}
             </span>
@@ -152,119 +103,7 @@ export function CreateGroupSheet({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-3.5">
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-muted-foreground text-xs font-semibold"
-              htmlFor="group-name"
-            >
-              {t('groups.dialog.nameLabel')}
-            </label>
-            <Input
-              id="group-name"
-              value={fName}
-              onChange={(e) => setFName(e.target.value)}
-              placeholder={t('groups.mobile.namePlaceholder')}
-              className="h-[42px] text-[15px]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-muted-foreground text-xs font-semibold"
-              htmlFor="group-desc"
-            >
-              {t('groups.dialog.descriptionLabel')}
-            </label>
-            <Input
-              id="group-desc"
-              value={fDesc}
-              onChange={(e) => setFDesc(e.target.value)}
-              placeholder={t('groups.mobile.descriptionPlaceholder')}
-              className="h-[42px] text-[15px]"
-            />
-          </div>
-
-          {/* Side: one segmented control, "no side" is a real option */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-xs font-semibold">
-              {t('groups.dialog.sideLabel')}
-            </span>
-            <div className="bg-muted flex h-[42px] gap-0.5 rounded-[11px] p-[3px]">
-              {([...GROUP_SIDES, null] as const).map((side) => {
-                const active = fSide === side;
-                return (
-                  <button
-                    key={side ?? 'none'}
-                    type="button"
-                    onClick={() => setFSide(side)}
-                    className={cn(
-                      'flex flex-1 items-center justify-center rounded-lg text-[13.5px] transition-colors',
-                      active
-                        ? 'bg-card text-foreground font-bold shadow-sm'
-                        : 'text-muted-foreground font-medium',
-                    )}
-                  >
-                    {side ? t(`list.sides.${side}`) : t('groups.mobile.noSide')}
-                  </button>
-                );
-              })}
-            </div>
-            <span className="text-muted-foreground text-xs leading-normal">
-              {t('groups.mobile.sideHint')}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-muted-foreground text-xs font-semibold">
-              {t('groups.dialog.iconLabel')}
-            </label>
-            <div className="grid grid-cols-6 gap-[7px]">
-              {GROUP_ICONS.map((iconName) => {
-                const active = fIcon === iconName;
-                return (
-                  <button
-                    key={iconName}
-                    type="button"
-                    onClick={() => setFIcon(iconName)}
-                    className={cn(
-                      'flex h-[46px] items-center justify-center rounded-[11px] border-[1.5px] transition-colors',
-                      active
-                        ? fSide
-                          ? cn(sideTintClass(fSide), 'border-current')
-                          : 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground',
-                    )}
-                  >
-                    <GroupIcon iconName={iconName} size="lg" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {!isEdit && unassignedCount > 0 && (
-            <div className="flex min-h-[50px] items-center gap-3 border-t pt-1.5">
-              <label
-                htmlFor="assign-right-away"
-                className="flex min-w-0 flex-1 cursor-pointer flex-col gap-px"
-              >
-                <span className="text-[15px] font-medium">
-                  {t('groups.mobile.assignRightAway')}
-                </span>
-                <span className="text-muted-foreground text-[12.5px]">
-                  {t('groups.mobile.stillUnassigned', {
-                    count: unassignedCount,
-                  })}
-                </span>
-              </label>
-              <Switch
-                id="assign-right-away"
-                switchSize="lg"
-                checked={fAssign}
-                onCheckedChange={setFAssign}
-              />
-            </div>
-          )}
+          <GroupFormFields form={form} unassignedCount={unassignedCount} />
         </div>
 
         <SheetFooter className="flex-row gap-2 border-t px-4 pt-2.5 pb-7">

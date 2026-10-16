@@ -5,10 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
-  useActionState,
-  startTransition,
 } from 'react';
-import { toast } from 'sonner';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
@@ -20,23 +17,24 @@ import { GuestWithGroupApp, GroupWithGuestsApp, GroupSide } from '../schemas';
 import type { TableOption } from '@/features/seating';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import {
-  GroupsDirectory,
-  CreateGroupDialog,
-} from '@/features/guests/components/groups';
+import { GroupsDesktop } from '@/features/guests/components/groups/desktop';
 import {
   GroupsMobile,
   AssignGuestsScreen,
   CreateGroupSheet,
   type AssignTarget,
 } from '@/features/guests/components/groups/mobile';
-import { upsertGroup, UpsertGroupState, UpsertGroupErrorCode } from '../actions/groups';
+import { useGroupWrites } from '../hooks/use-group-writes';
 import { GuestsMobile, AddGuestSourceSheet, type SelectionHeader } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { RecordPackageProvider, type GuestPackageView } from '@/features/billing';
+import {
+  DEFAULT_GUEST_LIST_PARAMS,
+  writeGuestListParams,
+} from '../utils/guest-list-params';
 
 /** The query parameter that addresses the open guest drawer. */
 const GUEST_PARAM = 'guest';
@@ -105,88 +103,23 @@ export function GuestsPage({
   const goToImportRoute = (source?: 'drive' | 'whatsapp') =>
     router.push(`/app/${eventId}/guests/import${source ? `?source=${source}` : ''}`);
 
-  const groupCreateErrorMessage = (errorCode?: UpsertGroupErrorCode) => {
-    const errorMessages: Record<UpsertGroupErrorCode, string> = {
-      GROUP_NAME_TAKEN: t('toast.groupNameTaken'),
-      UNKNOWN: t('toast.groupCreateFailed'),
-    };
-    return errorCode ? errorMessages[errorCode] : t('toast.groupCreateFailed');
-  };
-
-  const createGroupActionWithToast = async (
-    _prevState: UpsertGroupState | null,
-    params: { formData: FormData },
-  ): Promise<UpsertGroupState | null> => {
-    const groupName = params.formData.get('name') as string;
-
-    const promise = upsertGroup(eventId, params.formData).then((result) => {
-      if (!result.success) {
-        throw new Error(groupCreateErrorMessage(result.errorCode));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.creatingGroup', { name: groupName }),
-      success: () => t('toast.groupCreated'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.groupCreateFailed'),
-    });
-
-    try {
-      return await promise;
-    } catch {
-      return null;
-    }
-  };
-
-  const [, createGroupAction] = useActionState(
-    createGroupActionWithToast,
-    null,
-  );
+  const groupWrites = useGroupWrites(eventId);
 
   const handleCreateGroup = (formData: FormData) => {
-    startTransition(() => {
-      createGroupAction({ formData });
-    });
+    void groupWrites.create(formData);
   };
 
-  // Mobile's "create & assign guests" flow needs the new group's id right
-  // away to open the assign sheet, so it calls the server action directly
-  // instead of going through `createGroupAction` - the revalidated `groups`
-  // prop wouldn't be ready in time anyway.
-  const handleCreateGroupAndAssign = (formData: FormData) => {
+  // Mobile's "create & assign guests" flow opens the assign sheet on the new
+  // group as soon as it has an id - the revalidated `groups` prop wouldn't be
+  // ready in time.
+  const handleCreateGroupAndAssign = async (formData: FormData) => {
     // Read everything needed afterwards before the FormData goes to the action.
     const groupName = (formData.get('name') as string) || '';
     const groupSide = (formData.get('side') as GroupSide | null) || null;
-
-    const promise = upsertGroup(eventId, formData).then((result) => {
-      if (!result.success) {
-        throw new Error(groupCreateErrorMessage(result.errorCode));
-      }
-      return result;
-    });
-
-    toast.promise(promise, {
-      loading: t('toast.creatingGroup', { name: groupName }),
-      success: () => t('toast.groupCreated'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('toast.groupCreateFailed'),
-    });
-
-    promise
-      .then((result) => {
-        if (result.groupId) {
-          setAssignTarget({
-            id: result.groupId,
-            name: groupName,
-            side: groupSide,
-            guests: [],
-          });
-          setAssignSheetOpen(true);
-        }
-      })
-      .catch(() => {});
+    const groupId = await groupWrites.create(formData);
+    if (!groupId) return;
+    setAssignTarget({ id: groupId, name: groupName, side: groupSide, guests: [] });
+    setAssignSheetOpen(true);
   };
 
   const handleOpenGroupDialog = () => {
@@ -200,19 +133,7 @@ export function GuestsPage({
   };
 
   const handleUpdateGroup = (formData: FormData) => {
-    const groupName = (formData.get('name') as string) || '';
-    const promise = upsertGroup(eventId, formData).then((result) => {
-      if (!result.success) {
-        throw new Error(groupCreateErrorMessage(result.errorCode));
-      }
-      return result;
-    });
-    toast.promise(promise, {
-      loading: t('groups.mobile.updatingGroup', { name: groupName }),
-      success: () => t('groups.mobile.groupUpdated'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('groups.mobile.groupUpdateFailed'),
-    });
+    void groupWrites.update(formData);
   };
 
   const handleOpenAssign = (group: GroupWithGuestsApp) => {
@@ -307,6 +228,17 @@ export function GuestsPage({
   const [activeTab, setActiveTab] = useState<'guests' | 'groups'>(() =>
     searchParams.get('tab') === 'groups' ? 'groups' : 'guests',
   );
+
+  // A group's ⋯ "Show in Guests tab": the list, filtered to that group alone.
+  const handleShowGroupInGuests = (groupId: string) => {
+    setSearchParams((params) =>
+      writeGuestListParams(
+        { ...DEFAULT_GUEST_LIST_PARAMS, groups: [groupId] },
+        params,
+      ),
+    );
+    setActiveTab('guests');
+  };
 
   /*
    * On a phone the tab's action goes into `PageCard`'s chrome row beside the
@@ -485,17 +417,21 @@ export function GuestsPage({
               onEditGroup={handleEditGroup}
             />
           ) : (
-            <GroupsDirectory
+            <GroupsDesktop
               eventId={eventId}
               groups={groups}
               guests={guests}
-              onAddGroup={handleOpenGroupDialog}
+              createOpen={isGroupDialogOpen}
+              onCreateOpenChange={setIsGroupDialogOpen}
+              onShowInGuests={handleShowGroupInGuests}
             />
           )}
         </TabsContent>
       </Tabs>
 
-      {isMobile ? (
+      {/* Desktop's group dialog lives in `GroupsDesktop`, which selects the
+          group it creates. */}
+      {isMobile && (
         <CreateGroupSheet
           open={isGroupDialogOpen}
           onOpenChange={setIsGroupDialogOpen}
@@ -504,12 +440,6 @@ export function GuestsPage({
           unassignedCount={unassignedGuests.length}
           group={editingGroup}
           onUpdateGroup={handleUpdateGroup}
-        />
-      ) : (
-        <CreateGroupDialog
-          open={isGroupDialogOpen}
-          onOpenChange={setIsGroupDialogOpen}
-          onCreateGroup={handleCreateGroup}
         />
       )}
 

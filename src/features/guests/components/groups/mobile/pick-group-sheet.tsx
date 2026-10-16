@@ -1,7 +1,6 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   Sheet,
@@ -10,7 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { GuestApp, GroupWithGuestsApp } from '@/features/guests/schemas';
-import { updateGroupMembers } from '@/features/guests/actions/groups';
+import { useGroupWrites } from '@/features/guests/hooks/use-group-writes';
 import { GroupIcon } from '../group-icon';
 import { SideBadge, sideTintClass } from '../../side-badge';
 import { cn } from '@/lib/utils';
@@ -25,7 +24,7 @@ interface PickGroupSheetProps {
 
 /**
  * Where the unassigned list's per-card "Assign" button lands: pick the one
- * group this record joins. Reuses `updateGroupMembers` with a single added id,
+ * group this record joins. Reuses the membership write with a single added id,
  * so no new server action.
  */
 export function PickGroupSheet({
@@ -37,28 +36,13 @@ export function PickGroupSheet({
   const t = useTranslations('guests');
   const isRTL = useLocale() === 'he';
   const Chevron = isRTL ? IconChevronLeft : IconChevronRight;
+  const groupWrites = useGroupWrites(eventId);
 
   const handlePick = (group: GroupWithGuestsApp) => {
     if (!guest) return;
-    const name = guest.name;
     onOpenChange(false);
 
-    const promise = updateGroupMembers(eventId, group.id, [guest.id], []).then(
-      (result) => {
-        if (!result.success) {
-          throw new Error(result.message || t('groups.mobile.assignFailed'));
-        }
-        return result;
-      },
-    );
-
-    toast.promise(promise, {
-      loading: t('groups.assign.updatingMembers', { name: group.name }),
-      success: () =>
-        t('groups.mobile.assignedToast', { name, group: group.name }),
-      error: (err) =>
-        err instanceof Error ? err.message : t('groups.mobile.assignFailed'),
-    });
+    void groupWrites.assign([guest], group);
   };
 
   return (
