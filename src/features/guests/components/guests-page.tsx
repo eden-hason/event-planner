@@ -35,6 +35,7 @@ import {
   DEFAULT_GUEST_LIST_PARAMS,
   writeGuestListParams,
 } from '../utils/guest-list-params';
+import { rsvpHeadcounts } from '../utils/rsvp-headcounts';
 
 /** The query parameter that addresses the open guest drawer. */
 const GUEST_PARAM = 'guest';
@@ -96,6 +97,9 @@ export function GuestsPage({
     () => guests.filter((g) => !g.groupId),
     [guests],
   );
+  // The header counts Guests (the sum of amounts), like the RSVP meter, not
+  // records.
+  const guestHeadcount = useMemo(() => rsvpHeadcounts(guests).total, [guests]);
 
   // `?source=drive` opens the wizard straight into the Drive picker and
   // `?source=whatsapp` on the WhatsApp link step, instead of the plain upload
@@ -288,7 +292,7 @@ export function GuestsPage({
     : {
         title,
         subtitle: t('headerSubtitle', {
-          total: guests.length,
+          total: guestHeadcount,
           groupCount: groups.length,
         }),
         action: isMobile ? headerAction : undefined,
@@ -303,7 +307,7 @@ export function GuestsPage({
     // object every render: an identity-keyed effect would set state in a loop.
     // The counts feed the subtitle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, isMobile, activeTab, guests.length, groups.length, setHeader, selection]);
+  }, [title, isMobile, activeTab, guestHeadcount, groups.length, setHeader, selection]);
 
   usePublishedHeight(tabsRowRef, '--guest-tabs-h', hasMounted && !isMobile);
 
