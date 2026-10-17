@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { draftChanges, groupAssignmentStats, matchesNameOrPhone, withoutPendingDeletes } from './group-assignment.ts';
+import { draftChanges, groupAssignmentStats, matchesNameOrPhone, membershipStanding, withoutPendingDeletes } from './group-assignment.ts';
 
 const groups = [
   { id: 'b', side: 'bride' as const },
@@ -37,7 +37,10 @@ test('a held delete drops its group and leaves its records unassigned', () => {
     [{ groupId: 'b' }, { groupId: 'g' }],
     new Set(['b']),
   );
-  assert.deepEqual(view.groups.map((g) => g.id), ['g', 's']);
+  assert.deepEqual(
+    view.groups.map((g) => g.id),
+    ['g', 's'],
+  );
   assert.deepEqual(view.guests, [{ groupId: null }, { groupId: 'g' }]);
   assert.equal(groupAssignmentStats(view.guests, view.groups).unassigned, 1);
 });
@@ -79,6 +82,18 @@ test('a search matches the name, or the phone in its stored or local form', () =
 });
 
 test('a record with no phone matches by name only', () => {
-  assert.equal(matchesNameOrPhone({ name: 'נדב כץ', phone: null }, '05'), false);
+  assert.equal(
+    matchesNameOrPhone({ name: 'נדב כץ', phone: null }, '05'),
+    false,
+  );
   assert.equal(matchesNameOrPhone({ name: 'נדב כץ' }, 'נדב'), true);
+});
+
+test('a record stands in or out as saved, or moving when the draft disagrees', () => {
+  const saved = new Set(['a', 'b']);
+  const draft = new Set(['a', 'c']);
+  assert.equal(membershipStanding('a', saved, draft), 'in');
+  assert.equal(membershipStanding('b', saved, draft), 'leaving');
+  assert.equal(membershipStanding('c', saved, draft), 'joining');
+  assert.equal(membershipStanding('d', saved, draft), 'out');
 });

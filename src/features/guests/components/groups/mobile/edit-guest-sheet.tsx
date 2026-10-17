@@ -13,9 +13,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { upsertGuest } from '@/features/guests/actions/guests';
 import type { GroupSide, GuestApp } from '@/features/guests/schemas';
+import type { MembershipStanding } from '@/features/guests/types';
 import { rsvpPresentation } from '@/features/guests/utils';
+import { describeUpsertFailure } from '@/features/guests/utils/upsert-error';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
@@ -28,25 +31,22 @@ const SIDES = ['bride', 'groom', null] as const;
  * at the top says where the record stands in the open draft, and saving this
  * sheet writes only the details, so the draft is untouched.
  */
-export function EditGuestSheet({
-  guest,
-  eventId,
-  groupName,
-  inGroup,
-  pending,
-  draftChanges,
-  onOpenChange,
-}: {
-  /** `null` closes the sheet. */
-  guest: GuestApp | null;
+interface EditGuestProps {
   eventId: string;
   groupName: string;
-  /** Whether the record is in the group as saved. */
-  inGroup: boolean;
-  /** Whether the draft moves the record. */
-  pending: boolean;
+  /** Where the record stands against the open draft. */
+  standing: MembershipStanding;
   /** How many moves the open draft holds. */
-  draftChanges: number;
+  pendingMoves: number;
+}
+
+export function EditGuestSheet({
+  guest,
+  onOpenChange,
+  ...props
+}: EditGuestProps & {
+  /** `null` closes the sheet. */
+  guest: GuestApp | null;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
@@ -60,11 +60,7 @@ export function EditGuestSheet({
           <EditGuestForm
             key={guest.id}
             guest={guest}
-            eventId={eventId}
-            groupName={groupName}
-            inGroup={inGroup}
-            pending={pending}
-            draftChanges={draftChanges}
+            {...props}
             onClose={() => onOpenChange(false)}
           />
         )}
@@ -73,23 +69,21 @@ export function EditGuestSheet({
   );
 }
 
+const GROUP_LINE_KEY: Record<MembershipStanding, string> = {
+  in: 'inGroup',
+  leaving: 'inGroupLeaving',
+  out: 'noGroup',
+  joining: 'noGroupJoining',
+};
+
 function EditGuestForm({
   guest,
   eventId,
   groupName,
-  inGroup,
-  pending,
-  draftChanges,
+  standing,
+  pendingMoves,
   onClose,
-}: {
-  guest: GuestApp;
-  eventId: string;
-  groupName: string;
-  inGroup: boolean;
-  pending: boolean;
-  draftChanges: number;
-  onClose: () => void;
-}) {
+}: EditGuestProps & { guest: GuestApp; onClose: () => void }) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const [name, setName] = useState(guest.name);
@@ -101,13 +95,9 @@ function EditGuestForm({
   const noPhone = !phone.trim();
   const canSave = name.trim().length >= 2 && !saving;
 
-  const groupLine = inGroup
-    ? pending
-      ? t('groups.editGuest.inGroupLeaving', { group: groupName })
-      : t('groups.editGuest.inGroup', { group: groupName })
-    : pending
-      ? t('groups.editGuest.noGroupJoining', { group: groupName })
-      : t('groups.editGuest.noGroup');
+  const groupLine = t(`groups.editGuest.${GROUP_LINE_KEY[standing]}`, {
+    group: groupName,
+  });
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -119,9 +109,7 @@ function EditGuestForm({
 
     setSaving(true);
     const work = upsertGuest(eventId, formData).then((result) => {
-      if (!result.success) {
-        throw new Error(result.message || t('groups.editGuest.saveFailed'));
-      }
+      if (!result.success) throw new Error(describeUpsertFailure(result, t));
       return result;
     });
     toast.promise(work, {
@@ -180,9 +168,11 @@ function EditGuestForm({
         <div
           className={cn(
             'flex items-center gap-[9px] rounded-xl px-3 py-2.5 text-[13px] leading-snug font-semibold',
-            pending
-              ? rsvpPresentation(inGroup ? 'pending' : 'confirmed').chip
-              : 'bg-muted text-muted-foreground',
+            standing === 'joining'
+              ? rsvpPresentation('confirmed').chip
+              : standing === 'leaving'
+                ? rsvpPresentation('pending').chip
+                : 'bg-muted text-muted-foreground',
           )}
         >
           <IconFolder size={17} className="shrink-0" />
@@ -193,11 +183,11 @@ function EditGuestForm({
           <span className="text-muted-foreground text-xs font-semibold">
             {t('groups.editGuest.nameLabel')}
           </span>
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('groups.editGuest.namePlaceholder')}
-            className="bg-card focus-visible:border-primary focus-visible:ring-primary/20 h-[42px] rounded-[11px] border px-3 text-[15px] font-medium outline-none focus-visible:ring-[3px]"
+            className="h-[42px] rounded-[11px] text-[15px] font-medium"
           />
         </label>
 
@@ -205,7 +195,7 @@ function EditGuestForm({
           <span className="text-muted-foreground text-xs font-semibold">
             {t('groups.editGuest.phoneLabel')}
           </span>
-          <input
+          <Input
             dir="ltr"
             type="tel"
             inputMode="tel"
@@ -213,10 +203,8 @@ function EditGuestForm({
             onChange={(e) => setPhone(e.target.value)}
             placeholder="050-000-0000"
             className={cn(
-              'bg-card h-[42px] rounded-[11px] border-[1.5px] px-3 text-end text-[15px] font-medium tabular-nums outline-none',
-              noPhone
-                ? 'border-rsvp-pending'
-                : 'focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-[3px]',
+              'h-[42px] rounded-[11px] text-end text-[15px] font-medium tabular-nums',
+              noPhone && 'border-rsvp-pending border-[1.5px]',
             )}
           />
           {noPhone && (
@@ -277,8 +265,8 @@ function EditGuestForm({
       <SheetFooter className="flex-col gap-[9px] border-t px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
         <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
           <IconInfoCircle size={14} className="shrink-0" />
-          {draftChanges > 0
-            ? t('groups.editGuest.draftKept', { count: draftChanges })
+          {pendingMoves > 0
+            ? t('groups.editGuest.draftKept', { count: pendingMoves })
             : t('groups.editGuest.detailsOnly')}
         </span>
         <div className="flex gap-2">

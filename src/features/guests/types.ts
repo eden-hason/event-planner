@@ -79,3 +79,9 @@ export type WhatsAppImportState = {
   | { status: 'done' }
   | { status: 'error'; error: WhatsAppImportError }
 );
+
+/**
+ * Where a record stands against one group's open membership draft: in or out
+ * as saved, or moving on Save.
+ */
+export type MembershipStanding = 'in' | 'out' | 'joining' | 'leaving';

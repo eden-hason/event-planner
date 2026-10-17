@@ -63,6 +63,7 @@ import {
 import posthog from 'posthog-js';
 import { formatPhone } from '@/lib/phone';
 import { resolveAmounts } from '@/features/guests/utils/guest-amount';
+import { describeUpsertFailure } from '@/features/guests/utils/upsert-error';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
@@ -166,29 +167,6 @@ export function GuestForm({
     }
   }, [guest, form]);
 
-  // The seating capacity guard (ADR-0008) rejects an over-capacity Table
-  // Assignment inside Postgres and raises a parseable message. `upsertGuest`
-  // passes it through untranslated; turn it into the same shortfall sentence the
-  // Seating Plan shows rather than exposing a bare guest-upsert database error.
-  const describeUpsertError = React.useCallback(
-    (raw: string): string => {
-      if (raw.includes('seating_over_capacity')) {
-        const read = (key: string) =>
-          Number(new RegExp(`${key}=(-?\\d+)`).exec(raw)?.[1] ?? 0);
-        return t('form.table.overCapacity', {
-          party: read('party'),
-          free: read('free'),
-          shortfall: read('shortfall'),
-        });
-      }
-      if (raw.includes('seating_table_not_found')) {
-        return t('form.table.tableGone');
-      }
-      return raw;
-    },
-    [t],
-  );
-
   const router = useRouter();
 
   const [, formAction, isPending] = useActionState(
@@ -197,19 +175,8 @@ export function GuestForm({
       formData: FormData,
     ): Promise<UpsertGuestState | null> => {
       const promise = upsertGuest(eventId, formData).then((result) => {
-        if (!result.success && result.phoneTakenBy !== undefined) {
-          throw new Error(
-            result.phoneTakenBy
-              ? t('form.phoneTakenBy', { name: result.phoneTakenBy })
-              : t('form.phoneTaken'),
-          );
-        }
         if (!result.success) {
-          throw new Error(
-            result.message
-              ? describeUpsertError(result.message)
-              : t('form.somethingWentWrong'),
-          );
+          throw new Error(describeUpsertFailure(result, t));
         }
         return result;
       });
