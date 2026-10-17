@@ -1531,10 +1531,38 @@
   },
   "schedules": {
     "header": {
-      "title": "Messages & calls",
-      "summary": "{sent} sent · {pending} scheduled",
-      "lockedSummary": "{count} schedules ready · none active",
-      "callLive": "{label} is being called now · {handled} of {total} handled"
+      "title": "Messages & calls"
+    },
+    "hero": {
+      "set": "{type} set",
+      "scheduleCount": "{count, plural, one {1 schedule} other {# schedules}}",
+      "ofSent": "of {total} sent",
+      "ofActive": "of {total} active",
+      "waiting": "Waiting to activate",
+      "complete": "Set complete",
+      "scheduled": "{count} scheduled",
+      "undated": "{count} undated",
+      "skipped": "{count} not sent",
+      "nextLabel": "Next send",
+      "nextDatedLabel": "Next dated send",
+      "liveLabel": "Calling now",
+      "handled": "{handled} of {total} handled",
+      "done": {
+        "title": "All schedules sent",
+        "sub": "{label} went out on {date}",
+        "link": "Results"
+      },
+      "attention": {
+        "noAsk": {
+          "main": "The invitation is not scheduled yet",
+          "tail": " · without a date it will not go out",
+          "go": "Schedule"
+        },
+        "tables": {
+          "main": "{count, plural, one {1 guest still has no table} other {# guests still have no table}} before {label}",
+          "go": "Seating"
+        }
+      }
     },
     "channel": {
       "whatsapp": "WhatsApp",

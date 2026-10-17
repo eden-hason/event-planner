@@ -1531,10 +1531,38 @@
   },
   "schedules": {
     "header": {
-      "title": "הודעות ושיחות",
-      "summary": "{sent} נשלחו · {pending} מתוזמנים",
-      "lockedSummary": "{count} תזמונים מוכנים · אף אחד לא פעיל",
-      "callLive": "{label} בעבודה כרגע · {handled} מתוך {total} טופלו"
+      "title": "הודעות ושיחות"
+    },
+    "hero": {
+      "set": "סט {type}",
+      "scheduleCount": "{count, plural, one {תזמון אחד} other {# תזמונים}}",
+      "ofSent": "מתוך {total} נשלחו",
+      "ofActive": "מתוך {total} פעילים",
+      "waiting": "ממתינים להפעלה",
+      "complete": "הסט הושלם",
+      "scheduled": "{count, plural, one {אחד מתוזמן} other {# מתוזמנים}}",
+      "undated": "{count, plural, one {אחד בלי תאריך} other {# בלי תאריך}}",
+      "skipped": "{count, plural, one {אחד לא נשלח} other {# לא נשלחו}}",
+      "nextLabel": "השליחה הבאה",
+      "nextDatedLabel": "השליחה המתוזמנת הבאה",
+      "liveLabel": "מתקשרים עכשיו",
+      "handled": "{handled} מתוך {total} טופלו",
+      "done": {
+        "title": "כל התזמונים נשלחו",
+        "sub": "{label} · {date}",
+        "link": "לתוצאות"
+      },
+      "attention": {
+        "noAsk": {
+          "main": "ההזמנה עוד לא תוזמנה",
+          "tail": " · בלי תאריך היא לא תישלח",
+          "go": "לתזמון"
+        },
+        "tables": {
+          "main": "{count, plural, one {אורח אחד עדיין בלי שולחן} other {# אורחים עדיין בלי שולחן}} לפני {label}",
+          "go": "להושבה"
+        }
+      }
     },
     "channel": {
       "whatsapp": "WhatsApp",

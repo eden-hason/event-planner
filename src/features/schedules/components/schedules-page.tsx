@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 
-import { type EventApp } from '@/features/events/schemas';
+import { EventTypeKeySchema, type EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { callPaneState } from '@/features/calls';
 import { CallRoundPane } from '@/features/calls/components';
@@ -23,6 +23,7 @@ import {
   shouldSendTableNumbers,
 } from '../utils';
 import { comparePlanOrder, numberPlan, offsetDays, timelineStatus } from '../utils/timeline';
+import { heroModel, type HeroEntry } from '../utils/hero';
 import { resolveTemplatesForPreview } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
@@ -60,9 +61,12 @@ export async function SchedulesPage({
   schedules,
   event,
 }: SchedulesPageProps) {
-  const t = await getTranslations('schedules');
-  const tCalls = await getTranslations('calls');
-  const locale = await getLocale();
+  const [t, tCalls, tEventTypes, locale] = await Promise.all([
+    getTranslations('schedules'),
+    getTranslations('calls'),
+    getTranslations('eventDetails.types'),
+    getLocale(),
+  ]);
 
   // Nothing to plan yet. Since the seed trigger fires the moment an Event has
   // a type and a date, an empty timeline means one of those is missing - and
@@ -167,14 +171,6 @@ export async function SchedulesPage({
   // the follow-up - so "Confirmation 2" is always the one that says so.
   const numbers = numberPlan(resolved.map(({ schedule }) => schedule));
 
-  // Shown in a different order than they are numbered: an Undated Schedule has
-  // no place on the timeline, so the undated ones lead in a group of their own
-  // (ADR 0029), still in plan order among themselves.
-  const shown = [
-    ...resolved.filter(({ schedule }) => schedule.scheduledDate === null),
-    ...resolved.filter(({ schedule }) => schedule.scheduledDate !== null),
-  ];
-
   // Numeric rather than a month name: the card's meta line already carries the
   // channel and the offset, and "21 August" pushed it into an ellipsis on a
   // 375px screen.
@@ -207,7 +203,8 @@ export async function SchedulesPage({
   const callSchedules = resolved.filter(({ schedule }) => !isMessageSchedule(schedule));
   const messageCount = resolved.length - callSchedules.length;
 
-  const items: OutreachItem[] = shown.map(
+  // Built in plan order, which the hero reads; the timeline reorders below.
+  const planItems: OutreachItem[] = resolved.map(
     ({ schedule, template, smsBody, seatingGap, offersNote }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
@@ -312,15 +309,55 @@ export async function SchedulesPage({
     },
   );
 
-  // "The plan is locked" is a property of the Event, not of any one card: every
-  // Schedule of an Event that cannot send was seeded 'disabled' together, and
-  // paying releases them together.
-  const locked = items.some((item) => item.status === 'locked');
+  // The timeline is shown in a different order than the plan: an Undated
+  // Schedule has no place on it, so the undated ones lead in a group of their
+  // own (ADR 0029), still in plan order among themselves.
+  const items = [
+    ...planItems.filter((item) => item.undated),
+    ...planItems.filter((item) => !item.undated),
+  ];
+
+  // The hero reads the plan in plan order: its stepper is progress, so what has
+  // gone out comes first.
+  const hero = heroModel(
+    resolved.map(({ schedule, seatingGap }, index): HeroEntry => {
+      const item = planItems[index];
+      // A message went out when it was dispatched; a call round, when it
+      // finished.
+      const finishedAt = isMessageSchedule(schedule)
+        ? schedule.dispatchedAt
+        : (roundsBySchedule.get(schedule.id)?.completedAt ?? null);
+      return {
+        id: item.id,
+        label: item.label,
+        status: item.status,
+        scheduleTypeKey: schedule.scheduleTypeKey,
+        scheduledDate: schedule.scheduledDate,
+        audienceCount: item.audienceCount,
+        when: item.whenDetailed,
+        callProgress: item.callProgress,
+        finishedOn: finishedAt ? formatWhen(finishedAt) : null,
+        withoutTable: seatingGap?.withoutTable ?? 0,
+      };
+    }),
+  );
+
+  // The header names the set rather than counting it: the hero's stepper
+  // already says how far along it is.
+  const eventType = EventTypeKeySchema.safeParse(event?.eventType);
+  const subtitle = [
+    eventType.success ? t('hero.set', { type: tEventTypes(eventType.data) }) : null,
+    t('hero.scheduleCount', { count: items.length }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <SchedulesLayout
       items={items}
-      locked={locked}
+      hero={hero}
+      subtitle={subtitle}
+      eventId={eventId}
       eventDate={eventDate}
     />
   );

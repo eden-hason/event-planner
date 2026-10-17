@@ -21,8 +21,7 @@ export const BILLING_TONE_CLASS: Record<BillingPillTone, string> = {
 /**
  * The upsell surface: a fixed dark plum gradient, deliberately the same in both
  * themes, with white text. Shared by every "upgrade to Premium" card so they
- * read as one offer - the More page's plan card and the schedules timeline's
- * upsell banner.
+ * read as one offer.
  */
 export const UPSELL_SURFACE_CLASS =
   'bg-linear-150 from-[#2B0F3A] via-[#4A1247] via-70% to-[#6A1258] text-white shadow-[0_12px_28px_rgba(42,12,58,0.28)]';

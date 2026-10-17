@@ -55,3 +55,4 @@ in the diff, not here.
 | [0021](0021-pre-event-owner-heads-up.md) | The Owner hears nothing from Kululu in the days before the Event | owner messages / outreach | open |
 | [0022](0022-results-in-the-post-event-message.md) | The post-event Owner Message says thank you but not what Kululu did | owner messages / growth | open |
 | [0023](0023-read-owner-replies.md) | Nobody reads what an Owner writes back to the Kululu WhatsApp number | owner messages / back office | open |
+| [0024](0024-schedules-hero-attention-items.md) | The schedules hero leaves out three of its five attention items | schedules | open |

@@ -35,7 +35,7 @@ type ChipIcon = React.ComponentType<IconProps>;
  * produced it. They carry no icon - a round being worked shows a pulsing dot
  * instead, and a finished one has nothing to add to its label.
  */
-const TONE: Record<OutreachItemStatus, string> = {
+export const STATUS_TONE: Record<OutreachItemStatus, string> = {
   sent: 'bg-success/10 text-success',
   completed: 'bg-success/10 text-success',
   pending: 'bg-violet-tint text-violet-strong',
@@ -93,7 +93,7 @@ export function ScheduleStatusChip({
       className={cn(
         'inline-flex shrink-0 items-center gap-1 rounded-full font-bold whitespace-nowrap',
         SIZE[size],
-        TONE[status],
+        STATUS_TONE[status],
         className,
       )}
     >
