@@ -4,7 +4,6 @@ import { buildOwnerMessagePayload, firstName } from './payload';
 import type { OwnerMessageFacts } from '../types';
 
 const facts: OwnerMessageFacts = {
-  eventId: '11111111-1111-1111-1111-111111111111',
   ownerUserId: '22222222-2222-2222-2222-222222222222',
   ownerFullName: 'נועה  כהן',
   ownerPhone: '+972545451963',
@@ -13,7 +12,7 @@ const facts: OwnerMessageFacts = {
 };
 
 describe('buildOwnerMessagePayload - welcome', () => {
-  it('fills name, Plan and package, and links Home', () => {
+  it('fills name, Plan and package, with no button parameters', () => {
     const result = buildOwnerMessagePayload('welcome', facts);
     assert.ok(result.ok);
     const { payload } = result;
@@ -28,12 +27,8 @@ describe('buildOwnerMessagePayload - welcome', () => {
         { type: 'text', text: (1020).toLocaleString('he-IL') },
       ],
     });
-    assert.deepEqual(payload.components[1], {
-      type: 'button',
-      sub_type: 'url',
-      index: 0,
-      parameters: [{ type: 'text', text: `app/${facts.eventId}/home` }],
-    });
+    // The app link is static text in the body, and the support button is static.
+    assert.equal(payload.components.length, 1);
   });
 
   it('refuses without a payment', () => {
@@ -43,18 +38,12 @@ describe('buildOwnerMessagePayload - welcome', () => {
 });
 
 describe('buildOwnerMessagePayload - post event', () => {
-  it('fills the name and links the gifting page', () => {
+  it('fills the name, with no buttons', () => {
     const result = buildOwnerMessagePayload('post_event', { ...facts, channel: null });
     assert.ok(result.ok);
     assert.equal(result.payload.templateName, 'owner_post_event_1');
     assert.deepEqual(result.payload.components, [
       { type: 'body', parameters: [{ type: 'text', text: 'נועה' }] },
-      {
-        type: 'button',
-        sub_type: 'url',
-        index: 0,
-        parameters: [{ type: 'text', text: `app/${facts.eventId}/gifting` }],
-      },
     ]);
   });
 });

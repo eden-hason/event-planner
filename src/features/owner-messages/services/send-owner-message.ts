@@ -26,7 +26,7 @@ async function loadOwnerMessageFacts(
   const [eventRes, payments] = await Promise.all([
     supabase
       .from('events')
-      .select('id, user_id, bonus_records_override')
+      .select('user_id, bonus_records_override')
       .eq('id', eventId)
       .maybeSingle(),
     listEventPayments(supabase, eventId),
@@ -37,7 +37,6 @@ async function loadOwnerMessageFacts(
     return null;
   }
   const event = eventRes.data as {
-    id: string;
     user_id: string;
     bonus_records_override: number | null;
   };
@@ -58,7 +57,6 @@ async function loadOwnerMessageFacts(
   });
 
   return {
-    eventId: event.id,
     ownerUserId: event.user_id,
     ownerFullName: (profile?.full_name as string | null) ?? null,
     ownerPhone: (profile?.phone_number as string | null) ?? null,

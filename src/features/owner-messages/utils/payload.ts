@@ -9,18 +9,14 @@ import type { OwnerMessageFacts, OwnerMessageKind } from '../types';
  * are named here rather than in message_templates. Their approved text and
  * buttons are in docs/design/owner-message-templates.md.
  *
- * Both URL buttons are dynamic with the whole path as the suffix, so the
- * domain is fixed once in Meta and the code only ever says where in the app.
+ * Their links (`/app`, `/review`) are plain text in the body, fixed in Meta,
+ * not buttons: WhatsApp opens a button in its own browser, where the Owner is
+ * not signed in, and a body link in their own. The Welcome's one button
+ * (support) is static. So the only parameters are the body's.
  */
 export const OWNER_MESSAGE_TEMPLATES = {
   welcome: 'owner_welcome_1',
   post_event: 'owner_post_event_1',
-} as const satisfies Record<OwnerMessageKind, string>;
-
-/** Where each message's first button opens, under /app/<eventId>/. */
-const BUTTON_PAGE = {
-  welcome: 'home',
-  post_event: 'gifting',
 } as const satisfies Record<OwnerMessageKind, string>;
 
 const LANGUAGE_CODE = 'he';
@@ -80,15 +76,7 @@ export function buildOwnerMessagePayload(
       to,
       templateName: OWNER_MESSAGE_TEMPLATES[kind],
       languageCode: LANGUAGE_CODE,
-      components: [
-        { type: 'body', parameters: params.map(text) },
-        {
-          type: 'button',
-          sub_type: 'url',
-          index: 0,
-          parameters: [text(`app/${facts.eventId}/${BUTTON_PAGE[kind]}`)],
-        },
-      ],
+      components: [{ type: 'body', parameters: params.map(text) }],
     },
   };
 }

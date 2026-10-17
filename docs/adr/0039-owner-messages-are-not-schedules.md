@@ -37,9 +37,13 @@ An **Owner Message** is its own concept, not a Schedule Type and not a Template.
 - **Operator override.** The Back Office Event page lists the Event's Owner Messages and
   their status, and offers "send now" for each kind. A manual send ignores the once-only and
   48-hour rules, because an Operator is choosing it.
-- **Meta category.** Both are submitted as `UTILITY`. The post-event one leads with the
-  gifting page and puts the review second, to give it the best chance of staying utility.
-  If Meta reclassifies it as marketing, we accept that.
+- **Meta category.** Both are submitted as `UTILITY`. If Meta reclassifies the post-event
+  one as marketing, because of the review ask, we accept that.
+- **Links in the text, not buttons.** WhatsApp opens a template button in its own in-app
+  browser, where the Owner is not signed in. A link in the body opens in the phone's own
+  browser. So the app and the review are plain links in the body, on short paths of our
+  own (`/app`, `/review`) that redirect onward. Only the Welcome's support button remains,
+  because it opens WhatsApp, not a page.
 
 ## Considered
 
