@@ -18,15 +18,6 @@ export const OWNER_MESSAGE_TEMPLATES = {
 
 const LANGUAGE_CODE = 'he';
 
-/** The occasion as a bare noun, read after "הכל מוכן ל". */
-const OCCASION_NOUN: Record<string, string> = {
-  wedding: 'חתונה',
-  henna: 'חינה',
-  bar_mitzva: 'בר המצווה',
-  bat_mitzva: 'בת המצווה',
-};
-const FALLBACK_OCCASION_NOUN = 'אירוע';
-
 /** The Plan as the welcome names it. */
 const PLAN_LABEL: Record<NonNullable<OwnerMessageFacts['channel']>, string> = {
   whatsapp: 'WhatsApp',
@@ -41,12 +32,6 @@ export type OwnerMessagePayloadResult =
 export function firstName(fullName: string | null): string | null {
   const first = fullName?.trim().split(/\s+/)[0];
   return first ? first : null;
-}
-
-/** "12.11.2026", read from the calendar date the Owner picked. */
-function formatEventDate(eventDate: string): string {
-  const day = new Date(eventDate);
-  return `${day.getUTCDate()}.${day.getUTCMonth() + 1}.${day.getUTCFullYear()}`;
 }
 
 function urlButton(index: number, suffix: string) {
@@ -95,13 +80,9 @@ export function buildOwnerMessagePayload(
     };
   }
 
-  if (!facts.eventDate) return { ok: false, message: 'לאירוע אין תאריך' };
   if (!facts.channel || facts.packageSize === null) {
     return { ok: false, message: 'לא נרשם תשלום לאירוע' };
   }
-
-  const occasion =
-    (facts.eventTypeKey && OCCASION_NOUN[facts.eventTypeKey]) || FALLBACK_OCCASION_NOUN;
 
   return {
     ok: true,
@@ -115,8 +96,6 @@ export function buildOwnerMessagePayload(
           type: 'body',
           parameters: [
             text(name),
-            text(occasion),
-            text(formatEventDate(facts.eventDate)),
             text(PLAN_LABEL[facts.channel]),
             text(facts.packageSize.toLocaleString('he-IL')),
           ],

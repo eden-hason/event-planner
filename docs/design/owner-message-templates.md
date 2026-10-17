@@ -14,30 +14,33 @@ Sent the first time an Event is paid.
 **Body**
 
 ```
-היי {{1}}, ברוכים הבאים ל-Kululu! 🎉
-הכל מוכן ל{{2}} שלכם ב-{{3}}.
+היי {{1}}, איזה כיף שהצטרפת ל-Kululu! 🎉
 
-החבילה שלכם: {{4}}, {{5}} רשומות.
-ההזמנות וסבבי האישורים כבר מחכים לכם במערכת - אפשר לראות, לערוך ולתזמן הכל משם.
+החבילה שלך: {{2}}, {{3}} רשומות.
+ההזמנות וסבבי האישורים כבר מחכים לך במערכת - אפשר לראות, לערוך ולתזמן הכל משם.
 
-יש שאלה? אנחנו זמינים בוואטסאפ, בכפתור למטה 💜
+יש שאלה? אנחנו זמינים בוואטסאפ, בכפתור למטה
 ```
+
+Addressed to one person, because it goes to the Event's creator only. Every second-person
+word (הצטרפת, שלך, לך) is spelled the same for a man and a woman in unpointed Hebrew, so
+the message needs no gender. Keep it that way in any rewording: "ברוך הבא" or "תוכל"
+would force a guess.
 
 | Param | Value | Example for Meta review |
 |---|---|---|
 | `{{1}}` | Owner's first name | נועה |
-| `{{2}}` | Occasion noun: חתונה / חינה / בר המצווה / בת המצווה, else אירוע | חתונה |
-| `{{3}}` | Event date, `d.M.yyyy` | 12.11.2026 |
-| `{{4}}` | Plan: `WhatsApp` or `WhatsApp + שיחות` | WhatsApp + שיחות |
-| `{{5}}` | Paid + Bonus Records at first payment | 220 |
+| `{{2}}` | Plan: `WhatsApp` or `WhatsApp + שיחות` | WhatsApp + שיחות |
+| `{{3}}` | Paid + Bonus Records at first payment | 220 |
 
 **Buttons**
 
 1. URL, dynamic: text `לאירוע שלי`, URL `https://<site domain>/{{1}}`. The code sends
    `app/<eventId>/home` as the suffix. Example: `app/00000000-0000-0000-0000-000000000000/home`
-2. URL, static: text `דברו איתנו`, URL `https://wa.me/<support number>`. The billing
-   contact in `src/features/billing/utils/contact.ts` is `972552639234`, if that is the
-   staffed number.
+2. URL, static: text `דברו איתנו`, URL `https://<site domain>/support`. Meta does not
+   accept a `wa.me` link in a template button, so the button opens Kululu's own domain and
+   `next.config.ts` redirects to `wa.me/972552639234` (`KULULU_WHATSAPP_NUMBER` in
+   `src/features/billing/utils/contact.ts`, the same line the homepage uses).
 
 ## `owner_post_event_1`
 

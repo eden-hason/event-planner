@@ -24,7 +24,7 @@ export async function loadOwnerMessageFacts(
   const [eventRes, paymentsRes] = await Promise.all([
     supabase
       .from('events')
-      .select('id, user_id, event_date, bonus_records_override, event_types (key)')
+      .select('id, user_id, bonus_records_override')
       .eq('id', eventId)
       .maybeSingle(),
     supabase
@@ -43,9 +43,7 @@ export async function loadOwnerMessageFacts(
   const event = eventRes.data as {
     id: string;
     user_id: string;
-    event_date: string | null;
     bonus_records_override: number | null;
-    event_types: { key: string } | { key: string }[] | null;
   };
 
   const { data: profile, error: profileError } = await supabase
@@ -63,12 +61,9 @@ export async function loadOwnerMessageFacts(
     payments: payments.map((p) => p.record_count as number),
     bonusOverride: event.bonus_records_override,
   });
-  const eventType = Array.isArray(event.event_types) ? event.event_types[0] : event.event_types;
 
   return {
     eventId: event.id,
-    eventTypeKey: eventType?.key ?? null,
-    eventDate: event.event_date,
     ownerUserId: event.user_id,
     ownerFullName: (profile?.full_name as string | null) ?? null,
     ownerPhone: (profile?.phone_number as string | null) ?? null,
