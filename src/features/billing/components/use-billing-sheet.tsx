@@ -9,7 +9,7 @@ import { useEventBillingStatus } from './event-billing-status-provider';
 /**
  * Opening the one sheet that explains the plan.
  *
- * Every billing surface - the timeline's upsell banner, the locked Schedule's
+ * Every billing surface - the schedules hero's lock card, the locked Schedule's
  * footer - has to answer the same question the same way, and checkout is a
  * conversation rather than a button, so there is exactly one place that
  * conversation starts. Each of them needs the same four things:

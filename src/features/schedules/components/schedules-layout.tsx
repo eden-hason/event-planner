@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -13,17 +13,20 @@ import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import type { OutreachItem } from '../types';
+import type { HeroModel } from '../utils/hero';
 import { ScheduleStatusChip } from './schedule-status-chip';
 import { ScheduleTimeline } from './schedule-timeline';
-import { SchedulesUpsellBanner } from './schedules-upsell-banner';
+import { SchedulesHero } from './schedules-hero';
 
 /** The query parameter that addresses the open Schedule. */
 const PARAM = 'schedule';
 
 interface SchedulesLayoutProps {
   items: OutreachItem[];
-  /** Whether this Event's whole plan is seeded but not yet enabled. */
-  locked: boolean;
+  hero: HeroModel;
+  /** The header's line under the title: which set this is, and its size. */
+  subtitle: string;
+  eventId: string;
   eventDate: string | null;
 }
 
@@ -42,7 +45,9 @@ interface SchedulesLayoutProps {
  */
 export function SchedulesLayout({
   items,
-  locked,
+  hero,
+  subtitle,
+  eventId,
   eventDate,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
@@ -62,26 +67,6 @@ export function SchedulesLayout({
   // it takes over from the bottom nav. A call round has no Save - it is watched,
   // not edited - and keeps the nav so the Owner can move on from it.
   useHideBottomNav(openItem?.kind === 'message');
-
-  const summary = useMemo(() => {
-    if (locked) {
-      return t('header.lockedSummary', { count: items.length });
-    }
-    // A round being worked is the most current thing on the page, and "N sent,
-    // M scheduled" would not mention it at all.
-    const liveCall = items.find((item) => item.status === 'in_progress' && item.callProgress);
-    if (liveCall?.callProgress) {
-      const { total, awaiting } = liveCall.callProgress;
-      return t('header.callLive', {
-        label: liveCall.label,
-        handled: total - awaiting,
-        total,
-      });
-    }
-    const sent = items.filter((item) => item.status === 'sent').length;
-    const pending = items.filter((item) => item.status === 'pending').length;
-    return t('header.summary', { sent, pending });
-  }, [items, locked, t]);
 
   // Shallow: every pane is already in `items`, and the server never reads the
   // param, so a router navigation would only wait for an identical payload.
@@ -111,10 +96,10 @@ export function SchedulesLayout({
         back: { label: t('detail.back'), onClick: close },
       });
     } else {
-      setHeader({ title: t('header.title'), subtitle: summary });
+      setHeader({ title: t('header.title'), subtitle });
     }
     return () => clearHeader();
-  }, [setHeader, clearHeader, t, summary, headerItem, close]);
+  }, [setHeader, clearHeader, t, subtitle, headerItem, close]);
 
   const dayLabel = eventDate
     ? t('timeline.eventDay', {
@@ -127,39 +112,43 @@ export function SchedulesLayout({
     : t('timeline.eventDayUndated');
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-      {/* The timeline. Below md it yields the screen to an open pane; at md and
-          up it stays in view while a long pane scrolls, and scrolls on its own
-          when it is taller than the viewport. */}
-      <div
-        className={cn(
-          'flex min-w-0 flex-col gap-4 md:w-80 md:shrink-0 lg:w-96',
-          'md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto',
-          openItem && 'hidden md:flex',
-        )}
-      >
-        {locked && <SchedulesUpsellBanner count={items.length} />}
-
-        <ScheduleTimeline
-          items={items}
-          activeId={paneItem?.id ?? null}
-          onSelect={select}
-          dayLabel={dayLabel}
-        />
+    <div className="flex flex-col gap-4 md:gap-6">
+      {/* The hero spans both columns from md up. Below md an open Schedule is
+          the whole screen, so the hero yields with the timeline. */}
+      <div className={cn(openItem && 'hidden md:block')}>
+        <SchedulesHero model={hero} eventId={eventId} onOpen={select} />
       </div>
 
-      <Separator
-        orientation="vertical"
-        className="hidden h-auto self-stretch md:block"
-      />
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+        {/* The timeline. Below md it yields the screen to an open pane; at md and
+          up it stays in view while a long pane scrolls, and scrolls on its own
+          when it is taller than the viewport. */}
+        <div
+          className={cn(
+            'flex min-w-0 flex-col gap-4 md:w-80 md:shrink-0 lg:w-96',
+            'md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto',
+            openItem && 'hidden md:flex',
+          )}
+        >
+          <ScheduleTimeline
+            items={items}
+            activeId={paneItem?.id ?? null}
+            onSelect={select}
+            dayLabel={dayLabel}
+          />
+        </div>
 
-      {/* The open Schedule. Below md this is the whole screen. */}
-      <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
-        {paneItem && (
-          <div className="flex flex-col gap-4">
-            {paneItem.details}
-          </div>
-        )}
+        <Separator
+          orientation="vertical"
+          className="hidden h-auto self-stretch md:block"
+        />
+
+        {/* The open Schedule. Below md this is the whole screen. */}
+        <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
+          {paneItem && (
+            <div className="flex flex-col gap-4">{paneItem.details}</div>
+          )}
+        </div>
       </div>
     </div>
   );
