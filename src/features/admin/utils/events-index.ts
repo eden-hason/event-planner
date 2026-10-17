@@ -1,4 +1,5 @@
 import { israelToday, israelWallClockParts } from '@/lib/date-time';
+import { phoneSearchForms } from '@/lib/phone';
 import { formatEventDate } from './format';
 // The utils barrel rather than the feature barrel, which also carries Server
 // Actions - this stays pure, so the client toolbar and the tests can import it.
@@ -182,16 +183,6 @@ export function createdRange(
 }
 
 /**
- * A stored E.164 number as digits, plus its local form: +972521234567 also
- * reads 0521234567. Not `formatPhone`: that returns a number libphonenumber
- * will not validate untouched, and search has to find every stored number.
- */
-function phoneDigits(phone: string): string[] {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('972') ? [digits, `0${digits.slice(3)}`] : [digits];
-}
-
-/**
  * A matcher for one query, built once per list. It covers the owner's name,
  * phone and email and the Event's title. Whitespace is ignored, and a query
  * made only of phone characters is compared by its digits against both the
@@ -206,7 +197,7 @@ export function eventSearchMatcher(query: string): (row: EventIndexRow) => boole
     const text = `${row.ownerName} ${row.title} ${row.ownerEmail ?? ''}`.toLocaleLowerCase('en').replace(/\s/g, '');
     if (text.includes(needle)) return true;
     if (digits.length < 3 || !row.ownerPhone) return false;
-    return phoneDigits(row.ownerPhone).some((form) => form.includes(digits));
+    return phoneSearchForms(row.ownerPhone).some((form) => form.includes(digits));
   };
 }
 

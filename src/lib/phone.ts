@@ -109,3 +109,15 @@ export function phoneComparisonKey(input: string | null | undefined): string {
   if (!input) return '';
   return toE164(input) ?? input.replace(/[\s\-().]/g, '');
 }
+
+/**
+ * A stored number as the digit strings a search should find it by: its E.164
+ * digits, plus the local form an Israeli Owner types (`+972521234567` also
+ * reads `0521234567`). Plain string work rather than `formatPhone`, which
+ * returns numbers libphonenumber does not validate untouched - search has to
+ * find every stored number.
+ */
+export function phoneSearchForms(phone: string): string[] {
+  const digits = phone.replace(/\D/g, '');
+  return digits.startsWith('972') ? [digits, `0${digits.slice(3)}`] : [digits];
+}

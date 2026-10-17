@@ -91,7 +91,8 @@ export function GuestsPage({
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [assignSheetOpen, setAssignSheetOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<GroupWithGuestsApp | null>(null);
-  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
+  // Only which group is open: its records always come from the live `groups`.
+  const [assignTarget, setAssignTarget] = useState<Omit<AssignTarget, 'guests'> | null>(null);
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
   const unassignedGuests = useMemo(
     () => guests.filter((g) => !g.groupId),
@@ -122,7 +123,7 @@ export function GuestsPage({
     const groupSide = (formData.get('side') as GroupSide | null) || null;
     const groupId = await groupWrites.create(formData);
     if (!groupId) return;
-    setAssignTarget({ id: groupId, name: groupName, side: groupSide, guests: [] });
+    setAssignTarget({ id: groupId, name: groupName, side: groupSide });
     setAssignSheetOpen(true);
   };
 
@@ -140,8 +141,14 @@ export function GuestsPage({
     void groupWrites.update(formData);
   };
 
+  // A group created a moment ago may not be in `groups` yet: until it is, it
+  // opens empty.
+  const liveAssignTarget: AssignTarget | null = assignTarget
+    ? (groups.find((g) => g.id === assignTarget.id) ?? { ...assignTarget, guests: [] })
+    : null;
+
   const handleOpenAssign = (group: GroupWithGuestsApp) => {
-    setAssignTarget({ id: group.id, name: group.name, side: group.side, guests: group.guests });
+    setAssignTarget({ id: group.id, name: group.name, side: group.side });
     setAssignSheetOpen(true);
   };
 
@@ -451,7 +458,7 @@ export function GuestsPage({
         <AssignGuestsScreen
           open={assignSheetOpen}
           onOpenChange={setAssignSheetOpen}
-          group={assignTarget}
+          group={liveAssignTarget}
           availableGuests={unassignedGuests}
           totalRecords={guests.length}
           eventId={eventId}

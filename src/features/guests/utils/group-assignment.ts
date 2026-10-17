@@ -5,7 +5,9 @@
  * seats - a record of four is one here.
  */
 
+import { phoneSearchForms } from '@/lib/phone';
 import type { GroupSide } from '../schemas';
+import type { MembershipStanding } from '../types';
 
 export interface GroupAssignmentStats {
   bride: number;
@@ -74,4 +76,31 @@ export function draftChanges(
   for (const id of draft) if (!saved.has(id)) added++;
   for (const id of saved) if (!draft.has(id)) removed++;
   return { added, removed, dirty: added + removed > 0 };
+}
+
+/**
+ * Whether a record matches a search typed into the assign screen: its name
+ * contains the text, or its phone - stored or in its local form - contains the
+ * digits typed.
+ */
+export function matchesNameOrPhone(
+  guest: { name: string; phone?: string | null },
+  query: string,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (guest.name.toLowerCase().includes(q)) return true;
+  const digits = q.replace(/\D/g, '');
+  if (!digits || !guest.phone) return false;
+  return phoneSearchForms(guest.phone).some((form) => form.includes(digits));
+}
+
+/** Where a record stands: in or out as saved, or moving on Save. */
+export function membershipStanding(
+  id: string,
+  saved: ReadonlySet<string>,
+  draft: ReadonlySet<string>,
+): MembershipStanding {
+  if (saved.has(id)) return draft.has(id) ? 'in' : 'leaving';
+  return draft.has(id) ? 'joining' : 'out';
 }
