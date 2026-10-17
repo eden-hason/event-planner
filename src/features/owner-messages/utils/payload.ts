@@ -1,4 +1,5 @@
 import { E164_PATTERN } from '@/lib/phone';
+import { RECORD_PACKAGE_CHANNEL_LABELS } from '@/features/billing/utils/labels';
 import type { WhatsAppSendPayload } from '@/features/schedules/utils/send-payload';
 import type { OwnerMessageFacts, OwnerMessageKind } from '../types';
 
@@ -16,14 +17,13 @@ export const OWNER_MESSAGE_TEMPLATES = {
   post_event: 'owner_post_event_1',
 } as const satisfies Record<OwnerMessageKind, string>;
 
-const LANGUAGE_CODE = 'he';
+/** Where each message's first button opens, under /app/<eventId>/. */
+const BUTTON_PAGE = {
+  welcome: 'home',
+  post_event: 'gifting',
+} as const satisfies Record<OwnerMessageKind, string>;
 
-/** The Plan as the welcome names it. */
-const PLAN_LABEL: Record<NonNullable<OwnerMessageFacts['channel']>, string> = {
-  whatsapp: 'WhatsApp',
-  whatsapp_calls: 'WhatsApp + שיחות',
-  sms: 'SMS',
-};
+const LANGUAGE_CODE = 'he';
 
 export type OwnerMessagePayloadResult =
   | { ok: true; payload: WhatsAppSendPayload }
@@ -34,17 +34,23 @@ export function firstName(fullName: string | null): string | null {
   return first ? first : null;
 }
 
-function urlButton(index: number, suffix: string) {
-  return {
-    type: 'button' as const,
-    sub_type: 'url',
-    index,
-    parameters: [{ type: 'text' as const, text: suffix }],
-  };
-}
-
 function text(value: string) {
   return { type: 'text' as const, text: value };
+}
+
+/** The body parameters, in template order, or why the message cannot be filled. */
+function bodyParameters(
+  kind: OwnerMessageKind,
+  name: string,
+  facts: OwnerMessageFacts,
+): string[] | { message: string } {
+  if (kind === 'post_event') return [name];
+  if (!facts.channel || facts.packageSize === null) return { message: 'לא נרשם תשלום לאירוע' };
+  return [
+    name,
+    RECORD_PACKAGE_CHANNEL_LABELS[facts.channel],
+    facts.packageSize.toLocaleString('he-IL'),
+  ];
 }
 
 /**
@@ -58,49 +64,30 @@ export function buildOwnerMessagePayload(
 ): OwnerMessagePayloadResult {
   // profiles.phone_number is stored in E.164 and checked by a constraint, so
   // anything else is a missing number, not one to reformat.
-  const to = facts.ownerPhone?.trim() ?? '';
+  const to = facts.ownerPhone ?? '';
   if (!E164_PATTERN.test(to)) return { ok: false, message: 'אין מספר טלפון לבעל/ת האירוע' };
 
   const name = firstName(facts.ownerFullName);
   if (!name) return { ok: false, message: 'אין שם לבעל/ת האירוע' };
 
-  if (kind === 'post_event') {
-    return {
-      ok: true,
-      payload: {
-        channel: 'whatsapp',
-        to,
-        templateName: OWNER_MESSAGE_TEMPLATES.post_event,
-        languageCode: LANGUAGE_CODE,
-        components: [
-          { type: 'body', parameters: [text(name)] },
-          urlButton(0, `app/${facts.eventId}/gifting`),
-        ],
-      },
-    };
-  }
-
-  if (!facts.channel || facts.packageSize === null) {
-    return { ok: false, message: 'לא נרשם תשלום לאירוע' };
-  }
+  const params = bodyParameters(kind, name, facts);
+  if (!Array.isArray(params)) return { ok: false, message: params.message };
 
   return {
     ok: true,
     payload: {
       channel: 'whatsapp',
       to,
-      templateName: OWNER_MESSAGE_TEMPLATES.welcome,
+      templateName: OWNER_MESSAGE_TEMPLATES[kind],
       languageCode: LANGUAGE_CODE,
       components: [
+        { type: 'body', parameters: params.map(text) },
         {
-          type: 'body',
-          parameters: [
-            text(name),
-            text(PLAN_LABEL[facts.channel]),
-            text(facts.packageSize.toLocaleString('he-IL')),
-          ],
+          type: 'button',
+          sub_type: 'url',
+          index: 0,
+          parameters: [text(`app/${facts.eventId}/${BUTTON_PAGE[kind]}`)],
         },
-        urlButton(0, `app/${facts.eventId}/home`),
       ],
     },
   };

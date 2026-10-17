@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
-import { KULULU_WHATSAPP_NUMBER, SUPPORT_PATH } from './src/features/billing/utils/contact';
+import { KULULU_WHATSAPP_NUMBER, SUPPORT_PATH } from './src/lib/config/contact';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 

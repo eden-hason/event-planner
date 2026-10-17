@@ -5,7 +5,7 @@ import {
   InboundClaimError,
   type InboundWhatsAppMessage,
 } from '@/features/confirmation/services/confirmation-conversation';
-import { ownerMessageStatusUpdate } from '@/features/owner-messages/utils/status';
+import { applyOwnerMessageStatus } from '@/features/owner-messages/services';
 import { parseCallbackTag } from '../utils/whatsapp-callback-tag';
 
 /**
@@ -274,10 +274,20 @@ async function processStatusUpdates(
     orphanedTags = [...byAttemptId.keys()].filter((id) => !found.has(id));
   }
 
-  // Owner Messages (ADR 0039): one row each, no Delivery above them.
+  // Owner Messages (ADR 0039): their own feature keeps their rows.
   for (const [ownerMessageId, status] of byOwnerMessageId) {
-    const outcome = await applyOwnerMessageStatus(supabase, ownerMessageId, status);
-    if (outcome === 'error') counts.failedWrites++;
+    const errorMessage = formatErrors(status.errors);
+    if (status.status === 'failed') {
+      console.warn(
+        `${TAG} Owner Message ${ownerMessageId} to ${maskPhone(status.recipient_id)} FAILED - ${errorMessage}`,
+      );
+    }
+    try {
+      await applyOwnerMessageStatus(supabase, ownerMessageId, status.status, errorMessage);
+    } catch (error) {
+      console.error(`${TAG}`, error);
+      counts.failedWrites++;
+    }
   }
 
   // The one line that says the endpoint is doing its job. Per-row logging would
@@ -425,38 +435,6 @@ async function applyStatus(
     console.log(`${TAG} [debug] Attempt ${attempt.id}: ${current} -> ${target}`);
   }
 
-  return 'applied';
-}
-
-/**
- * Lands a status on an Owner Message row. Guarded on the statuses it outranks,
- * like an attempt, so redeliveries and out-of-order statuses change nothing.
- */
-async function applyOwnerMessageStatus(
-  supabase: SupabaseClient,
-  ownerMessageId: string,
-  status: WhatsAppStatus,
-): Promise<'applied' | 'error'> {
-  const update = ownerMessageStatusUpdate(status.status);
-  if (!update) return 'applied';
-
-  const patch: Record<string, unknown> = { status: update.status };
-  if (update.status === 'failed') {
-    patch.error_message = formatErrors(status.errors);
-    console.warn(
-      `${TAG} Owner Message ${ownerMessageId} to ${maskPhone(status.recipient_id)} FAILED - ${patch.error_message}`,
-    );
-  }
-
-  const { error } = await supabase
-    .from('owner_messages')
-    .update(patch)
-    .eq('id', ownerMessageId)
-    .in('status', update.from);
-  if (error) {
-    console.error(`${TAG} Update failed for owner message ${ownerMessageId}:`, error);
-    return 'error';
-  }
   return 'applied';
 }
 

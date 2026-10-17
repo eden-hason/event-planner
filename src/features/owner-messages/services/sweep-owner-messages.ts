@@ -1,10 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isDue, isTooLate, OWNER_MESSAGE_MAX_LATENESS_HOURS, postEventDueAt } from '../utils/due';
+import { DAY_MS, isDue, isTooLate, OWNER_MESSAGE_MAX_LATENESS_HOURS, postEventDueAt } from '../utils/due';
 import type { OwnerMessageKind } from '../types';
 import { deliverOwnerMessage } from './send-owner-message';
 
 const TAG = '[owner-messages]';
-const DAY_MS = 86_400_000;
 
 /** At most this many sends per pass, so one pass stays well inside the cron's budget. */
 const BATCH = 50;
@@ -16,7 +15,7 @@ const BATCH = 50;
  */
 const POST_EVENT_LOOKBACK_DAYS = 2 + OWNER_MESSAGE_MAX_LATENESS_HOURS / 24 + 1;
 
-export type OwnerMessageSweepResult = { sent: number; failed: number; expired: number };
+type OwnerMessageSweepResult = { sent: number; failed: number; expired: number };
 
 /**
  * The automatic Owner Messages (ADR 0039), run by the Sweeper.
@@ -58,7 +57,6 @@ async function sweepWelcomes(
     .select('event_id, due_at')
     .eq('status', 'pending')
     .eq('kind', 'welcome')
-    .is('sent_by', null)
     .lte('due_at', now.toISOString())
     .order('due_at')
     .limit(BATCH);
@@ -141,7 +139,7 @@ async function claimAndSend(
   if (!id) return;
 
   if (tooLate) {
-    console.warn(`${TAG} ${kind} for ${eventId} expired: due ${dueAt}, more than 48 hours ago`);
+    console.warn(`${TAG} ${kind} for ${eventId} expired: due ${dueAt}, more than ${OWNER_MESSAGE_MAX_LATENESS_HOURS} hours ago`);
     result.expired++;
     return;
   }

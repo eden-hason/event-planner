@@ -11,7 +11,7 @@ import {
 import { getEventOwnerMessages } from '../queries/owner-messages';
 import { formatDateTime } from '../utils/format';
 import { Band, BandRow } from './band';
-import { RetryButton } from './retry-button';
+import { BandFailure } from './event-workspace';
 import { SendOwnerMessageButton } from './send-owner-message-button';
 
 const TITLE = 'הודעות לבעלי האירוע';
@@ -36,14 +36,7 @@ export async function EventOwnerMessagesBand({ eventId }: { eventId: string }) {
     rows = await getEventOwnerMessages(eventId);
   } catch (error) {
     console.error('Owner messages failed:', error);
-    return (
-      <Band title={TITLE}>
-        <BandRow className="flex items-center justify-between gap-4">
-          <p className="text-[13.5px] font-medium">החלק הזה לא נטען</p>
-          <RetryButton />
-        </BandRow>
-      </Band>
-    );
+    return <BandFailure title={TITLE} />;
   }
 
   return (

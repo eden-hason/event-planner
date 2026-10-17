@@ -2,7 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { postWhatsAppTemplate } from '@/features/schedules/services/post-whatsapp';
 import { ownerMessageTag } from '@/features/schedules/utils/whatsapp-callback-tag';
 import { recordPackage } from '@/features/billing/utils/record-package';
+import { listEventPayments } from '@/features/billing/services/list-event-payments';
 import { buildOwnerMessagePayload } from '../utils/payload';
+import { ownerMessageStatusUpdate } from '../utils/status';
 import type {
   OwnerMessageFacts,
   OwnerMessageKind,
@@ -17,27 +19,21 @@ const TAG = '[owner-messages]';
  * at send time, never stored ahead, so a name or phone fixed after the payment
  * is the one that is used.
  */
-export async function loadOwnerMessageFacts(
+async function loadOwnerMessageFacts(
   supabase: SupabaseClient,
   eventId: string,
 ): Promise<OwnerMessageFacts | null> {
-  const [eventRes, paymentsRes] = await Promise.all([
+  const [eventRes, payments] = await Promise.all([
     supabase
       .from('events')
       .select('id, user_id, bonus_records_override')
       .eq('id', eventId)
       .maybeSingle(),
-    supabase
-      .from('event_billing_events')
-      .select('record_count, channel')
-      .eq('event_id', eventId)
-      .not('record_count', 'is', null)
-      .order('occurred_at', { ascending: false })
-      .order('created_at', { ascending: false }),
+    listEventPayments(supabase, eventId),
   ]);
 
-  if (eventRes.error || paymentsRes.error || !eventRes.data) {
-    console.error(`${TAG} Could not load event ${eventId}:`, eventRes.error ?? paymentsRes.error);
+  if (eventRes.error || !eventRes.data || !payments) {
+    console.error(`${TAG} Could not load event ${eventId}:`, eventRes.error);
     return null;
   }
   const event = eventRes.data as {
@@ -56,9 +52,8 @@ export async function loadOwnerMessageFacts(
     return null;
   }
 
-  const payments = paymentsRes.data ?? [];
   const pkg = recordPackage({
-    payments: payments.map((p) => p.record_count as number),
+    payments: payments.map((p) => p.records),
     bonusOverride: event.bonus_records_override,
   });
 
@@ -67,7 +62,7 @@ export async function loadOwnerMessageFacts(
     ownerUserId: event.user_id,
     ownerFullName: (profile?.full_name as string | null) ?? null,
     ownerPhone: (profile?.phone_number as string | null) ?? null,
-    channel: (payments[0]?.channel as OwnerMessageFacts['channel'] | undefined) ?? null,
+    channel: payments[0]?.channel ?? null,
     packageSize: pkg?.size ?? null,
   };
 }
@@ -111,7 +106,7 @@ export async function deliverOwnerMessage(
       external_message_id: result.messageId,
       error_message: null,
     });
-    return { success: true, status: 'accepted' };
+    return { success: true };
   }
 
   const status: OwnerMessageStatus = result.outcome === 'rejected' ? 'failed' : 'unknown';
@@ -157,4 +152,30 @@ async function recordOutcome(
 ): Promise<void> {
   const { error } = await supabase.from('owner_messages').update(patch).eq('id', id);
   if (error) console.error(`${TAG} Could not record the outcome of ${id}:`, error);
+}
+
+/**
+ * Lands one of Meta's statuses on an Owner Message row, for the webhook
+ * processor. Guarded on the statuses it outranks, like a Delivery Attempt, so
+ * redeliveries and out-of-order statuses change nothing. Throws on a failed
+ * write, so the webhook row is kept and tried again.
+ */
+export async function applyOwnerMessageStatus(
+  supabase: SupabaseClient,
+  ownerMessageId: string,
+  metaStatus: string,
+  errorMessage: string,
+): Promise<void> {
+  const update = ownerMessageStatusUpdate(metaStatus);
+  if (!update) return;
+
+  const { error } = await supabase
+    .from('owner_messages')
+    .update({
+      status: update.status,
+      ...(update.status === 'failed' && { error_message: errorMessage }),
+    })
+    .eq('id', ownerMessageId)
+    .in('status', update.from);
+  if (error) throw new Error(`Owner message ${ownerMessageId} update failed: ${error.message}`);
 }

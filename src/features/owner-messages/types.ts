@@ -1,10 +1,11 @@
 /**
  * TypeScript-only types for Owner Messages (ADR 0039). No Zod here.
  */
+import type { RecordPackageChannel } from '@/features/billing/types';
 
-export type OwnerMessageKind = 'welcome' | 'post_event';
+export const OWNER_MESSAGE_KINDS = ['welcome', 'post_event'] as const;
 
-export const OWNER_MESSAGE_KINDS: readonly OwnerMessageKind[] = ['welcome', 'post_event'];
+export type OwnerMessageKind = (typeof OWNER_MESSAGE_KINDS)[number];
 
 export type OwnerMessageStatus =
   | 'pending'
@@ -23,7 +24,6 @@ export type OwnerMessageRow = {
   status: OwnerMessageStatus;
   dueAt: string;
   createdAt: string;
-  updatedAt: string;
   /** True for an Operator's "send now". */
   manual: boolean;
   phoneNumber: string | null;
@@ -38,11 +38,9 @@ export type OwnerMessageFacts = {
   ownerFullName: string | null;
   ownerPhone: string | null;
   /** The Plan of the latest payment, null when none was recorded. */
-  channel: 'sms' | 'whatsapp' | 'whatsapp_calls' | null;
+  channel: RecordPackageChannel | null;
   /** Paid plus Bonus Records, null when no payment was recorded. */
   packageSize: number | null;
 };
 
-export type SendOwnerMessageResult =
-  | { success: true; status: OwnerMessageStatus }
-  | { success: false; message: string };
+export type SendOwnerMessageResult = { success: true } | { success: false; message: string };

@@ -1,30 +1,31 @@
 import type { OwnerMessageStatus } from '../types';
 
 /**
+ * Every status a sent Owner Message can move through, in order. A status is
+ * only written over the ones before it, the same rule a Delivery Attempt
+ * follows (process-whatsapp-webhook.ts), with `failed` last because Meta never
+ * delivers what it reported failed. `pending` and `expired` never went out, so
+ * no status moves them.
+ */
+const ORDER = ['sending', 'unknown', 'accepted', 'delivered', 'read', 'failed'] as const;
+
+/** Meta says `sent`; the row already reads `accepted` for that. */
+const FROM_META: Record<string, (typeof ORDER)[number]> = {
+  sent: 'accepted',
+  delivered: 'delivered',
+  read: 'read',
+  failed: 'failed',
+};
+
+/**
  * How one of Meta's statuses lands on an Owner Message row: the status to write,
- * and the statuses the row may hold for that write to be an advance.
- *
- * The same order as a Delivery Attempt's (process-whatsapp-webhook.ts), with
- * `failed` at the top because Meta never delivers what it reported failed. Meta
- * says `sent`; the row already reads `accepted` for that, so `sent` only lifts a
- * row still `sending` (the status beat the send call's answer) or `unknown`
- * (the answer was lost). `pending` and `expired` never went out and stay put.
- *
- * Null for a status this does not know.
+ * and the statuses the row may hold for that write to be an advance. Null for a
+ * status this does not know.
  */
 export function ownerMessageStatusUpdate(
   metaStatus: string,
 ): { status: OwnerMessageStatus; from: OwnerMessageStatus[] } | null {
-  switch (metaStatus) {
-    case 'sent':
-      return { status: 'accepted', from: ['sending', 'unknown'] };
-    case 'delivered':
-      return { status: 'delivered', from: ['sending', 'unknown', 'accepted'] };
-    case 'read':
-      return { status: 'read', from: ['sending', 'unknown', 'accepted', 'delivered'] };
-    case 'failed':
-      return { status: 'failed', from: ['sending', 'unknown', 'accepted', 'delivered', 'read'] };
-    default:
-      return null;
-  }
+  if (!Object.hasOwn(FROM_META, metaStatus)) return null;
+  const status = FROM_META[metaStatus];
+  return { status, from: ORDER.slice(0, ORDER.indexOf(status)) };
 }

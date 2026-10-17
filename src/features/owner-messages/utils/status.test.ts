@@ -24,5 +24,6 @@ describe('ownerMessageStatusUpdate', () => {
 
   it('ignores a status it does not know', () => {
     assert.equal(ownerMessageStatusUpdate('deleted'), null);
+    assert.equal(ownerMessageStatusUpdate('constructor'), null);
   });
 });

@@ -1,12 +1,12 @@
 import { israelWallClockToIso } from '@/lib/date-time';
 
-const DAY_MS = 86_400_000;
+export const DAY_MS = 86_400_000;
 
 /** An automatic Owner Message more than this late is never sent (ADR 0039). */
 export const OWNER_MESSAGE_MAX_LATENESS_HOURS = 48;
 
 /** The Israel wall clock the Post-event note goes out at. */
-export const POST_EVENT_TIME = '18:00';
+const POST_EVENT_TIME = '18:00';
 
 /** Saturday, as `Date.getUTCDay` numbers it. */
 const SATURDAY = 6;
@@ -31,11 +31,11 @@ export function postEventDueAt(eventDate: string | null): string | null {
 }
 
 /** True once the due time has come. */
-export function isDue(dueAt: string, now: Date = new Date()): boolean {
+export function isDue(dueAt: string, now: Date): boolean {
   return Date.parse(dueAt) <= now.getTime();
 }
 
 /** True when the send is more than 48 hours past its due time and must not go. */
-export function isTooLate(dueAt: string, now: Date = new Date()): boolean {
+export function isTooLate(dueAt: string, now: Date): boolean {
   return now.getTime() - Date.parse(dueAt) > OWNER_MESSAGE_MAX_LATENESS_HOURS * 3_600_000;
 }

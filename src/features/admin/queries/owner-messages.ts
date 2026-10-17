@@ -11,7 +11,7 @@ export async function getEventOwnerMessages(eventId: string): Promise<OwnerMessa
 
   const { data, error } = await supabase
     .from('owner_messages')
-    .select('id, kind, status, due_at, created_at, updated_at, sent_by, phone_number, error_message')
+    .select('id, kind, status, due_at, created_at, sent_by, phone_number, error_message')
     .eq('event_id', eventId)
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
@@ -22,7 +22,6 @@ export async function getEventOwnerMessages(eventId: string): Promise<OwnerMessa
     status: row.status,
     dueAt: row.due_at,
     createdAt: row.created_at,
-    updatedAt: row.updated_at,
     manual: row.sent_by !== null,
     phoneNumber: row.phone_number,
     errorMessage: row.error_message,
