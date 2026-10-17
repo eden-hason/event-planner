@@ -5,6 +5,7 @@ import {
   InboundClaimError,
   type InboundWhatsAppMessage,
 } from '@/features/confirmation/services/confirmation-conversation';
+import { applyOwnerMessageStatus } from '@/features/owner-messages/services';
 import { parseCallbackTag } from '../utils/whatsapp-callback-tag';
 
 /**
@@ -242,6 +243,7 @@ async function processStatusUpdates(
   // Conversation replies and Test Messages have nothing to apply to, and are
   // known to be ours, so they cost this one pass and nothing else.
   const byAttemptId = new Map<string, WhatsAppStatus>();
+  const byOwnerMessageId = new Map<string, WhatsAppStatus>();
   const untagged: string[] = [];
   let untracked = 0;
 
@@ -249,6 +251,7 @@ async function processStatusUpdates(
     const tag = parseCallbackTag(status.biz_opaque_callback_data);
     if (!tag) untagged.push(messageId);
     else if (tag.kind === 'attempt') byAttemptId.set(tag.attemptId, status);
+    else if (tag.kind === 'owner') byOwnerMessageId.set(tag.ownerMessageId, status);
     else untracked++;
   }
 
@@ -271,11 +274,28 @@ async function processStatusUpdates(
     orphanedTags = [...byAttemptId.keys()].filter((id) => !found.has(id));
   }
 
+  // Owner Messages (ADR 0039): their own feature keeps their rows.
+  for (const [ownerMessageId, status] of byOwnerMessageId) {
+    const errorMessage = formatErrors(status.errors);
+    if (status.status === 'failed') {
+      console.warn(
+        `${TAG} Owner Message ${ownerMessageId} to ${maskPhone(status.recipient_id)} FAILED - ${errorMessage}`,
+      );
+    }
+    try {
+      await applyOwnerMessageStatus(supabase, ownerMessageId, status.status, errorMessage);
+    } catch (error) {
+      console.error(`${TAG}`, error);
+      counts.failedWrites++;
+    }
+  }
+
   // The one line that says the endpoint is doing its job. Per-row logging would
   // be 1500 lines for a single 500-guest blast; this is one.
   console.log(
     `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ` +
       `${counts.matched} matched, ${counts.applied} applied, ${counts.skipped} already current, ` +
+      `${byOwnerMessageId.size} owner message(s), ` +
       `${untracked} untracked by design, ${untagged.length} untagged, ${counts.failedWrites} write error(s)`,
   );
 

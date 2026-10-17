@@ -52,3 +52,6 @@ in the diff, not here.
 | [0018](0018-captcha-on-auth-endpoints.md) | Nothing but a per-IP rate limit protects the public auth endpoints | auth / abuse | open |
 | [0019](0019-guest-link-description-and-preview.md) | The guest drawer's invitation link is unexplained, and its Preview button was removed | guests / confirmation | open |
 | [0020](0020-test-message-is-whatsapp-only.md) | A Test Message can still go out as an SMS | schedules / home | open |
+| [0021](0021-pre-event-owner-heads-up.md) | The Owner hears nothing from Kululu in the days before the Event | owner messages / outreach | open |
+| [0022](0022-results-in-the-post-event-message.md) | The post-event Owner Message says thank you but not what Kululu did | owner messages / growth | open |
+| [0023](0023-read-owner-replies.md) | Nobody reads what an Owner writes back to the Kululu WhatsApp number | owner messages / back office | open |

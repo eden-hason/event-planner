@@ -9,3 +9,4 @@ export {
   getEventsIndex,
 } from './events';
 export { getUsersIndex, getUserDetail } from './users';
+export { getEventOwnerMessages } from './owner-messages';

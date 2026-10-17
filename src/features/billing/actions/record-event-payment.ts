@@ -1,8 +1,10 @@
 'use server';
 
+import { after } from 'next/server';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
+import { sweepOwnerMessages } from '@/features/owner-messages/services';
 import { applyBillingTransition } from '../services';
 import { RecordEventPaymentSchema } from '../schemas';
 import type { BillingActionResult } from '../types';
@@ -75,6 +77,13 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
     createdBy: operatorId,
   });
   if (!result.ok) return { success: false, message: 'לא הצלחנו לרשום את התשלום' };
+
+  // A first payment queues the Owner's Welcome (ADR 0039). Sent straight after
+  // the response rather than on the next Sweeper pass, because the Owner has
+  // just paid; the Sweeper still picks it up if this does not run.
+  after(async () => {
+    await sweepOwnerMessages(supabase, { eventId });
+  });
 
   revalidateOutreach(eventId);
   return { success: true, message: method === 'gift' ? 'המתנה נרשמה' : 'התשלום נרשם' };

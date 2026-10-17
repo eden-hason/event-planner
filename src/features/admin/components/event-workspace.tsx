@@ -527,6 +527,6 @@ export function EventBandSkeleton() {
   return <div className="bg-card rounded-xl border p-4"><Skeleton className="mb-4 h-3 w-28" /><Skeleton className="h-24 w-full" /></div>;
 }
 
-function BandFailure({ title }: { title: string }) {
+export function BandFailure({ title }: { title: string }) {
   return <Band title={title}><BandRow className="flex items-center justify-between gap-4"><div><p className="text-[13.5px] font-medium">החלק הזה לא נטען</p><p className="text-muted-foreground text-[12px]">שאר פרטי האירוע עדיין זמינים</p></div><RetryButton /></BandRow></Band>;
 }

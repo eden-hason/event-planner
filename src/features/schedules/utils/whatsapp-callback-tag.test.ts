@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   attemptTag,
   conversationTag,
+  ownerMessageTag,
   parseCallbackTag,
   TEST_MESSAGE_TAG,
 } from './whatsapp-callback-tag';
@@ -18,6 +19,10 @@ test('a conversation tag round-trips to its inbound message id', () => {
     kind: 'conversation',
     inboundMessageId: ID,
   });
+});
+
+test('an owner message tag round-trips to its row id', () => {
+  assert.deepEqual(parseCallbackTag(ownerMessageTag(ID)), { kind: 'owner', ownerMessageId: ID });
 });
 
 test('the test message tag is recognised', () => {

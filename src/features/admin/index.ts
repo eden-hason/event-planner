@@ -18,6 +18,7 @@ export {
   EventRecordPackageBand,
   EventSignalsBand,
 } from './components/event-workspace';
+export { EventOwnerMessagesBand } from './components/owner-messages-band';
 export { Band, BandRow } from './components/band';
 export { RetryButton } from './components/retry-button';
 export { BackOfficeNav } from './components/back-office-nav';

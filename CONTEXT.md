@@ -455,6 +455,16 @@ that is ever Purchased or Granted; an Included Schedule is neither.
 The Event's creator, and any collaborator granted the `owner` role. Full access to
 everything on the Event. A spouse or co-planner invited to plan together is an Owner.
 
+## Owner Message
+
+A message Kululu sends to the Owner who created the Event - a **Welcome** when the Event is
+first paid, and a **Post-event** note the day after it. It is not a **Schedule**: it never reaches a Guest, the Owner does not plan
+or choose it, and it does not count against the **Record Package**.
+
+Distinct from a **Thank You**, which is the Owner thanking their Guests. An Owner Message
+is Kululu speaking to the Owner.
+_Avoid_: utility message (Meta's name for a WhatsApp template category), notification
+
 ## Seating Manager
 
 A collaborator who can manage all Tables in an Event but can identify and assign only

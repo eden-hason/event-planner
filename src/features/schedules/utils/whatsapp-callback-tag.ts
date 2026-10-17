@@ -15,6 +15,8 @@
  *  - `conversation:<id>`  - a Confirmation Conversation reply (ADR 0017),
  *                           keyed by the inbound message it answers. No attempt.
  *  - `test`               - a Test Message. Nothing is recorded for it.
+ *  - `owner:<id>`         - an Owner Message (ADR 0039). Its statuses are
+ *                           applied to that owner_messages row.
  *
  * A new send path adds a kind here, which is the point: the processor cannot
  * mistake an untracked sender for a missing attempt, because an untracked
@@ -24,7 +26,8 @@
 export type WhatsAppCallbackTag =
   | { kind: 'attempt'; attemptId: string }
   | { kind: 'conversation'; inboundMessageId: string }
-  | { kind: 'test' };
+  | { kind: 'test' }
+  | { kind: 'owner'; ownerMessageId: string };
 
 export function attemptTag(attemptId: string): string {
   return `attempt:${attemptId}`;
@@ -32,6 +35,10 @@ export function attemptTag(attemptId: string): string {
 
 export function conversationTag(inboundMessageId: string): string {
   return `conversation:${inboundMessageId}`;
+}
+
+export function ownerMessageTag(ownerMessageId: string): string {
+  return `owner:${ownerMessageId}`;
 }
 
 export const TEST_MESSAGE_TAG = 'test';
@@ -51,11 +58,12 @@ export function parseCallbackTag(value: string | null | undefined): WhatsAppCall
   if (separator <= 0) return null;
   const kind = value.slice(0, separator);
   const id = value.slice(separator + 1);
-  // Both ids are uuid columns. Anything else was not written by Kululu, and
+  // Every id is a uuid column. Anything else was not written by Kululu, and
   // looking it up would fail the query rather than match nothing.
   if (!UUID_REGEX.test(id)) return null;
 
   if (kind === 'attempt') return { kind: 'attempt', attemptId: id };
   if (kind === 'conversation') return { kind: 'conversation', inboundMessageId: id };
+  if (kind === 'owner') return { kind: 'owner', ownerMessageId: id };
   return null;
 }
