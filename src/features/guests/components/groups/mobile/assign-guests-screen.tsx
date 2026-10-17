@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  IconArrowBackUp,
+  IconArrowLeft,
+  IconArrowRight,
   IconCheck,
   IconListCheck,
   IconMinus,
+  IconPencil,
   IconPlus,
   IconSearch,
-  IconUsers,
   IconX,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
@@ -16,14 +19,20 @@ import { Reveal } from '@/components/ui/reveal';
 import { GuestApp, GroupSide } from '@/features/guests/schemas';
 import { useGroupWrites } from '@/features/guests/hooks/use-group-writes';
 import { cn } from '@/lib/utils';
+import { formatPhone } from '@/lib/phone';
 import { SideBadge } from '../../side-badge';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { rsvpPresentation } from '@/features/guests/utils';
+import {
+  draftChanges,
+  matchesNameOrPhone,
+} from '@/features/guests/utils/group-assignment';
 import {
   headerState,
   toggleAllVisible,
   toggleOne,
 } from '@/features/guests/utils/guest-selection';
+import { EditGuestSheet } from './edit-guest-sheet';
 
 /**
  * Just enough of a group to drive the sheet - a freshly created group (from
@@ -51,6 +60,17 @@ interface AssignGuestsScreenProps {
 
 type Tab = 'out' | 'in';
 
+/** How long a just-saved row stays highlighted in its new tab. */
+const FLASH_MS = 2200;
+
+/**
+ * Assigning records to one group, on a phone. The tabs list the group as
+ * saved: + / − only marks a row as pending to move, and the row stays where it
+ * is - tinted, labelled, its button turned into an undo - until Save. Save
+ * keeps the screen open, moves the rows, and highlights them for a moment in
+ * the tab they moved to. Any row's pencil edits the record's details on top,
+ * without touching the draft.
+ */
 export function AssignGuestsScreen({
   open,
   onOpenChange,
@@ -64,30 +84,46 @@ export function AssignGuestsScreen({
   const groupWrites = useGroupWrites(eventId);
 
   const [tab, setTab] = useState<Tab>('out');
-  const [qOut, setQOut] = useState('');
-  const [qIn, setQIn] = useState('');
+  const [query, setQuery] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [draftIn, setDraftIn] = useState<Set<string>>(new Set());
-  const [originalMemberIds, setOriginalMemberIds] = useState<Set<string>>(
-    new Set(),
-  );
+  /** The group's members as saved - what the tabs list. */
+  const [base, setBase] = useState<Set<string>>(new Set());
+  /** The members Save would leave the group with. */
+  const [draft, setDraft] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+  /** Rows the last save moved, highlighted for a moment. */
+  const [flash, setFlash] = useState<ReadonlySet<string>>(new Set());
+  /** What the last save did, until the draft changes again. */
+  const [lastSave, setLastSave] = useState<{
+    added: number;
+    removed: number;
+  } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && group) {
       const memberIds = new Set(group.guests.map((g) => g.id));
-      setDraftIn(memberIds);
-      setOriginalMemberIds(memberIds);
+      setBase(memberIds);
+      setDraft(memberIds);
       setSelected(new Set());
       setSelectMode(false);
       setTab('out');
-      setQOut('');
-      setQIn('');
+      setQuery('');
+      setFlash(new Set());
+      setLastSave(null);
+      setEditingId(null);
     }
-    // Only re-seed when the sheet opens for a (possibly new) group - not on
-    // every keystroke inside it.
+    // Only re-seed when the sheet opens for a (possibly new) group - not when
+    // the revalidated group arrives after a save or an edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, group?.id]);
+
+  useEffect(() => {
+    if (flash.size === 0) return;
+    const timer = setTimeout(() => setFlash(new Set()), FLASH_MS);
+    return () => clearTimeout(timer);
+  }, [flash]);
 
   // The only guests that can ever be a member of this group: currently
   // unassigned, or already in it. Guests belonging to another group aren't
@@ -98,67 +134,58 @@ export function AssignGuestsScreen({
   );
 
   const outList = useMemo(
-    () => pool.filter((g) => !draftIn.has(g.id)),
-    [pool, draftIn],
+    () => pool.filter((g) => !base.has(g.id)),
+    [pool, base],
   );
   const inList = useMemo(
-    () => pool.filter((g) => draftIn.has(g.id)),
-    [pool, draftIn],
+    () => pool.filter((g) => base.has(g.id)),
+    [pool, base],
   );
 
   const isOut = tab === 'out';
-  const query = (isOut ? qOut : qIn).trim().toLowerCase();
-  const visible = useMemo(() => {
-    const list = isOut ? outList : inList;
-    if (!query) return list;
-    return list.filter((g) => g.name.toLowerCase().includes(query));
-  }, [isOut, outList, inList, query]);
+  const visible = useMemo(
+    () =>
+      (isOut ? outList : inList).filter((g) => matchesNameOrPhone(g, query)),
+    [isOut, outList, inList, query],
+  );
 
-  const addedCount = [...draftIn].filter(
-    (id) => !originalMemberIds.has(id),
-  ).length;
-  const removedCount = [...originalMemberIds].filter(
-    (id) => !draftIn.has(id),
-  ).length;
-  const dirty = addedCount > 0 || removedCount > 0;
+  const { added, removed, dirty } = draftChanges(base, draft);
+  const isPending = (id: string) => draft.has(id) !== base.has(id);
 
-  const toggleMove = (guestId: string) => {
-    setDraftIn((prev) => {
-      const next = new Set(prev);
-      if (isOut) next.add(guestId);
-      else next.delete(guestId);
-      return next;
-    });
+  const updateDraft = (next: Set<string>) => {
+    setDraft(next);
+    setLastSave(null);
   };
 
-  const toggleSelected = (guestId: string) =>
-    setSelected((prev) => toggleOne(prev, guestId));
+  const toggleMove = (guestId: string) => {
+    const next = new Set(draft);
+    if (next.has(guestId)) next.delete(guestId);
+    else next.add(guestId);
+    updateDraft(next);
+  };
 
   const visibleIds = visible.map((g) => g.id);
   const allVisibleSelected = headerState(selected, visibleIds) === 'all';
-
-  const handleToggleAll = () =>
-    setSelected((prev) => toggleAllVisible(prev, visibleIds));
+  // Only what is still listed counts - a search can hide a ticked row.
+  const pickedCount = visibleIds.filter((id) => selected.has(id)).length;
 
   const handleApplyBulk = () => {
-    if (selected.size === 0) return;
-    setDraftIn((prev) => {
-      const next = new Set(prev);
-      if (isOut) selected.forEach((id) => next.add(id));
-      else selected.forEach((id) => next.delete(id));
-      return next;
-    });
+    const picked = visibleIds.filter((id) => selected.has(id));
+    if (picked.length === 0) return;
+    const next = new Set(draft);
+    if (isOut) picked.forEach((id) => next.add(id));
+    else picked.forEach((id) => next.delete(id));
+    updateDraft(next);
     setSelected(new Set());
-    setSelectMode(false);
   };
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) =>
+    if (!open || editingId) return;
+    const onKey = (e: globalThis.KeyboardEvent) =>
       e.key === 'Escape' && onOpenChange(false);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onOpenChange]);
+  }, [open, editingId, onOpenChange]);
 
   // Stay mounted through the exit animation, then unmount. The timeout covers
   // reduced-motion, where `animationend` never fires.
@@ -170,15 +197,47 @@ export function AssignGuestsScreen({
     return () => clearTimeout(timer);
   }, [open, rendered]);
 
-  const handleSave = () => {
-    if (!group || !dirty) return;
+  const handleSave = async () => {
+    if (!group || !dirty || saving) return;
+    const next = new Set(draft);
+    const moved = pool.filter((g) => isPending(g.id)).map((g) => g.id);
+    const summary = { added, removed };
 
-    onOpenChange(false);
+    setSaving(true);
+    const ok = await groupWrites.saveMembers(group, [...next], [...base]);
+    setSaving(false);
+    // A failed save keeps every mark, so it can be tried again.
+    if (!ok) return;
 
-    void groupWrites.saveMembers(group, [...draftIn], [...originalMemberIds]);
+    setBase(next);
+    setFlash(new Set(moved));
+    setLastSave(summary);
   };
 
+  const editing = editingId
+    ? (pool.find((g) => g.id === editingId) ?? null)
+    : null;
+
   if (!rendered) return null;
+
+  const inNow = inList.length;
+  const inTo = draft.size;
+  const footerSub = dirty
+    ? [
+        added > 0 && t('groups.assignScreen.joinPending', { count: added }),
+        removed > 0 &&
+          t('groups.assignScreen.leavePending', { count: removed }),
+        t('groups.assignScreen.unsaved'),
+      ]
+    : lastSave
+      ? [
+          t('groups.assignScreen.saved'),
+          lastSave.added > 0 &&
+            t('groups.assignScreen.joinDone', { count: lastSave.added }),
+          lastSave.removed > 0 &&
+            t('groups.assignScreen.leaveDone', { count: lastSave.removed }),
+        ]
+      : [t('groups.mobile.ofTotalRecords', { count: totalRecords })];
 
   return (
     <div
@@ -196,7 +255,7 @@ export function AssignGuestsScreen({
       )}
     >
       <header className="bg-card flex flex-col gap-2.5 border-b px-4 pt-1 pb-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-h-12 items-center gap-2.5">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
@@ -205,14 +264,14 @@ export function AssignGuestsScreen({
           >
             <IconX size={16} />
           </button>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="text-muted-foreground text-[11px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-px">
+            <span className="text-muted-foreground text-xs">
               {t('groups.mobile.eyebrowAssign')}
             </span>
             <div className="flex min-w-0 items-center gap-1.5">
               <h2
                 id="assign-guests-title"
-                className="truncate text-[18px] font-extrabold"
+                className="truncate text-[18px] leading-tight font-extrabold"
               >
                 {group?.name ?? ''}
               </h2>
@@ -222,7 +281,7 @@ export function AssignGuestsScreen({
           <button
             type="button"
             className={cn(
-              'flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] border px-[11px] text-sm font-semibold',
+              'flex h-9 shrink-0 items-center gap-[5px] rounded-[10px] border px-[11px] text-sm font-semibold',
               selectMode
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'bg-card text-foreground',
@@ -239,7 +298,7 @@ export function AssignGuestsScreen({
           </button>
         </div>
 
-        {/* Out / In segmented control */}
+        {/* Out / In, as saved - a pending move stays in the tab it is in */}
         <div className="bg-muted flex h-[42px] gap-0.5 rounded-[11px] p-[3px]">
           {(
             [
@@ -277,31 +336,27 @@ export function AssignGuestsScreen({
           })}
         </div>
 
-        <div className="bg-background flex h-10 items-center gap-2 rounded-[10px] border px-3">
-          <IconSearch size={15} className="text-muted-foreground shrink-0" />
+        <div className="bg-card flex h-10 items-center gap-[7px] rounded-[11px] border px-[11px]">
+          <IconSearch size={16} className="text-muted-foreground shrink-0" />
           <input
-            value={isOut ? qOut : qIn}
-            onChange={(e) =>
-              isOut ? setQOut(e.target.value) : setQIn(e.target.value)
-            }
-            placeholder={
-              isOut
-                ? t('groups.mobile.searchAvailablePlaceholder')
-                : t('groups.mobile.searchInGroupPlaceholder')
-            }
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('groups.assignScreen.searchPlaceholder')}
+            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
         </div>
       </header>
 
       <Reveal open={selectMode}>
-        <div className="text-muted-foreground flex items-center justify-between px-[18px] pt-2.5 text-[12.5px]">
+        <div className="text-muted-foreground flex min-h-[42px] items-center justify-end gap-2.5 px-4 pt-2.5 text-[12.5px]">
           <span>
-            {t('groups.mobile.selectedCount', { count: selected.size })}
+            {t('groups.mobile.selectedCount', { count: pickedCount })}
           </span>
           <button
             type="button"
-            onClick={handleToggleAll}
+            onClick={() =>
+              setSelected((prev) => toggleAllVisible(prev, visibleIds))
+            }
             className="text-primary text-[13.5px] font-bold"
           >
             {allVisibleSelected
@@ -312,139 +367,313 @@ export function AssignGuestsScreen({
       </Reveal>
 
       <div className="flex flex-1 flex-col gap-[7px] overflow-y-auto px-4 pt-2.5 pb-4">
-        {visible.map((g) => {
-          const checked = selected.has(g.id);
-          const wasMember = isOut && originalMemberIds.has(g.id);
-          return (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() =>
-                selectMode ? toggleSelected(g.id) : toggleMove(g.id)
-              }
-              className={cn(
-                'flex h-16 w-full shrink-0 items-center gap-2.5 rounded-[14px] border px-2.5 text-start transition-colors',
-                selectMode && checked
-                  ? 'border-primary/50 bg-primary/8 border-dashed'
-                  : 'bg-card',
-              )}
-            >
-              {selectMode && (
-                <span
-                  className={cn(
-                    'flex size-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px]',
-                    checked
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-muted-foreground/30 bg-card',
-                  )}
-                >
-                  {checked && <IconCheck size={15} stroke={3} />}
-                </span>
-              )}
-              <span
-                className={cn(
-                  'flex size-10 shrink-0 items-center justify-center rounded-full text-base font-bold',
-                  avatarTintFor(g.name),
-                )}
-              >
-                {g.name.trim().charAt(0).toUpperCase()}
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                <span className="truncate text-[15px] font-bold">{g.name}</span>
-                <div className="text-muted-foreground flex items-center gap-1.5 text-[12.5px]">
-                  <span className="whitespace-nowrap">
-                    {t('mobile.seats', { count: g.amount })}
-                  </span>
-                  {wasMember && (
-                    <span className={cn(rsvpPresentation('pending').chip, 'inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold')}>
-                      {t('groups.mobile.removedInDraft')}
-                    </span>
-                  )}
-                  {!isOut && !originalMemberIds.has(g.id) && (
-                    <span className={cn(rsvpPresentation('confirmed').chip, 'inline-flex h-[18px] items-center rounded-[5px] px-1.5 text-[11px] font-semibold')}>
-                      {t('groups.mobile.addedBadge')}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {!selectMode && (
-                <span
-                  className={cn(
-                    'flex size-[34px] shrink-0 items-center justify-center rounded-[10px]',
-                    isOut
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {isOut ? (
-                    <IconPlus size={18} stroke={2.4} />
-                  ) : (
-                    <IconMinus size={18} stroke={2.4} />
-                  )}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {visible.map((g) => (
+          <AssignRow
+            key={g.id}
+            guest={g}
+            isOut={isOut}
+            pending={isPending(g.id)}
+            flashed={flash.has(g.id) && !isPending(g.id)}
+            selectMode={selectMode}
+            checked={selected.has(g.id)}
+            disabled={saving}
+            onToggleSelect={() => setSelected((prev) => toggleOne(prev, g.id))}
+            onToggleMove={() => toggleMove(g.id)}
+            onEdit={() => setEditingId(g.id)}
+          />
+        ))}
 
         {visible.length === 0 && (
-          <div className="flex flex-col items-center gap-1.5 px-6 py-12 text-center">
-            <div className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-full">
-              {query ? <IconSearch size={20} /> : <IconUsers size={20} />}
+          <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+            <div className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
+              <IconSearch size={22} />
             </div>
-            <span className="text-[15px] font-semibold">
-              {query
-                ? t('groups.mobile.noResults')
+            <span className="text-[17px] font-bold">
+              {query.trim()
+                ? t('groups.assignScreen.noMatchesTitle')
                 : isOut
-                  ? t('groups.mobile.noAvailableGuests')
-                  : t('groups.mobile.emptyGroupTitle')}
+                  ? t('groups.assignScreen.allAssignedTitle')
+                  : t('groups.assignScreen.emptyGroupTitle')}
             </span>
-            <span className="text-muted-foreground text-[13px]">
-              {query
-                ? t('groups.mobile.tryAnotherName')
+            <span className="text-muted-foreground text-[13.5px]">
+              {query.trim()
+                ? t('groups.assignScreen.noMatchesHint')
                 : isOut
-                  ? t('groups.mobile.allGuestsAssigned')
-                  : t('groups.mobile.emptyGroupHint')}
+                  ? t('groups.assignScreen.allAssignedHint')
+                  : t('groups.assignScreen.emptyGroupHint')}
             </span>
           </div>
         )}
       </div>
 
-      <footer className="bg-card flex items-center justify-between gap-2 border-t px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+      <footer className="bg-card flex items-center gap-2 border-t px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+10px)]">
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[15px] font-bold">
-            {t('groups.mobile.inGroupCount', { count: inList.length })}
-          </span>
-          <span className="text-muted-foreground truncate text-xs">
-            {dirty
-              ? t('groups.mobile.changesSummary', {
-                  added: addedCount,
-                  removed: removedCount,
+          <span className="truncate text-[15px] font-extrabold tabular-nums">
+            {inTo !== inNow
+              ? t('groups.assignScreen.inGroupProjected', {
+                  from: inNow,
+                  to: inTo,
                 })
-              : t('groups.mobile.ofTotalRecords', { count: totalRecords })}
+              : t('groups.assignScreen.inGroup', { count: inNow })}
+          </span>
+          <span
+            className={cn(
+              'truncate text-xs',
+              dirty
+                ? cn(rsvpPresentation('pending').text, 'font-semibold')
+                : lastSave
+                  ? cn(rsvpPresentation('confirmed').text, 'font-semibold')
+                  : 'text-muted-foreground',
+            )}
+          >
+            {footerSub.filter(Boolean).join(' · ')}
           </span>
         </div>
         {selectMode ? (
           <Button
             onClick={handleApplyBulk}
-            disabled={selected.size === 0}
-            className="shrink-0"
+            disabled={pickedCount === 0 || saving}
+            className="h-12 shrink-0 rounded-xl px-[18px] text-[15px] font-bold"
           >
             {isOut
-              ? t('groups.mobile.addSelected', { count: selected.size })
-              : t('groups.mobile.removeSelected', { count: selected.size })}
+              ? t('groups.assignScreen.bulkAdd', { count: pickedCount })
+              : t('groups.assignScreen.bulkRemove', { count: pickedCount })}
           </Button>
         ) : (
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              disabled={!dirty || saving}
+              onClick={() => updateDraft(new Set(base))}
+              className="h-12 rounded-xl px-4 text-[15px]"
+            >
               {tCommon('cancel')}
             </Button>
-            <Button onClick={handleSave} disabled={!dirty}>
+            <Button
+              onClick={() => void handleSave()}
+              disabled={!dirty || saving}
+              className="h-12 rounded-xl px-[22px] text-[15px] font-bold"
+            >
               {t('groups.mobile.saveButton')}
             </Button>
           </div>
         )}
       </footer>
+
+      <EditGuestSheet
+        guest={editing}
+        eventId={eventId}
+        groupName={group?.name ?? ''}
+        inGroup={editing ? base.has(editing.id) : false}
+        pending={editing ? isPending(editing.id) : false}
+        draftChanges={added + removed}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setEditingId(null);
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * One record in the assign screen. Pending rows keep their place: a join is
+ * tinted green, a leave amber with the name dimmed, and the + / − becomes an
+ * undo. The label carries the meaning too, so it never rests on colour alone.
+ */
+function AssignRow({
+  guest,
+  isOut,
+  pending,
+  flashed,
+  selectMode,
+  checked,
+  disabled,
+  onToggleSelect,
+  onToggleMove,
+  onEdit,
+}: {
+  guest: GuestApp;
+  isOut: boolean;
+  pending: boolean;
+  flashed: boolean;
+  selectMode: boolean;
+  checked: boolean;
+  disabled: boolean;
+  onToggleSelect: () => void;
+  onToggleMove: () => void;
+  onEdit: () => void;
+}) {
+  const t = useTranslations('guests');
+  const joining = pending && isOut;
+  const leaving = pending && !isOut;
+  const on = selectMode && checked;
+  const phone = formatPhone(guest.phone);
+
+  const label = joining
+    ? t('groups.assignScreen.willJoin')
+    : leaving
+      ? t('groups.assignScreen.willLeave')
+      : flashed
+        ? isOut
+          ? t('groups.assignScreen.justLeft')
+          : t('groups.assignScreen.justJoined')
+        : null;
+  const LabelIcon = joining
+    ? IconArrowLeft
+    : leaving
+      ? IconArrowRight
+      : IconCheck;
+
+  // Only the surface is tinted - the text keeps its own colours.
+  const tint =
+    joining || (flashed && !isOut)
+      ? 'bg-rsvp-confirmed-tint'
+      : leaving || (flashed && isOut)
+        ? 'bg-rsvp-pending-tint'
+        : null;
+
+  return (
+    <div
+      role={selectMode ? 'checkbox' : undefined}
+      aria-checked={selectMode ? checked : undefined}
+      aria-label={label ? `${guest.name}, ${label}` : guest.name}
+      tabIndex={selectMode ? 0 : undefined}
+      onClick={selectMode ? onToggleSelect : undefined}
+      onKeyDown={
+        selectMode
+          ? (e: KeyboardEvent) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                onToggleSelect();
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        'flex min-h-[62px] shrink-0 items-center gap-[9px] rounded-[14px] border px-2.5 py-[9px] transition-[background-color,box-shadow] duration-700',
+        tint ?? (on ? 'bg-primary/8' : 'bg-card'),
+        tint && !on && 'border-transparent',
+        on && 'border-primary ring-primary ring-1',
+        selectMode && 'cursor-pointer',
+      )}
+    >
+      {selectMode && (
+        <span
+          className={cn(
+            'flex size-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px]',
+            checked
+              ? 'border-primary bg-primary text-white'
+              : 'border-muted-foreground/30 bg-card',
+          )}
+        >
+          {checked && <IconCheck size={15} stroke={3} />}
+        </span>
+      )}
+      <span
+        className={cn(
+          'flex size-[38px] shrink-0 items-center justify-center rounded-full text-[15px] font-bold',
+          avatarTintFor(guest.name),
+          leaving && 'opacity-60',
+        )}
+      >
+        {guest.name.trim().charAt(0).toUpperCase()}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={cn(
+              'min-w-0 truncate text-[15px] font-semibold',
+              leaving ? 'text-muted-foreground' : 'text-foreground',
+            )}
+          >
+            {guest.name}
+          </span>
+          {label && (
+            <span
+              className={cn(
+                'flex shrink-0 items-center gap-[3px] text-[11.5px] font-bold whitespace-nowrap',
+                rsvpPresentation(
+                  joining || (flashed && !isOut) ? 'confirmed' : 'pending',
+                ).text,
+              )}
+            >
+              <LabelIcon
+                size={13}
+                stroke={2.4}
+                // The arrow points at the tab the record moves to.
+                className={cn(pending && 'ltr:-scale-x-100')}
+              />
+              {label}
+            </span>
+          )}
+        </div>
+        {phone ? (
+          <span
+            dir="ltr"
+            className="text-muted-foreground self-start text-[12.5px] whitespace-nowrap tabular-nums"
+          >
+            {phone}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              rsvpPresentation('pending').text,
+              'self-start text-[12.5px] font-semibold whitespace-nowrap',
+            )}
+          >
+            {t('groups.assignScreen.noPhone')}
+          </span>
+        )}
+      </div>
+      <span className="flex min-w-[30px] shrink-0 flex-col items-center">
+        <b className="text-[15px] leading-tight font-bold tabular-nums">
+          {guest.amount}
+        </b>
+        <span className="text-muted-foreground text-[10.5px]">
+          {t('groups.assignScreen.seats')}
+        </span>
+      </span>
+      <button
+        type="button"
+        aria-label={t('groups.assignScreen.edit', { name: guest.name })}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        className="text-muted-foreground hover:bg-muted flex size-[34px] shrink-0 items-center justify-center rounded-[10px]"
+      >
+        <IconPencil size={17} />
+      </button>
+      {!selectMode && (
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={
+            pending
+              ? t('groups.assignScreen.undoMove', { name: guest.name })
+              : isOut
+                ? t('groups.desktop.addOne', { name: guest.name })
+                : t('groups.desktop.removeOne', { name: guest.name })
+          }
+          onClick={onToggleMove}
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-[10px] border disabled:opacity-50',
+            pending
+              ? 'bg-card text-foreground'
+              : isOut
+                ? 'bg-primary/10 text-primary border-transparent'
+                : 'bg-muted text-muted-foreground border-transparent',
+          )}
+        >
+          {pending ? (
+            <IconArrowBackUp size={18} stroke={2.3} />
+          ) : isOut ? (
+            <IconPlus size={18} stroke={2.3} />
+          ) : (
+            <IconMinus size={18} stroke={2.3} />
+          )}
+        </button>
+      )}
     </div>
   );
 }

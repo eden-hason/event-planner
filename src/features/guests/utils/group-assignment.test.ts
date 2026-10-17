@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { draftChanges, groupAssignmentStats, withoutPendingDeletes } from './group-assignment.ts';
+import { draftChanges, groupAssignmentStats, matchesNameOrPhone, withoutPendingDeletes } from './group-assignment.ts';
 
 const groups = [
   { id: 'b', side: 'bride' as const },
@@ -65,4 +65,20 @@ test('the draft diff counts additions and removals against the saved members', (
     removed: 2,
     dirty: true,
   });
+});
+
+test('a search matches the name, or the phone in its stored or local form', () => {
+  const guest = { name: 'טליה שמש', phone: '+972546621903' };
+  assert.equal(matchesNameOrPhone(guest, ''), true);
+  assert.equal(matchesNameOrPhone(guest, 'טליה'), true);
+  assert.equal(matchesNameOrPhone(guest, '0546'), true);
+  assert.equal(matchesNameOrPhone(guest, '054-662'), true);
+  assert.equal(matchesNameOrPhone(guest, '97254'), true);
+  assert.equal(matchesNameOrPhone(guest, '0521'), false);
+  assert.equal(matchesNameOrPhone(guest, 'דני'), false);
+});
+
+test('a record with no phone matches by name only', () => {
+  assert.equal(matchesNameOrPhone({ name: 'נדב כץ', phone: null }, '05'), false);
+  assert.equal(matchesNameOrPhone({ name: 'נדב כץ' }, 'נדב'), true);
 });

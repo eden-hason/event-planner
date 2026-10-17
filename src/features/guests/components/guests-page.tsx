@@ -136,6 +136,13 @@ export function GuestsPage({
     void groupWrites.update(formData);
   };
 
+  // The open assign screen follows the revalidated group, so a record edited
+  // or saved from inside it shows its new details. A group created a moment
+  // ago may not be in `groups` yet - it falls back to the target as opened.
+  const liveAssignTarget = assignTarget
+    ? (groups.find((g) => g.id === assignTarget.id) ?? assignTarget)
+    : null;
+
   const handleOpenAssign = (group: GroupWithGuestsApp) => {
     setAssignTarget({ id: group.id, name: group.name, side: group.side, guests: group.guests });
     setAssignSheetOpen(true);
@@ -447,7 +454,7 @@ export function GuestsPage({
         <AssignGuestsScreen
           open={assignSheetOpen}
           onOpenChange={setAssignSheetOpen}
-          group={assignTarget}
+          group={liveAssignTarget}
           availableGuests={unassignedGuests}
           totalRecords={guests.length}
           eventId={eventId}

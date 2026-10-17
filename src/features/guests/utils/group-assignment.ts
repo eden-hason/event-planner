@@ -75,3 +75,23 @@ export function draftChanges(
   for (const id of saved) if (!draft.has(id)) removed++;
   return { added, removed, dirty: added + removed > 0 };
 }
+
+/**
+ * Whether a record matches a search typed into the assign screen: its name
+ * contains the text, or its phone contains the digits typed. Phones are stored
+ * in E.164 (`+972546621903`) but typed the local way (`0546`), so the local
+ * form is matched too.
+ */
+export function matchesNameOrPhone(
+  guest: { name: string; phone?: string | null },
+  query: string,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (guest.name.toLowerCase().includes(q)) return true;
+  const digits = q.replace(/\D/g, '');
+  if (!digits || !guest.phone) return false;
+  const stored = guest.phone.replace(/\D/g, '');
+  const local = stored.startsWith('972') ? `0${stored.slice(3)}` : stored;
+  return stored.includes(digits) || local.includes(digits);
+}
