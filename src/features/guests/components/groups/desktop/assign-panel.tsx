@@ -1,35 +1,33 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  IconMinus,
-  IconPlus,
-  IconSearch,
-  IconUserEdit,
-} from '@tabler/icons-react';
+import { IconSearch, IconUserEdit } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { GuestApp, GroupWithGuestsApp } from '@/features/guests/schemas';
-import { rsvpPresentation } from '@/features/guests/utils';
+import { useAssignSaveFeedback } from '@/features/guests/hooks/use-assign-save-feedback';
 import {
-  headerState,
-  toggleAllVisible,
-  toggleOne,
-  withoutIds,
-} from '@/features/guests/utils/guest-selection';
-import { avatarTintFor } from '@/lib/avatar-tint';
+  matchesNameOrPhone,
+  membershipStanding,
+} from '@/features/guests/utils/group-assignment';
+import { toggleOne } from '@/features/guests/utils/guest-selection';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 import { GroupIcon } from '../group-icon';
+import { EditGuestSheet } from '../edit-guest-sheet';
 import { SideBadge, sideTintClass } from '../../side-badge';
-import { SelectBox } from '../../desktop/select-box';
+import { AssignRow } from './assign-row';
 
 /**
  * The selected group, open for assigning: "no group" and "in the group" side by
- * side. + / − and the column's bulk button only change a draft; nothing is
- * written until Save. The draft is the parent's, so it can guard against
- * leaving with it unsaved.
+ * side, each listing the group as saved. + / − only marks a row as pending to
+ * move - it stays where it is, tinted, until Save moves it and highlights it
+ * for a moment in its new column. The draft is the parent's, so it can guard against leaving with it
+ * unsaved. Any row's pencil edits the record's details on top, without
+ * touching the draft.
  */
 export function AssignPanel({
+  eventId,
   group,
   unassignedGuests,
   totalRecords,
@@ -41,6 +39,7 @@ export function AssignPanel({
   onSave,
   onEdit,
 }: {
+  eventId: string;
   group: GroupWithGuestsApp;
   /** Records with no group - the only ones that can join from here. */
   unassignedGuests: GuestApp[];
@@ -50,24 +49,73 @@ export function AssignPanel({
   draft: ReadonlySet<string>;
   /** What `draft` changes against `saved`. */
   changes: { added: number; removed: number; dirty: boolean };
-  onDraftChange: (next: Set<string>) => void;
+  onDraftChange: (update: (prev: ReadonlySet<string>) => Set<string>) => void;
   saving: boolean;
-  onSave: () => void;
+  /** Resolves to whether the save landed. */
+  onSave: () => Promise<boolean>;
   onEdit: () => void;
 }) {
   const t = useTranslations('guests.groups');
   const tCommon = useTranslations('common');
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const { flash, recordSave, clearLastSave, headline, summary } =
+    useAssignSaveFeedback({ saved, draft, changes, totalRecords });
+
   const pool = useMemo(
     () => [...unassignedGuests, ...group.guests],
     [unassignedGuests, group.guests],
   );
-  const outList = pool.filter((g) => !draft.has(g.id));
-  const inList = pool.filter((g) => draft.has(g.id));
-  const { added, removed, dirty } = changes;
+  // Formatting parses each number, so it runs once per record, not per render.
+  const phones = useMemo(
+    () => new Map(pool.map((g) => [g.id, formatPhone(g.phone)])),
+    [pool],
+  );
+  const outList = useMemo(
+    () => pool.filter((g) => !saved.has(g.id)),
+    [pool, saved],
+  );
+  const inList = useMemo(
+    () => pool.filter((g) => saved.has(g.id)),
+    [pool, saved],
+  );
+  const { dirty } = changes;
 
-  const move = (ids: string[], into: boolean) =>
-    onDraftChange(into ? new Set([...draft, ...ids]) : withoutIds(draft, ids));
+  const updateDraft = useCallback(
+    (update: (prev: ReadonlySet<string>) => Set<string>) => {
+      onDraftChange(update);
+      clearLastSave();
+    },
+    [onDraftChange, clearLastSave],
+  );
+
+  const toggleMove = useCallback(
+    (id: string) => updateDraft((prev) => toggleOne(prev, id)),
+    [updateDraft],
+  );
+
+  const handleSave = async () => {
+    if (!dirty || saving) return;
+    const moved = pool.filter((g) => draft.has(g.id) !== saved.has(g.id));
+    // A failed save keeps every mark, so it can be tried again.
+    if (!(await onSave())) return;
+    recordSave(
+      moved.map((g) => g.id),
+      changes,
+    );
+  };
+
+  const editing = pool.find((g) => g.id === editingId) ?? null;
+
+  const columnProps = {
+    saved,
+    draft,
+    phones,
+    flash,
+    saving,
+    onToggleMove: toggleMove,
+    onEditGuest: setEditingId,
+  };
 
   return (
     <>
@@ -98,60 +146,58 @@ export function AssignPanel({
             {group.description || t('mobile.noDescription')}
           </span>
         </div>
-        <Button variant="outline" onClick={onEdit} className="h-9 font-semibold">
+        <Button variant="outline" onClick={onEdit} className="font-semibold">
           <IconUserEdit size={16} />
           {t('mobile.menuEdit')}
         </Button>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-2">
-        <AssignColumn
-          side="out"
-          guests={outList}
-          saved={saved}
-          onMove={(ids) => move(ids, true)}
-        />
-        <AssignColumn
-          side="in"
-          guests={inList}
-          saved={saved}
-          onMove={(ids) => move(ids, false)}
-        />
+        <AssignColumn side="in" guests={inList} {...columnProps} />
+        <AssignColumn side="out" guests={outList} {...columnProps} />
       </div>
 
-      <div className="flex items-center gap-2.5 border-t px-[18px] py-3">
+      {/* Marked as a bottom bar, so the AI assistant's floating button lifts
+          clear of Save */}
+      <div
+        data-bottom-bar
+        className="flex items-center gap-2.5 border-t px-[18px] py-3"
+      >
         <div className="flex min-w-0 flex-1 items-baseline gap-2.5">
-          <span className="text-[15px] font-extrabold whitespace-nowrap">
-            {t('mobile.inGroupCount', { count: inList.length })}
+          <span className="text-[15px] font-extrabold whitespace-nowrap tabular-nums">
+            {headline}
           </span>
-          <span
-            className={cn(
-              'truncate text-[13px]',
-              dirty
-                ? rsvpPresentation('pending').text
-                : 'text-muted-foreground',
-            )}
-          >
-            {dirty
-              ? t('mobile.changesSummary', { added, removed })
-              : t('mobile.ofTotalRecords', { count: totalRecords })}
+          <span className={cn('truncate text-[13px]', summary.tone)}>
+            {summary.text}
           </span>
         </div>
         <Button
           variant="outline"
           disabled={!dirty || saving}
-          onClick={() => onDraftChange(new Set(saved))}
+          onClick={() => updateDraft(() => new Set(saved))}
         >
           {tCommon('cancel')}
         </Button>
         <Button
           disabled={!dirty || saving}
-          onClick={onSave}
-          className="px-[22px] font-bold"
+          onClick={() => void handleSave()}
+          className="font-bold"
         >
           {t('mobile.saveButton')}
         </Button>
       </div>
+
+      <EditGuestSheet
+        variant="desktop"
+        guest={editing}
+        eventId={eventId}
+        groupName={group.name}
+        standing={editing && membershipStanding(editing.id, saved, draft)}
+        pendingMoves={changes.added + changes.removed}
+        onOpenChange={(open) => {
+          if (!open) setEditingId(null);
+        }}
+      />
     </>
   );
 }
@@ -160,215 +206,85 @@ function AssignColumn({
   side,
   guests,
   saved,
-  onMove,
+  draft,
+  phones,
+  flash,
+  saving,
+  onToggleMove,
+  onEditGuest,
 }: {
   side: 'out' | 'in';
+  /** This column's records, as saved. */
   guests: GuestApp[];
   saved: ReadonlySet<string>;
-  onMove: (ids: string[]) => void;
+  draft: ReadonlySet<string>;
+  phones: ReadonlyMap<string, string>;
+  flash: ReadonlySet<string>;
+  saving: boolean;
+  onToggleMove: (id: string) => void;
+  onEditGuest: (id: string) => void;
 }) {
-  const t = useTranslations('guests');
+  const t = useTranslations('guests.groups');
   const isOut = side === 'out';
   const [query, setQuery] = useState('');
-  const [checked, setChecked] = useState<Set<string>>(new Set());
 
-  const q = query.trim().toLowerCase();
-  const visible = q
-    ? guests.filter((g) => g.name.toLowerCase().includes(q))
-    : guests;
-  const visibleIds = visible.map((g) => g.id);
-  // Only what is still in this column counts - a checked row that moved out
-  // by its own +/− is no longer here to act on.
-  const picked = guests.filter((g) => checked.has(g.id)).map((g) => g.id);
-  const allState = headerState(checked, visibleIds);
-  const pickedVisible = visibleIds.filter((id) => checked.has(id)).length;
+  const visible = useMemo(
+    () => guests.filter((g) => matchesNameOrPhone(g, query)),
+    [guests, query],
+  );
 
-  const moveOne = (id: string) => {
-    onMove([id]);
-    setChecked((prev) => withoutIds(prev, [id]));
-  };
-
-  const moveChecked = () => {
-    onMove(picked);
-    setChecked(new Set());
-  };
+  const empty = query.trim()
+    ? 'noMatches'
+    : isOut
+      ? 'allAssigned'
+      : 'emptyGroup';
 
   return (
-    <div
-      className={cn(
-        'flex min-h-0 flex-col',
-        !isOut && 'border-s',
-      )}
-    >
+    <div className={cn('flex min-h-0 flex-col', isOut && 'border-s')}>
       <div className="flex flex-col gap-2.5 px-4 pt-3.5 pb-2.5">
-        <div className="flex h-8 items-center justify-between gap-2.5">
-          <span className="flex items-baseline gap-[7px]">
-            <span className="text-[15px] font-extrabold">
-              {isOut ? t('groups.mobile.outTab') : t('groups.mobile.inTab')}
-            </span>
-            <span className="text-primary text-sm font-bold tabular-nums">
-              {guests.length}
-            </span>
+        <span className="flex h-8 items-center gap-[7px] whitespace-nowrap">
+          <span className="text-[15px] font-extrabold">
+            {isOut ? t('mobile.outTab') : t('mobile.inTab')}
           </span>
-          {picked.length > 0 && (
-            <Button
-              size="sm"
-              variant={isOut ? 'default' : 'secondary'}
-              onClick={moveChecked}
-              className="h-8 rounded-[9px] font-bold"
-            >
-              {isOut ? (
-                <IconPlus size={15} stroke={2.4} />
-              ) : (
-                <IconMinus size={15} stroke={2.4} />
-              )}
-              {isOut
-                ? t('groups.mobile.addSelected', { count: picked.length })
-                : t('groups.desktop.removeChecked', { count: picked.length })}
-            </Button>
-          )}
-        </div>
+          <span className="text-primary text-sm font-bold tabular-nums">
+            {guests.length}
+          </span>
+        </span>
 
         <div className="bg-card flex h-9 items-center gap-[7px] rounded-[10px] border px-[11px]">
           <IconSearch size={15} className="text-muted-foreground shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              isOut
-                ? t('groups.mobile.searchAvailablePlaceholder')
-                : t('groups.mobile.searchInGroupPlaceholder')
-            }
+            placeholder={t('assignScreen.searchPlaceholder')}
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13.5px] outline-none"
           />
         </div>
-
-        {visible.length > 0 && (
-          <div
-            onClick={() =>
-              setChecked((prev) => toggleAllVisible(prev, visibleIds))
-            }
-            className="text-muted-foreground flex h-7 cursor-pointer items-center gap-2.5 px-2.5 text-[12.5px]"
-          >
-            <SelectBox
-              state={allState}
-              label={t('groups.mobile.selectAllCount', {
-                count: visible.length,
-              })}
-              onClick={() =>
-                setChecked((prev) => toggleAllVisible(prev, visibleIds))
-              }
-              className="size-[18px] shrink-0"
-            />
-            <span>
-              {pickedVisible > 0
-                ? t('groups.mobile.selectedCount', { count: pickedVisible })
-                : t('groups.mobile.selectAllCount', { count: visible.length })}
-            </span>
-          </div>
-        )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-3">
-        {visible.map((guest) => {
-          const on = checked.has(guest.id);
-          const wasMember = saved.has(guest.id);
-          return (
-            <div
-              key={guest.id}
-              onClick={() => setChecked((prev) => toggleOne(prev, guest.id))}
-              className={cn(
-                'flex h-[52px] shrink-0 cursor-pointer items-center gap-2.5 rounded-[10px] ps-1.5 pe-2.5 transition-colors',
-                on ? 'bg-primary/8' : 'hover:bg-muted',
-              )}
-            >
-              <SelectBox
-                state={on ? 'all' : 'none'}
-                label={guest.name}
-                onClick={() =>
-                  setChecked((prev) => toggleOne(prev, guest.id))
-                }
-                className="size-[18px] shrink-0"
-              />
-              <span
-                className={cn(
-                  'flex size-8 shrink-0 items-center justify-center rounded-full text-[13.5px] font-bold',
-                  avatarTintFor(guest.name),
-                )}
-              >
-                {guest.name.trim().charAt(0).toUpperCase()}
-              </span>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="truncate text-sm font-semibold">
-                  {guest.name}
-                </span>
-                {isOut && wasMember && (
-                  <span
-                    className={cn(
-                      rsvpPresentation('pending').chip,
-                      'inline-flex h-[18px] shrink-0 items-center rounded-[5px] px-1.5 text-[11px] font-semibold',
-                    )}
-                  >
-                    {t('groups.desktop.removedOnSave')}
-                  </span>
-                )}
-                {!isOut && !wasMember && (
-                  <span
-                    className={cn(
-                      rsvpPresentation('confirmed').chip,
-                      'inline-flex h-[18px] shrink-0 items-center rounded-[5px] px-1.5 text-[11px] font-semibold',
-                    )}
-                  >
-                    {t('groups.mobile.addedBadge')}
-                  </span>
-                )}
-              </div>
-              <span className="text-muted-foreground shrink-0 text-[12.5px] whitespace-nowrap">
-                {t('mobile.seats', { count: guest.amount })}
-              </span>
-              <button
-                type="button"
-                aria-label={
-                  isOut
-                    ? t('groups.desktop.addOne', { name: guest.name })
-                    : t('groups.desktop.removeOne', { name: guest.name })
-                }
-                onClick={(e) => {
-                  e.stopPropagation();
-                  moveOne(guest.id);
-                }}
-                className={cn(
-                  'flex size-[30px] shrink-0 items-center justify-center rounded-lg',
-                  isOut
-                    ? 'bg-primary/10 text-primary hover:bg-primary/15'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/70',
-                )}
-              >
-                {isOut ? (
-                  <IconPlus size={16} stroke={2.4} />
-                ) : (
-                  <IconMinus size={16} stroke={2.4} />
-                )}
-              </button>
-            </div>
-          );
-        })}
+      <div className="flex min-h-0 flex-1 flex-col gap-[3px] overflow-y-auto px-2.5 pb-3">
+        {visible.map((guest) => (
+          <AssignRow
+            key={guest.id}
+            guest={guest}
+            phone={phones.get(guest.id) ?? ''}
+            standing={membershipStanding(guest.id, saved, draft)}
+            flashed={flash.has(guest.id)}
+            disabled={saving}
+            onToggleMove={onToggleMove}
+            onEdit={onEditGuest}
+          />
+        ))}
 
         {visible.length === 0 && (
           <div className="flex flex-col items-center gap-1.5 px-5 py-10 text-center">
             <span className="text-[15px] font-bold">
-              {q
-                ? t('groups.mobile.noResults')
-                : isOut
-                  ? t('groups.mobile.noAvailableGuests')
-                  : t('groups.mobile.emptyGroupTitle')}
+              {t(`assignScreen.${empty}Title`)}
             </span>
             <span className="text-muted-foreground text-[13px]">
-              {q
-                ? t('groups.mobile.tryAnotherName')
-                : isOut
-                  ? t('groups.mobile.allGuestsAssigned')
-                  : t('groups.desktop.emptyGroupHint')}
+              {empty === 'emptyGroup'
+                ? t('desktop.emptyGroupHint')
+                : t(`assignScreen.${empty}Hint`)}
             </span>
           </div>
         )}

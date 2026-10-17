@@ -2,52 +2,13 @@
 
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  IconArrowBackUp,
-  IconArrowLeft,
-  IconArrowRight,
-  IconCheck,
-  IconMinus,
-  IconPencil,
-  IconPlus,
-} from '@tabler/icons-react';
+import { IconCheck, IconPencil } from '@tabler/icons-react';
 import type { GuestApp } from '@/features/guests/schemas';
 import type { MembershipStanding } from '@/features/guests/types';
 import { rsvpPresentation } from '@/features/guests/utils';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
-
-/** A row's mark: a move pending on Save, or one the last save just made. */
-const MARKS = {
-  joining: { tone: 'confirmed', label: 'willJoin', Icon: IconArrowLeft },
-  leaving: { tone: 'pending', label: 'willLeave', Icon: IconArrowRight },
-  joined: { tone: 'confirmed', label: 'justJoined', Icon: IconCheck },
-  left: { tone: 'pending', label: 'justLeft', Icon: IconCheck },
-} as const;
-
-/** Only the surface is tinted - the text keeps its own colours. */
-const TINT = {
-  confirmed: 'bg-rsvp-confirmed-tint',
-  pending: 'bg-rsvp-pending-tint',
-} as const;
-
-const MOVE = {
-  pending: {
-    Icon: IconArrowBackUp,
-    label: 'groups.assignScreen.undoMove',
-    className: 'bg-card text-foreground',
-  },
-  out: {
-    Icon: IconPlus,
-    label: 'groups.desktop.addOne',
-    className: 'bg-primary/10 text-primary border-transparent',
-  },
-  in: {
-    Icon: IconMinus,
-    label: 'groups.desktop.removeOne',
-    className: 'bg-muted text-muted-foreground border-transparent',
-  },
-} as const;
+import { MARKS, PhoneLine, rowMarks, TINT } from '../assign-row-parts';
 
 /**
  * One record in the assign screen. Pending rows keep their place: a join is
@@ -81,17 +42,11 @@ export const AssignRow = memo(function AssignRow({
   onEdit: (id: string) => void;
 }) {
   const t = useTranslations('guests');
-  const pending = standing === 'joining' || standing === 'leaving';
+  const { pending, markKey, move } = rowMarks(standing, flashed);
   const leaving = standing === 'leaving';
   const on = selectMode && checked;
-
-  const mark = pending
-    ? MARKS[standing]
-    : flashed
-      ? MARKS[standing === 'in' ? 'joined' : 'left']
-      : null;
+  const mark = markKey && MARKS[markKey];
   const label = mark && t(`groups.assignScreen.${mark.label}`);
-  const move = MOVE[pending ? 'pending' : standing];
 
   return (
     <div
@@ -166,23 +121,7 @@ export const AssignRow = memo(function AssignRow({
             </span>
           )}
         </div>
-        {phone ? (
-          <span
-            dir="ltr"
-            className="text-muted-foreground self-start text-[12.5px] whitespace-nowrap tabular-nums"
-          >
-            {phone}
-          </span>
-        ) : (
-          <span
-            className={cn(
-              rsvpPresentation('pending').text,
-              'self-start text-[12.5px] font-semibold whitespace-nowrap',
-            )}
-          >
-            {t('groups.assignScreen.noPhone')}
-          </span>
-        )}
+        <PhoneLine phone={phone} />
       </div>
       <span className="flex min-w-[30px] shrink-0 flex-col items-center">
         <b className="text-[15px] leading-tight font-bold tabular-nums">

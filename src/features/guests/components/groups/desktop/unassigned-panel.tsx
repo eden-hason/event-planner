@@ -2,9 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { IconChevronDown, IconFolder, IconSearch } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconFolder,
+  IconPencil,
+  IconSearch,
+} from '@tabler/icons-react';
 import { GuestApp, GroupWithGuestsApp } from '@/features/guests/schemas';
 import { rsvpPresentation } from '@/features/guests/utils';
+import { matchesNameOrPhone } from '@/features/guests/utils/group-assignment';
 import {
   headerState,
   toggleAllVisible,
@@ -20,18 +26,22 @@ import {
   BarDivider,
   SELECTION_BAR_CLASS,
 } from '../../desktop/bulk-action-bar';
+import { EditGuestSheet } from '../edit-guest-sheet';
 import { GroupPicker } from './group-picker';
 
 /**
  * The "no group" records as a list: assign one from its row's popover, or tick
- * several and assign them together from the floating bar.
+ * several and assign them together from the floating bar. Assigning is
+ * immediate here - there is no Save - and a row's pencil edits its details.
  */
 export function UnassignedPanel({
+  eventId,
   guests,
   groups,
   onAssign,
   onNewGroup,
 }: {
+  eventId: string;
   guests: GuestApp[];
   groups: GroupWithGuestsApp[];
   onAssign: (guests: GuestApp[], group: GroupWithGuestsApp) => void;
@@ -44,32 +54,21 @@ export function UnassignedPanel({
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [popFor, setPopFor] = useState<string | null>(null);
   const [barPickerOpen, setBarPickerOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editLabel = t('groups.editGuest.dialogLabel');
 
-  // Parsed once per list, not on every tick and keystroke: formatting runs
-  // libphonenumber, and search matches the digits alone.
+  // Formatting parses each number, so it runs once per list, not on every
+  // tick and keystroke.
   const phones = useMemo(
-    () =>
-      new Map(
-        guests.map((g) => [
-          g.id,
-          {
-            shown: g.phone ? formatPhone(g.phone) : null,
-            digits: (g.phone ?? '').replace(/\D/g, ''),
-          },
-        ]),
-      ),
+    () => new Map(guests.map((g) => [g.id, formatPhone(g.phone)])),
     [guests],
   );
 
-  const q = query.trim().toLowerCase();
-  const digits = q.replace(/\D/g, '');
-  const visible = q
-    ? guests.filter(
-        (g) =>
-          g.name.toLowerCase().includes(q) ||
-          (digits.length > 0 && phones.get(g.id)!.digits.includes(digits)),
-      )
-    : guests;
+  const q = query.trim();
+  const visible = useMemo(
+    () => guests.filter((g) => matchesNameOrPhone(g, query)),
+    [guests, query],
+  );
   const visibleIds = visible.map((g) => g.id);
   const picked = guests.filter((g) => checked.has(g.id));
   const pickedVisible = visibleIds.filter((id) => checked.has(id)).length;
@@ -138,6 +137,7 @@ export function UnassignedPanel({
           </span>
           <span className="w-[150px]">{t('groups.desktop.colPhone')}</span>
           <span className="w-[90px]">{t('groups.desktop.colSeats')}</span>
+          <span className="w-[30px]" />
           <span className="w-[92px]" />
         </div>
       )}
@@ -151,7 +151,7 @@ export function UnassignedPanel({
         {visible.map((guest) => {
           const on = checked.has(guest.id);
           const popOpen = popFor === guest.id;
-          const phone = phones.get(guest.id)!.shown;
+          const phone = phones.get(guest.id);
           const trigger = (
             <button
               type="button"
@@ -199,14 +199,28 @@ export function UnassignedPanel({
                 dir="ltr"
                 className={cn(
                   'w-[150px] shrink-0 text-start text-[13px] whitespace-nowrap rtl:text-end',
-                  phone ? 'text-muted-foreground' : 'text-destructive/70',
+                  phone
+                    ? 'text-muted-foreground tabular-nums'
+                    : cn(pending.text, 'font-semibold'),
                 )}
               >
-                {phone ?? t('filters.noPhone')}
+                {phone || t('groups.assignScreen.noPhone')}
               </span>
               <span className="text-muted-foreground w-[90px] shrink-0 text-[13px]">
                 {guest.amount}
               </span>
+              <button
+                type="button"
+                aria-label={t('groups.assignScreen.edit', { name: guest.name })}
+                title={editLabel}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(guest.id);
+                }}
+                className="text-muted-foreground hover:bg-background flex size-[30px] shrink-0 items-center justify-center rounded-lg"
+              >
+                <IconPencil size={16} />
+              </button>
               {/* One popover at a time, so only the open row mounts one. */}
               {popOpen ? (
                 <GroupPicker
@@ -280,6 +294,15 @@ export function UnassignedPanel({
           </BarButton>
         </div>
       )}
+
+      <EditGuestSheet
+        variant="desktop"
+        guest={guests.find((g) => g.id === editingId) ?? null}
+        eventId={eventId}
+        onOpenChange={(open) => {
+          if (!open) setEditingId(null);
+        }}
+      />
     </>
   );
 }
