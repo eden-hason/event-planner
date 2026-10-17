@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconFolder, IconPlus, IconUsersGroup } from '@tabler/icons-react';
@@ -149,6 +149,18 @@ export function GroupsDesktop({
     selectedGroup && draft?.groupId === selectedGroup.id ? draft.ids : savedIds;
   const changes = draftChanges(savedIds, draftIds);
 
+  const selectedId = selectedGroup?.id;
+  const updateDraft = useCallback(
+    (update: (prev: ReadonlySet<string>) => Set<string>) => {
+      if (!selectedId) return;
+      setDraft((prev) => ({
+        groupId: selectedId,
+        ids: update(prev?.groupId === selectedId ? prev.ids : savedIds),
+      }));
+    },
+    [selectedId, savedIds],
+  );
+
   /** Runs `go` now, or after the Owner agrees to drop an unsaved draft. */
   const leave = (go: () => void) => {
     if (changes.dirty) setLeaveTo(() => go);
@@ -172,17 +184,18 @@ export function GroupsDesktop({
   };
 
   const handleSave = async () => {
-    if (!selectedGroup || !changes.dirty) return;
+    if (!selectedGroup || !changes.dirty) return false;
     setSaving(true);
     const saved = await groupWrites.saveMembers(
       selectedGroup,
       [...draftIds],
       [...savedIds],
     );
-    // The draft stays until the write lands, so the columns never flash back
-    // to the old members while it is in flight.
-    if (saved) setDraft(null);
     setSaving(false);
+    // The draft is kept: once the refreshed group arrives it matches the saved
+    // members and the pending marks clear, so rows never flash back to where
+    // they were while the refresh is in flight.
+    return saved;
   };
 
   const assignRecords = async (
@@ -433,15 +446,14 @@ export function GroupsDesktop({
           {view.kind === 'group' && selectedGroup && (
             <AssignPanel
               key={selectedGroup.id}
+              eventId={eventId}
               group={selectedGroup}
               unassignedGuests={unassignedGuests}
               totalRecords={stats.total}
               saved={savedIds}
               draft={draftIds}
               changes={changes}
-              onDraftChange={(ids) =>
-                setDraft({ groupId: selectedGroup.id, ids })
-              }
+              onDraftChange={updateDraft}
               saving={saving}
               onSave={handleSave}
               onEdit={() => setDialog({ mode: 'edit', group: selectedGroup })}
@@ -449,6 +461,7 @@ export function GroupsDesktop({
           )}
           {view.kind === 'unassigned' && (
             <UnassignedPanel
+              eventId={eventId}
               guests={unassignedGuests}
               groups={groups}
               onAssign={assignRecords}

@@ -6,11 +6,11 @@ import { IconListCheck, IconSearch, IconX } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { GuestApp, GroupSide } from '@/features/guests/schemas';
+import { useAssignSaveFeedback } from '@/features/guests/hooks/use-assign-save-feedback';
 import { useGroupWrites } from '@/features/guests/hooks/use-group-writes';
 import { cn } from '@/lib/utils';
 import { formatPhone } from '@/lib/phone';
 import { SideBadge } from '../../side-badge';
-import { rsvpPresentation } from '@/features/guests/utils';
 import {
   draftChanges,
   matchesNameOrPhone,
@@ -22,7 +22,7 @@ import {
   toggleOne,
 } from '@/features/guests/utils/guest-selection';
 import { AssignRow } from './assign-row';
-import { EditGuestSheet } from './edit-guest-sheet';
+import { EditGuestSheet } from '../edit-guest-sheet';
 
 /**
  * Just enough of a group to drive the sheet - a freshly created group (from
@@ -49,9 +49,6 @@ interface AssignGuestsScreenProps {
 }
 
 type Tab = 'out' | 'in';
-
-/** How long a just-saved row stays highlighted in its new tab. */
-const FLASH_MS = 2200;
 
 /**
  * Assigning records to one group, on a phone. The tabs list the group as
@@ -80,13 +77,6 @@ export function AssignGuestsScreen({
   /** The members Save would leave the group with. */
   const [draft, setDraft] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
-  /** Rows the last save moved, highlighted for a moment. */
-  const [flash, setFlash] = useState<ReadonlySet<string>>(new Set());
-  /** What the last save did, until the draft changes again. */
-  const [lastSave, setLastSave] = useState<{
-    added: number;
-    removed: number;
-  } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,20 +86,13 @@ export function AssignGuestsScreen({
       setSelectMode(false);
       setTab('out');
       setQuery('');
-      setFlash(new Set());
-      setLastSave(null);
+      resetFeedback();
       setEditingId(null);
     }
     // Only re-seed when the sheet opens for a (possibly new) group - not when
     // the revalidated group arrives after a save or an edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, group?.id]);
-
-  useEffect(() => {
-    if (flash.size === 0) return;
-    const timer = setTimeout(() => setFlash(new Set()), FLASH_MS);
-    return () => clearTimeout(timer);
-  }, [flash]);
 
   /**
    * The group's members as saved - what the tabs list. Read from the live
@@ -146,25 +129,33 @@ export function AssignGuestsScreen({
     [isOut, outList, inList, query],
   );
 
-  const { added, removed, dirty } = draftChanges(base, draft);
+  const changes = draftChanges(base, draft);
+  const { added, removed, dirty } = changes;
   const standingOf = (id: string) => membershipStanding(id, base, draft);
+  const {
+    flash,
+    recordSave,
+    clearLastSave,
+    reset: resetFeedback,
+    headline,
+    summary,
+  } = useAssignSaveFeedback({
+    saved: base,
+    draft,
+    changes,
+    totalRecords,
+  });
 
   const updateDraft = useCallback(
     (update: (prev: Set<string>) => Set<string>) => {
       setDraft(update);
-      setLastSave(null);
+      clearLastSave();
     },
-    [],
+    [clearLastSave],
   );
 
   const toggleMove = useCallback(
-    (id: string) =>
-      updateDraft((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      }),
+    (id: string) => updateDraft((prev) => toggleOne(prev, id)),
     [updateDraft],
   );
 
@@ -216,43 +207,16 @@ export function AssignGuestsScreen({
     // A failed save keeps every mark, so it can be tried again.
     if (!ok) return;
 
-    setFlash(new Set(moved.map((g) => g.id)));
-    setLastSave({ added, removed });
+    recordSave(
+      moved.map((g) => g.id),
+      changes,
+    );
   };
 
-  const editing = editingId
-    ? (pool.find((g) => g.id === editingId) ?? null)
-    : null;
+  const editing = pool.find((g) => g.id === editingId) ?? null;
 
   if (!rendered) return null;
 
-  const inNow = base.size;
-  const inTo = draft.size;
-  const footer = dirty
-    ? {
-        tone: cn(rsvpPresentation('pending').text, 'font-semibold'),
-        parts: [
-          added > 0 && t('groups.assignScreen.joinPending', { count: added }),
-          removed > 0 &&
-            t('groups.assignScreen.leavePending', { count: removed }),
-          t('groups.assignScreen.unsaved'),
-        ],
-      }
-    : lastSave
-      ? {
-          tone: cn(rsvpPresentation('confirmed').text, 'font-semibold'),
-          parts: [
-            t('groups.assignScreen.saved'),
-            lastSave.added > 0 &&
-              t('groups.assignScreen.joinDone', { count: lastSave.added }),
-            lastSave.removed > 0 &&
-              t('groups.assignScreen.leaveDone', { count: lastSave.removed }),
-          ],
-        }
-      : {
-          tone: 'text-muted-foreground',
-          parts: [t('groups.mobile.ofTotalRecords', { count: totalRecords })],
-        };
   const empty = query.trim()
     ? 'noMatches'
     : isOut
@@ -421,22 +385,17 @@ export function AssignGuestsScreen({
       <footer className="bg-card flex items-center gap-2 border-t px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+10px)]">
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-[15px] font-extrabold tabular-nums">
-            {inTo !== inNow
-              ? t('groups.assignScreen.inGroupProjected', {
-                  from: inNow,
-                  to: inTo,
-                })
-              : t('groups.assignScreen.inGroup', { count: inNow })}
+            {headline}
           </span>
-          <span className={cn('truncate text-xs', footer.tone)}>
-            {footer.parts.filter(Boolean).join(' · ')}
+          <span className={cn('truncate text-xs', summary.tone)}>
+            {summary.text}
           </span>
         </div>
         {selectMode ? (
           <Button
             onClick={handleApplyBulk}
             disabled={picked.length === 0 || saving}
-            className="h-12 shrink-0 rounded-xl px-[18px] text-[15px] font-bold"
+            className="shrink-0 font-bold"
           >
             {isOut
               ? t('groups.assignScreen.bulkAdd', { count: picked.length })
@@ -448,14 +407,13 @@ export function AssignGuestsScreen({
               variant="outline"
               disabled={!dirty || saving}
               onClick={() => updateDraft(() => new Set(base))}
-              className="h-12 rounded-xl px-4 text-[15px]"
             >
               {tCommon('cancel')}
             </Button>
             <Button
               onClick={() => void handleSave()}
               disabled={!dirty || saving}
-              className="h-12 rounded-xl px-[22px] text-[15px] font-bold"
+              className="font-bold"
             >
               {t('groups.mobile.saveButton')}
             </Button>
@@ -464,10 +422,11 @@ export function AssignGuestsScreen({
       </footer>
 
       <EditGuestSheet
+        variant="mobile"
         guest={editing}
         eventId={eventId}
-        groupName={group?.name ?? ''}
-        standing={editing ? standingOf(editing.id) : 'out'}
+        groupName={group?.name}
+        standing={editing && standingOf(editing.id)}
         pendingMoves={added + removed}
         onOpenChange={(isOpen) => {
           if (!isOpen) setEditingId(null);

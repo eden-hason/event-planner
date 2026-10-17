@@ -1,23 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconFolder, IconInfoCircle, IconX } from '@tabler/icons-react';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { upsertGuest } from '@/features/guests/actions/guests';
 import type { GroupSide, GuestApp } from '@/features/guests/schemas';
 import type { MembershipStanding } from '@/features/guests/types';
 import { rsvpPresentation } from '@/features/guests/utils';
+import {
+  amountDisplay,
+  resolveAmounts,
+} from '@/features/guests/utils/guest-amount';
 import { describeUpsertFailure } from '@/features/guests/utils/upsert-error';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { formatPhone } from '@/lib/phone';
@@ -26,18 +29,23 @@ import { cn } from '@/lib/utils';
 const SIDES = ['bride', 'groom', null] as const;
 
 /**
- * A Guest Record's details, edited from inside the assign screen without
- * leaving it: name, phone and side. Membership is not edited here - the strip
+ * A Guest Record's details, edited from inside the assign view without
+ * leaving it: name, phone, side and how many are invited. Membership is not edited here - the strip
  * at the top says where the record stands in the open draft, and saving this
- * sheet writes only the details, so the draft is untouched.
+ * sheet writes only the details, so the draft is untouched. A bottom sheet on
+ * a phone, a centred dialog on desktop.
  */
 interface EditGuestProps {
+  variant: 'mobile' | 'desktop';
   eventId: string;
-  groupName: string;
-  /** Where the record stands against the open draft. */
-  standing: MembershipStanding;
-  /** How many moves the open draft holds. */
-  pendingMoves: number;
+  /**
+   * The open group, where the record stands against its draft, and how many
+   * moves the draft holds. Left out where there is no group or draft (the
+   * "no group" list): the record reads as having no group.
+   */
+  groupName?: string;
+  standing?: MembershipStanding | null;
+  pendingMoves?: number;
 }
 
 export function EditGuestSheet({
@@ -49,21 +57,39 @@ export function EditGuestSheet({
   guest: GuestApp | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
+  const open = guest !== null;
+  const form = guest && (
+    // Keyed so each record opens on its own saved values.
+    <EditGuestForm
+      key={guest.id}
+      guest={guest}
+      {...props}
+      onClose={() => onOpenChange(false)}
+    />
+  );
+
+  if (props.variant === 'desktop') {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          dir={dir}
+          showCloseButton={false}
+          className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden rounded-[18px] p-0 sm:max-w-[480px]"
+        >
+          {form}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Sheet open={guest !== null} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
         className="flex h-[80dvh] flex-col gap-0 overflow-clip rounded-t-[24px] border-0 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-200 [&_[data-slot=sheet-close]]:hidden"
       >
-        {guest && (
-          // Keyed so each record opens on its own saved values.
-          <EditGuestForm
-            key={guest.id}
-            guest={guest}
-            {...props}
-            onClose={() => onOpenChange(false)}
-          />
-        )}
+        {form}
       </SheetContent>
     </Sheet>
   );
@@ -77,19 +103,24 @@ const GROUP_LINE_KEY: Record<MembershipStanding, string> = {
 };
 
 function EditGuestForm({
+  variant,
   guest,
   eventId,
-  groupName,
-  standing,
-  pendingMoves,
+  groupName = '',
+  standing: standingProp,
+  pendingMoves = 0,
   onClose,
 }: EditGuestProps & { guest: GuestApp; onClose: () => void }) {
   const t = useTranslations('guests');
   const tCommon = useTranslations('common');
   const [name, setName] = useState(guest.name);
-  const [phone, setPhone] = useState(formatPhone(guest.phone));
+  const standing = standingProp ?? 'out';
+  const [phone, setPhone] = useState(() => formatPhone(guest.phone));
+  const savedInvited = amountDisplay(guest).invited;
+  const [invited, setInvited] = useState(savedInvited);
   const [side, setSide] = useState<GroupSide | null>(guest.side ?? null);
   const [saving, setSaving] = useState(false);
+  const mobile = variant === 'mobile';
 
   const title = name.trim() || t('groups.editGuest.untitled');
   const noPhone = !phone.trim();
@@ -106,6 +137,18 @@ function EditGuestForm({
     formData.set('name', name.trim());
     formData.set('phone', phone.trim());
     formData.set('side', side ?? 'null');
+    // Only a changed count is sent, so saving a name never touches it. The
+    // answer moves with the invitation unless the record is confirmed, as in
+    // the Guests tab's drawer (ADR 0026).
+    if (invited !== savedInvited) {
+      const amounts = resolveAmounts({
+        rsvpStatus: guest.rsvpStatus,
+        invited,
+        coming: guest.amount,
+      });
+      formData.set('invitedAmount', String(amounts.invitedAmount));
+      formData.set('amount', String(amounts.amount));
+    }
 
     setSaving(true);
     const work = upsertGuest(eventId, formData).then((result) => {
@@ -130,7 +173,12 @@ function EditGuestForm({
 
   return (
     <>
-      <SheetHeader className="flex-row items-center gap-[11px] border-b px-4 pt-5 pb-3.5">
+      <div
+        className={cn(
+          'flex items-center gap-[11px] border-b',
+          mobile ? 'px-4 pt-5 pb-3.5' : 'gap-3 px-5 pt-[18px] pb-4',
+        )}
+      >
         <span
           className={cn(
             'flex size-11 shrink-0 items-center justify-center rounded-full text-lg font-bold',
@@ -140,12 +188,18 @@ function EditGuestForm({
           {title.charAt(0).toUpperCase()}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <SheetTitle className="truncate text-[18px] leading-tight font-extrabold">
+          {/* Radix's dialog title and description, which a Sheet is too */}
+          <DialogTitle
+            className={cn(
+              'truncate leading-tight font-extrabold',
+              mobile ? 'text-[18px]' : 'text-[19px]',
+            )}
+          >
             {title}
-          </SheetTitle>
-          <SheetDescription className="text-muted-foreground text-[12.5px]">
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-[12.5px]">
             {t('groups.editGuest.subtitle')}
-          </SheetDescription>
+          </DialogDescription>
         </div>
         <button
           type="button"
@@ -155,7 +209,7 @@ function EditGuestForm({
         >
           <IconX size={16} />
         </button>
-      </SheetHeader>
+      </div>
 
       <form
         id="edit-guest-sheet-form"
@@ -163,7 +217,10 @@ function EditGuestForm({
           e.preventDefault();
           void handleSave();
         }}
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-3.5"
+        className={cn(
+          'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto',
+          mobile ? 'px-4 py-3.5' : 'px-5 py-[18px]',
+        )}
       >
         <div
           className={cn(
@@ -179,45 +236,54 @@ function EditGuestForm({
           <span className="flex-1">{groupLine}</span>
         </div>
 
-        <label className="flex flex-col gap-[5px]">
-          <span className="text-muted-foreground text-xs font-semibold">
-            {t('groups.editGuest.nameLabel')}
-          </span>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('groups.editGuest.namePlaceholder')}
-            className="h-[42px] rounded-[11px] text-[15px] font-medium"
-          />
-        </label>
-
-        <label className="flex flex-col gap-[5px]">
-          <span className="text-muted-foreground text-xs font-semibold">
-            {t('groups.editGuest.phoneLabel')}
-          </span>
-          <Input
-            dir="ltr"
-            type="tel"
-            inputMode="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="050-000-0000"
-            className={cn(
-              'h-[42px] rounded-[11px] text-end text-[15px] font-medium tabular-nums',
-              noPhone && 'border-rsvp-pending border-[1.5px]',
-            )}
-          />
-          {noPhone && (
-            <span
-              className={cn(
-                rsvpPresentation('pending').text,
-                'text-[12.5px] leading-normal',
-              )}
-            >
-              {t('groups.editGuest.noPhoneHint')}
-            </span>
+        {/* Name and phone share a line on desktop */}
+        <div
+          className={cn(
+            mobile
+              ? 'contents'
+              : 'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-start gap-3',
           )}
-        </label>
+        >
+          <label className="flex flex-col gap-[5px]">
+            <span className="text-muted-foreground text-xs font-semibold">
+              {t('groups.editGuest.nameLabel')}
+            </span>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('groups.editGuest.namePlaceholder')}
+              className="h-[42px] rounded-[11px] text-[15px] font-medium"
+            />
+          </label>
+
+          <label className="flex flex-col gap-[5px]">
+            <span className="text-muted-foreground text-xs font-semibold">
+              {t('groups.editGuest.phoneLabel')}
+            </span>
+            <Input
+              dir="ltr"
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="050-000-0000"
+              className={cn(
+                'h-[42px] rounded-[11px] text-end text-[15px] font-medium tabular-nums',
+                noPhone && 'border-rsvp-pending border-[1.5px]',
+              )}
+            />
+            {noPhone && (
+              <span
+                className={cn(
+                  rsvpPresentation('pending').text,
+                  'text-[12.5px] leading-normal',
+                )}
+              >
+                {t('groups.editGuest.noPhoneHint')}
+              </span>
+            )}
+          </label>
+        </div>
 
         <div className="grid grid-cols-[minmax(0,1fr)_88px] gap-2.5">
           <div className="flex flex-col gap-[5px]">
@@ -253,17 +319,40 @@ function EditGuestForm({
           </div>
           <div className="flex flex-col gap-[5px]">
             <span className="text-muted-foreground text-xs font-semibold">
-              {t('groups.editGuest.seatsLabel')}
+              {t('list.drawer.invited')}
             </span>
-            <span className="flex h-[42px] items-center rounded-[11px] border px-3 text-[15px] font-medium tabular-nums">
-              {guest.amount}
-            </span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={invited}
+              // Selected on focus, so typing replaces the count instead of
+              // appending to it (an emptied field falls back to 1).
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => {
+                const next = Math.floor(Number(e.target.value));
+                setInvited(Number.isFinite(next) && next >= 1 ? next : 1);
+              }}
+              className="h-[42px] rounded-[11px] text-center text-[15px] font-medium tabular-nums"
+            />
           </div>
         </div>
       </form>
 
-      <SheetFooter className="flex-col gap-[9px] border-t px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
-        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <div
+        className={cn(
+          'flex border-t',
+          mobile
+            ? 'flex-col gap-[9px] px-4 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+20px)]'
+            : 'flex-row items-center gap-2 px-5 py-3',
+        )}
+      >
+        <span
+          className={cn(
+            'text-muted-foreground flex items-center gap-1.5',
+            mobile ? 'text-xs' : 'min-w-0 flex-1 text-[12.5px]',
+          )}
+        >
           <IconInfoCircle size={14} className="shrink-0" />
           {pendingMoves > 0
             ? t('groups.editGuest.draftKept', { count: pendingMoves })
@@ -273,7 +362,7 @@ function EditGuestForm({
           <Button
             type="button"
             variant="outline"
-            className="h-12 flex-1 text-[15px]"
+            className={cn(mobile && 'flex-1')}
             onClick={onClose}
           >
             {tCommon('cancel')}
@@ -282,12 +371,12 @@ function EditGuestForm({
             type="submit"
             form="edit-guest-sheet-form"
             disabled={!canSave}
-            className="h-12 flex-[1.4] text-[15px] font-bold"
+            className={cn('font-bold', mobile && 'flex-[1.4]')}
           >
             {t('groups.editGuest.save')}
           </Button>
         </div>
-      </SheetFooter>
+      </div>
     </>
   );
 }
