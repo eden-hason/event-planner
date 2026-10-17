@@ -282,6 +282,9 @@ export function HomepageClient() {
         /* ===== REVIEWS ===== */
         .reviews{overflow:hidden}
         .reviews .section-head{margin-bottom:44px}
+        .reviews-link{margin-top:6px}
+        .reviews-link a{color:var(--primary);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+        .reviews-link a:hover{color:var(--primary-deep)}
         /* Drifts left-to-right: in RTL the next card comes in from the left, where the eye goes next */
         .rv-marquee{--rv-card:380px;--rv-gap:24px;overflow:hidden;padding:12px 0 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
         .rv-track{display:flex;width:max-content;animation:rv-drift 110s linear infinite}
@@ -686,6 +689,22 @@ export function HomepageClient() {
         </div>
       </section>
 
+      {/* REVIEWS */}
+      <section className="section reviews" id="reviews" dir="rtl">
+        <div className="wrap">
+          <div className="section-head reveal">
+            <div className="eyebrow">ביקורות</div>
+            <h2 className="section-title">לקוחות מספרים על החוויה</h2>
+            <p className="section-sub">ביקורות אמיתיות של לקוחות Kululu, כפי שנכתבו ב-Google</p>
+            <p className="section-sub reviews-link">
+              לדף העסק שלנו{' '}
+              <a href="https://maps.google.com/?cid=1514774218887257554" target="_blank" rel="noopener noreferrer">לחצו כאן</a>
+            </p>
+          </div>
+        </div>
+        <Testimonials />
+      </section>
+
       {/* HOW IT WORKS */}
       <section className="section how" id="how" dir="rtl">
         <div className="wrap">
@@ -713,18 +732,6 @@ export function HomepageClient() {
             </div>
           </div>
         </div>
-      </section>
-
-      {/* REVIEWS */}
-      <section className="section reviews" id="reviews" dir="rtl">
-        <div className="wrap">
-          <div className="section-head reveal">
-            <div className="eyebrow">ביקורות</div>
-            <h2 className="section-title">לקוחות מספרים על החוויה</h2>
-            <p className="section-sub">ביקורות אמיתיות של לקוחות Kululu, כפי שנכתבו ב-Google</p>
-          </div>
-        </div>
-        <Testimonials />
       </section>
 
       {/* PRICING */}
