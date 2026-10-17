@@ -720,7 +720,7 @@ export function HomepageClient() {
         <div className="wrap">
           <div className="section-head reveal">
             <div className="eyebrow">ביקורות</div>
-            <h2 className="section-title">מה הלקוחות שלנו אומרים</h2>
+            <h2 className="section-title">לקוחות מספרים על החוויה</h2>
             <p className="section-sub">ביקורות אמיתיות של לקוחות Kululu, כפי שנכתבו ב-Google</p>
           </div>
         </div>
