@@ -5,6 +5,7 @@ import {
   InboundClaimError,
   type InboundWhatsAppMessage,
 } from '@/features/confirmation/services/confirmation-conversation';
+import { ownerMessageStatusUpdate } from '@/features/owner-messages/utils/status';
 import { parseCallbackTag } from '../utils/whatsapp-callback-tag';
 
 /**
@@ -242,6 +243,7 @@ async function processStatusUpdates(
   // Conversation replies and Test Messages have nothing to apply to, and are
   // known to be ours, so they cost this one pass and nothing else.
   const byAttemptId = new Map<string, WhatsAppStatus>();
+  const byOwnerMessageId = new Map<string, WhatsAppStatus>();
   const untagged: string[] = [];
   let untracked = 0;
 
@@ -249,6 +251,7 @@ async function processStatusUpdates(
     const tag = parseCallbackTag(status.biz_opaque_callback_data);
     if (!tag) untagged.push(messageId);
     else if (tag.kind === 'attempt') byAttemptId.set(tag.attemptId, status);
+    else if (tag.kind === 'owner') byOwnerMessageId.set(tag.ownerMessageId, status);
     else untracked++;
   }
 
@@ -271,11 +274,18 @@ async function processStatusUpdates(
     orphanedTags = [...byAttemptId.keys()].filter((id) => !found.has(id));
   }
 
+  // Owner Messages (ADR 0039): one row each, no Delivery above them.
+  for (const [ownerMessageId, status] of byOwnerMessageId) {
+    const outcome = await applyOwnerMessageStatus(supabase, ownerMessageId, status);
+    if (outcome === 'error') counts.failedWrites++;
+  }
+
   // The one line that says the endpoint is doing its job. Per-row logging would
   // be 1500 lines for a single 500-guest blast; this is one.
   console.log(
     `${TAG} ${statuses.length} status(es) -> ${byMessageId.size} message(s), ` +
       `${counts.matched} matched, ${counts.applied} applied, ${counts.skipped} already current, ` +
+      `${byOwnerMessageId.size} owner message(s), ` +
       `${untracked} untracked by design, ${untagged.length} untagged, ${counts.failedWrites} write error(s)`,
   );
 
@@ -415,6 +425,38 @@ async function applyStatus(
     console.log(`${TAG} [debug] Attempt ${attempt.id}: ${current} -> ${target}`);
   }
 
+  return 'applied';
+}
+
+/**
+ * Lands a status on an Owner Message row. Guarded on the statuses it outranks,
+ * like an attempt, so redeliveries and out-of-order statuses change nothing.
+ */
+async function applyOwnerMessageStatus(
+  supabase: SupabaseClient,
+  ownerMessageId: string,
+  status: WhatsAppStatus,
+): Promise<'applied' | 'error'> {
+  const update = ownerMessageStatusUpdate(status.status);
+  if (!update) return 'applied';
+
+  const patch: Record<string, unknown> = { status: update.status };
+  if (update.status === 'failed') {
+    patch.error_message = formatErrors(status.errors);
+    console.warn(
+      `${TAG} Owner Message ${ownerMessageId} to ${maskPhone(status.recipient_id)} FAILED - ${patch.error_message}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from('owner_messages')
+    .update(patch)
+    .eq('id', ownerMessageId)
+    .in('status', update.from);
+  if (error) {
+    console.error(`${TAG} Update failed for owner message ${ownerMessageId}:`, error);
+    return 'error';
+  }
   return 'applied';
 }
 
