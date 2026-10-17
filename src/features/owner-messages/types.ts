@@ -32,7 +32,6 @@ export type OwnerMessageRow = {
 
 /** What a send needs to know about the Event and its creator. */
 export type OwnerMessageFacts = {
-  eventId: string;
   /** The Event's creator - the only recipient (ADR 0039). */
   ownerUserId: string;
   ownerFullName: string | null;

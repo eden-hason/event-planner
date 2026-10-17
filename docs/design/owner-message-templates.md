@@ -17,10 +17,16 @@ Sent the first time an Event is paid.
 היי {{1}}, איזה כיף שהצטרפת ל-Kululu! 🎉
 
 החבילה שלך: {{2}}, {{3}} רשומות.
-ההזמנות וסבבי האישורים כבר מחכים לך במערכת - אפשר לראות, לערוך ולתזמן הכל משם.
+ההזמנות וסבבי האישורים כבר מחכים לך במערכת - אפשר לראות, לערוך ולתזמן הכל משם:
+https://kulu-lu.com/app
 
 יש שאלה? אנחנו זמינים בוואטסאפ, בכפתור למטה
 ```
+
+The app link is plain text in the body, not a button. WhatsApp opens a template button in
+its own in-app browser, where the Owner is not signed in. A link in the body opens in the
+phone's own browser. It is static: `/app` sends a signed-in Owner to their latest Event's
+Home, and asks anyone else to sign in first.
 
 Addressed to one person, because it goes to the Event's creator only. Every second-person
 word (הצטרפת, שלך, לך) is spelled the same for a man and a woman in unpointed Hebrew, so
@@ -35,9 +41,7 @@ would force a guess.
 
 **Buttons**
 
-1. URL, dynamic: text `לאירוע שלי`, URL `https://<site domain>/{{1}}`. The code sends
-   `app/<eventId>/home` as the suffix. Example: `app/00000000-0000-0000-0000-000000000000/home`
-2. URL, static: text `דברו איתנו`, URL `https://<site domain>/support`. Meta does not
+1. URL, static: text `דברו איתנו`, URL `https://kulu-lu.com/support`. Meta does not
    accept a `wa.me` link in a template button, so the button opens Kululu's own domain and
    `next.config.ts` redirects to `wa.me/972552639234` (`KULULU_WHATSAPP_NUMBER` in
    `src/features/billing/utils/contact.ts`, the same line the homepage uses).
@@ -49,29 +53,28 @@ Sent at 18:00 Israel the day after the Event, or Sunday if that day is Saturday.
 **Body**
 
 ```
-היי {{1}}
-שמחנו לקחת חלק בתכנון האירוע המרגש שלכם! מקווים שנהניתם מכל רגע ושאתם עדיין בעננים
+היי {{1}},
+שמחנו לקחת חלק בתכנון האירוע המרגש שלכם! מקווים שנהניתם מכל רגע.
 
 כל המידע מהאירוע נשאר זמין לכם במערכת.
-
 יש לכם אפשרות לתעד במערכת את המתנות שקיבלתם, בצורה פשוטה ונוחה 🎁
 
-אם הייתם מרוצים מהחוויה איתנו, נשמח ממש להמלצה קצרה מכם בדף העסק שלנו בגוגל 💜
-זה לוקח רק רגע ועוזר לנו מאוד להגיע לעוד אנשים 🙏🏼
+אם הייתם מרוצים מהחוויה איתנו, נשמח ממש להמלצה קצרה מכם בדף העסק שלנו 💜
+https://kulu-lu.com/review
 
-תודה ענקית על האמון והבחירה ב-Kululu
+תודה ענקית על האמון והבחירה ב-Kululu 🙏🏼
 ```
 
 | Param | Value | Example |
 |---|---|---|
 | `{{1}}` | Owner's first name | נועה |
 
-**Buttons**, gifts first, so the template stays utility:
-
-1. URL, dynamic: text `לתיעוד המתנות`, URL `https://<site domain>/{{1}}`. The code sends
-   `app/<eventId>/gifting`.
-2. URL, static: text `להמלצה בגוגל`, URL the Google Business Profile "Ask for reviews" link
-   (`https://g.page/r/<id>/review`), not the `maps.google.com/?cid=...` page link.
+**Buttons:** none. The gifting page is mentioned in the text only. The review link is plain
+text in the body, so it opens in the phone's own browser rather than WhatsApp's.
+`/review` is Kululu's own short link: `next.config.ts` redirects it to
+`GOOGLE_REVIEW_URL` in `src/lib/config/contact.ts`, the Business Profile's "Ask for
+reviews" link (`https://g.page/r/CdLdsV8gjwUVEAI/review`), which opens the review form
+directly. Changing it there changes nothing in the template.
 
 ## Before turning it on
 
