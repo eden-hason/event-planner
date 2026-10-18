@@ -19,6 +19,7 @@ import { parseConversationId, type ParsedConversationId } from '../utils/convers
 import { buildMealOptions } from '../utils/meal-options';
 import { parseMealCounts } from '../utils/meal-counts';
 import { isRsvpOpen } from '../utils/rsvp-cutoff';
+import { matchTypedQuickReply } from '../utils/typed-quick-reply';
 import { recordGuestRsvp } from './record-rsvp';
 
 /**
@@ -26,10 +27,12 @@ import { recordGuestRsvp } from './record-rsvp';
  * one RSVP write and one reply out (CONTEXT.md, ADR 0017).
  *
  * Called by the WhatsApp webhook processor for every inbound message: a tap, or
- * text - which is read as a Guest count when the latest reply to that phone
- * asked for one (ADR 0023), and otherwise gets the fixed prompt. Replies
- * are posted inline, not queued - they answer something the Guest did seconds
- * ago - and are free, because the Guest's own message opened the 24-hour window.
+ * text - which is read as the tap when it is an RSVP button's label quoting the
+ * template (some Guests' WhatsApp sends a tap that way), as a Guest count when
+ * the latest reply to that phone asked for one (ADR 0023), and otherwise gets
+ * the fixed prompt (ADR 0040). Replies are posted inline, not queued - they
+ * answer something the Guest did seconds ago - and are free, because the
+ * Guest's own message opened the 24-hour window.
  *
  * Idempotent by claim: the message id is inserted into whatsapp_inbound_messages
  * before anything else, and a message whose claim already exists is skipped. A
@@ -55,6 +58,8 @@ export interface InboundWhatsAppMessage {
     list_reply?: { id?: string; title?: string };
   };
   text?: { body?: string };
+  /** The message this one quotes - for a text, the message it was sent in reply to. */
+  context?: { id?: string };
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -84,6 +89,39 @@ function readTap(message: InboundWhatsAppMessage): { id: string; title: string }
     return { id: reply.id, title: reply.title ?? '' };
   }
   return null;
+}
+
+/**
+ * The RSVP tap a text stands for, when it is a template quick reply's label
+ * quoting the template send it belongs to (utils/typed-quick-reply.ts). The
+ * quoted message is one of our attempts, so it names the Delivery - and with it
+ * the token a real tap would have carried.
+ */
+async function readTypedQuickReply(
+  supabase: SupabaseClient,
+  message: InboundWhatsAppMessage,
+  text: string,
+): Promise<ParsedConversationId | null> {
+  const quotedId = message.context?.id;
+  if (!quotedId || !text) return null;
+
+  const { data } = await supabase
+    .from('message_delivery_attempts')
+    .select('message_deliveries!inner (confirmation_token), message_templates (payload)')
+    .eq('channel', 'whatsapp')
+    .eq('external_message_id', quotedId)
+    .maybeSingle();
+  if (!data) return null;
+
+  const token = (data.message_deliveries as unknown as { confirmation_token: string | null })
+    .confirmation_token;
+  const template = data.message_templates as unknown as {
+    payload: { parameters?: { buttonPlaceholders?: unknown } } | null;
+  } | null;
+  const answer = matchTypedQuickReply(template?.payload?.parameters?.buttonPlaceholders, text);
+  if (!token || !answer) return null;
+
+  return { token, action: { type: answer }, amount: null };
 }
 
 type ClaimRow = { id: string };
@@ -522,6 +560,13 @@ export async function handleInboundWhatsAppMessage(
       return;
     }
     await handleTap(supabase, message, claimed.id, parsed);
+    return;
+  }
+
+  const typedTap = await readTypedQuickReply(supabase, message, text);
+  if (typedTap) {
+    console.log(`${TAG} Read a typed quick-reply label as a tap (${typedTap.action.type})`);
+    await handleTap(supabase, message, claimed.id, typedTap);
     return;
   }
 
