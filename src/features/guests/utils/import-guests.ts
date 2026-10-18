@@ -97,7 +97,9 @@ export function normalizePhone(phone: string): string {
  * - Converts Hebrew/Arabic-Indic digits to ASCII
  * - Strips spaces, dashes, parens, dots
  * - Replaces leading +972 / 972 with 0
- * Returns null if the result is still not a valid IL mobile.
+ * - Keeps the leading + of any other country code, so a number from abroad
+ *   survives as international rather than being read as Israeli
+ * Returns null if the result is still not a valid guest phone.
  */
 export function autoFixPhone(raw: string): string | null {
   if (!raw) return null;
@@ -108,11 +110,14 @@ export function autoFixPhone(raw: string): string | null {
   );
 
   // Strip formatting characters
+  const international = fixed.trim().startsWith('+');
   fixed = fixed.replace(/[\s\-().+]/g, '');
 
   // Replace leading country codes: 972 → 0
   if (fixed.startsWith('972')) {
     fixed = '0' + fixed.slice(3);
+  } else if (international) {
+    fixed = '+' + fixed;
   }
 
   // Validate with libphonenumber (reuse schema logic via ImportGuestSchema)

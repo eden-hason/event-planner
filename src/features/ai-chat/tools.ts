@@ -111,7 +111,9 @@ export function buildTools(supabase: SupabaseClient, eventId: string) {
         phone: z
           .string()
           .optional()
-          .describe('Israeli mobile phone number, e.g. 054-1234567'),
+          .describe(
+            'Mobile phone number: Israeli as typed (054-1234567), or from abroad with its + country code (+1 212 555 0100)',
+          ),
         side: sideSchema.optional().describe('Which side the guest belongs to'),
         amount: z
           .number()

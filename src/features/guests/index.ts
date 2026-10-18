@@ -59,7 +59,7 @@ export {
 
 // Schemas/Types
 export {
-  israeliMobilePhoneSchema,
+  guestPhoneSchema,
   GuestAppSchema,
   GuestWithGroupAppSchema,
   GuestDbSchema,

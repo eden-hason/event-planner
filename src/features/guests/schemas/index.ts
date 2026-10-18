@@ -13,30 +13,38 @@ export const MealCountsSchema = z.partialRecord(
   z.number().int().min(1),
 );
 
-function isIsraeliMobile(val: string): boolean {
+/**
+ * A number a Guest can be messaged on. Israeli numbers must be mobile, as
+ * before; a number from anywhere else only has to be valid, and has to be typed
+ * with its `+` country code, since an unprefixed number is read as Israeli.
+ * A Guest abroad is reached on WhatsApp alone - SMS is Israeli-only
+ * (`canReceiveSms` in `@/lib/phone`).
+ */
+function isValidGuestPhone(val: string): boolean {
   try {
     const phone = parsePhoneNumberWithError(val, 'IL');
+    if (!phone.isValid()) return false;
     // Israeli mobile prefixes (050, 052–059) always have a national number starting with 5.
     // Avoids requiring the "max" metadata build which getType() needs.
-    return phone.isValid() && phone.nationalNumber.startsWith('5');
+    return phone.country !== 'IL' || phone.nationalNumber.startsWith('5');
   } catch {
     return false;
   }
 }
 
-export function israeliMobilePhoneSchema(message: string) {
+export function guestPhoneSchema(message: string) {
   return z
     .string()
     .nullable()
     .optional()
     .refine(
-      (val) => !val || val.trim().length === 0 || isIsraeliMobile(val),
+      (val) => !val || val.trim().length === 0 || isValidGuestPhone(val),
       { message },
     );
 }
 
-const israeliMobilePhone = israeliMobilePhoneSchema(
-  'Must be a valid Israeli mobile number (e.g. 054-1234567)',
+const guestPhone = guestPhoneSchema(
+  'Must be a valid mobile number (e.g. 054-1234567, or +1 212 555 0100 from abroad)',
 );
 
 // --- 1. The "Canonical" App-Level Schema ---
@@ -51,7 +59,7 @@ export const GuestAppSchema = z.object({
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long'),
-  phone: israeliMobilePhone,
+  phone: guestPhone,
   // Foreign key to groups table
   groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
@@ -195,7 +203,7 @@ export const GuestUpsertSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(255, 'Name is too long')
     .optional(),
-  phone: israeliMobilePhone,
+  phone: guestPhone,
   // Foreign key to groups table
   groupId: z.uuid().nullable().optional(),
   rsvpStatus: z
@@ -237,7 +245,7 @@ export const AppToDbTransformerSchema = GuestUpsertSchema.transform(
     if (appData.phone !== undefined) {
       // Canonicalised here rather than at the call sites, so every path that
       // upserts a guest through this transform stores E.164 by construction.
-      // `israeliMobilePhone` above only validates - it passes the raw string
+      // `guestPhone` above only validates - it passes the raw string
       // through, which is how mixed formats reached the column.
       dbData.phone_number = appData.phone ? toE164(appData.phone) : null;
     }
@@ -446,7 +454,7 @@ export const ImportGuestSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => !val || val.trim().length === 0 || isIsraeliMobile(val),
+      (val) => !val || val.trim().length === 0 || isValidGuestPhone(val),
       { message: 'import.validate.errors.phoneInvalid' },
     ),
   amount: z.coerce
@@ -476,7 +484,7 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   'import.validate.errors.nameTooShort': 'Name must be at least 2 characters',
   'import.validate.errors.nameTooLong': 'Name is too long',
   'import.validate.errors.phoneInvalid':
-    'Must be a valid Israeli mobile number (e.g. 054-1234567)',
+    'Must be a valid mobile number (e.g. 054-1234567, or +1 212 555 0100 from abroad)',
   'import.validate.errors.phoneExists':
     'Phone number already exists in your guest list',
   'import.validate.errors.phoneDuplicateCsv':

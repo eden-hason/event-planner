@@ -22,6 +22,7 @@ import {
   type SmsFallbackTrigger,
 } from '../utils';
 import { sendingConfig } from '@/lib/config/sending';
+import { canReceiveSms } from '@/lib/phone';
 
 /**
  * The SMS Fallback engine (CONTEXT.md, ADR 0012): a further SMS attempt for a
@@ -53,7 +54,8 @@ export type SmsFallbackExclusionReason =
   | 'system_failure'
   | 'already_sms'
   | 'not_whatsapp'
-  | 'no_phone';
+  | 'no_phone'
+  | 'not_israeli';
 
 export type SmsFallbackRecipient = {
   deliveryId: string;
@@ -308,6 +310,8 @@ export function classifySmsFallbackCandidates(
 
     if (!validatePhoneNumber(base.guestPhone)) {
       excluded.push({ ...base, exclusion: 'no_phone', reason: 'אין מספר טלפון תקין' });
+    } else if (!canReceiveSms(base.guestPhone)) {
+      excluded.push({ ...base, exclusion: 'not_israeli', reason: 'מספר מחו"ל - SMS נשלח רק למספרים ישראליים' });
     } else {
       eligible.push({ ...base, reason });
     }

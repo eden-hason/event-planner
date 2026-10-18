@@ -196,13 +196,15 @@ export type FailedCandidateRow = FallbackDeliveryRow & {
  * Why the engine leaves a failed Delivery out that no later sweep can change:
  * an SMS was already tried (the sweeper never retries one, ADR 0038 - this is
  * also every Delivery of a Schedule sent by SMS in the first place), there is
- * no failed WhatsApp to fall back from, or the failure was system-level. A
- * missing phone is not on the list - an Owner can still fix the number.
+ * no failed WhatsApp to fall back from, the failure was system-level, or the
+ * number is from abroad and SMS is Israeli-only. A missing phone is not on the
+ * list - an Owner can still fix the number.
  */
 const SETTLED_EXCLUSIONS: SmsFallbackExclusionReason[] = [
   'already_sms',
   'not_whatsapp',
   'system_failure',
+  'not_israeli',
 ];
 
 /**

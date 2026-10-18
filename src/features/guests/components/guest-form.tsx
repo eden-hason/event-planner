@@ -30,7 +30,7 @@ import { upsertGuest, type UpsertGuestState } from '@/features/guests/actions';
 import {
   type GuestUpsert,
   GuestUpsertSchema,
-  israeliMobilePhoneSchema,
+  guestPhoneSchema,
   GuestApp,
   GroupApp,
   GROUP_SIDES,
@@ -123,7 +123,7 @@ export function GuestForm({
   };
 
   const formSchema = GuestUpsertSchema.extend({
-    phone: israeliMobilePhoneSchema(t('form.phoneInvalid')),
+    phone: guestPhoneSchema(t('form.phoneInvalid')),
   });
 
   const form = useForm({
