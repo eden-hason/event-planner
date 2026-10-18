@@ -6,6 +6,19 @@ export function generateInviteToken(): string {
 }
 
 /**
+ * Whether two email addresses belong to the same mailbox. Addresses are
+ * case-insensitive in practice (Gmail certainly), and Supabase Auth stores
+ * them lowercased, so an invite typed as "Name@gmail.com" must still match.
+ */
+export function isSameEmail(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (!a || !b) return false;
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/**
  * Builds the full invitation URL from a token.
  */
 export function buildInvitationLink(token: string): string {

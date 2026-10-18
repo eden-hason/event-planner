@@ -23,3 +23,6 @@ export { getEventInvitations, getInvitationByToken } from './queries';
 export { createInvitation } from './actions';
 export { removeCollaborator, updateCollaboratorScope } from './actions';
 export { acceptInvitation, declineInvitation } from './actions';
+
+// Utils
+export { isSameEmail } from './utils';

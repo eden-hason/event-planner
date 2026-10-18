@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getInvitationByToken } from '@/features/collaborate/queries';
 import { isVisitor } from '@/features/auth';
+import { isSameEmail } from '@/features/collaborate';
 import { InvitationResponsePage } from './invitation-response-page';
 
 export default async function InvitationPage({
@@ -79,7 +80,7 @@ export default async function InvitationPage({
   }
 
   // Check email mismatch
-  if (user.email !== invitation.invitedEmail) {
+  if (!isSameEmail(user.email, invitation.invitedEmail)) {
     return (
       // theme-locked-light: reached from an invite link - see the comment
       // above `.theme-locked-light` in globals.css.

@@ -5,7 +5,11 @@ import { getCurrentUser } from '@/features/auth/queries';
 import { SAVE_REQUIRED } from '@/features/auth';
 import { revalidatePath } from 'next/cache';
 import { InviteFormSchema, type ActionState } from '../schemas';
-import { generateInviteToken, buildInvitationLink } from '../utils';
+import {
+  generateInviteToken,
+  buildInvitationLink,
+  isSameEmail,
+} from '../utils';
 import { sendInvitationEmail } from '@/lib/email/send-invitation-email';
 
 export async function createInvitation(
@@ -80,7 +84,7 @@ export async function createInvitation(
 
     const alreadyCollaborator = (existingCollab || []).some(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (c) => (c.profiles as any)?.email === email,
+      (c) => isSameEmail((c.profiles as any)?.email, email),
     );
 
     if (alreadyCollaborator) {
