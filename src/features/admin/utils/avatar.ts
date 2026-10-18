@@ -1,3 +1,5 @@
+import { formatPhone } from '@/lib/phone';
+
 /**
  * The Users table and sheet share one avatar treatment: a tinted initials
  * circle, no photos. The tint is derived from the User's id so it is stable
@@ -25,18 +27,36 @@ export function avatarTint(id: string): { background: string; color: string } {
 }
 
 /**
- * Two letters from the name, or from the email when `full_name` is null - a
- * User is never rendered as "Unknown user". Hebrew names are supported: the
- * check is "is this a letter", not "is this ASCII".
+ * Two letters from the name, or from the email when `full_name` is null. A
+ * User signed in by phone may have neither yet - they get "?", since two
+ * digits of a phone number read as a code rather than a person. Hebrew names
+ * are supported: the check is "is this a letter", not "is this ASCII".
  */
 // Escapes rather than a literal range: U+0590 to U+05FF is the Hebrew block.
 const NAME_LETTER = new RegExp('[A-Za-z\\u0590-\\u05FF]');
 
-export function initialsFor(name: string | null, email: string): string {
+export function initialsFor(name: string | null, email: string | null): string {
   if (name) {
     const parts = name.trim().split(/\s+/).filter((part) => NAME_LETTER.test(part[0]));
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   }
-  return email.slice(0, 2).toUpperCase();
+  if (email) return email.slice(0, 2).toUpperCase();
+  return '?';
+}
+
+/** The placeholder for a User with no name, email or phone on file. */
+export const UNNAMED_USER = 'משתמש ללא פרטים';
+
+/**
+ * A User's primary line: the name, then the email, then the phone. Phone
+ * sign-ins have no email, and nothing asks for a name until onboarding, so a
+ * fresh one is often known by the phone alone.
+ */
+export function userDisplayName(user: {
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+}): string {
+  return user.fullName || user.email || formatPhone(user.phone) || UNNAMED_USER;
 }
