@@ -66,9 +66,9 @@ export async function StatusStripSection({ eventId }: { eventId: string }) {
     getTranslations('home.mobile.strip'),
     getLocale(),
     getHomeEvent(eventId),
-    getHomeViewer(eventId),
+    getHomeViewer(),
   ]);
-  if (!event || !viewer?.isOwner) return null;
+  if (!event || !viewer) return null;
 
   const strip = await getStatusStrip(event);
   const currency = new Intl.NumberFormat(locale === 'he' ? 'he-IL' : 'en-IL', {

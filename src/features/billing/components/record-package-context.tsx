@@ -14,14 +14,12 @@ type RecordPackageValue = {
   view: GuestPackageView | null;
   /** The Guest Records outside the package, for the row tags and the filter. */
   outsideIds: ReadonlySet<string>;
-  canOpenSheet: boolean;
   openSheet: (options?: OpenSheetOptions) => void;
 };
 
 const EMPTY: RecordPackageValue = {
   view: null,
   outsideIds: new Set(),
-  canOpenSheet: false,
   openSheet: () => {},
 };
 
@@ -45,7 +43,6 @@ export function RecordPackageProvider({
   // Kept after close, so the sheet does not change under its own closing animation.
   const [options, setOptions] = React.useState<OpenSheetOptions>({});
 
-  const canOpenSheet = Boolean(view);
   const openSheet = React.useCallback((next?: OpenSheetOptions) => {
     setOptions(next ?? {});
     setOpen(true);
@@ -57,17 +54,16 @@ export function RecordPackageProvider({
         ? {
             view,
             outsideIds: new Set(view.outsideIds),
-            canOpenSheet,
             openSheet,
           }
         : EMPTY,
-    [view, canOpenSheet, openSheet],
+    [view, openSheet],
   );
 
   return (
     <RecordPackageContext.Provider value={value}>
       {children}
-      {view && canOpenSheet && (
+      {view && (
         <RecordPackageSheet
           open={open}
           onOpenChange={setOpen}

@@ -1,11 +1,8 @@
-import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { getCurrentUser } from '@/features/auth/queries';
-import { AUTO_JOIN_PARAM, JoinCoPlannerPage } from '@/features/collaborate';
-import {
-  getCollaboratorAccess,
-  getCoPlannerLinkPreview,
-} from '@/features/collaborate/queries';
+import { InvalidCoPlannerLink, JoinCoPlannerPage } from '@/features/collaborate';
+import { getCoPlannerLinkPreview } from '@/features/collaborate/queries';
 
 export default async function JoinPage({
   params,
@@ -23,26 +20,11 @@ export default async function JoinPage({
     searchParams,
   ]);
 
-  if (!preview) {
-    const t = await getTranslations('collaborate.joinPage');
-    return (
-      // theme-locked-light: reached from a shared link - see the comment
-      // above `.theme-locked-light` in globals.css.
-      <div className="theme-locked-light flex min-h-dvh items-center justify-center p-4">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold">{t('invalidTitle')}</h1>
-          <p className="text-muted-foreground">{t('invalidDescription')}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // A Visitor has a session but no account to plan with (ADR 0028).
-  const signedIn = Boolean(user && !user.isVisitor);
+  if (!preview) return <InvalidCoPlannerLink />;
 
   // Already planning this Event - the creator, or a co-planner opening the
   // link again: nothing to join, so straight to it (ADR 0041).
-  if (signedIn && (await getCollaboratorAccess(preview.eventId))) {
+  if (preview.alreadyMember) {
     return redirect({ href: `/app/${preview.eventId}/home`, locale });
   }
 
@@ -50,8 +32,9 @@ export default async function JoinPage({
     <JoinCoPlannerPage
       token={token}
       preview={preview}
-      signedIn={signedIn}
-      autoJoin={signedIn && query[AUTO_JOIN_PARAM] === '1'}
+      // A Visitor has a session but no account to plan with (ADR 0028).
+      signedIn={Boolean(user && !user.isVisitor)}
+      failed={query.failed === '1'}
     />
   );
 }

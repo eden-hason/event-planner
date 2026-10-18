@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   buildCoPlannerLink,
   buildWhatsAppShareUrl,
+  coPlannerAcceptPath,
   coPlannerLinkPath,
 } from './index';
 
@@ -25,6 +26,12 @@ describe('buildCoPlannerLink', () => {
 describe('coPlannerLinkPath', () => {
   it('escapes anything that is not a plain token', () => {
     assert.equal(coPlannerLinkPath('a/b'), '/join/a%2Fb');
+  });
+});
+
+describe('coPlannerAcceptPath', () => {
+  it('sits under the link it accepts', () => {
+    assert.equal(coPlannerAcceptPath('abc123'), '/join/abc123/accept');
   });
 });
 

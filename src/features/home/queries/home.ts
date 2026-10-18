@@ -3,7 +3,6 @@ import { getEffectiveClient, getImpersonation } from '@/lib/supabase/admin';
 import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
 import { getEffectiveUser, getUserProfile } from '@/features/auth/queries';
-import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import { getGlobalProgressCounts } from '@/features/seating/queries';
 import { findGuestIssues } from '@/features/guests';
 import {
@@ -38,17 +37,13 @@ export type HomeViewer = {
   userId: string;
   name: string;
   phone: string | null;
-  isOwner: boolean;
   /** An Operator acting as this user - allowed to look, not to send as them. */
   isImpersonated: boolean;
 };
 
-export const getHomeViewer = cache(async function getHomeViewer(
-  eventId: string,
-): Promise<HomeViewer | null> {
-  const [user, access, impersonation, profile] = await Promise.all([
+export const getHomeViewer = cache(async function getHomeViewer(): Promise<HomeViewer | null> {
+  const [user, impersonation, profile] = await Promise.all([
     getEffectiveUser(),
-    getCollaboratorAccess(eventId),
     getImpersonation(),
     getUserProfile(),
   ]);
@@ -59,7 +54,6 @@ export const getHomeViewer = cache(async function getHomeViewer(
     userId: user.id,
     name: impersonation ? user.displayName : profile?.fullName || user.displayName,
     phone: (impersonation ? user.phone : profile?.phoneNumber) || null,
-    isOwner: access !== null,
     isImpersonated: Boolean(impersonation),
   };
 });

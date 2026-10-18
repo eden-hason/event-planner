@@ -21,10 +21,8 @@ export async function getRecordPackage(eventId: string): Promise<LoadedRecordPac
  * The package as the Guests page shows it, to the Owner and to collaborators alike.
  *
  * Read with the service client, after the viewer's own client has proven they can see the
- * event. Two things RLS would get wrong here are the reason: the payments are Owner-only
- * because they carry money, and a seating manager sees only part of the guest list - but
- * the package is counted against all of it. What leaves this function is counts, the channel and
- * record ids, never amounts. Null when the event has no package (free, payment pending).
+ * event, because the payments RLS would hide are creator-only: they carry money. What leaves
+ * this function is counts, the channel and record ids, never amounts. Null when the event has no package (free, payment pending).
  */
 export async function getGuestPackageView(eventId: string): Promise<GuestPackageView | null> {
   const { supabase } = await getEffectiveClient();

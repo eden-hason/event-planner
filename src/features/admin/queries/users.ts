@@ -148,7 +148,7 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
     // same table force the `!constraint_name` form instead.
     supabase
       .from('event_collaborators')
-      .select('role, events(id, title, event_date)')
+      .select('events(id, title, event_date)')
       .eq('user_id', userId)
       .eq('is_creator', false),
   ]);
@@ -179,7 +179,6 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
         return {
           id: event.id,
           title: eventTitle(event.title),
-          role: row.role as string,
         };
       })
       .filter((row): row is UserSharedEvent => row !== null),

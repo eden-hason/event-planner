@@ -19,9 +19,9 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
   const [t, event, viewer] = await Promise.all([
     getTranslations('home.mobile.actions'),
     getHomeEvent(eventId),
-    getHomeViewer(eventId),
+    getHomeViewer(),
   ]);
-  if (!event || !viewer?.isOwner) return null;
+  if (!event || !viewer) return null;
 
   // The package is loaded here, not with the other facts, because its sheet needs it too.
   const [baseFacts, recordPackage] = await Promise.all([

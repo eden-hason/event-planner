@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { IconConfetti } from '@tabler/icons-react';
 import {
@@ -13,30 +12,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { usePathname, useRouter } from '@/i18n/navigation';
-import { JOINED_PARAM } from '../utils';
+import { JOINED_COOKIE } from '../utils';
 
 /**
  * Said once, to a co-planner who has just joined through the Co-planner Link
  * (ADR 0041), so they know they are in and the Event is now theirs too. The
- * join page sends them to Home with `?joined=1`; the flag is dropped from the
- * URL straight away, so a reload never shows it twice.
+ * join leaves a short-lived cookie; the dialog reads it and clears it straight
+ * away, so a reload never shows it twice.
  */
-export function JoinedToast() {
+export function JoinedDialog() {
   const t = useTranslations('collaborate.joined');
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get(JOINED_PARAM) !== '1') return;
+    const flagged = document.cookie
+      .split('; ')
+      .some((c) => c === `${JOINED_COOKIE}=1`);
+    if (!flagged) return;
+    document.cookie = `${JOINED_COOKIE}=; Max-Age=0; Path=/`;
     setOpen(true);
-    const rest = new URLSearchParams(searchParams);
-    rest.delete(JOINED_PARAM);
-    const query = rest.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [searchParams, router, pathname]);
+  }, []);
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>

@@ -4,23 +4,6 @@ import { z } from 'zod';
 // Collaborator
 // ============================================================================
 
-// Every collaborator is an Owner (ADR 0041), so a row carries no role. The
-// creator is still told apart: they cannot be removed.
-export const CollaboratorAppSchema = z.object({
-  id: z.string().uuid(),
-  eventId: z.string().uuid(),
-  userId: z.string().uuid(),
-  isCreator: z.boolean(),
-  /** Full name when the profile has one, otherwise the phone or email. */
-  displayName: z.string(),
-  /** Phone or email, whichever they signed in with; empty when unknown. */
-  contact: z.string(),
-  avatarUrl: z.string().optional(),
-  createdAt: z.string(),
-});
-
-export type CollaboratorApp = z.infer<typeof CollaboratorAppSchema>;
-
 const CollaboratorProfileDbSchema = z
   .object({
     email: z.string().nullable(),
@@ -40,18 +23,24 @@ export const CollaboratorDbToAppSchema = z
     profiles: CollaboratorProfileDbSchema,
   })
   .transform((db) => {
+    // Phone or email, whichever they signed in with; empty when unknown.
     const contact = db.profiles?.phone_number || db.profiles?.email || '';
     return {
       id: db.id,
       eventId: db.event_id,
       userId: db.user_id,
       isCreator: db.is_creator,
+      // Full name when the profile has one, otherwise the contact.
       displayName: db.profiles?.full_name?.trim() || contact,
       contact,
       avatarUrl: db.profiles?.avatar_url ?? undefined,
       createdAt: db.created_at,
     };
   });
+
+// Every collaborator is an Owner (ADR 0041), so a row carries no role. The
+// creator is still told apart: they cannot be removed.
+export type CollaboratorApp = z.output<typeof CollaboratorDbToAppSchema>;
 
 // ============================================================================
 // Action State

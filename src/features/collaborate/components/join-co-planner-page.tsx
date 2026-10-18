@@ -1,14 +1,9 @@
-'use client';
-
-import * as React from 'react';
 import { IconUsersGroup } from '@tabler/icons-react';
-import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link, useRouter } from '@/i18n/navigation';
-import { joinEventByCoPlannerLink } from '../actions';
-import { AUTO_JOIN_PARAM, coPlannerLinkPath, JOINED_PARAM } from '../utils';
+import { getPathname, Link } from '@/i18n/navigation';
+import { coPlannerAcceptPath } from '../utils';
 import type { CoPlannerLinkPreview } from '../types';
 
 interface JoinCoPlannerPageProps {
@@ -16,49 +11,20 @@ interface JoinCoPlannerPageProps {
   preview: CoPlannerLinkPreview;
   /** Signed in with a real account - a Visitor counts as signed out (ADR 0028). */
   signedIn: boolean;
-  /** Back from sign-in: join straight away. */
-  autoJoin: boolean;
+  /** The last attempt to join did not go through. */
+  failed: boolean;
 }
 
 /**
- * The page a Co-planner Link opens (ADR 0041). Signed out, it sends the
- * co-planner through the usual sign-in and back here to join automatically.
- * Signed in, one Join button. Either way they land on the Event's Home, which
- * tells them they joined. There is no Decline: nothing was addressed to them.
+ * The page a Co-planner Link opens (ADR 0041). Both buttons lead to the
+ * accept route, which joins and lands the co-planner on the Event's Home -
+ * signed out, by way of the usual sign-in first. There is no Decline: nothing
+ * was addressed to them.
  */
-export function JoinCoPlannerPage({
-  token,
-  preview,
-  signedIn,
-  autoJoin,
-}: JoinCoPlannerPageProps) {
+export function JoinCoPlannerPage({ token, preview, signedIn, failed }: JoinCoPlannerPageProps) {
   const t = useTranslations('collaborate.joinPage');
-  const router = useRouter();
-  const [isPending, setIsPending] = React.useState(autoJoin);
-  const started = React.useRef(false);
-
-  const join = React.useCallback(async () => {
-    setIsPending(true);
-    const result = await joinEventByCoPlannerLink(token);
-    if (result.success) {
-      router.replace(
-        `/app/${result.eventId}/home${result.joined ? `?${JOINED_PARAM}=1` : ''}`,
-      );
-      return;
-    }
-    setIsPending(false);
-    toast.error(result.reason === 'not_found' ? t('toast.notFound') : t('toast.failed'));
-  }, [token, router, t]);
-
-  React.useEffect(() => {
-    if (!autoJoin || started.current) return;
-    started.current = true;
-    void join();
-  }, [autoJoin, join]);
-
-  const signInHref = `/login?next=${encodeURIComponent(
-    `${coPlannerLinkPath(token)}?${AUTO_JOIN_PARAM}=1`,
-  )}`;
+  const locale = useLocale();
+  const acceptPath = coPlannerAcceptPath(token);
 
   return (
     // theme-locked-light: reached from a shared link, before the co-planner is
@@ -85,14 +51,19 @@ export function JoinCoPlannerPage({
             </p>
           </div>
 
+          {failed && <p className="text-destructive text-sm">{t('failed')}</p>}
+
           {signedIn ? (
-            <Button size="lg" className="w-full" onClick={join} disabled={isPending}>
-              {isPending ? t('joining') : t('join')}
+            <Button size="lg" className="w-full" asChild>
+              {/* A route handler, not a page: a plain anchor, not a client navigation. */}
+              <a href={getPathname({ href: acceptPath, locale })}>{t('join')}</a>
             </Button>
           ) : (
             <div className="space-y-2">
               <Button size="lg" className="w-full" asChild>
-                <Link href={signInHref}>{t('signInToJoin')}</Link>
+                <Link href={{ pathname: '/login', query: { next: acceptPath } }}>
+                  {t('signInToJoin')}
+                </Link>
               </Button>
               <p className="text-muted-foreground text-xs">{t('signInHint')}</p>
             </div>

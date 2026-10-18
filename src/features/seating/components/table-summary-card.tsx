@@ -18,7 +18,7 @@ const VISIBLE_GUESTS = 3;
 
 /**
  * A Table as a list row: the same facts the canvas node carries, in the shape
- * mobile and the scoped-collaborator view need. Number, optional label,
+ * mobile needs. Number, optional label,
  * confirmed and provisional occupancy, remaining capacity, and who is seated.
  */
 export function TableSummaryCard({ view, onOpen, onUnassign }: TableSummaryCardProps) {

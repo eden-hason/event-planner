@@ -13,7 +13,6 @@ import { MarkTestAccountDialog } from './mark-test-account-dialog';
 import { RetryButton } from './retry-button';
 import type { UserDetail } from '../types';
 import { formatEventDate, formatFullDate } from '../utils/format';
-import { collaboratorRoleLabel } from '../utils/labels';
 import { avatarTint, initialsFor } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 
@@ -251,7 +250,6 @@ function UserSheetBody({
                   )}
                 >
                   <span className="min-w-0 flex-1 truncate text-[13.5px]">{event.title}</span>
-                  <span className="text-muted-foreground shrink-0 text-[12.5px]">{collaboratorRoleLabel(event.role)}</span>
                   <ChevronLeft className="text-muted-foreground/70 size-4 shrink-0" />
                 </Link>
               ))}

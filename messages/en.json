@@ -1329,7 +1329,7 @@
       "chip": "Outside the package",
       "tag": "Outside package",
       "countOutside": "{count, plural, one {# record outside the package} other {# records outside the package}} · the most recently added",
-      "bannerOwner": "The most recently added records won't get messages until records are added to the package",
+      "banner": "The most recently added records won't get messages until records are added to the package",
       "addRecords": "Add records",
       "drawerLine": "Outside the package · won't get messages",
       "drawerLink": "Package details",
@@ -1974,15 +1974,11 @@
       "untitledEvent": "An event on Kululu",
       "description": "Join to see the guest list, the schedule and everything else, and plan it together",
       "join": "Join the event",
-      "joining": "Joining...",
       "signInToJoin": "Sign in to join",
       "signInHint": "With your phone number or Google - whichever you like",
       "invalidTitle": "This link is no longer valid",
       "invalidDescription": "Ask whoever invited you to send you a new link.",
-      "toast": {
-        "notFound": "This link is no longer valid",
-        "failed": "Couldn't join the event. Try again"
-      }
+      "failed": "Couldn't join the event. Try again"
     },
     "joined": {
       "title": "You joined the event",

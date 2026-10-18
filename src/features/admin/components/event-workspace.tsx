@@ -36,7 +36,7 @@ import {
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
-import { collaboratorRoleLabel, rsvpLabel } from '../utils/labels';
+import { rsvpLabel } from '../utils/labels';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -128,12 +128,9 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
             <div className="flex flex-col gap-1.5">
               <p className="text-muted-foreground text-xs">שותפים נוספים באירוע</p>
               {event.collaborators.map((person) => (
-                <div key={person.id} className="flex min-w-0 flex-wrap items-baseline gap-2">
-                  <span className="truncate text-[13px]">{person.name}</span>
-                  <Badge variant="outline" className="text-muted-foreground px-2 py-0 text-[11.5px] font-normal normal-case">
-                    {collaboratorRoleLabel(person.role)}
-                  </Badge>
-                </div>
+                <span key={person.id} className="truncate text-[13px]">
+                  {person.name}
+                </span>
               ))}
             </div>
           </>

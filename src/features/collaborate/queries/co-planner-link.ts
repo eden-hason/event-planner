@@ -47,7 +47,12 @@ export async function getCoPlannerLinkPreview(
 
     const { data, error } = await supabase
       .rpc('get_co_planner_link_preview', { p_token: token })
-      .maybeSingle<{ event_id: string; event_title: string | null; inviter_name: string | null }>();
+      .maybeSingle<{
+        event_id: string;
+        event_title: string | null;
+        inviter_name: string | null;
+        already_member: boolean;
+      }>();
 
     if (error) {
       console.error('Error fetching co-planner link preview:', error);
@@ -59,6 +64,7 @@ export async function getCoPlannerLinkPreview(
       eventId: data.event_id,
       eventTitle: data.event_title ?? '',
       inviterName: data.inviter_name,
+      alreadyMember: data.already_member,
     };
   } catch (error) {
     console.error('Error in getCoPlannerLinkPreview:', error);

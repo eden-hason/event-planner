@@ -91,17 +91,25 @@ select e.id, e.user_id
 from public.events e
 on conflict (event_id) do nothing;
 
--- What the link's page shows before anyone signs in: whose Event, and who
--- shared it. SECURITY DEFINER because the reader is not a collaborator yet,
--- and may not be signed in at all. The token is the only key.
+-- What the link's page shows before anyone signs in: whose Event, who shared
+-- it, and whether the reader is already on it (then there is nothing to join).
+-- SECURITY DEFINER because the reader is not a collaborator yet, and may not be
+-- signed in at all. The token is the only key.
 create or replace function public.get_co_planner_link_preview(p_token text)
-returns table (event_id uuid, event_title text, inviter_name text)
+returns table (event_id uuid, event_title text, inviter_name text, already_member boolean)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select e.id, e.title, nullif(btrim(p.full_name), '')
+  select
+    e.id,
+    e.title,
+    nullif(btrim(p.full_name), ''),
+    auth.uid() is not null and exists (
+      select 1 from public.event_collaborators ec
+      where ec.event_id = e.id and ec.user_id = auth.uid()
+    )
   from public.co_planner_links l
   join public.events e on e.id = l.event_id
   left join public.profiles p on p.id = l.created_by
@@ -188,14 +196,19 @@ drop type public.invitation_status;
 
 drop policy guests_update_seating_manager on public.guests;
 
+-- Every collaborator, the creator included (auto_add_event_creator), has an
+-- event_collaborators row and is an Owner. One uncorrelated subquery, so it is
+-- evaluated once per query rather than once per guest row.
 drop policy guests_select on public.guests;
 create policy guests_select on public.guests
   as permissive
   for select
   to authenticated
   using (
-    event_id in (select events.id from public.events where events.user_id = auth.uid())
-    or public.user_is_event_owner(event_id)
+    event_id in (
+      select ec.event_id from public.event_collaborators ec
+      where ec.user_id = (select auth.uid())
+    )
   );
 
 drop trigger tables_delete_guard on public.tables;

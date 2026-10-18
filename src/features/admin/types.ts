@@ -162,7 +162,7 @@ export type EventIdentity = {
   /** The account the event belongs to - the identity an Operator impersonates. */
   ownerId: string;
   owner: { name: string; email: string | null; phone: string | null };
-  collaborators: { id: string; name: string; email: string | null; role: string }[];
+  collaborators: { id: string; name: string; email: string | null }[];
   hostNames: string[];
   /** Free-text "parents" side of each host, e.g. "Mr. and Mrs. Cohen" */
   parentNames: string[];
@@ -392,8 +392,6 @@ export type UserOwnedEvent = {
 export type UserSharedEvent = {
   id: string;
   title: string;
-  /** `event_collaborators.role` - always `owner` since ADR 0041. */
-  role: string;
 };
 
 export type UserDetail = {

@@ -40,15 +40,6 @@ export function eventTitle(title: string | null | undefined): string {
 /** The placeholder for an Owner with neither a name nor an email on file. */
 export const UNKNOWN_OWNER = 'בעלים לא ידועים';
 
-const COLLABORATOR_ROLES: Record<string, string> = {
-  owner: 'בעלים',
-};
-
-/** A collaborator's role on an Event (`event_collaborators.role`). */
-export function collaboratorRoleLabel(role: string): string {
-  return COLLABORATOR_ROLES[role] ?? role;
-}
-
 const RSVP: Record<string, string> = {
   confirmed: 'אישרו',
   declined: 'לא מגיעים',

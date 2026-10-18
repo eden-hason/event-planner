@@ -1,21 +1,22 @@
 // Schemas & types
 export { type CollaboratorApp, type ActionState } from './schemas';
-export type { CoPlannerLinkPreview, CollaboratorAccess, JoinResult } from './types';
+export type { CoPlannerLinkPreview, CollaboratorAccess } from './types';
 
 // Actions
-export { removeCollaborator, joinEventByCoPlannerLink } from './actions';
+export { removeCollaborator } from './actions';
 
 // Components
 export { CollaboratePage } from './components/collaborate-page';
 export { JoinCoPlannerPage } from './components/join-co-planner-page';
-export { JoinedToast } from './components/joined-toast';
+export { InvalidCoPlannerLink } from './components/invalid-co-planner-link';
+export { JoinedDialog } from './components/joined-dialog';
 
 // Utils
 export {
-  AUTO_JOIN_PARAM,
-  JOINED_PARAM,
+  JOINED_COOKIE,
   buildCoPlannerLink,
   buildWhatsAppShareUrl,
+  coPlannerAcceptPath,
   coPlannerLinkPath,
 } from './utils';
 

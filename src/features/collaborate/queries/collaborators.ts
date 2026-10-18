@@ -68,23 +68,13 @@ export async function getCollaboratorAccess(
 
     if (!userId) return null;
 
-    // First check if user is the event owner (user_id on events table)
-    const { data: event } = await supabase
-      .from('events')
-      .select('user_id')
-      .eq('id', eventId)
-      .single();
-
-    if (event?.user_id === userId) {
-      return { isCreator: true };
-    }
-
+    // The creator has a row too (auto_add_event_creator), marked is_creator.
     const { data, error } = await supabase
       .from('event_collaborators')
       .select('is_creator')
       .eq('event_id', eventId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
 

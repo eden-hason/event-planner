@@ -1,12 +1,17 @@
-/** Query flag Home reads to tell a co-planner they just joined the Event. */
-export const JOINED_PARAM = 'joined';
-
-/** Set on the return from sign-in, so the join happens without a second tap. */
-export const AUTO_JOIN_PARAM = 'auto';
+/**
+ * Set by the join for one Home render, so the co-planner is told they joined
+ * (ADR 0041). Read and cleared by the browser, like the Visitor-dropped flag.
+ */
+export const JOINED_COOKIE = 'kululu_co_planner_joined';
 
 /** The path a Co-planner Link opens, relative to the site origin. */
 export function coPlannerLinkPath(token: string): string {
   return `/join/${encodeURIComponent(token)}`;
+}
+
+/** Where the link's page sends someone to be joined, after sign-in if needed. */
+export function coPlannerAcceptPath(token: string): string {
+  return `${coPlannerLinkPath(token)}/accept`;
 }
 
 /** The full Co-planner Link the inviter shares. */
