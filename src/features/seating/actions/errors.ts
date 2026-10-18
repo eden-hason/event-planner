@@ -17,7 +17,6 @@ export type SeatingFailure =
       records: number;
     }
   | { kind: 'capacityBelowOccupancy'; occupancy: number; requested: number }
-  | { kind: 'deleteOutOfScope' }
   | { kind: 'duplicateNumbers'; numbers: number[] }
   | { kind: 'tableNotFound' }
   | { kind: 'nothingAssignable' }
@@ -50,10 +49,6 @@ export function toSeatingFailure(error: unknown): SeatingFailure {
       occupancy: readNumber(message, 'occupancy'),
       requested: readNumber(message, 'requested'),
     };
-  }
-
-  if (message.includes('seating_delete_out_of_scope')) {
-    return { kind: 'deleteOutOfScope' };
   }
 
   if (message.includes('seating_table_not_found')) {

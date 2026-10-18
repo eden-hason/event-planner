@@ -1,12 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TableView } from '../types';
 import { rsvpSortKey } from '../utils/occupancy';
 import { OccupancyBar } from './occupancy-bar';
-import { OutOfScopeRow } from './out-of-scope-row';
 import { SeatedGuestChip } from './seated-guest-chip';
 import { useSeatingCopy } from './use-seating-copy';
 
@@ -52,12 +50,6 @@ export function TableSummaryCard({ view, onOpen, onUnassign }: TableSummaryCardP
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {!view.canDelete && (
-            <Lock
-              className="text-muted-foreground size-3.5"
-              aria-label={t('scope.deleteBlockedTooltip')}
-            />
-          )}
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-xs font-medium',
@@ -86,12 +78,6 @@ export function TableSummaryCard({ view, onOpen, onUnassign }: TableSummaryCardP
           />
         ))}
 
-        <OutOfScopeRow records={view.outOfScopeRecords} heads={view.outOfScopeHeads} />
-
-        {view.outOfScopeRecords > 0 && (
-          <p className="text-muted-foreground text-xs">{t('scope.outOfScopeNote')}</p>
-        )}
-
         {hidden > 0 && (
           <button
             type="button"
@@ -102,16 +88,12 @@ export function TableSummaryCard({ view, onOpen, onUnassign }: TableSummaryCardP
           </button>
         )}
 
-        {sorted.length === 0 && view.outOfScopeRecords === 0 && (
+        {sorted.length === 0 && (
           <p className="text-muted-foreground py-3 text-center text-xs">
             {t('table.noOneSeated')}
           </p>
         )}
       </div>
-
-      {!view.canDelete && (
-        <p className="text-muted-foreground text-xs">{t('scope.deleteBlocked')}</p>
-      )}
     </div>
   );
 }

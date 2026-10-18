@@ -214,11 +214,7 @@
       "descriptionEmpty": "השולחן ריק, כך שדבר לא זז. אי אפשר לבטל את הפעולה.",
       "returning": "חוזרים ללא שיבוץ",
       "cancel": "השארת השולחן",
-      "confirm": "מחיקת השולחן",
-      "blockedTitle": "אי אפשר למחוק את {table}",
-      "blockedDescription": "בשולחן הזה יושבים {heads, plural, one {אורח אחד ששובץ} other {# אורחים ששובצו}} על ידי מארגן אחר, מחוץ להרשאות שלכם. בקשו מבעלי האירוע למחוק אותו.",
-      "blockedNote": "עדיין אפשר לשבץ ולבטל שיבוץ של האורחים שלכם בשולחן הזה.",
-      "close": "סגירה"
+      "confirm": "מחיקת השולחן"
     },
     "assignDialog": {
       "title": "שיבוץ {name}",
@@ -231,14 +227,6 @@
       "cancel": "ביטול",
       "noTables": "עדיין אין שולחנות - צרו אחד קודם"
     },
-    "scope": {
-      "bannerTitle": "אתם מסדרים את האורחים שהוקצו לכם",
-      "bannerBody": "אתם רואים כל שולחן ואת התפוסה האמיתית שלו, אבל יכולים לשבץ רק את {count, plural, one {רשומת האורח האחת} other {# רשומות האורחים}} שבהרשאות שלכם.",
-      "outOfScope": "{count, plural, one {רשומה אחת מחוץ להרשאות שלכם} other {# רשומות מחוץ להרשאות שלכם}}",
-      "outOfScopeNote": "השמות מוסתרים. המקומות שלהם עדיין נספרים בקיבולת",
-      "deleteBlocked": "המחיקה אינה זמינה - בשולחן הזה יושבים אורחים שאינכם רואים",
-      "deleteBlockedTooltip": "מחיקה חסומה"
-    },
     "zoom": {
       "in": "התקרבות",
       "out": "התרחקות",
@@ -250,7 +238,6 @@
       "capacityBelowOccupancy": "ב{table} יושבים כרגע {occupancy} אורחים. אי אפשר לרדת מתחת ל-{occupancy} - בטלו שיבוץ של מישהו קודם",
       "duplicateNumber": "שולחן {number} כבר קיים. המספרים חייבים להיות ייחודיים באירוע",
       "duplicateNumbers": "שולחנות {numbers} כבר קיימים. המספרים חייבים להיות ייחודיים באירוע",
-      "deleteOutOfScope": "בשולחן הזה יושבים אורחים מחוץ להרשאות שלכם. בקשו מבעלי האירוע למחוק אותו",
       "tableNotFound": "השולחן הזה כבר לא קיים",
       "nothingAssignable": "אין מה לשבץ",
       "createFailed": "יצירת השולחן נכשלה",
@@ -1343,7 +1330,6 @@
       "tag": "מחוץ לחבילה",
       "countOutside": "{count, plural, one {רשומה אחת מחוץ לחבילה} other {# רשומות מחוץ לחבילה}} · האחרונות שנוספו",
       "bannerOwner": "הרשומות האחרונות שנוספו לא יקבלו הודעות עד שיתווספו רשומות לחבילה",
-      "bannerCollaborator": "הרשומות האחרונות שנוספו לא יקבלו הודעות. בקשו מבעלי האירוע להוסיף רשומות",
       "addRecords": "הוספת רשומות",
       "drawerLine": "מחוץ לחבילה · לא תקבל הודעות",
       "drawerLink": "לפרטי החבילה",
@@ -1943,10 +1929,9 @@
       }
     },
     "tab": {
-      "heading": "שתף פעולה עם אחרים",
-      "description": "הזמן את הבן/בת זוג, המשפחה או החברים לעזור בניהול האירוע. ניתן להקצות תפקידים והרשאות שונות כדי לשמור על סדר.",
-      "inviteButton": "הזמן שותף",
-      "activeMembers": "חברים פעילים",
+      "heading": "מתכננים ביחד",
+      "description": "הזמינו את בן או בת הזוג, הורה או חבר טוב לתכנן איתכם את האירוע. כל מי שתזמינו מקבל גישה מלאה, בדיוק כמוכם.",
+      "activeMembers": "מתכננים את האירוע",
       "features": {
         "shareWorkload": "שתף את העומס",
         "shareWorkloadDesc": "חלק משימות בקלות",
@@ -1957,111 +1942,52 @@
       }
     },
     "collaboratorsList": {
-      "you": "אתה",
-      "invitedByYou": "הוזמן על ידך",
-      "changeRole": "שנה תפקיד",
-      "remove": "הסר",
+      "you": "את/ה",
+      "creator": "יצר/ה את האירוע",
+      "joinedOn": "הצטרף/ה ב-{date}",
+      "remove": "הסרה",
       "removeDialog": {
-        "title": "הסרת שותף?",
-        "description": "{name} יאבד גישה לאירוע זה. לא ניתן לבטל פעולה זו.",
+        "title": "להסיר את השותף לתכנון?",
+        "description": "{name} לא יוכל/תוכל עוד לגשת לאירוע",
         "cancel": "ביטול",
-        "confirm": "הסר"
+        "confirm": "הסרה"
       },
       "toast": {
-        "removing": "מסיר שותף...",
-        "removed": "השותף הוסר",
+        "removing": "מסירים...",
+        "removed": "השותף לתכנון הוסר",
         "failed": "משהו השתבש"
       }
     },
-    "configDialog": {
-      "title": "הגדרת שותף",
-      "description": "שנה את התפקיד וההרשאות עבור שותף זה.",
-      "roleLabel": "תפקיד",
-      "ownerDescription": "גישה מלאה לכל הגדרות האירוע, האורחים והשותפים.",
-      "seatingManagerDescription": "יכול לנהל אורחים וקבוצות שהוקצו לו בלבד.",
-      "scopeLabel": "היקף מוקצה",
-      "saving": "שומר...",
-      "saveChanges": "שמור שינויים",
+    "link": {
+      "title": "הזמינו שותף לתכנון",
+      "description": "שלחו את הקישור למי שמתכנן איתכם. אחרי שיפתח אותו ויתחבר, יוכל לתכנן איתכם הכל.",
+      "sendOnWhatsApp": "שליחה בוואטסאפ",
+      "copy": "העתקת הקישור",
+      "copiedButton": "הועתק",
+      "copied": "הקישור הועתק",
+      "copyFailed": "לא הצלחנו להעתיק את הקישור",
+      "whatsappMessage": "בוא/י נתכנן את האירוע שלנו ביחד בקולולו: {link}"
+    },
+    "joinPage": {
+      "invitedBy": "{name} מזמין/ה אותך לתכנן את",
+      "invited": "הוזמנת לתכנן את",
+      "untitledEvent": "אירוע בקולולו",
+      "description": "הצטרפו כדי לראות את רשימת המוזמנים, התזמונים וכל השאר, ולתכנן ביחד",
+      "join": "הצטרפות לאירוע",
+      "joining": "מצטרפים...",
+      "signInToJoin": "התחברות והצטרפות",
+      "signInHint": "עם מספר הטלפון או עם Google - איך שנוח לכם",
+      "invalidTitle": "הקישור הזה כבר לא בתוקף",
+      "invalidDescription": "בקשו ממי שהזמין אתכם לשלוח קישור חדש.",
       "toast": {
-        "needsScope": "מנהלי מיקום צריכים לפחות קבוצה או אורח אחד מוקצה",
-        "roleFailed": "עדכון התפקיד נכשל",
-        "roleUpdated": "התפקיד עודכן",
-        "scopeRequired": "נדרשת לפחות קבוצה או אורח אחד",
-        "scopeFailed": "עדכון ההיקף נכשל",
-        "scopeUpdated": "ההיקף עודכן",
-        "error": "משהו השתבש"
+        "notFound": "הקישור הזה כבר לא בתוקף",
+        "failed": "לא הצלחנו לצרף אותך לאירוע. נסו שוב"
       }
     },
-    "pendingInvitations": {
-      "title": "הזמנות ממתינות",
-      "expires": "פג תוקף",
-      "resend": "שלח שוב",
-      "cancel": "ביטול",
-      "toast": {
-        "linkCopied": "קישור ההזמנה הועתק ללוח",
-        "revoking": "מבטל הזמנה...",
-        "revoked": "ההזמנה בוטלה",
-        "failed": "משהו השתבש"
-      }
-    },
-    "inviteDialog": {
-      "titleInvite": "הזמנת שותף",
-      "titleSuccess": "ההזמנה נוצרה",
-      "descriptionInvite": "הוסף חבר חדש לצוות התכנון שלך.",
-      "descriptionSuccessEmail": "נשלח מייל הזמנה. תוכל גם לשתף את הקישור ידנית.",
-      "descriptionSuccessLink": "שתף את הקישור הזה עם האדם שהזמנת.",
-      "emailLabel": "כתובת מייל",
-      "emailPlaceholder": "partner@gmail.com",
-      "emailHint": "כתובות Gmail בלבד (‎@gmail.com)",
-      "roleLabel": "תפקיד",
-      "ownerLabel": "בעלים",
-      "ownerBadge": "גישה מלאה",
-      "ownerDescription": "גישה מלאה לניהול האירוע, האורחים וההגדרות.",
-      "seatingManagerLabel": "מנהל מיקום",
-      "seatingManagerBadge": "גישה מוגבלת",
-      "seatingManagerDescription": "יכול לנהל אורחים ותרשימי מיקום שהוקצו לו בלבד.",
-      "inviteInfo": "שותפים חדשים יקבלו מייל הזמנה להצטרף לאירוע שלך.",
-      "cancel": "ביטול",
-      "nextScope": "הבא: הגדר היקף",
-      "sendInvitation": "שלח הזמנה",
-      "sending": "שולח...",
-      "selectScope": "בחר מה הם יוכלו לנהל",
-      "invitationSentTo": "מייל הזמנה נשלח ל-{email}",
-      "copied": "הועתק",
-      "copy": "העתק",
-      "done": "סיום",
-      "toast": {
-        "emailRequired": "אנא הזן כתובת מייל",
-        "gmailOnly": "ניתן להזמין כתובות Gmail בלבד (‎@gmail.com)",
-        "createFailed": "יצירת ההזמנה נכשלה",
-        "created": "ההזמנה נוצרה",
-        "linkCopied": "הקישור הועתק ללוח"
-      }
-    },
-    "editScope": {
-      "title": "ערוך היקף - {name}",
-      "description": "בחר אילו קבוצות ואורחים מנהל המיקום יוכל לצפות בהם.",
-      "saving": "שומר...",
-      "save": "שמור היקף",
-      "toast": {
-        "failed": "עדכון ההיקף נכשל",
-        "updated": "ההיקף עודכן"
-      }
-    },
-    "invitationPage": {
-      "title": "הזמנה לאירוע",
-      "invitedTo": "הוזמנת לשתף פעולה ב",
-      "seatingManagerNote": "תהיה לך גישת צפייה בלבד לאורחים ולקבוצות שהוקצו לך.",
-      "decline": "דחה",
-      "processing": "מעבד...",
-      "accept": "קבל",
-      "toast": {
-        "accepted": "ההזמנה התקבלה",
-        "declined": "ההזמנה נדחתה",
-        "acceptFailed": "קבלת ההזמנה נכשלה",
-        "declineFailed": "דחיית ההזמנה נכשלה",
-        "error": "משהו השתבש"
-      }
+    "joined": {
+      "title": "הצטרפת לאירוע",
+      "body": "מעכשיו אתם מתכננים את האירוע ביחד. הכל כאן משותף - רשימת המוזמנים, התזמונים, התקציב וכל השאר.",
+      "ok": "יאללה"
     }
   },
   "settings": {

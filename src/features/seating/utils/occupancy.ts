@@ -44,11 +44,7 @@ export function freeSeats(capacity: number, occupancy: TableOccupancy): number {
   return Math.max(capacity - seatedHeads(occupancy), 0);
 }
 
-/**
- * Whether a party fits, measured against the Table's *total* occupancy rather
- * than the part of it the current collaborator can see. A scoped Seating
- * Manager who validated against visible guests alone would overbook the Table.
- */
+/** Whether a party fits in the places the Table has left. */
 export function fitsIn(table: TableView, partyHeads: number): boolean {
   return partyHeads <= table.freeSeats;
 }
@@ -60,12 +56,9 @@ export function shortfall(table: TableView, partyHeads: number): number {
 /**
  * The guest-record and guest-head portion of plan progress.
  *
- * Split out from {@link composeProgress} because it is the one part that a
- * scoped Seating Manager cannot compute from what they can see: their guest
- * list is RLS-filtered, so counting confirmed records off it would report the
- * plan finished while out-of-scope records sit unseated. The Event-wide truth
- * comes from the `event_seating_progress` aggregate; this same shape is used
- * client-side to take a *delta* of the records the collaborator did move.
+ * Split out from {@link composeProgress} because it comes from the
+ * `event_seating_progress` aggregate on the server; this same shape is used
+ * client-side to take a *delta* of the records that moved.
  */
 export interface GuestProgressCounts {
   confirmedRecordsTotal: number;
@@ -99,9 +92,8 @@ export function guestProgressCounts(
  * a couple should not be told their plan is unfinished because a cousin has yet
  * to reply.
  *
- * `seatedHeads` and `totalCapacity` are Table-derived and stay truthful on any
- * client, scoped or not, because {@link TableView.seatedHeads} already carries
- * out-of-scope heads. Only `counts` needs to come from the privileged aggregate.
+ * `seatedHeads` and `totalCapacity` are Table-derived; only `counts` comes from
+ * the aggregate.
  */
 export function composeProgress(
   tables: TableView[],

@@ -69,7 +69,7 @@ export type SeatingDialog =
  * the same assignment call and the same capacity validation.
  */
 export function useSeatingWorkspace(props: SeatingPageProps) {
-  const { eventId, isScopedCollaborator } = props;
+  const { eventId } = props;
   const { t, tableTitle, failureMessage } = useSeatingCopy();
 
   const [state, setState] = React.useState<SeatingState>({
@@ -118,8 +118,6 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
       timers.clear();
     };
   }, []);
-
-  const unrestrictedDelete = !isScopedCollaborator;
 
   const unassigned = React.useMemo(
     () => state.guests.filter((guest) => !guest.tableId),
@@ -267,7 +265,7 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
       }
 
       setState((current) =>
-        applyAssignment(current, guestIds, tableId, unrestrictedDelete),
+        applyAssignment(current, guestIds, tableId),
       );
       setSelectedIds((current) => current.filter((id) => !guestIds.includes(id)));
       closeDialog();
@@ -312,7 +310,7 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
         } catch {
           // Delta rollback on the current state - never a stale snapshot.
           setState((current) =>
-            revertAssignment(current, origins, unrestrictedDelete),
+            revertAssignment(current, origins),
           );
         }
       });
@@ -326,7 +324,6 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
       t,
       tableById,
       tableTitle,
-      unrestrictedDelete,
     ],
   );
 
@@ -378,7 +375,7 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
           const table = result.data;
           if (table && editing) {
             setState((current) =>
-              applyTableUpdate(current, table, unrestrictedDelete),
+              applyTableUpdate(current, table),
             );
           }
           closeDialog();
@@ -406,7 +403,6 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
       t,
       tableById,
       tableTitle,
-      unrestrictedDelete,
     ],
   );
 
@@ -459,7 +455,7 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
 
       const optimistic: TableApp = { ...view.table, ...patch };
       setState((current) =>
-        applyTableUpdate(current, optimistic, unrestrictedDelete),
+        applyTableUpdate(current, optimistic),
       );
 
       const run = rejectOnFailure(updateTable(eventId, formData));
@@ -484,12 +480,12 @@ export function useSeatingWorkspace(props: SeatingPageProps) {
           // Delta rollback: restore this Table's original fields on the current
           // state, leaving any concurrent successful edit to other Tables alone.
           setState((current) =>
-            applyTableUpdate(current, view.table, unrestrictedDelete),
+            applyTableUpdate(current, view.table),
           );
         }
       });
     },
-    [eventId, failureMessage, t, tableTitle, unrestrictedDelete],
+    [eventId, failureMessage, t, tableTitle],
   );
 
   const removeTable = React.useCallback(

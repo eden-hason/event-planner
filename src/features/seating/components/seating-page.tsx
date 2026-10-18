@@ -19,7 +19,6 @@ import { snapToGrid } from '../utils/snap';
 import { AssignDialog } from './assign-dialog';
 import { BatchCreateDialog } from './batch-create-dialog';
 import { DeleteTableDialog } from './delete-table-dialog';
-import { ScopeBanner } from './scope-banner';
 import { SeatingEmptyState } from './seating-empty-state';
 import { SeatingHeaderActions } from './seating-header-actions';
 import { SeatingMobile } from './seating-mobile';
@@ -168,7 +167,6 @@ export function SeatingPage(props: SeatingPageProps) {
       ? workspace.tableById(workspace.dialog.tableId)
       : null;
 
-  const scopedRecordCount = workspace.guests.length;
   const confirmedUnseated =
     workspace.progress.confirmedRecordsTotal -
     workspace.progress.confirmedRecordsSeated;
@@ -234,11 +232,6 @@ export function SeatingPage(props: SeatingPageProps) {
           'pb-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))]',
         )}
       >
-        {props.isScopedCollaborator && (
-          <div className="px-4 pb-3">
-            <ScopeBanner scopedRecordCount={scopedRecordCount} />
-          </div>
-        )}
         <SeatingMobile workspace={workspace} groups={props.groups} />
         {dialogs}
       </div>
@@ -271,10 +264,6 @@ export function SeatingPage(props: SeatingPageProps) {
           'flex min-h-0 flex-col gap-4 overflow-hidden px-6 pb-6',
         )}
       >
-        {props.isScopedCollaborator && (
-          <ScopeBanner scopedRecordCount={scopedRecordCount} />
-        )}
-
         {workspace.tables.length === 0 ? (
           <SeatingEmptyState
             confirmedUnseated={confirmedUnseated}

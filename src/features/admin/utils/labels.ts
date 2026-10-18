@@ -42,7 +42,6 @@ export const UNKNOWN_OWNER = 'בעלים לא ידועים';
 
 const COLLABORATOR_ROLES: Record<string, string> = {
   owner: 'בעלים',
-  seating_manager: 'אחראי הושבה',
 };
 
 /** A collaborator's role on an Event (`event_collaborators.role`). */

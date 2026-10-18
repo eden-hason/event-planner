@@ -452,8 +452,21 @@ that is ever Purchased or Granted; an Included Schedule is neither.
 
 ## Owner
 
-The Event's creator, and any collaborator granted the `owner` role. Full access to
-everything on the Event. A spouse or co-planner invited to plan together is an Owner.
+The Event's creator, and anyone who joined it through its **Co-planner Link**. Every Owner
+has full access to everything on the Event, and an Event can have any number of them. A
+spouse or co-planner invited to plan together is an Owner. The creator is still told apart:
+they cannot be removed, and **Owner Messages** go to them.
+
+Owner is the **only** collaborator role. There is no "viewer", "editor" or "Seating
+Manager" - avoid that vocabulary, in the product and in marketing copy.
+
+## Co-planner Link
+
+The one link an Event has for bringing in co-planners. Whoever opens it and signs in, by
+any sign-in method, becomes an Owner of that Event. It is not addressed to anyone: it
+belongs to the Event, can be used by more than one person, and stays valid.
+_Avoid_: invitation, invite link (clashes with the **Live Invite Preview Link** a Guest
+sees), partner invitation (a **Partner** is a referring business)
 
 ## Owner Message
 
@@ -464,16 +477,6 @@ or choose it, and it does not count against the **Record Package**.
 Distinct from a **Thank You**, which is the Owner thanking their Guests. An Owner Message
 is Kululu speaking to the Owner.
 _Avoid_: utility message (Meta's name for a WhatsApp template category), notification
-
-## Seating Manager
-
-A collaborator who can manage all Tables in an Event but can identify and assign only
-the Guest Records within their guest or group scope. Intended for a planner or venue
-contact, not for a co-planner. They cannot delete a Table when doing so would disturb an
-out-of-scope Table Assignment.
-
-Owner and Seating Manager are the **only** two collaborator roles. There is no
-"viewer" or "editor" role - avoid that vocabulary, in the product and in marketing copy.
 
 ## Back Office
 
@@ -568,8 +571,7 @@ Up to four are shown, drawn from three tiers in priority order - every unfinishe
 step first, then the **Guest List Health Check**, then discovery (**Test Message**,
 seating, digital gifting, **Live Invite Preview Link**, budget). After setup, each tier
 contributes its top eligible action before the rest fill in tier order, with "add a
-guest", "ask the assistant" and "view the guest list" filling any slot left over. Only Owners see them; a Seating Manager's Home
-has none.
+guest", "ask the assistant" and "view the guest list" filling any slot left over.
 
 A fact the system records for its own reasons can still retire an action - a Test
 Message the viewer has already received, for one. That is a rule turning false, not a

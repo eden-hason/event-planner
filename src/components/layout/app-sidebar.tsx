@@ -34,7 +34,6 @@ import { type EventApp } from '@/features/events/schemas';
 import { useCollaboration } from '@/components/feature-layout';
 import { cn } from '@/lib/utils';
 
-const SEATING_MANAGER_ALLOWED = ['home', 'guests', 'seating', 'settings'];
 
 // Helper function to extract eventId from pathname
 function getEventIdFromPathname(pathname: string): string | null {
@@ -65,7 +64,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const eventId = getEventIdFromPathname(pathname);
-  const { isOwner, canSeePayments } = useCollaboration();
+  const { canSeePayments } = useCollaboration();
   const tNav = useTranslations('navigation');
   const tSidebar = useTranslations('sidebar');
   const locale = useLocale();
@@ -173,13 +172,7 @@ export function AppSidebar({
       : []),
   ];
 
-  const filteredNavMain = isOwner
-    ? navMainBase
-    : navMainBase.filter((item) =>
-        SEATING_MANAGER_ALLOWED.includes(item.id),
-      );
-
-  const navMain = filteredNavMain.map((item) => ({
+  const navMain = navMainBase.map((item) => ({
     ...item,
     url: buildNavUrl(item.url, eventId),
   }));

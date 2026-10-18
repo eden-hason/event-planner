@@ -4,7 +4,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAllUserEvents, getEventById } from '@/features/events/queries';
 import { getEffectiveUser } from '@/features/auth/queries';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { AppShell, HiddenOnFullTakeoverRoute } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
@@ -67,9 +67,8 @@ export default async function EventLayout({
     return redirect({ href: '/start', locale });
   }
 
-  const collaboratorRole = await getCollaboratorRole(eventId);
-  const role = collaboratorRole?.role ?? 'owner';
-  const isCreator = collaboratorRole?.isCreator ?? true;
+  const access = await getCollaboratorAccess(eventId);
+  const isCreator = access?.isCreator ?? true;
 
   const user = {
     id: effectiveUser?.id ?? auth.user.id,
@@ -97,7 +96,7 @@ export default async function EventLayout({
             <ImpersonationBanner />
             <BottomNavProvider>
               <LayoutContentWrapper>
-                <CollaborationProvider role={role} isCreator={isCreator}>
+                <CollaborationProvider isCreator={isCreator}>
                   <FeatureLayoutProvider>
                     <EventBillingStatusProvider
                       value={deriveHeaderStatus(event.billingStatus)}

@@ -15,13 +15,6 @@ import { useCollaboration } from '@/components/feature-layout';
 import { isSeatingRoute } from './app-shell';
 import { buildNavUrl, getEventIdFromPathname, type NavHref } from './nav-urls';
 
-/**
- * What a Seating Manager is allowed to see. Everything else in the app belongs
- * to the owner, so the collaborator's "More" page is a shorter list rather
- * than a wall of rows that all refuse to open.
- */
-const SEATING_MANAGER_ALLOWED = new Set(['seating', 'aiAssistant']);
-
 const AI_GRADIENT_STOPS = (
   <>
     <stop offset="0%" stopColor="#22d3ee" />
@@ -82,7 +75,7 @@ export function useMoreNavItems(): MoreNavItem[] {
   const tNav = useTranslations('navigation');
   const tMore = useTranslations('more.descriptions');
   const tChat = useTranslations('aiChat');
-  const { isOwner, canSeePayments } = useCollaboration();
+  const { canSeePayments } = useCollaboration();
 
   const items: MoreNavItem[] = [
     {
@@ -115,8 +108,6 @@ export function useMoreNavItems(): MoreNavItem[] {
       tint: 'bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300',
       href: buildNavUrl('/app/collaborate', eventId),
     },
-    // Without this a Seating Manager - whose entire job is the Seating Plan -
-    // could not reach it on a phone at all.
     ...(process.env.NEXT_PUBLIC_ENABLE_SEATING === 'true'
       ? [
           {
@@ -160,7 +151,5 @@ export function useMoreNavItems(): MoreNavItem[] {
         ]),
   ];
 
-  return isOwner
-    ? items
-    : items.filter((item) => SEATING_MANAGER_ALLOWED.has(item.value));
+  return items;
 }

@@ -4,7 +4,8 @@ Date: 2026-08-28
 
 ## Status
 
-Accepted; expanded incrementally during the Seating Plan redesign.
+Accepted; expanded incrementally during the Seating Plan redesign. The Seating Manager
+sections are superseded by ADR 0041, which removes the role.
 
 Builds on [ADR-0005](0005-seating-plan-is-an-operational-layout.md), which settles what
 the canvas is. This ADR settles how assignment behaves underneath it.

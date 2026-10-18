@@ -2,7 +2,7 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import {
   listEventPayments,
   loadRecordPackage,
@@ -71,13 +71,13 @@ export async function getRecordPackagePageView(
   eventId: string,
 ): Promise<{ allowed: false } | { allowed: true; view: RecordPackagePageView | null }> {
   const { supabase } = await getEffectiveClient();
-  // Read through RLS, so starting the loads before the role check leaks nothing.
-  const [role, loaded, payments] = await Promise.all([
-    getCollaboratorRole(eventId),
+  // Read through RLS, so starting the loads before the access check leaks nothing.
+  const [access, loaded, payments] = await Promise.all([
+    getCollaboratorAccess(eventId),
     loadRecordPackage(supabase, eventId),
     listEventPayments(supabase, eventId),
   ]);
-  if (role?.role !== 'owner' || !role.isCreator) return { allowed: false };
+  if (!access?.isCreator) return { allowed: false };
   if (!loaded?.package || !payments) return { allowed: true, view: null };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the page never reads it

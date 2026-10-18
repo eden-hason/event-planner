@@ -4,12 +4,9 @@ import type { TableApp, TableOccupancy, TableView } from '../types';
 /**
  * Local echoes of a mutation, applied while the Server Action is in flight.
  *
- * The interesting constraint is that occupancy is not fully derivable on the
- * client: a scoped collaborator's view carries head counts for Guest Records
- * they cannot see. So rather than recomputing a Table from its visible guests -
- * which would silently drop those reserved places and make a full Table look
- * empty - these helpers adjust the counters by the delta of the records that
- * actually moved, and leave the out-of-scope part exactly where it was.
+ * These adjust a Table's counters by the delta of the records that actually
+ * moved rather than recomputing it from its guests, so a concurrent change the
+ * server has already counted is never dropped.
  */
 
 const headsOf = (guest: GuestWithGroupApp) => guest.amount ?? 1;
@@ -26,10 +23,6 @@ function withGuest(
     confirmedHeads: occupancy.confirmedHeads + (isPending ? 0 : heads),
     pendingHeads: occupancy.pendingHeads + (isPending ? heads : 0),
     records: occupancy.records + direction,
-    // The mover is a record this collaborator can see, or they could not have
-    // moved it, so the visible counters move with the totals.
-    visibleRecords: occupancy.visibleRecords + direction,
-    visibleHeads: occupancy.visibleHeads + heads,
   };
 }
 
@@ -37,10 +30,8 @@ function rebuild(
   table: TableApp,
   guests: GuestWithGroupApp[],
   occupancy: TableOccupancy,
-  canDeleteWhenInScope: boolean,
 ): TableView {
   const seatedHeads = occupancy.confirmedHeads + occupancy.pendingHeads;
-  const outOfScopeRecords = Math.max(occupancy.records - occupancy.visibleRecords, 0);
 
   return {
     table,
@@ -48,9 +39,6 @@ function rebuild(
     occupancy,
     seatedHeads,
     freeSeats: Math.max(table.capacity - seatedHeads, 0),
-    outOfScopeRecords,
-    outOfScopeHeads: Math.max(seatedHeads - occupancy.visibleHeads, 0),
-    canDelete: canDeleteWhenInScope || outOfScopeRecords === 0,
   };
 }
 
@@ -68,8 +56,6 @@ export function applyAssignment(
   state: SeatingState,
   guestIds: string[],
   tableId: string | null,
-  /** True for an Owner, who may delete a Table regardless of scope. */
-  unrestrictedDelete: boolean,
 ): SeatingState {
   const ids = new Set(guestIds);
   const moving = state.guests.filter((guest) => ids.has(guest.id));
@@ -95,7 +81,7 @@ export function applyAssignment(
     const remaining = view.guests.filter((guest) => !ids.has(guest.id));
     const next = [...remaining, ...arriving.map((g) => ({ ...g, tableId }))];
 
-    return rebuild(view.table, next, occupancy, unrestrictedDelete);
+    return rebuild(view.table, next, occupancy);
   });
 
   return { tables, guests };
@@ -110,7 +96,6 @@ export function applyAssignment(
 export function revertAssignment(
   state: SeatingState,
   origins: Array<{ id: string; tableId: string | null }>,
-  unrestrictedDelete: boolean,
 ): SeatingState {
   const byOrigin = new Map<string | null, string[]>();
   for (const { id, tableId } of origins) {
@@ -121,7 +106,7 @@ export function revertAssignment(
 
   let next = state;
   for (const [tableId, ids] of byOrigin) {
-    next = applyAssignment(next, ids, tableId, unrestrictedDelete);
+    next = applyAssignment(next, ids, tableId);
   }
   return next;
 }
@@ -172,14 +157,13 @@ export function applyPosition(
 export function applyTableUpdate(
   state: SeatingState,
   table: TableApp,
-  unrestrictedDelete: boolean,
 ): SeatingState {
   return {
     ...state,
     tables: state.tables
       .map((view) =>
         view.table.id === table.id
-          ? rebuild(table, view.guests, view.occupancy, unrestrictedDelete)
+          ? rebuild(table, view.guests, view.occupancy)
           : view,
       )
       // Tables are canonically ordered by ascending number (ADR-0008), so an

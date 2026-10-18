@@ -1,6 +1,5 @@
-import { CollaboratePage } from '@/features/collaborate/components/collaborate-page';
-import { getEventCollaborators, getEventInvitations } from '@/features/collaborate/queries';
-import { getEventGroups, getEventGuests } from '@/features/guests/queries';
+import { CollaboratePage } from '@/features/collaborate';
+import { getCoPlannerLink, getEventCollaborators } from '@/features/collaborate/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function CollaboratePageRoute({
@@ -15,11 +14,9 @@ export default async function CollaboratePageRoute({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [collaborators, invitations, groups, guests] = await Promise.all([
+  const [collaborators, coPlannerLink] = await Promise.all([
     getEventCollaborators(eventId),
-    getEventInvitations(eventId),
-    getEventGroups(eventId),
-    getEventGuests(eventId),
+    getCoPlannerLink(eventId),
   ]);
 
   return (
@@ -27,9 +24,7 @@ export default async function CollaboratePageRoute({
       eventId={eventId}
       currentUserId={user?.id}
       collaborators={collaborators}
-      invitations={invitations}
-      groups={groups}
-      guests={guests}
+      coPlannerLink={coPlannerLink}
     />
   );
 }

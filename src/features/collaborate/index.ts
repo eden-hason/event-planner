@@ -1,28 +1,22 @@
 // Schemas & types
-export {
-  type CollaboratorApp,
-  type InvitationApp,
-  type CollaboratorRole,
-  type InvitationStatus,
-  type ScopeItem,
-  type ActionState,
-  ROLE_LABELS,
-  collaboratorRoles,
-  invitationStatuses,
-} from './schemas';
-
-// Queries
-export {
-  getEventCollaborators,
-  getCollaboratorRole,
-  getCollaboratorScope,
-} from './queries';
-export { getEventInvitations, getInvitationByToken } from './queries';
+export { type CollaboratorApp, type ActionState } from './schemas';
+export type { CoPlannerLinkPreview, CollaboratorAccess, JoinResult } from './types';
 
 // Actions
-export { createInvitation } from './actions';
-export { removeCollaborator, updateCollaboratorScope } from './actions';
-export { acceptInvitation, declineInvitation } from './actions';
+export { removeCollaborator, joinEventByCoPlannerLink } from './actions';
+
+// Components
+export { CollaboratePage } from './components/collaborate-page';
+export { JoinCoPlannerPage } from './components/join-co-planner-page';
+export { JoinedToast } from './components/joined-toast';
 
 // Utils
-export { isSameEmail } from './utils';
+export {
+  AUTO_JOIN_PARAM,
+  JOINED_PARAM,
+  buildCoPlannerLink,
+  buildWhatsAppShareUrl,
+  coPlannerLinkPath,
+} from './utils';
+
+// Queries are server-only: import them from '@/features/collaborate/queries'.

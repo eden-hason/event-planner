@@ -57,3 +57,4 @@ in the diff, not here.
 | [0023](0023-read-owner-replies.md) | Nobody reads what an Owner writes back to the Kululu WhatsApp number | owner messages / back office | open |
 | [0024](0024-schedules-hero-attention-items.md) | The schedules hero leaves out three of its five attention items | schedules | open |
 | [0025](0025-guests-abroad-are-whatsapp-only.md) | A Guest with a number from abroad is reached on WhatsApp alone, and nothing says so | guests / outreach | open |
+| [0026](0026-the-co-planner-link-cannot-be-shut-off.md) | The Co-planner Link cannot be shut off, and a removed Owner can rejoin | collaborate / security | open |

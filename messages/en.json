@@ -214,11 +214,7 @@
       "descriptionEmpty": "This table is empty, so nothing moves. This action cannot be undone.",
       "returning": "Returning to Unassigned",
       "cancel": "Keep table",
-      "confirm": "Delete table",
-      "blockedTitle": "{table} can't be deleted",
-      "blockedDescription": "This table seats {heads, plural, one {# guest} other {# guests}} assigned by another planner, outside your guest scope. Ask the event owner to delete it.",
-      "blockedNote": "You can still assign and unassign your own guests at this table.",
-      "close": "Close"
+      "confirm": "Delete table"
     },
     "assignDialog": {
       "title": "Assign {name}",
@@ -231,14 +227,6 @@
       "cancel": "Cancel",
       "noTables": "No tables yet - create one first"
     },
-    "scope": {
-      "bannerTitle": "You're seating your assigned guests",
-      "bannerBody": "You can see every table and its true occupancy, but only assign the {count, plural, one {# guest record} other {# guest records}} in your scope.",
-      "outOfScope": "{count, plural, one {# record outside your scope} other {# records outside your scope}}",
-      "outOfScopeNote": "Names hidden. Their seats still count against capacity",
-      "deleteBlocked": "Delete is unavailable - this table holds guests you can't see",
-      "deleteBlockedTooltip": "Delete blocked"
-    },
     "zoom": {
       "in": "Zoom in",
       "out": "Zoom out",
@@ -250,7 +238,6 @@
       "capacityBelowOccupancy": "{table} seats {occupancy} guests today. Seats can't go below {occupancy} - unassign someone first",
       "duplicateNumber": "Table {number} already exists. Numbers must be unique in this event",
       "duplicateNumbers": "Tables {numbers} already exist. Numbers must be unique in this event",
-      "deleteOutOfScope": "This table holds guests outside your scope. Ask the event owner to delete it",
       "tableNotFound": "That table no longer exists",
       "nothingAssignable": "Nothing to assign",
       "createFailed": "Could not create the table",
@@ -1343,7 +1330,6 @@
       "tag": "Outside package",
       "countOutside": "{count, plural, one {# record outside the package} other {# records outside the package}} · the most recently added",
       "bannerOwner": "The most recently added records won't get messages until records are added to the package",
-      "bannerCollaborator": "The most recently added records won't get messages. Ask the event owner to add records",
       "addRecords": "Add records",
       "drawerLine": "Outside the package · won't get messages",
       "drawerLink": "Package details",
@@ -1943,10 +1929,9 @@
       }
     },
     "tab": {
-      "heading": "Collaborate with others",
-      "description": "Invite your partner, family, or friends to help manage this event. You can assign different roles and permissions to keep everything organized.",
-      "inviteButton": "Invite Collaborator",
-      "activeMembers": "Active Members",
+      "heading": "Plan together",
+      "description": "Invite your partner, a parent or a good friend to plan this event with you. Everyone you invite gets full access, just like you.",
+      "activeMembers": "Planning this event",
       "features": {
         "shareWorkload": "Share the workload",
         "shareWorkloadDesc": "Distribute tasks easily",
@@ -1958,110 +1943,51 @@
     },
     "collaboratorsList": {
       "you": "You",
-      "invitedByYou": "Invited by you",
-      "changeRole": "Change Role",
+      "creator": "Created the event",
+      "joinedOn": "Joined {date}",
       "remove": "Remove",
       "removeDialog": {
-        "title": "Remove collaborator?",
-        "description": "{name} will lose access to this event. This action cannot be undone.",
+        "title": "Remove co-planner?",
+        "description": "{name} will lose access to this event",
         "cancel": "Cancel",
         "confirm": "Remove"
       },
       "toast": {
-        "removing": "Removing collaborator...",
-        "removed": "Collaborator removed",
+        "removing": "Removing co-planner...",
+        "removed": "Co-planner removed",
         "failed": "Something went wrong"
       }
     },
-    "configDialog": {
-      "title": "Configure Collaborator",
-      "description": "Change the role and permissions for this collaborator.",
-      "roleLabel": "Role",
-      "ownerDescription": "Full access to all event settings, guests, and collaborators.",
-      "seatingManagerDescription": "Can manage assigned guests and groups only.",
-      "scopeLabel": "Assigned Scope",
-      "saving": "Saving...",
-      "saveChanges": "Save Changes",
+    "link": {
+      "title": "Invite your co-planner",
+      "description": "Send this link to whoever you're planning with. Once they open it and sign in, they can plan everything with you.",
+      "sendOnWhatsApp": "Send on WhatsApp",
+      "copy": "Copy link",
+      "copiedButton": "Copied",
+      "copied": "Link copied",
+      "copyFailed": "Couldn't copy the link",
+      "whatsappMessage": "Let's plan our event together on Kululu: {link}"
+    },
+    "joinPage": {
+      "invitedBy": "{name} invited you to plan",
+      "invited": "You're invited to plan",
+      "untitledEvent": "An event on Kululu",
+      "description": "Join to see the guest list, the schedule and everything else, and plan it together",
+      "join": "Join the event",
+      "joining": "Joining...",
+      "signInToJoin": "Sign in to join",
+      "signInHint": "With your phone number or Google - whichever you like",
+      "invalidTitle": "This link is no longer valid",
+      "invalidDescription": "Ask whoever invited you to send you a new link.",
       "toast": {
-        "needsScope": "Seating managers need at least one group or guest assigned",
-        "roleFailed": "Failed to update role",
-        "roleUpdated": "Role updated",
-        "scopeRequired": "At least one group or guest is required",
-        "scopeFailed": "Failed to update scope",
-        "scopeUpdated": "Scope updated",
-        "error": "Something went wrong"
+        "notFound": "This link is no longer valid",
+        "failed": "Couldn't join the event. Try again"
       }
     },
-    "pendingInvitations": {
-      "title": "Pending Invitations",
-      "expires": "Expires",
-      "resend": "Resend",
-      "cancel": "Cancel",
-      "toast": {
-        "linkCopied": "Invitation link copied to clipboard",
-        "revoking": "Revoking invitation...",
-        "revoked": "Invitation revoked",
-        "failed": "Something went wrong"
-      }
-    },
-    "inviteDialog": {
-      "titleInvite": "Invite Collaborator",
-      "titleSuccess": "Invitation Created",
-      "descriptionInvite": "Add a new member to your planning team.",
-      "descriptionSuccessEmail": "An invitation email has been sent. You can also share the link manually.",
-      "descriptionSuccessLink": "Share this link with the person you invited.",
-      "emailLabel": "Email Address",
-      "emailPlaceholder": "partner@gmail.com",
-      "emailHint": "Gmail addresses only (@gmail.com)",
-      "roleLabel": "Role",
-      "ownerLabel": "Owner",
-      "ownerBadge": "Full Access",
-      "ownerDescription": "Full access to manage the event, guests, and settings.",
-      "seatingManagerLabel": "Seating Manager",
-      "seatingManagerBadge": "Limited Access",
-      "seatingManagerDescription": "Can manage assigned guests and seating charts only.",
-      "inviteInfo": "New collaborators will receive an email invitation to join your event.",
-      "cancel": "Cancel",
-      "nextScope": "Next: Set Scope",
-      "sendInvitation": "Send Invitation",
-      "sending": "Sending...",
-      "selectScope": "Select What They Can Manage",
-      "invitationSentTo": "Invitation email sent to {email}",
-      "copied": "Copied",
-      "copy": "Copy",
-      "done": "Done",
-      "toast": {
-        "emailRequired": "Please enter an email address",
-        "gmailOnly": "Only Gmail addresses (@gmail.com) can be invited",
-        "createFailed": "Failed to create invitation",
-        "created": "Invitation created",
-        "linkCopied": "Link copied to clipboard"
-      }
-    },
-    "editScope": {
-      "title": "Edit Scope - {name}",
-      "description": "Choose which groups and guests this seating manager can view.",
-      "saving": "Saving...",
-      "save": "Save Scope",
-      "toast": {
-        "failed": "Failed to update scope",
-        "updated": "Scope updated"
-      }
-    },
-    "invitationPage": {
-      "title": "Event Invitation",
-      "invitedTo": "You have been invited to collaborate on",
-      "seatingManagerNote": "You will have view-only access to assigned guests and groups.",
-      "decline": "Decline",
-      "processing": "Processing...",
-      "accept": "Accept",
-      "toast": {
-        "accepted": "Invitation accepted",
-        "declined": "Invitation declined",
-        "acceptFailed": "Failed to accept invitation",
-        "declineFailed": "Failed to decline invitation",
-        "error": "Something went wrong"
-      }
+    "joined": {
+      "title": "You joined the event",
+      "body": "You're now planning this event together. Everything here is shared - the guest list, the schedule, the budget and the rest.",
+      "ok": "Let's go"
     }
   },
   "settings": {

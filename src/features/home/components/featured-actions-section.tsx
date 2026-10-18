@@ -21,8 +21,6 @@ export async function FeaturedActionsSection({ eventId }: { eventId: string }) {
     getHomeEvent(eventId),
     getHomeViewer(eventId),
   ]);
-  // Seating Managers get Hero and analytics only - nearly every action leads
-  // somewhere they cannot go.
   if (!event || !viewer?.isOwner) return null;
 
   // The package is loaded here, not with the other facts, because its sheet needs it too.

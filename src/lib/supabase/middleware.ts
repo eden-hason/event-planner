@@ -76,6 +76,8 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     // Live Invite Preview Link - opened by whoever the Owner shares it with
     !strippedPath.startsWith('/p/') &&
     !strippedPath.startsWith('/invitations') &&
+    // Co-planner Link (ADR 0041) - its page shows whose Event before sign-in
+    !strippedPath.startsWith('/join/') &&
     !strippedPath.startsWith('/privacy') &&
     !strippedPath.startsWith('/terms') &&
     !strippedPath.startsWith('/nav')

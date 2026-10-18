@@ -3,7 +3,7 @@ import { getEffectiveClient, getImpersonation } from '@/lib/supabase/admin';
 import { getEventById } from '@/features/events/queries';
 import { getEventGuests, getEventGroupsWithGuests } from '@/features/guests/queries';
 import { getEffectiveUser, getUserProfile } from '@/features/auth/queries';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import { getGlobalProgressCounts } from '@/features/seating/queries';
 import { findGuestIssues } from '@/features/guests';
 import {
@@ -46,9 +46,9 @@ export type HomeViewer = {
 export const getHomeViewer = cache(async function getHomeViewer(
   eventId: string,
 ): Promise<HomeViewer | null> {
-  const [user, role, impersonation, profile] = await Promise.all([
+  const [user, access, impersonation, profile] = await Promise.all([
     getEffectiveUser(),
-    getCollaboratorRole(eventId),
+    getCollaboratorAccess(eventId),
     getImpersonation(),
     getUserProfile(),
   ]);
@@ -59,7 +59,7 @@ export const getHomeViewer = cache(async function getHomeViewer(
     userId: user.id,
     name: impersonation ? user.displayName : profile?.fullName || user.displayName,
     phone: (impersonation ? user.phone : profile?.phoneNumber) || null,
-    isOwner: role?.role === 'owner',
+    isOwner: access !== null,
     isImpersonated: Boolean(impersonation),
   };
 });

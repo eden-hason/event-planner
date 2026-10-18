@@ -1,66 +1,23 @@
-/**
- * Generates a unique invitation token using crypto.randomUUID().
- */
-export function generateInviteToken(): string {
-  return crypto.randomUUID();
+/** Query flag Home reads to tell a co-planner they just joined the Event. */
+export const JOINED_PARAM = 'joined';
+
+/** Set on the return from sign-in, so the join happens without a second tap. */
+export const AUTO_JOIN_PARAM = 'auto';
+
+/** The path a Co-planner Link opens, relative to the site origin. */
+export function coPlannerLinkPath(token: string): string {
+  return `/join/${encodeURIComponent(token)}`;
+}
+
+/** The full Co-planner Link the inviter shares. */
+export function buildCoPlannerLink(origin: string, token: string): string {
+  return `${origin.replace(/\/+$/, '')}${coPlannerLinkPath(token)}`;
 }
 
 /**
- * Whether two email addresses belong to the same mailbox. Addresses are
- * case-insensitive in practice (Gmail certainly), and Supabase Auth stores
- * them lowercased, so an invite typed as "Name@gmail.com" must still match.
+ * A wa.me link that opens WhatsApp with `text` ready to send, letting the
+ * sender pick the chat. No phone number: the inviter chooses who gets it.
  */
-export function isSameEmail(
-  a: string | null | undefined,
-  b: string | null | undefined,
-): boolean {
-  if (!a || !b) return false;
-  return a.trim().toLowerCase() === b.trim().toLowerCase();
-}
-
-/**
- * Builds the full invitation URL from a token.
- */
-export function buildInvitationLink(token: string): string {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
-    'http://localhost:3000';
-  const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-  return `${origin}/invitations/${token}`;
-}
-
-/**
- * Formats a scope summary string like "2 groups · 15 guests"
- */
-export function formatScopeSummary(
-  groupCount: number,
-  guestCount: number,
-): string {
-  const parts: string[] = [];
-  if (groupCount > 0) {
-    parts.push(`${groupCount} group${groupCount !== 1 ? 's' : ''}`);
-  }
-  if (guestCount > 0) {
-    parts.push(`${guestCount} guest${guestCount !== 1 ? 's' : ''}`);
-  }
-  return parts.join(' · ') || 'No scope assigned';
-}
-
-/**
- * Returns a human-readable time until expiration.
- */
-export function getExpiryText(expiresAt: string): string {
-  const now = new Date();
-  const expires = new Date(expiresAt);
-  const diffMs = expires.getTime() - now.getTime();
-
-  if (diffMs <= 0) return 'Expired';
-
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) return `${diffDays}d left`;
-  if (diffHours > 0) return `${diffHours}h left`;
-  return 'Less than 1h left';
+export function buildWhatsAppShareUrl(text: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }

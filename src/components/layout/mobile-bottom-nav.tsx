@@ -13,20 +13,16 @@ import {
   MobileTabBar,
   type MobileTabBarItem,
 } from '@/components/layout/mobile-tab-bar';
-import { useCollaboration } from '@/components/feature-layout';
 import { isGuestImportRoute } from './app-shell';
 import { useBottomNavHidden } from './bottom-nav-context';
 import { useMoreNavItems } from './more-nav-items';
 import { buildNavUrl, getEventIdFromPathname } from './nav-urls';
-
-const SEATING_MANAGER_ALLOWED = new Set(['home', 'guests', 'more']);
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const bottomNavHidden = useBottomNavHidden();
   const eventId = getEventIdFromPathname(pathname);
   const tNav = useTranslations('navigation');
-  const { isOwner } = useCollaboration();
   // Only to decide whether the tab has anywhere to lead - the "More" page owns
   // the rendering of the tools themselves.
   const moreItems = useMoreNavItems();
@@ -88,8 +84,7 @@ export function MobileBottomNav() {
     disabled,
   };
 
-  const items = [...primaryItems, ...(moreItems.length > 0 ? [moreTab] : [])]
-    .filter((item) => isOwner || SEATING_MANAGER_ALLOWED.has(item.value));
+  const items = [...primaryItems, ...(moreItems.length > 0 ? [moreTab] : [])];
 
   return <MobileTabBar items={items} />;
 }

@@ -1,4 +1,3 @@
-import type { CollaboratorRole } from '@/features/collaborate/schemas';
 import type {
   EventBillingStatus,
   EventPayment,
@@ -361,7 +360,7 @@ export type UserRow = {
   isTestAccount: boolean;
   /** Events where this User is the creator, draft and published alike. */
   ownedEvents: number;
-  /** Non-creator collaborations - Owner or Seating Manager on someone else's Event. */
+  /** Non-creator collaborations - an Owner on someone else's Event. */
   sharedEvents: number;
   createdAt: string;
 };
@@ -393,7 +392,8 @@ export type UserOwnedEvent = {
 export type UserSharedEvent = {
   id: string;
   title: string;
-  role: CollaboratorRole;
+  /** `event_collaborators.role` - always `owner` since ADR 0041. */
+  role: string;
 };
 
 export type UserDetail = {
