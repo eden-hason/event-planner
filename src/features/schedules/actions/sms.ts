@@ -1,3 +1,4 @@
+import { canReceiveSms } from '@/lib/phone';
 import type { SmsCampaignReport } from '../utils/sms-delivery-report';
 
 const BASE_URL = 'https://webapi.mymarketing.co.il';
@@ -16,6 +17,12 @@ export async function sendSmsMessage({
   body: string;
 }): Promise<{ success: boolean; messageId?: string; message: string }> {
   const apiKey = process.env.ACTIVE_TRAIL_API_KEY!;
+
+  // The audience filters already leave numbers from abroad out of every SMS
+  // path; this is the backstop for a payload rendered before they did.
+  if (!canReceiveSms(to)) {
+    return { success: false, message: 'SMS goes to Israeli numbers only' };
+  }
 
   try {
     const response = await fetch(

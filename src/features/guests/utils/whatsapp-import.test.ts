@@ -172,7 +172,7 @@ test('the selection becomes a name/phone/group table, one row per person', () =>
     ['Dana', '0542222222', 'Family'],
     // No name anywhere: left blank for the validate step to flag.
     ['', '0543333333', ''],
-    // Not an Israeli mobile: kept international so validation rejects it as it would from a file.
+    // Not an Israeli mobile: kept international, as a number from abroad has to be.
     ['Abroad', '+14155550100', ''],
   ]);
 });

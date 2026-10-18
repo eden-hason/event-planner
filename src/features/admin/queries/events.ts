@@ -4,6 +4,7 @@ import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { pageAll } from '@/lib/supabase/row-cap';
+import { canReceiveSms } from '@/lib/phone';
 import {
   classifyWhatsAppFailure,
   comparePlanOrder,
@@ -488,7 +489,7 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
       fallbackCount += failures.filter(
         (delivery) => delivery.channel === 'whatsapp'
           && classifyWhatsAppFailure(delivery.errorCode) === 'guest'
-          && validatePhoneNumber(delivery.guestPhone),
+          && canReceiveSms(delivery.guestPhone),
       ).length;
       firstFailedSchedule ??= row;
     }

@@ -16,6 +16,7 @@ import { mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
 import { loadOutsidePackageIds } from '@/features/billing/services';
+import { canReceiveSms } from '@/lib/phone';
 import {
   includesGiftButton,
   hasInvitationImage,
@@ -205,14 +206,18 @@ export async function renderScheduleDeliveries(
   const outside = targeted.filter((guest) => outsideIds.has(guest.id));
   const inside = targeted.filter((guest) => !outsideIds.has(guest.id));
 
-  const reachable = inside.filter((guest) => validatePhoneNumber(guest.phone));
+  // A Schedule sent by SMS cannot reach a number from abroad (SMS is
+  // Israeli-only), so such a guest is skipped as having no usable phone - for
+  // this channel, they have none.
+  const usablePhone = withoutTable.channel === 'sms' ? canReceiveSms : validatePhoneNumber;
+  const reachable = inside.filter((guest) => usablePhone(guest.phone));
 
   // Skipped guests are a fact the Owner needs to see ("never got it - no phone
   // number", "outside the package"), not just a number in a summary. Only
   // meaningful for a whole audience: a hand-picked subset says nothing about who
   // was left out.
   if (!options.guestIds?.length) {
-    const unreachable = inside.filter((guest) => !validatePhoneNumber(guest.phone));
+    const unreachable = inside.filter((guest) => !usablePhone(guest.phone));
     try {
       if (outside.length > 0) {
         await recordNotSent(supabase, scheduleId, outside.map((g) => g.id), 'scheduled', 'outside_package');

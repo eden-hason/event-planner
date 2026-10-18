@@ -98,6 +98,16 @@ export function isValidPhone(
 }
 
 /**
+ * True when an SMS can reach the number. SMS goes out through ActiveTrail, an
+ * Israeli provider, so only Israeli numbers qualify: a Guest with a number from
+ * abroad is reached on WhatsApp alone, and the SMS paths leave them out
+ * (docs/backlog/0025-guests-abroad-are-whatsapp-only.md).
+ */
+export function canReceiveSms(input: string | null | undefined): boolean {
+  return toE164(input)?.startsWith('+972') ?? false;
+}
+
+/**
  * Canonical form for *comparison* - duplicate detection, set membership, map
  * keys - falling back to a whitespace-stripped copy of the input when the
  * number does not parse.
