@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AddCallRoundDialog } from './add-call-round-dialog';
+import { LateGuestsDialog } from './late-guests-dialog';
 import { Band, BandRow } from './band';
 import {
   BILLING_STATUS_LABELS,
@@ -332,16 +333,22 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     // empty guest list does not hide them: the audience is taken at Start.
     const sendingEnabled = event.canCreateSchedules;
     const guestSummary = sendingEnabled ? await getEventGuestSummary(eventId) : null;
+    const messageSchedules = rows.filter((row) => row.kind === 'message');
     return (
       <Band
         id="outreach-timeline"
         title="ציר התקשורת"
         className="scroll-mt-20"
         // Bulk sending is gone (ADR 0013): a Schedule sends when its Due Time
-        // comes, and the one manual path left is the per-delivery send on the
-        // timeline itself, capped at ten guest records.
+        // comes. The manual paths left - the per-delivery resend on the
+        // timeline and the late-guest send here - are capped at ten records.
         action={guestSummary ? (
           <div className="flex shrink-0 gap-2">
+            {messageSchedules.some((row) => row.status === 'sent') && (
+              <LateGuestsDialog
+                schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
+              />
+            )}
             <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
           </div>
         ) : null}

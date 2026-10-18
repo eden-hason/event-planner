@@ -27,6 +27,7 @@ export {
   Search,
   Trash2,
   TriangleAlert,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react';
