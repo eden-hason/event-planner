@@ -7,31 +7,23 @@ export type { TableApp, TableShape, TableWithGuestsApp } from './schemas';
  * What one Table holds, in the two units ADR-0009 keeps apart.
  *
  * Heads are what capacity is measured in; records are what progress is
- * measured in. `visibleRecords` and `visibleHeads` cover only the Guest Records
- * the current collaborator may identify, so `records - visibleRecords` is the
- * anonymized "outside your scope" count. Every capacity check uses the totals.
+ * measured in.
  */
 export interface TableOccupancy {
   confirmedHeads: number;
   pendingHeads: number;
   records: number;
-  visibleRecords: number;
-  visibleHeads: number;
 }
 
 export interface TableView {
   table: TableApp;
-  /** Guest Records seated here that the current collaborator may identify. */
+  /** Guest Records seated here. */
   guests: GuestWithGroupApp[];
   occupancy: TableOccupancy;
   /** Total heads reserved here, confirmed and provisional alike. */
   seatedHeads: number;
   /** Places left. Never negative: capacity is a hard invariant. */
   freeSeats: number;
-  outOfScopeRecords: number;
-  outOfScopeHeads: number;
-  /** A Seating Manager may not delete a Table holding guests they cannot see. */
-  canDelete: boolean;
 }
 
 /**
@@ -109,6 +101,4 @@ export type DroppableData = DroppableTableData | DroppableUnassignedData;
 export type SeatingPageProps = SeatingPageData & {
   eventId: string;
   groups: Array<{ id: string; name: string; icon: string | null }>;
-  /** Scoped collaborators get the board 1f treatment: full capacity, no names. */
-  isScopedCollaborator: boolean;
 };

@@ -4,25 +4,20 @@ import { useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { CollaborateTab } from './collaborate-tab';
-import type { CollaboratorApp, InvitationApp } from '../schemas';
-import type { GroupApp, GuestApp } from '@/features/guests/schemas';
+import type { CollaboratorApp } from '../schemas';
 
 interface CollaboratePageProps {
   eventId: string;
   currentUserId?: string;
   collaborators: CollaboratorApp[];
-  invitations: InvitationApp[];
-  groups: GroupApp[];
-  guests: GuestApp[];
+  coPlannerLink: string | null;
 }
 
 export function CollaboratePage({
   eventId,
   currentUserId,
   collaborators,
-  invitations,
-  groups,
-  guests,
+  coPlannerLink,
 }: CollaboratePageProps) {
   const t = useTranslations('collaborate.page');
 
@@ -43,9 +38,7 @@ export function CollaboratePage({
         eventId={eventId}
         currentUserId={currentUserId}
         collaborators={collaborators}
-        invitations={invitations}
-        groups={groups}
-        guests={guests}
+        coPlannerLink={coPlannerLink}
       />
     </div>
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useCollaboration } from '@/components/feature-layout';
 import type { GuestPackageView } from '../types';
 import { RecordPackageSheet } from './record-package-sheet';
 
@@ -15,15 +14,12 @@ type RecordPackageValue = {
   view: GuestPackageView | null;
   /** The Guest Records outside the package, for the row tags and the filter. */
   outsideIds: ReadonlySet<string>;
-  /** Only the Owner has the package sheet: it is about buying records. */
-  canOpenSheet: boolean;
   openSheet: (options?: OpenSheetOptions) => void;
 };
 
 const EMPTY: RecordPackageValue = {
   view: null,
   outsideIds: new Set(),
-  canOpenSheet: false,
   openSheet: () => {},
 };
 
@@ -43,12 +39,10 @@ export function RecordPackageProvider({
   eventName?: string;
   children: React.ReactNode;
 }) {
-  const { isOwner } = useCollaboration();
   const [open, setOpen] = React.useState(false);
   // Kept after close, so the sheet does not change under its own closing animation.
   const [options, setOptions] = React.useState<OpenSheetOptions>({});
 
-  const canOpenSheet = Boolean(view) && isOwner;
   const openSheet = React.useCallback((next?: OpenSheetOptions) => {
     setOptions(next ?? {});
     setOpen(true);
@@ -60,17 +54,16 @@ export function RecordPackageProvider({
         ? {
             view,
             outsideIds: new Set(view.outsideIds),
-            canOpenSheet,
             openSheet,
           }
         : EMPTY,
-    [view, canOpenSheet, openSheet],
+    [view, openSheet],
   );
 
   return (
     <RecordPackageContext.Provider value={value}>
       {children}
-      {view && canOpenSheet && (
+      {view && (
         <RecordPackageSheet
           open={open}
           onOpenChange={setOpen}

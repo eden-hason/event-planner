@@ -1,107 +1,16 @@
-import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
-import { getInvitationByToken } from '@/features/collaborate/queries';
-import { isVisitor } from '@/features/auth';
-import { isSameEmail } from '@/features/collaborate';
-import { InvitationResponsePage } from './invitation-response-page';
+import { InvalidCoPlannerLink } from '@/features/collaborate';
 
-export default async function InvitationPage({
+/**
+ * Email invitations were replaced by the Co-planner Link (ADR 0041). An old
+ * invitation link still opens, and says so, rather than a 404.
+ */
+export default async function RetiredInvitationPage({
   params,
 }: {
-  params: Promise<{ locale: string; token: string }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale, token } = await params;
+  const { locale } = await params;
   setRequestLocale(locale);
-  const invitation = await getInvitationByToken(token);
-
-  if (!invitation) {
-    return (
-      // theme-locked-light: reached from an invite link - see the comment
-      // above `.theme-locked-light` in globals.css.
-      <div className="theme-locked-light flex min-h-screen items-center justify-center">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold">Invitation Not Found</h1>
-          <p className="text-muted-foreground">
-            This invitation link is invalid or has been revoked.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if expired
-  if (new Date(invitation.expiresAt) < new Date()) {
-    return (
-      // theme-locked-light: reached from an invite link - see the comment
-      // above `.theme-locked-light` in globals.css.
-      <div className="theme-locked-light flex min-h-screen items-center justify-center">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold">Invitation Expired</h1>
-          <p className="text-muted-foreground">
-            This invitation has expired. Please ask the event owner to send a
-            new one.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if already responded
-  if (invitation.status !== 'pending') {
-    return (
-      // theme-locked-light: reached from an invite link - see the comment
-      // above `.theme-locked-light` in globals.css.
-      <div className="theme-locked-light flex min-h-screen items-center justify-center">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold">
-            Invitation Already {invitation.status === 'accepted' ? 'Accepted' : 'Declined'}
-          </h1>
-          <p className="text-muted-foreground">
-            {invitation.status === 'accepted'
-              ? 'You have already accepted this invitation.'
-              : 'This invitation has been declined.'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check authentication
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // A Visitor (ADR 0028) has a session but no account to accept with.
-  if (!user || isVisitor(user)) {
-    // Redirect to login with return URL
-    return redirect({ href: `/login?next=/invitations/${token}`, locale });
-  }
-
-  // Check email mismatch
-  if (!isSameEmail(user.email, invitation.invitedEmail)) {
-    return (
-      // theme-locked-light: reached from an invite link - see the comment
-      // above `.theme-locked-light` in globals.css.
-      <div className="theme-locked-light flex min-h-screen items-center justify-center">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-2xl font-bold">Email Mismatch</h1>
-          <p className="text-muted-foreground">
-            This invitation was sent to{' '}
-            <strong>{invitation.invitedEmail}</strong>, but you are logged in as{' '}
-            <strong>{user.email}</strong>. Please log in with the correct
-            account.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <InvitationResponsePage
-      invitation={invitation}
-      token={token}
-    />
-  );
+  return <InvalidCoPlannerLink />;
 }

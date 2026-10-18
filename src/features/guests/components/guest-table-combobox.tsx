@@ -171,8 +171,7 @@ export function GuestTableCombobox({
                   // Total occupancy from the database already counts this
                   // record's current seats, so at its own Table those seats are
                   // available to it again - but nothing more. Everywhere else,
-                  // free capacity is measured against the full occupancy,
-                  // including assignments made outside this collaborator's scope.
+                  // free capacity is measured against the full occupancy.
                   const reservedHere =
                     originalTableId === table.id ? originalPartyHeads : 0;
                   const free =

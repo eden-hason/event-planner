@@ -2,7 +2,7 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import {
   listEventPayments,
   loadRecordPackage,
@@ -21,10 +21,8 @@ export async function getRecordPackage(eventId: string): Promise<LoadedRecordPac
  * The package as the Guests page shows it, to the Owner and to collaborators alike.
  *
  * Read with the service client, after the viewer's own client has proven they can see the
- * event. Two things RLS would get wrong here are the reason: the payments are Owner-only
- * because they carry money, and a seating manager sees only part of the guest list - but
- * the package is counted against all of it. What leaves this function is counts, the channel and
- * record ids, never amounts. Null when the event has no package (free, payment pending).
+ * event, because the payments RLS would hide are creator-only: they carry money. What leaves
+ * this function is counts, the channel and record ids, never amounts. Null when the event has no package (free, payment pending).
  */
 export async function getGuestPackageView(eventId: string): Promise<GuestPackageView | null> {
   const { supabase } = await getEffectiveClient();
@@ -71,13 +69,13 @@ export async function getRecordPackagePageView(
   eventId: string,
 ): Promise<{ allowed: false } | { allowed: true; view: RecordPackagePageView | null }> {
   const { supabase } = await getEffectiveClient();
-  // Read through RLS, so starting the loads before the role check leaks nothing.
-  const [role, loaded, payments] = await Promise.all([
-    getCollaboratorRole(eventId),
+  // Read through RLS, so starting the loads before the access check leaks nothing.
+  const [access, loaded, payments] = await Promise.all([
+    getCollaboratorAccess(eventId),
     loadRecordPackage(supabase, eventId),
     listEventPayments(supabase, eventId),
   ]);
-  if (role?.role !== 'owner' || !role.isCreator) return { allowed: false };
+  if (!access?.isCreator) return { allowed: false };
   if (!loaded?.package || !payments) return { allowed: true, view: null };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the page never reads it

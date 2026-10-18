@@ -14,7 +14,6 @@ import {
 import type { TableView } from '../types';
 import { rsvpSortKey } from '../utils/occupancy';
 import { OccupancyBar } from './occupancy-bar';
-import { OutOfScopeRow } from './out-of-scope-row';
 import { SeatedGuestChip } from './seated-guest-chip';
 import { useSeatingCopy } from './use-seating-copy';
 
@@ -139,11 +138,6 @@ export function TableDetailPanel({
           />
         ))}
 
-        <OutOfScopeRow
-          records={view.outOfScopeRecords}
-          heads={view.outOfScopeHeads}
-        />
-
         {hidden > 0 && (
           <button
             type="button"
@@ -164,7 +158,7 @@ export function TableDetailPanel({
           </button>
         )}
 
-        {sorted.length === 0 && view.outOfScopeRecords === 0 && (
+        {sorted.length === 0 && (
           <div className="text-muted-foreground py-6 text-center text-xs">
             <p>{t('table.noOneSeated')}</p>
             <p className="mt-1">{t('table.noOneSeatedHint')}</p>
@@ -276,18 +270,11 @@ export function TableDetailPanel({
             size="icon"
             className="hover:border-destructive hover:text-destructive size-8"
             aria-label={t('table.deleteTable')}
-            title={view.canDelete ? undefined : t('scope.deleteBlockedTooltip')}
             onClick={onDelete}
           >
             <Trash2 className="size-3.5" />
           </Button>
         </div>
-
-        {!view.canDelete && (
-          <p className="text-muted-foreground text-xs">
-            {t('scope.deleteBlocked')}
-          </p>
-        )}
       </div>
     </div>
   );

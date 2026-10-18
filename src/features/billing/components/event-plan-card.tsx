@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { ChevronRight, Clock, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BILLING_TONE_CLASS, UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from '../utils';
-import { useCollaboration } from '@/components/feature-layout';
 import { useEventBillingStatus } from './event-billing-status-provider';
 import { EventBillingStatusSheet } from './event-billing-status-sheet';
 
@@ -18,17 +17,16 @@ import { EventBillingStatusSheet } from './event-billing-status-sheet';
  * the plan and offers "manage". Both open the same detail sheet the header
  * pill uses, so there is one place the billing story is told.
  *
- * Owner-only and silent until the provider supplies a status, matching
+ * Silent until the provider supplies a status, matching
  * `EventBillingStatusPill`. Renders its own group heading so the More page
  * can drop it in without leaving an empty labelled section when it is hidden.
  */
 export function EventPlanCard() {
   const status = useEventBillingStatus();
-  const { isOwner } = useCollaboration();
   const t = useTranslations('billing');
   const [open, setOpen] = React.useState(false);
 
-  if (!status || !isOwner) return null;
+  if (!status) return null;
 
   const heading = (
     <h2 className="text-muted-foreground px-1.5 text-xs font-medium">

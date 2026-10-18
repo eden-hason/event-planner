@@ -20,7 +20,6 @@ export default async function Page({
       guests={data.guests}
       unassignedGuests={data.unassignedGuests}
       progress={data.progress}
-      isScopedCollaborator={data.isScopedCollaborator}
       groups={groups.map((g) => ({ id: g.id, name: g.name, icon: g.icon }))}
     />
   );

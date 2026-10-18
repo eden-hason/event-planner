@@ -1,6 +1,5 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { getEventGuestsWithGroups } from '@/features/guests/queries';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import { TableDbToAppTransformerSchema, type TableApp } from '../schemas';
 import type {
@@ -21,8 +20,6 @@ interface OccupancyRow {
   confirmed_heads: number;
   pending_heads: number;
   record_count: number;
-  visible_record_count: number;
-  visible_heads: number;
 }
 
 interface ProgressRow {
@@ -34,10 +31,8 @@ interface ProgressRow {
 }
 
 /**
- * Event-wide progress counts, computed by a privileged aggregate so a scoped
- * Seating Manager is measured against every confirmed Guest Record in the
- * Event - not just the ones RLS lets them read (ADR-0008). Returns null when
- * the aggregate is unavailable, so the caller can fall back to the visible set.
+ * Event-wide progress counts from one aggregate. Returns null when it is
+ * unavailable, so the caller can fall back to counting the guests it read.
  */
 export const getGlobalProgressCounts = async (
   eventId: string,
@@ -105,15 +100,7 @@ export const getEventTables = async (eventId: string): Promise<TableApp[]> => {
   }
 };
 
-/**
- * Truthful per-Table occupancy, including assignments the caller may not
- * identify.
- *
- * Row Level Security hides out-of-scope Guest Records from any ordinary read,
- * so a scoped Seating Manager cannot derive real remaining capacity from what
- * they can select. ADR-0008 requires they see it anyway - as anonymized head
- * counts - so this goes through a privileged aggregate instead.
- */
+/** Per-Table occupancy, counted in the database in one aggregate. */
 const getOccupancyByTable = async (
   eventId: string,
 ): Promise<Map<string, TableOccupancy>> => {
@@ -135,8 +122,6 @@ const getOccupancyByTable = async (
         confirmedHeads: row.confirmed_heads,
         pendingHeads: row.pending_heads,
         records: row.record_count,
-        visibleRecords: row.visible_record_count,
-        visibleHeads: row.visible_heads,
       });
     }
   } catch (error) {
@@ -150,8 +135,6 @@ const emptyOccupancy = (): TableOccupancy => ({
   confirmedHeads: 0,
   pendingHeads: 0,
   records: 0,
-  visibleRecords: 0,
-  visibleHeads: 0,
 });
 
 /**
@@ -197,17 +180,13 @@ export const getEventTableOptions = async (
 
 export const getSeatingPageData = async (
   eventId: string,
-): Promise<SeatingPageData & { isScopedCollaborator: boolean }> => {
-  const [tables, guests, occupancy, collaborator, globalProgress] =
-    await Promise.all([
-      getEventTables(eventId),
-      getEventGuestsWithGroups(eventId),
-      getOccupancyByTable(eventId),
-      getCollaboratorRole(eventId),
-      getGlobalProgressCounts(eventId),
-    ]);
-
-  const isScopedCollaborator = collaborator?.role === 'seating_manager';
+): Promise<SeatingPageData> => {
+  const [tables, guests, occupancy, globalProgress] = await Promise.all([
+    getEventTables(eventId),
+    getEventGuestsWithGroups(eventId),
+    getOccupancyByTable(eventId),
+    getGlobalProgressCounts(eventId),
+  ]);
 
   // Declined records do not participate in the plan and reserve nothing.
   const participating = guests.filter((g) => g.rsvpStatus !== 'declined');
@@ -221,45 +200,32 @@ export const getSeatingPageData = async (
   }
 
   const views: TableView[] = tables.map((table) => {
-    const visible = seatedByTable.get(table.id) ?? [];
+    const seatedGuests = seatedByTable.get(table.id) ?? [];
 
-    // Fall back to what we can see only when the aggregate is unavailable;
+    // Fall back to the guests we read only when the aggregate is unavailable;
     // a missing row means an empty Table, not an unknown one.
     const seated =
       occupancy.get(table.id) ??
       (() => {
-        const { confirmedHeads, pendingHeads } = splitHeads(visible);
-        return {
-          confirmedHeads,
-          pendingHeads,
-          records: visible.length,
-          visibleRecords: visible.length,
-          visibleHeads: confirmedHeads + pendingHeads,
-        };
+        const { confirmedHeads, pendingHeads } = splitHeads(seatedGuests);
+        return { confirmedHeads, pendingHeads, records: seatedGuests.length };
       })();
 
     const heads = seated.confirmedHeads + seated.pendingHeads;
-    const outOfScopeRecords = Math.max(seated.records - seated.visibleRecords, 0);
 
     return {
       table,
-      guests: visible,
+      guests: seatedGuests,
       occupancy: seated,
       seatedHeads: heads,
       freeSeats: Math.max(table.capacity - heads, 0),
-      outOfScopeRecords,
-      outOfScopeHeads: Math.max(heads - seated.visibleHeads, 0),
-      // Deleting a Table with out-of-scope assignments would mutate Guest
-      // Records the Seating Manager is not authorized to manage (ADR-0008).
-      canDelete: !isScopedCollaborator || outOfScopeRecords === 0,
     };
   });
 
   const unassignedGuests = participating.filter((g) => !g.tableId);
 
-  // The privileged aggregate is Event-wide; the visible set is the fallback when
-  // it is unavailable. Table-derived figures (seated heads, capacity) are always
-  // truthful because per-Table occupancy already includes out-of-scope heads.
+  // The aggregate is Event-wide; the guests we read are the fallback when it is
+  // unavailable.
   const progressCounts =
     globalProgress ?? guestProgressCounts(participating);
 
@@ -268,6 +234,5 @@ export const getSeatingPageData = async (
     guests,
     unassignedGuests,
     progress: composeProgress(views, progressCounts),
-    isScopedCollaborator,
   };
 };

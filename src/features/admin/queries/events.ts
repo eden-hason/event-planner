@@ -176,7 +176,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     supabase.from('profiles').select('id, full_name, email, phone_number').eq('id', event.user_id).maybeSingle(),
     supabase
       .from('event_collaborators')
-      .select('id, user_id, role, is_creator, profiles!event_collaborators_user_id_profiles_fk(full_name, email)')
+      .select('id, user_id, is_creator, profiles!event_collaborators_user_id_profiles_fk(full_name, email)')
       .eq('event_id', eventId)
       .eq('is_creator', false),
   ]);
@@ -221,7 +221,6 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
         id: row.id,
         name: profile?.full_name || profile?.email || 'שותף לא ידוע',
         email: profile?.email ?? null,
-        role: row.role,
       };
     }),
     hostNames,

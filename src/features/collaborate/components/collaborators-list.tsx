@@ -19,26 +19,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { IconDotsVertical, IconUserMinus, IconUserCog } from '@tabler/icons-react';
+import { IconDotsVertical, IconStar, IconUserMinus } from '@tabler/icons-react';
 import { toast } from 'sonner';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { removeCollaborator } from '../actions';
-import { RoleBadge } from './role-badge';
-import { formatScopeSummary } from '../utils';
 import type { CollaboratorApp } from '../schemas';
 
 interface CollaboratorsListProps {
   collaborators: CollaboratorApp[];
   currentUserId?: string;
-  onConfigure?: (collaborator: CollaboratorApp) => void;
 }
 
 export function CollaboratorsList({
   collaborators,
   currentUserId,
-  onConfigure,
 }: CollaboratorsListProps) {
   const t = useTranslations('collaborate.collaboratorsList');
+  const locale = useLocale();
 
   const handleRemove = async (collaborator: CollaboratorApp) => {
     const promise = removeCollaborator(collaborator.id).then((result) => {
@@ -60,7 +57,7 @@ export function CollaboratorsList({
     <div className="space-y-3">
       {collaborators.map((collaborator) => {
         const isCurrentUser = currentUserId === collaborator.userId;
-        const initials = collaborator.fullName
+        const initials = collaborator.displayName
           .split(' ')
           .map((n) => n[0])
           .join('')
@@ -70,24 +67,24 @@ export function CollaboratorsList({
         return (
           <div
             key={collaborator.id}
-            className="flex items-center justify-between rounded-xl border bg-card px-5 py-4"
+            className="flex items-center justify-between gap-3 rounded-xl border bg-card px-5 py-4"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-4">
               <Avatar className="h-10 w-10">
                 {collaborator.avatarUrl && (
                   <AvatarImage
                     src={collaborator.avatarUrl}
-                    alt={collaborator.fullName}
+                    alt={collaborator.displayName}
                   />
                 )}
                 <AvatarFallback className="bg-blue-100 text-xs font-medium text-blue-700">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-semibold">
-                    {collaborator.email}
+                  <span className="truncate text-base font-semibold">
+                    {collaborator.displayName}
                   </span>
                   {isCurrentUser && (
                     <span className="rounded-full border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
@@ -95,31 +92,28 @@ export function CollaboratorsList({
                     </span>
                   )}
                 </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <RoleBadge
-                    role={collaborator.role}
-                    isCreator={collaborator.isCreator}
-                  />
-                  {collaborator.role === 'seating_manager' &&
-                    (collaborator.scopeGuestCount > 0 ||
-                      collaborator.scopeGroupCount > 0) && (
-                      <span className="text-muted-foreground text-xs">
-                        &middot;{' '}
-                        {formatScopeSummary(
-                          collaborator.scopeGroupCount,
-                          collaborator.scopeGuestCount,
-                        )}
-                      </span>
-                    )}
-                  {collaborator.role === 'owner' && !collaborator.isCreator && (
-                    <span className="text-muted-foreground text-xs">
-                      &middot; {t('invitedByYou')} &middot;{' '}
-                      {new Date(collaborator.createdAt).toLocaleDateString(
-                        'en-US',
-                        { month: 'short', day: 'numeric' },
-                      )}
+                <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+                  {collaborator.isCreator ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 font-medium text-amber-700">
+                      <IconStar className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      {t('creator')}
+                    </span>
+                  ) : (
+                    <span>
+                      {t('joinedOn', {
+                        date: new Date(collaborator.createdAt).toLocaleDateString(
+                          locale,
+                          { month: 'short', day: 'numeric' },
+                        ),
+                      })}
                     </span>
                   )}
+                  {collaborator.contact &&
+                    collaborator.contact !== collaborator.displayName && (
+                      <span dir="ltr" className="truncate">
+                        &middot; {collaborator.contact}
+                      </span>
+                    )}
                 </div>
               </div>
             </div>
@@ -132,14 +126,6 @@ export function CollaboratorsList({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                  {onConfigure && (
-                    <DropdownMenuItem
-                      onClick={() => onConfigure(collaborator)}
-                    >
-                      <IconUserCog className="mr-2 h-4 w-4" />
-                      {t('changeRole')}
-                    </DropdownMenuItem>
-                  )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem
@@ -156,7 +142,7 @@ export function CollaboratorsList({
                           {t('removeDialog.title')}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t('removeDialog.description', { name: collaborator.fullName })}
+                          {t('removeDialog.description', { name: collaborator.displayName })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

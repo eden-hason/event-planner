@@ -259,8 +259,6 @@ export async function deleteTable(
     .eq('event_id', eventId);
 
   if (error) {
-    // A Seating Manager deleting a Table that holds guests outside their scope
-    // lands here. The refusal names nobody.
     return { success: false, failure: toSeatingFailure(error) };
   }
 

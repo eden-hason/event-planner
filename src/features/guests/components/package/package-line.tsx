@@ -27,13 +27,12 @@ export function PackageLine({
 }) {
   const t = useTranslations('guests.package');
   const locale = useLocale();
-  const { view, canOpenSheet, openSheet } = useRecordPackage();
+  const { view, openSheet } = useRecordPackage();
 
   if (!view) return null;
 
   const over = view.state === 'over';
-  const interactive = canOpenSheet || over;
-  const onClick = canOpenSheet ? () => openSheet({ onShowOutside }) : onShowOutside;
+  const onClick = () => openSheet({ onShowOutside });
   const fmt = (n: number) => n.toLocaleString(locale);
 
   const usedLine = t('usedLine', { used: fmt(view.used), size: fmt(view.size) });
@@ -41,13 +40,11 @@ export function PackageLine({
   const aside = t(asideParts.key, { count: fmt(asideParts.count) });
   const asideTone = asideParts.warn ? 'text-warning-strong' : 'text-muted-foreground';
 
-  const Root = interactive ? 'button' : 'div';
-  const rootProps = interactive ? { type: 'button' as const, onClick } : {};
-
   if (variant === 'mobile') {
     return (
-      <Root
-        {...rootProps}
+      <button
+        type="button"
+        onClick={onClick}
         className={cn(
           'flex h-[38px] w-full items-center gap-[7px] border-t px-3.5 text-start text-[12.5px]',
           over ? 'bg-warning-tint text-warning-strong' : 'text-muted-foreground',
@@ -61,22 +58,23 @@ export function PackageLine({
         <span className="whitespace-nowrap tabular-nums">{usedLine}</span>
         <span className="flex-1" />
         <span className={cn('font-bold whitespace-nowrap tabular-nums', asideTone)}>{aside}</span>
-        {interactive && <IconChevronRight size={14} stroke={2.2} className="shrink-0 rtl:rotate-180" />}
-      </Root>
+        <IconChevronRight size={14} stroke={2.2} className="shrink-0 rtl:rotate-180" />
+      </button>
     );
   }
 
   return (
     <>
       <div className="bg-border h-10 w-px shrink-0" />
-      <Root
-        {...rootProps}
+      <button
+        type="button"
+        onClick={onClick}
         className={cn(
           'flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 text-start',
           over
             ? 'bg-warning-tint border-warning-tint-border text-warning-strong'
             : 'bg-card text-muted-foreground',
-          interactive && !over && 'hover:bg-muted/60 transition-colors',
+          !over && 'hover:bg-muted/60 transition-colors',
         )}
       >
         <IconPackage
@@ -92,8 +90,8 @@ export function PackageLine({
           <PackageBar view={view} />
           <PackageUncountedNote view={view} className="text-[12px] whitespace-nowrap" />
         </div>
-        {interactive && <IconChevronRight size={15} stroke={2.2} className="rtl:rotate-180" />}
-      </Root>
+        <IconChevronRight size={15} stroke={2.2} className="rtl:rotate-180" />
+      </button>
     </>
   );
 }

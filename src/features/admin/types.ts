@@ -1,4 +1,3 @@
-import type { CollaboratorRole } from '@/features/collaborate/schemas';
 import type {
   EventBillingStatus,
   EventPayment,
@@ -163,7 +162,7 @@ export type EventIdentity = {
   /** The account the event belongs to - the identity an Operator impersonates. */
   ownerId: string;
   owner: { name: string; email: string | null; phone: string | null };
-  collaborators: { id: string; name: string; email: string | null; role: string }[];
+  collaborators: { id: string; name: string; email: string | null }[];
   hostNames: string[];
   /** Free-text "parents" side of each host, e.g. "Mr. and Mrs. Cohen" */
   parentNames: string[];
@@ -361,7 +360,7 @@ export type UserRow = {
   isTestAccount: boolean;
   /** Events where this User is the creator, draft and published alike. */
   ownedEvents: number;
-  /** Non-creator collaborations - Owner or Seating Manager on someone else's Event. */
+  /** Non-creator collaborations - an Owner on someone else's Event. */
   sharedEvents: number;
   createdAt: string;
 };
@@ -393,7 +392,6 @@ export type UserOwnedEvent = {
 export type UserSharedEvent = {
   id: string;
   title: string;
-  role: CollaboratorRole;
 };
 
 export type UserDetail = {

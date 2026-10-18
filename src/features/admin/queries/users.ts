@@ -3,7 +3,6 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { pageAll } from '@/lib/supabase/row-cap';
-import type { CollaboratorRole } from '@/features/collaborate/schemas';
 import type { UserDetail, UserRow, UserSharedEvent, UsersIndexFilters, UsersIndexPage } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { eventTitle } from '../utils/labels';
@@ -149,7 +148,7 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
     // same table force the `!constraint_name` form instead.
     supabase
       .from('event_collaborators')
-      .select('role, events(id, title, event_date)')
+      .select('events(id, title, event_date)')
       .eq('user_id', userId)
       .eq('is_creator', false),
   ]);
@@ -180,7 +179,6 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
         return {
           id: event.id,
           title: eventTitle(event.title),
-          role: row.role as CollaboratorRole,
         };
       })
       .filter((row): row is UserSharedEvent => row !== null),

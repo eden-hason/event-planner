@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getImpersonation } from '@/lib/supabase/admin';
-import { getCollaboratorRole } from '@/features/collaborate/queries';
+import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import { sendTestMessage } from '@/features/schedules/services/send-test-message';
 import { toE164 } from '@/lib/phone';
 import { isVisitor } from '@/features/auth';
@@ -42,15 +42,14 @@ export async function sendHomeTestMessage(
   if (isVisitor(user)) return { success: false, reason: 'save-required' };
 
   // An Operator impersonating an Owner can see Home, but a test goes to the
-  // Owner's personal phone and spends the event's allowance. The role check is
-  // not an ownership check RLS could make for us: the send below runs on the
-  // service-role client, which bypasses RLS, and a Seating Manager can read
-  // the event too.
-  const [impersonation, role] = await Promise.all([
+  // Owner's personal phone and spends the event's allowance. The access check
+  // is not one RLS could make for us: the send below runs on the service-role
+  // client, which bypasses RLS.
+  const [impersonation, access] = await Promise.all([
     getImpersonation(),
-    getCollaboratorRole(eventId),
+    getCollaboratorAccess(eventId),
   ]);
-  if (impersonation || role?.role !== 'owner') {
+  if (impersonation || !access) {
     return { success: false, reason: 'not-allowed' };
   }
 

@@ -1,11 +1,12 @@
 'use server';
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import type { CollaboratorApp, CollaboratorRole } from '../schemas';
+import { CollaboratorDbToAppSchema, type CollaboratorApp } from '../schemas';
+import type { CollaboratorAccess } from '../types';
 
 /**
- * Fetches all collaborators for an event, with profile info from auth.users metadata.
- * Uses a join with profiles table for name/email/avatar.
+ * Every Owner of an Event, the creator first, with their profile's name,
+ * contact and avatar.
  */
 export async function getEventCollaborators(
   eventId: string,
@@ -20,11 +21,11 @@ export async function getEventCollaborators(
         id,
         event_id,
         user_id,
-        role,
         is_creator,
         created_at,
         profiles!event_collaborators_user_id_profiles_fk (
           email,
+          phone_number,
           full_name,
           avatar_url
         )
@@ -39,48 +40,7 @@ export async function getEventCollaborators(
       return [];
     }
 
-    // For each collaborator, get scope counts if seating_manager
-    const collaborators: CollaboratorApp[] = [];
-
-    for (const row of data || []) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profile = row.profiles as any;
-      let scopeGroupCount = 0;
-      let scopeGuestCount = 0;
-
-      if (row.role === 'seating_manager') {
-        const { count: guestCount } = await supabase
-          .from('collaborator_guest_scope')
-          .select('*', { count: 'exact', head: true })
-          .eq('collaborator_id', row.id)
-          .not('guest_id', 'is', null);
-
-        const { count: groupCount } = await supabase
-          .from('collaborator_guest_scope')
-          .select('*', { count: 'exact', head: true })
-          .eq('collaborator_id', row.id)
-          .not('group_id', 'is', null);
-
-        scopeGuestCount = guestCount ?? 0;
-        scopeGroupCount = groupCount ?? 0;
-      }
-
-      collaborators.push({
-        id: row.id,
-        eventId: row.event_id,
-        userId: row.user_id,
-        role: row.role as CollaboratorApp['role'],
-        isCreator: row.is_creator,
-        email: profile?.email ?? '',
-        fullName: profile?.full_name ?? profile?.email ?? '',
-        avatarUrl: profile?.avatar_url ?? undefined,
-        createdAt: row.created_at,
-        scopeGroupCount,
-        scopeGuestCount,
-      });
-    }
-
-    return collaborators;
+    return (data || []).map((row) => CollaboratorDbToAppSchema.parse(row));
   } catch (error) {
     console.error('Error in getEventCollaborators:', error);
     return [];
@@ -88,17 +48,18 @@ export async function getEventCollaborators(
 }
 
 /**
- * Gets the current user's collaborator role on an event.
+ * Whether the current user is on this Event, and if so whether they created
+ * it. Every collaborator is an Owner (ADR 0041), so there is no role to return.
  */
-export async function getCollaboratorRole(
+export async function getCollaboratorAccess(
   eventId: string,
-): Promise<{ role: CollaboratorRole; isCreator: boolean } | null> {
+): Promise<CollaboratorAccess | null> {
   try {
     const { supabase, impersonation } = await getEffectiveClient();
 
-    // Whose role this is. Under impersonation `supabase` is the service-role
+    // Whose access this is. Under impersonation `supabase` is the service-role
     // client, which carries no session at all - asking it for the user returns
-    // nobody, and every caller then reads the Operator as a non-Owner. The
+    // nobody, and every caller then reads the Operator as not on the Event. The
     // impersonation cookie already names who is being viewed, and
     // getImpersonation has checked the Operator's admin flag, so take the id
     // from there instead.
@@ -107,67 +68,19 @@ export async function getCollaboratorRole(
 
     if (!userId) return null;
 
-    // First check if user is the event owner (user_id on events table)
-    const { data: event } = await supabase
-      .from('events')
-      .select('user_id')
-      .eq('id', eventId)
-      .single();
-
-    if (event?.user_id === userId) {
-      return { role: 'owner', isCreator: true };
-    }
-
-    // Then check event_collaborators
+    // The creator has a row too (auto_add_event_creator), marked is_creator.
     const { data, error } = await supabase
       .from('event_collaborators')
-      .select('role, is_creator')
+      .select('is_creator')
       .eq('event_id', eventId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
 
-    return {
-      role: data.role as CollaboratorRole,
-      isCreator: data.is_creator,
-    };
+    return { isCreator: data.is_creator };
   } catch (error) {
-    console.error('Error in getCollaboratorRole:', error);
+    console.error('Error in getCollaboratorAccess:', error);
     return null;
-  }
-}
-
-/**
- * Gets the scope entries for a collaborator (for editing).
- */
-export async function getCollaboratorScope(
-  collaboratorId: string,
-): Promise<{ guestIds: string[]; groupIds: string[] }> {
-  try {
-    const { supabase } = await getEffectiveClient();
-
-    const { data, error } = await supabase
-      .from('collaborator_guest_scope')
-      .select('guest_id, group_id')
-      .eq('collaborator_id', collaboratorId);
-
-    if (error) {
-      console.error('Error fetching collaborator scope:', error);
-      return { guestIds: [], groupIds: [] };
-    }
-
-    const guestIds: string[] = [];
-    const groupIds: string[] = [];
-
-    for (const row of data || []) {
-      if (row.guest_id) guestIds.push(row.guest_id);
-      if (row.group_id) groupIds.push(row.group_id);
-    }
-
-    return { guestIds, groupIds };
-  } catch (error) {
-    console.error('Error in getCollaboratorScope:', error);
-    return { guestIds: [], groupIds: [] };
   }
 }

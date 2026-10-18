@@ -75,8 +75,6 @@ export function useSeatingCopy() {
         return failure.numbers.length === 1
           ? t('errors.duplicateNumber', { number: failure.numbers[0] })
           : t('errors.duplicateNumbers', { numbers: failure.numbers.join(', ') });
-      case 'deleteOutOfScope':
-        return t('errors.deleteOutOfScope');
       case 'tableNotFound':
         return t('errors.tableNotFound');
       case 'nothingAssignable':

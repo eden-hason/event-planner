@@ -1,164 +1,46 @@
 import { z } from 'zod';
 
 // ============================================================================
-// Enums
+// Collaborator
 // ============================================================================
 
-export const collaboratorRoles = ['owner', 'seating_manager'] as const;
-export type CollaboratorRole = (typeof collaboratorRoles)[number];
+const CollaboratorProfileDbSchema = z
+  .object({
+    email: z.string().nullable(),
+    phone_number: z.string().nullable(),
+    full_name: z.string().nullable(),
+    avatar_url: z.string().nullable(),
+  })
+  .nullable();
 
-export const invitationStatuses = [
-  'pending',
-  'accepted',
-  'declined',
-  'expired',
-] as const;
-export type InvitationStatus = (typeof invitationStatuses)[number];
+export const CollaboratorDbToAppSchema = z
+  .object({
+    id: z.string().uuid(),
+    event_id: z.string().uuid(),
+    user_id: z.string().uuid(),
+    is_creator: z.boolean(),
+    created_at: z.string(),
+    profiles: CollaboratorProfileDbSchema,
+  })
+  .transform((db) => {
+    // Phone or email, whichever they signed in with; empty when unknown.
+    const contact = db.profiles?.phone_number || db.profiles?.email || '';
+    return {
+      id: db.id,
+      eventId: db.event_id,
+      userId: db.user_id,
+      isCreator: db.is_creator,
+      // Full name when the profile has one, otherwise the contact.
+      displayName: db.profiles?.full_name?.trim() || contact,
+      contact,
+      avatarUrl: db.profiles?.avatar_url ?? undefined,
+      createdAt: db.created_at,
+    };
+  });
 
-export const ROLE_LABELS: Record<CollaboratorRole, string> = {
-  owner: 'Owner',
-  seating_manager: 'Seating Manager',
-};
-
-// ============================================================================
-// Collaborator — App Schema
-// ============================================================================
-
-export const CollaboratorAppSchema = z.object({
-  id: z.string().uuid(),
-  eventId: z.string().uuid(),
-  userId: z.string().uuid(),
-  role: z.enum(collaboratorRoles),
-  isCreator: z.boolean(),
-  email: z.string(),
-  fullName: z.string(),
-  avatarUrl: z.string().optional(),
-  createdAt: z.string(),
-  scopeGroupCount: z.number().int().default(0),
-  scopeGuestCount: z.number().int().default(0),
-});
-
-export type CollaboratorApp = z.infer<typeof CollaboratorAppSchema>;
-
-// ============================================================================
-// Collaborator — DB Schema
-// ============================================================================
-
-export const CollaboratorDbSchema = z.object({
-  id: z.string().uuid(),
-  event_id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  role: z.enum(collaboratorRoles),
-  is_creator: z.boolean(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-export type CollaboratorDb = z.infer<typeof CollaboratorDbSchema>;
-
-// ============================================================================
-// Invitation — App Schema
-// ============================================================================
-
-export const InvitationAppSchema = z.object({
-  id: z.string().uuid(),
-  eventId: z.string().uuid(),
-  invitedBy: z.string().uuid(),
-  invitedEmail: z.string(),
-  role: z.enum(collaboratorRoles),
-  token: z.string(),
-  status: z.enum(invitationStatuses),
-  scopeGroups: z.array(z.string().uuid()).default([]),
-  scopeGuests: z.array(z.string().uuid()).default([]),
-  expiresAt: z.string(),
-  createdAt: z.string(),
-  eventTitle: z.string().optional(),
-});
-
-export type InvitationApp = z.infer<typeof InvitationAppSchema>;
-
-// ============================================================================
-// Invitation — DB Schema & Transformer
-// ============================================================================
-
-export const InvitationDbSchema = z.object({
-  id: z.string().uuid(),
-  event_id: z.string().uuid(),
-  invited_by: z.string().uuid(),
-  invited_email: z.string(),
-  role: z.enum(collaboratorRoles),
-  token: z.string(),
-  status: z.enum(invitationStatuses),
-  scope_groups: z.array(z.string().uuid()).nullable().default([]),
-  scope_guests: z.array(z.string().uuid()).nullable().default([]),
-  expires_at: z.string(),
-  responded_at: z.string().nullable(),
-  created_at: z.string(),
-});
-
-export type InvitationDb = z.infer<typeof InvitationDbSchema>;
-
-export const InvitationDbToAppSchema = InvitationDbSchema.transform((db) => ({
-  id: db.id,
-  eventId: db.event_id,
-  invitedBy: db.invited_by,
-  invitedEmail: db.invited_email,
-  role: db.role,
-  token: db.token,
-  status: db.status,
-  scopeGroups: db.scope_groups ?? [],
-  scopeGuests: db.scope_guests ?? [],
-  expiresAt: db.expires_at,
-  createdAt: db.created_at,
-}));
-
-// ============================================================================
-// Scope Item — App Schema
-// ============================================================================
-
-export const ScopeItemSchema = z.object({
-  id: z.string().uuid(),
-  collaboratorId: z.string().uuid(),
-  guestId: z.string().uuid().optional(),
-  groupId: z.string().uuid().optional(),
-});
-
-export type ScopeItem = z.infer<typeof ScopeItemSchema>;
-
-// ============================================================================
-// Form / Action Schemas
-// ============================================================================
-
-// Collaborators sign in with Google, so invites are limited to Gmail addresses
-export const GMAIL_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
-
-export const isGmailAddress = (email: string) =>
-  GMAIL_EMAIL_REGEX.test(email.trim());
-
-export const InviteFormSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    // Stored lowercased so it matches the (lowercased) Supabase Auth email
-    .toLowerCase()
-    .email('Please enter a valid email address')
-    .regex(GMAIL_EMAIL_REGEX, 'Only Gmail addresses (@gmail.com) can be invited'),
-  role: z.enum(collaboratorRoles, {
-    message: 'Please select a role',
-  }),
-  scopeGroups: z.array(z.string().uuid()).default([]),
-  scopeGuests: z.array(z.string().uuid()).default([]),
-});
-
-export type InviteFormData = z.infer<typeof InviteFormSchema>;
-
-export const UpdateScopeFormSchema = z.object({
-  collaboratorId: z.string().uuid(),
-  scopeGroups: z.array(z.string().uuid()).default([]),
-  scopeGuests: z.array(z.string().uuid()).default([]),
-});
-
-export type UpdateScopeFormData = z.infer<typeof UpdateScopeFormSchema>;
+// Every collaborator is an Owner (ADR 0041), so a row carries no role. The
+// creator is still told apart: they cannot be removed.
+export type CollaboratorApp = z.output<typeof CollaboratorDbToAppSchema>;
 
 // ============================================================================
 // Action State
@@ -167,6 +49,4 @@ export type UpdateScopeFormData = z.infer<typeof UpdateScopeFormSchema>;
 export type ActionState = {
   success: boolean;
   message?: string | null;
-  invitationLink?: string | null;
-  emailSent?: boolean;
 };
