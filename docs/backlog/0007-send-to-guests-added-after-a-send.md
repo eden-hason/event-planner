@@ -1,6 +1,6 @@
 # A guest added after a Schedule went out never receives it
 
-Status: open
+Status: in progress - the Back Office half is built; the Owner-facing half is open
 
 ## The problem
 
@@ -9,8 +9,33 @@ following day is simply not in it, and nothing on the schedules page says so. Fo
 Initial Invitation this is the common case, not the edge case: the list is still being
 assembled while the first invitation goes out.
 
-The organiser's only recourse today is the Back Office quick-send, which they cannot
-reach.
+The organiser cannot reach them on their own. An Operator can, from the Back Office (below).
+
+## Built: the Back Office late-guest send
+
+The event workspace's outreach band has a "שליחה לאורחים שנוספו" dialog: pick a sent
+message Schedule, tick up to ten guest records, confirm, send. It answers the "Options
+already considered" questions this way, which an Owner-facing version can reuse or
+revisit:
+
+- **Only a Schedule that went out** (`status = 'sent'` or `dispatched_at` set). A planned
+  one will include everyone on the list when it sends, so a manual send now would be the
+  duplicate. Cancelled, expired and disabled Schedules are refused, and so is any
+  Schedule but the Thank You once the Event day has ended - the Dispatcher's expiry rule.
+- **Offered:** audience guests (same `target_status` predicate as the engine) with no
+  Delivery, a `not_sent` Delivery whose cause is gone, or a reservation nothing ever
+  attempted. Guests added after the send are badged and listed first.
+- **Not offered:** guests already reached (`sent`/`delivered`/`read`), guests mid-send
+  (queued, or an attempt still `pending`), failures (they have their own resend on the
+  timeline row, beside the error), records outside the Record Package, and records with
+  no usable phone for the channel. The last three are listed with the reason.
+- **Pressing twice is safe:** eligibility is recomputed in the Server Action before
+  sending, so a picked guest reached in between is dropped and counted, and the send
+  itself is `sendSelectedDeliveries` - same renderer, package gate and scoped claim.
+
+Code: `features/admin/utils/late-guests.ts` (the rules, tested),
+`features/admin/services/late-guest-plan.ts`, `features/admin/actions/late-guests.ts`,
+`features/admin/components/late-guests-dialog.tsx`.
 
 ## What is known
 
@@ -19,9 +44,11 @@ reach.
   The gap is `filterGuestsByTarget(guests, targetStatus)` minus the guests that table
   names for this Schedule.
 - The send engine already knows how to send to a chosen subset of a Schedule's audience:
-  `sendSelectedDeliveriesAdmin` (`features/schedules/actions/manual-send.ts`) takes guest
-  ids and is gated on `events.can_create_schedules`. A Owner-facing path would be a second
-  entry point to the same service, not new send machinery.
+  `sendSelectedDeliveries` (`features/schedules/services/manual-send.ts`) takes guest ids,
+  and the Back Office late-guest send is built on it. An Owner-facing path would be another
+  entry point to the same service and the same `buildLateGuestPlan`, not new send
+  machinery - but it would sit behind the ten-record cap (ADR 0013), which suits an
+  Operator topping up a few guests and not an Owner who imported 80 the day after.
 - The Schedule row itself is frozen once sent: `prevent_sent_schedule_mutation` raises on
   any update to a row with `status = 'sent'` or `dispatched_at` set. So a top-up send must
   create Deliveries without touching the Schedule.
