@@ -1,7 +1,11 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { redirect } from '@/i18n/navigation';
 import { getCurrentUser } from '@/features/auth/queries';
 import { AUTO_JOIN_PARAM, JoinCoPlannerPage } from '@/features/collaborate';
-import { getCoPlannerLinkPreview } from '@/features/collaborate/queries';
+import {
+  getCollaboratorAccess,
+  getCoPlannerLinkPreview,
+} from '@/features/collaborate/queries';
 
 export default async function JoinPage({
   params,
@@ -35,6 +39,12 @@ export default async function JoinPage({
 
   // A Visitor has a session but no account to plan with (ADR 0028).
   const signedIn = Boolean(user && !user.isVisitor);
+
+  // Already planning this Event - the creator, or a co-planner opening the
+  // link again: nothing to join, so straight to it (ADR 0041).
+  if (signedIn && (await getCollaboratorAccess(preview.eventId))) {
+    return redirect({ href: `/app/${preview.eventId}/home`, locale });
+  }
 
   return (
     <JoinCoPlannerPage
