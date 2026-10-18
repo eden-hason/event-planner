@@ -15,9 +15,30 @@
 // SUPABASE_CLI overrides the command (CI uses the installed `supabase` binary).
 
 import { execSync } from 'node:child_process';
+import { readdirSync } from 'node:fs';
 
 const allowPending = process.argv.includes('--allow-pending');
 const cli = process.env.SUPABASE_CLI ?? 'npx supabase';
+
+// Two files sharing a version is drift the migration list cannot show: the CLI
+// records whichever applies first, the other then fails on the version's
+// primary key and is rolled back, and both still read as applied. Two branches
+// that each took the next free number on the same day merged that way, and the
+// Co-planner Link phone fix (20261018000002) never reached production.
+const versions = new Map();
+for (const file of readdirSync('supabase/migrations')) {
+  const version = file.match(/^(\d+)_.*\.sql$/)?.[1];
+  if (version) versions.set(version, [...(versions.get(version) ?? []), file]);
+}
+const duplicates = [...versions.values()].filter((files) => files.length > 1);
+if (duplicates.length) {
+  console.error(
+    'supabase/migrations has more than one file per version:\n' +
+      duplicates.map((files) => files.map((f) => `  - ${f}`).join('\n')).join('\n\n') +
+      '\n\nRename the one production has not applied to a free version.',
+  );
+  process.exit(1);
+}
 
 let migrations;
 try {
