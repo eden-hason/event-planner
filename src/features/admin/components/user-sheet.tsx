@@ -13,7 +13,7 @@ import { MarkTestAccountDialog } from './mark-test-account-dialog';
 import { RetryButton } from './retry-button';
 import type { UserDetail } from '../types';
 import { formatEventDate, formatFullDate } from '../utils/format';
-import { avatarTint, initialsFor } from '../utils/avatar';
+import { avatarTint, initialsFor, userDisplayName } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 
 const OWNS_VISIBLE_LIMIT = 6;
@@ -56,7 +56,7 @@ export function UserSheet({
   testAccountsVisible: boolean;
 }) {
   const isNotFound = detail === 'not-found';
-  const title = isNotFound ? 'המשתמש לא נמצא' : detail.fullName || detail.email;
+  const title = isNotFound ? 'המשתמש לא נמצא' : userDisplayName(detail);
   const tint = avatarTint(isNotFound ? 'not-found' : detail.id);
 
   return (
@@ -88,7 +88,7 @@ export function UserSheet({
                 ? 'אין במערכת משתמש עם המזהה הזה'
                 : 'ייתכן שהוא מוסתר על ידי מתג חשבונות הבדיקה'
               : detail.fullName
-                ? detail.email
+                ? (detail.email ?? 'לא הוזן אימייל')
                 : 'לא הוזן שם'}
           </SheetDescription>
         </div>
@@ -174,7 +174,7 @@ function UserSheetBody({
     <>
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-4">
         <SheetSection label="פרטי קשר">
-          <SheetField label="אימייל" value={detail.email} />
+          <SheetField label="אימייל" value={detail.email ?? 'לא הוזן'} muted={!detail.email} />
           <SheetField
             label="טלפון"
             value={detail.phone ? formatPhone(detail.phone) : 'לא הוזן'}

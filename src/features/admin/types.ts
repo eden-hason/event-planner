@@ -352,9 +352,10 @@ export type OverviewCallRounds = {
  */
 export type UserRow = {
   id: string;
-  /** null when the profile has no full_name - the email becomes the primary line instead. */
+  /** null when the profile has no full_name - the email (or phone) becomes the primary line instead. */
   fullName: string | null;
-  email: string;
+  /** null for a phone sign-in, which never gives one. */
+  email: string | null;
   phone: string | null;
   isAdmin: boolean;
   isTestAccount: boolean;
@@ -397,7 +398,7 @@ export type UserSharedEvent = {
 export type UserDetail = {
   id: string;
   fullName: string | null;
-  email: string;
+  email: string | null;
   phone: string | null;
   isAdmin: boolean;
   isTestAccount: boolean;

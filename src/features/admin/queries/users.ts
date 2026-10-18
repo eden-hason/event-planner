@@ -12,7 +12,7 @@ const PAGE_SIZE = 50;
 type ProfileRow = {
   id: string;
   full_name: string | null;
-  email: string;
+  email: string | null;
   phone_number: string | null;
   is_admin: boolean | null;
   is_test_account: boolean | null;
@@ -95,7 +95,7 @@ export async function getUsersIndex(filters: UsersIndexFilters): Promise<UsersIn
   const needle = filters.q.trim().toLocaleLowerCase('en').replace(/\s/g, '');
   const filtered = needle
     ? allRows.filter((row) => {
-        const haystack = `${row.fullName ?? ''} ${row.email} ${row.phone ?? ''}`
+        const haystack = `${row.fullName ?? ''} ${row.email ?? ''} ${row.phone ?? ''}`
           .toLocaleLowerCase('en')
           .replace(/\s/g, '');
         return haystack.includes(needle);

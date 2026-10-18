@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/table';
 import type { UserRow, UsersIndexFilters, UsersIndexPage } from '../types';
 import { formatEventDate } from '../utils/format';
-import { avatarTint, initialsFor } from '../utils/avatar';
+import { avatarTint, initialsFor, userDisplayName } from '../utils/avatar';
 import { cn } from '@/lib/utils';
 import { ToggleTestAccountsLink } from './toggle-test-accounts-link';
 import { countLabel } from '../utils/labels';
@@ -198,7 +198,7 @@ function UserTableRow({
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="truncate text-[14px] font-medium group-hover:underline">
-                {row.fullName || row.email}
+                {userDisplayName(row)}
               </span>
               {row.isAdmin && (
                 <Badge variant="outline" className="text-muted-foreground shrink-0 px-1.5 py-0 text-[10px] tracking-[0.05em]">
@@ -212,7 +212,7 @@ function UserTableRow({
               )}
             </span>
             <span className={cn('truncate text-[12.5px]', hasName ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
-              {hasName ? row.email : 'לא הוזן שם'}
+              {hasName ? (row.email ?? 'לא הוזן אימייל') : 'לא הוזן שם'}
             </span>
           </span>
         </Link>
