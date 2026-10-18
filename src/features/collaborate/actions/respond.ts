@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/features/auth/queries';
 import { revalidatePath } from 'next/cache';
 import type { ActionState } from '../schemas';
+import { isSameEmail } from '../utils';
 
 export async function acceptInvitation(token: string): Promise<ActionState> {
   try {
@@ -77,7 +78,7 @@ export async function declineInvitation(token: string): Promise<ActionState> {
       return { success: false, message: 'Invitation not found.' };
     }
 
-    if (invitation.invited_email !== currentUser.email) {
+    if (!isSameEmail(invitation.invited_email, currentUser.email)) {
       return { success: false, message: 'This invitation is not for your account.' };
     }
 

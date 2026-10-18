@@ -139,6 +139,8 @@ export const InviteFormSchema = z.object({
   email: z
     .string()
     .trim()
+    // Stored lowercased so it matches the (lowercased) Supabase Auth email
+    .toLowerCase()
     .email('Please enter a valid email address')
     .regex(GMAIL_EMAIL_REGEX, 'Only Gmail addresses (@gmail.com) can be invited'),
   role: z.enum(collaboratorRoles, {
