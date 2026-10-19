@@ -1,7 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pageAll } from '@/lib/supabase/row-cap';
-import type { PackageSplit, RecordPackage, RecordPackageChannel } from '../types';
+import type {
+  EventBillingStatus,
+  PackageSplit,
+  RecordPackage,
+  RecordPackageChannel,
+} from '../types';
+import type { PricingChannel } from '../utils/pricing';
 import { recordPackage, splitByPackage } from '../utils/record-package';
+import { topUpPlan } from '../utils/top-up';
 
 export type LoadedRecordPackage = {
   /** Null when no payment was ever recorded: the Event has no package. */
@@ -11,6 +18,8 @@ export type LoadedRecordPackage = {
   channel: RecordPackageChannel | null;
   /** True when every payment is a gift from Kululu, so no surface should talk about paying. */
   gifted: boolean;
+  /** The Plan a Top-up would be bought on, or null when the package cannot grow (ADR 0042). */
+  topUpPlan: PricingChannel | null;
 };
 
 /**
@@ -26,7 +35,11 @@ export async function loadRecordPackage(
   eventId: string,
 ): Promise<LoadedRecordPackage | null> {
   const [eventRes, paymentsRes, guests, reached] = await Promise.all([
-    supabase.from('events').select('bonus_records_override').eq('id', eventId).single(),
+    supabase
+      .from('events')
+      .select('bonus_records_override, billing_status, event_date')
+      .eq('id', eventId)
+      .single(),
     supabase
       .from('event_billing_events')
       .select('record_count, channel, payment_method')
@@ -74,10 +87,19 @@ export async function loadRecordPackage(
     reached: reachedIds.delete(g.id),
   }));
 
+  const channel = (payments[0]?.channel as RecordPackageChannel | undefined) ?? null;
+  const gifted = payments.length > 0 && payments.every((p) => p.payment_method === 'gift');
+
   return {
     package: pkg,
-    channel: (payments[0]?.channel as RecordPackageChannel | undefined) ?? null,
-    gifted: payments.length > 0 && payments.every((p) => p.payment_method === 'gift'),
+    channel,
+    gifted,
+    topUpPlan: topUpPlan({
+      billingStatus: eventRes.data.billing_status as EventBillingStatus,
+      channel,
+      gifted,
+      eventDate: eventRes.data.event_date as string | null,
+    }),
     split: splitByPackage({
       packageSize: pkg?.size ?? 0,
       records,

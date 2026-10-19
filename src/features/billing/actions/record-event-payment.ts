@@ -11,7 +11,8 @@ import type { BillingActionResult } from '../types';
 
 /**
  * Records a payment taken outside the system (ADR 0021): adds its records to the Event's
- * Paid Records and moves it to `paid` (ADR 0027). A top-up is just another payment.
+ * Paid Records and moves it to `paid` (ADR 0027). A top-up is just another payment, on the
+ * package's own Plan (ADR 0042): `applyBillingTransition` refuses one on any other.
  *
  * The reference goes in as the provider ref, which makes the database call idempotent on it.
  * That would silently swallow a second payment that reuses a reference, so a reuse is
@@ -76,7 +77,15 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
     note: note || undefined,
     createdBy: operatorId,
   });
-  if (!result.ok) return { success: false, message: 'לא הצלחנו לרשום את התשלום' };
+  if (!result.ok) {
+    return {
+      success: false,
+      message:
+        result.reason === 'otherPlan'
+          ? 'תוספת רשומות נרשמת באותה חבילה של האירוע'
+          : 'לא הצלחנו לרשום את התשלום',
+    };
+  }
 
   // A first payment queues the Owner's Welcome (ADR 0039). Sent straight after
   // the response rather than on the next Sweeper pass, because the Owner has

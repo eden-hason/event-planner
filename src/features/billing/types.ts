@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { EventBillingStatusSchema } from './schemas';
+import type { PricingChannel } from './utils/pricing';
 
 export type EventBillingStatus = z.infer<typeof EventBillingStatusSchema>;
 
@@ -94,6 +95,8 @@ export type GuestPackageView = {
   channel: RecordPackageChannel | null;
   /** Every payment was a gift from Kululu. */
   gifted: boolean;
+  /** The Plan a Top-up would be bought on, or null when the package cannot grow (ADR 0042). */
+  topUpPlan: PricingChannel | null;
   outsideIds: string[];
 };
 

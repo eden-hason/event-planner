@@ -53,6 +53,7 @@ function toGuestPackageView(
     state: packageState(pkg.size, used),
     channel: loaded.channel,
     gifted: loaded.gifted,
+    topUpPlan: loaded.topUpPlan,
     outsideIds: outside,
   };
 }

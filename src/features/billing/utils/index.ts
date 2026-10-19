@@ -9,6 +9,7 @@ export {
   RECORD_PACKAGE_CHANNELS,
   RECORD_PACKAGE_RATES,
   BONUS_STEPS,
+  automaticBonus,
   bonusRecords,
   nextBonusStep,
   packageAside,
@@ -24,9 +25,13 @@ export {
   RECORDS_MIN,
   RECORDS_STEP,
   clampRecords,
+  formatShekels,
+  onSale,
   quote,
   trackPct,
   type PricingChannel,
 } from './pricing';
+
+export { TOP_UP_STEP, clampTopUp, suggestedTopUp, topUpTotal } from './top-up';
 
 export { BILLING_TONE_CLASS, UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from './tone-class';

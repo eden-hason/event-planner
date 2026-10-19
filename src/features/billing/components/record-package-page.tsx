@@ -15,10 +15,11 @@ import { useEventBillingStatus } from './event-billing-status-provider';
 import { UpgradeSimulator } from './upgrade-simulator';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { billingWhatsAppUrl } from '../utils';
+import { billingWhatsAppUrl, formatShekels } from '../utils';
 import type { RecordPackagePageView } from '../types';
 import { PackageBar, PackageSwatch } from './package-bar';
-import { PackageHeroCount, PackageUncountedNote, usePackageWhatsAppHref } from './package-hero';
+import { PackageHeroCount, PackageUncountedNote } from './package-hero';
+import { TopUpButton } from './top-up-sheet';
 import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackagePageProps = {
@@ -46,7 +47,8 @@ function Card({
  * The Owner's Record Package page (Record Package Plan design, 1a-1h): how much room is left
  * or how far over the list is, what the package is made of, and every payment behind it. A
  * receipt and a fuel gauge - tabular numbers, a quiet bar, colour only when there is
- * something to do. Buying records is a WhatsApp conversation with Kululu, never a checkout.
+ * something to do. Buying records, first or as a Top-up, is a WhatsApp conversation with
+ * Kululu, never a checkout.
  */
 export function RecordPackagePage({
   eventId,
@@ -127,20 +129,12 @@ function PackageDetails({
   const t = useTranslations('billing.packagePage');
   const tSheet = useTranslations('billing.packageSheet');
   const locale = useLocale();
-  const whatsappHref = usePackageWhatsAppHref(view, eventName);
-  const gatePay = useSaveGatedClick('pay');
 
   const fmt = (n: number) => n.toLocaleString(locale);
   const dateFormat = new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
-  });
-  const moneyFormat = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'ILS',
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0,
   });
 
   const over = view.state === 'over';
@@ -187,12 +181,6 @@ function PackageDetails({
       : { key: 'left', label: t('rows.left'), value: view.left },
   ];
 
-  const addRecords = (
-    <a href={whatsappHref} onClick={gatePay} target="_blank" rel="noopener noreferrer">
-      <IconBrandWhatsapp />
-      {tSheet('addRecords')}
-    </a>
-  );
 
   // The oldest payment opened the package; the list is newest first.
   const firstPaymentId = view.payments.at(-1)?.id;
@@ -241,14 +229,15 @@ function PackageDetails({
             ))}
           </div>
 
-          {!over && (
-            <Button
-              asChild
+          {/* Only a package that can grow offers to (ADR 0042): never a gift, never after the Event */}
+          {!over && view.topUpPlan && (
+            <TopUpButton
+              view={view}
+              plan={view.topUpPlan}
+              eventName={eventName}
               variant="outline"
               className="text-primary h-11 rounded-xl font-bold"
-            >
-              {addRecords}
-            </Button>
+            />
           )}
         </Card>
 
@@ -264,9 +253,14 @@ function PackageDetails({
               {t('over.body')}
             </p>
             <div className="flex items-center gap-3.5">
-              <Button asChild className="h-[46px] flex-1 rounded-xl font-bold">
-                {addRecords}
-              </Button>
+              {view.topUpPlan && (
+                <TopUpButton
+                  view={view}
+                  plan={view.topUpPlan}
+                  eventName={eventName}
+                  className="h-[46px] flex-1 rounded-xl font-bold"
+                />
+              )}
               <Link
                 href={`/app/${eventId}/guests?package=outside`}
                 className="text-warning-strong text-sm font-bold whitespace-nowrap underline underline-offset-[3px]"
@@ -348,11 +342,9 @@ function PackageDetails({
                         formatted: fmt(payment.records),
                       })}
                     </span>
-                    {payment.id === firstPaymentId && (
-                      <span className="bg-muted text-muted-foreground inline-flex h-5 items-center rounded-md px-[7px] text-[11px] font-bold">
-                        {t('payments.first')}
-                      </span>
-                    )}
+                    <span className="bg-muted text-muted-foreground inline-flex h-5 items-center rounded-md px-[7px] text-[11px] font-bold">
+                      {payment.id === firstPaymentId ? t('payments.first') : t('payments.topUp')}
+                    </span>
                   </div>
                   <span className="text-muted-foreground text-[12.5px]">
                     {dateFormat.format(new Date(payment.occurredAt))} ·{' '}
@@ -362,7 +354,7 @@ function PackageDetails({
                 <span className="text-sm font-bold whitespace-nowrap tabular-nums">
                   {payment.gift
                     ? t('payments.gift')
-                    : moneyFormat.format(payment.amount)}
+                    : formatShekels(payment.amount, locale)}
                 </span>
               </div>
             );

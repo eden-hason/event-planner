@@ -2,7 +2,6 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { billingWhatsAppUrl } from '../utils';
 import type { PackageCounts } from '../types';
 
 /**
@@ -63,20 +62,5 @@ export function PackageUncountedNote({
     <span className={cn('text-muted-foreground text-[12.5px] tabular-nums', className)}>
       {t('uncounted', { count: view.uncounted })}
     </span>
-  );
-}
-
-/** "Add records" is a WhatsApp conversation; over the package it says by how much. */
-export function usePackageWhatsAppHref(
-  view: PackageCounts,
-  eventName?: string,
-): string {
-  const t = useTranslations('billing.packageSheet');
-  const locale = useLocale();
-  const event = eventName ?? '';
-  return billingWhatsAppUrl(
-    view.state === 'over'
-      ? t('whatsappOver', { event, count: view.over.toLocaleString(locale) })
-      : t('whatsapp', { event }),
   );
 }

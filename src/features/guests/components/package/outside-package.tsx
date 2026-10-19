@@ -1,10 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { IconBrandWhatsapp, IconPackage } from '@tabler/icons-react';
-import { billingWhatsAppUrl, useRecordPackage } from '@/features/billing';
+import { IconPackage, IconPlus } from '@tabler/icons-react';
+import { useRecordPackage } from '@/features/billing';
 import { cn } from '@/lib/utils';
-import { useSaveGatedClick } from '@/features/auth';
 
 /**
  * The tag on a Guest Record a Schedule would skip. Sized to sit inside the existing row:
@@ -26,24 +25,13 @@ export function OutsidePackageTag({ size = 'sm' }: { size?: 'sm' | 'md' }) {
 
 /**
  * Above the list while it is narrowed to the records outside the package: what that
- * means, and for the Owner the way out - a WhatsApp conversation with Kululu, since
- * buying records is never a checkout (brief section 7). A collaborator is told to ask.
+ * means, and for the Owner the way out - a Top-up (ADR 0042), offered only while the
+ * package can grow.
  */
-export function OutsidePackageBanner({
-  variant,
-  eventName,
-}: {
-  variant: 'mobile' | 'desktop';
-  eventName?: string;
-}) {
+export function OutsidePackageBanner({ variant }: { variant: 'mobile' | 'desktop' }) {
   const t = useTranslations('guests.package');
-  const { view } = useRecordPackage();
-  const gatePay = useSaveGatedClick('pay');
+  const { view, openTopUp } = useRecordPackage();
   if (!view || view.over === 0) return null;
-
-  const href = billingWhatsAppUrl(
-    t('whatsapp', { event: eventName ?? '', count: view.over.toLocaleString() }),
-  );
 
   return (
     <div
@@ -61,16 +49,16 @@ export function OutsidePackageBanner({
       >
         {t('banner')}
       </span>
-      <a
-        href={href}
-        onClick={gatePay}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-card text-foreground flex h-[34px] shrink-0 items-center gap-[5px] rounded-[9px] px-3 text-[13px] font-bold whitespace-nowrap"
-      >
-        <IconBrandWhatsapp size={15} stroke={2} />
-        {t('addRecords')}
-      </a>
+      {openTopUp && (
+        <button
+          type="button"
+          onClick={openTopUp}
+          className="bg-card text-foreground flex h-[34px] shrink-0 items-center gap-[5px] rounded-[9px] px-3 text-[13px] font-bold whitespace-nowrap"
+        >
+          <IconPlus size={15} stroke={2} />
+          {t('addRecords')}
+        </button>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  automaticBonus,
   bonusRecords,
   nextBonusStep,
   packageState,
@@ -41,6 +42,17 @@ describe('nextBonusStep', () => {
   });
 });
 
+describe('automaticBonus', () => {
+  it('is earned by the opening payment alone', () => {
+    assert.equal(automaticBonus([10, 400]), 20);
+    assert.equal(automaticBonus([20, 190]), 0);
+  });
+
+  it('is zero with no payments', () => {
+    assert.equal(automaticBonus([]), 0);
+  });
+});
+
 describe('recordPackage', () => {
   it('sums the payments and adds the automatic bonus', () => {
     assert.deepEqual(recordPackage({ payments: [200], bonusOverride: null }), {
@@ -51,26 +63,26 @@ describe('recordPackage', () => {
     });
   });
 
-  it('computes the bonus from the total, so a split purchase never stacks it', () => {
+  it('takes the bonus from the opening payment, so a split purchase never stacks it', () => {
     assert.deepEqual(recordPackage({ payments: [200, 200], bonusOverride: null }), {
       paid: 400,
-      bonus: 20,
+      bonus: 10,
       bonusIsCustom: false,
-      size: 420,
+      size: 410,
     });
   });
 
-  it('grants the bonus once a top-up crosses 200 paid records', () => {
-    assert.deepEqual(recordPackage({ payments: [150, 50], bonusOverride: null }), {
+  it('grants no bonus for a top-up that crosses 200 paid records', () => {
+    assert.deepEqual(recordPackage({ payments: [50, 150], bonusOverride: null }), {
       paid: 200,
-      bonus: 10,
+      bonus: 0,
       bonusIsCustom: false,
-      size: 210,
+      size: 200,
     });
   });
 
   it('keeps an Operator override, including through a top-up', () => {
-    assert.deepEqual(recordPackage({ payments: [200, 300], bonusOverride: 30 }), {
+    assert.deepEqual(recordPackage({ payments: [300, 200], bonusOverride: 30 }), {
       paid: 500,
       bonus: 30,
       bonusIsCustom: true,

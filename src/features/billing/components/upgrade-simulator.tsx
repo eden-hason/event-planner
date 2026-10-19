@@ -25,6 +25,7 @@ import {
   RECORDS_STEP,
   billingWhatsAppUrl,
   clampRecords,
+  formatShekels,
   nextBonusStep,
   quote,
   trackPct,
@@ -113,17 +114,7 @@ export function UpgradeSimulator({ eventName }: { eventName?: string }) {
   useHideBottomNav(isMobile);
 
   const fmt = (n: number) => n.toLocaleString(locale);
-  const shekels = React.useMemo(
-    () =>
-      new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: 'ILS',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }),
-    [locale],
-  );
-  const money = (n: number) => shekels.format(n);
+  const money = (n: number) => formatShekels(n, locale);
 
   const { total, bonus, packageSize } = quote(records, channel);
   // While the bonus line folds away it keeps showing the first step, never "+0"

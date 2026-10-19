@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { IconAlertTriangle, IconBrandWhatsapp } from '@tabler/icons-react';
+import { IconAlertTriangle, IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,30 +19,30 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
-import { PackageHeroCount, PackageUncountedNote, usePackageWhatsAppHref } from './package-hero';
-import { useSaveGatedClick } from '@/features/auth';
+import { PackageHeroCount, PackageUncountedNote } from './package-hero';
 
 type RecordPackageSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   view: GuestPackageView;
-  eventName?: string;
   /** Present when the opener can narrow its list to the records outside the package. */
   onShowOutside?: () => void;
+  /** Present when the viewer may grow the package with a Top-up (ADR 0042). */
+  onTopUp?: () => void;
 };
 
 /**
  * The Owner's billing sheet for the Record Package (Record Package Plan design, 1i-1k): how
  * much room is left or how far over the list is, what the package is made of, and the way to
- * grow it. Buying records is a WhatsApp conversation with Kululu, never a checkout. A bottom
- * drawer on a phone, a dialog on desktop.
+ * grow it. Growing it is a Top-up (ADR 0042), offered only when the opener passes one. A
+ * bottom drawer on a phone, a dialog on desktop.
  */
 export function RecordPackageSheet({
   open,
   onOpenChange,
   view,
-  eventName,
   onShowOutside,
+  onTopUp,
 }: RecordPackageSheetProps) {
   const t = useTranslations('billing.packageSheet');
   const locale = useLocale();
@@ -53,8 +53,6 @@ export function RecordPackageSheet({
   const fmt = (n: number) => n.toLocaleString(locale);
 
   const over = view.state === 'over';
-  const whatsappHref = usePackageWhatsAppHref(view, eventName);
-  const gatePay = useSaveGatedClick('pay');
 
   const status = [
     view.gifted ? t('gifted') : t('paid'),
@@ -136,12 +134,18 @@ export function RecordPackageSheet({
         </div>
       )}
 
-      <Button asChild>
-        <a href={whatsappHref} onClick={gatePay} target="_blank" rel="noopener noreferrer">
-          <IconBrandWhatsapp />
+      {onTopUp && (
+        <Button
+          type="button"
+          onClick={() => {
+            onOpenChange(false);
+            onTopUp();
+          }}
+        >
+          <IconPlus />
           {t('addRecords')}
-        </a>
-      </Button>
+        </Button>
+      )}
 
       {over && onShowOutside && (
         <button

@@ -32,6 +32,8 @@ export {
   packageState,
   PRICING_CHANNELS,
   type PricingChannel,
+  formatShekels,
+  onSale,
   recordPackage,
   splitByPackage,
   UPSELL_CTA_CLASS,

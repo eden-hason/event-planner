@@ -14,6 +14,28 @@ import { BONUS_STEPS, RECORD_PACKAGE_RATES, bonusRecords } from './record-packag
 export const PRICING_CHANNELS = ['whatsapp', 'whatsapp_calls'] as const satisfies readonly RecordPackageChannel[];
 export type PricingChannel = (typeof PRICING_CHANNELS)[number];
 
+/** A package's channel as a Plan on sale, or null for one no longer sold (SMS) or none. */
+export function onSale(channel: RecordPackageChannel | null | undefined): PricingChannel | null {
+  return PRICING_CHANNELS.find((c) => c === channel) ?? null;
+}
+
+const SHEKELS = new Map<string, Intl.NumberFormat>();
+
+/** Shekels to at most two decimals, the way every price is shown. Built once per locale. */
+export function formatShekels(amount: number, locale: string): string {
+  let format = SHEKELS.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'ILS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+    SHEKELS.set(locale, format);
+  }
+  return format.format(amount);
+}
+
 export const RECORDS_MIN = 50;
 export const RECORDS_MAX = 1000;
 export const RECORDS_STEP = 10;

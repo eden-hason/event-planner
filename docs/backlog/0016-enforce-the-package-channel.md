@@ -22,8 +22,9 @@ SMS was sold at 1 ₪ until ADR 0034 and never bought. `sms` is still a value of
 
 ## Open questions
 
-- Is the channel a property of the package, or of each payment? A top-up on a different
-  channel (150 on WhatsApp, then 50 on WhatsApp + calls) has no defined meaning yet.
+- ~~Is the channel a property of the package, or of each payment?~~ Of the package
+  (ADR 0042): a top-up is bought on the package's own Plan, and recording one on another is
+  refused.
 - Does SMS Fallback count as "SMS" for a WhatsApp-only package? It is operator-launched and
   exists to rescue failed WhatsApp sends, so it probably should not.
 - Is an upgrade (WhatsApp → WhatsApp + calls) the rate difference on the records already

@@ -395,8 +395,7 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
             <EventBillingStatusControl eventId={eventId} currentStatus={view.billingStatus} />
             <RecordPaymentDialog
               eventId={eventId}
-              paidRecords={pkg?.paid ?? 0}
-              bonusOverride={pkg?.bonusIsCustom ? pkg.bonus : null}
+              current={pkg}
               defaultChannel={view.channel}
             />
           </div>

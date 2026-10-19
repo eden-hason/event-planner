@@ -338,7 +338,7 @@ export function GuestsDesktop({
         </div>
       )}
 
-      {outsideOnly && <OutsidePackageBanner variant="desktop" eventName={eventName} />}
+      {outsideOnly && <OutsidePackageBanner variant="desktop" />}
 
       {rows.length === 0 ? (
         <div className="border-input my-1 flex min-h-[max(360px,calc(100svh-24rem))] items-center justify-center rounded-[14px] border border-dashed">
