@@ -1,8 +1,32 @@
+import { headers } from 'next/headers';
 import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { AuthTakeover } from '@/features/auth/components/auth-takeover';
 import { isVisitor } from '@/features/auth';
+
+/**
+ * TEMPORARY. Records what a signed-out tap on an Owner Message's `/app` link
+ * looks like, to learn how WhatsApp's in-app browser identifies itself before
+ * building a "open in your browser" prompt for it. The headers besides the
+ * user agent are the other places a WebView can give itself away: Chromium's
+ * client hints name an "Android WebView" brand, and some WebViews still send
+ * X-Requested-With with the host app's package name. Remove once the strings
+ * are captured.
+ */
+async function logInAppBrowserProbe(next: string | undefined) {
+  if (!next?.replace(/^\/en(?=\/|$)/, '').startsWith('/app')) return;
+  const h = await headers();
+  console.info('[login-ua]', {
+    next,
+    userAgent: h.get('user-agent'),
+    secChUa: h.get('sec-ch-ua'),
+    secChUaMobile: h.get('sec-ch-ua-mobile'),
+    secChUaPlatform: h.get('sec-ch-ua-platform'),
+    xRequestedWith: h.get('x-requested-with'),
+    referer: h.get('referer'),
+  });
+}
 
 // Force dynamic rendering since this page uses cookies for authentication
 export const dynamic = 'force-dynamic';
@@ -26,6 +50,8 @@ export default async function LoginPage({
   if (data.user && !isVisitor(data.user)) {
     redirect({ href: next || '/app', locale });
   }
+
+  await logInAppBrowserProbe(next);
 
   // Signing in from here replaces a Visitor's session, and their Event goes
   // with it once the sign-in succeeds - so they are told before they start.
