@@ -11,7 +11,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
-import { GoogleIcon } from '@/components/icons';
+import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
 import { OtpCodeInput } from './otp-code-input';
 import {
   TakeoverBackButton,
@@ -147,7 +147,14 @@ export function AuthTakeover({
         {sendState.message && !sendState.success && (
           <TakeoverError>{sendState.message}</TakeoverError>
         )}
-        <TakeoverButton type="submit" disabled={isSending}>
+        {/* The code arrives on WhatsApp only (ADR 0043), so the button says
+            where to look before anyone waits for an SMS that never comes. */}
+        <TakeoverButton
+          type="submit"
+          disabled={isSending}
+          className="flex items-center justify-center gap-2"
+        >
+          {!isSending && <WhatsAppIcon />}
           {isSending ? t('sendingCode') : t('sendCode')}
         </TakeoverButton>
       </form>

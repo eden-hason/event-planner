@@ -4,6 +4,7 @@ import {
   attemptTag,
   conversationTag,
   ownerMessageTag,
+  OTP_MESSAGE_TAG,
   parseCallbackTag,
   TEST_MESSAGE_TAG,
 } from './whatsapp-callback-tag';
@@ -27,6 +28,10 @@ test('an owner message tag round-trips to its row id', () => {
 
 test('the test message tag is recognised', () => {
   assert.deepEqual(parseCallbackTag(TEST_MESSAGE_TAG), { kind: 'test' });
+});
+
+test('the sign-in code tag is recognised', () => {
+  assert.deepEqual(parseCallbackTag(OTP_MESSAGE_TAG), { kind: 'otp' });
 });
 
 test('tags stay well inside Meta’s 512-character limit', () => {

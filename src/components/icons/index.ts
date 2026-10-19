@@ -1,5 +1,6 @@
 export { GoogleDriveIcon } from './google-drive-icon';
 export { GoogleIcon } from './google-icon';
+export { WhatsAppIcon } from './whatsapp-icon';
 
 export {
   ArrowDown,

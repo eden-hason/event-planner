@@ -240,8 +240,8 @@ async function processStatusUpdates(
   if (byMessageId.size === 0) return;
 
   // Sort by the tag each message was sent with (utils/whatsapp-callback-tag.ts).
-  // Conversation replies and Test Messages have nothing to apply to, and are
-  // known to be ours, so they cost this one pass and nothing else.
+  // Conversation replies, Test Messages and sign-in codes have nothing to apply
+  // to, and are known to be ours, so they cost this one pass and nothing else.
   const byAttemptId = new Map<string, WhatsAppStatus>();
   const byOwnerMessageId = new Map<string, WhatsAppStatus>();
   const untagged: string[] = [];
