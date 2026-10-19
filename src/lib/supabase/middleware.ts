@@ -73,8 +73,6 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     // beginning with c, /collaborate among them
     strippedPath !== '/c' &&
     !strippedPath.startsWith('/c/') &&
-    // Live Invite Preview Link - opened by whoever the Owner shares it with
-    !strippedPath.startsWith('/p/') &&
     !strippedPath.startsWith('/invitations') &&
     // Co-planner Link (ADR 0041) - its page shows whose Event before sign-in
     !strippedPath.startsWith('/join/') &&

@@ -1,7 +1,6 @@
 import {
   getConfirmationDataByToken,
   getConfirmationDataByGuestToken,
-  getConfirmationPreviewData,
   isGuestInvitationToken,
 } from '@/features/confirmation/queries';
 import { ConfirmationExperience } from '@/features/confirmation';
@@ -42,14 +41,9 @@ export async function ConfirmationPage({
     return <ConfirmationExperience token={token} data={data} />;
   }
 
-  // An event preview token shares the uuid shape of a Guest's invitation token.
-  // The WhatsApp button on a Test Message can only append a token to the /c/
-  // base registered with Meta, so previews must resolve here too.
-  const preview = await getConfirmationPreviewData(token);
-  if (preview) {
-    return <ConfirmationExperience token={token} data={preview} preview />;
-  }
-
+  // Only a Guest's own token opens this page. An event's preview token (the
+  // link on a Test Message) shares the uuid shape but resolves to nothing, so
+  // an Owner cannot see the guest-facing page through it.
   return <InvalidTokenView />;
 }
 

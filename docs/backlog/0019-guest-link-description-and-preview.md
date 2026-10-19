@@ -21,10 +21,12 @@ once the row explains itself.
   invitation token renders `ConfirmationPage` for that Guest, and any answer given there is
   recorded as that Guest's RSVP. An Owner who clicked Preview and then tried the buttons would
   have changed a real Guest's status. Nothing on the page or the button warned about this.
-- **The event has a real preview.** `events.preview_token` resolves through
-  `getConfirmationPreviewData` (`src/features/confirmation/queries/index.ts`) to a sample guest,
-  and `ConfirmationExperience` takes a `preview` flag that keeps answers from being recorded.
-  `/p/[token]` re-exports the `/c/[token]` page, so it reads as a preview and is noindex.
+- **The event preview is gone.** `events.preview_token` used to open the RSVP page with a
+  sample guest (at `/p/[token]` and `/c/[token]`), with a `preview` flag on
+  `ConfirmationExperience` that kept answers from being recorded. Issue #491 removed it on
+  2026-10-14: an Owner is not to see the guest-facing RSVP page, so `/p/` was deleted and a
+  preview token now shows the invalid-link page. Restoring a Preview button would go against
+  that decision.
 - **Copy sends the link with a prefix.** It copies `guests.sheet.copyInvitationLinkPrefix` ("We
   would be delighted if you could kindly confirm...") followed by the URL, so the copy is meant
   for the Guest, not for the Owner. The label does not say so.
@@ -36,10 +38,8 @@ once the row explains itself.
 - What should the description say? It needs to cover that this is the Guest's own RSVP link,
   that Copy produces a ready-to-send message, and that answers given on the page count as the
   Guest's.
-- Should the restored Preview open the Guest's page (it shows their name and party size) or
-  the event preview at `/p/${preview_token}` (which cannot record anything)? If it opens the
-  Guest's page, it needs a read-only mode or a clear warning. One option is a guest-scoped
-  preview flag that renders the Guest's name but disables submission.
+- Should Preview come back at all? Issue #491 asked that Owners not see the guest-facing RSVP
+  page, which rules out both the Guest's page and the old event preview.
 - Does a Visitor need the save gate for Preview too, or only for Copy?
 
 ## Done means
