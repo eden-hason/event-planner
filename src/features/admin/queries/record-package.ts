@@ -2,7 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { bonusRecords } from '@/features/billing/utils';
+import { automaticBonus } from '@/features/billing/utils';
 import { listEventPayments, loadRecordPackage } from '@/features/billing/services';
 import type { EventBillingStatus } from '@/features/billing';
 import type { EventRecordPackageView } from '../types';
@@ -31,7 +31,7 @@ export async function getEventRecordPackage(eventId: string): Promise<EventRecor
   return {
     billingStatus: eventRes.data.billing_status as EventBillingStatus,
     package: loaded.package,
-    automaticBonus: bonusRecords(loaded.package?.paid ?? 0),
+    automaticBonus: automaticBonus(payments.map((p) => p.records).reverse()),
     used: loaded.split.used,
     uncounted: loaded.split.uncounted,
     left: loaded.split.left,

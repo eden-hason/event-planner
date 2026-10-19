@@ -63,7 +63,8 @@ export async function loadRecordPackage(
 
   const payments = paymentsRes.data ?? [];
   const pkg = recordPackage({
-    payments: payments.map((p) => p.record_count as number),
+    // Read newest first for the channel; the package wants them oldest first.
+    payments: payments.map((p) => p.record_count as number).reverse(),
     bonusOverride: eventRes.data.bonus_records_override as number | null,
   });
 

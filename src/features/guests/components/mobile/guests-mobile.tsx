@@ -404,7 +404,7 @@ export function GuestsMobile({
         }
       />
 
-      {outsideOnly && <OutsidePackageBanner variant="mobile" eventName={eventName} />}
+      {outsideOnly && <OutsidePackageBanner variant="mobile" />}
 
       {rows.length === 0 ? (
         <div className="flex min-h-[calc(100svh-22rem)] flex-col items-center justify-center gap-2.5 px-3 py-10 text-center">

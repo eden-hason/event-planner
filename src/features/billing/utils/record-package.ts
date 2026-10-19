@@ -48,11 +48,21 @@ export function nextBonusStep(paidRecords: number): (typeof BONUS_STEPS)[number]
 }
 
 /**
- * Paid Records are the sum of the recorded payments. The bonus is worked out from that
- * total, so splitting a purchase never stacks bonuses, unless an Operator overrode it.
+ * The automatic Bonus Records for an Event's payments, oldest first. Only the opening
+ * payment earns them (ADR 0042): a Top-up adds Paid Records and never bonus, so the gift is
+ * settled the day the package opens and splitting a purchase never stacks it.
+ */
+export function automaticBonus(paymentsOldestFirst: readonly number[]): number {
+  return bonusRecords(paymentsOldestFirst[0] ?? 0);
+}
+
+/**
+ * Paid Records are the sum of the recorded payments, oldest first. The bonus comes from the
+ * opening payment alone, unless an Operator overrode it.
  * Null when nothing was ever paid for: the Event has no package, not a package of zero.
  */
 export function recordPackage(input: {
+  /** Records per payment, oldest first. */
   payments: readonly number[];
   bonusOverride: number | null;
 }): RecordPackage | null {
@@ -60,7 +70,7 @@ export function recordPackage(input: {
 
   const paid = input.payments.reduce((sum, records) => sum + records, 0);
   const bonusIsCustom = input.bonusOverride !== null;
-  const bonus = bonusIsCustom ? input.bonusOverride! : bonusRecords(paid);
+  const bonus = bonusIsCustom ? input.bonusOverride! : automaticBonus(input.payments);
 
   return { paid, bonus, bonusIsCustom, size: paid + bonus };
 }

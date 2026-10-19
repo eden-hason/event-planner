@@ -1332,8 +1332,7 @@
       "banner": "The most recently added records won't get messages until records are added to the package",
       "addRecords": "Add records",
       "drawerLine": "Outside the package · won't get messages",
-      "drawerLink": "Package details",
-      "whatsapp": "Hi, I'd like to add records to the package for {event}. {count} records are currently outside the package"
+      "drawerLink": "Package details"
     }
   },
   "home": {
@@ -2597,9 +2596,21 @@
       "total": "Total in the package",
       "overWarning": "{count, plural, one {# record won't get messages} other {# records won't get messages}}",
       "addRecords": "Add records",
-      "showOutside": "Show the records",
-      "whatsapp": "Hi, I'd like to add records to the package for {event}",
-      "whatsappOver": "Hi, I'd like to add records to the package for {event}. {count} records are currently outside the package"
+      "showOutside": "Show the records"
+    },
+    "topUp": {
+      "title": "Add records",
+      "planNote": "On the same plan, {rate} per record",
+      "recordsLabel": "How many records to add?",
+      "recordsHint": "In steps of 10, no limit",
+      "fewer": "{step} fewer records",
+      "more": "{step} more records",
+      "lineRecords": "{count} records × {rate}",
+      "packageAfter": "Package total after the top-up",
+      "stillOver": "Still outside the package",
+      "pay": "Pay · {total}",
+      "payNote": "Payment is handled with our team on WhatsApp",
+      "whatsApp": "Hi, I would like to add records to the package for {event}: {records} more records on the {plan} plan, {total}"
     },
     "packagePage": {
       "title": "Package & payments",
@@ -2626,6 +2637,7 @@
         "title": "Payments",
         "records": "{count, plural, one {# record} other {{formatted} records}}",
         "first": "First purchase",
+        "topUp": "Top-up",
         "gift": "Gift from Kululu"
       },
       "help": {

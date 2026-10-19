@@ -654,11 +654,20 @@ _Avoid_: tier, channel (in Owner-facing copy)
 The number of Guest Records the Owner paid for, at their Plan's rate per record. It only
 grows - buying more records adds to it at the same rate.
 
+## Top-up
+
+A payment that adds Paid Records to a Record Package that is already open. It is bought on
+the package's own Plan, at that Plan's rate, in steps of 10, and earns no Bonus Records.
+Only a paid package can be topped up, and only until the Event day is over.
+
+_Avoid_: upgrade (that would change the Plan, which a Top-up never does)
+
 ## Bonus Records
 
 Free Guest Records added on top of the Paid Records as a gift: 10 once 200 or more are paid
 for, 20 once 400 or more are, none below 200. Each step replaces the one before, so 400 paid
-earns 20, not 30. A flat number per step, never a percentage.
+earns 20, not 30. A flat number per step, never a percentage. Only the payment that opens
+the package counts towards them; a Top-up never adds any.
 
 _Avoid_: reserve records (retired with tiers)
 

@@ -1,3 +1,6 @@
+> **Partly superseded by ADR 0042:** only the opening payment earns Bonus Records. A top-up
+> that crosses a step no longer earns it.
+
 # Bonus Records grow in two steps: 10 from 200, 20 from 400
 
 Date: 2026-10-09

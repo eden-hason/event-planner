@@ -1,3 +1,6 @@
+> **Partly superseded by ADR 0042:** Bonus Records come from the opening payment alone, and a
+> top-up stays on the package's Plan.
+
 # The Record Package caps sending, not planning
 
 Date: 2026-10-02

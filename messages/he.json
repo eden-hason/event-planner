@@ -1332,8 +1332,7 @@
       "banner": "הרשומות האחרונות שנוספו לא יקבלו הודעות עד שיתווספו רשומות לחבילה",
       "addRecords": "הוספת רשומות",
       "drawerLine": "מחוץ לחבילה · לא תקבל הודעות",
-      "drawerLink": "לפרטי החבילה",
-      "whatsapp": "היי, אני רוצה להוסיף רשומות לחבילה של {event}. כרגע {count} רשומות מחוץ לחבילה"
+      "drawerLink": "לפרטי החבילה"
     }
   },
   "home": {
@@ -2598,9 +2597,21 @@
       "total": "סה״כ בחבילה",
       "overWarning": "{count, plural, one {רשומה אחת לא תקבל הודעות} other {# רשומות לא יקבלו הודעות}}",
       "addRecords": "הוספת רשומות",
-      "showOutside": "הצגת הרשומות",
-      "whatsapp": "היי, אני רוצה להוסיף רשומות לחבילה של {event}",
-      "whatsappOver": "היי, אני רוצה להוסיף רשומות לחבילה של {event}. כרגע {count} רשומות מחוץ לחבילה"
+      "showOutside": "הצגת הרשומות"
+    },
+    "topUp": {
+      "title": "הוספת רשומות",
+      "planNote": "באותה חבילה, {rate} לרשומה",
+      "recordsLabel": "כמה רשומות להוסיף?",
+      "recordsHint": "בקפיצות של 10, בלי הגבלה",
+      "fewer": "הורדת {step} רשומות",
+      "more": "הוספת {step} רשומות",
+      "lineRecords": "{count} רשומות × {rate}",
+      "packageAfter": "סה״כ בחבילה אחרי התוספת",
+      "stillOver": "עדיין מחוץ לחבילה",
+      "pay": "לתשלום · {total}",
+      "payNote": "התשלום מתבצע מול הצוות שלנו ב-WhatsApp",
+      "whatsApp": "היי, אשמח להוסיף רשומות לחבילה של {event}: {records} רשומות נוספות בחבילת {plan}, {total}"
     },
     "packagePage": {
       "title": "חבילה ותשלומים",
@@ -2627,6 +2638,7 @@
         "title": "תשלומים",
         "records": "{count, plural, one {רשומה אחת} other {{formatted} רשומות}}",
         "first": "רכישה ראשונה",
+        "topUp": "תוספת",
         "gift": "מתנה מ-Kululu"
       },
       "help": {

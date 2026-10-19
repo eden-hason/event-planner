@@ -7,11 +7,13 @@ import { revalidateOutreach } from '@/features/schedules/services/revalidate-out
 import { sweepOwnerMessages } from '@/features/owner-messages/services';
 import { applyBillingTransition } from '../services';
 import { RecordEventPaymentSchema } from '../schemas';
+import { PRICING_CHANNELS } from '../utils/pricing';
 import type { BillingActionResult } from '../types';
 
 /**
  * Records a payment taken outside the system (ADR 0021): adds its records to the Event's
- * Paid Records and moves it to `paid` (ADR 0027). A top-up is just another payment.
+ * Paid Records and moves it to `paid` (ADR 0027). A top-up is just another payment, on the
+ * package's own Plan (ADR 0042), so one on any other Plan is refused.
  *
  * The reference goes in as the provider ref, which makes the database call idempotent on it.
  * That would silently swallow a second payment that reuses a reference, so a reuse is
@@ -40,6 +42,25 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
   if (!event) return { success: false, message: 'האירוע הזה כבר לא קיים' };
   if (event.status === 'draft') {
     return { success: false, message: 'לאירוע בטיוטה אין סביבת עבודה לרשום עבורה תשלום' };
+  }
+
+  const { data: latest, error: planError } = await supabase
+    .from('event_billing_events')
+    .select('channel')
+    .eq('event_id', eventId)
+    .not('record_count', 'is', null)
+    .order('occurred_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (planError) {
+    console.error('recordEventPayment plan read failed:', planError);
+    return { success: false, message: 'לא הצלחנו לטעון את החבילה' };
+  }
+  // A package on a Plan no longer sold (SMS) may move to one that is.
+  const plan = PRICING_CHANNELS.find((c) => c === latest?.channel);
+  if (plan && plan !== channel) {
+    return { success: false, message: 'תוספת רשומות נרשמת באותה חבילה של האירוע' };
   }
 
   if (reference) {
