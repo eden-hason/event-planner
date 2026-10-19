@@ -48,21 +48,22 @@ export function nextBonusStep(paidRecords: number): (typeof BONUS_STEPS)[number]
 }
 
 /**
- * The automatic Bonus Records for an Event's payments, oldest first. Only the opening
- * payment earns them (ADR 0042): a Top-up adds Paid Records and never bonus, so the gift is
- * settled the day the package opens and splitting a purchase never stacks it.
+ * The automatic Bonus Records for an Event's payments, newest first as every read returns
+ * them. Only the opening payment - the last - earns them (ADR 0042): a Top-up adds Paid
+ * Records and never bonus, so the gift is settled the day the package opens and splitting a
+ * purchase never stacks it.
  */
-export function automaticBonus(paymentsOldestFirst: readonly number[]): number {
-  return bonusRecords(paymentsOldestFirst[0] ?? 0);
+export function automaticBonus(payments: readonly number[]): number {
+  return bonusRecords(payments.at(-1) ?? 0);
 }
 
 /**
- * Paid Records are the sum of the recorded payments, oldest first. The bonus comes from the
- * opening payment alone, unless an Operator overrode it.
+ * Paid Records are the sum of the recorded payments. The bonus comes from the opening
+ * payment alone, unless an Operator overrode it.
  * Null when nothing was ever paid for: the Event has no package, not a package of zero.
  */
 export function recordPackage(input: {
-  /** Records per payment, oldest first. */
+  /** Records per payment, newest first. */
   payments: readonly number[];
   bonusOverride: number | null;
 }): RecordPackage | null {

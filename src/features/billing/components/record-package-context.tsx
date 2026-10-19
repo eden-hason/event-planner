@@ -18,17 +18,16 @@ type RecordPackageValue = {
   outsideIds: ReadonlySet<string>;
   openSheet: (options?: OpenSheetOptions) => void;
   /**
-   * Opens the Top-up sheet (ADR 0042). Null when the package cannot grow, or the viewer is
+   * Opens the Top-up sheet (ADR 0042). Absent when the package cannot grow, or the viewer is
    * not the one who pays: then no surface offers to add records.
    */
-  openTopUp: (() => void) | null;
+  openTopUp?: () => void;
 };
 
 const EMPTY: RecordPackageValue = {
   view: null,
   outsideIds: new Set(),
   openSheet: () => {},
-  openTopUp: null,
 };
 
 const RecordPackageContext = React.createContext<RecordPackageValue>(EMPTY);
@@ -67,7 +66,7 @@ export function RecordPackageProvider({
             view,
             outsideIds: new Set(view.outsideIds),
             openSheet,
-            openTopUp: topUpPlan ? () => setTopUpOpen(true) : null,
+            openTopUp: topUpPlan ? () => setTopUpOpen(true) : undefined,
           }
         : EMPTY,
     [view, openSheet, topUpPlan],
@@ -82,7 +81,7 @@ export function RecordPackageProvider({
           onOpenChange={setOpen}
           view={view}
           onShowOutside={options.onShowOutside}
-          onTopUp={value.openTopUp ?? undefined}
+          onTopUp={value.openTopUp}
         />
       )}
       {view && topUpPlan && (

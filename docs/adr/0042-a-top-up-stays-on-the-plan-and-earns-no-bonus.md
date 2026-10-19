@@ -23,8 +23,8 @@ A **Top-up** is any payment after the one that opened the package.
 
 - **It is bought on the package's own Plan, at that Plan's rate** (1.5 ₪ or 2 ₪, ADR 0034).
   The Plan is a property of the package, not of each payment. The Owner's top-up sheet
-  shows the Plan without offering another, and recording a payment on a different Plan
-  for an Event that already has a package is refused. A package on SMS, which is no longer
+  shows the Plan without offering another, and `applyBillingTransition` refuses a payment
+  on a different Plan for an Event that already has a package. A package on SMS, which is no longer
   sold, may move to a Plan that is.
 - **It earns no Bonus Records.** The automatic bonus is worked out from the opening payment
   alone (`automaticBonus` in `src/features/billing/utils/record-package.ts`), so it is
@@ -57,5 +57,7 @@ A **Top-up** is any payment after the one that opened the package.
 - An Owner who opens with 190 and tops up by 20 has 210 paid and no bonus, where ADR 0035
   gave them 10. The homepage FAQ only promises more records "באותו מחיר לרשומה", which
   still holds.
-- `recordPackage()` now reads payments oldest first, since the first one sets the bonus.
-  Every caller reads them newest first and reverses them.
+- The bonus now depends on which payment came first. `recordPackage()` takes payments newest
+  first, as every read returns them, and reads the opening one from the end.
+- The same-Plan rule lives in `applyBillingTransition`, the one write path, so the payment
+  webhook will hold to it too.

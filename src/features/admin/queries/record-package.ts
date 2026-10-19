@@ -31,7 +31,7 @@ export async function getEventRecordPackage(eventId: string): Promise<EventRecor
   return {
     billingStatus: eventRes.data.billing_status as EventBillingStatus,
     package: loaded.package,
-    automaticBonus: automaticBonus(payments.map((p) => p.records).reverse()),
+    automaticBonus: automaticBonus(payments.map((p) => p.records)),
     used: loaded.split.used,
     uncounted: loaded.split.uncounted,
     left: loaded.split.left,

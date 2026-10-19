@@ -29,6 +29,7 @@ import {
   PRICING_CHANNELS,
   RECORD_PACKAGE_CHANNEL_LABELS,
   RECORD_PACKAGE_RATES,
+  onSale,
   recordEventPayment,
   recordPackage,
   type BillingPaymentMethod,
@@ -39,11 +40,6 @@ import {
 
 const METHODS = Object.keys(PAYMENT_METHOD_LABELS) as BillingPaymentMethod[];
 
-/** A past payment's channel, if it is still on sale (ADR 0034: SMS is not). */
-function onSale(channel: RecordPackageChannel | null): PricingChannel | null {
-  return PRICING_CHANNELS.find((c) => c === channel) ?? null;
-}
-
 /**
  * Records a payment taken outside the system (ADR 0021, ADR 0027). Every payment adds to
  * Paid Records and moves the Event to `paid`, so this is also how a first package is entered
@@ -53,13 +49,11 @@ function onSale(channel: RecordPackageChannel | null): PricingChannel | null {
 export function RecordPaymentDialog({
   eventId,
   current,
-  bonusOverride,
   defaultChannel,
 }: {
   eventId: string;
   /** The package before this payment, for the live preview; null when none is open. */
   current: RecordPackage | null;
-  bonusOverride: number | null;
   defaultChannel: RecordPackageChannel | null;
 }) {
   const router = useRouter();
@@ -67,7 +61,8 @@ export function RecordPaymentDialog({
   const [records, setRecords] = useState('');
   // A Top-up stays on the package's Plan; one on SMS, no longer sold, may move to one that is.
   const lockedChannel = current ? onSale(defaultChannel) : null;
-  const [channel, setChannel] = useState<PricingChannel>(onSale(defaultChannel) ?? 'whatsapp');
+  const [picked, setPicked] = useState<PricingChannel>(onSale(defaultChannel) ?? 'whatsapp');
+  const channel = lockedChannel ?? picked;
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<BillingPaymentMethod>('bank_transfer');
   const [reference, setReference] = useState('');
@@ -77,13 +72,13 @@ export function RecordPaymentDialog({
   const recordCount = Number.parseInt(records, 10);
   const validRecords = Number.isInteger(recordCount) && recordCount > 0;
   const isGift = method === 'gift';
-  const listPrice = validRecords ? recordCount * RECORD_PACKAGE_RATES[lockedChannel ?? channel] : null;
+  const listPrice = validRecords ? recordCount * RECORD_PACKAGE_RATES[channel] : null;
   // The bonus is settled by the opening payment, so a Top-up only adds its records.
   const after = !validRecords
     ? null
     : current
       ? { ...current, paid: current.paid + recordCount, size: current.size + recordCount }
-      : recordPackage({ payments: [recordCount], bonusOverride });
+      : recordPackage({ payments: [recordCount], bonusOverride: null });
 
   function reset() {
     setRecords('');
@@ -98,7 +93,7 @@ export function RecordPaymentDialog({
       const result = await recordEventPayment({
         eventId,
         records: validRecords ? recordCount : Number.NaN,
-        channel: lockedChannel ?? channel,
+        channel,
         amount: isGift ? 0 : amount.trim() === '' ? Number.NaN : Number(amount),
         method,
         reference: reference.trim() || undefined,
@@ -146,8 +141,8 @@ export function RecordPaymentDialog({
           <div className="space-y-2">
             <Label htmlFor="payment-channel">ערוץ</Label>
             <Select
-              value={lockedChannel ?? channel}
-              onValueChange={(v) => setChannel(v as PricingChannel)}
+              value={channel}
+              onValueChange={(v) => setPicked(v as PricingChannel)}
               disabled={lockedChannel !== null}
             >
               <SelectTrigger id="payment-channel" className="w-full">

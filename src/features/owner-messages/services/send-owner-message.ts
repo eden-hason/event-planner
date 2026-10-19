@@ -52,7 +52,7 @@ async function loadOwnerMessageFacts(
   }
 
   const pkg = recordPackage({
-    payments: payments.map((p) => p.records).reverse(),
+    payments: payments.map((p) => p.records),
     bonusOverride: event.bonus_records_override,
   });
 

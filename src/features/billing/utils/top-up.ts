@@ -6,7 +6,7 @@
 
 import { daysUntil } from '@/lib/date-time';
 import type { EventBillingStatus, RecordPackageChannel } from '../types';
-import { PRICING_CHANNELS, RECORDS_STEP, type PricingChannel } from './pricing';
+import { RECORDS_STEP, onSale, type PricingChannel } from './pricing';
 import { RECORD_PACKAGE_RATES } from './record-package';
 
 export const TOP_UP_MIN = 10;
@@ -20,7 +20,7 @@ export function clampTopUp(value: number): number {
 
 /** The first top-up to offer: enough to cover what is over the package, else 50. */
 export function suggestedTopUp(over: number): number {
-  return over > 0 ? Math.max(TOP_UP_MIN, Math.ceil(over / TOP_UP_STEP) * TOP_UP_STEP) : 50;
+  return over > 0 ? Math.ceil(over / TOP_UP_STEP) * TOP_UP_STEP : 50;
 }
 
 export function topUpTotal(records: number, plan: PricingChannel): number {
@@ -41,7 +41,7 @@ export function topUpPlan(input: {
   now?: Date;
 }): PricingChannel | null {
   if (input.billingStatus !== 'paid' || input.gifted) return null;
-  const plan = PRICING_CHANNELS.find((c) => c === input.channel);
+  const plan = onSale(input.channel);
   if (!plan) return null;
   if (input.eventDate && daysUntil(input.eventDate, input.now) < 0) return null;
   return plan;

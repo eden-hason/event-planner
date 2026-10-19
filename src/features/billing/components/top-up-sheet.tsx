@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { IconBrandWhatsapp } from '@tabler/icons-react';
+import { IconBrandWhatsapp, IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,6 +25,7 @@ import {
   TOP_UP_STEP,
   billingWhatsAppUrl,
   clampTopUp,
+  formatShekels,
   suggestedTopUp,
   topUpTotal,
   type PricingChannel,
@@ -44,10 +45,18 @@ type TopUpSheetProps = {
  * Adding records to a package that is already open (ADR 0042): how many, in steps of 10
  * with no ceiling, on the package's own Plan and at its rate, with no Bonus Records.
  * Checkout is a WhatsApp conversation with Kululu, pre-filled with the quote, like the
- * first purchase. A bottom drawer on a phone, a dialog on desktop.
+ * first purchase. A bottom drawer on a phone, a dialog on desktop. Memoized: the Guests page
+ * keeps it mounted, closed, under every keystroke in its search.
  */
-export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpSheetProps) {
+export const TopUpSheet = React.memo(function TopUpSheet({
+  open,
+  onOpenChange,
+  view,
+  plan,
+  eventName,
+}: TopUpSheetProps) {
   const t = useTranslations('billing.topUp');
+  const tUpgrade = useTranslations('billing.upgrade');
   const tSheet = useTranslations('billing.packageSheet');
   const locale = useLocale();
   const isMobile = useIsMobile();
@@ -66,16 +75,8 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
   const records = clampTopUp(Number.parseInt(draft, 10));
 
   const fmt = (n: number) => n.toLocaleString(locale);
-  const money = (n: number) =>
-    new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: 'ILS',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(n);
-
-  const total = topUpTotal(records, plan);
-  const rate = money(RECORD_PACKAGE_RATES[plan]);
+  const total = formatShekels(topUpTotal(records, plan), locale);
+  const rate = formatShekels(RECORD_PACKAGE_RATES[plan], locale);
   const planName = tSheet(`channels.${plan}`);
   const stillOver = Math.max(0, view.over - records);
 
@@ -84,7 +85,7 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
       event: eventName ?? '',
       plan: planName,
       records: fmt(records),
-      total: money(total),
+      total,
     }),
   );
 
@@ -114,7 +115,7 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
             className="size-11 rounded-xl text-xl"
             onClick={() => step(-TOP_UP_STEP)}
             disabled={records <= TOP_UP_STEP}
-            aria-label={t('fewer', { step: TOP_UP_STEP })}
+            aria-label={tUpgrade('fewer', { step: TOP_UP_STEP })}
           >
             −
           </Button>
@@ -132,7 +133,7 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
             size="icon"
             className="size-11 rounded-xl text-xl"
             onClick={() => step(TOP_UP_STEP)}
-            aria-label={t('more', { step: TOP_UP_STEP })}
+            aria-label={tUpgrade('more', { step: TOP_UP_STEP })}
           >
             +
           </Button>
@@ -141,7 +142,7 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
       </div>
 
       <div aria-live="polite" className="bg-muted/60 flex flex-col rounded-[14px] px-3.5 py-1">
-        <Row label={t('lineRecords', { count: fmt(records), rate })} value={money(total)} strong />
+        <Row label={t('lineRecords', { count: fmt(records), rate })} value={total} strong />
         <Row label={t('packageAfter')} value={fmt(view.size + records)} className="border-t" />
         {stillOver > 0 && (
           <Row
@@ -155,10 +156,10 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
       <Button asChild size="lg" className="h-[52px] rounded-[14px] text-base font-bold">
         <a href={payHref} onClick={gatePay} target="_blank" rel="noopener noreferrer">
           <IconBrandWhatsapp className="size-5" />
-          {t('pay', { total: money(total) })}
+          {t('pay', { total })}
         </a>
       </Button>
-      <span className="text-muted-foreground -mt-2 text-center text-xs">{t('payNote')}</span>
+      <span className="text-muted-foreground -mt-2 text-center text-xs">{tUpgrade('payNote')}</span>
     </div>
   );
 
@@ -182,6 +183,29 @@ export function TopUpSheet({ open, onOpenChange, view, plan, eventName }: TopUpS
         {body}
       </DialogContent>
     </Dialog>
+  );
+});
+
+/** "Add records" with its own Top-up sheet, for a page that hosts no other trigger. */
+export function TopUpButton({
+  view,
+  plan,
+  eventName,
+  className,
+  variant,
+}: Omit<TopUpSheetProps, 'open' | 'onOpenChange'> &
+  Pick<React.ComponentProps<typeof Button>, 'className' | 'variant'>) {
+  const t = useTranslations('billing.packageSheet');
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <>
+      <Button type="button" variant={variant} className={className} onClick={() => setOpen(true)}>
+        <IconPlus />
+        {t('addRecords')}
+      </Button>
+      <TopUpSheet open={open} onOpenChange={setOpen} view={view} plan={plan} eventName={eventName} />
+    </>
   );
 }
 

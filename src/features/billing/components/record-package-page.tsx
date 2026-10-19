@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   IconAlertTriangle,
   IconBrandWhatsapp,
   IconGift,
   IconPackage,
-  IconPlus,
   IconReceipt,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
@@ -16,11 +15,11 @@ import { useEventBillingStatus } from './event-billing-status-provider';
 import { UpgradeSimulator } from './upgrade-simulator';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { billingWhatsAppUrl } from '../utils';
+import { billingWhatsAppUrl, formatShekels } from '../utils';
 import type { RecordPackagePageView } from '../types';
 import { PackageBar, PackageSwatch } from './package-bar';
 import { PackageHeroCount, PackageUncountedNote } from './package-hero';
-import { TopUpSheet } from './top-up-sheet';
+import { TopUpButton } from './top-up-sheet';
 import { useSaveGatedClick } from '@/features/auth';
 
 type RecordPackagePageProps = {
@@ -130,19 +129,12 @@ function PackageDetails({
   const t = useTranslations('billing.packagePage');
   const tSheet = useTranslations('billing.packageSheet');
   const locale = useLocale();
-  const [topUpOpen, setTopUpOpen] = useState(false);
 
   const fmt = (n: number) => n.toLocaleString(locale);
   const dateFormat = new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
-  });
-  const moneyFormat = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'ILS',
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0,
   });
 
   const over = view.state === 'over';
@@ -189,14 +181,6 @@ function PackageDetails({
       : { key: 'left', label: t('rows.left'), value: view.left },
   ];
 
-  // Only a package that can grow offers to (ADR 0042): never a gift, never after the Event.
-  const topUpPlan = view.topUpPlan;
-  const addRecords = (
-    <>
-      <IconPlus />
-      {tSheet('addRecords')}
-    </>
-  );
 
   // The oldest payment opened the package; the list is newest first.
   const firstPaymentId = view.payments.at(-1)?.id;
@@ -245,15 +229,15 @@ function PackageDetails({
             ))}
           </div>
 
-          {!over && topUpPlan && (
-            <Button
-              type="button"
+          {/* Only a package that can grow offers to (ADR 0042): never a gift, never after the Event */}
+          {!over && view.topUpPlan && (
+            <TopUpButton
+              view={view}
+              plan={view.topUpPlan}
+              eventName={eventName}
               variant="outline"
               className="text-primary h-11 rounded-xl font-bold"
-              onClick={() => setTopUpOpen(true)}
-            >
-              {addRecords}
-            </Button>
+            />
           )}
         </Card>
 
@@ -269,14 +253,13 @@ function PackageDetails({
               {t('over.body')}
             </p>
             <div className="flex items-center gap-3.5">
-              {topUpPlan && (
-                <Button
-                  type="button"
+              {view.topUpPlan && (
+                <TopUpButton
+                  view={view}
+                  plan={view.topUpPlan}
+                  eventName={eventName}
                   className="h-[46px] flex-1 rounded-xl font-bold"
-                  onClick={() => setTopUpOpen(true)}
-                >
-                  {addRecords}
-                </Button>
+                />
               )}
               <Link
                 href={`/app/${eventId}/guests?package=outside`}
@@ -371,7 +354,7 @@ function PackageDetails({
                 <span className="text-sm font-bold whitespace-nowrap tabular-nums">
                   {payment.gift
                     ? t('payments.gift')
-                    : moneyFormat.format(payment.amount)}
+                    : formatShekels(payment.amount, locale)}
                 </span>
               </div>
             );
@@ -395,16 +378,6 @@ function PackageDetails({
           )}
         </div>
       </div>
-
-      {topUpPlan && (
-        <TopUpSheet
-          open={topUpOpen}
-          onOpenChange={setTopUpOpen}
-          view={view}
-          plan={topUpPlan}
-          eventName={eventName}
-        />
-      )}
     </div>
   );
 }

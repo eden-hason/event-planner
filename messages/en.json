@@ -2603,13 +2603,10 @@
       "planNote": "On the same plan, {rate} per record",
       "recordsLabel": "How many records to add?",
       "recordsHint": "In steps of 10, no limit",
-      "fewer": "{step} fewer records",
-      "more": "{step} more records",
       "lineRecords": "{count} records × {rate}",
       "packageAfter": "Package total after the top-up",
       "stillOver": "Still outside the package",
       "pay": "Pay · {total}",
-      "payNote": "Payment is handled with our team on WhatsApp",
       "whatsApp": "Hi, I would like to add records to the package for {event}: {records} more records on the {plan} plan, {total}"
     },
     "packagePage": {

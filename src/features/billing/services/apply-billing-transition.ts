@@ -4,6 +4,8 @@ import type {
   EventBillingStatus,
   RecordPackageChannel,
 } from '../types';
+import { onSale } from '../utils/pricing';
+import { listEventPayments } from './list-event-payments';
 
 export type BillingTransitionInput = {
   eventId: string;
@@ -31,7 +33,8 @@ export type BillingTransitionInput = {
 
 export type BillingTransitionResult =
   | { ok: true; billingEventId: string }
-  | { ok: false; message: string };
+  /** `otherPlan`: a Top-up on a Plan other than the package's own, refused (ADR 0042). */
+  | { ok: false; message: string; reason?: 'otherPlan' };
 
 /**
  * The single write path for `events.billing_status`. Advances the status and
@@ -42,12 +45,23 @@ export type BillingTransitionResult =
  * and the (future) payment webhook route - go through it, and it takes its
  * client as a parameter so it never constructs one. It does NOT authorize the
  * caller: the action calls `assertAdmin` first, the webhook verifies its
- * signature first.
+ * signature first. It does keep a Top-up on the package's Plan (ADR 0042), so
+ * every entry point holds to it.
  */
 export async function applyBillingTransition(
   supabase: SupabaseClient,
   input: BillingTransitionInput,
 ): Promise<BillingTransitionResult> {
+  if (input.recordCount != null && input.channel) {
+    const payments = await listEventPayments(supabase, input.eventId);
+    if (!payments) return { ok: false, message: 'Could not read the package' };
+    // A package on a Plan no longer sold (SMS) may move to one that is.
+    const plan = onSale(payments[0]?.channel);
+    if (plan && plan !== input.channel) {
+      return { ok: false, message: 'A top-up stays on the package Plan', reason: 'otherPlan' };
+    }
+  }
+
   const { data, error } = await supabase.rpc('apply_event_billing_transition', {
     p_event_id: input.eventId,
     p_to_status: input.toStatus,

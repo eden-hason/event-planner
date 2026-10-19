@@ -9,11 +9,7 @@ import {
   type LoadedRecordPackage,
 } from '../services';
 import { packageState } from '../utils/record-package';
-import { topUpPlan } from '../utils/top-up';
-import type { EventBillingStatus, GuestPackageView, RecordPackagePageView } from '../types';
-
-/** What a Top-up needs to know about the Event itself. */
-type EventFacts = { billing_status: EventBillingStatus | null; event_date: string | null };
+import type { GuestPackageView, RecordPackagePageView } from '../types';
 
 /** The current Event's Record Package and how its guest list sits against it. */
 export async function getRecordPackage(eventId: string): Promise<LoadedRecordPackage | null> {
@@ -32,19 +28,18 @@ export async function getGuestPackageView(eventId: string): Promise<GuestPackage
   const { supabase } = await getEffectiveClient();
   const { data: event, error } = await supabase
     .from('events')
-    .select('billing_status, event_date')
+    .select('id')
     .eq('id', eventId)
-    .maybeSingle<EventFacts>();
+    .maybeSingle();
   if (error || !event) return null;
 
   const loaded = await loadRecordPackage(createServiceClient(), eventId);
-  return loaded?.package ? toGuestPackageView(loaded, loaded.package, event) : null;
+  return loaded?.package ? toGuestPackageView(loaded, loaded.package) : null;
 }
 
 function toGuestPackageView(
   loaded: LoadedRecordPackage,
   pkg: NonNullable<LoadedRecordPackage['package']>,
-  event: EventFacts,
 ): GuestPackageView {
   const { used, uncounted, left, over, outside } = loaded.split;
   return {
@@ -58,12 +53,7 @@ function toGuestPackageView(
     state: packageState(pkg.size, used),
     channel: loaded.channel,
     gifted: loaded.gifted,
-    topUpPlan: topUpPlan({
-      billingStatus: event.billing_status,
-      channel: loaded.channel,
-      gifted: loaded.gifted,
-      eventDate: event.event_date,
-    }),
+    topUpPlan: loaded.topUpPlan,
     outsideIds: outside,
   };
 }
@@ -81,23 +71,16 @@ export async function getRecordPackagePageView(
 ): Promise<{ allowed: false } | { allowed: true; view: RecordPackagePageView | null }> {
   const { supabase } = await getEffectiveClient();
   // Read through RLS, so starting the loads before the access check leaks nothing.
-  const [access, eventRes, loaded, payments] = await Promise.all([
+  const [access, loaded, payments] = await Promise.all([
     getCollaboratorAccess(eventId),
-    supabase
-      .from('events')
-      .select('billing_status, event_date')
-      .eq('id', eventId)
-      .maybeSingle<EventFacts>(),
     loadRecordPackage(supabase, eventId),
     listEventPayments(supabase, eventId),
   ]);
   if (!access?.isCreator) return { allowed: false };
   if (!loaded?.package || !payments) return { allowed: true, view: null };
 
-  // Unread, the Event offers no Top-up rather than hiding the package it has.
-  const event = eventRes.data ?? { billing_status: null, event_date: null };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the page never reads it
-  const { outsideIds, ...counts } = toGuestPackageView(loaded, loaded.package, event);
+  const { outsideIds, ...counts } = toGuestPackageView(loaded, loaded.package);
   return {
     allowed: true,
     view: {
