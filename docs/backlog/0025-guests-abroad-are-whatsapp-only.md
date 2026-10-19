@@ -52,8 +52,8 @@ no phone number.
    target country - it does not in the US), the gate could become a per-country list instead of
    `+972` only.
 6. **Out of scope, not touched:** call rounds (an Operator dials by hand, so a number from abroad
-   is just a longer number), the Owner's own phone (auth OTP goes through ActiveTrail too, via
-   `supabase/functions/send-sms`), and Test Messages (WhatsApp only, see 0020).
+   is just a longer number), the Owner's own phone (auth OTP now goes by WhatsApp, ADR 0043, so
+   an Owner from abroad can sign in), and Test Messages (WhatsApp only, see 0020).
 
 ## Also worth knowing
 

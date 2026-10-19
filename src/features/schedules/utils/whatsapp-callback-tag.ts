@@ -17,6 +17,8 @@
  *  - `test`               - a Test Message. Nothing is recorded for it.
  *  - `owner:<id>`         - an Owner Message (ADR 0039). Its statuses are
  *                           applied to that owner_messages row.
+ *  - `otp`                - an auth sign-in code (ADR 0043), posted by the
+ *                           `send-sms` edge function. Nothing is recorded.
  *
  * A new send path adds a kind here, which is the point: the processor cannot
  * mistake an untracked sender for a missing attempt, because an untracked
@@ -27,7 +29,8 @@ export type WhatsAppCallbackTag =
   | { kind: 'attempt'; attemptId: string }
   | { kind: 'conversation'; inboundMessageId: string }
   | { kind: 'test' }
-  | { kind: 'owner'; ownerMessageId: string };
+  | { kind: 'owner'; ownerMessageId: string }
+  | { kind: 'otp' };
 
 export function attemptTag(attemptId: string): string {
   return `attempt:${attemptId}`;
@@ -43,6 +46,12 @@ export function ownerMessageTag(ownerMessageId: string): string {
 
 export const TEST_MESSAGE_TAG = 'test';
 
+/**
+ * Written by supabase/functions/send-sms, a Deno function that cannot import
+ * this module, so the literal is repeated there. Change both together.
+ */
+export const OTP_MESSAGE_TAG = 'otp';
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -53,6 +62,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export function parseCallbackTag(value: string | null | undefined): WhatsAppCallbackTag | null {
   if (!value) return null;
   if (value === TEST_MESSAGE_TAG) return { kind: 'test' };
+  if (value === OTP_MESSAGE_TAG) return { kind: 'otp' };
 
   const separator = value.indexOf(':');
   if (separator <= 0) return null;

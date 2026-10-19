@@ -13,7 +13,7 @@ import {
   verifyPhoneSave,
   type SaveState,
 } from '../actions';
-import { GoogleIcon } from '@/components/icons';
+import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
 import { OtpCodeInput } from './otp-code-input';
 
 type Step = 'details' | 'phoneExists' | 'googleExists' | 'otp';
@@ -202,6 +202,7 @@ export function SaveEventForm({
           onClick={() => sendCode(false)}
           disabled={!named || !phoneReady || isSending || isLeaving}
         >
+          {!isSending && <WhatsAppIcon />}
           {isSending ? tAuth('sendingCode') : t('savePhone')}
         </Button>
       </div>
