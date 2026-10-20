@@ -7,12 +7,19 @@ import type { MetadataRoute } from 'next';
  * `standalone` opens it without the browser's address bar, like an app.
  * The maskable icon keeps the mark inside the 80% safe zone, so a launcher's
  * circle or squircle crop never clips it.
+ *
+ * The icon opens `/app`, which takes a signed-in Owner to their last Event (and
+ * anyone else to sign-in), not the marketing page. `id` stays `/`: without one
+ * Chrome identifies the app by `start_url`, so moving it would make every
+ * existing install look like a different, uninstalled app.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: '/',
     name: 'Kululu אישורי הגעה',
     short_name: 'Kululu',
-    start_url: '/',
+    start_url: '/app',
+    scope: '/',
     display: 'standalone',
     background_color: '#e7e0ec',
     theme_color: '#e7e0ec',
