@@ -26,11 +26,9 @@ export async function resolveTemplatesForPreview(
   const family = await loadTemplateFamily(supabase, params.anchor);
   if (!family.success) return { withNote: family, withoutNote: family };
 
-  const resolve = (note: boolean) => {
-    const result = pickTemplates({ ...params, note, candidates: family.candidates });
-    if (!result.success) console.error(`[resolve-templates] ${result.message}`);
-    return result;
+  const { candidates } = family;
+  return {
+    withNote: pickTemplates({ ...params, note: true, candidates }),
+    withoutNote: pickTemplates({ ...params, note: false, candidates }),
   };
-
-  return { withNote: resolve(true), withoutNote: resolve(false) };
 }

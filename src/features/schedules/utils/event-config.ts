@@ -104,3 +104,12 @@ export function hasInvitationImage(invitations: InvitationSettings): boolean {
     return false;
   }
 }
+
+/**
+ * Whether the organiser's note counts as one: a note that trims to nothing
+ * picks the row without a note. The one rule for every send and for the
+ * preview, which has to switch versions exactly where the send does.
+ */
+export function hasNote(customText: string | null | undefined): boolean {
+  return Boolean(customText?.trim());
+}

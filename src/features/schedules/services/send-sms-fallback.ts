@@ -14,6 +14,7 @@ import {
   describeGuestLevelFailure,
   includesGiftButton,
   hasInvitationImage,
+  hasNote,
   isMessageSchedule,
   sendSmsToGuest,
   shouldSendTableNumbers,
@@ -173,7 +174,7 @@ async function resolveSmsTemplates(
     anchor: MessageTemplateDbToAppSchema.parse(data[0]),
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
-    note: Boolean(schedule.customText?.trim()),
+    note: hasNote(schedule.customText),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),
     invitationImage: hasInvitationImage(event.invitations),
   });

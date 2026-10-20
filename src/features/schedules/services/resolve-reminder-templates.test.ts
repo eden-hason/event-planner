@@ -4,19 +4,7 @@ import test from 'node:test';
 import { pickTemplates } from './resolve-reminder-templates.ts';
 import type { MessageTemplateApp } from '../schemas/message-templates';
 
-function row(
-  id: string,
-  flags: Partial<
-    Pick<
-      MessageTemplateApp,
-      | 'requiresTableNumbers'
-      | 'requiresGifting'
-      | 'requiresNote'
-      | 'requiresFollowUp'
-      | 'requiresInvitationImage'
-    >
-  > = {},
-): MessageTemplateApp {
+function row(id: string, flags: Partial<MessageTemplateApp> = {}): MessageTemplateApp {
   return {
     id,
     key: 'event_reminder',

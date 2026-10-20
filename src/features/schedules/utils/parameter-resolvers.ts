@@ -223,6 +223,19 @@ const transformers: Record<TransformerType, TransformerFunction> = {
 };
 
 /**
+ * Whether a template folds the organiser's note onto one line, read from its
+ * own placeholder config rather than assumed from its channel: the WhatsApp
+ * rows carry the singleLine transformer, the SMS rows keep the note as typed.
+ */
+export function foldsNote(parameters: { placeholders?: NamedPlaceholderConfig[] }): boolean {
+  return (parameters.placeholders ?? []).some(
+    (config) =>
+      (config.source ?? config.name) === 'schedule.customText' &&
+      config.transformer === 'singleLine',
+  );
+}
+
+/**
  * Resolve a single placeholder value using its configuration
  *
  * @param placeholderName - The placeholder name from the template (e.g., "guest.name")

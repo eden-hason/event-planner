@@ -112,16 +112,27 @@ export async function loadTemplateFamily(
   };
 }
 
+type PickParams = TemplateAxes & {
+  anchor: MessageTemplateApp;
+  candidates: MessageTemplateApp[];
+};
+
 /**
- * The pure half of resolveTemplatesForEvent: picks from a family already
+ * The in-memory half of resolveTemplatesForEvent: picks from a family already
  * loaded, so a caller that needs more than one resolution of the same family
- * (the preview, with and without the note) reads it once.
+ * (the preview, with and without the note) reads it once. Logs a failure, which
+ * is a seeding bug.
  */
 export function pickTemplates(
-  params: TemplateAxes & {
-    anchor: MessageTemplateApp;
-    candidates: MessageTemplateApp[];
-  },
+  params: PickParams,
+): ResolveTemplatesResult {
+  const result = pick(params);
+  if (!result.success) console.error(`[resolve-templates] ${result.message}`);
+  return result;
+}
+
+function pick(
+  params: PickParams,
 ): ResolveTemplatesResult {
   const {
     anchor,
@@ -152,7 +163,7 @@ export function pickTemplates(
   const wantImage =
     invitationImage && candidates.some((t) => t.requiresInvitationImage);
 
-  const pick = (requiresTable: boolean) =>
+  const pickRow = (requiresTable: boolean) =>
     candidates.find(
       (t) =>
         t.requiresGifting === wantGifting &&
@@ -162,7 +173,7 @@ export function pickTemplates(
         t.requiresInvitationImage === wantImage,
     ) ?? null;
 
-  const withoutTable = pick(false);
+  const withoutTable = pickRow(false);
 
   if (!withoutTable) {
     return {
@@ -178,7 +189,7 @@ export function pickTemplates(
     };
   }
 
-  const withTable = pick(true);
+  const withTable = pickRow(true);
 
   if (!withTable) {
     return {
@@ -200,7 +211,5 @@ export async function resolveTemplatesForEvent(
   const family = await loadTemplateFamily(supabase, axes.anchor);
   if (!family.success) return family;
 
-  const result = pickTemplates({ ...axes, candidates: family.candidates });
-  if (!result.success) console.error(`[resolve-templates] ${result.message}`);
-  return result;
+  return pickTemplates({ ...axes, candidates: family.candidates });
 }

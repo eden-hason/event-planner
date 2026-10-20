@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import { Textarea } from '@/components/ui/textarea';
 
-import { CUSTOM_TEXT_MAX_LENGTH, type ScheduleApp } from '../schemas';
+import { CUSTOM_TEXT_MAX_LENGTH } from '../schemas';
 import { SettingsCard } from './settings-card';
 import { useScheduleSettings } from './schedule-settings-context';
 
@@ -16,10 +16,11 @@ import { useScheduleSettings } from './schedule-settings-context';
  */
 export function PersonalNoteCard({
   lockReason,
-  channel,
+  foldsNote,
 }: {
   lockReason: 'locked' | 'sent' | null;
-  channel: ScheduleApp['deliveryMethod'];
+  /** The message folds the note onto one line, so line breaks will not survive. */
+  foldsNote: boolean;
 }) {
   const t = useTranslations('schedules.personalNote');
   const { note, setNote, editable } = useScheduleSettings();
@@ -46,11 +47,8 @@ export function PersonalNoteCard({
         className="read-only:bg-muted/60 resize-none"
       />
       <p className="text-muted-foreground text-xs">{t(`help.${lockReason ?? 'editable'}`)}</p>
-      {/* Meta rejects a line break, a tab or a run of spaces in a template
-          parameter (132018), so the singleLine transformer folds them before
-          sending. Said here because the field itself still accepts them. SMS
-          keeps the note as typed. */}
-      {channel === 'whatsapp' && lockReason !== 'sent' && (
+      {/* Said here because the field itself still accepts them. */}
+      {foldsNote && lockReason !== 'sent' && (
         <p className="text-muted-foreground text-xs">{t('help.whatsappSingleLine')}</p>
       )}
     </SettingsCard>

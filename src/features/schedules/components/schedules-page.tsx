@@ -8,12 +8,11 @@ import { getCallRoundsByScheduleId } from '@/features/calls/queries';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import {
   SCHEDULE_TYPE_KEYS,
-  toWhatsAppTemplate,
-  type MessageTemplateApp,
   type ScheduleTypeKey,
   type ScheduleApp,
 } from '../schemas';
-import { type OutreachItem, type PreviewMessage, type PreviewMessages } from '../types';
+import { type OutreachItem, type PreviewMessages } from '../types';
+import { foldsNote } from '../utils/parameter-resolvers';
 import {
   filterGuestsByTarget,
   includesGiftButton,
@@ -49,13 +48,9 @@ type ScheduleWithTemplate = {
   seatingGap: { withoutTable: number; total: number } | null;
   /** Whether this schedule's family offers a note variant at all. */
   offersNote: boolean;
+  /** Whether the note version folds the note onto one line (see foldsNote). */
+  foldsNote: boolean;
 };
-
-function previewMessageOf(template: MessageTemplateApp): PreviewMessage {
-  return template.channel === 'whatsapp'
-    ? { channel: 'whatsapp', template: toWhatsAppTemplate(template)! }
-    : { channel: 'sms', payload: template.payload };
-}
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
 
@@ -108,6 +103,7 @@ export async function SchedulesPage({
           messages: null,
           seatingGap: null,
           offersNote: false,
+          foldsNote: false,
         };
       }
 
@@ -127,13 +123,13 @@ export async function SchedulesPage({
       // account for the guests who will get the other. A failed resolution is
       // a seeding bug that will also fail the send. Fall back to the anchor so
       // the page still renders something rather than blanking the card.
-      const toPreviewMessage = (
-        resolution: typeof resolutions.withNote,
-      ): PreviewMessage => {
-        const template = resolution.success
+      const previewOf = (resolution: typeof resolutions.withNote) =>
+        resolution.success
           ? (resolution.templates.withTable ?? resolution.templates.withoutTable)
           : anchor;
-        return previewMessageOf(template);
+      const messages = {
+        withNote: previewOf(resolutions.withNote),
+        withoutNote: previewOf(resolutions.withoutNote),
       };
 
       // The note axis never decides whether there is a table variant or a note
@@ -153,12 +149,10 @@ export async function SchedulesPage({
 
       return {
         schedule,
-        messages: {
-          withNote: toPreviewMessage(resolutions.withNote),
-          withoutNote: toPreviewMessage(resolutions.withoutNote),
-        },
+        messages,
         seatingGap,
         offersNote: resolution.success ? resolution.templates.offersNote : false,
+        foldsNote: foldsNote(messages.withNote.payload.parameters),
       };
     }),
   );
@@ -207,7 +201,7 @@ export async function SchedulesPage({
 
   // Built in plan order, which the hero reads; the timeline reorders below.
   const planItems: OutreachItem[] = resolved.map(
-    ({ schedule, messages, seatingGap, offersNote }) => {
+    ({ schedule, messages, seatingGap, offersNote, foldsNote }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
       // to its own DB name so it still renders with a sensible label.
@@ -281,6 +275,7 @@ export async function SchedulesPage({
             messages={messages}
             seatingGap={seatingGap}
             offersNote={offersNote}
+            foldsNote={foldsNote}
             eventDate={eventDate}
             event={event}
             status={status}

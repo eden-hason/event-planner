@@ -20,6 +20,8 @@ interface ScheduleTabContentProps {
   seatingGap?: { withoutTable: number; total: number } | null;
   /** Whether this schedule's family offers a note variant at all. */
   offersNote?: boolean;
+  /** Whether the note version folds the note onto one line (see foldsNote). */
+  foldsNote?: boolean;
   eventDate: string | null;
   event: EventApp | null;
   status: OutreachItemStatus;
@@ -32,6 +34,7 @@ export async function ScheduleTabContent({
   messages,
   seatingGap,
   offersNote,
+  foldsNote,
   eventDate,
   event,
   status,
@@ -84,7 +87,7 @@ export async function ScheduleTabContent({
           <div className="flex flex-col gap-3.5 lg:order-1">
             <MessageTypeCard offersNote={Boolean(offersNote)} sent={sent} />
             {offersNote && (
-              <PersonalNoteCard lockReason={lockReason} channel={schedule.deliveryMethod} />
+              <PersonalNoteCard lockReason={lockReason} foldsNote={Boolean(foldsNote)} />
             )}
             <ScheduleDetailsCard
               eventDate={eventDate}

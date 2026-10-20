@@ -16,7 +16,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { type EventApp } from '@/features/events/schemas';
 
+import { toWhatsAppTemplate } from '../schemas';
 import type { PreviewMessages } from '../types';
+import { hasNote } from '../utils/event-config';
 import { splitMessageLinks } from '../utils/message-links';
 import { missingDetails } from '../utils/missing-details';
 import {
@@ -81,24 +83,23 @@ export function MessagePreview({
   const t = useTranslations('schedules.messagePreview');
   const { note } = useScheduleSettings();
 
-  // The same rule the send applies to the saved note (a note that trims to
-  // nothing is no note), so the preview switches to the note version exactly
-  // where the send would - while it is still being typed.
-  const trimmedNote = note.trim();
+  // The send's own rule, so the preview switches to the note version exactly
+  // where the send would - while the note is still being typed. Trimmed as the
+  // save stores it.
+  const savedNote = note.trim();
   const message = messages
-    ? trimmedNote
+    ? hasNote(savedNote)
       ? messages.withNote
       : messages.withoutNote
     : null;
-  const template = message?.channel === 'whatsapp' ? message.template : null;
-  // Trimmed as the save stores it: SMS passes the note through untouched.
+  const template = message ? toWhatsAppTemplate(message) : null;
   const smsBody =
     message?.channel === 'sms'
-      ? resolveSmsBodyForPreview(message.payload, event, trimmedNote).resolvedBody
+      ? resolveSmsBodyForPreview(message.payload, event, savedNote).resolvedBody
       : null;
 
   const { resolvedBody, missingSources } = template
-    ? resolveTemplateBodyForPreview(template, event, note)
+    ? resolveTemplateBodyForPreview(template, event, savedNote)
     : { resolvedBody: '', missingSources: [] };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];

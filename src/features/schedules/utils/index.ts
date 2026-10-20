@@ -21,6 +21,7 @@ export {
   GIFT_BUTTON_SCHEDULE_TYPES,
   shouldSendTableNumbers,
   hasInvitationImage,
+  hasNote,
   type GiftingSettings,
   type InvitationSettings,
   type TableNumberSettings,
