@@ -2744,5 +2744,26 @@
     "useDifferentAccount": "Use a different account",
     "signInAndDiscard": "Sign in and discard this event",
     "saved": "Your event is saved"
+  },
+  "installApp": {
+    "card": {
+      "label": "Add Kululu to your home screen",
+      "text": "Open your event in one tap, no browser needed",
+      "add": "Add",
+      "hide": "Hide"
+    },
+    "drawer": {
+      "title": "Add Kululu to your home screen",
+      "subtitle": "So your event is one tap away",
+      "steps": {
+        "shareSafari": "Tap the Share button in the bottom bar, or inside ⋯",
+        "shareChrome": "Tap the Share button in the address bar at the top",
+        "addToHomeScreen": "Scroll and tap \"Add to Home Screen\"",
+        "confirm": "Tap \"Add\" in the top corner"
+      },
+      "signInNote": "The first time you open it, sign in with the code we send on WhatsApp",
+      "done": "Done"
+    },
+    "moreRow": "Add to home screen"
   }
 }

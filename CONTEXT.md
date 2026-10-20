@@ -590,6 +590,18 @@ rather than any Guest's page.
 An Event gets three accepted Test Messages for its whole life, across all its Owners. Each
 viewer is offered one until they have received it.
 
+## Install Card
+
+An offer on Home to add Kululu to the phone's home screen, so it opens like an app. It is
+not a **Featured Action**: it rides above them and takes none of their slots, and unlike
+them it can be dismissed - because being installed is a fact about the device, not about
+the Event or the Owner, the dismissal belongs to that device too.
+
+A **Visitor** is never offered one; the offer starts once the Event is saved.
+
+_Avoid_: Install Prompt (that is the browser's own dialog, which the card may open), PWA
+banner
+
 ## Guest List Health Check
 
 A read-only scan of the Guest list for likely data problems - duplicate Guest Records and

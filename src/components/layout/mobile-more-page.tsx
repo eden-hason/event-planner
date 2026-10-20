@@ -2,7 +2,7 @@
 
 import { type ElementType, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Bell, ChevronRight, CloudUpload, LogIn, LogOut } from 'lucide-react';
+import { Bell, ChevronRight, CloudUpload, LogIn, LogOut, Smartphone } from 'lucide-react';
 import { useSaveEvent } from '@/features/auth';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import {
   type GuestPackageView,
 } from '@/features/billing';
 import { type EventApp } from '@/features/events';
+import { InstallMoreRow } from '@/features/install-app';
 import { cn } from '@/lib/utils';
 import {
   eventDisplayTitle,
@@ -212,6 +213,7 @@ export function MobileMorePage({
   const t = useTranslations('more');
   const tSidebar = useTranslations('sidebar');
   const tNotifications = useTranslations('sidebar.notifications');
+  const tInstall = useTranslations('installApp');
   const tools = useMoreNavItems();
   const logout = useLogout();
   const { isVisitor, openSave } = useSaveEvent();
@@ -340,6 +342,20 @@ export function MobileMorePage({
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Not for a Visitor, for the same reason as the Home card. */}
+          {!isVisitor && (
+            <InstallMoreRow>
+              {(onClick) => (
+                <AccountRow
+                  icon={Smartphone}
+                  label={tInstall('moreRow')}
+                  trailing={<RowChevron />}
+                  onClick={onClick}
+                />
+              )}
+            </InstallMoreRow>
+          )}
 
           <Popover>
             <PopoverTrigger className={ROW_CLASS}>

@@ -1,4 +1,13 @@
 import posthog from 'posthog-js';
+// A deep import on purpose: this file runs before hydration, and the feature's
+// barrel would pull its React components into this bundle.
+import {
+  captureInstallPrompt,
+  isRunningInstalled,
+} from '@/features/install-app/utils/install-store';
+
+// First, so Chrome's install event is never fired before anyone is listening.
+captureInstallPrompt();
 
 const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
@@ -22,4 +31,6 @@ if (!projectToken) {
     capture_exceptions: true,
     debug: process.env.NODE_ENV === 'development',
   });
+  // On every event, so we can see whether Owners who installed come back more.
+  posthog.register({ display_mode: isRunningInstalled() ? 'standalone' : 'browser' });
 }
