@@ -1,7 +1,7 @@
 import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
-import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
-import type { OutreachItemStatus } from '../types';
+import { type ScheduleApp } from '../schemas';
+import type { OutreachItemStatus, PreviewMessages } from '../types';
 import { DeliveryInfoCard } from './delivery-info-card';
 import { MessagePreview } from './message-preview';
 import { MessageTypeCard } from './message-type-card';
@@ -16,8 +16,7 @@ import { TargetAudienceCard } from './target-audience-card';
 
 interface ScheduleTabContentProps {
   schedule: ScheduleApp;
-  template: WhatsAppTemplateApp | null;
-  smsBody?: string | null;
+  messages: PreviewMessages;
   seatingGap?: { withoutTable: number; total: number } | null;
   /** Whether this schedule's family offers a note variant at all. */
   offersNote?: boolean;
@@ -30,8 +29,7 @@ interface ScheduleTabContentProps {
 
 export async function ScheduleTabContent({
   schedule,
-  template,
-  smsBody,
+  messages,
   seatingGap,
   offersNote,
   eventDate,
@@ -76,8 +74,7 @@ export async function ScheduleTabContent({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="flex flex-col gap-4 lg:order-2">
             <MessagePreview
-              template={template}
-              smsBody={smsBody}
+              messages={messages}
               channel={schedule.deliveryMethod}
               seatingGap={seatingGap}
               event={event}

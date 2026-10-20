@@ -16,10 +16,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { type EventApp } from '@/features/events/schemas';
 
-import { type WhatsAppTemplateApp } from '../schemas';
+import type { PreviewMessages } from '../types';
 import { splitMessageLinks } from '../utils/message-links';
 import { missingDetails } from '../utils/missing-details';
-import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
+import {
+  resolveSmsBodyForPreview,
+  resolveTemplateBodyForPreview,
+} from '../utils/parameter-resolvers';
 import { useScheduleSettings } from './schedule-settings-context';
 
 function resolveSourcePath(source: string, event: EventApp | null): string | null {
@@ -48,8 +51,7 @@ const chatBgStyle: React.CSSProperties = {
 };
 
 interface MessagePreviewProps {
-  template: WhatsAppTemplateApp | null;
-  smsBody?: string | null;
+  messages: PreviewMessages;
   /** Delivery channel: WhatsApp gets the chat wallpaper and header bar, SMS a plain thread. */
   channel?: 'whatsapp' | 'sms' | null;
   /**
@@ -67,17 +69,33 @@ interface MessagePreviewProps {
  *
  * Not in a card: it is the thing the organiser came to check, and a border
  * around it would make it one setting among the others. Reads the note as it
- * is typed, so the preview and the field never disagree about what is unsaved.
+ * is typed, so the preview and the field never disagree about what is unsaved:
+ * both the text and which version of the message carries it follow the field.
  */
 export function MessagePreview({
-  template,
-  smsBody,
+  messages,
   channel,
   seatingGap,
   event,
 }: MessagePreviewProps) {
   const t = useTranslations('schedules.messagePreview');
   const { note } = useScheduleSettings();
+
+  // The same rule the send applies to the saved note (a note that trims to
+  // nothing is no note), so the preview switches to the note version exactly
+  // where the send would - while it is still being typed.
+  const trimmedNote = note.trim();
+  const message = messages
+    ? trimmedNote
+      ? messages.withNote
+      : messages.withoutNote
+    : null;
+  const template = message?.channel === 'whatsapp' ? message.template : null;
+  // Trimmed as the save stores it: SMS passes the note through untouched.
+  const smsBody =
+    message?.channel === 'sms'
+      ? resolveSmsBodyForPreview(message.payload, event, trimmedNote).resolvedBody
+      : null;
 
   const { resolvedBody, missingSources } = template
     ? resolveTemplateBodyForPreview(template, event, note)

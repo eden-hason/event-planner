@@ -3,6 +3,8 @@
 
 import type { ReactNode } from 'react';
 
+import type { SmsPayload, WhatsAppTemplateApp } from './schemas';
+
 export type OutreachItemStatus =
   // Message schedules
   | 'pending'
@@ -79,3 +81,19 @@ export type OutreachItem = {
   } | null;
   details: ReactNode;
 };
+
+/** One message the schedule preview can show, in the shape it renders. */
+export type PreviewMessage =
+  | { channel: 'whatsapp'; template: WhatsAppTemplateApp }
+  | { channel: 'sms'; payload: SmsPayload };
+
+/**
+ * The message a schedule would send with the organiser's note and without it.
+ * Both are resolved on the server so the preview can follow the note field as
+ * it is typed, before it is saved. The same message twice when the family has
+ * no note variant; null when the schedule has no template.
+ */
+export type PreviewMessages = {
+  withNote: PreviewMessage;
+  withoutNote: PreviewMessage;
+} | null;

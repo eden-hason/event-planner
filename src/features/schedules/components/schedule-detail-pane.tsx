@@ -3,16 +3,15 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type EventApp } from '@/features/events/schemas';
 
-import { type ScheduleApp, type WhatsAppTemplateApp } from '../schemas';
-import type { OutreachItemStatus } from '../types';
+import { type ScheduleApp } from '../schemas';
+import type { OutreachItemStatus, PreviewMessages } from '../types';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleResultsGhost } from './schedule-results';
 import { ScheduleTabContent } from './schedule-tab-content';
 
 interface ScheduleDetailPaneProps {
   schedule: ScheduleApp;
-  template: WhatsAppTemplateApp | null;
-  smsBody: string | null;
+  messages: PreviewMessages;
   seatingGap: { withoutTable: number; total: number } | null;
   offersNote: boolean;
   eventDate: string | null;
@@ -29,8 +28,7 @@ interface ScheduleDetailPaneProps {
  */
 export async function ScheduleDetailPane({
   schedule,
-  template,
-  smsBody,
+  messages,
   seatingGap,
   offersNote,
   eventDate,
@@ -44,8 +42,7 @@ export async function ScheduleDetailPane({
   const settings = (
     <ScheduleTabContent
       schedule={schedule}
-      template={template}
-      smsBody={smsBody}
+      messages={messages}
       seatingGap={seatingGap}
       offersNote={offersNote}
       eventDate={eventDate}

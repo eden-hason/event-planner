@@ -1,5 +1,10 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { resolveTemplatesForEvent } from '../services/resolve-reminder-templates';
+import {
+  loadTemplateFamily,
+  pickTemplates,
+  type ResolveTemplatesResult,
+  type TemplateAxes,
+} from '../services/resolve-reminder-templates';
 import type { MessageTemplateApp } from '../schemas/message-templates';
 
 /**
@@ -9,15 +14,23 @@ import type { MessageTemplateApp } from '../schemas/message-templates';
  * approves one message and guests receive another. message_templates is
  * readable by any authenticated user, so this needs no elevated access beyond
  * the effective (impersonation-aware) client the rest of the catalog uses.
+ *
+ * Resolves both sides of the note axis from one read of the family: the note is
+ * typed on the client, and the preview follows it before it is saved, so it
+ * needs the message the send would pick either way.
  */
-export async function resolveTemplatesForPreview(params: {
-  anchor: MessageTemplateApp;
-  gifting: boolean;
-  tableNumbers: boolean;
-  note?: boolean;
-  followUp?: boolean;
-  invitationImage?: boolean;
-}) {
+export async function resolveTemplatesForPreview(
+  params: Omit<TemplateAxes, 'note'> & { anchor: MessageTemplateApp },
+): Promise<{ withNote: ResolveTemplatesResult; withoutNote: ResolveTemplatesResult }> {
   const { supabase } = await getEffectiveClient();
-  return resolveTemplatesForEvent({ supabase, ...params });
+  const family = await loadTemplateFamily(supabase, params.anchor);
+  if (!family.success) return { withNote: family, withoutNote: family };
+
+  const resolve = (note: boolean) => {
+    const result = pickTemplates({ ...params, note, candidates: family.candidates });
+    if (!result.success) console.error(`[resolve-templates] ${result.message}`);
+    return result;
+  };
+
+  return { withNote: resolve(true), withoutNote: resolve(false) };
 }
