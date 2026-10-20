@@ -163,12 +163,12 @@ export function FeaturedActionList({
   };
 
   return (
-    <section className="flex flex-col gap-2.5">
+    <section className="flex flex-col">
       {/* Above the heading, so it reads as an extra rather than one of the
-          ranked actions. A Visitor never gets it: on iOS the home-screen app
-          keeps its own storage, and would open without their unsaved Event. */}
-      {!isVisitor && <InstallCard />}
+          ranked actions. It brings its own space below, and collapses with it. */}
+      <InstallCard />
 
+      <div className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between px-0.5">
         <h2 className="text-[17px] font-bold">{title}</h2>
         <span className="text-muted-foreground text-xs">{subtitle}</span>
@@ -384,6 +384,7 @@ export function FeaturedActionList({
           </div>
         );
       })}
+      </div>
       </div>
     </section>
   );

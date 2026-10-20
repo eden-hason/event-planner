@@ -1,10 +1,12 @@
 'use client';
 
+import { useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
@@ -20,25 +22,24 @@ import {
  *
  * "Done" is the dismissal - Safari can never learn the app was installed, so
  * it is the only thing that turns the Install Card off. Swiping the drawer away
- * just closes it.
+ * just closes it. `onDone` runs once the drawer has finished closing, so
+ * whatever it changes happens in view.
  */
 export function InstallDrawer({
   open,
   onOpenChange,
   browser,
   onDone,
-  onClosed,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   browser: 'ios-safari' | 'ios-chrome';
   onDone: () => void;
-  /** After the close animation, however the drawer was closed. */
-  onClosed?: () => void;
 }) {
   const t = useTranslations('installApp.drawer');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
+  const doneTapped = useRef(false);
 
   const steps = [
     browser === 'ios-chrome' ? t('steps.shareChrome') : t('steps.shareSafari'),
@@ -50,8 +51,12 @@ export function InstallDrawer({
     <Drawer
       open={open}
       onOpenChange={onOpenChange}
+      // Fires only for a close vaul made itself, which is why "Done" closes
+      // through `DrawerClose` rather than by setting `open`.
       onAnimationEnd={(isOpen) => {
-        if (!isOpen) onClosed?.();
+        if (isOpen || !doneTapped.current) return;
+        doneTapped.current = false;
+        onDone();
       }}
     >
       <DrawerContent dir={dir} className="mx-auto max-w-md">
@@ -78,9 +83,17 @@ export function InstallDrawer({
         </p>
 
         <DrawerFooter className="pt-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <Button size="lg" className="h-12 rounded-xl text-[15px] font-bold" onClick={onDone}>
-            {t('done')}
-          </Button>
+          <DrawerClose asChild>
+            <Button
+              size="lg"
+              className="h-12 rounded-xl text-[15px] font-bold"
+              onClick={() => {
+                doneTapped.current = true;
+              }}
+            >
+              {t('done')}
+            </Button>
+          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

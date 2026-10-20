@@ -343,19 +343,16 @@ export function MobileMorePage({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Not for a Visitor, for the same reason as the Home card. */}
-          {!isVisitor && (
-            <InstallMoreRow>
-              {(onClick) => (
-                <AccountRow
-                  icon={Smartphone}
-                  label={tInstall('moreRow')}
-                  trailing={<RowChevron />}
-                  onClick={onClick}
-                />
-              )}
-            </InstallMoreRow>
-          )}
+          <InstallMoreRow>
+            {(onClick) => (
+              <AccountRow
+                icon={Smartphone}
+                label={tInstall('moreRow')}
+                trailing={<RowChevron />}
+                onClick={onClick}
+              />
+            )}
+          </InstallMoreRow>
 
           <Popover>
             <PopoverTrigger className={ROW_CLASS}>

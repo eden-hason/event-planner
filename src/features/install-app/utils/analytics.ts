@@ -10,7 +10,10 @@ type InstallEvent =
 /** The install funnel. Every event says which platform and which surface it came from. */
 export function captureInstallEvent(
   { name, ...properties }: InstallEvent,
-  context: { platform: Exclude<InstallPlatform, 'none'>; surface: InstallSurface },
+  context: {
+    platform: Exclude<InstallPlatform, 'none'>;
+    surface: InstallSurface;
+  },
 ) {
   if (
     process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&

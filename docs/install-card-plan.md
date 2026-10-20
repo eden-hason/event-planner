@@ -149,16 +149,18 @@ A new feature slice, **`src/features/install-app/`**:
   the event can be missed. `instrumentation-client.ts` already runs before the app, so it
   can attach the listener and hand the event to a small module-level store that the hook
   subscribes to
-- `hooks/` - `useInstallability()`, which returns what the platform allows, whether
-  we're installed, whether it's dismissed, and `install()` / `dismiss()`
+- `hooks/` - `useInstallability(surface)`, the one place the rules live: whether to show
+  (including the Visitor rule, and the More row ignoring the dismissal), what "Add" does
+  per platform, the analytics, and the iOS drawer element for the surface to render
 - `components/` - `InstallCard`, `InstallDrawer` (iOS steps), and `InstallMoreRow`, which
-  owns visibility, the drawer and analytics but takes the row itself as a render prop, so
-  the More page draws it with its own `AccountRow`
-- `index.ts` - the barrel. Nothing here is server-only
+  takes the row itself as a render prop, so the More page draws it with its own
+  `AccountRow`
+- `index.ts` - the barrel: `InstallCard` and `InstallMoreRow`. Nothing here is server-only
 
-Placement: `InstallCard` renders inside `FeaturedActionList`
-(`src/features/home/components/featured-action-list.tsx`), in the slot where the Visitor
-Save card is, when `!isVisitor`. It is client-only, so it renders nothing on the server and
+Placement: `InstallCard` renders first inside `FeaturedActionList`
+(`src/features/home/components/featured-action-list.tsx`), above the heading. The section
+has no gap of its own around it: the card's bottom padding is the space, so it collapses
+with the card. It is client-only, so it renders nothing on the server and
 appears after mount. The design brief covers how it enters without jumping the list.
 
 Copy goes in `messages/he.json` and `messages/en.json` under a new `installApp`

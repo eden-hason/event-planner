@@ -41,13 +41,15 @@ export function captureInstallPrompt() {
 /**
  * Opened from the home-screen icon rather than a browser tab. iOS Safari only
  * sets `navigator.standalone`, and older iOS versions don't match the media query.
+ * Fixed for the page's life, so it is worked out once.
  */
+let installed: boolean | null = null;
 export function isRunningInstalled(): boolean {
   if (typeof window === 'undefined') return false;
-  return (
+  installed ??=
     window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return installed;
 }
 
 export function subscribeInstallStore(listener: () => void) {
@@ -66,7 +68,9 @@ export function getInstallPrompt() {
  * dropped either way: an accepted install never fires it again, and a cancel
  * hides the card until the browser fires a new one on a later visit.
  */
-export async function runInstallPrompt(): Promise<'accepted' | 'dismissed' | null> {
+export async function runInstallPrompt(): Promise<
+  'accepted' | 'dismissed' | null
+> {
   const event = prompt;
   if (!event) return null;
   prompt = null;

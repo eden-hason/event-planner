@@ -19,5 +19,8 @@ export type DismissVia = 'x' | 'done';
  */
 export interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
 }
