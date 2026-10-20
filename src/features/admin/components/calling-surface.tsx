@@ -50,6 +50,13 @@ const FILTER_OUTCOME: Record<Exclude<Filter, typeof ALL>, CallOutcome | null> = 
   [OUTCOME_LABELS.guest_will_update]: 'guest_will_update',
 };
 
+/**
+ * The outcomes an operator can record from this page. Will update is no longer
+ * offered: rounds that already recorded it still show it in the tally and the
+ * filters, but a new call ends as one of these.
+ */
+const RECORDABLE_OUTCOMES = CALL_OUTCOMES.filter((outcome) => outcome !== 'guest_will_update');
+
 /*
  * RSVP is a category, not a severity - it is the only colour on this page that
  * is not lateness or failure. The vocabulary itself comes from the Owner app's
@@ -146,7 +153,7 @@ function OutcomeCell({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {CALL_OUTCOMES.map((outcome) => {
+      {RECORDABLE_OUTCOMES.map((outcome) => {
         if (outcome === 'confirmed') {
           return (
             <Popover
@@ -446,11 +453,13 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             value={tally.no_answer}
             className={callOutcomePresentation('no_answer').text}
           />
-          <Tally
-            label={OUTCOME_LABELS.guest_will_update}
-            value={tally.guest_will_update}
-            className={callOutcomePresentation('guest_will_update').text}
-          />
+          {tally.guest_will_update > 0 && (
+            <Tally
+              label={OUTCOME_LABELS.guest_will_update}
+              value={tally.guest_will_update}
+              className={callOutcomePresentation('guest_will_update').text}
+            />
+          )}
           <Tally label="לא התקשרנו" value={total - called} className="text-muted-foreground" />
         </div>
       )}
@@ -465,7 +474,9 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px]"
           />
         </div>
-        {FILTERS.map((option) => (
+        {FILTERS.filter(
+          (option) => option !== OUTCOME_LABELS.guest_will_update || tally.guest_will_update > 0,
+        ).map((option) => (
           <button
             key={option}
             type="button"
@@ -556,8 +567,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         <Info className="mt-px size-3.5 shrink-0" />
         <span>
           ההערות גלויות לבעלי האירוע באפליקציה. &quot;סטטוס עכשיו&quot; הוא מה שרשום ברשומת האורח היום,
-          והתוצאה היא מה שקרה בשיחה. &quot;יעדכנו בעצמם&quot; אומר שהאורח ענה אבל לא התחייב, ויענה בעצמו
-          להודעת הוואטסאפ - אישור ההגעה לא משתנה
+          והתוצאה היא מה שקרה בשיחה
         </span>
       </p>
     </div>
