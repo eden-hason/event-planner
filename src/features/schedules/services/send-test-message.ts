@@ -5,6 +5,7 @@ import type { GuestApp } from '@/features/guests/schemas';
 import {
   includesGiftButton,
   hasInvitationImage,
+  hasNote,
   isMessageSchedule,
   sendSmsToGuest,
   sendToGuest,
@@ -77,7 +78,7 @@ export async function sendTestMessage(params: {
     anchor: schedule.template,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
-    note: Boolean(schedule.customText?.trim()),
+    note: hasNote(schedule.customText),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),
     invitationImage: hasInvitationImage(event.invitations),
   });

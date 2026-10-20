@@ -20,6 +20,7 @@ import { canReceiveSms } from '@/lib/phone';
 import {
   includesGiftButton,
   hasInvitationImage,
+  hasNote,
   shouldSendTableNumbers,
   filterGuestsByTarget,
   isMessageSchedule,
@@ -167,7 +168,7 @@ export async function renderScheduleDeliveries(
     anchor,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
-    note: Boolean(schedule.customText?.trim()),
+    note: hasNote(schedule.customText),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),
     invitationImage: hasInvitationImage(event.invitations),
   });

@@ -16,9 +16,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { type EventApp } from '@/features/events/schemas';
 
-import { type WhatsAppTemplateApp } from '../schemas';
+import { toWhatsAppTemplate } from '../schemas';
+import type { PreviewMessages } from '../types';
+import { hasNote } from '../utils/event-config';
+import { splitMessageLinks } from '../utils/message-links';
 import { missingDetails } from '../utils/missing-details';
-import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
+import {
+  resolveSmsBodyForPreview,
+  resolveTemplateBodyForPreview,
+} from '../utils/parameter-resolvers';
 import { useScheduleSettings } from './schedule-settings-context';
 
 function resolveSourcePath(source: string, event: EventApp | null): string | null {
@@ -47,8 +53,7 @@ const chatBgStyle: React.CSSProperties = {
 };
 
 interface MessagePreviewProps {
-  template: WhatsAppTemplateApp | null;
-  smsBody?: string | null;
+  messages: PreviewMessages;
   /** Delivery channel: WhatsApp gets the chat wallpaper and header bar, SMS a plain thread. */
   channel?: 'whatsapp' | 'sms' | null;
   /**
@@ -66,11 +71,11 @@ interface MessagePreviewProps {
  *
  * Not in a card: it is the thing the organiser came to check, and a border
  * around it would make it one setting among the others. Reads the note as it
- * is typed, so the preview and the field never disagree about what is unsaved.
+ * is typed, so the preview and the field never disagree about what is unsaved:
+ * both the text and which version of the message carries it follow the field.
  */
 export function MessagePreview({
-  template,
-  smsBody,
+  messages,
   channel,
   seatingGap,
   event,
@@ -78,8 +83,23 @@ export function MessagePreview({
   const t = useTranslations('schedules.messagePreview');
   const { note } = useScheduleSettings();
 
+  // The send's own rule, so the preview switches to the note version exactly
+  // where the send would - while the note is still being typed. Trimmed as the
+  // save stores it.
+  const savedNote = note.trim();
+  const message = messages
+    ? hasNote(savedNote)
+      ? messages.withNote
+      : messages.withoutNote
+    : null;
+  const template = message ? toWhatsAppTemplate(message) : null;
+  const smsBody =
+    message?.channel === 'sms'
+      ? resolveSmsBodyForPreview(message.payload, event, savedNote).resolvedBody
+      : null;
+
   const { resolvedBody, missingSources } = template
-    ? resolveTemplateBodyForPreview(template, event, note)
+    ? resolveTemplateBodyForPreview(template, event, savedNote)
     : { resolvedBody: '', missingSources: [] };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];
@@ -128,7 +148,7 @@ export function MessagePreview({
                     className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
                     dir="rtl"
                   >
-                    {smsBody}
+                    <MessageBody body={smsBody} />
                   </p>
                 </div>
               </div>
@@ -175,7 +195,7 @@ export function MessagePreview({
                       className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
                       dir="rtl"
                     >
-                      {resolvedBody}
+                      <MessageBody body={resolvedBody} />
                     </p>
                   </div>
                   {/* Buttons */}
@@ -234,6 +254,30 @@ export function MessagePreview({
         </Alert>
       )}
     </section>
+  );
+}
+
+/**
+ * The body text with its URLs as links, the way the guest's phone shows them -
+ * WhatsApp and SMS apps both link a URL found anywhere in the text, the
+ * organiser's note included. Opens in a new tab so the organiser can check
+ * where a link goes without leaving the page.
+ */
+function MessageBody({ body }: { body: string }) {
+  return splitMessageLinks(body).map((segment, i) =>
+    segment.kind === 'link' ? (
+      <a
+        key={i}
+        href={segment.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all text-[#027EB5] underline underline-offset-2"
+      >
+        {segment.text}
+      </a>
+    ) : (
+      segment.text
+    ),
   );
 }
 

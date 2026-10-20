@@ -49,9 +49,8 @@ export type ResolveTemplatesResult =
   | { success: true; templates: ResolvedTemplates }
   | { success: false; message: string };
 
-export async function resolveTemplatesForEvent(params: {
-  supabase: SupabaseClient;
-  anchor: MessageTemplateApp;
+/** The configuration axes a send is resolved on. See resolveTemplatesForEvent. */
+export type TemplateAxes = {
   /** Event-level: does the copy/button mention gifting? */
   gifting: boolean;
   /** Event-level gate for the table-number variant. */
@@ -74,19 +73,21 @@ export async function resolveTemplatesForEvent(params: {
    * send never goes to Meta missing the image its template was approved with.
    */
   invitationImage?: boolean;
-}): Promise<ResolveTemplatesResult> {
-  const {
-    supabase,
-    anchor,
-    gifting,
-    tableNumbers,
-    note = false,
-    followUp = false,
-    invitationImage = false,
-  } = params;
+};
 
-  const family = `${anchor.key}/${anchor.channel}/${anchor.variant}/${anchor.languageCode}`;
+export type LoadTemplateFamilyResult =
+  | { success: true; candidates: MessageTemplateApp[] }
+  | { success: false; message: string };
 
+function familyName(anchor: MessageTemplateApp): string {
+  return `${anchor.key}/${anchor.channel}/${anchor.variant}/${anchor.languageCode}`;
+}
+
+/** Every row of the anchor's family, the candidates pickTemplates chooses from. */
+export async function loadTemplateFamily(
+  supabase: SupabaseClient,
+  anchor: MessageTemplateApp,
+): Promise<LoadTemplateFamilyResult> {
   const { data, error } = await supabase
     .from('message_templates')
     .select('*')
@@ -97,18 +98,55 @@ export async function resolveTemplatesForEvent(params: {
 
   if (error) {
     console.error(
-      `[resolve-templates] Query failed for family ${family}:`,
+      `[resolve-templates] Query failed for family ${familyName(anchor)}:`,
       error,
     );
     return { success: false, message: 'Could not load message templates' };
   }
 
-  const candidates = (data ?? []).map((row: Record<string, unknown>) =>
-    MessageTemplateDbToAppSchema.parse(row),
-  );
+  return {
+    success: true,
+    candidates: (data ?? []).map((row: Record<string, unknown>) =>
+      MessageTemplateDbToAppSchema.parse(row),
+    ),
+  };
+}
+
+type PickParams = TemplateAxes & {
+  anchor: MessageTemplateApp;
+  candidates: MessageTemplateApp[];
+};
+
+/**
+ * The in-memory half of resolveTemplatesForEvent: picks from a family already
+ * loaded, so a caller that needs more than one resolution of the same family
+ * (the preview, with and without the note) reads it once. Logs a failure, which
+ * is a seeding bug.
+ */
+export function pickTemplates(
+  params: PickParams,
+): ResolveTemplatesResult {
+  const result = pick(params);
+  if (!result.success) console.error(`[resolve-templates] ${result.message}`);
+  return result;
+}
+
+function pick(
+  params: PickParams,
+): ResolveTemplatesResult {
+  const {
+    anchor,
+    candidates,
+    gifting,
+    tableNumbers,
+    note = false,
+    followUp = false,
+    invitationImage = false,
+  } = params;
+
+  const family = familyName(anchor);
 
   if (candidates.length === 0) {
-    console.error(`[resolve-templates] Family ${family} has no rows`);
     return {
       success: false,
       message: `No message templates found for ${family}`,
@@ -125,7 +163,7 @@ export async function resolveTemplatesForEvent(params: {
   const wantImage =
     invitationImage && candidates.some((t) => t.requiresInvitationImage);
 
-  const pick = (requiresTable: boolean) =>
+  const pickRow = (requiresTable: boolean) =>
     candidates.find(
       (t) =>
         t.requiresGifting === wantGifting &&
@@ -135,12 +173,9 @@ export async function resolveTemplatesForEvent(params: {
         t.requiresInvitationImage === wantImage,
     ) ?? null;
 
-  const withoutTable = pick(false);
+  const withoutTable = pickRow(false);
 
   if (!withoutTable) {
-    console.error(
-      `[resolve-templates] No row in ${family} for gifting=${wantGifting}, tableNumbers=false, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}`,
-    );
     return {
       success: false,
       message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
@@ -154,12 +189,9 @@ export async function resolveTemplatesForEvent(params: {
     };
   }
 
-  const withTable = pick(true);
+  const withTable = pickRow(true);
 
   if (!withTable) {
-    console.error(
-      `[resolve-templates] No table-number row in ${family} for gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}`,
-    );
     return {
       success: false,
       message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
@@ -167,4 +199,17 @@ export async function resolveTemplatesForEvent(params: {
   }
 
   return { success: true, templates: { withTable, withoutTable, offersNote } };
+}
+
+export async function resolveTemplatesForEvent(
+  params: TemplateAxes & {
+    supabase: SupabaseClient;
+    anchor: MessageTemplateApp;
+  },
+): Promise<ResolveTemplatesResult> {
+  const { supabase, ...axes } = params;
+  const family = await loadTemplateFamily(supabase, axes.anchor);
+  if (!family.success) return family;
+
+  return pickTemplates({ ...axes, candidates: family.candidates });
 }

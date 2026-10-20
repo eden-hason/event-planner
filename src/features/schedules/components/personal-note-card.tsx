@@ -14,7 +14,14 @@ import { useScheduleSettings } from './schedule-settings-context';
  * Shown only for a Schedule whose family has a note variant at all. Saved by
  * the page's one Save, not from here.
  */
-export function PersonalNoteCard({ lockReason }: { lockReason: 'locked' | 'sent' | null }) {
+export function PersonalNoteCard({
+  lockReason,
+  foldsNote,
+}: {
+  lockReason: 'locked' | 'sent' | null;
+  /** The message folds the note onto one line, so line breaks will not survive. */
+  foldsNote: boolean;
+}) {
   const t = useTranslations('schedules.personalNote');
   const { note, setNote, editable } = useScheduleSettings();
 
@@ -40,6 +47,10 @@ export function PersonalNoteCard({ lockReason }: { lockReason: 'locked' | 'sent'
         className="read-only:bg-muted/60 resize-none"
       />
       <p className="text-muted-foreground text-xs">{t(`help.${lockReason ?? 'editable'}`)}</p>
+      {/* Said here because the field itself still accepts them. */}
+      {foldsNote && lockReason !== 'sent' && (
+        <p className="text-muted-foreground text-xs">{t('help.whatsappSingleLine')}</p>
+      )}
     </SettingsCard>
   );
 }

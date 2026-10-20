@@ -4,6 +4,7 @@ import { missingOccasionPhrase } from './send-payload';
 import {
   buildDynamicButtonParameters,
   buildDynamicTemplateParameters,
+  foldsNote,
   type ParameterResolutionContext,
 } from './parameter-resolvers';
 import { buildTodayLine } from '@/features/events/utils/event-title';
@@ -64,6 +65,18 @@ describe('singleLine transformer', () => {
       context,
     );
     assert.equal(param.text, 'חניה בחינם בכניסה האחורית לאולם');
+  });
+
+  it('is read from the note placeholder, which only the WhatsApp rows fold', () => {
+    const note = (transformer: 'singleLine' | 'none') => ({
+      placeholders: [
+        { name: 'event.receptionTime', source: 'event.receptionTime', transformer: 'singleLine' as const },
+        { name: 'schedule.customText', source: 'schedule.customText', transformer },
+      ],
+    });
+    assert.equal(foldsNote(note('singleLine')), true);
+    assert.equal(foldsNote(note('none')), false);
+    assert.equal(foldsNote({ placeholders: [] }), false);
   });
 });
 
