@@ -1761,7 +1761,8 @@
       "help": {
         "editable": "Added at the end of the message, above the reply buttons",
         "locked": "The note is added at the end of the message. Available once sending is enabled",
-        "sent": "The message has already gone out, so the note is kept for the record"
+        "sent": "The message has already gone out, so the note is kept for the record",
+        "whatsappSingleLine": "WhatsApp does not allow line breaks, tabs or repeated spaces here, so they are joined into a single line"
       }
     },
     "results": {

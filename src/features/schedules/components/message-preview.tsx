@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { type EventApp } from '@/features/events/schemas';
 
 import { type WhatsAppTemplateApp } from '../schemas';
+import { splitMessageLinks } from '../utils/message-links';
 import { missingDetails } from '../utils/missing-details';
 import { resolveTemplateBodyForPreview } from '../utils/parameter-resolvers';
 import { useScheduleSettings } from './schedule-settings-context';
@@ -128,7 +129,7 @@ export function MessagePreview({
                     className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
                     dir="rtl"
                   >
-                    {smsBody}
+                    <MessageBody body={smsBody} />
                   </p>
                 </div>
               </div>
@@ -175,7 +176,7 @@ export function MessagePreview({
                       className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
                       dir="rtl"
                     >
-                      {resolvedBody}
+                      <MessageBody body={resolvedBody} />
                     </p>
                   </div>
                   {/* Buttons */}
@@ -234,6 +235,30 @@ export function MessagePreview({
         </Alert>
       )}
     </section>
+  );
+}
+
+/**
+ * The body text with its URLs as links, the way the guest's phone shows them -
+ * WhatsApp and SMS apps both link a URL found anywhere in the text, the
+ * organiser's note included. Opens in a new tab so the organiser can check
+ * where a link goes without leaving the page.
+ */
+function MessageBody({ body }: { body: string }) {
+  return splitMessageLinks(body).map((segment, i) =>
+    segment.kind === 'link' ? (
+      <a
+        key={i}
+        href={segment.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all text-[#027EB5] underline underline-offset-2"
+      >
+        {segment.text}
+      </a>
+    ) : (
+      segment.text
+    ),
   );
 }
 

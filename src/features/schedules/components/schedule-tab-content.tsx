@@ -86,7 +86,9 @@ export async function ScheduleTabContent({
 
           <div className="flex flex-col gap-3.5 lg:order-1">
             <MessageTypeCard offersNote={Boolean(offersNote)} sent={sent} />
-            {offersNote && <PersonalNoteCard lockReason={lockReason} />}
+            {offersNote && (
+              <PersonalNoteCard lockReason={lockReason} channel={schedule.deliveryMethod} />
+            )}
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}
