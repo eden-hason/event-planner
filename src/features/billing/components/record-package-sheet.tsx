@@ -66,7 +66,15 @@ export function RecordPackageSheet({
       label: view.gifted ? t('giftedRecords') : t('paidRecords'),
       value: fmt(view.paid),
     },
-    { label: t('bonusRecords'), value: `+${fmt(view.bonus)}`, bonus: true },
+    ...(view.bonus
+      ? [
+          {
+            label: t('bonusRecords'),
+            value: `+${fmt(view.bonus)}`,
+            bonus: true,
+          },
+        ]
+      : []),
     { label: t('total'), value: fmt(view.size), total: true },
   ];
 

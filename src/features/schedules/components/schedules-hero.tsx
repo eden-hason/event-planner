@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
-import { useBillingSheet } from '@/features/billing';
+import { usePlansHref } from '@/features/billing';
 
 import type {
   HeroAttention,
@@ -340,7 +340,7 @@ function FocusText({
 function LockedHero({ total }: { total: number }) {
   const t = useTranslations('schedules.hero');
   const tUpsell = useTranslations('schedules.upsell');
-  const { canPrompt, openSheet, sheet } = useBillingSheet();
+  const plansHref = usePlansHref();
 
   return (
     <section
@@ -374,18 +374,18 @@ function LockedHero({ total }: { total: number }) {
         <span className="text-muted-foreground -mt-2.5 ps-[42px] text-[12.5px] leading-normal text-pretty md:mt-0 md:ps-0">
           {tUpsell('description', { count: total })}
         </span>
-        {canPrompt && (
+        {plansHref && (
           <Button
-            type="button"
-            onClick={openSheet}
+            asChild
             className="rounded-xl text-[15px] font-bold md:rounded-[11px] md:text-sm"
           >
-            <IconCrown aria-hidden size={16} stroke={2} />
-            {tUpsell('cta')}
+            <Link href={plansHref}>
+              <IconCrown aria-hidden size={16} stroke={2} />
+              {tUpsell('cta')}
+            </Link>
           </Button>
         )}
       </div>
-      {sheet}
     </section>
   );
 }

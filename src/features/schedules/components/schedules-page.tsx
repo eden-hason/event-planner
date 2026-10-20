@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 
-import { EventTypeKeySchema, type EventApp } from '@/features/events/schemas';
+import type { EventApp } from '@/features/events/schemas';
 import { getEventGuests } from '@/features/guests/queries/guests';
 import { callPaneState } from '@/features/calls';
 import { CallRoundPane } from '@/features/calls/components';
@@ -60,10 +60,9 @@ export async function SchedulesPage({
   schedules,
   event,
 }: SchedulesPageProps) {
-  const [t, tCalls, tEventTypes, locale] = await Promise.all([
+  const [t, tCalls, locale] = await Promise.all([
     getTranslations('schedules'),
     getTranslations('calls'),
-    getTranslations('eventDetails.types'),
     getLocale(),
   ]);
 
@@ -338,12 +337,13 @@ export async function SchedulesPage({
     }),
   );
 
-  // The header names the set rather than counting it: the hero's stepper
-  // already says how far along it is.
-  const eventType = EventTypeKeySchema.safeParse(event?.eventType);
+  // The header says what the plan is made of - so many messages, so many call
+  // rounds - leaving out a kind the plan has none of.
   const subtitle = [
-    eventType.success ? t('hero.set', { type: tEventTypes(eventType.data) }) : null,
-    t('hero.scheduleCount', { count: items.length }),
+    messageCount > 0 ? t('header.messageCount', { count: messageCount }) : null,
+    callSchedules.length > 0
+      ? t('header.callCount', { count: callSchedules.length })
+      : null,
   ]
     .filter(Boolean)
     .join(' · ');

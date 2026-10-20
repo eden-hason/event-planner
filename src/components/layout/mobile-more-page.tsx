@@ -196,9 +196,10 @@ function AccountRow({
  * that did not fit in the five-slot tab bar, and the account controls that
  * otherwise only exist inside the sidebar drawer.
  *
- * Capped at `max-w-md` because it is a phone layout by design - reaching the
- * route on a desktop shows the same column centred rather than a row of rows
- * stretched across the content card.
+ * On a phone the column fills the screen, so its edges are the header title's
+ * edges. It is a phone layout by design, so from md up it is capped rather than
+ * stretched across the content card - and held to the start edge, not centred,
+ * so the title still lines up with it.
  */
 export function MobileMorePage({
   eventId,
@@ -241,7 +242,7 @@ export function MobileMorePage({
   const ThemeIcon = activeTheme?.Icon ?? THEME_OPTIONS[2].Icon;
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <div className="flex w-full flex-col gap-4 md:max-w-md">
       {currentEvent && (
         <Group label={t('groups.event')}>
           <div className="bg-card flex items-center gap-3 rounded-xl border p-3.5">
