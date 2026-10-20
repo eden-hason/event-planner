@@ -140,12 +140,8 @@ function PackageDetails({
   const over = view.state === 'over';
   const channel = view.channel ? tSheet(`channels.${view.channel}`) : null;
 
+  // The paid share is the bar's default; only what differs from it gets a key.
   const legend = [
-    {
-      kind: 'paid' as const,
-      label: view.gifted ? t('legend.gifted') : t('legend.paid'),
-      value: view.paid,
-    },
     ...(view.bonus
       ? [
           {
@@ -173,14 +169,22 @@ function PackageDetails({
       label: view.gifted ? tSheet('giftedRecords') : tSheet('paidRecords'),
       value: view.paid,
     },
-    { key: 'bonus', label: t('rows.bonus'), value: view.bonus, bonus: true },
+    ...(view.bonus
+      ? [
+          {
+            key: 'bonus',
+            label: t('rows.bonus'),
+            value: view.bonus,
+            bonus: true,
+          },
+        ]
+      : []),
     { key: 'total', label: tSheet('total'), value: view.size, total: true },
     { key: 'used', label: t('rows.used'), value: view.used },
     over
       ? { key: 'over', label: t('rows.over'), value: view.over, warn: true }
       : { key: 'left', label: t('rows.left'), value: view.left },
   ];
-
 
   // The oldest payment opened the package; the list is newest first.
   const firstPaymentId = view.payments.at(-1)?.id;
@@ -214,20 +218,22 @@ function PackageDetails({
 
           <PackageBar view={view} className="h-3 gap-0.5" />
 
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {legend.map((item) => (
-              <span
-                key={item.kind}
-                className="text-muted-foreground flex items-center gap-1.5 text-[12.5px]"
-              >
-                <PackageSwatch kind={item.kind} />
-                {item.label}
-                <b className="text-foreground tabular-nums">
-                  {fmt(item.value)}
-                </b>
-              </span>
-            ))}
-          </div>
+          {legend.length > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              {legend.map((item) => (
+                <span
+                  key={item.kind}
+                  className="text-muted-foreground flex items-center gap-1.5 text-[12.5px]"
+                >
+                  <PackageSwatch kind={item.kind} />
+                  {item.label}
+                  <b className="text-foreground tabular-nums">
+                    {fmt(item.value)}
+                  </b>
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Only a package that can grow offers to (ADR 0042): never a gift, never after the Event */}
           {!over && view.topUpPlan && (

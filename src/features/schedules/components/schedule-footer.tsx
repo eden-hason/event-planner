@@ -4,9 +4,10 @@ import { IconSparkles } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 
-import { useBillingSheet } from '@/features/billing';
+import { usePlansHref } from '@/features/billing';
 
 /**
  * The bar stuck to the bottom of an open Schedule: whatever action the
@@ -16,8 +17,8 @@ import { useBillingSheet } from '@/features/billing';
  * sticks above the nav instead of behind it, and leaves the safe-area padding
  * to the nav that already carries it.
  *
- * `upgrade` adds the one action a locked Schedule has - opening the plan sheet,
- * for the Owner who would pay. Phone only: from md up the bar is hidden. Children are the Schedule's own action, if it
+ * `upgrade` adds the one action a locked Schedule has - the way to the plans
+ * page, for the Owner who would pay. Phone only: from md up the bar is hidden. Children are the Schedule's own action, if it
  * has one (Save on a message, nothing on a call round).
  */
 export function ScheduleFooter({
@@ -32,7 +33,7 @@ export function ScheduleFooter({
   children?: React.ReactNode;
 }) {
   const t = useTranslations('schedules.detail');
-  const { canPrompt, openSheet, sheet } = useBillingSheet();
+  const plansHref = usePlansHref();
 
   return (
     <div
@@ -47,18 +48,15 @@ export function ScheduleFooter({
       )}
     >
       {children}
-      {upgrade && canPrompt && (
-        <Button
-          type="button"
-          onClick={openSheet}
-          className="w-full rounded-xl text-base font-bold"
-        >
-          <IconSparkles stroke={2.2} />
-          {t('upgrade')}
+      {upgrade && plansHref && (
+        <Button asChild className="w-full rounded-xl text-base font-bold">
+          <Link href={plansHref}>
+            <IconSparkles stroke={2.2} />
+            {t('upgrade')}
+          </Link>
         </Button>
       )}
       <p className="text-muted-foreground text-center text-xs leading-relaxed">{note}</p>
-      {sheet}
     </div>
   );
 }

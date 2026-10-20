@@ -1516,11 +1516,11 @@
   },
   "schedules": {
     "header": {
-      "title": "Messages & calls"
+      "title": "Messages & calls",
+      "messageCount": "{count, plural, one {1 message} other {# messages}}",
+      "callCount": "{count, plural, one {1 phone call} other {# phone calls}}"
     },
     "hero": {
-      "set": "{type} set",
-      "scheduleCount": "{count, plural, one {1 schedule} other {# schedules}}",
       "ofSent": "of {total} sent",
       "ofActive": "of {total} active",
       "waiting": "Waiting to activate",
@@ -2541,41 +2541,9 @@
       }
     },
     "sheet": {
-      "free": {
-        "title": "Planning is free",
-        "description": "You only pay when you send - everything until then is free"
-      },
-      "payment_pending": {
-        "title": "Payment in progress",
-        "description": "Sending switches on as soon as your payment is confirmed"
-      },
-      "paid": {
-        "title": "Sending is active",
-        "description": "Your RSVP campaign is running - invitations, reminders and calls"
-      },
-      "canceled": {
-        "title": "Sending is switched off",
-        "description": "This event was active and has been switched back to planning"
-      },
-      "includedTitle": "Free while you plan",
-      "included": {
-        "guests": "Build and import your full guest list",
-        "budget": "Track your budget",
-        "collaborate": "Plan together with a partner",
-        "seating": "Design your seating plan"
-      },
-      "unlocksTitle": "Sending unlocks",
-      "activeTitle": "Active now",
-      "unlocks": {
-        "whatsapp": "WhatsApp invitations, reminders and thank-yous",
-        "calls": "Two call rounds by the Kululu team",
-        "tracking": "Live RSVP tracking as replies come in"
-      },
-      "whatsAppMessage": "Hi, I'd like to enable invitation sending for my event",
       "cta": {
         "talk": "Talk with us"
-      },
-      "close": "Close"
+      }
     },
     "packageSheet": {
       "title": "Record package",
@@ -2615,8 +2583,6 @@
       "subtitle": "How many records are left, what the package is made of, and every payment",
       "cardTitle": "Record package",
       "legend": {
-        "paid": "Paid",
-        "gifted": "Gifted",
         "bonus": "Bonus · free",
         "over": "Outside the package"
       },

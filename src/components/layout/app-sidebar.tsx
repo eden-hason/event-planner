@@ -166,7 +166,6 @@ export function AppSidebar({
             title: tNav('seating'),
             url: '/app/seating',
             icon: IconArmchair,
-            isNew: true,
           },
         ]
       : []),

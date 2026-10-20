@@ -1,12 +1,12 @@
 'use client';
 
-import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronRight, Clock, Crown } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { BILLING_TONE_CLASS, UPSELL_CTA_CLASS, UPSELL_SURFACE_CLASS } from '../utils';
 import { useEventBillingStatus } from './event-billing-status-provider';
-import { EventBillingStatusSheet } from './event-billing-status-sheet';
+import { usePlansHref } from './use-plans-href';
 
 /**
  * The "your plan" card on the mobile More page - the standalone surface for
@@ -14,19 +14,19 @@ import { EventBillingStatusSheet } from './event-billing-status-sheet';
  *
  * Free (or a lapsed event) gets the plum upsell surface with a
  * single call to action; a sending event gets a quiet white card that states
- * the plan and offers "manage". Both open the same detail sheet the header
- * pill uses, so there is one place the billing story is told.
+ * the plan and offers "manage". Both lead to the plans page, as the header pill
+ * does, so there is one place the billing story is told.
  *
- * Silent until the provider supplies a status, matching
- * `EventBillingStatusPill`. Renders its own group heading so the More page
+ * Silent until there is a way there - a status from the provider, and the
+ * Event's creator looking - since the card is only a door to that page. Renders its own group heading so the More page
  * can drop it in without leaving an empty labelled section when it is hidden.
  */
 export function EventPlanCard() {
   const status = useEventBillingStatus();
+  const href = usePlansHref();
   const t = useTranslations('billing');
-  const [open, setOpen] = React.useState(false);
 
-  if (!status) return null;
+  if (!status || !href) return null;
 
   const heading = (
     <h2 className="text-muted-foreground px-1.5 text-xs font-medium">
@@ -74,9 +74,8 @@ export function EventPlanCard() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
+          <Link
+            href={href}
             className={cn(
               'flex items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-sm font-semibold transition-opacity active:opacity-90',
               UPSELL_CTA_CLASS,
@@ -84,26 +83,20 @@ export function EventPlanCard() {
           >
             {t('planCard.free.cta')}
             <ChevronRight aria-hidden className="size-4 rtl:rotate-180" />
-          </button>
+          </Link>
         </div>
-        <EventBillingStatusSheet
-          open={open}
-          onOpenChange={setOpen}
-          status={status}
-        />
       </section>
     );
   }
 
   const isPending = status.tone === 'pending';
 
-  // Paid / payment_pending: quiet white card that opens the sheet.
+  // Paid / payment_pending: quiet white card that leads to the plans page.
   return (
     <section className="flex flex-col gap-1.5">
       {heading}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
+      <Link
+        href={href}
         className="bg-card flex w-full items-center gap-3 rounded-xl border p-3.5 text-start transition-colors active:opacity-70"
       >
         <span
@@ -137,12 +130,7 @@ export function EventPlanCard() {
         <span className="border-border text-foreground/70 shrink-0 rounded-lg border px-2.5 py-1 text-xs font-medium">
           {isPending ? t('planCard.details') : t('planCard.manage')}
         </span>
-      </button>
-      <EventBillingStatusSheet
-        open={open}
-        onOpenChange={setOpen}
-        status={status}
-      />
+      </Link>
     </section>
   );
 }
