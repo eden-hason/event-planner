@@ -785,7 +785,7 @@ export function HomepageClient() {
 
           <div className="faq-foot reveal">
             <div className="ft">לא מצאתם את מה שחיפשתם?</div>
-            <div className="fs">יש לכם שאלה ספציפית? שמחים לענות ישירות בוואטסאפ</div>
+            <div className="fs">יש לכם שאלה ספציפית? נשמח לענות ישירות בוואטסאפ</div>
             <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_OPENING_MESSAGE)}`} target="_blank" rel="noopener" className="btn btn-ghost">
               <IconBrandWhatsapp size={18} stroke={1.75} />
               דברו איתנו
