@@ -6,14 +6,14 @@ import { CheckList } from './check-list';
 const POINTS = ['official', 'fallback', 'results'] as const;
 
 /**
- * How a WhatsApp message gets to the guest, said once at the top of a Schedule
- * that has not gone out yet.
+ * How a WhatsApp message gets to the guest, said once under the timeline
+ * while a WhatsApp Schedule has not gone out yet.
  *
  * A neutral card, not a notice: nothing here needs the organiser's attention,
  * it answers the question they have before they trust the send - what happens
- * when WhatsApp cannot deliver, and where they will see the outcome. Once the
- * Schedule has been sent the results tab answers it with real numbers, so the
- * card leaves.
+ * when WhatsApp cannot deliver, and where they will see the outcome. Once every
+ * WhatsApp Schedule has been sent the results tabs answer it with real numbers,
+ * so the card leaves.
  */
 export async function DeliveryInfoCard() {
   const t = await getTranslations('schedules.deliveryInfo');

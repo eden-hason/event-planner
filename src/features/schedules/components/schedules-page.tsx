@@ -25,6 +25,7 @@ import { heroModel, type HeroEntry } from '../utils/hero';
 import { resolveTemplatesForPreview } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
+import { DeliveryInfoCard } from './delivery-info-card';
 import { ScheduleDetailPane } from './schedule-detail-pane';
 import { SchedulesEmptyState } from './schedules-empty-state';
 import { SchedulesLayout } from './schedules-layout';
@@ -348,6 +349,16 @@ export async function SchedulesPage({
     .filter(Boolean)
     .join(' · ');
 
+  // How a WhatsApp message reaches the guest matters only while one is still
+  // to go out. Once every WhatsApp Schedule has been sent, its results tab
+  // answers the question with real numbers.
+  const whatsappPending = resolved.some(
+    ({ schedule }, index) =>
+      isMessageSchedule(schedule) &&
+      schedule.deliveryMethod === 'whatsapp' &&
+      planItems[index].status === 'pending',
+  );
+
   return (
     <SchedulesLayout
       items={items}
@@ -355,6 +366,7 @@ export async function SchedulesPage({
       subtitle={subtitle}
       eventId={eventId}
       eventDate={eventDate}
+      deliveryInfo={whatsappPending ? <DeliveryInfoCard /> : null}
     />
   );
 }

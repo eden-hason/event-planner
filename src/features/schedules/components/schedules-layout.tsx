@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -28,6 +28,8 @@ interface SchedulesLayoutProps {
   subtitle: string;
   eventId: string;
   eventDate: string | null;
+  /** How a WhatsApp message reaches the guest, shown under the timeline. */
+  deliveryInfo?: ReactNode;
 }
 
 /**
@@ -49,6 +51,7 @@ export function SchedulesLayout({
   subtitle,
   eventId,
   eventDate,
+  deliveryInfo,
 }: SchedulesLayoutProps) {
   const t = useTranslations('schedules');
   const locale = useLocale();
@@ -136,6 +139,7 @@ export function SchedulesLayout({
             onSelect={select}
             dayLabel={dayLabel}
           />
+          {deliveryInfo}
         </div>
 
         <Separator

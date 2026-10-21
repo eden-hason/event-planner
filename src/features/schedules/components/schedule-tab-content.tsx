@@ -2,7 +2,6 @@ import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp } from '../schemas';
 import type { OutreachItemStatus, PreviewMessages } from '../types';
-import { DeliveryInfoCard } from './delivery-info-card';
 import { MessagePreview } from './message-preview';
 import { MessageTypeCard } from './message-type-card';
 import { PastDueTimeDialog } from './past-due-time-dialog';
@@ -68,27 +67,16 @@ export async function ScheduleTabContent({
       dueTimeRules={{ sendWindow, maxLatenessHours: scheduleMaxLatenessHours }}
     >
       <div className="flex flex-col gap-4">
-        {status === 'pending' && schedule.deliveryMethod === 'whatsapp' && <DeliveryInfoCard />}
         {locked && <ScheduleLockedNotice />}
 
         {/* Single column until there is room for the message preview to sit
-            beside the settings without squeezing either. The preview leads on a
-            phone: it is the thing the organiser came to check. */}
+            beside the settings without squeezing either. The settings lead in
+            the order the organiser decides them - what to send, when, the note
+            that goes with it, to whom - and the preview closes the stack on a
+            phone as the result of those choices. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="flex flex-col gap-4 lg:order-2">
-            <MessagePreview
-              messages={messages}
-              channel={schedule.deliveryMethod}
-              seatingGap={seatingGap}
-              event={event}
-            />
-          </div>
-
-          <div className="flex flex-col gap-3.5 lg:order-1">
+          <div className="flex flex-col gap-3.5">
             <MessageTypeCard offersNote={Boolean(offersNote)} sent={sent} />
-            {offersNote && (
-              <PersonalNoteCard lockReason={lockReason} foldsNote={Boolean(foldsNote)} />
-            )}
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}
@@ -96,11 +84,23 @@ export async function ScheduleTabContent({
               sendWindow={sendWindow}
               lockBadge={sent ? <ScheduleLockBadge /> : undefined}
             />
+            {offersNote && (
+              <PersonalNoteCard lockReason={lockReason} foldsNote={Boolean(foldsNote)} />
+            )}
             <TargetAudienceCard
               targetStatus={schedule.targetStatus}
               disabled={schedule.status === 'cancelled'}
               sent={sent}
               count={audienceCount}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <MessagePreview
+              messages={messages}
+              channel={schedule.deliveryMethod}
+              seatingGap={seatingGap}
+              event={event}
             />
           </div>
         </div>
