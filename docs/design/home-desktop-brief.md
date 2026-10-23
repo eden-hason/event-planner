@@ -76,9 +76,11 @@ So the board matches what shipped, not what the first brief described:
     2. Venue
     3. RSVP: "X of Y confirmed", a percentage and the tri-colour bar
   - States:
-    - No date: the date row becomes a dashed violet link to `/details`
-    - No venue: the venue row shows a muted placeholder
+    - No date: the date row becomes a dashed primary link to `/details`
+    - No venue: the venue row becomes a dashed primary link to `/details`
     - Zero guests: the RSVP row becomes a dashed primary link to `/guests`
+    - Every empty row shares the one dashed primary look, so the dashes alone say
+      "missing, tap to fill" and no colour implies a grouping
 - **Featured Actions** (`featured-action-list.tsx`) is a titled list of **row-shaped
   cards**:
   - Anatomy: an icon tile, then the label and optional badge, then a one-line "why",

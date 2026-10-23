@@ -1359,6 +1359,7 @@
         "dateLabel": "Date",
         "venueLabel": "Venue",
         "venueMissing": "No venue picked yet",
+        "noVenueTitle": "Add the venue",
         "rsvpLabel": "RSVPs",
         "rsvpLine": "<b>{confirmed}</b> of {total} confirmed",
         "noDateTitle": "Waiting on the perfect date",

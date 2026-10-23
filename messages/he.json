@@ -1359,6 +1359,7 @@
         "dateLabel": "תאריך",
         "venueLabel": "מקום",
         "venueMissing": "עדיין לא נבחר מקום",
+        "noVenueTitle": "הוסיפו את מקום האירוע",
         "rsvpLabel": "אישורי הגעה",
         "rsvpLine": "<b>{confirmed}</b> מתוך {total} אישרו",
         "noDateTitle": "מחכים לתאריך המושלם",

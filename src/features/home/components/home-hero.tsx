@@ -19,19 +19,18 @@ function HeroRow({
 }: {
   icon: ReactNode;
   iconClassName: string;
-  dashed?: 'primary' | 'violet';
+  /** The empty state: one look for every missing value, whatever it links to. */
+  dashed?: boolean;
   href?: string;
   children: ReactNode;
 }) {
   const className = cn(
     'flex min-w-0 flex-1 items-center gap-3 rounded-2xl border px-3 py-2.5',
-    dashed === 'violet'
-      ? 'border-home-violet bg-home-violet-tint hover:bg-home-violet/20 border-dashed'
-      : dashed === 'primary'
-        ? 'border-primary/50 bg-primary/5 hover:bg-primary/15 border-dashed'
-        : // Wide, the three rows are cells of one card split by dividers, so
-          // each loses its own box.
-          'bg-primary/[0.03] border-border home-wide:border-transparent home-wide:bg-transparent',
+    dashed
+      ? 'border-primary/50 bg-primary/5 hover:bg-primary/15 border-dashed'
+      : // Wide, the three rows are cells of one card split by dividers, so
+        // each loses its own box.
+        'bg-primary/[0.03] border-border home-wide:border-transparent home-wide:bg-transparent',
     href &&
       'focus-visible:ring-primary focus-visible:ring-offset-card transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   );
@@ -47,12 +46,7 @@ function HeroRow({
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-px">{children}</div>
       {href && (
-        <IconChevronRight
-          className={cn(
-            'size-[18px] shrink-0 rtl:rotate-180',
-            dashed === 'violet' ? 'text-home-violet' : 'text-primary',
-          )}
-        />
+        <IconChevronRight className="text-primary size-[18px] shrink-0 rtl:rotate-180" />
       )}
     </>
   );
@@ -218,29 +212,34 @@ export async function HomeHero({ eventId }: { eventId: string }) {
         ) : (
           <HeroRow
             icon={<IconCalendar className="size-[17px]" />}
-            iconClassName="bg-card text-home-violet"
-            dashed="violet"
+            iconClassName="bg-primary/15 text-primary"
+            dashed
             href={`/app/${eventId}/details`}
           >
-            <span className="text-home-violet text-[15px] font-bold">{t('hero.noDateTitle')}</span>
+            <span className="text-primary text-[15px] font-bold">{t('hero.noDateTitle')}</span>
             <span className="text-muted-foreground text-xs">{t('hero.noDateDescription')}</span>
           </HeroRow>
         )}
 
-        <HeroRow
-          icon={<IconMapPin className="size-[17px]" />}
-          iconClassName="bg-home-violet-tint text-home-violet"
-        >
-          <span className="text-muted-foreground text-[11.5px]">{t('hero.venueLabel')}</span>
-          <span
-            className={cn(
-              'truncate text-[15px] font-semibold',
-              !event.location?.name && 'text-muted-foreground font-medium',
-            )}
+        {event.location?.name ? (
+          <HeroRow
+            icon={<IconMapPin className="size-[17px]" />}
+            iconClassName="bg-home-violet-tint text-home-violet"
           >
-            {event.location?.name || t('hero.venueMissing')}
-          </span>
-        </HeroRow>
+            <span className="text-muted-foreground text-[11.5px]">{t('hero.venueLabel')}</span>
+            <span className="truncate text-[15px] font-semibold">{event.location.name}</span>
+          </HeroRow>
+        ) : (
+          <HeroRow
+            icon={<IconMapPin className="size-[17px]" />}
+            iconClassName="bg-primary/15 text-primary"
+            dashed
+            href={`/app/${eventId}/details`}
+          >
+            <span className="text-primary text-[15px] font-bold">{t('hero.noVenueTitle')}</span>
+            <span className="text-muted-foreground text-xs">{t('hero.venueMissing')}</span>
+          </HeroRow>
+        )}
 
         {guests.length > 0 ? (
           <HeroRow
@@ -266,7 +265,7 @@ export async function HomeHero({ eventId }: { eventId: string }) {
           <HeroRow
             icon={<IconUsers className="size-[17px]" />}
             iconClassName="bg-primary/15 text-primary"
-            dashed="primary"
+            dashed
             href={`/app/${eventId}/guests`}
           >
             <span className="text-primary text-[15px] font-bold">{t('hero.zeroGuestsTitle')}</span>
