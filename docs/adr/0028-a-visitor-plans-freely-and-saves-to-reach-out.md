@@ -35,15 +35,16 @@ inviting a collaborator, paying, WhatsApp import, and the shareable RSVP and inv
 This is **Free to Plan, Pay to Send** with one more step in front of sending.
 
 **Saving is always available.** A "Save your event" pill sits in the workspace header, and
-every gated action opens the same save dialog with a line saying why. It asks for a name,
-then phone OTP or Google.
+every gated action opens the same Save Event page with a line saying why. It asks for a
+name, then phone OTP or Google. It is a page rather than a dialog: a stray tap on a dialog's
+backdrop threw away the name, number or code they had just typed.
 
 **A new account upgrades the Visitor in place.** Phone uses `updateUser({ phone })` and then
 an OTP; Google uses `linkIdentity`. The user id stays the same, so the Event, its guests and
 everything else stay where they are. Nothing is moved.
 
 **An Event never moves to an account that already exists.** If the phone or Google account
-is already an Owner's, the dialog says so and asks before anything is lost: use a different
+is already an Owner's, the save page says so and asks before anything is lost: use a different
 one, or sign in and discard the Event. Phone is checked before a code is sent. Google can
 only report it after the round trip, so the same question is asked when they come back. If
 they choose to sign in, the anonymous user and its Event are deleted only after the sign-in

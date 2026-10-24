@@ -33,7 +33,7 @@ export function isExistingAccountError(code: string | null | undefined): boolean
 /**
  * What a Server Action returns when a Visitor tries something that needs an
  * account - sending, inviting, importing, paying (ADR 0028). The client gates
- * these up front with the save dialog, so this is the backstop.
+ * these up front with the save page, so this is the backstop.
  */
 export const SAVE_REQUIRED = 'Save your event first';
 
@@ -59,13 +59,41 @@ export const ROUND_TRIP_COOKIE_OPTIONS = {
  */
 export const VISITOR_DROPPED_COOKIE = 'kululu_visitor_dropped';
 
-/** The name typed in the save dialog, carried across the Google round trip. */
+/** The name typed on the save page, carried across the Google round trip. */
 export const SAVE_NAME_COOKIE = 'kululu_save_name';
 
-/** Where the save dialog was opened, so the Google round trip returns there. */
+/** Where the save page was opened from, so the Google round trip returns there. */
 export const SAVE_RETURN_COOKIE = 'kululu_save_return';
 
 /** Only a path on this site may be returned to - never an absolute URL. */
 export function safeReturnPath(path: string | null | undefined, fallback = '/app'): string {
   return path && path.startsWith('/') && !path.startsWith('//') ? path : fallback;
+}
+
+/**
+ * Why a Visitor was sent to save. A gated action names itself, so the page can
+ * say why saving comes first; the header pill and the other ways in give none.
+ */
+const SAVE_REASONS = ['send', 'invite', 'import', 'pay', 'share'] as const;
+export type SaveReason = (typeof SAVE_REASONS)[number];
+
+export function parseSaveReason(value: string | null | undefined): SaveReason | undefined {
+  return SAVE_REASONS.find((reason) => reason === value);
+}
+
+/**
+ * The Save Event page, opened from `from` - where saving returns them, and
+ * where its back button goes.
+ *
+ * `googleExists` is Google's return with an account that already has one: the
+ * page opens on that question rather than on the form.
+ */
+export function savePageHref(
+  from: string,
+  { reason, googleExists }: { reason?: SaveReason; googleExists?: boolean } = {},
+): string {
+  const params = new URLSearchParams({ from: safeReturnPath(from) });
+  if (reason) params.set('reason', reason);
+  if (googleExists) params.set('exists', '1');
+  return `/save?${params}`;
 }

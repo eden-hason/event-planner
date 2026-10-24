@@ -15,9 +15,10 @@ export {
   useSaveEvent,
   useSaveGatedClick,
 } from './components/save-event-provider';
+export { SaveEventPage } from './components/save-event-page';
 
 // Utils
-export { isVisitor, SAVE_REQUIRED } from './utils/visitor';
+export { isVisitor, parseSaveReason, safeReturnPath, SAVE_REQUIRED } from './utils/visitor';
 
 // Schemas/Types
 export type { User, ProfileData } from './schemas';

@@ -8,6 +8,7 @@ import {
   isExistingAccountError,
   isVisitor,
   safeReturnPath,
+  savePageHref,
   SAVE_NAME_COOKIE,
   SAVE_RETURN_COOKIE,
 } from '@/features/auth/utils/visitor';
@@ -19,10 +20,10 @@ import {
  *     this replaced (ADR 0028), go on to `next`
  *   - a Visitor saving with Google (`save=1`) whose link worked: they are now
  *     the Owner of their Event, so write their profile and return them to
- *     where they opened the save dialog
+ *     where they opened the save page from
  *   - a Visitor saving with a Google account that already has a Kululu
  *     account: the session is still the Visitor's and nothing is lost yet, so
- *     return them with `?save=exists`, where the dialog asks what to do
+ *     return them to the save page, which asks what to do
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -41,8 +42,10 @@ export async function GET(request: Request) {
 
     if (!code) {
       const exists = isExistingAccountError(searchParams.get('error_code'));
-      // Cancelled at Google or failed: back where they were, Event intact.
-      return redirectTo(request, exists ? withParam(returnTo, 'save', 'exists') : returnTo);
+      // Cancelled at Google or failed: back on the save page, Event intact.
+      // Supabase may report the failure in the fragment instead, which the
+      // browser carries across this redirect for the page to read.
+      return redirectTo(request, savePageHref(returnTo, { googleExists: exists }));
     }
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -75,12 +78,6 @@ export async function GET(request: Request) {
 
   // return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error`);
-}
-
-function withParam(path: string, key: string, value: string): string {
-  const url = new URL(path, 'http://x');
-  url.searchParams.set(key, value);
-  return `${url.pathname}${url.search}`;
 }
 
 /** This site's public origin - behind Vercel's proxy, the forwarded host. */
