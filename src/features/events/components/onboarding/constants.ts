@@ -21,8 +21,12 @@ export const TAKEOVER_TOKENS = {
   '--kt-card': '#FFFFFF',
   '--kt-border': 'rgba(26,11,46,0.1)',
   '--kt-border-soft': 'rgba(26,11,46,0.08)',
+  '--kt-border-hover': 'rgba(26,11,46,0.22)',
+  '--kt-field': '#FFFFFF',
   '--kt-disabled': '#DDD3E8',
+  '--kt-on-disabled': '#FFFFFF',
   '--kt-danger': '#e11d48',
+  '--kt-brand-shadow': '0 6px 16px rgba(210,60,194,0.28)',
 } as const;
 
 /** The soft brand wash behind every takeover screen. */

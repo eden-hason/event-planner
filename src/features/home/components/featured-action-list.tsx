@@ -181,8 +181,15 @@ export function FeaturedActionList({
         <button
           type="button"
           onClick={() => openSave()}
-          className="bg-primary text-primary-foreground border-primary focus-visible:ring-primary focus-visible:ring-offset-background flex w-full items-center gap-3 rounded-2xl border p-3.5 shadow-md transition-[filter] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-offset-2"
+          className="bg-primary text-primary-foreground border-primary focus-visible:ring-primary focus-visible:ring-offset-background relative isolate flex w-full items-center gap-3 overflow-hidden rounded-2xl border p-3.5 shadow-md transition-[filter] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-offset-2"
         >
+          {/* Pinned to the button's edge at a fixed scale and faded toward the
+              text, so a wider card only adds plain fill. The art is drawn as
+              black/white alpha, so it follows --primary in either theme. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 end-0 -z-10 w-[clamp(170px,40%,360px)] bg-[url(/save-event-card-clouds.svg)] bg-[length:auto_100%] bg-left bg-no-repeat [mask-image:linear-gradient(to_right,#000_45%,transparent)] ltr:-scale-x-100"
+          />
           <span className="flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-white/20">
             <IconCloudUpload className="size-[21px]" strokeWidth={1.9} />
           </span>

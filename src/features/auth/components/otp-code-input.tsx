@@ -13,12 +13,15 @@ export function OtpCodeInput({
   label,
   inputRef,
   name = 'token',
+  invalid = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   label: string;
   inputRef?: Ref<HTMLInputElement>;
   name?: string;
+  /** The code was refused: every box turns the danger colour until it is edited. */
+  invalid?: boolean;
 }) {
   return (
     <div className="relative my-5">
@@ -27,10 +30,12 @@ export function OtpCodeInput({
           <div
             key={i}
             className={cn(
-              'flex h-14 w-[46px] items-center justify-center rounded-[14px] bg-white font-rubik text-2xl font-bold text-[var(--kt-ink)] transition-colors',
-              i === value.length
-                ? 'border-2 border-[var(--kt-brand)]'
-                : 'border-[1.5px] border-[var(--kt-border)]',
+              'flex h-14 w-[46px] items-center justify-center rounded-[14px] bg-[var(--kt-field)] font-rubik text-2xl font-bold text-[var(--kt-ink)] transition-colors',
+              invalid
+                ? 'border-[1.5px] border-[var(--kt-danger)]'
+                : i === value.length
+                  ? 'border-2 border-[var(--kt-brand)]'
+                  : 'border-[1.5px] border-[var(--kt-border)]',
             )}
           >
             {value[i] ?? ''}

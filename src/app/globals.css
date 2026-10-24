@@ -674,3 +674,56 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Save Event page ──────────────────────────────────────────────────────
+   Saving speaks the sign-in takeover's `--kt-*` language, but unlike the
+   takeover it follows the app's theme: the Visitor arrives from their own
+   workspace, so the page sits on `--app-shell` with no brand wash, and in
+   dark mode it has to hold its contrast. The dark set is from the Save Event
+   Page design; the light set lifts the takeover's faint ink and borders a
+   step, which the takeover's pastel wash had been compensating for.
+
+   The page does not render `TakeoverShell`, so it sets the whole palette here
+   rather than overriding `TAKEOVER_TOKENS`.
+
+   Where the design's value sits close to an app token, it is that token, so
+   the page moves with the app's theme. The rest stay literal on purpose: the
+   purple-tinted ink and muted ink, the borders the design lifts a step for
+   contrast, the disabled fills, and the dark brand text, which is lighter
+   than --primary to hold contrast on the dark field. */
+[data-save-page] {
+  --kt-brand: var(--primary);
+  --kt-brand-deep: color-mix(in oklch, var(--primary), black 12%);
+  --kt-brand-text: var(--kt-brand-deep);
+  --kt-ink: #1a0b2e;
+  --kt-ink-muted: #4b3a63;
+  --kt-ink-faint: var(--muted-foreground);
+  --kt-ink-ghost: #857599;
+  --kt-surface: var(--app-shell);
+  --kt-field: var(--card);
+  --kt-border: rgba(26, 11, 46, 0.16);
+  --kt-border-soft: var(--border);
+  --kt-border-hover: rgba(26, 11, 46, 0.24);
+  --kt-disabled: #ddd3e8;
+  --kt-on-disabled: #ffffff;
+  --kt-on-disabled-outline: #b9aecb;
+  --kt-danger: var(--destructive);
+  --kt-danger-soft: color-mix(in oklch, var(--destructive) 7%, transparent);
+  --kt-danger-border: color-mix(in oklch, var(--destructive) 18%, transparent);
+  --kt-brand-shadow: 0 6px 16px color-mix(in oklch, var(--primary) 28%, transparent);
+}
+
+.dark [data-save-page] {
+  --kt-brand-text: #f28ae8;
+  --kt-ink: var(--foreground);
+  --kt-ink-muted: #cbbfdc;
+  --kt-ink-ghost: #9184a6;
+  --kt-border: rgba(245, 239, 252, 0.2);
+  --kt-border-hover: rgba(245, 239, 252, 0.32);
+  --kt-disabled: #2f2440;
+  --kt-on-disabled: #8c7fa2;
+  --kt-on-disabled-outline: #75688b;
+  --kt-danger-soft: color-mix(in oklch, var(--destructive) 12%, transparent);
+  --kt-danger-border: color-mix(in oklch, var(--destructive) 26%, transparent);
+  --kt-brand-shadow: 0 6px 18px color-mix(in oklch, var(--primary) 30%, transparent);
+}

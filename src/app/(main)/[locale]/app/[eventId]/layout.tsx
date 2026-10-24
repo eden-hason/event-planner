@@ -80,7 +80,7 @@ export default async function EventLayout({
   return (
     <AppShell>
       {/* A Visitor plans freely; anything that needs an account opens the
-          save dialog this provides (ADR 0028). Above the sidebar too, whose
+          save page this leads to (ADR 0028). Above the sidebar too, whose
           user menu is one of the ways in. */}
       <SaveEventProvider isVisitor={!!effectiveUser?.isVisitor}>
         <div className="flex min-h-0 w-full flex-1">

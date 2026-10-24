@@ -92,7 +92,7 @@ export function TakeoverBackButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex size-10 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--kt-border)] bg-white text-[var(--kt-ink-muted)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--kt-border)] bg-[var(--kt-field)] text-[var(--kt-ink-muted)] transition-colors hover:border-[var(--kt-border-hover)]"
     >
       <svg
         width="18"
@@ -118,6 +118,7 @@ export function TakeoverButton({
   onClick,
   type = 'button',
   disabled = false,
+  pending = false,
   pulse = false,
   className,
 }: {
@@ -125,6 +126,11 @@ export function TakeoverButton({
   onClick?: () => void;
   type?: 'button' | 'submit';
   disabled?: boolean;
+  /**
+   * Working on it: still reads as the action the person just took, in the
+   * deeper brand shade, rather than greying out as if it were never available.
+   */
+  pending?: boolean;
   /** Draws the eye to the one action on the payoff screen. */
   pulse?: boolean;
   className?: string;
@@ -133,13 +139,16 @@ export function TakeoverButton({
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || pending}
+      aria-busy={pending || undefined}
       className={cn(
-        'h-[54px] rounded-2xl text-base font-bold text-white shadow-[0_6px_16px_rgba(210,60,194,0.28)] transition-colors',
-        disabled
-          ? 'cursor-default bg-[var(--kt-disabled)] shadow-none'
-          : 'cursor-pointer bg-[var(--kt-brand)] hover:bg-[var(--kt-brand-deep)]',
-        pulse && !disabled && 'animate-[kt-pulse-ring_2s_ease-out_1.4s_infinite]',
+        'h-[54px] rounded-2xl text-base font-bold text-white shadow-[var(--kt-brand-shadow)] transition-colors',
+        pending
+          ? 'cursor-wait bg-[var(--kt-brand-deep)]'
+          : disabled
+            ? 'cursor-default bg-[var(--kt-disabled)] text-[color:var(--kt-on-disabled)] shadow-none'
+            : 'cursor-pointer bg-[var(--kt-brand)] hover:bg-[var(--kt-brand-deep)]',
+        pulse && !disabled && !pending && 'animate-[kt-pulse-ring_2s_ease-out_1.4s_infinite]',
         className,
       )}
     >
@@ -177,7 +186,7 @@ export function TakeoverSkipButton({
  * measurements from here.
  */
 export const TAKEOVER_FIELD =
-  'h-[54px] w-full rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[17px] font-medium text-[var(--kt-ink)]';
+  'h-[54px] w-full rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-[var(--kt-field)] text-[17px] font-medium text-[var(--kt-ink)]';
 
 /** Text field, shared by every screen that takes typed input. */
 export function TakeoverInput({

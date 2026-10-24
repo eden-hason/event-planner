@@ -38,11 +38,11 @@ into their workspace and saves whenever they choose. This file describes what is
 - **The user object:** `getCurrentUser` and `getEffectiveUser` return Visitors with
   `isVisitor: true`, and `getVisitorId` is the cheap check.
 - **Saving:** `SaveEventProvider` in the event layout, with `SaveEventPill` in the page
-  header at every width and at the top of Home on the phone. `SaveEventForm` asks for a
-  name, then phone or Google. The actions are in `features/auth/actions/visitor.ts` and
+  header at every width and at the top of Home on the phone. `SaveEventPage` (`/save`) asks
+  for a name, then phone or Google. The actions are in `features/auth/actions/visitor.ts` and
   the cookies in `features/auth/services/visitor-session.ts`.
 - **Existing accounts:** the phone check happens before any code is sent (`phone_exists`);
-  Google comes back from the callback with `?save=exists`. Either way the Visitor chooses
+  Google comes back from the callback to `/save?exists=1`. Either way the Visitor chooses
   between a different number or account, and signing in while discarding the Event. The
   discard happens only after the sign-in succeeds, and a one-time dialog follows.
 - **Server gates (`SAVE_REQUIRED`):** `createInvitation`, `executeSchedule`,

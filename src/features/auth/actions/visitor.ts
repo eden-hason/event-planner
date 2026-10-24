@@ -36,7 +36,7 @@ export type SaveState = {
   success: boolean;
   message: string;
   /**
-   * The number already has an account. No code was sent; the dialog asks
+   * The number already has an account. No code was sent; the save page asks
    * whether to use a different one or sign in and discard the Event.
    */
   existingAccount?: boolean;
@@ -138,8 +138,8 @@ export async function verifyPhoneSave(
 /**
  * Starts saving with Google. Linking the identity upgrades the Visitor in
  * place; the callback writes the profile and returns to `returnTo`. If that
- * Google account already has a Kululu account, it returns to `returnTo` with
- * `?save=exists`, and the dialog asks before anything is discarded.
+ * Google account already has a Kululu account, it returns to the save page,
+ * which asks before anything is discarded.
  */
 export async function startGoogleSave(
   fullName: string,

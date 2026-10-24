@@ -2711,6 +2711,7 @@
     "useDifferentNumber": "Use a different number",
     "useDifferentAccount": "Use a different account",
     "signInAndDiscard": "Sign in and discard this event",
+    "wrongCode": "That code isn't right. Check the WhatsApp message and try again",
     "saved": "Your event is saved"
   },
   "installApp": {
