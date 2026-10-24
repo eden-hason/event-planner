@@ -88,7 +88,7 @@ const SCENES: Partial<
   wedding: {
     phone: '/hero-wedding-scene.webp',
     wide: '/hero-wedding-scene-wide.webp',
-    lift: 120,
+    lift: 140,
     wideY: 84,
   },
   henna: {
@@ -100,13 +100,13 @@ const SCENES: Partial<
   bar_mitzva: {
     phone: '/hero-bar-mitzva-scene.webp',
     wide: '/hero-bar-mitzva-scene-wide.webp',
-    lift: 110,
+    lift: 130,
     wideY: 84,
   },
   bat_mitzva: {
     phone: '/hero-bat-mitzva-scene.webp',
     wide: '/hero-bat-mitzva-scene-wide.webp',
-    lift: 110,
+    lift: 130,
     wideY: 50,
   },
 };
@@ -308,10 +308,10 @@ export async function HomeHero({ eventId }: { eventId: string }) {
       <div
         className={cn(
           'bg-card border-border home-wide:mx-3.5 home-wide:mb-3.5 home-wide:grid home-wide:grid-cols-3 home-wide:gap-0 home-wide:p-2.5 relative mt-4 flex flex-col gap-2.5 rounded-3xl border p-4 shadow-[0_18px_44px_rgba(26,11,46,0.1)] md:mx-3 md:mt-0 md:mb-3 dark:shadow-[0_18px_44px_rgba(0,0,0,0.35)]',
-          // Over the scene the sheet starts 300px down whatever the notch, so
-          // it lands below the centerpiece and leaves it in view. The lead
+          // Over the scene the sheet starts 240px down whatever the notch, so
+          // it lands just under the centerpiece and leaves it in view. The lead
           // above is 160px plus the inset, hence the subtraction.
-          scene && 'max-md:mt-[calc(140px-env(safe-area-inset-top))]',
+          scene && 'max-md:mt-[calc(80px-env(safe-area-inset-top))]',
           // On the panel it drops 110px so the whole centerpiece shows, and turns
           // to clear glass over the grass. Borders and labels follow through
           // their tokens; the white halo keeps the text off the busy scene.
