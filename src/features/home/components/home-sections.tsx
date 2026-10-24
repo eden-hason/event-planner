@@ -4,7 +4,6 @@ import { HomeHero } from './home-hero';
 import { FeaturedActionsSection } from './featured-actions-section';
 import { StatusStripSection } from './status-strip-section';
 import {
-  AnswerSourcesCard,
   GroupEngagementCard,
   RecentActivityCard,
   RsvpDonutCard,
@@ -21,7 +20,13 @@ async function SectionError() {
   );
 }
 
-function Section({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {
+function Section({
+  fallback,
+  children,
+}: {
+  fallback: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <SectionErrorBoundary fallback={<SectionError />}>
       <Suspense fallback={fallback}>{children}</Suspense>
@@ -41,7 +46,7 @@ function Section({ fallback, children }: { fallback: ReactNode; children: ReactN
  */
 export function HomeSections({ eventId }: { eventId: string }) {
   return (
-    <div className="md:@container/home pb-3.5 md:mx-auto md:w-full md:max-w-[1120px] md:pb-0">
+    <div className="pb-3.5 md:@container/home md:mx-auto md:w-full md:max-w-[1120px] md:pb-0">
       <div className="home-wide:gap-7 flex flex-col gap-[22px]">
         <Section fallback={<HeroSkeleton />}>
           <HomeHero eventId={eventId} />
@@ -52,14 +57,11 @@ export function HomeSections({ eventId }: { eventId: string }) {
         <Section fallback={<ListSkeleton rows={1} />}>
           <StatusStripSection eventId={eventId} />
         </Section>
-        {/* Row pairs from wide up: the two compact summaries, then the two lists.
-            Top-aligned, so expanding one card's rows never stretches its neighbour. */}
+        {/* Two columns from wide up, top-aligned, so expanding one card's rows
+            never stretches its neighbour. */}
         <div className="home-wide:grid home-wide:grid-cols-2 home-wide:items-start home-wide:gap-3 flex flex-col gap-[22px]">
           <Section fallback={<CardSkeleton height={176} />}>
             <RsvpDonutCard eventId={eventId} />
-          </Section>
-          <Section fallback={<CardSkeleton height={176} />}>
-            <AnswerSourcesCard eventId={eventId} />
           </Section>
           <Section fallback={<CardSkeleton />}>
             <GroupEngagementCard eventId={eventId} />

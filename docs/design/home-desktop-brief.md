@@ -183,10 +183,9 @@ the layout inside each section widens.
 │  │ 💰 Budget         │ 🪑 Seating        │ 📨 Messages     │  │
 │  └───────────────────┴───────────────────┴─────────────────┘  │
 │                                                               │
-│  ┌ RSVP donut ─────────────┐ ┌ How guests answered ───────┐   │
-│  └─────────────────────────┘ └────────────────────────────┘   │
-│  ┌ Engagement by group ────┐ ┌ Recent activity ───────────┐   │
-│  │                         │ └────────────────────────────┘   │
+│  ┌ RSVP donut ─────────────┐ ┌ Engagement by group ───────┐   │
+│  └─────────────────────────┘ │                            │   │
+│  ┌ Recent activity ────────┐ └────────────────────────────┘   │
 │  └─────────────────────────┘                                  │
 └───────────────────────────────────────────────────────────────┘
 ```
@@ -229,12 +228,9 @@ the layout inside each section widens.
 
 ### Analytics
 
-- **Changed by [`home-answer-sources-brief.md`](./home-answer-sources-brief.md):** Group
-  heads is removed on both platforms, and a new **How guests answered** card follows the
-  donut. Design that card from that brief; this brief only places it
-- A **2-column grid in row pairs**, **top-aligned**:
-  - Row 1: RSVP donut | how guests answered (the two compact summaries)
-  - Row 2: engagement by group | recent activity (the two lists)
+- Group heads is removed on both platforms
+- A **2-column grid**, **top-aligned**, in mobile's order: RSVP donut | engagement by
+  group, then recent activity
 - Cards keep their natural height. Expanding "show all" grows only that card
 - The 5-row cap stays. The donut may get somewhat larger with the room; say so if you
   change it
@@ -295,8 +291,7 @@ Section 9 of `home-page-brief.md` applies in full. At desktop width specifically
 ## 8. Out of scope
 
 - **Any change to mobile**, meaning anything below the container threshold, including
-  its empty states - except the analytics change owned by
-  [`home-answer-sources-brief.md`](./home-answer-sources-brief.md)
+  its empty states
 - New data, queries, tables or capabilities - including the guest estimate
 - Featured Action ranking, eligibility, copy, or any dismissal mechanism (ADR 0010)
 - New copy (see section 7)

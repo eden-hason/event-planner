@@ -1,28 +1,58 @@
 import type { ReactNode } from 'react';
-import { IconBell, IconList, IconMessage, IconUsers } from '@tabler/icons-react';
+import { IconBell, IconList, IconUsers } from '@tabler/icons-react';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { GHOST_BAR, GhostEmpty } from '@/components/ghost-empty';
 import { rsvpPresentation } from '@/features/guests/utils';
-import { getHomeEvent, getHomeGroups, getHomeGuests, getRecentRsvpActivity } from '../queries';
-import { countAnswerSources, countHeads, groupHeads, percent } from '../utils/counts';
+import { getHomeGroups, getHomeGuests, getRecentRsvpActivity } from '../queries';
+import { countHeads, groupHeads, percent } from '../utils/counts';
+import { ringSegments, type RingSegment } from '../utils/ring';
 import { RsvpTriBar } from './rsvp-tri-bar';
 import { CollapsibleRows } from './collapsible-rows';
-
-/**
- * One tone per RSVP Source, in the card's fixed order. Deliberately not the
- * RSVP status colours: these say how an answer came in, not what it was.
- */
-const SOURCE_TONES = [
-  { bar: 'bg-primary', row: 'bg-primary/10 text-primary' },
-  { bar: 'bg-home-violet', row: 'bg-home-violet-tint text-home-violet' },
-  { bar: 'bg-chart-2', row: 'bg-chart-2/10 text-chart-2' },
-] as const;
 
 function Panel({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <section className={cn('bg-card border-border rounded-2xl border', className)}>{children}</section>
+  );
+}
+
+const RSVP_STROKES = {
+  confirmed: { solid: 'stroke-rsvp-confirmed', tint: 'stroke-rsvp-confirmed-tint' },
+  pending: { solid: 'stroke-rsvp-pending', tint: 'stroke-rsvp-pending-tint' },
+  declined: { solid: 'stroke-rsvp-declined', tint: 'stroke-rsvp-declined-tint' },
+} as const;
+
+/** A thin segmented ring, drawn clockwise from the top, with `children` in its middle. */
+function Ring({
+  segments,
+  tone,
+  children,
+}: {
+  segments: RingSegment<keyof typeof RSVP_STROKES>[];
+  tone: 'solid' | 'tint';
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative size-[116px] shrink-0">
+      <svg viewBox="0 0 116 116" className="size-full -rotate-90" aria-hidden="true">
+        {segments.map((segment) => (
+          <circle
+            key={segment.key}
+            cx="58"
+            cy="58"
+            r="50"
+            fill="none"
+            strokeWidth="9"
+            pathLength="100"
+            strokeDasharray={`${segment.length} ${100 - segment.length}`}
+            strokeDashoffset={-segment.start}
+            className={RSVP_STROKES[segment.key][tone]}
+          />
+        ))}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
+    </div>
   );
 }
 
@@ -32,45 +62,39 @@ export async function RsvpDonutCard({ eventId }: { eventId: string }) {
     getHomeGuests(eventId),
   ]);
   const heads = countHeads(guests);
-  const okP = percent(heads.confirmed, heads.total);
-  const decP = percent(heads.declined, heads.total);
 
-  const legend = [
-    { status: 'confirmed', n: heads.confirmed },
-    { status: 'pending', n: heads.pending },
-    { status: 'declined', n: heads.declined },
-  ] as const;
+  const legend = (['confirmed', 'pending', 'declined'] as const).map((status) => ({
+    key: status,
+    n: heads[status],
+  }));
 
   return (
     <Panel className="flex flex-col gap-3.5 p-4">
-      <h2 className="text-[15px] font-bold">{t('donutTitle')}</h2>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[15px] font-bold">{t('donutTitle')}</h2>
+        {heads.total > 0 && (
+          <span className="text-muted-foreground shrink-0 text-xs">
+            {t('donutTotal', { count: heads.total })}
+          </span>
+        )}
+      </div>
       {heads.total > 0 ? (
-        <div className="home-wide:gap-5 flex items-center gap-[18px]">
-          <div
-            className="home-wide:size-[128px] flex size-[112px] shrink-0 items-center justify-center rounded-full"
-            style={{
-              background: `conic-gradient(var(--rsvp-confirmed) 0 ${okP}%, var(--rsvp-pending) ${okP}% ${100 - decP}%, var(--rsvp-declined) ${100 - decP}% 100%)`,
-            }}
-          >
-            <div className="bg-card home-wide:size-[90px] flex size-[78px] flex-col items-center justify-center rounded-full">
-              <span className="home-wide:text-2xl text-[22px] leading-none font-extrabold">{okP}%</span>
-              <span className="text-muted-foreground text-[11px]">{t('donutCenter')}</span>
-            </div>
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
-            {legend.map(({ status, n }) => (
-              <div
-                key={status}
-                className={cn(
-                  'flex items-center justify-between rounded-[9px] px-2.5 py-[7px]',
-                  rsvpPresentation(status).chip,
-                )}
-              >
-                <span className="flex items-center gap-[7px] text-[13px] font-semibold">
-                  <span className={cn('size-2 rounded-full', rsvpPresentation(status).solid)} />
-                  {t(status)}
+        <div className="flex items-center gap-5">
+          <Ring segments={ringSegments(legend)} tone="solid">
+            <span dir="ltr" className="text-[28px] leading-none font-extrabold tracking-[-0.03em]">
+              {percent(heads.confirmed, heads.total)}%
+            </span>
+            <span className="text-muted-foreground mt-0.5 text-xs">{t('donutCenter')}</span>
+          </Ring>
+          <div className="divide-border flex min-w-0 flex-1 flex-col divide-y">
+            {legend.map(({ key, n }) => (
+              <div key={key} className="flex items-center gap-2 py-[9px]">
+                <span className={cn('size-2 shrink-0 rounded-full', rsvpPresentation(key).solid)} />
+                <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">{t(key)}</span>
+                <span className="text-[15px] font-bold tabular-nums">{n}</span>
+                <span className="text-muted-foreground w-[34px] text-end text-xs tabular-nums">
+                  {percent(n, heads.total)}%
                 </span>
-                <span className="text-sm font-bold">{n}</span>
               </div>
             ))}
           </div>
@@ -81,31 +105,28 @@ export async function RsvpDonutCard({ eventId }: { eventId: string }) {
           message={t('donutEmpty')}
           overlayOffset="64px"
         >
-          <div className="home-wide:gap-5 flex items-center gap-[18px]">
-            <div
-              className="home-wide:size-[128px] flex size-[112px] shrink-0 items-center justify-center rounded-full"
-              style={{
-                background:
-                  'conic-gradient(var(--rsvp-confirmed-tint) 0 58%, var(--rsvp-pending-tint) 58% 86%, var(--rsvp-declined-tint) 86% 100%)',
-              }}
+          <div className="flex items-center gap-5">
+            <Ring
+              segments={ringSegments([
+                { key: 'confirmed', n: 58 },
+                { key: 'pending', n: 28 },
+                { key: 'declined', n: 14 },
+              ])}
+              tone="tint"
             >
-              <div className="bg-card home-wide:size-[90px] flex size-[78px] flex-col items-center justify-center gap-1.5 rounded-full">
-                <span className={cn(GHOST_BAR, 'h-3.5 w-9')} />
-                <span className={cn(GHOST_BAR, 'h-[7px] w-[26px]')} />
-              </div>
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <span className={cn(GHOST_BAR, 'h-4 w-10')} />
+              <span className={cn(GHOST_BAR, 'mt-1.5 h-[7px] w-[26px]')} />
+            </Ring>
+            <div className="divide-border flex min-w-0 flex-1 flex-col divide-y">
               {[
-                ['bg-rsvp-confirmed-tint', 'bg-rsvp-confirmed/40', 'w-[46%]', 'opacity-100'],
-                ['bg-rsvp-pending-tint', 'bg-rsvp-pending/40', 'w-[38%]', 'opacity-70'],
-                ['bg-rsvp-declined-tint', 'bg-rsvp-declined/40', 'w-[30%]', 'opacity-45'],
-              ].map(([tint, bar, width, opacity]) => (
-                <div
-                  key={tint}
-                  className={cn('flex h-[34px] items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
-                >
-                  <span className={cn('h-2 rounded-full', bar, width)} />
-                  <span className={cn('h-2 w-5 rounded-full', bar)} />
+                ['bg-rsvp-confirmed-tint', 'w-[46%]', 'opacity-100'],
+                ['bg-rsvp-pending-tint', 'w-[38%]', 'opacity-70'],
+                ['bg-rsvp-declined-tint', 'w-[30%]', 'opacity-45'],
+              ].map(([dot, width, opacity]) => (
+                <div key={dot} className={cn('flex h-[38px] items-center gap-2', opacity)}>
+                  <span className={cn('size-2 shrink-0 rounded-full', dot)} />
+                  <span className={cn(GHOST_BAR, 'h-2', width)} />
+                  <span className={cn(GHOST_BAR, 'ms-auto h-2 w-6')} />
                 </div>
               ))}
             </div>
@@ -186,123 +207,6 @@ export async function GroupEngagementCard({ eventId }: { eventId: string }) {
                 </div>
               </div>
             ))}
-          </div>
-        </GhostEmpty>
-      )}
-    </Panel>
-  );
-}
-
-/**
- * How answered RSVPs came in, by RSVP Source: the Guest themselves, a Call
- * Round, or an edit in the guest list. Counts answers (Guest Records), so it
- * never reads as contradicting the head counts beside it.
- */
-export async function AnswerSourcesCard({ eventId }: { eventId: string }) {
-  const [t, event, guests] = await Promise.all([
-    getTranslations('home.mobile.analytics'),
-    getHomeEvent(eventId),
-    getHomeGuests(eventId),
-  ]);
-  const counts = countAnswerSources(guests);
-  // Two Call Rounds come with every paid Event, so a 0 there means "coming", not "not done".
-  const callsComing = event?.billingStatus === 'paid';
-
-  const sources = [
-    { label: t('sourcesGuest'), n: counts.guest },
-    { label: t('sourcesCall'), n: counts.call, hint: callsComing ? t('sourcesCallsHint') : null },
-    { label: t('sourcesList'), n: counts.list },
-  ].map((source, i) => ({ ...source, tone: SOURCE_TONES[i] }));
-
-  return (
-    <Panel className="flex flex-col gap-3 p-4">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-[15px] font-bold">{t('sourcesTitle')}</h2>
-        {counts.total > 0 && (
-          <span className="flex shrink-0 items-baseline gap-[5px]">
-            <span className="text-xl leading-none font-extrabold tabular-nums">{counts.total}</span>
-            <span className="text-muted-foreground text-xs">{t('sourcesUnit')}</span>
-          </span>
-        )}
-      </div>
-      {counts.total > 0 ? (
-        <>
-          <div className="bg-muted flex h-2.5 gap-0.5 overflow-hidden rounded-full">
-            {sources
-              .filter((source) => source.n > 0)
-              .map((source) => (
-                <div
-                  key={source.label}
-                  className={source.tone.bar}
-                  style={{ width: `${percent(source.n, counts.total)}%` }}
-                />
-              ))}
-          </div>
-          <div className="flex flex-col gap-2">
-            {sources.map((source) => {
-              const zero = source.n === 0;
-              const hint = zero ? source.hint : null;
-              return (
-                <div
-                  key={source.label}
-                  className={cn(
-                    'flex min-h-9 items-center justify-between gap-3 rounded-[9px] px-2.5 py-[7px]',
-                    zero ? 'bg-muted text-muted-foreground' : source.tone.row,
-                  )}
-                >
-                  <span className="flex min-w-0 items-center gap-[7px]">
-                    <span
-                      className={cn('size-2 shrink-0 rounded-full', zero ? 'bg-border' : source.tone.bar)}
-                    />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-[13px] font-semibold">{source.label}</span>
-                      {hint && (
-                        <span className="text-muted-foreground text-[11.5px] leading-[1.4] font-medium">
-                          {hint}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  {!hint && (
-                    <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
-                      <span className="text-sm font-bold">{source.n}</span>
-                      <span className="w-[34px] text-end text-xs font-semibold opacity-85">
-                        {percent(source.n, counts.total)}%
-                      </span>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        <GhostEmpty
-          icon={<IconMessage className="size-[18px]" strokeWidth={1.9} />}
-          message={t('sourcesEmpty')}
-          overlayOffset="56px"
-        >
-          <div className="flex flex-col gap-3">
-            <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
-              <div className="bg-primary/10 w-[58%]" />
-              <div className="bg-home-violet-tint w-[27%]" />
-              <div className="bg-chart-2/10 w-[15%]" />
-            </div>
-            <div className="flex flex-col gap-2">
-              {[
-                ['bg-primary/10', 'w-[34%]', 'opacity-100'],
-                ['bg-home-violet-tint', 'w-[46%]', 'opacity-70'],
-                ['bg-chart-2/10', 'w-[40%]', 'opacity-45'],
-              ].map(([tint, width, opacity]) => (
-                <div
-                  key={tint}
-                  className={cn('flex h-9 items-center justify-between rounded-[9px] px-2.5', tint, opacity)}
-                >
-                  <span className={cn(GHOST_BAR, 'h-2', width)} />
-                  <span className={cn(GHOST_BAR, 'h-2 w-11')} />
-                </div>
-              ))}
-            </div>
           </div>
         </GhostEmpty>
       )}

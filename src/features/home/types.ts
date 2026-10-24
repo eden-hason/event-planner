@@ -79,11 +79,3 @@ export type GroupHeadsRow = {
   declined: number;
   total: number;
 };
-
-/** Answered Guest Records (not heads) per RSVP Source. Rows with no recorded source are left out. */
-export type AnswerSourceCounts = {
-  guest: number;
-  call: number;
-  list: number;
-  total: number;
-};
