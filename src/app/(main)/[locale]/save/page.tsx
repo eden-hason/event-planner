@@ -1,6 +1,8 @@
+import { headers } from 'next/headers';
 import { setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { detectInAppBrowser } from '@/lib/in-app-browser';
 import {
   isVisitor,
   parseSaveReason,
@@ -40,11 +42,15 @@ export default async function SavePage({
   // Already saved - a second tab, or back after saving: nothing to do here.
   if (!isVisitor(data?.claims)) redirect({ href: from, locale });
 
+  const h = await headers();
+  const inAppBrowser = !!detectInAppBrowser(h.get('user-agent'), h.get('sec-ch-ua'));
+
   return (
     <SaveEventPage
       from={from}
       reason={parseSaveReason(reason)}
       startAt={exists === '1' ? 'googleExists' : 'details'}
+      inAppBrowser={inAppBrowser}
     />
   );
 }

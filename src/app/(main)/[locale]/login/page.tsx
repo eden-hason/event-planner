@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
+import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { AuthTakeover } from '@/features/auth/components/auth-takeover';
 import { isVisitor } from '@/features/auth';
 
@@ -53,7 +54,16 @@ export default async function LoginPage({
 
   await logInAppBrowserProbe(next);
 
+  const h = await headers();
+  const inAppBrowser = detectInAppBrowser(h.get('user-agent'), h.get('sec-ch-ua'));
+
   // Signing in from here replaces a Visitor's session, and their Event goes
   // with it once the sign-in succeeds - so they are told before they start.
-  return <AuthTakeover next={next} holdsUnsavedEvent={isVisitor(data.user)} />;
+  return (
+    <AuthTakeover
+      next={next}
+      holdsUnsavedEvent={isVisitor(data.user)}
+      inAppBrowser={inAppBrowser}
+    />
+  );
 }
