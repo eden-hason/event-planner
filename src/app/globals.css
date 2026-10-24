@@ -684,44 +684,46 @@ a:focus-visible {
    step, which the takeover's pastel wash had been compensating for.
 
    The page does not render `TakeoverShell`, so it sets the whole palette here
-   rather than overriding `TAKEOVER_TOKENS`. */
+   rather than overriding `TAKEOVER_TOKENS`.
+
+   Where the design's value sits close to an app token, it is that token, so
+   the page moves with the app's theme. The rest stay literal on purpose: the
+   purple-tinted ink and muted ink, the borders the design lifts a step for
+   contrast, the disabled fills, and the dark brand text, which is lighter
+   than --primary to hold contrast on the dark field. */
 [data-save-page] {
-  --kt-brand: #d23cc2;
-  --kt-brand-deep: #b92aab;
-  --kt-brand-text: #b92aab;
+  --kt-brand: var(--primary);
+  --kt-brand-deep: color-mix(in oklch, var(--primary), black 12%);
+  --kt-brand-text: var(--kt-brand-deep);
   --kt-ink: #1a0b2e;
   --kt-ink-muted: #4b3a63;
-  --kt-ink-faint: #7a6a90;
+  --kt-ink-faint: var(--muted-foreground);
   --kt-ink-ghost: #857599;
   --kt-surface: var(--app-shell);
-  --kt-field: #ffffff;
+  --kt-field: var(--card);
   --kt-border: rgba(26, 11, 46, 0.16);
-  --kt-border-soft: rgba(26, 11, 46, 0.1);
+  --kt-border-soft: var(--border);
   --kt-border-hover: rgba(26, 11, 46, 0.24);
   --kt-disabled: #ddd3e8;
   --kt-on-disabled: #ffffff;
   --kt-on-disabled-outline: #b9aecb;
-  --kt-danger: #e11d48;
-  --kt-danger-soft: rgba(225, 29, 72, 0.07);
-  --kt-danger-border: rgba(225, 29, 72, 0.18);
-  --kt-brand-shadow: 0 6px 16px rgba(210, 60, 194, 0.28);
+  --kt-danger: var(--destructive);
+  --kt-danger-soft: color-mix(in oklch, var(--destructive) 7%, transparent);
+  --kt-danger-border: color-mix(in oklch, var(--destructive) 18%, transparent);
+  --kt-brand-shadow: 0 6px 16px color-mix(in oklch, var(--primary) 28%, transparent);
 }
 
 .dark [data-save-page] {
   --kt-brand-text: #f28ae8;
-  --kt-ink: #f5effc;
+  --kt-ink: var(--foreground);
   --kt-ink-muted: #cbbfdc;
-  --kt-ink-faint: #a193b6;
   --kt-ink-ghost: #9184a6;
-  --kt-field: #251b30;
   --kt-border: rgba(245, 239, 252, 0.2);
-  --kt-border-soft: rgba(245, 239, 252, 0.12);
   --kt-border-hover: rgba(245, 239, 252, 0.32);
   --kt-disabled: #2f2440;
   --kt-on-disabled: #8c7fa2;
   --kt-on-disabled-outline: #75688b;
-  --kt-danger: #fb7185;
-  --kt-danger-soft: rgba(251, 113, 133, 0.12);
-  --kt-danger-border: rgba(251, 113, 133, 0.26);
-  --kt-brand-shadow: 0 6px 18px rgba(210, 60, 194, 0.3);
+  --kt-danger-soft: color-mix(in oklch, var(--destructive) 12%, transparent);
+  --kt-danger-border: color-mix(in oklch, var(--destructive) 26%, transparent);
+  --kt-brand-shadow: 0 6px 18px color-mix(in oklch, var(--primary) 30%, transparent);
 }
