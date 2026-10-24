@@ -97,6 +97,18 @@ const SCENES: Partial<
     lift: 110,
     wideY: 20,
   },
+  bar_mitzva: {
+    phone: '/hero-bar-mitzva-scene.webp',
+    wide: '/hero-bar-mitzva-scene-wide.webp',
+    lift: 110,
+    wideY: 84,
+  },
+  bat_mitzva: {
+    phone: '/hero-bat-mitzva-scene.webp',
+    wide: '/hero-bat-mitzva-scene-wide.webp',
+    lift: 110,
+    wideY: 50,
+  },
 };
 
 /**
@@ -135,15 +147,24 @@ export async function HomeHero({ eventId }: { eventId: string }) {
           {/* The scene, pulled up by its `lift` so the empty top of its sky
               runs off the band and the centerpiece sits higher. The negative
               margin is what makes the clip that much shorter than the art, so
-              the fade below ends where the visible image does. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden [mask-image:linear-gradient(180deg,#000_0%,#000_52%,transparent_100%)] md:hidden"
-          >
-            <div
-              className="aspect-[928/1152] bg-cover bg-top"
-              style={{ backgroundImage: `url(${scene.phone})`, marginTop: -scene.lift }}
-            />
+              the fade below ends where the visible image does.
+
+              It also holds still for the first 120px of scroll while the
+              title and sheet move up over it, then leaves with the page: the
+              clip is sticky inside a runway 120px taller than itself, so it
+              pins until the runway's end pushes it out. The extra 120px is a
+              spacer, not padding: a sticky box only travels within its
+              parent's content box. The sheet covers the art as it rises, and
+              whatever reaches past the sheet is the transparent end of the
+              fade, so nothing shows over the next section. */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 md:hidden">
+            <div className="sticky top-0 overflow-hidden [mask-image:linear-gradient(180deg,#000_0%,#000_52%,transparent_100%)]">
+              <div
+                className="aspect-[928/1152] bg-cover bg-top"
+                style={{ backgroundImage: `url(${scene.phone})`, marginTop: -scene.lift }}
+              />
+            </div>
+            <div className="h-[120px]" />
           </div>
           {/* From `md` up, the wide art fills the panel. Cover fits any width;
               the position keeps the centerpiece in view when the panel is wide
