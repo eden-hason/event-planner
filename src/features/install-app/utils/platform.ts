@@ -1,11 +1,5 @@
+import { IN_APP_BROWSER_UA } from '@/lib/in-app-browser';
 import type { InstallPlatform } from '../types';
-
-/**
- * Apps that open links in their own browser. Nothing can be added to the home
- * screen from inside one, so the Install Card stays away (install-card-plan.md).
- */
-const IN_APP_BROWSER =
-  /FBAN|FBAV|FBIOS|Instagram|Line\/|GSA\/|Twitter|LinkedInApp|Snapchat|musical_ly|BytedanceWebview|WhatsApp/i;
 
 /** iOS browsers other than Safari and Chrome. They get no card. */
 const OTHER_IOS_BROWSER = /FxiOS|EdgiOS|OPiOS|OPT\/|Ddg\/|YaBrowser/;
@@ -35,7 +29,9 @@ export function detectInstallPlatform(
   userAgent: string,
   maxTouchPoints: number,
 ): InstallPlatform {
-  if (IN_APP_BROWSER.test(userAgent)) return 'none';
+  // Nothing can be added to the home screen from inside an app's own browser,
+  // so the Install Card stays away (install-card-plan.md).
+  if (IN_APP_BROWSER_UA.test(userAgent)) return 'none';
 
   if (/Android/i.test(userAgent)) return 'android';
 

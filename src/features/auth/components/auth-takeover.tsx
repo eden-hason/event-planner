@@ -12,6 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
 import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
+import { OpenInBrowserButton } from './open-in-browser-button';
 import { OtpCodeInput } from './otp-code-input';
 import {
   TakeoverBackButton,
@@ -34,6 +35,7 @@ import {
 export function AuthTakeover({
   next,
   holdsUnsavedEvent = false,
+  inAppBrowser = null,
 }: {
   next?: string;
   /**
@@ -41,6 +43,12 @@ export function AuthTakeover({
    * they have been planning, so the screen says so before they start.
    */
   holdsUnsavedEvent?: boolean;
+  /**
+   * The platform of the app browser this page was opened in, if any. Google
+   * refuses to sign in there, so its button leads out to the real browser
+   * instead. Safe even for a Visitor: signing in discards their Event anyway.
+   */
+  inAppBrowser?: 'android' | 'ios' | 'other' | null;
 }) {
   const t = useTranslations('auth');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -165,15 +173,21 @@ export function AuthTakeover({
         <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
       </div>
 
-      <button
-        type="button"
-        onClick={handleGoogle}
-        className="flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
-      >
-        <GoogleIcon />
-        {t('signInWithGoogle')}
-      </button>
-      {googleError && <TakeoverError>{googleError}</TakeoverError>}
+      {inAppBrowser ? (
+        <OpenInBrowserButton platform={inAppBrowser} />
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            className="flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
+          >
+            <GoogleIcon />
+            {t('signInWithGoogle')}
+          </button>
+          {googleError && <TakeoverError>{googleError}</TakeoverError>}
+        </>
+      )}
     </div>
   );
 

@@ -54,12 +54,19 @@ export function SaveEventPage({
   from,
   reason,
   startAt = 'details',
+  inAppBrowser = false,
 }: {
   /** Where they opened it from: where back goes, and where saving returns. */
   from: string;
   reason?: SaveReason;
   /** `googleExists` when Google just reported an existing account. */
   startAt?: 'details' | 'googleExists';
+  /**
+   * Opened inside an app's own browser. Google refuses to sign in there, and
+   * leaving for the real browser would leave the Event behind in this app's
+   * cookies - so phone is the only way to save, and Google is not offered.
+   */
+  inAppBrowser?: boolean;
 }) {
   const t = useTranslations('saveEvent');
   const tAuth = useTranslations('auth');
@@ -254,19 +261,23 @@ export function SaveEventPage({
                 </TakeoverButton>
               </form>
 
-              <div className="my-4 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
-                <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-                {tAuth('or')}
-                <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-              </div>
+              {!inAppBrowser && (
+                <>
+                  <div className="my-4 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
+                    <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+                    {tAuth('or')}
+                    <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+                  </div>
 
-              <OutlineButton onClick={() => goGoogle(false)} disabled={!named || busy}>
-                <span className={cn('flex', (!named || busy) && 'opacity-35 grayscale')}>
-                  <GoogleIcon />
-                </span>
-                {t('saveGoogle')}
-              </OutlineButton>
-              {googleErrorLine && <div className="mt-3">{googleErrorLine}</div>}
+                  <OutlineButton onClick={() => goGoogle(false)} disabled={!named || busy}>
+                    <span className={cn('flex', (!named || busy) && 'opacity-35 grayscale')}>
+                      <GoogleIcon />
+                    </span>
+                    {t('saveGoogle')}
+                  </OutlineButton>
+                  {googleErrorLine && <div className="mt-3">{googleErrorLine}</div>}
+                </>
+              )}
             </>
           )}
 
