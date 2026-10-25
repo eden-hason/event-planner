@@ -45,8 +45,13 @@ where the Owner knows them from.**
    header sticks to the top of the list while it scrolls, and the same control reads
    *Show less*, so collapsing is always one tap away.
 
-   Everyone else is reachable through search, which still runs across everyone read,
-   and through their groups. A line under the search field says so.
+   Everyone else is reachable through search and through their groups. A line under the
+   search field says so. **Search covers everyone read: the contacts the sync sent, and
+   every member of every group.** Today it covers only the first. A group member the sync
+   sent no contact for (no saved name, no name of their own) exists only inside their
+   group: `buildGroups` gives them a nameless entry, and they never join the contacts
+   list. In the spike that was most of the 936 unnamed group members. A search result
+   from a group shows the group, as every other row does.
 2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
    list. A group with no chat timestamp goes after the rest, smallest first.
 3. **A group opens into its members.** Tapping a card opens a members screen with a
