@@ -40,8 +40,10 @@ where the Owner knows them from.**
    - *Recent chats*: people the Owner has a one-on-one chat with, most recent first.
 
    A person appears in one section only, the first that fits. Each section opens as a
-   preview of its most recent few people, followed by a *Show all N* row that expands it in
-   place. That way *Recent chats* is not buried under 163 saved contacts.
+   preview of its most recent few people, with *Show all* on the section's header row.
+   That way *Recent chats* is not buried under 163 saved contacts. An expanded section's
+   header sticks to the top of the list while it scrolls, and the same control reads
+   *Show less*, so collapsing is always one tap away.
 
    Everyone else is reachable through search, which still runs across everyone read,
    and through their groups. A line under the search field says so.
