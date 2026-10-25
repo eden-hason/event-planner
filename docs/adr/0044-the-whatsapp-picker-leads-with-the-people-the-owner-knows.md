@@ -39,7 +39,10 @@ where the Owner knows them from.**
    - *Saved in your phone*: people with a saved name;
    - *Recent chats*: people the Owner has a one-on-one chat with, most recent first.
 
-   A person appears in one section only, the first that fits. Each section opens as a
+   **A person appears in one section only, the first that fits.** Someone the Owner saved
+   and also chats with is under *Saved in your phone* and not repeated under *Recent
+   chats*. Section counts are taken after this. *Saved in your phone* is ordered by last
+   one-on-one chat too; saved people with no chat come last, by name. Each section opens as a
    preview of its most recent few people, with *Show all* on the section's header row.
    That way *Recent chats* is not buried under 163 saved contacts. An expanded section's
    header sticks to the top of the list while it scrolls, and the same control reads
@@ -55,6 +58,13 @@ where the Owner knows them from.**
    split the members into *All*, *No name* and *Already on your list*, so the unnamed
    are one tap away in a large group. People with a name come first under *All*.
    The guest-group mapping (`GroupCombobox`) stays on the group card.
+
+   **A person is one selection wherever they appear**, matched by phone. The same person
+   can be listed in Contacts and inside one or more groups, but ticking or unticking them
+   in one place does the same everywhere else. A group's checkbox then shows *some*. A
+   person picked through more than one group takes the guest group of the first group
+   picked, as today. Someone picked from Contacts who is also in a picked group takes
+   that group's guest group.
 4. **Every person row shows their shared groups**, smallest group first, as many as fit,
    then `+N`. On the members screen this is left out, since the group is already known.
 5. **People already on the guest list are marked**, matched by phone against
