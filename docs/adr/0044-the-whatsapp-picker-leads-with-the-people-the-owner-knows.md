@@ -51,6 +51,9 @@ where the Owner knows them from.**
    Everyone else is reachable through their groups only. A line under the search field
    says so. **Search in Contacts covers these two sections and nothing else.** A group
    member is found by opening the group, where the members screen has its own search.
+   While searching, matches stay in their sections, which are shown in full with the
+   match highlighted. A search with no match says that it covers only these two sections,
+   and links to the Groups tab.
 2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
    list. A group with no chat timestamp goes after the rest, smallest first.
 3. **A group opens into its members.** Tapping a card opens a members screen with a
