@@ -45,13 +45,9 @@ where the Owner knows them from.**
    header sticks to the top of the list while it scrolls, and the same control reads
    *Show less*, so collapsing is always one tap away.
 
-   Everyone else is reachable through search and through their groups. A line under the
-   search field says so. **Search covers everyone read: the contacts the sync sent, and
-   every member of every group.** Today it covers only the first. A group member the sync
-   sent no contact for (no saved name, no name of their own) exists only inside their
-   group: `buildGroups` gives them a nameless entry, and they never join the contacts
-   list. In the spike that was most of the 936 unnamed group members. A search result
-   from a group shows the group, as every other row does.
+   Everyone else is reachable through their groups only. A line under the search field
+   says so. **Search in Contacts covers these two sections and nothing else.** A group
+   member is found by opening the group, where the members screen has its own search.
 2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
    list. A group with no chat timestamp goes after the rest, smallest first.
 3. **A group opens into its members.** Tapping a card opens a members screen with a
@@ -84,6 +80,11 @@ list.
 - **Keep one flat Contacts list and only sort it better.** Rejected: even ranked well,
   1,500 rows of mostly strangers is a list nobody scrolls. People found through groups are
   better recognised in their group.
+- **Search in Contacts across everyone read, group members included.** Rejected: results
+  would bring the strangers back, and most group-only members have no name to search by.
+  They are found in their group.
+- **A third, collapsed *Everyone else* section in Contacts.** Rejected for the same
+  reason: it is the flat list again, one tap away.
 - **Drop the Contacts tab and import only by group.** Rejected: one-on-one contacts who
   share no group with the Owner (a parent's friend, a colleague) would be unreachable.
 - **Expand group members inline in the Groups list.** Rejected: a 300-member group pushes
@@ -108,6 +109,10 @@ list.
   which reads as fewer contacts. The line under search explains it.
 - One new screen (*Name N people*) between pick and validate. It appears only when unnamed
   people are selected.
+- Someone the Owner neither saved nor chats with one-on-one can be picked only from a
+  group, so the Owner has to know which group they are in. A person in no group and with
+  no one-on-one chat cannot be picked at all. They would have had nothing but a number
+  to recognise them by anyway.
 - Hidden-ID one-on-one chats must be included in the batch phone lookup
   (`getPNsForLIDs`) that runs before the result is built. Today it covers only contacts and
   group participants, so a person the Owner chats with under a hidden ID could be missing
