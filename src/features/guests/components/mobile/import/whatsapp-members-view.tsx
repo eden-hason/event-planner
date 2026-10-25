@@ -24,8 +24,8 @@ import {
   PickBox,
   SearchEmptyState,
   SearchField,
-  StepFooter,
 } from './whatsapp-pick-parts';
+import { StepFooter } from './import-wizard-shell';
 
 type Chip = 'all' | 'unnamed' | 'listed';
 

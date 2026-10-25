@@ -13,7 +13,7 @@ import {
   type WhatsAppPick,
 } from '@/features/guests/utils/whatsapp-import';
 import { cn } from '@/lib/utils';
-import { StepFooter } from './whatsapp-pick-parts';
+import { StepFooter } from './import-wizard-shell';
 
 interface WhatsAppNameStepProps {
   people: Map<string, WhatsAppPerson>;

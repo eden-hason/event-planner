@@ -123,7 +123,7 @@ export function WhatsAppLinkStep({
         </div>
       </div>
 
-      <Button type="submit" disabled={!phone.trim()} className="mt-auto h-11 font-bold">
+      <Button type="submit" disabled={!phone.trim()} className="mt-auto h-12 shrink-0 text-base">
         {state.status === 'error' ? t('tryAgain') : t('getCode')}
       </Button>
     </form>

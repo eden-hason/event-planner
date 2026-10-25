@@ -12,7 +12,7 @@ import {
 import { WhatsAppContactsTab } from './whatsapp-contacts-tab';
 import { WhatsAppGroupsTab } from './whatsapp-groups-tab';
 import { WhatsAppMembersView } from './whatsapp-members-view';
-import { StepFooter } from './whatsapp-pick-parts';
+import { StepFooter } from './import-wizard-shell';
 
 type Tab = 'groups' | 'contacts';
 

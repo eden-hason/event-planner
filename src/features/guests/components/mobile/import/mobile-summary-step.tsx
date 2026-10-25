@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { IconCircleCheck, IconCircleX, IconLoader2 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import type { ImportGuestsState } from '@/features/guests/actions';
+import { StepFooter } from './import-wizard-shell';
 
 export interface SkipReason {
   key: string;
@@ -140,12 +141,11 @@ export function MobileSummaryStep({
         </div>
       </div>
 
-      <div className="bg-card flex shrink-0 flex-col gap-2 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-        <Button onClick={onGoToGuestList}>{ts('goToGuestList')}</Button>
-        <Button variant="ghost" onClick={onImportAnother}>
-          {importAnotherLabel}
-        </Button>
-      </div>
+      <StepFooter
+        action={ts('goToGuestList')}
+        onAction={onGoToGuestList}
+        secondary={{ label: importAnotherLabel, onAction: onImportAnother }}
+      />
     </div>
   );
 }

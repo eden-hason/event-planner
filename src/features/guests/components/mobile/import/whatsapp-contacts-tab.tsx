@@ -21,6 +21,7 @@ import {
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { cn } from '@/lib/utils';
 import {
+  ListNote,
   NothingHere,
   PersonRow,
   SearchEmptyState,
@@ -171,23 +172,26 @@ export function WhatsAppContactsTab({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-col gap-2 p-3 pb-1">
+      <div className="shrink-0 p-3 pb-2">
         <SearchField
           value={search}
           onChange={onSearchChange}
           placeholder={t('searchContacts')}
           clearLabel={t('clearSearch')}
         />
-        {(!searching || matchCount > 0) && (
-          <span className="text-muted-foreground text-xs leading-relaxed">
-            {searching
-              ? t('contactsResults', { count: matchCount })
-              : t('contactsInfo')}
-          </span>
-        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-3">
+        {matchCount > 0 && (
+          <ListNote
+            results={
+              searching
+                ? t('contactsResults', { count: matchCount })
+                : undefined
+            }
+            order={t('recentOrder')}
+          />
+        )}
         {renderSection('saved', t('sectionSaved'))}
         {renderSection('recent', t('sectionRecent'))}
 

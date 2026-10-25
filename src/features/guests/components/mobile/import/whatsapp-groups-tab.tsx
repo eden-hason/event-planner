@@ -2,7 +2,7 @@
 
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useTranslations } from 'next-intl';
-import { IconArrowsSort, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronRight } from '@tabler/icons-react';
 import type { GroupApp } from '@/features/guests/schemas';
 import type { WhatsAppGroup } from '@/features/guests/types';
 import {
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { GroupCombobox } from './group-combobox';
 import {
   Highlight,
+  ListNote,
   NothingHere,
   PickBox,
   SearchEmptyState,
@@ -77,28 +78,26 @@ export function WhatsAppGroupsTab({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-col gap-2 p-3 pb-1">
+      <div className="shrink-0 p-3 pb-2">
         <SearchField
           value={search}
           onChange={onSearchChange}
           placeholder={t('searchGroups')}
           clearLabel={t('clearSearch')}
         />
-        {searching ? (
-          shown.length > 0 && (
-            <span className="text-muted-foreground text-xs">
-              {t('groupsResults', { count: shown.length })}
-            </span>
-          )
-        ) : (
-          <span className="text-muted-foreground flex items-center gap-1 text-xs">
-            <IconArrowsSort size={14} />
-            {t('groupsOrder')}
-          </span>
-        )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 pt-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
+        {shown.length > 0 && (
+          <ListNote
+            results={
+              searching
+                ? t('groupsResults', { count: shown.length })
+                : undefined
+            }
+            order={t('recentOrder')}
+          />
+        )}
         {shown.map((group) => {
           const { state, picked, pickable } = groupPickState(
             group,

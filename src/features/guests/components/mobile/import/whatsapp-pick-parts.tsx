@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import {
+  IconArrowsSort,
   IconCheck,
   IconMinus,
   IconSearch,
@@ -33,8 +34,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * Small pieces shared by the WhatsApp pick step's Groups tab, Contacts tab,
- * members screen and name step (ADR 0044), so a person, a search, a dead end
- * and the bottom bar look the same wherever they appear.
+ * members screen and name step (ADR 0044), so a person, a search and a dead
+ * end look the same wherever they appear.
  */
 
 /**
@@ -132,6 +133,30 @@ export function SearchField({
   );
 }
 
+/**
+ * The line at the top of a tab's list: how many matched while searching,
+ * otherwise how the list is ordered. Lives inside the scrolling list, so it
+ * scrolls away and leaves only the search pinned.
+ */
+export function ListNote({
+  results,
+  order,
+}: {
+  /** The match count line, or undefined when not searching. */
+  results?: string;
+  order: string;
+}) {
+  if (results !== undefined) {
+    return <span className="text-muted-foreground text-xs">{results}</span>;
+  }
+  return (
+    <span className="text-muted-foreground flex items-center gap-1 text-xs">
+      <IconArrowsSort size={14} className="shrink-0" />
+      {order}
+    </span>
+  );
+}
+
 /** A search that found nothing: what was searched, and the one useful next step. */
 export function SearchEmptyState({
   title,
@@ -193,32 +218,6 @@ export function Tag({
   );
 }
 
-/** The bar pinned under a step: its one action, and an optional hint below it. */
-export function StepFooter({
-  action,
-  disabled,
-  onAction,
-  hint,
-}: {
-  action: string;
-  disabled?: boolean;
-  onAction: () => void;
-  hint?: string;
-}) {
-  return (
-    <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-      <Button className="h-12 text-base" disabled={disabled} onClick={onAction}>
-        {action}
-      </Button>
-      {hint && (
-        <span className="text-muted-foreground text-center text-xs">
-          {hint}
-        </span>
-      )}
-    </div>
-  );
-}
-
 interface PersonRowProps {
   phone: string;
   /** The number as the Owner reads it. */
@@ -277,9 +276,13 @@ export const PersonRow = memo(function PersonRow({
   // would toggle the checkbox.
   const Row = hasNameField ? 'div' : 'label';
   return (
+    // `shrink-0`: the lists are scrolling flex columns, which would otherwise
+    // squeeze a row down to its min height and spill a name field's number
+    // over the row above.
     <Row
       className={cn(
-        'flex min-h-[60px] items-center gap-3 border-b py-2 last:border-b-0',
+        'flex min-h-[60px] shrink-0 items-center gap-3 border-b last:border-b-0',
+        hasNameField ? 'py-3' : 'py-2',
         !hasNameField && !locked && 'cursor-pointer',
       )}
     >
