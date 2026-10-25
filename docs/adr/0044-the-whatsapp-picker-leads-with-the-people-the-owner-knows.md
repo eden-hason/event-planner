@@ -55,7 +55,9 @@ where the Owner knows them from.**
    match highlighted. A search with no match says that it covers only these two sections,
    and links to the Groups tab.
 2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
-   list. A group with no chat timestamp goes after the rest, smallest first.
+   list. A group with no chat timestamp goes after the rest, smallest first. The Groups
+   tab's search matches group names only. With no match, it says so, points to Contacts or
+   a group's own search for finding a person, and links to Contacts.
 3. **A group opens into its members.** Tapping a card opens a members screen with a
    checkbox per person, and the group's checkbox shows all, some or none. Filter chips
    split the members into *All*, *No name* and *Already on your list*, so the unnamed
