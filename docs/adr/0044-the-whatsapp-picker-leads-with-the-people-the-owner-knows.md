@@ -4,8 +4,8 @@ Date: 2026-10-25
 
 ## Status
 
-Proposed. Ranking by recent chat depends on a data check that has not been run yet (see
-Open below).
+Accepted. The chat-timestamp check it depended on ran on 2026-10-25 and passed (see
+Evidence below).
 
 ## Context
 
@@ -42,8 +42,7 @@ where the Owner knows them from.**
    Everyone else is reachable through search, which still runs across everyone read,
    and through their groups. A line under the search field says so.
 2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
-   list. If chat timestamps are not available, they are ordered by the share of members
-   with a name, then by size, smallest first.
+   list. A group with no chat timestamp goes after the rest, smallest first.
 3. **A group opens into its members.** Tapping a card opens a members screen with a
    checkbox per person, and the group's checkbox shows all, some or none. Filter chips
    split the members into *All*, *No name* and *Already on your list*, so the unnamed
@@ -99,12 +98,34 @@ list.
 - One new screen (*Name N people*) between pick and validate. It appears only when unnamed
   people are selected.
 
+- Hidden-ID one-on-one chats must be included in the batch phone lookup
+  (`getPNsForLIDs`) that runs before the result is built. Today it covers only contacts and
+  group participants, so a person the Owner chats with under a hidden ID could be missing
+  from *Recent chats*. See Evidence.
+
+## Evidence
+
+A probe linked the same account as backlog 0017's spike on 2026-10-25, with the import's
+own connection options (`syncFullHistory: false`). It printed counts only.
+
+| Chats | Total | With a timestamp | < 7 days | < 30 days | < 1 year | Older |
+|---|---|---|---|---|---|---|
+| One-on-one, by phone | 458 | 458 | 7 | 10 | 84 | 357 |
+| One-on-one, by hidden ID | 79 | 79 | 7 | 17 | 55 | 0 |
+| Group | 97 | 97 | 10 | 1 | 18 | 68 |
+
+- **Every chat carries a timestamp**, and all 89 groups matched a group chat. The 8 extra
+  group chats are groups the Owner has left. Chats arrive in two sync batches,
+  `INITIAL_BOOTSTRAP` (635) and `RECENT` (552), and the service already listens to both.
+- **Recency separates well.** 10 groups were active in the last week and 68 not for over a
+  year. Of 537 one-on-one chats, 41 were active in the last month.
+- **Hidden-ID chats are the recent ones**: all 79 are under a year old, and only 15
+  resolved to a phone from the sync's own mappings. The probe did not run the
+  `getPNsForLIDs` lookup the service runs, so the real share is likely higher. It still
+  has to be measured when this is built.
+
 ## Open
 
-- **Confirm chat timestamps reach a linked device in the recent sync** (`syncFullHistory:
-  false`): `chats` in `messaging-history.set` with `conversationTimestamp`, for one-on-one
-  and group chats. This needs one linked run against a real account. If they don't arrive,
-  points 1 and 2 fall back: *Recent chats* becomes "people with a one-on-one chat" with no
-  order beyond name, and groups use the fallback order above.
-- Whether community announcement groups can be recognised from the group metadata
-  (`isCommunityAnnounce`) and hidden, since they repeat the members of their community.
+- Whether community announcement groups (`isCommunityAnnounce`) should be hidden. The
+  probed account has no communities, so this is unverified. Hiding them when the flag is
+  set costs one filter.
