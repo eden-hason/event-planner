@@ -2,6 +2,7 @@
 
 import { ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface ImportWizardShellProps {
@@ -88,6 +89,47 @@ export function ImportWizardShell({
       <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-x-clip">
         {children}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The bar pinned under a step: its action, an optional second one below it,
+ * and an optional hint. One component so every step's buttons are the same
+ * size, whichever source the import came from.
+ */
+export function StepFooter({
+  action,
+  disabled,
+  onAction,
+  secondary,
+  hint,
+}: {
+  action: string;
+  disabled?: boolean;
+  onAction: () => void;
+  secondary?: { label: string; onAction: () => void };
+  hint?: string;
+}) {
+  return (
+    <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <Button className="h-12 text-base" disabled={disabled} onClick={onAction}>
+        {action}
+      </Button>
+      {secondary && (
+        <Button
+          variant="ghost"
+          className="h-12 text-base"
+          onClick={secondary.onAction}
+        >
+          {secondary.label}
+        </Button>
+      )}
+      {hint && (
+        <span className="text-muted-foreground text-center text-xs">
+          {hint}
+        </span>
+      )}
     </div>
   );
 }

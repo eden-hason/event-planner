@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getSampleData, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import {
@@ -18,6 +17,7 @@ import {
   type KululuFieldValue,
 } from '@/features/guests/utils/import-guests';
 import type { AnalyzeCsvResult } from '@/features/guests/actions/analyze-csv';
+import { StepFooter } from './import-wizard-shell';
 
 const KULULU_TO_AI_FIELD: Record<KululuFieldValue, string> = {
   name: 'full_name',
@@ -185,11 +185,11 @@ export function MobileMappingReviewStep({
       </div>
     </div>
 
-      <div className="bg-card shrink-0 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-        <Button onClick={onConfirm} disabled={!nameMapped} className="w-full">
-          {tm('confirm')}
-        </Button>
-      </div>
+      <StepFooter
+        action={tm('confirm')}
+        disabled={!nameMapped}
+        onAction={onConfirm}
+      />
     </div>
   );
 }

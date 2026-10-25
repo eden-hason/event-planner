@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconEdit, IconSparkles } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ImportAllValidState } from '../../import-all-valid-state';
 import {
@@ -19,6 +18,7 @@ import {
   isNewGroup,
   type RowEditsMap,
 } from './compute-import-rows';
+import { StepFooter } from './import-wizard-shell';
 import { MobileRowEditSheet, type RowEditDraft } from './mobile-row-edit-sheet';
 
 type Tab = 'errors' | 'valid';
@@ -269,16 +269,16 @@ export function MobileValidateStep({
           ))}
       </div>
 
-      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-        <Button disabled={validRows.length === 0} onClick={onImport}>
-          {tv('importCount', { count: validRows.length })}
-        </Button>
-        {needsFixRows.length > 0 && (
-          <span className="text-muted-foreground text-center text-xs">
-            {tv('footerSkip', { count: needsFixRows.length })}
-          </span>
-        )}
-      </div>
+      <StepFooter
+        action={tv('importCount', { count: validRows.length })}
+        disabled={validRows.length === 0}
+        onAction={onImport}
+        hint={
+          needsFixRows.length > 0
+            ? tv('footerSkip', { count: needsFixRows.length })
+            : undefined
+        }
+      />
 
       <MobileRowEditSheet
         open={editingRow !== null}
