@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import {
   IconCheck,
@@ -8,21 +9,38 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
-import { splitMatch } from '@/features/guests/utils/whatsapp-import';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import {
+  splitMatch,
+  type PickState,
+} from '@/features/guests/utils/whatsapp-import';
 import { cn } from '@/lib/utils';
 
 /**
- * Small pieces shared by the WhatsApp pick step's Groups tab, Contacts tab
- * and members screen (ADR 0044), so a person, a search and a dead end look
- * the same wherever they appear.
+ * Small pieces shared by the WhatsApp pick step's Groups tab, Contacts tab,
+ * members screen and name step (ADR 0044), so a person, a search, a dead end
+ * and the bottom bar look the same wherever they appear.
  */
 
-export type PickState = 'all' | 'some' | 'none';
-
 /**
- * The picker's checkbox: all, some (a group partly picked) or none. Disabled
- * for people already on the guest list, who cannot be picked again.
+ * The picker's checkbox: all, some (a group partly picked) or none. Larger
+ * than the desktop `SelectBox`, for a thumb. Disabled for people already on
+ * the guest list, who cannot be picked again.
  */
 export function PickBox({
   state,
@@ -88,32 +106,29 @@ export function SearchField({
   clearLabel: string;
 }) {
   return (
-    <div className="relative">
-      <IconSearch
-        size={16}
-        className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 -translate-y-1/2"
-      />
-      <Input
+    <InputGroup className={cn('h-11', value && 'border-primary')}>
+      <InputGroupAddon>
+        <IconSearch />
+      </InputGroupAddon>
+      <InputGroupInput
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={cn(
-          'h-11 ps-9 pe-10 text-[16px] [&::-webkit-search-cancel-button]:hidden',
-          value && 'border-primary',
-        )}
+        className="text-[16px] [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          aria-label={clearLabel}
-          className="bg-border text-foreground absolute end-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full"
-        >
-          <IconX size={12} stroke={3} />
-        </button>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            size="icon-xs"
+            aria-label={clearLabel}
+            onClick={() => onChange('')}
+          >
+            <IconX />
+          </InputGroupButton>
+        </InputGroupAddon>
       )}
-    </div>
+    </InputGroup>
   );
 }
 
@@ -126,38 +141,120 @@ export function SearchEmptyState({
 }: {
   title: string;
   body: string;
-  action: React.ReactNode;
+  action: string;
   onAction: () => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2.5 px-5 py-12 text-center">
-      <span className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full">
-        <IconSearch size={24} />
-      </span>
-      <span className="text-base font-semibold">{title}</span>
-      <span className="text-muted-foreground text-sm leading-relaxed">
-        {body}
-      </span>
-      <button
-        type="button"
-        onClick={onAction}
-        className="border-primary/30 text-primary mt-1.5 flex h-11 items-center gap-1.5 rounded-xl border px-4 text-sm font-semibold"
-      >
-        {action}
-      </button>
+    <Empty className="flex-1 border-0 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <IconSearch className="text-muted-foreground size-6" />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{body}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" onClick={onAction}>
+          {action}
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
+}
+
+/** A list with nothing in it at all, search or not. */
+export function NothingHere({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-muted-foreground flex flex-1 items-center justify-center py-16 text-sm">
+      {children}
     </div>
   );
 }
 
+/** A small count or status pill: picked (primary) or already a guest (success). */
+export function Tag({
+  tone,
+  children,
+}: {
+  tone: 'primary' | 'success';
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'shrink-0 rounded-md px-2 py-0.5 text-[11.5px] font-semibold',
+        tone === 'primary'
+          ? 'bg-primary/15 text-primary'
+          : 'bg-success/15 text-success',
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** The bar pinned under a step: its one action, and an optional hint below it. */
+export function StepFooter({
+  action,
+  disabled,
+  onAction,
+  hint,
+}: {
+  action: string;
+  disabled?: boolean;
+  onAction: () => void;
+  hint?: string;
+}) {
+  return (
+    <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <Button className="h-12 text-base" disabled={disabled} onClick={onAction}>
+        {action}
+      </Button>
+      {hint && (
+        <span className="text-muted-foreground text-center text-xs">
+          {hint}
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface PersonRowProps {
+  phone: string;
+  /** The number as the Owner reads it. */
+  localPhone: string;
+  label: string;
+  noNameLabel: string;
+  term: string;
+  selected: boolean;
+  locked: boolean;
+  lockedLabel: string;
+  /** Takes the row's `phone`, so one stable handler serves every row. */
+  onToggle: (phone: string) => void;
+  groupsLine?: string;
+  when?: string;
+  /**
+   * For someone WhatsApp has no name for: a field to type one in, shown in
+   * place of the name. Flat props rather than an object, to keep the memo.
+   */
+  onNameChange?: (phone: string, name: string) => void;
+  nameValue?: string;
+  namePlaceholder?: string;
+  nameLabel?: string;
+}
+
 /**
- * One person in a list: checkbox, name (highlighted while searching), number,
- * and optionally the groups they share with the Owner and when they last
- * chatted. A person already on the guest list is greyed out and marked.
+ * One person in a list: checkbox, name (highlighted while searching) or a
+ * field to type one, number, and optionally the groups they share with the
+ * Owner and when they last chatted. A person already on the guest list is
+ * greyed out and marked. Memoised: a long members list re-renders only the
+ * row that changed.
  */
-export function PersonRow({
+export const PersonRow = memo(function PersonRow({
+  phone,
+  localPhone,
   label,
   noNameLabel,
-  phone,
   term,
   selected,
   locked,
@@ -165,65 +262,79 @@ export function PersonRow({
   onToggle,
   groupsLine,
   when,
-}: {
-  label: string;
-  noNameLabel: string;
-  phone: string;
-  term: string;
-  selected: boolean;
-  locked: boolean;
-  lockedLabel: string;
-  onToggle: () => void;
-  groupsLine?: string;
-  when?: string;
-}) {
+  onNameChange,
+  nameValue = '',
+  namePlaceholder,
+  nameLabel,
+}: PersonRowProps) {
+  const hasNameField = onNameChange !== undefined;
+  const number = (
+    <span dir="ltr" className="text-muted-foreground shrink-0 text-xs">
+      <Highlight text={localPhone} term={term} />
+    </span>
+  );
+  // A row with a text field can't be one big <label>, or tapping the field
+  // would toggle the checkbox.
+  const Row = hasNameField ? 'div' : 'label';
   return (
-    <label
+    <Row
       className={cn(
         'flex min-h-[60px] items-center gap-3 border-b py-2 last:border-b-0',
-        locked ? 'cursor-default' : 'cursor-pointer',
+        !hasNameField && !locked && 'cursor-pointer',
       )}
     >
       <PickBox
         state={selected ? 'all' : 'none'}
-        onToggle={onToggle}
+        onToggle={() => onToggle(phone)}
         disabled={locked}
-        label={label || phone}
+        label={label || localPhone}
       />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <span
+      {hasNameField ? (
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span dir="ltr" className="self-start text-sm font-semibold">
+            <Highlight text={localPhone} term={term} />
+          </span>
+          <Input
+            value={nameValue}
+            onChange={(e) => onNameChange(phone, e.target.value)}
+            placeholder={namePlaceholder}
+            aria-label={nameLabel}
             className={cn(
-              'truncate text-[15px]',
-              !label ? 'text-muted-foreground italic' : 'font-medium',
-              locked && 'text-muted-foreground',
+              'h-10 text-[16px]',
+              !nameValue && 'border-warning bg-warning/5 border-dashed',
             )}
-          >
-            {label ? <Highlight text={label} term={term} /> : noNameLabel}
-          </span>
-          <span dir="ltr" className="text-muted-foreground shrink-0 text-xs">
-            <Highlight text={phone} term={term} />
-          </span>
+          />
         </div>
-        {groupsLine !== undefined && (
-          <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
-            <IconUsers size={13} className="shrink-0" />
-            <span className="truncate">{groupsLine}</span>
-          </span>
-        )}
-      </div>
+      ) : (
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <span
+              className={cn(
+                'truncate text-[15px]',
+                !label ? 'text-muted-foreground italic' : 'font-medium',
+                locked && 'text-muted-foreground',
+              )}
+            >
+              {label ? <Highlight text={label} term={term} /> : noNameLabel}
+            </span>
+            {number}
+          </div>
+          {groupsLine !== undefined && (
+            <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
+              <IconUsers size={13} className="shrink-0" />
+              <span className="truncate">{groupsLine}</span>
+            </span>
+          )}
+        </div>
+      )}
       {(when || locked) && (
         <div className="flex shrink-0 flex-col items-end gap-1">
           {when && (
             <span className="text-muted-foreground text-[11.5px]">{when}</span>
           )}
-          {locked && (
-            <span className="bg-success/15 text-success rounded-md px-2 py-0.5 text-[11.5px] font-semibold">
-              {lockedLabel}
-            </span>
-          )}
+          {locked && <Tag tone="success">{lockedLabel}</Tag>}
         </div>
       )}
-    </label>
+    </Row>
   );
-}
+});

@@ -1,4 +1,7 @@
+import { daysUntil, israelToday } from '@/lib/date-time';
+import { phoneSearchForms } from '@/lib/phone';
 import type { WhatsAppGroup, WhatsAppPerson } from '../types';
+import { headerState, type HeaderState } from './guest-selection';
 import type { ColumnMapping } from './import-guests';
 import type { ParsedCSV } from './parse-csv';
 
@@ -33,7 +36,7 @@ export interface RawWhatsAppGroup {
 type RawTimestamp = number | { toString(): string } | null | undefined;
 
 /** The subset of a Baileys `Chat` the import reads - never its messages. */
-export interface RawWhatsAppChat {
+interface RawWhatsAppChat {
   id?: string | null;
   conversationTimestamp?: RawTimestamp;
   lastMessageRecvTimestamp?: RawTimestamp;
@@ -180,7 +183,7 @@ export function buildPeople(
       phone,
       savedName: prev?.savedName ?? clean(contact.name),
       pushName: prev?.pushName ?? clean(contact.notify),
-      lastChatAt: prev?.lastChatAt ?? null,
+      lastChatAt: null,
     });
   }
 
@@ -188,10 +191,7 @@ export function buildPeople(
     const phone = personPhone(jid);
     if (!phone) continue;
     const prev = people.get(phone) ?? { phone, savedName: null, pushName: null, lastChatAt: null };
-    people.set(phone, {
-      ...prev,
-      lastChatAt: prev.lastChatAt === null || at > prev.lastChatAt ? at : prev.lastChatAt,
-    });
+    people.set(phone, { ...prev, lastChatAt: Math.max(prev.lastChatAt ?? 0, at) });
   }
   return people;
 }
@@ -233,13 +233,18 @@ export function buildGroups(
         lastActivityAt: book.chatTimes.get(bareJid(group.id)) ?? null,
       };
     })
-    .sort((a, b) => {
-      if (a.lastActivityAt !== null && b.lastActivityAt !== null) {
-        return b.lastActivityAt - a.lastActivityAt;
-      }
-      if (a.lastActivityAt !== b.lastActivityAt) return a.lastActivityAt === null ? 1 : -1;
-      return a.members.length - b.members.length;
-    });
+    .sort(
+      (a, b) =>
+        byRecentFirst(a.lastActivityAt, b.lastActivityAt) || a.members.length - b.members.length,
+    );
+}
+
+/** Most recent first, with no time at all after every time. */
+function byRecentFirst(a: number | null, b: number | null): number {
+  if (a === b) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return b - a;
 }
 
 /**
@@ -260,14 +265,9 @@ export function contactSections(contacts: WhatsAppPerson[]): {
   saved: WhatsAppPerson[];
   recent: WhatsAppPerson[];
 } {
-  const byRecency = (a: WhatsAppPerson, b: WhatsAppPerson) => {
-    if (a.lastChatAt !== b.lastChatAt) {
-      if (a.lastChatAt === null) return 1;
-      if (b.lastChatAt === null) return -1;
-      return b.lastChatAt - a.lastChatAt;
-    }
-    return whatsAppDisplayName(a).localeCompare(whatsAppDisplayName(b));
-  };
+  const byRecency = (a: WhatsAppPerson, b: WhatsAppPerson) =>
+    byRecentFirst(a.lastChatAt, b.lastChatAt) ||
+    whatsAppDisplayName(a).localeCompare(whatsAppDisplayName(b));
   return {
     saved: contacts.filter((c) => c.savedName !== null).sort(byRecency),
     recent: contacts.filter((c) => c.savedName === null && c.lastChatAt !== null).sort(byRecency),
@@ -309,15 +309,52 @@ function clean(value: string | null | undefined): string | null {
 
 /**
  * When a chat's last message was, relative to `now`: today, yesterday, or
- * longer ago (the picker shows a date then). Calendar days in local time.
+ * longer ago (the picker shows a date then). Calendar days in Israel, like
+ * every other date in the app.
  */
 export function chatDay(atSeconds: number, now: Date): 'today' | 'yesterday' | 'earlier' {
-  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const today = day(now);
-  const then = day(new Date(atSeconds * 1000));
-  if (then >= today) return 'today';
-  const yesterday = day(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
-  return then >= yesterday ? 'yesterday' : 'earlier';
+  const days = daysUntil(israelToday(new Date(atSeconds * 1000)), now);
+  return days >= 0 ? 'today' : days === -1 ? 'yesterday' : 'earlier';
+}
+
+/**
+ * Whether a person matches a search: either of their names or their number
+ * as the Owner reads it contains the text, or their number contains the
+ * digits typed (`054 123` finds `0541234567`).
+ */
+export function personMatches(term: string, person: WhatsAppPerson, localPhone?: string): boolean {
+  if (matchesSearch(term, person.savedName, person.pushName, localPhone)) return true;
+  const digits = term.replace(/\D/g, '');
+  return digits !== '' && phoneSearchForms(person.phone).some((form) => form.includes(digits));
+}
+
+/**
+ * A group's members as its members screen splits them, over those matching
+ * `term`: everyone pickable (named people first, so the ones the Owner can
+ * recognise lead), those WhatsApp has no name for, and those already on the
+ * guest list.
+ */
+export function memberLists(
+  members: WhatsAppPerson[],
+  term: string,
+  locked: ReadonlySet<string>,
+  localPhones: Map<string, string>,
+): {
+  matches: WhatsAppPerson[];
+  all: WhatsAppPerson[];
+  unnamed: WhatsAppPerson[];
+  listed: WhatsAppPerson[];
+} {
+  const matches = members.filter((m) => personMatches(term, m, localPhones.get(m.phone)));
+  const named: WhatsAppPerson[] = [];
+  const unnamed: WhatsAppPerson[] = [];
+  const listed: WhatsAppPerson[] = [];
+  for (const m of matches) {
+    if (locked.has(m.phone)) listed.push(m);
+    else if (whatsAppDisplayName(m)) named.push(m);
+    else unnamed.push(m);
+  }
+  return { matches, all: [...named, ...unnamed], unnamed, listed };
 }
 
 /**
@@ -347,27 +384,51 @@ export const EMPTY_WHATSAPP_PICK: WhatsAppPick = {
   names: {},
 };
 
+export type PickState = HeaderState;
+
 /**
- * Picks or drops a set of people at once - a group's checkbox, a "select
- * all", or one row. Picking from a group records the group in `groupOrder`.
- * People already on the guest list are never picked.
+ * Picks or drops people. People already on the guest list are never picked -
+ * every way of picking goes through here, so this is the one place that holds.
  */
 export function setPeoplePick(
   pick: WhatsAppPick,
   phones: string[],
   on: boolean,
-  options: { groupId?: string; locked?: ReadonlySet<string> } = {},
+  locked: ReadonlySet<string>,
 ): WhatsAppPick {
-  const { groupId, locked } = options;
   if (!on) {
     const drop = new Set(phones);
     return { ...pick, phones: pick.phones.filter((p) => !drop.has(p)) };
   }
   const have = new Set(pick.phones);
-  const add = phones.filter((p) => !have.has(p) && !locked?.has(p));
-  const groupOrder =
-    groupId && !pick.groupOrder.includes(groupId) ? [...pick.groupOrder, groupId] : pick.groupOrder;
-  return { ...pick, phones: add.length ? [...pick.phones, ...add] : pick.phones, groupOrder };
+  const add = phones.filter((p) => !have.has(p) && !locked.has(p));
+  return add.length ? { ...pick, phones: [...pick.phones, ...add] } : pick;
+}
+
+/**
+ * Picks or drops people from inside a group - its checkbox, its members
+ * screen's select all, or one member. The group joins `groupOrder` when the
+ * first of its members is picked this way and leaves it when none are left,
+ * whichever control did it.
+ */
+export function setGroupMembersPick(
+  pick: WhatsAppPick,
+  group: WhatsAppGroup,
+  phones: string[],
+  on: boolean,
+  locked: ReadonlySet<string>,
+): WhatsAppPick {
+  const next = setPeoplePick(pick, phones, on, locked);
+  const selected = new Set(next.phones);
+  const anyPicked = group.members.some((m) => selected.has(m.phone));
+  const listed = next.groupOrder.includes(group.id);
+  if (anyPicked === listed) return next;
+  return {
+    ...next,
+    groupOrder: anyPicked
+      ? [...next.groupOrder, group.id]
+      : next.groupOrder.filter((id) => id !== group.id),
+  };
 }
 
 /** A group's checkbox: everyone pickable when it is not already full, else nobody. */
@@ -376,13 +437,9 @@ export function toggleGroupPick(
   group: WhatsAppGroup,
   locked: ReadonlySet<string>,
 ): WhatsAppPick {
+  const { state } = groupPickState(group, new Set(pick.phones), locked);
   const phones = group.members.map((m) => m.phone);
-  const { state } = groupPickState(group, pick, locked);
-  if (state === 'all') {
-    const dropped = setPeoplePick(pick, phones, false);
-    return { ...dropped, groupOrder: dropped.groupOrder.filter((id) => id !== group.id) };
-  }
-  return setPeoplePick(pick, phones, true, { groupId: group.id, locked });
+  return setGroupMembersPick(pick, group, phones, state !== 'all', locked);
 }
 
 export function setGuestGroupPick(
@@ -407,23 +464,19 @@ export function setNamePick(pick: WhatsAppPick, phone: string, name: string): Wh
  */
 export function groupPickState(
   group: WhatsAppGroup,
-  pick: WhatsAppPick,
+  selected: ReadonlySet<string>,
   locked: ReadonlySet<string>,
-): { state: 'all' | 'some' | 'none'; picked: number; pickable: number } {
-  const selected = new Set(pick.phones);
-  let picked = 0;
-  let pickable = 0;
-  for (const member of group.members) {
-    if (locked.has(member.phone)) continue;
-    pickable++;
-    if (selected.has(member.phone)) picked++;
-  }
-  const state = picked === 0 ? 'none' : picked === pickable ? 'all' : 'some';
-  return { state, picked, pickable };
+): { state: PickState; picked: number; pickable: number } {
+  const pickable = group.members.map((m) => m.phone).filter((p) => !locked.has(p));
+  return {
+    state: headerState(selected, pickable),
+    picked: pickable.filter((p) => selected.has(p)).length,
+    pickable: pickable.length,
+  };
 }
 
 /** The name a picked person is imported under: typed, then from WhatsApp, then empty. */
-export function pickedName(pick: WhatsAppPick, person: WhatsAppPerson): string {
+function pickedName(pick: WhatsAppPick, person: WhatsAppPerson): string {
   return pick.names[person.phone]?.trim() || whatsAppDisplayName(person);
 }
 
@@ -485,30 +538,22 @@ export const WHATSAPP_IMPORT_MAPPING: ColumnMapping = { 0: 'name', 1: 'phone', 2
  */
 export function toWhatsAppImportTable(
   groups: WhatsAppGroup[],
-  contacts: WhatsAppPerson[],
+  people: Map<string, WhatsAppPerson>,
   pick: WhatsAppPick,
 ): { parsed: ParsedCSV; mapping: ColumnMapping } {
-  const people = peopleByPhone(groups, contacts);
   const groupsById = new Map(groups.map((g) => [g.id, g]));
-  const memberSets = new Map<string, Set<string>>();
-  const guestGroupOf = (phone: string): string => {
-    for (const id of pick.groupOrder) {
-      const group = groupsById.get(id);
-      if (!group) continue;
-      let members = memberSets.get(id);
-      if (!members) {
-        members = new Set(group.members.map((m) => m.phone));
-        memberSets.set(id, members);
-      }
-      if (members.has(phone)) return pick.guestGroups[id] ?? '';
+  const guestGroupByPhone = new Map<string, string>();
+  for (const id of pick.groupOrder) {
+    const guestGroup = pick.guestGroups[id] ?? '';
+    for (const member of groupsById.get(id)?.members ?? []) {
+      if (!guestGroupByPhone.has(member.phone)) guestGroupByPhone.set(member.phone, guestGroup);
     }
-    return '';
-  };
+  }
 
   const rows = pickedPeople(people, pick).map((person) => [
     pickedName(pick, person),
     toImportPhone(person.phone),
-    guestGroupOf(person.phone),
+    guestGroupByPhone.get(person.phone) ?? '',
   ]);
 
   return {

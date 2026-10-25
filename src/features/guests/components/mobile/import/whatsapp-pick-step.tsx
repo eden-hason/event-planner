@@ -1,19 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { GroupApp } from '@/features/guests/schemas';
 import type { WhatsAppGroup, WhatsAppPerson } from '@/features/guests/types';
-import { normalizePhone } from '@/features/guests/utils/import-guests';
 import {
   summarizePick,
   type WhatsAppPick,
 } from '@/features/guests/utils/whatsapp-import';
-import { cn } from '@/lib/utils';
 import { WhatsAppContactsTab } from './whatsapp-contacts-tab';
 import { WhatsAppGroupsTab } from './whatsapp-groups-tab';
 import { WhatsAppMembersView } from './whatsapp-members-view';
+import { StepFooter } from './whatsapp-pick-parts';
 
 type Tab = 'groups' | 'contacts';
 
@@ -25,12 +24,13 @@ interface WhatsAppPickStepProps {
   groupsByPhone: Map<string, WhatsAppGroup[]>;
   /** Each person's number as the Owner reads it, formatted once. */
   localPhones: Map<string, string>;
+  /** Phones already on the guest list - shown, never picked. */
+  locked: ReadonlySet<string>;
   /** The Event's existing guest groups, offered for each picked WhatsApp group. */
   guestGroups: GroupApp[];
-  /** The guest list's phones, to mark who is already a guest. */
-  existingPhones: Map<string, string>;
   pick: WhatsAppPick;
-  onPickChange: (pick: WhatsAppPick) => void;
+  /** Takes updater functions too, so row handlers can stay stable. */
+  onPickChange: Dispatch<SetStateAction<WhatsAppPick>>;
   /** The group opened into its members, if any - the flow's back button closes it. */
   openGroupId: string | null;
   onOpenGroupChange: (groupId: string | null) => void;
@@ -49,8 +49,8 @@ export function WhatsAppPickStep({
   people,
   groupsByPhone,
   localPhones,
+  locked,
   guestGroups,
-  existingPhones,
   pick,
   onPickChange,
   openGroupId,
@@ -58,19 +58,11 @@ export function WhatsAppPickStep({
   onContinue,
 }: WhatsAppPickStepProps) {
   const t = useTranslations('guests.import.whatsapp.pick');
+  // Radix Tabs writes its own `dir`, `ltr` by default - see `SeatingMobile`.
+  const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
   const [tab, setTab] = useState<Tab>('groups');
   const [groupSearch, setGroupSearch] = useState('');
   const [contactSearch, setContactSearch] = useState('');
-
-  // Matched the way the validate step matches, so nobody marked here turns
-  // into a duplicate there, or the other way round.
-  const locked = useMemo(() => {
-    const out = new Set<string>();
-    for (const phone of people.keys()) {
-      if (existingPhones.has(normalizePhone(`+${phone}`))) out.add(phone);
-    }
-    return out;
-  }, [people, existingPhones]);
 
   const summary = useMemo(() => summarizePick(people, pick), [people, pick]);
   const openGroup = openGroupId
@@ -96,40 +88,28 @@ export function WhatsAppPickStep({
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="bg-card flex shrink-0 border-b">
-        {tabs.map(({ key, label, count }) => {
-          const active = tab === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              aria-pressed={active}
-              className={cn(
-                'flex h-11 flex-1 items-center justify-center gap-1.5 border-b-2 text-sm font-semibold',
-                active
-                  ? 'border-primary text-primary'
-                  : 'text-muted-foreground border-transparent',
-              )}
-            >
-              {label}
-              <span
-                className={cn(
-                  'rounded-full px-1.5 py-0.5 text-[11px] font-bold',
-                  active
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-muted text-muted-foreground',
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+    <Tabs
+      value={tab}
+      onValueChange={(value) => setTab(value as Tab)}
+      dir={dir}
+      className="flex h-full min-h-0 flex-col gap-0"
+    >
+      <TabsList className="bg-card h-11 w-full shrink-0 rounded-none border-b p-0">
+        {tabs.map(({ key, label, count }) => (
+          <TabsTrigger
+            key={key}
+            value={key}
+            className="group text-muted-foreground data-[state=active]:border-b-primary data-[state=active]:text-primary h-full rounded-none border-0 border-b-2 border-transparent font-semibold data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            {label}
+            <span className="bg-muted text-muted-foreground group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary rounded-full px-1.5 py-0.5 text-[11px] font-bold">
+              {count}
+            </span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
 
-      {tab === 'groups' ? (
+      <TabsContent value="groups" className="flex min-h-0 flex-col">
         <WhatsAppGroupsTab
           groups={groups}
           guestGroups={guestGroups}
@@ -141,7 +121,8 @@ export function WhatsAppPickStep({
           onOpenGroup={onOpenGroupChange}
           onGoToContacts={() => setTab('contacts')}
         />
-      ) : (
+      </TabsContent>
+      <TabsContent value="contacts" className="flex min-h-0 flex-col">
         <WhatsAppContactsTab
           contacts={contacts}
           groupsByPhone={groupsByPhone}
@@ -153,24 +134,22 @@ export function WhatsAppPickStep({
           onSearchChange={setContactSearch}
           onGoToGroups={() => setTab('groups')}
         />
-      )}
+      </TabsContent>
 
-      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-        <Button
-          className="h-12 text-base"
-          disabled={summary.people === 0}
-          onClick={onContinue}
-        >
-          {summary.people === 0
+      <StepFooter
+        action={
+          summary.people === 0
             ? t('continueEmpty')
-            : t('continue', { count: summary.people })}
-        </Button>
-        {summary.unnamed > 0 && (
-          <span className="text-muted-foreground text-center text-xs">
-            {t('unnamedHint', { count: summary.unnamed })}
-          </span>
-        )}
-      </div>
-    </div>
+            : t('continue', { count: summary.people })
+        }
+        disabled={summary.people === 0}
+        onAction={onContinue}
+        hint={
+          summary.unnamed > 0
+            ? t('unnamedHint', { count: summary.unnamed })
+            : undefined
+        }
+      />
+    </Tabs>
   );
 }

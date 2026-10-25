@@ -1057,6 +1057,7 @@
           "yesterday": "Yesterday",
           "onList": "On your list",
           "noName": "No name",
+          "nameFor": "Name for {phone}",
           "emptyTab": "Nothing to show here",
           "continueEmpty": "Choose groups or contacts",
           "continue": "{count, plural, one {Continue with # person} other {Continue with # people}}",
@@ -1073,7 +1074,6 @@
           "selectResults": "All results",
           "pickedOf": "{picked} of {total}",
           "addName": "Add a name",
-          "nameFor": "Name for {phone}",
           "unnamedNote": "Anyone left without a name won't be imported",
           "listedNote": "People already on your list can't be picked again",
           "emptyTitle": "No \"{query}\" in this group",
@@ -1086,7 +1086,6 @@
           "progress": "{done} of {total}",
           "body": "These people have no name on WhatsApp. The name appears in the invitation and the RSVPs. Anyone left without a name won't be imported.",
           "placeholder": "Guest name",
-          "nameFor": "Name for {phone}",
           "remove": "Remove {phone} from the selection",
           "continue": "Continue to validation",
           "stillUnnamed": "{count, plural, one {# still has no name and won't be imported} other {# still have no name and won't be imported}}"

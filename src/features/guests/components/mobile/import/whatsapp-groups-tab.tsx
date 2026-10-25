@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconArrowsSort, IconChevronRight } from '@tabler/icons-react';
 import type { GroupApp } from '@/features/guests/schemas';
@@ -17,9 +17,11 @@ import { cn } from '@/lib/utils';
 import { GroupCombobox } from './group-combobox';
 import {
   Highlight,
+  NothingHere,
   PickBox,
   SearchEmptyState,
   SearchField,
+  Tag,
 } from './whatsapp-pick-parts';
 
 interface WhatsAppGroupsTabProps {
@@ -27,7 +29,7 @@ interface WhatsAppGroupsTabProps {
   groups: WhatsAppGroup[];
   guestGroups: GroupApp[];
   pick: WhatsAppPick;
-  onPickChange: (pick: WhatsAppPick) => void;
+  onPickChange: Dispatch<SetStateAction<WhatsAppPick>>;
   /** Phones already on the guest list - never picked. */
   locked: ReadonlySet<string>;
   search: string;
@@ -60,6 +62,18 @@ export function WhatsAppGroupsTab({
     () => groups.filter((g) => matchesSearch(search, g.subject)),
     [groups, search],
   );
+  const selected = useMemo(() => new Set(pick.phones), [pick.phones]);
+  // What a card shows that no pick changes, counted once rather than per tap.
+  const unnamedCounts = useMemo(
+    () =>
+      new Map(
+        groups.map((g) => [
+          g.id,
+          g.members.filter((m) => !whatsAppDisplayName(m)).length,
+        ]),
+      ),
+    [groups],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -88,13 +102,11 @@ export function WhatsAppGroupsTab({
         {shown.map((group) => {
           const { state, picked, pickable } = groupPickState(
             group,
-            pick,
+            selected,
             locked,
           );
           const listed = group.members.length - pickable;
-          const unnamed = group.members.filter(
-            (m) => !whatsAppDisplayName(m),
-          ).length;
+          const unnamed = unnamedCounts.get(group.id) ?? 0;
           // Only a group the Owner picked from decides anyone's guest group;
           // one that is partly picked because its members were picked
           // elsewhere has nothing to map.
@@ -113,7 +125,7 @@ export function WhatsAppGroupsTab({
                   <PickBox
                     state={state}
                     onToggle={() =>
-                      onPickChange(toggleGroupPick(pick, group, locked))
+                      onPickChange((p) => toggleGroupPick(p, group, locked))
                     }
                     disabled={pickable === 0}
                     label={group.subject}
@@ -129,16 +141,16 @@ export function WhatsAppGroupsTab({
                     {(state !== 'none' || listed > 0) && (
                       <span className="mt-1 flex flex-wrap gap-1.5">
                         {state !== 'none' && (
-                          <span className="bg-primary/15 text-primary rounded-md px-2 py-0.5 text-[11.5px] font-semibold">
+                          <Tag tone="primary">
                             {state === 'all'
                               ? t('pickedAll', { count: picked })
                               : t('pickedSome', { picked, total: pickable })}
-                          </span>
+                          </Tag>
                         )}
                         {listed > 0 && (
-                          <span className="bg-success/15 text-success rounded-md px-2 py-0.5 text-[11.5px] font-semibold">
+                          <Tag tone="success">
                             {t('alreadyGuests', { count: listed })}
-                          </span>
+                          </Tag>
                         )}
                       </span>
                     )}
@@ -164,7 +176,9 @@ export function WhatsAppGroupsTab({
                       side={null}
                       value={pick.guestGroups[group.id] ?? null}
                       onChange={(name) =>
-                        onPickChange(setGuestGroupPick(pick, group.id, name))
+                        onPickChange((p) =>
+                          setGuestGroupPick(p, group.id, name),
+                        )
                       }
                     />
                   </div>
@@ -183,9 +197,7 @@ export function WhatsAppGroupsTab({
               onAction={onGoToContacts}
             />
           ) : (
-            <div className="text-muted-foreground flex flex-1 items-center justify-center py-16 text-sm">
-              {t('emptyTab')}
-            </div>
+            <NothingHere>{t('emptyTab')}</NothingHere>
           ))}
       </div>
     </div>

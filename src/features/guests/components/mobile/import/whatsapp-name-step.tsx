@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconX } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { WhatsAppGroup, WhatsAppPerson } from '@/features/guests/types';
 import {
@@ -14,12 +13,15 @@ import {
   type WhatsAppPick,
 } from '@/features/guests/utils/whatsapp-import';
 import { cn } from '@/lib/utils';
+import { StepFooter } from './whatsapp-pick-parts';
 
 interface WhatsAppNameStepProps {
   people: Map<string, WhatsAppPerson>;
   groupsByPhone: Map<string, WhatsAppGroup[]>;
   localPhones: Map<string, string>;
   pick: WhatsAppPick;
+  /** Phones already on the guest list. */
+  locked: ReadonlySet<string>;
   onPickChange: (pick: WhatsAppPick) => void;
   onContinue: () => void;
 }
@@ -36,10 +38,12 @@ export function WhatsAppNameStep({
   groupsByPhone,
   localPhones,
   pick,
+  locked,
   onPickChange,
   onContinue,
 }: WhatsAppNameStepProps) {
   const t = useTranslations('guests.import.whatsapp.name');
+  const tp = useTranslations('guests.import.whatsapp.pick');
   // Fixed on entry, so a row stays put once its name is typed.
   const [phones] = useState(() =>
     pickedPeople(people, pick)
@@ -104,7 +108,7 @@ export function WhatsAppNameStep({
                 <button
                   type="button"
                   onClick={() =>
-                    onPickChange(setPeoplePick(pick, [phone], false))
+                    onPickChange(setPeoplePick(pick, [phone], false, locked))
                   }
                   aria-label={t('remove', { phone: local })}
                   className="text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg"
@@ -129,7 +133,7 @@ export function WhatsAppNameStep({
                 }}
                 enterKeyHint={i < rows.length - 1 ? 'next' : 'done'}
                 placeholder={t('placeholder')}
-                aria-label={t('nameFor', { phone: local })}
+                aria-label={tp('nameFor', { phone: local })}
                 className="h-11 text-[16px]"
               />
             </div>
@@ -137,16 +141,13 @@ export function WhatsAppNameStep({
         })}
       </div>
 
-      <div className="bg-card flex shrink-0 flex-col gap-1.5 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-        <Button className="h-12 text-base" onClick={onContinue}>
-          {t('continue')}
-        </Button>
-        {remaining > 0 && (
-          <span className="text-muted-foreground text-center text-xs">
-            {t('stillUnnamed', { count: remaining })}
-          </span>
-        )}
-      </div>
+      <StepFooter
+        action={t('continue')}
+        onAction={onContinue}
+        hint={
+          remaining > 0 ? t('stillUnnamed', { count: remaining }) : undefined
+        }
+      />
     </div>
   );
 }

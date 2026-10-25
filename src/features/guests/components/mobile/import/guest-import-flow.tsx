@@ -13,7 +13,8 @@ import type { AnalyzeCsvResult } from '@/features/guests/actions/analyze-csv';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { pickGoogleDriveFile } from '@/features/guests/utils/google-drive-picker';
 import type { ImportGuestData, GroupApp } from '@/features/guests/schemas';
-import { type ColumnMapping } from '@/features/guests/utils/import-guests';
+import type { WhatsAppGroup, WhatsAppPerson } from '@/features/guests/types';
+import { normalizePhone, type ColumnMapping } from '@/features/guests/utils/import-guests';
 import { ImportWizardShell } from './import-wizard-shell';
 import { MobileUploadStep } from './mobile-upload-step';
 import { MobileAnalyzeStep } from './mobile-analyze-step';
@@ -35,6 +36,10 @@ import {
 } from '@/features/guests/utils/whatsapp-import';
 import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
+
+// Stable stand-ins until the WhatsApp read lands, so the memos below hold.
+const NO_GROUPS: WhatsAppGroup[] = [];
+const NO_PEOPLE: WhatsAppPerson[] = [];
 
 type FlowStep =
   | 'upload'
@@ -116,14 +121,14 @@ export function GuestImportFlow({
   // The group opened into its members on the pick step; the header's back
   // arrow closes it before it leaves the step.
   const [openGroupId, setOpenGroupId] = useState<string | null>(null);
-  const whatsAppGroups = whatsApp.state.groups;
-  const whatsAppContacts = whatsApp.state.contacts;
+  const whatsAppGroups = whatsApp.state.groups ?? NO_GROUPS;
+  const whatsAppContacts = whatsApp.state.contacts ?? NO_PEOPLE;
   const whatsAppPeople = useMemo(
-    () => peopleByPhone(whatsAppGroups ?? [], whatsAppContacts ?? []),
+    () => peopleByPhone(whatsAppGroups, whatsAppContacts),
     [whatsAppGroups, whatsAppContacts],
   );
   const whatsAppGroupsByPhone = useMemo(
-    () => toGroupsByPhone(whatsAppGroups ?? []),
+    () => toGroupsByPhone(whatsAppGroups),
     [whatsAppGroups],
   );
   // Formatted once - parsing a couple of thousand numbers on every keystroke
@@ -135,6 +140,19 @@ export function GuestImportFlow({
       ),
     [whatsAppPeople],
   );
+  const openGroup = openGroupId
+    ? whatsAppGroups.find((g) => g.id === openGroupId)
+    : undefined;
+  // Who is already a guest, matched the way the validate step matches so
+  // nobody marked here turns into a duplicate there. Once per read, not per
+  // visit to the pick step: it parses every number.
+  const whatsAppLocked = useMemo(() => {
+    const out = new Set<string>();
+    for (const phone of whatsAppPeople.keys()) {
+      if (existingPhones.has(normalizePhone(`+${phone}`))) out.add(phone);
+    }
+    return out;
+  }, [whatsAppPeople, existingPhones]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [isConnectingToDrive, setIsConnectingToDrive] = useState(false);
@@ -179,8 +197,8 @@ export function GuestImportFlow({
 
   const toWhatsAppValidate = () => {
     const { parsed, mapping } = toWhatsAppImportTable(
-      whatsAppGroups ?? [],
-      whatsAppContacts ?? [],
+      whatsAppGroups,
+      whatsAppPeople,
       whatsAppPick,
     );
     setParsedData(parsed);
@@ -216,7 +234,7 @@ export function GuestImportFlow({
       goToGuestList();
       return;
     }
-    if (shownStep === 'whatsapp-pick' && openGroupId) {
+    if (shownStep === 'whatsapp-pick' && openGroup) {
       setOpenGroupId(null);
       return;
     }
@@ -371,7 +389,13 @@ export function GuestImportFlow({
 
   return (
     <ImportWizardShell
-      title={isWhatsApp ? tw('link.title') : t('title')}
+      title={
+        openGroup && shownStep === 'whatsapp-pick'
+          ? openGroup.subject
+          : isWhatsApp
+            ? tw('link.title')
+            : t('title')
+      }
       stepIndex={stepIndexFor(shownStep)}
       stepLabels={[
         ...(isWhatsApp
@@ -419,13 +443,13 @@ export function GuestImportFlow({
 
         {shownStep === 'whatsapp-pick' && (
           <WhatsAppPickStep
-            groups={whatsAppGroups ?? []}
-            contacts={whatsAppContacts ?? []}
+            groups={whatsAppGroups}
+            contacts={whatsAppContacts}
             people={whatsAppPeople}
             groupsByPhone={whatsAppGroupsByPhone}
             localPhones={whatsAppLocalPhones}
+            locked={whatsAppLocked}
             guestGroups={groups}
-            existingPhones={existingPhones}
             pick={whatsAppPick}
             onPickChange={setWhatsAppPick}
             openGroupId={openGroupId}
@@ -439,6 +463,7 @@ export function GuestImportFlow({
             people={whatsAppPeople}
             groupsByPhone={whatsAppGroupsByPhone}
             localPhones={whatsAppLocalPhones}
+            locked={whatsAppLocked}
             pick={whatsAppPick}
             onPickChange={setWhatsAppPick}
             onContinue={toWhatsAppValidate}

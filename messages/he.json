@@ -1057,6 +1057,7 @@
           "yesterday": "אתמול",
           "onList": "ברשימה",
           "noName": "ללא שם",
+          "nameFor": "שם עבור {phone}",
           "emptyTab": "אין מה להציג כאן",
           "continueEmpty": "יש לבחור קבוצות או אנשי קשר",
           "continue": "{count, plural, one {המשך עם אדם אחד} other {המשך עם # אנשים}}",
@@ -1073,7 +1074,6 @@
           "selectResults": "כל התוצאות",
           "pickedOf": "{picked} מתוך {total}",
           "addName": "הוספת שם",
-          "nameFor": "שם עבור {phone}",
           "unnamedNote": "מי שיישאר בלי שם לא ייובא",
           "listedNote": "מי שכבר ברשימה לא נבחר שוב",
           "emptyTitle": "לא נמצא \"{query}\" בקבוצה הזו",
@@ -1086,7 +1086,6 @@
           "progress": "{done} מתוך {total}",
           "body": "לאנשים האלה אין שם בוואטסאפ. השם יופיע בהזמנה ובאישורי ההגעה. מי שיישאר בלי שם לא ייובא.",
           "placeholder": "שם האורח",
-          "nameFor": "שם עבור {phone}",
           "remove": "הסרת {phone} מהבחירה",
           "continue": "המשך לאימות",
           "stillUnnamed": "{count, plural, one {אחד עדיין בלי שם ולא ייובא} other {# עדיין בלי שם ולא ייובאו}}"

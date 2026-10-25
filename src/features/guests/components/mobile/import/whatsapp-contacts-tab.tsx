@@ -1,20 +1,27 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { IconChevronDown } from '@tabler/icons-react';
 import type { WhatsAppGroup, WhatsAppPerson } from '@/features/guests/types';
 import {
   chatDay,
   contactSections,
-  matchesSearch,
+  personMatches,
   setPeoplePick,
   whatsAppLabel,
   type WhatsAppPick,
 } from '@/features/guests/utils/whatsapp-import';
-import { phoneSearchForms } from '@/lib/phone';
+import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { cn } from '@/lib/utils';
 import {
+  NothingHere,
   PersonRow,
   SearchEmptyState,
   SearchField,
@@ -31,7 +38,7 @@ interface WhatsAppContactsTabProps {
   groupsByPhone: Map<string, WhatsAppGroup[]>;
   localPhones: Map<string, string>;
   pick: WhatsAppPick;
-  onPickChange: (pick: WhatsAppPick) => void;
+  onPickChange: Dispatch<SetStateAction<WhatsAppPick>>;
   locked: ReadonlySet<string>;
   search: string;
   onSearchChange: (search: string) => void;
@@ -69,23 +76,27 @@ export function WhatsAppContactsTab({
 
   const shown = useMemo(() => {
     const filter = (people: WhatsAppPerson[]) =>
-      people.filter((p) =>
-        matchesSearch(
-          search,
-          p.savedName,
-          p.pushName,
-          localPhones.get(p.phone),
-          ...phoneSearchForms(p.phone),
-        ),
-      );
+      people.filter((p) => personMatches(search, p, localPhones.get(p.phone)));
     return { saved: filter(sections.saved), recent: filter(sections.recent) };
   }, [sections, search, localPhones]);
   const matchCount = shown.saved.length + shown.recent.length;
 
   const now = useMemo(() => new Date(), []);
   const dateFormat = useMemo(
-    () => new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }),
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: ADMIN_TIME_ZONE,
+      }),
     [locale],
+  );
+  const toggle = useCallback(
+    (phone: string) =>
+      onPickChange((p) =>
+        setPeoplePick(p, [phone], !p.phones.includes(phone), locked),
+      ),
+    [onPickChange, locked],
   );
   const whenOf = (person: WhatsAppPerson) => {
     if (person.lastChatAt === null) return undefined;
@@ -107,7 +118,6 @@ export function WhatsAppContactsTab({
   const renderSection = (key: SectionKey, title: string) => {
     const people = shown[key];
     if (people.length === 0) return null;
-    const total = searching ? people.length : sections[key].length;
     const open = searching || expanded[key];
     return (
       <section key={key}>
@@ -119,7 +129,9 @@ export function WhatsAppContactsTab({
         >
           <span className="text-[13px] font-bold">
             {title}{' '}
-            <span className="text-muted-foreground font-medium">· {total}</span>
+            <span className="text-muted-foreground font-medium">
+              · {people.length}
+            </span>
           </span>
           {!searching && people.length > PREVIEW && (
             <button
@@ -140,22 +152,15 @@ export function WhatsAppContactsTab({
         {(open ? people : people.slice(0, PREVIEW)).map((person) => (
           <PersonRow
             key={person.phone}
+            phone={person.phone}
+            localPhone={localPhones.get(person.phone) ?? person.phone}
             label={whatsAppLabel(person)}
             noNameLabel={t('noName')}
-            phone={localPhones.get(person.phone) ?? person.phone}
             term={search}
             selected={selected.has(person.phone)}
             locked={locked.has(person.phone)}
             lockedLabel={t('onList')}
-            onToggle={() =>
-              onPickChange(
-                setPeoplePick(
-                  pick,
-                  [person.phone],
-                  !selected.has(person.phone),
-                ),
-              )
-            }
+            onToggle={toggle}
             groupsLine={groupsLineOf(person)}
             when={whenOf(person)}
           />
@@ -195,9 +200,7 @@ export function WhatsAppContactsTab({
               onAction={onGoToGroups}
             />
           ) : (
-            <div className="text-muted-foreground flex flex-1 items-center justify-center py-16 text-sm">
-              {t('emptyTab')}
-            </div>
+            <NothingHere>{t('emptyTab')}</NothingHere>
           ))}
       </div>
     </div>
