@@ -15,8 +15,9 @@ import {
   buildPeople,
   createContactBook,
   jidPhone,
+  knownContacts,
   mergeContact,
-  sortContacts,
+  recordChat,
   unresolvedLids,
   type RawWhatsAppContact,
   type RawWhatsAppGroup,
@@ -162,7 +163,9 @@ export function runWhatsAppImport({
 
         const people = buildPeople(book, selfPhone);
         emit({ type: 'groups', groups: buildGroups(book, people, groups, selfPhone) });
-        emit({ type: 'contacts', contacts: sortContacts(people.values()) });
+        // Only people the Owner saved or chats with one-on-one: everyone else
+        // is reached through their groups, whose members carry their names.
+        emit({ type: 'contacts', contacts: knownContacts(people.values()) });
         await finish({ type: 'done' });
       } catch (error) {
         console.error('[whatsapp-import] settle failed:', (error as Error)?.message);
@@ -194,7 +197,14 @@ export function runWhatsAppImport({
         touch();
       });
       s.ev.on('lid-mapping.update', ({ lid, pn }) => addLidMapping(book, lid, pn));
-      s.ev.on('messaging-history.set', ({ contacts, lidPnMappings, syncType, progress }) => {
+      // Chats are read for their last message time only, which ranks people
+      // and groups (ADR 0044). Message content is never read.
+      s.ev.on('chats.upsert', (chats) => {
+        chats.forEach((c) => recordChat(book, c));
+        touch();
+      });
+      s.ev.on('messaging-history.set', ({ chats, contacts, lidPnMappings, syncType, progress }) => {
+        chats.forEach((c) => recordChat(book, c));
         contacts.forEach((c) => mergeContact(book, c));
         lidPnMappings?.forEach(({ lid, pn }) => addLidMapping(book, lid, pn));
         if (syncType === proto.HistorySync.HistorySyncType.RECENT && progress === 100) {

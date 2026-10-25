@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { addLidMapping, bareJid, buildGroups, buildPeople, createContactBook, EMPTY_WHATSAPP_PICK, jidPhone, matchesSearch, mergeContact, resolvePhone, setGuestGroupPick, sortContacts, summarizePick, toggleContactPick, toggleGroupPick, toImportSelection, toWhatsAppImportTable, unresolvedLids, WHATSAPP_IMPORT_MAPPING } from './whatsapp-import.ts';
+import { addLidMapping, bareJid, buildGroups, buildPeople, chatDay, contactSections, createContactBook, EMPTY_WHATSAPP_PICK, groupPickState, groupsByPhone, jidPhone, knownContacts, matchesSearch, mergeContact, peopleByPhone, recordChat, resolvePhone, setGuestGroupPick, setNamePick, setPeoplePick, splitMatch, summarizePick, toggleGroupPick, toWhatsAppImportTable, unresolvedLids, whatsAppLabel, WHATSAPP_IMPORT_MAPPING } from './whatsapp-import.ts';
 
 const PN = (digits: string) => `${digits}@s.whatsapp.net`;
 const LID = (id: string) => `${id}@lid`;
@@ -29,6 +29,7 @@ test('a later partial contact with an undefined name does not erase a saved name
     phone: '972541111111',
     savedName: 'Moshe Cohen',
     pushName: 'Moshe 🙂',
+    lastChatAt: null,
   });
 });
 
@@ -43,6 +44,7 @@ test('a person seen under both their phone jid and hidden jid is one record', ()
     phone: '972542222222',
     savedName: 'Dana Levi',
     pushName: 'Dana',
+    lastChatAt: null,
   });
 });
 
@@ -94,144 +96,220 @@ test('group members take the server phone first, then the book, and carry known 
   );
 
   assert.deepEqual(group.members, [
-    { phone: '972545555555', savedName: 'Saved', pushName: null },
-    { phone: '972546666666', savedName: null, pushName: null },
+    { phone: '972545555555', savedName: 'Saved', pushName: null, lastChatAt: null },
+    { phone: '972546666666', savedName: null, pushName: null, lastChatAt: null },
   ]);
   assert.equal(group.unresolvedCount, 1);
 });
 
-test('groups are listed largest first', () => {
+test('groups run by last activity, then groups with none, smallest first', () => {
   const book = createContactBook();
+  recordChat(book, { id: 'old@g.us', conversationTimestamp: 100 });
+  // A Long-like timestamp, as protobuf hands it over.
+  recordChat(book, { id: 'new@g.us', conversationTimestamp: { toString: () => '300' } });
+  // The same chat in a later batch with an older time keeps the newer one.
+  recordChat(book, { id: 'new@g.us', conversationTimestamp: 200 });
+  const member = (d: string) => ({ id: PN(d) });
   const groups = buildGroups(
     book,
     new Map(),
     [
-      { id: 'small', subject: 'Small', participants: [{ id: PN('972540000001') }] },
-      {
-        id: 'big',
-        subject: 'Big',
-        participants: [{ id: PN('972540000002') }, { id: PN('972540000003') }],
-      },
+      { id: 'old@g.us', subject: 'Old', participants: [member('972540000001')] },
+      { id: 'quiet-big@g.us', subject: 'Big', participants: [member('972540000002'), member('972540000003')] },
+      { id: 'new@g.us', subject: 'New', participants: [member('972540000004')] },
+      { id: 'quiet-small@g.us', subject: 'Small', participants: [member('972540000005')] },
     ],
     SELF,
   );
   assert.deepEqual(
-    groups.map((g: { id: string }) => g.id),
-    ['big', 'small'],
+    groups.map((g: { id: string; lastActivityAt: number | null }) => [g.id, g.lastActivityAt]),
+    [
+      ['new@g.us', 300],
+      ['old@g.us', 100],
+      ['quiet-small@g.us', null],
+      ['quiet-big@g.us', null],
+    ],
   );
 });
 
-test('contacts sort named people first, then by name', () => {
-  const sorted = sortContacts([
-    { phone: '1', savedName: null, pushName: null },
-    { phone: '2', savedName: null, pushName: 'Zohar' },
-    { phone: '3', savedName: 'Avi', pushName: null },
+test('a one-on-one chat under either alias sets when they last chatted', () => {
+  const book = createContactBook();
+  mergeContact(book, { id: PN('972541111111'), name: 'Saved, no chat' });
+  mergeContact(book, { id: LID('910'), notify: 'Hidden' });
+  addLidMapping(book, LID('910'), PN('972542222222'));
+  recordChat(book, { id: LID('910'), conversationTimestamp: 500 });
+  recordChat(book, { id: PN('972542222222'), lastMessageRecvTimestamp: 400 });
+  // A chat with someone the contacts never mentioned still yields a person.
+  recordChat(book, { id: PN('972543333333'), conversationTimestamp: 50 });
+  recordChat(book, { id: '120363@g.us', conversationTimestamp: 900 });
+  recordChat(book, { id: PN(SELF), conversationTimestamp: 900 });
+
+  const people = buildPeople(book, SELF);
+  assert.equal(people.get('972541111111')?.lastChatAt, null);
+  assert.equal(people.get('972542222222')?.lastChatAt, 500);
+  assert.deepEqual(people.get('972543333333'), {
+    phone: '972543333333',
+    savedName: null,
+    pushName: null,
+    lastChatAt: 50,
+  });
+  assert.equal(people.size, 3);
+});
+
+test('hidden one-on-one chats with no phone yet are included in the lookup', () => {
+  const book = createContactBook();
+  recordChat(book, { id: LID('920'), conversationTimestamp: 1 });
+  recordChat(book, { id: '120363@g.us', conversationTimestamp: 1 });
+  assert.deepEqual(unresolvedLids(book), [LID('920')]);
+});
+
+const person = (
+  phone: string,
+  savedName: string | null,
+  pushName: string | null,
+  lastChatAt: number | null = null,
+) => ({ phone, savedName, pushName, lastChatAt });
+
+test('Contacts lists only people saved or chatted with, each in one section', () => {
+  const contacts = knownContacts([
+    person('1', 'Avi', null, 100),
+    person('2', 'Bella', null),
+    person('3', null, 'Gal', 300),
+    person('4', 'Zohar', null, 200),
+    person('5', null, 'Stranger'),
+    person('6', null, null, 50),
   ]);
   assert.deepEqual(
-    sorted.map((p: { phone: string }) => p.phone),
-    ['3', '2', '1'],
+    contacts.map((p: { phone: string }) => p.phone),
+    ['1', '2', '3', '4', '6'],
+  );
+
+  const { saved, recent } = contactSections(contacts);
+  // Saved runs by last chat too; a saved person never chatted with comes last.
+  assert.deepEqual(saved.map((p: { phone: string }) => p.phone), ['4', '1', '2']);
+  assert.deepEqual(recent.map((p: { phone: string }) => p.phone), ['3', '6']);
+});
+
+test('a self-chosen name is marked the way WhatsApp marks it', () => {
+  assert.equal(whatsAppLabel(person('1', 'Avi', 'Avi K')), 'Avi');
+  assert.equal(whatsAppLabel(person('1', null, 'Itay')), '~ Itay');
+  assert.equal(whatsAppLabel(person('1', null, null)), '');
+});
+
+const group = (id: string, members: ReturnType<typeof person>[]) => ({
+  id,
+  subject: id,
+  members,
+  unresolvedCount: 0,
+  lastActivityAt: null,
+});
+
+test('each person lists their groups smallest first', () => {
+  const dana = person('972542222222', null, 'Dana');
+  const big = group('big', [dana, person('1', null, null), person('2', null, null)]);
+  const small = group('small', [dana]);
+  const byPhone = groupsByPhone([big, small]);
+  assert.deepEqual(
+    byPhone.get(dana.phone)?.map((g: { id: string }) => g.id),
+    ['small', 'big'],
   );
 });
 
-test('the selection becomes a name/phone/group table, one row per person', () => {
-  const family = {
-    id: 'g1',
-    subject: 'Family',
-    unresolvedCount: 0,
-    members: [
-      { phone: '972541111111', savedName: 'Moshe Cohen', pushName: 'Moshe' },
-      { phone: '972542222222', savedName: null, pushName: 'Dana' },
-    ],
-  };
-  const friends = {
-    id: 'g2',
-    subject: 'Friends',
-    unresolvedCount: 0,
-    members: [
-      { phone: '972542222222', savedName: null, pushName: 'Dana' },
-      { phone: '972543333333', savedName: null, pushName: null },
-    ],
-  };
+test('a group checkbox picks everyone pickable, and unpicks them all when full', () => {
+  const a = person('972541111111', 'A', null);
+  const b = person('972542222222', 'B', null);
+  const listed = person('972543333333', 'Already a guest', null);
+  const family = group('family', [a, b, listed]);
+  const locked = new Set([listed.phone]);
 
-  const { parsed, mapping } = toWhatsAppImportTable({
-    groups: [
-      { group: family, guestGroup: 'Family' },
-      { group: friends, guestGroup: null },
-    ],
-    contacts: [
-      { phone: '972541111111', savedName: 'Moshe Cohen', pushName: null },
-      { phone: '14155550100', savedName: 'Abroad', pushName: null },
-    ],
-  });
+  let pick = toggleGroupPick(EMPTY_WHATSAPP_PICK, family, locked);
+  assert.deepEqual(pick.phones, [a.phone, b.phone]);
+  assert.deepEqual(pick.groupOrder, ['family']);
+  assert.deepEqual(groupPickState(family, pick, locked), { state: 'all', picked: 2, pickable: 2 });
 
+  // Unticking one person anywhere leaves the group partly picked.
+  pick = setPeoplePick(pick, [b.phone], false);
+  assert.deepEqual(groupPickState(family, pick, locked), { state: 'some', picked: 1, pickable: 2 });
+
+  // From "some", the checkbox fills the group again rather than clearing it.
+  pick = toggleGroupPick(pick, family, locked);
+  assert.deepEqual(pick.phones, [a.phone, b.phone]);
+
+  pick = toggleGroupPick(pick, family, locked);
+  assert.deepEqual(pick.phones, []);
+  assert.deepEqual(pick.groupOrder, []);
+  // The empty pick itself is never mutated.
+  assert.deepEqual(EMPTY_WHATSAPP_PICK.phones, []);
+});
+
+test('the pick becomes a name/phone/group table, one row per person', () => {
+  const moshe = person('972541111111', 'Moshe Cohen', 'Moshe');
+  const dana = person('972542222222', null, 'Dana');
+  const nameless = person('972543333333', null, null);
+  const typed = person('972544444444', null, null);
+  const abroad = person('14155550100', 'Abroad', null);
+  const family = group('family', [moshe, dana]);
+  const friends = group('friends', [dana, nameless, typed]);
+
+  let pick = EMPTY_WHATSAPP_PICK;
+  pick = toggleGroupPick(pick, friends, new Set());
+  pick = toggleGroupPick(pick, family, new Set());
+  pick = setGuestGroupPick(pick, 'family', 'Family');
+  pick = setGuestGroupPick(pick, 'friends', 'Friends');
+  pick = setNamePick(pick, typed.phone, 'Aunt Rachel');
+  pick = setPeoplePick(pick, [abroad.phone, '972549999999'], true);
+
+  const { parsed, mapping } = toWhatsAppImportTable([family, friends], [moshe, abroad], pick);
   assert.deepEqual(mapping, WHATSAPP_IMPORT_MAPPING);
   assert.deepEqual(parsed.headers, ['name', 'phone', 'group']);
   assert.deepEqual(parsed.rows, [
-    ['Moshe Cohen', '0541111111', 'Family'],
-    // Already in Family, which was selected first - Friends does not re-add her.
-    ['Dana', '0542222222', 'Family'],
+    // Friends was picked from first, so it decides Dana's guest group.
+    ['Dana', '0542222222', 'Friends'],
     // No name anywhere: left blank for the validate step to flag.
-    ['', '0543333333', ''],
-    // Not an Israeli mobile: kept international, as a number from abroad has to be.
+    ['', '0543333333', 'Friends'],
+    // A name typed in the pick step wins.
+    ['Aunt Rachel', '0544444444', 'Friends'],
+    ['Moshe Cohen', '0541111111', 'Family'],
+    // Picked from Contacts and in no picked group: no guest group. Not an
+    // Israeli mobile: kept international, as a number from abroad has to be.
     ['Abroad', '+14155550100', ''],
+    // 972549999999 was never read, so it is dropped.
   ]);
 });
 
-test('picking toggles groups and contacts, keeping the order groups were ticked', () => {
-  let pick = EMPTY_WHATSAPP_PICK;
-  pick = toggleGroupPick(pick, 'b');
-  pick = toggleGroupPick(pick, 'a');
-  pick = toggleContactPick(pick, '972541111111');
-  assert.deepEqual(pick.groupIds, ['b', 'a']);
-  assert.deepEqual(pick.contactPhones, ['972541111111']);
-
-  pick = toggleGroupPick(pick, 'b');
-  pick = toggleContactPick(pick, '972541111111');
-  assert.deepEqual(pick.groupIds, ['a']);
-  assert.deepEqual(pick.contactPhones, []);
-  // The empty pick itself is never mutated.
-  assert.deepEqual(EMPTY_WHATSAPP_PICK.groupIds, []);
+test('someone picked from Contacts takes the guest group of a picked group they are in', () => {
+  const dana = person('972542222222', null, 'Dana');
+  const other = person('972541111111', 'Other', null);
+  const family = group('family', [dana, other]);
+  let pick = setPeoplePick(EMPTY_WHATSAPP_PICK, [other.phone], true, { groupId: 'family' });
+  pick = setGuestGroupPick(pick, 'family', 'Family');
+  pick = setPeoplePick(pick, [dana.phone], true);
+  const { parsed } = toWhatsAppImportTable([family], [dana], pick);
+  assert.deepEqual(parsed.rows, [
+    ['Other', '0541111111', 'Family'],
+    ['Dana', '0542222222', 'Family'],
+  ]);
 });
 
-test('a pick resolves to groups in tick order with their guest group, skipping stale ids', () => {
-  const groups = [
-    { id: 'a', subject: 'A', unresolvedCount: 0, members: [] },
-    { id: 'b', subject: 'B', unresolvedCount: 0, members: [] },
-  ];
-  const contacts = [{ phone: '972541111111', savedName: 'Moshe', pushName: null }];
-  let pick = EMPTY_WHATSAPP_PICK;
-  pick = toggleGroupPick(pick, 'b');
-  pick = toggleGroupPick(pick, 'a');
-  pick = toggleGroupPick(pick, 'gone');
-  pick = setGuestGroupPick(pick, 'b', 'Family');
-  pick = toggleContactPick(pick, '972541111111');
-  pick = toggleContactPick(pick, '972549999999');
+test('the pick summary counts each person once and counts those still nameless', () => {
+  const dana = person('972542222222', null, 'Dana');
+  const nameless = person('972543333333', null, null);
+  const named = person('972544444444', null, null);
+  const people = peopleByPhone([group('a', [dana, nameless, named])], [dana]);
+  let pick = setPeoplePick(EMPTY_WHATSAPP_PICK, [dana.phone, nameless.phone, named.phone], true);
+  pick = setNamePick(pick, named.phone, 'Typed');
+  assert.deepEqual(summarizePick(people, pick), { people: 3, unnamed: 1 });
 
-  const selection = toImportSelection(groups, contacts, pick);
-  assert.deepEqual(
-    selection.groups.map((g: { group: { id: string }; guestGroup: string | null }) => [
-      g.group.id,
-      g.guestGroup,
-    ]),
-    [
-      ['b', 'Family'],
-      ['a', null],
-    ],
-  );
-  assert.deepEqual(selection.contacts, contacts);
+  pick = setNamePick(pick, named.phone, '   ');
+  assert.deepEqual(summarizePick(people, pick), { people: 3, unnamed: 2 });
 });
 
-test('the pick summary counts each person once and counts the nameless', () => {
-  const dana = { phone: '972542222222', savedName: null, pushName: 'Dana' };
-  const nameless = { phone: '972543333333', savedName: null, pushName: null };
-  const summary = summarizePick({
-    groups: [
-      { group: { id: 'a', subject: 'A', unresolvedCount: 0, members: [dana, nameless] }, guestGroup: null },
-      { group: { id: 'b', subject: 'B', unresolvedCount: 0, members: [dana] }, guestGroup: null },
-    ],
-    contacts: [dana, { phone: '972544444444', savedName: 'Avi', pushName: null }],
-  });
-  assert.deepEqual(summary, { people: 3, unnamed: 1 });
+test('chat days are calendar days in local time', () => {
+  const now = new Date(2026, 9, 25, 9, 0);
+  const at = (d: Date) => d.getTime() / 1000;
+  assert.equal(chatDay(at(new Date(2026, 9, 25, 0, 5)), now), 'today');
+  assert.equal(chatDay(at(new Date(2026, 9, 24, 23, 59)), now), 'yesterday');
+  assert.equal(chatDay(at(new Date(2026, 9, 23, 12, 0)), now), 'earlier');
 });
 
 test('search matches any text, ignoring case and blank terms', () => {
@@ -240,4 +318,10 @@ test('search matches any text, ignoring case and blank terms', () => {
   assert.equal(matchesSearch('moSHE', 'Moshe Cohen', null), true);
   assert.equal(matchesSearch('0541', null, '0541111111'), true);
   assert.equal(matchesSearch('dana', 'Moshe', null), false);
+});
+
+test('a match splits out for highlighting, keeping the original case', () => {
+  assert.deepEqual(splitMatch('Moshe Cohen', 'coh'), { before: 'Moshe ', match: 'Coh', after: 'en' });
+  assert.deepEqual(splitMatch('Moshe', 'x'), { before: 'Moshe', match: '', after: '' });
+  assert.deepEqual(splitMatch('Moshe', ' '), { before: 'Moshe', match: '', after: '' });
 });
