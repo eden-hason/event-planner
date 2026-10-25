@@ -59,7 +59,11 @@ where the Owner knows them from.**
 3. **A group opens into its members.** Tapping a card opens a members screen with a
    checkbox per person, and the group's checkbox shows all, some or none. Filter chips
    split the members into *All*, *No name* and *Already on your list*, so the unnamed
-   are one tap away in a large group. People with a name come first under *All*.
+   are one tap away in a large group. People with a name come first under *All*. The
+   members screen's search matches name or number, the only way to find someone with no
+   name. While searching, the chips count the matches and *select all* acts on the matches
+   only. With no match, it says how many members were searched and that unnamed members
+   are found by number.
    The guest-group mapping (`GroupCombobox`) stays on the group card.
 
    **A person is one selection wherever they appear**, matched by phone. The same person
