@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface ImportWizardShellProps {
+  /** Names the source: a file, or WhatsApp. */
+  title: string;
   /** 0-indexed into `stepLabels`. */
   stepIndex: number;
   /** One per progress segment - the flow owns them, since they depend on the source. */
@@ -22,12 +24,12 @@ interface ImportWizardShellProps {
  * back semantics across four steps, not a page inside the app shell.
  */
 export function ImportWizardShell({
+  title,
   stepIndex,
   stepLabels,
   onBack,
   children,
 }: ImportWizardShellProps) {
-  const t = useTranslations('guests.import');
   const tMobile = useTranslations('guests.import.mobile.header');
 
   return (
@@ -42,7 +44,7 @@ export function ImportWizardShell({
           >
             <ChevronLeft className="size-[18px] rtl:rotate-180" />
           </button>
-          <span className="flex-1 truncate text-lg font-bold">{t('title')}</span>
+          <span className="flex-1 truncate text-lg font-bold">{title}</span>
           <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">
             {tMobile('stepOf', { step: stepIndex + 1, total: stepLabels.length })}
           </span>

@@ -123,7 +123,9 @@ release candidate and breaks when WhatsApp changes the protocol, so it gets no c
   - rejected or expired code → "Wait a few minutes and try again";
   - timeout;
   - the connection dropped.
-- **`whatsapp-pick-step.tsx`**: Groups and Contacts tabs, search, and per-row checkboxes
+- **`whatsapp-pick-step.tsx`**: *Revised by [ADR 0044](adr/0044-the-whatsapp-picker-leads-with-the-people-the-owner-knows.md):
+  ranking, a members screen per group, Contacts limited to saved and one-on-one, and a
+  naming step. The original v1 description follows.* Groups and Contacts tabs, search, and per-row checkboxes
   (a group selects all its members). Each selected group gets a `GroupCombobox`. A footer
   shows "N people selected" and how many have no name.
 - A short consent line before linking: read-only, unlinked when done, nothing stored

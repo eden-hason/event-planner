@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -13,7 +13,8 @@ import type { AnalyzeCsvResult } from '@/features/guests/actions/analyze-csv';
 import { parseCSVFile, type ParsedCSV } from '@/features/guests/utils/parse-csv';
 import { pickGoogleDriveFile } from '@/features/guests/utils/google-drive-picker';
 import type { ImportGuestData, GroupApp } from '@/features/guests/schemas';
-import { type ColumnMapping } from '@/features/guests/utils/import-guests';
+import type { WhatsAppGroup, WhatsAppPerson } from '@/features/guests/types';
+import { normalizePhone, type ColumnMapping } from '@/features/guests/utils/import-guests';
 import { ImportWizardShell } from './import-wizard-shell';
 import { MobileUploadStep } from './mobile-upload-step';
 import { MobileAnalyzeStep } from './mobile-analyze-step';
@@ -23,20 +24,30 @@ import { MobileSummaryStep, type SkipReason } from './mobile-summary-step';
 import { computeMergedRows, type RowEditsMap } from './compute-import-rows';
 import { WhatsAppLinkStep } from './whatsapp-link-step';
 import { WhatsAppPickStep } from './whatsapp-pick-step';
+import { WhatsAppNameStep } from './whatsapp-name-step';
 import { useWhatsAppImport } from '@/features/guests/hooks/use-whatsapp-import';
 import {
   EMPTY_WHATSAPP_PICK,
-  toImportSelection,
+  groupsByPhone as toGroupsByPhone,
+  peopleByPhone,
+  summarizePick,
   toWhatsAppImportTable,
   type WhatsAppPick,
 } from '@/features/guests/utils/whatsapp-import';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
+
+// Stable stand-ins until the WhatsApp read lands, so the memos below hold.
+const NO_GROUPS: WhatsAppGroup[] = [];
+const NO_PEOPLE: WhatsAppPerson[] = [];
 
 type FlowStep =
   | 'upload'
   | 'analyzing'
   | 'review'
   | 'whatsapp-link'
+  /** Naming the picked people WhatsApp has no name for - only when there are some. */
+  | 'whatsapp-name'
   | 'validate'
   | 'summary';
 
@@ -53,7 +64,14 @@ interface GuestImportFlowProps {
 
 function stepIndexFor(step: ShownStep): number {
   if (step === 'upload' || step === 'whatsapp-link') return 0;
-  if (step === 'analyzing' || step === 'review' || step === 'whatsapp-pick') return 1;
+  if (
+    step === 'analyzing' ||
+    step === 'review' ||
+    step === 'whatsapp-pick' ||
+    step === 'whatsapp-name'
+  ) {
+    return 1;
+  }
   if (step === 'validate') return 2;
   return 3;
 }
@@ -62,6 +80,7 @@ function stepIndexFor(step: ShownStep): number {
  * The mobile guest-import wizard's state machine: upload -> analyze ->
  * (mapping review, only when the AI wasn't confident) -> validate -> summary.
  * From WhatsApp (`?source=whatsapp`) the first two are link -> pick instead,
+ * with a naming step after pick when someone picked has no name (ADR 0044),
  * and the pick becomes the same table a file would, so validate and summary
  * run unchanged.
  *
@@ -99,6 +118,41 @@ export function GuestImportFlow({
   // Lives here rather than in the pick step so going back from validate
   // lands on the same ticks.
   const [whatsAppPick, setWhatsAppPick] = useState<WhatsAppPick>(EMPTY_WHATSAPP_PICK);
+  // The group opened into its members on the pick step; the header's back
+  // arrow closes it before it leaves the step.
+  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
+  const whatsAppGroups = whatsApp.state.groups ?? NO_GROUPS;
+  const whatsAppContacts = whatsApp.state.contacts ?? NO_PEOPLE;
+  const whatsAppPeople = useMemo(
+    () => peopleByPhone(whatsAppGroups, whatsAppContacts),
+    [whatsAppGroups, whatsAppContacts],
+  );
+  const whatsAppGroupsByPhone = useMemo(
+    () => toGroupsByPhone(whatsAppGroups),
+    [whatsAppGroups],
+  );
+  // Formatted once - parsing a couple of thousand numbers on every keystroke
+  // is noticeable on a phone.
+  const whatsAppLocalPhones = useMemo(
+    () =>
+      new Map(
+        [...whatsAppPeople.keys()].map((phone) => [phone, formatPhone(`+${phone}`)]),
+      ),
+    [whatsAppPeople],
+  );
+  const openGroup = openGroupId
+    ? whatsAppGroups.find((g) => g.id === openGroupId)
+    : undefined;
+  // Who is already a guest, matched the way the validate step matches so
+  // nobody marked here turns into a duplicate there. Once per read, not per
+  // visit to the pick step: it parses every number.
+  const whatsAppLocked = useMemo(() => {
+    const out = new Set<string>();
+    for (const phone of whatsAppPeople.keys()) {
+      if (existingPhones.has(normalizePhone(`+${phone}`))) out.add(phone);
+    }
+    return out;
+  }, [whatsAppPeople, existingPhones]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedCSV | null>(null);
   const [isConnectingToDrive, setIsConnectingToDrive] = useState(false);
@@ -127,16 +181,25 @@ export function GuestImportFlow({
     setExcludedRows(new Set());
     setRowEdits(new Map());
     setImportResult(null);
+    setOpenGroupId(null);
     setStep('whatsapp-link');
   };
 
+  // Anyone picked with no name is named first (ADR 0044); otherwise straight
+  // on to validate.
   const handleWhatsAppContinue = () => {
+    if (summarizePick(whatsAppPeople, whatsAppPick).unnamed > 0) {
+      setStep('whatsapp-name');
+      return;
+    }
+    toWhatsAppValidate();
+  };
+
+  const toWhatsAppValidate = () => {
     const { parsed, mapping } = toWhatsAppImportTable(
-      toImportSelection(
-        whatsApp.state.groups ?? [],
-        whatsApp.state.contacts ?? [],
-        whatsAppPick,
-      ),
+      whatsAppGroups,
+      whatsAppPeople,
+      whatsAppPick,
     );
     setParsedData(parsed);
     setColumnMapping(mapping);
@@ -169,6 +232,14 @@ export function GuestImportFlow({
   const handleBack = () => {
     if (step === 'upload') {
       goToGuestList();
+      return;
+    }
+    if (shownStep === 'whatsapp-pick' && openGroup) {
+      setOpenGroupId(null);
+      return;
+    }
+    if (step === 'whatsapp-name') {
+      setStep('whatsapp-link');
       return;
     }
     if (shownStep === 'whatsapp-pick') {
@@ -318,6 +389,13 @@ export function GuestImportFlow({
 
   return (
     <ImportWizardShell
+      title={
+        openGroup && shownStep === 'whatsapp-pick'
+          ? openGroup.subject
+          : isWhatsApp
+            ? tw('link.title')
+            : t('title')
+      }
       stepIndex={stepIndexFor(shownStep)}
       stepLabels={[
         ...(isWhatsApp
@@ -365,12 +443,30 @@ export function GuestImportFlow({
 
         {shownStep === 'whatsapp-pick' && (
           <WhatsAppPickStep
-            groups={whatsApp.state.groups ?? []}
-            contacts={whatsApp.state.contacts ?? []}
+            groups={whatsAppGroups}
+            contacts={whatsAppContacts}
+            people={whatsAppPeople}
+            groupsByPhone={whatsAppGroupsByPhone}
+            localPhones={whatsAppLocalPhones}
+            locked={whatsAppLocked}
             guestGroups={groups}
             pick={whatsAppPick}
             onPickChange={setWhatsAppPick}
+            openGroupId={openGroupId}
+            onOpenGroupChange={setOpenGroupId}
             onContinue={handleWhatsAppContinue}
+          />
+        )}
+
+        {step === 'whatsapp-name' && (
+          <WhatsAppNameStep
+            people={whatsAppPeople}
+            groupsByPhone={whatsAppGroupsByPhone}
+            localPhones={whatsAppLocalPhones}
+            locked={whatsAppLocked}
+            pick={whatsAppPick}
+            onPickChange={setWhatsAppPick}
+            onContinue={toWhatsAppValidate}
           />
         )}
 

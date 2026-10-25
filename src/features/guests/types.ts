@@ -12,6 +12,12 @@ export interface WhatsAppPerson {
   phone: string;
   savedName: string | null;
   pushName: string | null;
+  /**
+   * Unix seconds of the last message in the Owner's one-on-one chat with them,
+   * or null when they have none. The Contacts tab lists only people with a
+   * saved name or a one-on-one chat (ADR 0044).
+   */
+  lastChatAt: number | null;
 }
 
 export interface WhatsAppGroup {
@@ -20,6 +26,8 @@ export interface WhatsAppGroup {
   members: WhatsAppPerson[];
   /** Members whose phone number could not be resolved - shown, never imported. */
   unresolvedCount: number;
+  /** Unix seconds of the group chat's last message; orders the Groups tab. */
+  lastActivityAt: number | null;
 }
 
 export type WhatsAppImportErrorReason =
