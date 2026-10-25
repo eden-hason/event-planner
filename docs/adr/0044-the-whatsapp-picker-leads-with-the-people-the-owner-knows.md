@@ -1,0 +1,110 @@
+# The WhatsApp picker leads with the people the Owner knows
+
+Date: 2026-10-25
+
+## Status
+
+Proposed. Ranking by recent chat depends on a data check that has not been run yet (see
+Open below).
+
+## Context
+
+The WhatsApp import (backlog 0017, `docs/whatsapp-import-plan.md`) reads the Owner's
+groups and contacts through a short-lived linked device, then shows a pick step with a
+Groups tab and a Contacts tab. The first real use on a phone (2026-10-25, 89 groups,
+1,566 contacts) showed four problems:
+
+- **A group can't be opened.** A card shows only "296 members · 291 with no name". The Owner
+  can't see who is in it and can only take all of it or none of it. A large group of
+  colleagues is useless even if ten of them are invited.
+- **Contacts is mostly strangers.** The tab lists everyone the sync carries a name for,
+  most of them people seen in group chats. Only about 163 are names the Owner saved
+  (backlog 0017's spike). `sortContacts` sorts alphabetically with named people first, so
+  names made of symbols and emoji (`.😑😑.`, `:={`, `<`, `~`) sit at the top.
+- **A contact row gives no context.** A name such as `~Itay` or a bare number is hard to
+  recognise without knowing where the Owner knows them from.
+- **Missing names surface too late.** In the same run, 7 of the 18 people picked (39%) were
+  skipped at the summary for having no name. Fixing them meant opening a full row-edit
+  sheet for each one in the validate step.
+
+Groups are also ordered by size, largest first, which puts the least relevant groups (a
+296-member guild) at the top and the family groups below them.
+
+## Decision
+
+**The pick step leads with the people the Owner knows, and every person is shown with
+where the Owner knows them from.**
+
+1. **Contacts lists only people the Owner knows directly**, in two sections:
+   - *Saved in your phone*: people with a saved name;
+   - *Recent chats*: people the Owner has a one-on-one chat with, most recent first.
+
+   Everyone else is reachable through search, which still runs across everyone read,
+   and through their groups. A line under the search field says so.
+2. **Groups are ordered by recent activity**, the order of the Owner's own WhatsApp chat
+   list. If chat timestamps are not available, they are ordered by the share of members
+   with a name, then by size, smallest first.
+3. **A group opens into its members.** Tapping a card opens a members screen with a
+   checkbox per person, and the group's checkbox shows all, some or none. Filter chips
+   split the members into *All*, *No name* and *Already on your list*, so the unnamed
+   are one tap away in a large group. People with a name come first under *All*.
+   The guest-group mapping (`GroupCombobox`) stays on the group card.
+4. **Every person row shows their shared groups**, smallest group first, as many as fit,
+   then `+N`. On the members screen this is left out, since the group is already known.
+5. **People already on the guest list are marked**, matched by phone against
+   `existingPhones`: "Already on your list" on a person, "N already guests" on a group card.
+   They can't be selected, so duplicates no longer appear as errors in the validate step.
+6. **Missing names are filled in during the pick step.** An unnamed person on the members
+   screen gets an inline name field. Continuing with any unnamed people selected first
+   shows a *Name N people* screen: one field per person, with their number and group,
+   where the keyboard's Next key moves to the next field. The Owner can continue anyway.
+   Those people are then skipped as today. The validate step's checks stay as the safety
+   net, unchanged.
+7. **Names the person chose themselves are shown as WhatsApp shows them**, with a leading
+   `~`, so the Owner can tell them apart from names they saved.
+8. **The wizard title names the source.** The WhatsApp flow is titled "Import from
+   WhatsApp", not "Import guests from CSV".
+
+The table handed to the validate step (`toWhatsAppImportTable`) keeps its shape. It gains
+the names typed in the pick step and loses de-selected members and people already on the
+list.
+
+## Considered Options
+
+- **Keep one flat Contacts list and only sort it better.** Rejected: even ranked well,
+  1,500 rows of mostly strangers is a list nobody scrolls. People found through groups are
+  better recognised in their group.
+- **Drop the Contacts tab and import only by group.** Rejected: one-on-one contacts who
+  share no group with the Owner (a parent's friend, a colleague) would be unreachable.
+- **Expand group members inline in the Groups list.** Rejected: a 300-member group pushes
+  every other group off the screen, and scrolling back out on a phone is unreliable.
+- **Leave missing names to the validate step.** Rejected: that is what dropped 39% of the
+  picked people in the first real run. The validate step's edit sheet carries every
+  field, and one name each is all the Owner needs to type.
+- **Keep sorting groups by size.** Rejected: size is the weakest signal of closeness.
+  Wedding guests come from small family and friends groups.
+
+## Consequences
+
+- The service must keep the chat list from `messaging-history.set` (the chat id and its
+  last-message timestamp), which it discards today. Only the ordering and the "has a
+  one-on-one chat" flag reach the page, never message content.
+- `WhatsAppPerson` gains a last one-on-one chat time and shared group ids. `WhatsAppGroup`
+  gains a last activity time. The session row carries slightly more, still purged within
+  15 minutes by the Sweeper.
+- `WhatsAppPick` changes from whole groups to per-member selections, plus names typed in
+  the pick step. Going back from validate still restores it.
+- The Contacts count drops from ~1,566 to a few hundred for an account like the spike's,
+  which reads as fewer contacts. The line under search explains it.
+- One new screen (*Name N people*) between pick and validate. It appears only when unnamed
+  people are selected.
+
+## Open
+
+- **Confirm chat timestamps reach a linked device in the recent sync** (`syncFullHistory:
+  false`): `chats` in `messaging-history.set` with `conversationTimestamp`, for one-on-one
+  and group chats. This needs one linked run against a real account. If they don't arrive,
+  points 1 and 2 fall back: *Recent chats* becomes "people with a one-on-one chat" with no
+  order beyond name, and groups use the fallback order above.
+- Whether community announcement groups can be recognised from the group metadata
+  (`isCommunityAnnounce`) and hidden, since they repeat the members of their community.
