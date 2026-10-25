@@ -97,7 +97,6 @@ list.
   which reads as fewer contacts. The line under search explains it.
 - One new screen (*Name N people*) between pick and validate. It appears only when unnamed
   people are selected.
-
 - Hidden-ID one-on-one chats must be included in the batch phone lookup
   (`getPNsForLIDs`) that runs before the result is built. Today it covers only contacts and
   group participants, so a person the Owner chats with under a hidden ID could be missing
