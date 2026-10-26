@@ -55,7 +55,7 @@ export interface ExpenseSheetLabels {
     status: string,
   ];
   total: string;
-  status: Record<ExpenseStatus, string>;
+  status: (status: ExpenseStatus) => string;
 }
 
 export function buildExpensesSheetRows(
@@ -72,7 +72,7 @@ export function buildExpensesSheetRows(
       expense.vendorPhone ?? '',
       price,
       expense.hasAdvance ? Number(expense.advanceAmount) : '',
-      labels.status[getExpenseStatus(expense)],
+      labels.status(getExpenseStatus(expense)),
     ];
   });
 

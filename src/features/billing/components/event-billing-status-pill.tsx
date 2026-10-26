@@ -20,7 +20,7 @@ import { BILLING_TONE_CLASS } from '../utils';
  * Silent until the provider supplies a status.
  * Not shown to a Visitor either: there is no account to bill until they save,
  * and the header's "Save your event" pill takes its place (ADR 0028). Nor while
- * the Owner can still upgrade: the header's upgrade button stands in for it.
+ * the Owner can still upgrade.
  */
 export function EventBillingStatusPill() {
   const status = useEventBillingStatus();

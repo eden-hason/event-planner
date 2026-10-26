@@ -11,9 +11,26 @@ export type GiftRow = {
   notes: string | null;
 };
 
+export const PAYMENT_METHODS = ['cash', 'bit', 'paybox', 'check', 'other'] as const;
+export type PaymentMethodKey = typeof PAYMENT_METHODS[number];
+
+export function isPaymentMethodKey(value: string | null | undefined): value is PaymentMethodKey {
+  return PAYMENT_METHODS.includes(value as PaymentMethodKey);
+}
+
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
-export function getExpenseStatus(exp: ExpenseApp): ExpenseStatus {
+/** Each status's label under `budget.expenseRow`. */
+export const EXPENSE_STATUS_LABEL_KEYS = {
+  'fully-paid': 'statusFullyPaid',
+  'advance-paid': 'statusAdvancePaid',
+  'advance-due': 'statusAdvanceDue',
+  'not-paid': 'statusNotPaid',
+} as const satisfies Record<ExpenseStatus, string>;
+
+export function getExpenseStatus(
+  exp: Pick<ExpenseApp, 'fullyPaid' | 'hasAdvance' | 'advancePaid'>,
+): ExpenseStatus {
   if (exp.fullyPaid) return 'fully-paid';
   if (exp.hasAdvance && exp.advancePaid) return 'advance-paid';
   if (exp.hasAdvance && !exp.advancePaid) return 'advance-due';

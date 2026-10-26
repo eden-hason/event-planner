@@ -1,16 +1,21 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ChartNoAxesColumn, Trash2, Receipt } from 'lucide-react';
-import { IconPlus } from '@tabler/icons-react';
-import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { Trash2 } from 'lucide-react';
+import { IconFilter2, IconSearch } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChartContainer } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
 import { Label as FormLabel } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -18,14 +23,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Search } from 'lucide-react';
 import { type ExpenseApp } from '../schemas/expenses';
-import { formatCurrency } from '../types';
 import { setEventBudget, removeEventBudget, type SetEventBudgetState } from '../actions/event-budget';
 import { ExpenseRow } from './expense-row';
 import { ExpenseSheet } from './expense-sheet';
+import { ExpensesHero } from './expenses-hero';
 import { buildExpensesSheetRows, toFileName } from '../utils/export-budget';
+import {
+  EXPENSE_FILTERS,
+  EXPENSE_STATUSES,
+  expenseFilterCount,
+  matchesExpenseFilter,
+  summarizeExpenses,
+  type ExpenseFilter,
+} from '../utils/expense-summary';
+import { EXPENSE_STATUS_LABEL_KEYS, type ExpenseStatus } from '../types';
 import { DownloadSheetButton } from './download-sheet-button';
+import { FilterChips } from './filter-chips';
 
 interface ExpensesTabProps {
   expenses: ExpenseApp[];
@@ -33,93 +47,6 @@ interface ExpensesTabProps {
   eventName?: string;
   eventBudget: number | null;
   onAddExpense: () => void;
-}
-
-function BudgetCard({ expenses, eventBudget, onOpenDialog }: {
-  expenses: ExpenseApp[];
-  eventBudget: number | null;
-  onOpenDialog: () => void;
-}) {
-  const t = useTranslations('budget');
-
-  const totalSpent = expenses.reduce((s, e) => s + Number(e.estimate), 0);
-
-  const remaining = eventBudget !== null ? Math.max(0, eventBudget - totalSpent) : 0;
-  const isOverBudget = eventBudget !== null && totalSpent > eventBudget;
-
-  const pct = eventBudget !== null && eventBudget > 0
-    ? Math.min(100, Math.round((totalSpent / eventBudget) * 100))
-    : 0;
-
-  if (eventBudget === null) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 pb-6 pt-6 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <ChartNoAxesColumn className="size-5 text-muted-foreground" />
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t('budgetCard.emptyDescription')}
-          </p>
-          <Button size="sm" onClick={onOpenDialog}>
-            {t('budgetCard.addBudget')}
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="flex flex-col gap-2">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-sm font-semibold">{t('budgetCard.title')}</CardTitle>
-          <button
-            onClick={onOpenDialog}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t('budgetCard.edit')}
-          </button>
-        </div>
-        <p className="text-2xl font-bold tracking-tight">{formatCurrency(eventBudget)}</p>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4 pb-6">
-        <div className="space-y-1.5">
-          <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${isOverBudget ? 'bg-destructive' : 'bg-primary'}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>₪0</span>
-            <span>{pct}%</span>
-            <span>{formatCurrency(eventBudget)}</span>
-          </div>
-        </div>
-
-        <div className="w-full space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-              <span className="text-xs text-muted-foreground">{t('budgetCard.legendExpenses')}</span>
-            </div>
-            <span className="text-sm font-bold tabular-nums">{formatCurrency(totalSpent)}</span>
-          </div>
-          {!isOverBudget && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 shrink-0 rounded-full bg-muted" />
-                <span className="text-xs text-muted-foreground">{t('budgetCard.legendRemaining')}</span>
-              </div>
-              <span className="text-sm font-bold tabular-nums">{formatCurrency(remaining)}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function BudgetDialog({
@@ -197,103 +124,23 @@ function BudgetDialog({
   );
 }
 
-const PIE_COLORS = [
-  '#6366f1', '#ec4899', '#f97316', '#14b8a6', '#22c55e',
-  '#eab308', '#06b6d4', '#f43f5e', '#8b5cf6', '#84cc16',
-  '#3b82f6', '#a855f7', '#fb923c', '#2dd4bf', '#4ade80',
-];
-
-function PieTooltip({ active, payload }: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; payload: { emoji: string } }>;
-}) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0];
-  return (
-    <div className="rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
-      <p className="font-medium">{item.payload.emoji} {item.name}</p>
-      <p className="text-muted-foreground">{formatCurrency(item.value)}</p>
-    </div>
-  );
-}
-
-function ExpensePieCard({ expenses }: { expenses: ExpenseApp[] }) {
-  const t = useTranslations('budget');
-
-  const grouped = expenses.reduce<Record<string, { name: string; emoji: string; value: number }>>(
-    (acc, exp) => {
-      const key = exp.name;
-      if (!acc[key]) acc[key] = { name: exp.name, emoji: exp.emoji, value: 0 };
-      acc[key].value += Number(exp.estimate);
-      return acc;
-    },
-    {},
-  );
-
-  const pieData = Object.values(grouped)
-    .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value);
-
-  const total = pieData.reduce((s, d) => s + d.value, 0);
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">{t('pieCard.title')}</CardTitle>
-      </CardHeader>
-      <CardContent className="pb-4">
-        {pieData.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground">{t('pieCard.noData')}</p>
-        ) : (
-          <>
-            <ChartContainer config={{}} className="mx-auto aspect-square max-h-44">
-              <PieChart>
-                <Tooltip content={<PieTooltip />} />
-                <Pie
-                  data={pieData.map((d, i) => ({ ...d, fill: PIE_COLORS[i % PIE_COLORS.length] }))}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius="50%"
-                  outerRadius="80%"
-                  paddingAngle={2}
-                >
-                  {pieData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="transparent" />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="mt-3 max-h-40 space-y-1.5 overflow-y-auto">
-              {pieData.map((item, i) => (
-                <div key={item.name} className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <div
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
-                    />
-                    <span className="truncate text-xs text-muted-foreground">
-                      {item.emoji} {item.name}
-                    </span>
-                  </div>
-                  <span className="shrink-0 text-xs font-medium tabular-nums">
-                    {total > 0 ? `${Math.round((item.value / total) * 100)}%` : '0%'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddExpense }: ExpensesTabProps) {
   const t = useTranslations('budget');
   const [editExpense, setEditExpense] = useState<ExpenseApp | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<ExpenseFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<ExpenseStatus | null>(null);
+  const summary = useMemo(() => summarizeExpenses(expenses, eventBudget), [expenses, eventBudget]);
+  const statusLabel = (status: ExpenseStatus) =>
+    t(`expenseRow.${EXPENSE_STATUS_LABEL_KEYS[status]}`);
+  const filterItems = EXPENSE_FILTERS.map((key) => ({
+    key,
+    label: t(`expenseFilters.${key}`),
+    count: expenseFilterCount(summary, key),
+  }));
+
 
   const budgetActionWithToast = async (
     _prevState: SetEventBudgetState | null,
@@ -353,15 +200,14 @@ export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddEx
     if (!open) setEditExpense(null);
   };
 
-  const filteredExpenses = search.trim()
-    ? expenses.filter((exp) => {
-        const q = search.toLowerCase();
-        return (
-          exp.name.toLowerCase().includes(q) ||
-          (exp.vendorName ?? '').toLowerCase().includes(q)
-        );
-      })
-    : expenses;
+  const q = search.trim().toLowerCase();
+  const filteredExpenses = expenses.filter(
+    (exp) =>
+      matchesExpenseFilter(exp, filter, statusFilter) &&
+      (!q ||
+        exp.name.toLowerCase().includes(q) ||
+        (exp.vendorName ?? '').toLowerCase().includes(q)),
+  );
 
   if (expenses.length === 0 && eventBudget === null) {
     return (
@@ -402,92 +248,103 @@ export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddEx
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Expenses list — primary content */}
-        <div className="order-2 lg:order-1 lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-sm font-semibold">{t('expensesCard.title')}</CardTitle>
-                <div className="flex items-center gap-2">
-                  {expenses.length > 0 && (
-                    <DownloadSheetButton
-                      fileName={toFileName(eventName, t('export.expensesFileName'))}
-                      sheetName={t('export.expensesFileName')}
-                      getRows={() =>
-                        buildExpensesSheetRows(expenses, {
-                          headers: [
-                            t('export.expenseHeaders.name'),
-                            t('export.expenseHeaders.vendor'),
-                            t('export.expenseHeaders.phone'),
-                            t('export.expenseHeaders.price'),
-                            t('export.expenseHeaders.advance'),
-                            t('export.expenseHeaders.status'),
-                          ],
-                          total: t('export.total'),
-                          status: {
-                            'fully-paid': t('expenseRow.statusFullyPaid'),
-                            'advance-paid': t('expenseRow.statusAdvancePaid'),
-                            'advance-due': t('expenseRow.statusAdvanceDue'),
-                            'not-paid': t('expenseRow.statusNotPaid'),
-                          },
-                        })
-                      }
-                    />
-                  )}
-                  <Button size="sm" onClick={onAddExpense}>
-                    <IconPlus size={16} />
-                    {t('addExpense')}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            {expenses.length > 0 && (
-              <CardHeader className="pb-3 pt-0">
-                <div className="relative">
-                  <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    className="ps-9"
-                    placeholder={t('expenseSearchPlaceholder')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-              </CardHeader>
-            )}
-            <CardContent className="p-0">
-              {filteredExpenses.length > 0 ? (
-                filteredExpenses.map((exp) => (
-                  <ExpenseRow key={exp.id} expense={exp} onClick={handleRowClick} />
-                ))
-              ) : expenses.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 py-12 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                    <Receipt className="size-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{t('expenseListEmpty.title')}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{t('expenseListEmpty.description')}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="py-10 text-center text-sm text-muted-foreground">
-                  {t('expenseSearchEmpty')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex flex-col gap-4">
+        <ExpensesHero
+          summary={summary}
+          onEditBudget={() => setBudgetDialogOpen(true)}
+          onAddExpense={onAddExpense}
+        />
 
-        {/* Budget sidebar — sticky on desktop */}
-        <div className="order-1 lg:order-2 lg:col-span-1 lg:self-start lg:sticky lg:top-4 flex flex-col gap-4">
-          <BudgetCard
-            expenses={expenses}
-            eventBudget={eventBudget}
-            onOpenDialog={() => setBudgetDialogOpen(true)}
-          />
-          <ExpensePieCard expenses={expenses} />
-        </div>
+        {expenses.length > 0 && (
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-[7px] md:gap-2">
+              <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-10 min-w-0 flex-1 items-center gap-[7px] rounded-[11px] border px-[11px] focus-within:ring-[3px] md:h-9 md:max-w-[290px] md:gap-2 md:rounded-[10px]">
+                <IconSearch size={16} className="text-muted-foreground shrink-0" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('expenseSearchPlaceholder')}
+                  // 16px keeps iOS from zooming the page into the field.
+                  className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px] [&::-webkit-search-cancel-button]:hidden"
+                />
+              </label>
+              <FilterChips
+                items={filterItems}
+                value={filter}
+                onChange={setFilter}
+                variant="segmented"
+                className="hidden md:flex"
+              />
+              <div className="hidden md:block">
+                <Select
+                  value={statusFilter ?? 'all'}
+                  onValueChange={(value) =>
+                    setStatusFilter(
+                      EXPENSE_STATUSES.find((status) => status === value) ?? null,
+                    )
+                  }
+                >
+                  <SelectTrigger
+                    className={cn(
+                      'gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold',
+                      statusFilter && 'border-primary bg-primary/8 text-primary hover:bg-primary/12',
+                    )}
+                  >
+                    <IconFilter2 size={16} className={statusFilter ? 'text-primary' : 'text-foreground'} />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('expenseFilters.allStatuses')}</SelectItem>
+                    {EXPENSE_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {statusLabel(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DownloadSheetButton
+                fileName={toFileName(eventName, t('export.expensesFileName'))}
+                sheetName={t('export.expensesFileName')}
+                getRows={() =>
+                  buildExpensesSheetRows(expenses, {
+                    headers: [
+                      t('export.expenseHeaders.name'),
+                      t('export.expenseHeaders.vendor'),
+                      t('export.expenseHeaders.phone'),
+                      t('export.expenseHeaders.price'),
+                      t('export.expenseHeaders.advance'),
+                      t('export.expenseHeaders.status'),
+                    ],
+                    total: t('export.total'),
+                    status: statusLabel,
+                  })
+                }
+                className="md:ms-auto"
+              />
+            </div>
+            <FilterChips
+              items={filterItems}
+              value={filter}
+              onChange={setFilter}
+              variant="pill"
+              className="md:hidden"
+            />
+
+            {filteredExpenses.length > 0 ? (
+              <div className="bg-card overflow-hidden rounded-[14px] border">
+                {filteredExpenses.map((exp) => (
+                  <ExpenseRow key={exp.id} expense={exp} onClick={handleRowClick} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground py-4 text-center text-sm">
+                {q ? t('expenseSearchEmpty') : t('expenseFilters.empty')}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <BudgetDialog

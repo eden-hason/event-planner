@@ -311,6 +311,8 @@
     },
     "addExpense": "Add expense",
     "addGift": "Add gift",
+    "newExpense": "New expense",
+    "newGift": "New gift",
     "stats": {
       "totalReceived": "Total received",
       "ofPledged": "of {amount} pledged",
@@ -366,17 +368,18 @@
       "notes": "Notes",
       "notesPlaceholder": "Optional note...",
       "saveChanges": "Save changes",
-      "delete": "Delete"
-    },
-    "expensesCard": {
-      "title": "Expenses"
-    },
-    "expenseListEmpty": {
-      "title": "No expenses yet",
-      "description": "Start recording your expenses to keep track of every detail."
+      "delete": "Delete",
+      "guestNameHint": "Pick a confirmed guest or type any other name"
     },
     "expenseSearchPlaceholder": "Search expenses...",
     "expenseSearchEmpty": "No expenses match your search.",
+    "expenseFilters": {
+      "all": "All",
+      "owed": "Still owed",
+      "paid": "Paid",
+      "allStatuses": "All statuses",
+      "empty": "No expenses match this filter"
+    },
     "expenseRow": {
       "noVendor": "No vendor",
       "advancePaidBadge": "Advance paid",
@@ -390,11 +393,23 @@
       "received": "Received",
       "pending": "Pending"
     },
-    "giftsChart": {
-      "title": "Payment breakdown",
-      "noData": "No payment data yet",
-      "breakdown": "Breakdown by payment method",
-      "total": "Total"
+    "giftsHero": {
+      "label": "Your gifts so far",
+      "progressAria": "Gifts logged",
+      "progress": "{logged} of {total} guests logged",
+      "progressComplete": "{total, plural, one {The one guest is logged} other {All # guests are logged}}",
+      "average": "Average gift",
+      "largest": "Largest gift",
+      "byMethod": "By payment method",
+      "segmentMeta": "{count} · {percent}%",
+      "noMethod": "Not chosen yet",
+      "show": "Show",
+      "hide": "Hide",
+      "emptyLabel": "Your gifts",
+      "emptyTitle": "Let's log the first gift",
+      "emptyBody": "{count, plural, =0 {Every amount you log will show up here right away} one {One guest has confirmed. Every amount you log in the table will show up here right away} other {# guests have confirmed. Every amount you log in the table will show up here right away}}",
+      "emptyCta": "Log a gift",
+      "emptyMethodHint": "Amounts will show here by cash, Bit, Paybox, check and other"
     },
     "giftTable": {
       "guestName": "Guest name",
@@ -407,7 +422,16 @@
       "selectPlaceholder": "Choose...",
       "selectPaymentMethod": "Choose method",
       "addAmount": "Add amount",
-      "addNote": "Add note"
+      "addNote": "Add note",
+      "filterAll": "All",
+      "filterNoAmount": "No amount",
+      "filterNoMethod": "No payment method",
+      "allMethods": "All payment methods",
+      "filterEmpty": "No gifts match this filter"
+    },
+    "giftList": {
+      "noAmount": "No amount",
+      "addAmount": "Add amount"
     },
     "paymentMethods": {
       "cash": "Cash",
@@ -452,17 +476,32 @@
       "transport": "Transport"
     },
     "budgetCard": {
-      "title": "Budget overview",
-      "description": "Track spending against your total budget",
-      "emptyDescription": "Set a budget to track your spending progress",
-      "addBudget": "Add Budget",
-      "edit": "Edit",
-      "legendExpenses": "Expenses",
-      "legendRemaining": "Remaining"
+      "addBudget": "Add Budget"
     },
-    "pieCard": {
-      "title": "Cost breakdown",
-      "noData": "Add expenses to see breakdown"
+    "expensesHero": {
+      "label": "Your spending so far",
+      "budgetAria": "Budget used",
+      "ofBudget": "of a <b>{budget}</b> budget",
+      "ofBudgetShort": "of <b>{budget}</b>",
+      "editBudget": "Edit",
+      "editBudgetAria": "Edit budget",
+      "remaining": "{amount} left",
+      "over": "{amount} over",
+      "setBudgetHint": "Set a budget to see how much is used and how much is left",
+      "setBudget": "Set budget",
+      "paid": "Paid",
+      "owed": "Still owed",
+      "itemCount": "{count, plural, one {1 item} other {# items}}",
+      "byExpense": "By expense",
+      "other": "Other",
+      "segmentMeta": "{count, plural, one {{percent}%} other {# items · {percent}%}}",
+      "show": "Show",
+      "hide": "Hide",
+      "emptyLabel": "Your spending",
+      "emptyTitle": "Let's log your first expense",
+      "emptyBody": "Your budget is {budget}. Every expense you add is tracked here against it",
+      "emptyCta": "Add expense",
+      "emptySplitHint": "Amounts show up here by venue, catering, photography and the rest"
     },
     "budgetDialog": {
       "titleAdd": "Set event budget",
@@ -2688,7 +2727,6 @@
       "details": "Details"
     },
     "upgrade": {
-      "button": "Upgrade",
       "pageTitle": "Plans and Payments",
       "title": "Choose your package",
       "subtitle": "Choose how to reach your guests and how many records - and see the final price. One-time payment",

@@ -63,12 +63,13 @@ test('expense rows carry status, advance only when there is one, and a total', (
     {
       headers: ['Expense', 'Vendor', 'Phone', 'Price', 'Advance', 'Status'],
       total: 'Total',
-      status: {
-        'fully-paid': 'Paid',
-        'advance-paid': 'Advance paid',
-        'advance-due': 'Advance due',
-        'not-paid': 'Not paid',
-      },
+      status: (status) =>
+        ({
+          'fully-paid': 'Paid',
+          'advance-paid': 'Advance paid',
+          'advance-due': 'Advance due',
+          'not-paid': 'Not paid',
+        })[status],
     },
   );
 

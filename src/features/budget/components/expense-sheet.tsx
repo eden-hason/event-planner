@@ -185,7 +185,7 @@ export function ExpenseSheet({ open, onOpenChange, expense, eventId, existingExp
             {isEdit ? t('expenseSheet.editLabel') : t('expenseSheet.newLabel')}
           </SheetDescription>
           <SheetTitle className="text-xl">
-            {isEdit ? expense.name : t('addExpense')}
+            {isEdit ? expense.name : t('newExpense')}
           </SheetTitle>
         </SheetHeader>
 
