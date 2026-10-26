@@ -11,6 +11,13 @@ export type GiftRow = {
   notes: string | null;
 };
 
+export const PAYMENT_METHODS = ['cash', 'bit', 'paybox', 'check', 'other'] as const;
+export type PaymentMethodKey = typeof PAYMENT_METHODS[number];
+
+export function isPaymentMethodKey(value: string | null | undefined): value is PaymentMethodKey {
+  return PAYMENT_METHODS.includes(value as PaymentMethodKey);
+}
+
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
 export function getExpenseStatus(exp: ExpenseApp): ExpenseStatus {

@@ -366,7 +366,8 @@
       "notes": "הערות",
       "notesPlaceholder": "הערה אופציונלית...",
       "saveChanges": "שמור שינויים",
-      "delete": "מחק"
+      "delete": "מחק",
+      "guestNameHint": "בחרו אורח שאישר הגעה או כתבו כל שם אחר"
     },
     "expensesCard": {
       "title": "הוצאות"
@@ -390,11 +391,23 @@
       "received": "התקבל",
       "pending": "ממתין"
     },
-    "giftsChart": {
-      "title": "פילוח תשלומים",
-      "noData": "אין נתוני תשלום עדיין",
-      "breakdown": "פילוח לפי אמצעי תשלום",
-      "total": "סה\"כ"
+    "giftsHero": {
+      "label": "המתנות שלכם עד עכשיו",
+      "progressAria": "מתנות שנרשמו",
+      "progress": "{logged} מתוך {total} אורחים נרשמו",
+      "progressComplete": "{total, plural, one {האורח היחיד נרשם} other {כל # האורחים נרשמו}}",
+      "average": "ממוצע למתנה",
+      "largest": "המתנה הגבוהה",
+      "byMethod": "לפי אמצעי תשלום",
+      "segmentMeta": "{count} · {percent}%",
+      "noMethod": "טרם נבחר",
+      "show": "הצגה",
+      "hide": "הסתרה",
+      "emptyLabel": "המתנות שלכם",
+      "emptyTitle": "בואו נרשום את המתנה הראשונה",
+      "emptyBody": "{count, plural, =0 {כל סכום שתרשמו יתווסף כאן מיד} one {אורח אחד אישר הגעה. כל סכום שתרשמו בטבלה יתווסף כאן מיד} other {# אורחים אישרו הגעה. כל סכום שתרשמו בטבלה יתווסף כאן מיד}}",
+      "emptyCta": "רשמו מתנה",
+      "emptyMethodHint": "הסכומים יופיעו כאן לפי מזומן, ביט, פייבוקס, צ'ק ואחר"
     },
     "giftTable": {
       "guestName": "שם אורח",
@@ -407,7 +420,17 @@
       "selectPlaceholder": "בחר...",
       "selectPaymentMethod": "בחר אמצעי",
       "addAmount": "הוסף סכום",
-      "addNote": "הוסף הערה"
+      "addNote": "הוסף הערה",
+      "filterAll": "הכל",
+      "filterNoAmount": "בלי סכום",
+      "filterNoMethod": "בלי אמצעי תשלום",
+      "allMethods": "כל אמצעי התשלום",
+      "filterEmpty": "אין מתנות שמתאימות לסינון"
+    },
+    "giftList": {
+      "title": "המתנות",
+      "noAmount": "אין סכום",
+      "addAmount": "הוסיפו סכום"
     },
     "paymentMethods": {
       "cash": "מזומן",

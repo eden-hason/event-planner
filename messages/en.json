@@ -366,7 +366,8 @@
       "notes": "Notes",
       "notesPlaceholder": "Optional note...",
       "saveChanges": "Save changes",
-      "delete": "Delete"
+      "delete": "Delete",
+      "guestNameHint": "Pick a confirmed guest or type any other name"
     },
     "expensesCard": {
       "title": "Expenses"
@@ -390,11 +391,23 @@
       "received": "Received",
       "pending": "Pending"
     },
-    "giftsChart": {
-      "title": "Payment breakdown",
-      "noData": "No payment data yet",
-      "breakdown": "Breakdown by payment method",
-      "total": "Total"
+    "giftsHero": {
+      "label": "Your gifts so far",
+      "progressAria": "Gifts logged",
+      "progress": "{logged} of {total} guests logged",
+      "progressComplete": "{total, plural, one {The one guest is logged} other {All # guests are logged}}",
+      "average": "Average gift",
+      "largest": "Largest gift",
+      "byMethod": "By payment method",
+      "segmentMeta": "{count} · {percent}%",
+      "noMethod": "Not chosen yet",
+      "show": "Show",
+      "hide": "Hide",
+      "emptyLabel": "Your gifts",
+      "emptyTitle": "Let's log the first gift",
+      "emptyBody": "{count, plural, =0 {Every amount you log will show up here right away} one {One guest has confirmed. Every amount you log in the table will show up here right away} other {# guests have confirmed. Every amount you log in the table will show up here right away}}",
+      "emptyCta": "Log a gift",
+      "emptyMethodHint": "Amounts will show here by cash, Bit, Paybox, check and other"
     },
     "giftTable": {
       "guestName": "Guest name",
@@ -407,7 +420,17 @@
       "selectPlaceholder": "Choose...",
       "selectPaymentMethod": "Choose method",
       "addAmount": "Add amount",
-      "addNote": "Add note"
+      "addNote": "Add note",
+      "filterAll": "All",
+      "filterNoAmount": "No amount",
+      "filterNoMethod": "No payment method",
+      "allMethods": "All payment methods",
+      "filterEmpty": "No gifts match this filter"
+    },
+    "giftList": {
+      "title": "Gifts",
+      "noAmount": "No amount",
+      "addAmount": "Add amount"
     },
     "paymentMethods": {
       "cash": "Cash",

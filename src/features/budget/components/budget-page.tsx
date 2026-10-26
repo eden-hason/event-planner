@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { type ExpenseApp } from '../schemas/expenses';
@@ -10,7 +11,7 @@ import type { GiftRow } from '../types';
 import { ExpensesTab } from './expenses-tab';
 import { ExpenseSheet } from './expense-sheet';
 import { GiftsTab } from './gifts-tab';
-import { IconReceipt, IconGift } from '@tabler/icons-react';
+import { IconReceipt, IconGift, IconPlus } from '@tabler/icons-react';
 
 interface BudgetPageProps {
   expenses: ExpenseApp[];
@@ -24,14 +25,41 @@ export function BudgetPage({ expenses, eventId, eventName, eventBudget, gifts }:
   const t = useTranslations('budget');
   const locale = useLocale();
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('expenses');
+  const [addGiftOpen, setAddGiftOpen] = useState(false);
 
-  useFeatureHeader({
-    title: t('title'),
-  });
+  /*
+   * The Gifts tab hangs its add button in the page header, at every width; the
+   * Expenses tab keeps its own button on its card. `useFeatureHeader` only
+   * re-runs on a title change, so the action is pushed through `setHeader` as
+   * the tab changes.
+   */
+  const title = t('title');
+  const headerConfig = {
+    title,
+    action:
+      activeTab === 'gifts' ? (
+        <Button
+          onClick={() => setAddGiftOpen(true)}
+          className="h-9 gap-[5px] rounded-[10px] px-[13px] font-bold"
+        >
+          <IconPlus size={16} stroke={2.4} />
+          {t('addGift')}
+        </Button>
+      ) : undefined,
+  };
+  const { setHeader } = useFeatureHeader(headerConfig);
+  useEffect(() => {
+    setHeader(headerConfig);
+    // Keyed on what the header shows, not on `headerConfig`, which is a new
+    // object every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, activeTab, setHeader]);
 
   return (
     <Tabs
-      defaultValue="expenses"
+      value={activeTab}
+      onValueChange={setActiveTab}
       dir={locale === 'he' ? 'rtl' : 'ltr'}
     >
       <TabsList className="border-border mb-6 h-10 w-full justify-start gap-4 rounded-none border-b bg-transparent p-0">
@@ -70,7 +98,13 @@ export function BudgetPage({ expenses, eventId, eventName, eventBudget, gifts }:
       </TabsContent>
 
       <TabsContent value="gifts">
-        <GiftsTab eventId={eventId} eventName={eventName} initialGifts={gifts} />
+        <GiftsTab
+          eventId={eventId}
+          eventName={eventName}
+          initialGifts={gifts}
+          addGiftOpen={addGiftOpen}
+          onAddGiftOpenChange={setAddGiftOpen}
+        />
       </TabsContent>
     </Tabs>
   );
