@@ -406,10 +406,8 @@ export function GiftsTab({
       />
 
       {/* Desktop: the editable table */}
-      <div className="hidden min-w-0 md:block">
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        {/* Integrated toolbar */}
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b">
+      <div className="hidden min-w-0 flex-col gap-2.5 md:flex">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-9 max-w-[290px] min-w-40 grow basis-[200px] items-center gap-2 rounded-[10px] border px-[11px] focus-within:ring-[3px]">
             <IconSearch size={16} className="text-muted-foreground shrink-0" />
             <input
@@ -451,6 +449,7 @@ export function GiftsTab({
           </div>
         </div>
 
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-b bg-muted/20">
