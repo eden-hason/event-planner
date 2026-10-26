@@ -44,7 +44,12 @@
     "unsavedEventWarning": "You have an event that isn't saved yet. Signing in here will discard it.",
     "backToMyEvent": "Back to my event",
     "googleInBrowser": "Continue with Google in your browser",
-    "inAppGoogleHint": "Google sign-in doesn't work inside this app. If your browser doesn't open, tap the app's menu (⋯) and choose to open in your browser"
+    "inAppGoogleHint": "Google sign-in doesn't work inside this app. If your browser doesn't open, tap the app's menu (⋯) and choose to open in your browser",
+    "signOut": {
+      "signingOut": "Signing you out...",
+      "signOutFailed": "We couldn't sign you out",
+      "tryAgain": "Try again"
+    }
   },
   "navigation": {
     "home": "Home",

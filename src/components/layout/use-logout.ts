@@ -8,8 +8,12 @@ import { logout } from '@/features/auth';
  * Signs the user out, resetting PostHog first so the next session on this
  * device is not stitched onto the one that just ended.
  *
- * Shared by every surface that offers a log-out row - the sidebar's user menu
- * and the mobile "More" page - so the reset can't be forgotten on one of them.
+ * Shared by every surface that offers a log-out row - the sidebar's user menu,
+ * the mobile "More" page and the /signout page - so the reset can't be
+ * forgotten on one of them.
+ *
+ * On success the action redirects to /login and resolves with no value; a
+ * result means the sign-out failed.
  */
 export function useLogout() {
   return useCallback(async () => {
@@ -20,6 +24,6 @@ export function useLogout() {
       posthog.reset();
     }
 
-    await logout();
+    return logout();
   }, []);
 }

@@ -66,6 +66,9 @@ export async function updateSession(request: NextRequest, effectivePath?: string
     !isTakeover &&
     strippedPath !== '/' &&
     !strippedPath.startsWith('/login') &&
+    // Sign-out link - with no session it still lands on /login, without a
+    // ?next=/signout that would sign the user out again after they sign in
+    strippedPath !== '/signout' &&
     !strippedPath.startsWith('/auth') &&
     !strippedPath.startsWith('/error') &&
     !strippedPath.startsWith('/confirm') &&
