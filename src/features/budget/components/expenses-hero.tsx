@@ -57,11 +57,6 @@ const LEVEL_INK: Record<BudgetLevel, string> = {
   over: 'text-destructive',
 };
 
-function useSegmentLabel() {
-  const t = useTranslations('budget.expensesHero');
-  return (segment: ExpenseSegment) => (segment.isOther ? t('other') : segment.name);
-}
-
 function BudgetProgress({
   summary,
   size,
@@ -223,15 +218,12 @@ function MobilePaymentTile({ tone, label, amount }: { tone: 'paid' | 'owed'; lab
   );
 }
 
-function emptyBody(t: ReturnType<typeof useTranslations<'budget.expensesHero'>>, summary: ExpenseSummary) {
-  return summary.budget !== null
-    ? t('emptyBody', { budget: formatCurrency(summary.budget) })
-    : t('emptyBodyNoBudget');
-}
-
 function DesktopHero({ summary, onEditBudget, onAddExpense }: ExpensesHeroProps) {
   const t = useTranslations('budget.expensesHero');
-  const segmentLabel = useSegmentLabel();
+  const segmentLabel = (segment: ExpenseSegment) => (segment.isOther ? t('other') : segment.name);
+  // Only reached with a budget set: with no expenses and no budget the tab
+  // renders its own empty page instead.
+  const emptyBody = t('emptyBody', { budget: formatCurrency(summary.budget ?? 0) });
 
   return (
     <section
@@ -299,7 +291,7 @@ function DesktopHero({ summary, onEditBudget, onAddExpense }: ExpensesHeroProps)
               {t('emptyTitle')}
             </h2>
             <p className="text-muted-foreground text-[15px] leading-normal text-pretty">
-              {emptyBody(t, summary)}
+              {emptyBody}
             </p>
             <Button size="lg" onClick={onAddExpense} className="mt-1 h-11 rounded-xl px-5 text-[15px]">
               {t('emptyCta')}
@@ -319,7 +311,8 @@ function DesktopHero({ summary, onEditBudget, onAddExpense }: ExpensesHeroProps)
 
 function MobileHero({ summary, onEditBudget, onAddExpense }: ExpensesHeroProps) {
   const t = useTranslations('budget.expensesHero');
-  const segmentLabel = useSegmentLabel();
+  const segmentLabel = (segment: ExpenseSegment) => (segment.isOther ? t('other') : segment.name);
+  const emptyBody = t('emptyBody', { budget: formatCurrency(summary.budget ?? 0) });
   const [open, setOpen] = useState(false);
 
   return (
@@ -396,7 +389,7 @@ function MobileHero({ summary, onEditBudget, onAddExpense }: ExpensesHeroProps) 
         <>
           <span className="text-primary text-[13px] font-semibold">{t('emptyLabel')}</span>
           <h2 className="text-2xl leading-[1.2] font-extrabold">{t('emptyTitle')}</h2>
-          <p className="text-muted-foreground text-sm leading-normal">{emptyBody(t, summary)}</p>
+          <p className="text-muted-foreground text-sm leading-normal">{emptyBody}</p>
           <Button onClick={onAddExpense} className="h-12 rounded-xl text-[15px]">
             {t('emptyCta')}
           </Button>

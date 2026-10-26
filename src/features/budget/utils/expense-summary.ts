@@ -1,24 +1,19 @@
+import type { ExpenseApp } from '../schemas/expenses';
 import { getExpenseStatus, type ExpenseStatus } from '../types';
 
-/** The fields the Expenses hero reads from an expense. */
-export interface ExpenseSummaryRow {
-  name: string;
-  emoji: string;
-  estimate: number;
-  fullyPaid: boolean;
-  hasAdvance: boolean;
-  advanceAmount: number;
-  advancePaid: boolean;
-}
+/** The fields the Expenses hero and the list filters read from an expense. */
+export type ExpenseSummaryRow = Pick<
+  ExpenseApp,
+  'name' | 'estimate' | 'fullyPaid' | 'hasAdvance' | 'advanceAmount' | 'advancePaid'
+>;
 
 /** How many expenses get a segment of their own before the rest fold into one. */
-export const EXPENSE_SEGMENT_LIMIT = 5;
+const SEGMENT_LIMIT = 5;
 
 export interface ExpenseSegment {
   /** The expense name, or a reserved key for the folded remainder. */
   key: string;
   name: string;
-  emoji: string;
   amount: number;
   /** Expenses in the segment: same-named ones merge, and `other` holds the rest. */
   count: number;
@@ -53,9 +48,8 @@ export interface ExpenseSummary {
 }
 
 function paidAmount(row: ExpenseSummaryRow): number {
-  const estimate = Number(row.estimate);
-  if (row.fullyPaid) return estimate;
-  if (row.hasAdvance && row.advancePaid) return Math.min(Number(row.advanceAmount), estimate);
+  if (row.fullyPaid) return row.estimate;
+  if (row.hasAdvance && row.advancePaid) return Math.min(row.advanceAmount, row.estimate);
   return 0;
 }
 
@@ -63,19 +57,19 @@ export function summarizeExpenses(
   rows: ExpenseSummaryRow[],
   budget: number | null,
 ): ExpenseSummary {
-  const buckets = new Map<string, { name: string; emoji: string; amount: number; count: number }>();
+  const buckets = new Map<string, { name: string; amount: number; count: number }>();
   let total = 0;
   let paid = 0;
   let paidCount = 0;
 
   for (const row of rows) {
-    const estimate = Number(row.estimate);
+    const { estimate } = row;
     total += estimate;
     paid += paidAmount(row);
     if (row.fullyPaid) paidCount += 1;
 
     const key = row.name.trim();
-    const bucket = buckets.get(key) ?? { name: key, emoji: row.emoji, amount: 0, count: 0 };
+    const bucket = buckets.get(key) ?? { name: key, amount: 0, count: 0 };
     bucket.amount += estimate;
     bucket.count += 1;
     buckets.set(key, bucket);
@@ -95,9 +89,9 @@ export function summarizeExpenses(
 
   // Folding a single leftover would trade its name for "other" and save no room.
   const segments =
-    ranked.length <= EXPENSE_SEGMENT_LIMIT + 1
+    ranked.length <= SEGMENT_LIMIT + 1
       ? ranked
-      : [...ranked.slice(0, EXPENSE_SEGMENT_LIMIT), foldOther(ranked.slice(EXPENSE_SEGMENT_LIMIT), percentOf)];
+      : [...ranked.slice(0, SEGMENT_LIMIT), foldOther(ranked.slice(SEGMENT_LIMIT), percentOf)];
 
   const hasBudget = budget !== null && budget > 0;
   const ratio = hasBudget ? total / budget : 0;
@@ -123,7 +117,6 @@ function foldOther(rest: ExpenseSegment[], percentOf: (amount: number) => number
     // Names are trimmed, so a leading space can never collide with one.
     key: ' other',
     name: '',
-    emoji: '',
     amount,
     count: rest.reduce((sum, segment) => sum + segment.count, 0),
     percent: percentOf(amount),

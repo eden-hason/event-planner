@@ -5,7 +5,7 @@ import { Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Item, ItemMedia, ItemContent, ItemTitle, ItemActions } from '@/components/ui/item';
 import { type ExpenseApp } from '../schemas/expenses';
-import { formatCurrency, getExpenseStatus } from '../types';
+import { EXPENSE_STATUS_LABEL_KEYS, formatCurrency, getExpenseStatus } from '../types';
 
 interface ExpenseRowProps {
   expense: ExpenseApp;
@@ -21,13 +21,6 @@ export function ExpenseRow({ expense, onClick }: ExpenseRowProps) {
     'advance-paid': 'bg-warning/10 text-warning',
     'advance-due':  'bg-destructive/10 text-destructive',
     'not-paid':     'bg-muted text-muted-foreground',
-  };
-
-  const STATUS_LABELS: Record<string, string> = {
-    'fully-paid':   t('expenseRow.statusFullyPaid'),
-    'advance-paid': t('expenseRow.statusAdvancePaid'),
-    'advance-due':  t('expenseRow.statusAdvanceDue'),
-    'not-paid':     t('expenseRow.statusNotPaid'),
   };
 
   return (
@@ -70,7 +63,7 @@ export function ExpenseRow({ expense, onClick }: ExpenseRowProps) {
           <p className="text-sm font-semibold">{formatCurrency(expense.estimate)}</p>
 
           <span className={cn('mt-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap', STATUS_STYLES[status])}>
-            {STATUS_LABELS[status]}
+            {t(`expenseRow.${EXPENSE_STATUS_LABEL_KEYS[status]}`)}
           </span>
         </div>
       </ItemActions>

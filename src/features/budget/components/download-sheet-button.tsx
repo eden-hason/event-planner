@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { IconDownload } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { downloadSheet, type SheetRow } from '../utils/export-budget';
 
 interface DownloadSheetButtonProps {
@@ -11,16 +12,17 @@ interface DownloadSheetButtonProps {
   getRows: () => SheetRow[];
   fileName: string;
   sheetName: string;
-  /** Drops the label, leaving the icon (and the aria-label) only. */
-  iconOnly?: boolean;
   className?: string;
 }
 
+/**
+ * The list toolbars' download button, sized like the guests page's toolbar
+ * buttons: an icon-only square below `md`, a labelled button from `md` up.
+ */
 export function DownloadSheetButton({
   getRows,
   fileName,
   sheetName,
-  iconOnly = false,
   className,
 }: DownloadSheetButtonProps) {
   const t = useTranslations('budget.export');
@@ -36,15 +38,19 @@ export function DownloadSheetButton({
 
   return (
     <Button
-      size={iconOnly ? 'icon' : 'sm'}
+      size="icon"
       variant="outline"
       onClick={handleDownload}
       aria-label={t('downloadAria')}
       title={t('downloadAria')}
-      className={className}
+      className={cn(
+        'bg-card text-muted-foreground size-10 shrink-0 rounded-[11px]',
+        'md:bg-background md:text-foreground md:h-9 md:w-auto md:gap-[7px] md:rounded-[10px] md:px-3 md:text-[13.5px] md:font-semibold',
+        className,
+      )}
     >
-      <IconDownload size={iconOnly ? 18 : 16} />
-      {!iconOnly && t('download')}
+      <IconDownload className="size-[18px] md:size-4" />
+      <span className="max-md:sr-only">{t('download')}</span>
     </Button>
   );
 }

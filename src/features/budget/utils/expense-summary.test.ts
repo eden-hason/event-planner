@@ -10,7 +10,6 @@ import {
 function row(name: string, estimate: number, paid: Partial<ExpenseSummaryRow> = {}): ExpenseSummaryRow {
   return {
     name,
-    emoji: '💸',
     estimate,
     fullyPaid: false,
     hasAdvance: false,

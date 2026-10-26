@@ -20,6 +20,14 @@ export function isPaymentMethodKey(value: string | null | undefined): value is P
 
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
+/** Each status's label under `budget.expenseRow`. */
+export const EXPENSE_STATUS_LABEL_KEYS = {
+  'fully-paid': 'statusFullyPaid',
+  'advance-paid': 'statusAdvancePaid',
+  'advance-due': 'statusAdvanceDue',
+  'not-paid': 'statusNotPaid',
+} as const satisfies Record<ExpenseStatus, string>;
+
 export function getExpenseStatus(
   exp: Pick<ExpenseApp, 'fullyPaid' | 'hasAdvance' | 'advancePaid'>,
 ): ExpenseStatus {

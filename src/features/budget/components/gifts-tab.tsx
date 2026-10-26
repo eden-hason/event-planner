@@ -48,6 +48,7 @@ import {
   type GiftSummary,
 } from '../utils/gift-summary';
 import { DownloadSheetButton } from './download-sheet-button';
+import { FilterChips } from './filter-chips';
 import { GiftsHero } from './gifts-hero';
 import { GiftSheet, type GiftSheetEntry, type GiftSheetValues } from './gift-sheet';
 import { PAYMENT_METHOD_BADGE } from './payment-method-styles';
@@ -87,80 +88,16 @@ function generateId() {
 
 const FILTERS: GiftFilter[] = ['all', 'noAmount', 'noMethod'];
 
+const FILTER_LABEL_KEYS = {
+  all: 'filterAll',
+  noAmount: 'filterNoAmount',
+  noMethod: 'filterNoMethod',
+} as const satisfies Record<GiftFilter, string>;
+
 function filterCount(summary: GiftSummary, filter: GiftFilter) {
   if (filter === 'noAmount') return summary.missingAmountCount;
   if (filter === 'noMethod') return summary.missingMethodCount;
   return summary.rowCount;
-}
-
-/**
- * "All / no amount / no method" over the log. On the desktop table every chip
- * shows; the phone row only has room for the ones with something in them, so
- * it drops an empty chip unless it is the one selected.
- */
-function FilterChips({
-  summary,
-  value,
-  onChange,
-  variant,
-}: {
-  summary: GiftSummary;
-  value: GiftFilter;
-  onChange: (filter: GiftFilter) => void;
-  variant: 'table' | 'list';
-}) {
-  const t = useTranslations('budget.giftTable');
-  const labels: Record<GiftFilter, string> = {
-    all: t('filterAll'),
-    noAmount: t('filterNoAmount'),
-    noMethod: t('filterNoMethod'),
-  };
-
-  return (
-    <>
-      {FILTERS.map((filter) => {
-        const count = filterCount(summary, filter);
-        const active = value === filter;
-        if (variant === 'list' && filter !== 'all' && count === 0 && !active) return null;
-        return (
-          <button
-            key={filter}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onChange(filter)}
-            className={cn(
-              'flex shrink-0 items-center text-[13px] whitespace-nowrap transition-colors',
-              variant === 'table'
-                ? cn(
-                    'h-[30px] gap-1.5 rounded-lg px-[11px]',
-                    active
-                      ? 'bg-card text-foreground font-bold shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
-                      : 'text-muted-foreground hover:text-foreground font-medium',
-                  )
-                : cn(
-                    'h-8 gap-1 rounded-full border px-[9px]',
-                    active
-                      ? 'border-primary bg-primary/10 text-primary font-bold'
-                      : 'bg-card text-muted-foreground font-medium',
-                  ),
-            )}
-          >
-            {labels[filter]}
-            <span
-              className={cn(
-                'tabular-nums',
-                variant === 'table'
-                  ? cn('text-xs font-semibold', active ? 'text-primary' : 'text-muted-foreground')
-                  : 'font-bold',
-              )}
-            >
-              {count}
-            </span>
-          </button>
-        );
-      })}
-    </>
-  );
 }
 
 export function GiftsTab({
@@ -197,6 +134,11 @@ export function GiftsTab({
   giftsRef.current = gifts;
 
   const summary = useMemo(() => summarizeGifts(gifts), [gifts]);
+  const filterItems = FILTERS.map((key) => ({
+    key,
+    label: t(`giftTable.${FILTER_LABEL_KEYS[key]}`),
+    count: filterCount(summary, key),
+  }));
   const confirmedGuestCount = useMemo(() => gifts.filter((g) => g.guestId).length, [gifts]);
 
   /**
@@ -477,9 +419,7 @@ export function GiftsTab({
               className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13.5px] outline-none"
             />
           </label>
-          <div className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px]">
-            <FilterChips summary={summary} value={filter} onChange={setFilter} variant="table" />
-          </div>
+          <FilterChips items={filterItems} value={filter} onChange={setFilter} variant="segmented" />
           <Select
             value={methodFilter ?? 'all'}
             onValueChange={(value) => setMethodFilter(isPaymentMethodKey(value) ? value : null)}
@@ -507,7 +447,6 @@ export function GiftsTab({
               fileName={exportFileName}
               sheetName={t('export.giftsFileName')}
               getRows={getSheetRows}
-              className="h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold"
             />
           </div>
         </div>
@@ -620,13 +559,9 @@ export function GiftsTab({
             fileName={exportFileName}
             sheetName={t('export.giftsFileName')}
             getRows={getSheetRows}
-            iconOnly
-            className="bg-card text-muted-foreground size-10 shrink-0 rounded-[11px]"
           />
         </div>
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <FilterChips summary={summary} value={filter} onChange={setFilter} variant="list" />
-        </div>
+        <FilterChips items={filterItems} value={filter} onChange={setFilter} variant="pill" />
         {listedGifts.length > 0 && (
           <div className="bg-card overflow-hidden rounded-[14px] border">
             {listedGifts.map((gift) => (

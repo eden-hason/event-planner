@@ -500,7 +500,6 @@
       "emptyLabel": "Your spending",
       "emptyTitle": "Let's log your first expense",
       "emptyBody": "Your budget is {budget}. Every expense you add is tracked here against it",
-      "emptyBodyNoBudget": "Every expense you add is totaled here by expense and by what's been paid",
       "emptyCta": "Add expense",
       "emptySplitHint": "Amounts show up here by venue, catering, photography and the rest"
     },

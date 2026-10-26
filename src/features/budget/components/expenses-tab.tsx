@@ -36,10 +36,10 @@ import {
   matchesExpenseFilter,
   summarizeExpenses,
   type ExpenseFilter,
-  type ExpenseSummary,
 } from '../utils/expense-summary';
-import type { ExpenseStatus } from '../types';
+import { EXPENSE_STATUS_LABEL_KEYS, type ExpenseStatus } from '../types';
 import { DownloadSheetButton } from './download-sheet-button';
+import { FilterChips } from './filter-chips';
 
 interface ExpensesTabProps {
   expenses: ExpenseApp[];
@@ -124,79 +124,6 @@ function BudgetDialog({
   );
 }
 
-const STATUS_LABEL_KEYS = {
-  'fully-paid': 'statusFullyPaid',
-  'advance-paid': 'statusAdvancePaid',
-  'advance-due': 'statusAdvanceDue',
-  'not-paid': 'statusNotPaid',
-} as const satisfies Record<ExpenseStatus, string>;
-
-/**
- * "All / still owed / paid" over the list, counted the way the hero's tiles
- * are. The desktop toolbar shows every chip as a segmented control; the phone
- * row only has room for the ones with something in them, so it drops an empty
- * chip unless it is the one selected.
- */
-function FilterChips({
-  summary,
-  value,
-  onChange,
-  variant,
-}: {
-  summary: ExpenseSummary;
-  value: ExpenseFilter;
-  onChange: (filter: ExpenseFilter) => void;
-  variant: 'toolbar' | 'list';
-}) {
-  const t = useTranslations('budget.expenseFilters');
-
-  return (
-    <>
-      {EXPENSE_FILTERS.map((filter) => {
-        const count = expenseFilterCount(summary, filter);
-        const active = value === filter;
-        if (variant === 'list' && filter !== 'all' && count === 0 && !active) return null;
-        return (
-          <button
-            key={filter}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onChange(filter)}
-            className={cn(
-              'flex shrink-0 items-center text-[13px] whitespace-nowrap transition-colors',
-              variant === 'toolbar'
-                ? cn(
-                    'h-[30px] gap-1.5 rounded-lg px-[11px]',
-                    active
-                      ? 'bg-card text-foreground font-bold shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
-                      : 'text-muted-foreground hover:text-foreground font-medium',
-                  )
-                : cn(
-                    'h-8 gap-1 rounded-full border px-[9px]',
-                    active
-                      ? 'border-primary bg-primary/10 text-primary font-bold'
-                      : 'bg-card text-muted-foreground font-medium',
-                  ),
-            )}
-          >
-            {t(filter)}
-            <span
-              className={cn(
-                'tabular-nums',
-                variant === 'toolbar'
-                  ? cn('text-xs font-semibold', active ? 'text-primary' : 'text-muted-foreground')
-                  : 'font-bold',
-              )}
-            >
-              {count}
-            </span>
-          </button>
-        );
-      })}
-    </>
-  );
-}
-
 export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddExpense }: ExpensesTabProps) {
   const t = useTranslations('budget');
   const [editExpense, setEditExpense] = useState<ExpenseApp | null>(null);
@@ -206,29 +133,14 @@ export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddEx
   const [filter, setFilter] = useState<ExpenseFilter>('all');
   const [statusFilter, setStatusFilter] = useState<ExpenseStatus | null>(null);
   const summary = useMemo(() => summarizeExpenses(expenses, eventBudget), [expenses, eventBudget]);
+  const statusLabel = (status: ExpenseStatus) =>
+    t(`expenseRow.${EXPENSE_STATUS_LABEL_KEYS[status]}`);
+  const filterItems = EXPENSE_FILTERS.map((key) => ({
+    key,
+    label: t(`expenseFilters.${key}`),
+    count: expenseFilterCount(summary, key),
+  }));
 
-  const sheetProps = {
-    fileName: toFileName(eventName, t('export.expensesFileName')),
-    sheetName: t('export.expensesFileName'),
-    getRows: () =>
-      buildExpensesSheetRows(expenses, {
-        headers: [
-          t('export.expenseHeaders.name'),
-          t('export.expenseHeaders.vendor'),
-          t('export.expenseHeaders.phone'),
-          t('export.expenseHeaders.price'),
-          t('export.expenseHeaders.advance'),
-          t('export.expenseHeaders.status'),
-        ],
-        total: t('export.total'),
-        status: {
-          'fully-paid': t('expenseRow.statusFullyPaid'),
-          'advance-paid': t('expenseRow.statusAdvancePaid'),
-          'advance-due': t('expenseRow.statusAdvanceDue'),
-          'not-paid': t('expenseRow.statusNotPaid'),
-        },
-      }),
-  };
 
   const budgetActionWithToast = async (
     _prevState: SetEventBudgetState | null,
@@ -357,9 +269,13 @@ export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddEx
                   className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px] [&::-webkit-search-cancel-button]:hidden"
                 />
               </label>
-              <div className="bg-muted hidden shrink-0 gap-0.5 rounded-[10px] p-[3px] md:flex">
-                <FilterChips summary={summary} value={filter} onChange={setFilter} variant="toolbar" />
-              </div>
+              <FilterChips
+                items={filterItems}
+                value={filter}
+                onChange={setFilter}
+                variant="segmented"
+                className="hidden md:flex"
+              />
               <div className="hidden md:block">
                 <Select
                   value={statusFilter ?? 'all'}
@@ -382,25 +298,39 @@ export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddEx
                     <SelectItem value="all">{t('expenseFilters.allStatuses')}</SelectItem>
                     {EXPENSE_STATUSES.map((status) => (
                       <SelectItem key={status} value={status}>
-                        {t(`expenseRow.${STATUS_LABEL_KEYS[status]}`)}
+                        {statusLabel(status)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <DownloadSheetButton
-                {...sheetProps}
-                iconOnly
-                className="bg-card text-muted-foreground size-10 shrink-0 rounded-[11px] md:hidden"
-              />
-              <DownloadSheetButton
-                {...sheetProps}
-                className="ms-auto hidden h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold md:inline-flex"
+                fileName={toFileName(eventName, t('export.expensesFileName'))}
+                sheetName={t('export.expensesFileName')}
+                getRows={() =>
+                  buildExpensesSheetRows(expenses, {
+                    headers: [
+                      t('export.expenseHeaders.name'),
+                      t('export.expenseHeaders.vendor'),
+                      t('export.expenseHeaders.phone'),
+                      t('export.expenseHeaders.price'),
+                      t('export.expenseHeaders.advance'),
+                      t('export.expenseHeaders.status'),
+                    ],
+                    total: t('export.total'),
+                    status: statusLabel,
+                  })
+                }
+                className="md:ms-auto"
               />
             </div>
-            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
-              <FilterChips summary={summary} value={filter} onChange={setFilter} variant="list" />
-            </div>
+            <FilterChips
+              items={filterItems}
+              value={filter}
+              onChange={setFilter}
+              variant="pill"
+              className="md:hidden"
+            />
 
             {filteredExpenses.length > 0 ? (
               <div className="bg-card overflow-hidden rounded-[14px] border">
