@@ -6,7 +6,7 @@ import { Link, usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
 import { NotificationsMenu } from '@/components/layout/notifications-menu';
-import { EventBillingStatusPill, UpgradeButton } from '@/features/billing';
+import { EventBillingStatusPill } from '@/features/billing';
 import { SidebarToggleButton } from '@/components/layout/sidebar-toggle-button';
 import { ThemeMenuButton } from '@/components/layout/theme-toggle';
 import { useLayoutEffect, useRef } from 'react';
@@ -67,8 +67,6 @@ export function PageCard({ children }: { children: React.ReactNode }) {
   // in the bottom nav, so below `md` they would otherwise have no way back.
   // The list is the same one the tab bar and the More page render from.
   const eventId = getEventIdFromPathname(pathname);
-  const packageHref = buildNavUrl('/app/package', eventId);
-  const onPackagePage = pathname === packageHref;
   const moreItems = useMoreNavItems();
   const isMoreSubpage = moreItems.some((item) => {
     if (typeof item.href !== 'string') return false;
@@ -225,11 +223,6 @@ export function PageCard({ children }: { children: React.ReactNode }) {
         </div>
         <div data-collapse="" className="flex shrink-0 items-center gap-2">
           {action}
-          {/*
-            The way to the plans page while nothing is paid for, at every width -
-            except on the plans page itself, where it would only lead back here.
-          */}
-          {!onPackagePage && <UpgradeButton href={packageHref} />}
           {/*
             The account-status pill (see `@/features/billing`), the theme menu,
             and notifications - `md` and up only. Below `md` the phone header

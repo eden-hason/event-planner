@@ -49,7 +49,6 @@ export {
   useEventBillingStatus,
 } from './components/event-billing-status-provider';
 export { EventBillingStatusPill } from './components/event-billing-status-pill';
-export { UpgradeButton } from './components/upgrade-button';
 export { EventPlanCard } from './components/event-plan-card';
 export { EventBillingStatusControl } from './components/event-billing-status-control';
 // The way to the plans page. Exported so surfaces outside this feature (the
