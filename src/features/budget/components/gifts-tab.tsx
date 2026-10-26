@@ -39,6 +39,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { GiftRow } from '../types';
 import { upsertGift, deleteGift } from '../actions/gifts';
+import { buildGiftsSheetRows, toFileName } from '../utils/export-budget';
+import { DownloadSheetButton } from './download-sheet-button';
 
 const PAYMENT_METHODS = ['cash', 'bit', 'paybox', 'check', 'other'] as const;
 type PaymentMethodKey = typeof PAYMENT_METHODS[number];
@@ -186,9 +188,11 @@ function PaymentMethodChart({ gifts }: { gifts: LocalGiftEntry[] }) {
 
 export function GiftsTab({
   eventId,
+  eventName,
   initialGifts,
 }: {
   eventId: string;
+  eventName?: string;
   initialGifts: GiftRow[];
 }) {
   const t = useTranslations('budget');
@@ -303,6 +307,27 @@ export function GiftsTab({
               placeholder={t('giftTable.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="ms-auto">
+            <DownloadSheetButton
+              fileName={toFileName(eventName, t('export.giftsFileName'))}
+              sheetName={t('export.giftsFileName')}
+              getRows={() =>
+                buildGiftsSheetRows(gifts, {
+                  headers: [
+                    t('giftTable.guestName'),
+                    t('giftTable.amount'),
+                    t('giftTable.paymentMethod'),
+                    t('giftTable.notes'),
+                  ],
+                  total: t('export.total'),
+                  paymentMethod: (key) =>
+                    PAYMENT_METHODS.includes(key as PaymentMethodKey)
+                      ? t(`paymentMethods.${key as PaymentMethodKey}`)
+                      : key,
+                })
+              }
             />
           </div>
         </div>

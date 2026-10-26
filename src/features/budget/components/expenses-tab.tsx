@@ -24,10 +24,13 @@ import { formatCurrency } from '../types';
 import { setEventBudget, removeEventBudget, type SetEventBudgetState } from '../actions/event-budget';
 import { ExpenseRow } from './expense-row';
 import { ExpenseSheet } from './expense-sheet';
+import { buildExpensesSheetRows, toFileName } from '../utils/export-budget';
+import { DownloadSheetButton } from './download-sheet-button';
 
 interface ExpensesTabProps {
   expenses: ExpenseApp[];
   eventId: string;
+  eventName?: string;
   eventBudget: number | null;
   onAddExpense: () => void;
 }
@@ -285,7 +288,7 @@ function ExpensePieCard({ expenses }: { expenses: ExpenseApp[] }) {
   );
 }
 
-export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: ExpensesTabProps) {
+export function ExpensesTab({ expenses, eventId, eventName, eventBudget, onAddExpense }: ExpensesTabProps) {
   const t = useTranslations('budget');
   const [editExpense, setEditExpense] = useState<ExpenseApp | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -406,10 +409,37 @@ export function ExpensesTab({ expenses, eventId, eventBudget, onAddExpense }: Ex
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-sm font-semibold">{t('expensesCard.title')}</CardTitle>
-                <Button size="sm" onClick={onAddExpense}>
-                  <IconPlus size={16} />
-                  {t('addExpense')}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {expenses.length > 0 && (
+                    <DownloadSheetButton
+                      fileName={toFileName(eventName, t('export.expensesFileName'))}
+                      sheetName={t('export.expensesFileName')}
+                      getRows={() =>
+                        buildExpensesSheetRows(expenses, {
+                          headers: [
+                            t('export.expenseHeaders.name'),
+                            t('export.expenseHeaders.vendor'),
+                            t('export.expenseHeaders.phone'),
+                            t('export.expenseHeaders.price'),
+                            t('export.expenseHeaders.advance'),
+                            t('export.expenseHeaders.status'),
+                          ],
+                          total: t('export.total'),
+                          status: {
+                            'fully-paid': t('expenseRow.statusFullyPaid'),
+                            'advance-paid': t('expenseRow.statusAdvancePaid'),
+                            'advance-due': t('expenseRow.statusAdvanceDue'),
+                            'not-paid': t('expenseRow.statusNotPaid'),
+                          },
+                        })
+                      }
+                    />
+                  )}
+                  <Button size="sm" onClick={onAddExpense}>
+                    <IconPlus size={16} />
+                    {t('addExpense')}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             {expenses.length > 0 && (

@@ -20,6 +20,7 @@ export default async function BudgetPageRoute({
     <BudgetPage
       expenses={expenses}
       eventId={eventId}
+      eventName={event?.title}
       eventBudget={event?.budget ?? null}
       gifts={gifts}
     />

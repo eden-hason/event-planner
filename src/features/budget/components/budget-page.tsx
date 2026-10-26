@@ -15,11 +15,12 @@ import { IconReceipt, IconGift } from '@tabler/icons-react';
 interface BudgetPageProps {
   expenses: ExpenseApp[];
   eventId: string;
+  eventName?: string;
   eventBudget: number | null;
   gifts: GiftRow[];
 }
 
-export function BudgetPage({ expenses, eventId, eventBudget, gifts }: BudgetPageProps) {
+export function BudgetPage({ expenses, eventId, eventName, eventBudget, gifts }: BudgetPageProps) {
   const t = useTranslations('budget');
   const locale = useLocale();
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false);
@@ -54,6 +55,7 @@ export function BudgetPage({ expenses, eventId, eventBudget, gifts }: BudgetPage
         <ExpensesTab
           expenses={expenses}
           eventId={eventId}
+          eventName={eventName}
           eventBudget={eventBudget}
           onAddExpense={() => setExpenseSheetOpen(true)}
         />
@@ -68,7 +70,7 @@ export function BudgetPage({ expenses, eventId, eventBudget, gifts }: BudgetPage
       </TabsContent>
 
       <TabsContent value="gifts">
-        <GiftsTab eventId={eventId} initialGifts={gifts} />
+        <GiftsTab eventId={eventId} eventName={eventName} initialGifts={gifts} />
       </TabsContent>
     </Tabs>
   );

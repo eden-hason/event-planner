@@ -488,6 +488,24 @@
       "removingBudget": "מסיר תקציב...",
       "budgetRemoved": "התקציב הוסר",
       "error": "משהו השתבש"
+    },
+    "export": {
+      "download": "הורדה",
+      "downloadAria": "הורדה כגיליון אקסל",
+      "preparing": "מכין את הקובץ...",
+      "downloaded": "הקובץ הורד",
+      "failed": "לא הצלחנו ליצור את הקובץ",
+      "total": "סה\"כ",
+      "giftsFileName": "מתנות",
+      "expensesFileName": "הוצאות",
+      "expenseHeaders": {
+        "name": "הוצאה",
+        "vendor": "ספק",
+        "phone": "טלפון ספק",
+        "price": "מחיר כולל",
+        "advance": "מקדמה",
+        "status": "סטטוס"
+      }
     }
   },
   "guests": {
