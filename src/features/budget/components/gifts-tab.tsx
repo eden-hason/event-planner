@@ -3,7 +3,8 @@
 import { useState, useRef, useCallback, useTransition, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
-import { Search, Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
+import { IconFilter2, IconSearch } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -128,18 +129,29 @@ function FilterChips({
             aria-pressed={active}
             onClick={() => onChange(filter)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 border text-[13px] font-semibold whitespace-nowrap transition-colors',
-              variant === 'table' ? 'h-8 rounded-[10px] px-3' : 'h-9 rounded-full px-3',
-              active
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-card hover:bg-muted/50',
+              'flex shrink-0 items-center text-[13px] whitespace-nowrap transition-colors',
+              variant === 'table'
+                ? cn(
+                    'h-[30px] gap-1.5 rounded-lg px-[11px]',
+                    active
+                      ? 'bg-card text-foreground font-bold shadow-[0_1px_3px_rgba(26,11,46,0.12)]'
+                      : 'text-muted-foreground hover:text-foreground font-medium',
+                  )
+                : cn(
+                    'h-8 gap-1 rounded-full border px-[9px]',
+                    active
+                      ? 'border-primary bg-primary/10 text-primary font-bold'
+                      : 'bg-card text-muted-foreground font-medium',
+                  ),
             )}
           >
             {labels[filter]}
             <span
               className={cn(
-                'text-xs tabular-nums',
-                active ? 'opacity-75' : 'text-muted-foreground font-medium',
+                'tabular-nums',
+                variant === 'table'
+                  ? cn('text-xs font-semibold', active ? 'text-primary' : 'text-muted-foreground')
+                  : 'font-bold',
               )}
             >
               {count}
@@ -456,30 +468,29 @@ export function GiftsTab({
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         {/* Integrated toolbar */}
         <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b">
-          <div className="relative">
-            <Search
-              size={14}
-              className="text-muted-foreground absolute top-1/2 start-3 -translate-y-1/2 pointer-events-none"
-            />
-            <Input
-              className="ps-9 h-8 w-52 bg-muted/40 border-muted/60 focus-visible:bg-background text-sm"
-              placeholder={t('giftTable.searchPlaceholder')}
+          <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-9 max-w-[290px] min-w-40 grow basis-[200px] items-center gap-2 rounded-[10px] border px-[11px] focus-within:ring-[3px]">
+            <IconSearch size={16} className="text-muted-foreground shrink-0" />
+            <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('giftTable.searchPlaceholder')}
+              className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[13.5px] outline-none"
             />
+          </label>
+          <div className="bg-muted flex shrink-0 gap-0.5 rounded-[10px] p-[3px]">
+            <FilterChips summary={summary} value={filter} onChange={setFilter} variant="table" />
           </div>
-          <FilterChips summary={summary} value={filter} onChange={setFilter} variant="table" />
           <Select
             value={methodFilter ?? 'all'}
             onValueChange={(value) => setMethodFilter(isPaymentMethodKey(value) ? value : null)}
           >
             <SelectTrigger
-              size="sm"
               className={cn(
-                'h-8 rounded-[10px] text-[13px] font-semibold',
-                methodFilter && 'border-foreground',
+                'gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold',
+                methodFilter && 'border-primary bg-primary/8 text-primary hover:bg-primary/12',
               )}
             >
+              <IconFilter2 size={16} className={methodFilter ? 'text-primary' : 'text-foreground'} />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -496,6 +507,7 @@ export function GiftsTab({
               fileName={exportFileName}
               sheetName={t('export.giftsFileName')}
               getRows={getSheetRows}
+              className="h-9 gap-[7px] rounded-[10px] px-3 text-[13.5px] font-semibold"
             />
           </div>
         </div>
@@ -592,24 +604,24 @@ export function GiftsTab({
 
       {/* Phone: the table drops to a list, each row opening the sheet */}
       <div className="flex flex-col gap-2.5 md:hidden">
-        <div className="flex items-center justify-between">
-          <span className="text-base font-bold">{t('giftList.title')}</span>
+        <div className="flex gap-[7px]">
+          <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-10 min-w-0 flex-1 items-center gap-[7px] rounded-[11px] border px-[11px] focus-within:ring-[3px]">
+            <IconSearch size={16} className="text-muted-foreground shrink-0" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('giftTable.searchPlaceholder')}
+              // 16px keeps iOS from zooming the page into the field.
+              className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+            />
+          </label>
           <DownloadSheetButton
             fileName={exportFileName}
             sheetName={t('export.giftsFileName')}
             getRows={getSheetRows}
-          />
-        </div>
-        <div className="relative">
-          <Search
-            size={16}
-            className="text-muted-foreground absolute top-1/2 start-3.5 -translate-y-1/2 pointer-events-none"
-          />
-          <Input
-            className="bg-card h-11 rounded-xl ps-10 text-sm"
-            placeholder={t('giftTable.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            iconOnly
+            className="bg-card text-muted-foreground size-10 shrink-0 rounded-[11px]"
           />
         </div>
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

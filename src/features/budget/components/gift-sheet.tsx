@@ -108,7 +108,7 @@ export function GiftSheet({
             {isEdit ? t('giftSheet.editLabel') : t('giftSheet.newLabel')}
           </SheetDescription>
           <SheetTitle className="text-xl">
-            {isEdit ? gift.guestName : t('addGift')}
+            {isEdit ? gift.guestName : t('newGift')}
           </SheetTitle>
         </SheetHeader>
 

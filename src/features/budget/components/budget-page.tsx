@@ -29,24 +29,23 @@ export function BudgetPage({ expenses, eventId, eventName, eventBudget, gifts }:
   const [addGiftOpen, setAddGiftOpen] = useState(false);
 
   /*
-   * The Gifts tab hangs its add button in the page header, at every width; the
-   * Expenses tab keeps its own button on its card. `useFeatureHeader` only
-   * re-runs on a title change, so the action is pushed through `setHeader` as
-   * the tab changes.
+   * Each tab hangs its add button in the page header, at every width.
+   * `useFeatureHeader` only re-runs on a title change, so the action is pushed
+   * through `setHeader` as the tab changes.
    */
   const title = t('title');
+  const isGifts = activeTab === 'gifts';
   const headerConfig = {
     title,
-    action:
-      activeTab === 'gifts' ? (
-        <Button
-          onClick={() => setAddGiftOpen(true)}
-          className="h-9 gap-[5px] rounded-[10px] px-[13px] font-bold"
-        >
-          <IconPlus size={16} stroke={2.4} />
-          {t('addGift')}
-        </Button>
-      ) : undefined,
+    action: (
+      <Button
+        onClick={() => (isGifts ? setAddGiftOpen(true) : setExpenseSheetOpen(true))}
+        className="h-9 gap-[5px] rounded-[10px] px-[13px] font-bold"
+      >
+        <IconPlus size={16} stroke={2.4} />
+        {isGifts ? t('newGift') : t('newExpense')}
+      </Button>
+    ),
   };
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {

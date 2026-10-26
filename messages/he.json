@@ -311,6 +311,8 @@
     },
     "addExpense": "הוסף הוצאה",
     "addGift": "הוסף מתנה",
+    "newExpense": "הוצאה חדשה",
+    "newGift": "מתנה חדשה",
     "stats": {
       "totalReceived": "סה\"כ התקבל",
       "ofPledged": "מתוך {amount} שהובטח",
@@ -369,15 +371,15 @@
       "delete": "מחק",
       "guestNameHint": "בחרו אורח שאישר הגעה או כתבו כל שם אחר"
     },
-    "expensesCard": {
-      "title": "הוצאות"
-    },
-    "expenseListEmpty": {
-      "title": "עדיין אין הוצאות",
-      "description": "התחל לתעד את ההוצאות שלך כדי לעקוב אחר כל פרט."
-    },
     "expenseSearchPlaceholder": "חיפוש הוצאות...",
     "expenseSearchEmpty": "לא נמצאו הוצאות תואמות.",
+    "expenseFilters": {
+      "all": "הכל",
+      "owed": "נותר לשלם",
+      "paid": "שולם",
+      "allStatuses": "כל הסטטוסים",
+      "empty": "אין הוצאות שמתאימות לסינון"
+    },
     "expenseRow": {
       "noVendor": "אין ספק",
       "advancePaidBadge": "מקדמה שולמה",
@@ -428,7 +430,6 @@
       "filterEmpty": "אין מתנות שמתאימות לסינון"
     },
     "giftList": {
-      "title": "המתנות",
       "noAmount": "אין סכום",
       "addAmount": "הוסיפו סכום"
     },
@@ -475,17 +476,33 @@
       "transport": "הסעות"
     },
     "budgetCard": {
-      "title": "סקירת תקציב",
-      "description": "עקוב אחר ההוצאות מול התקציב הכולל",
-      "emptyDescription": "הגדר תקציב כדי לעקוב אחר ההוצאות שלך",
-      "addBudget": "הוסף תקציב",
-      "edit": "ערוך",
-      "legendExpenses": "הוצאות",
-      "legendRemaining": "נותר"
+      "addBudget": "הוסף תקציב"
     },
-    "pieCard": {
-      "title": "פירוט הוצאות",
-      "noData": "הוסף הוצאות כדי לראות פירוט"
+    "expensesHero": {
+      "label": "ההוצאות שלכם עד עכשיו",
+      "budgetAria": "ניצול התקציב",
+      "ofBudget": "מתוך תקציב של <b>{budget}</b>",
+      "ofBudgetShort": "מתוך <b>{budget}</b>",
+      "editBudget": "עריכה",
+      "editBudgetAria": "עריכת תקציב",
+      "remaining": "נותרו {amount}",
+      "over": "חריגה של {amount}",
+      "setBudgetHint": "הגדירו תקציב כדי לראות כמה נוצל וכמה נשאר",
+      "setBudget": "הגדרת תקציב",
+      "paid": "שולם",
+      "owed": "נותר לשלם",
+      "itemCount": "{count, plural, one {פריט אחד} other {# פריטים}}",
+      "byExpense": "לפי הוצאה",
+      "other": "אחר",
+      "segmentMeta": "{count, plural, one {{percent}%} other {# פריטים · {percent}%}}",
+      "show": "הצגה",
+      "hide": "הסתרה",
+      "emptyLabel": "ההוצאות שלכם",
+      "emptyTitle": "בואו נרשום את ההוצאה הראשונה",
+      "emptyBody": "התקציב שלכם {budget}. כל הוצאה שתוסיפו תתעדכן כאן מול התקציב",
+      "emptyBodyNoBudget": "כל הוצאה שתוסיפו תסוכם כאן לפי הוצאה ולפי מה ששולם",
+      "emptyCta": "הוספת הוצאה",
+      "emptySplitHint": "הסכומים יופיעו כאן לפי אולם, קייטרינג, צילום ושאר ההוצאות"
     },
     "budgetDialog": {
       "titleAdd": "הגדר תקציב לאירוע",

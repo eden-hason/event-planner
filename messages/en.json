@@ -311,6 +311,8 @@
     },
     "addExpense": "Add expense",
     "addGift": "Add gift",
+    "newExpense": "New expense",
+    "newGift": "New gift",
     "stats": {
       "totalReceived": "Total received",
       "ofPledged": "of {amount} pledged",
@@ -369,15 +371,15 @@
       "delete": "Delete",
       "guestNameHint": "Pick a confirmed guest or type any other name"
     },
-    "expensesCard": {
-      "title": "Expenses"
-    },
-    "expenseListEmpty": {
-      "title": "No expenses yet",
-      "description": "Start recording your expenses to keep track of every detail."
-    },
     "expenseSearchPlaceholder": "Search expenses...",
     "expenseSearchEmpty": "No expenses match your search.",
+    "expenseFilters": {
+      "all": "All",
+      "owed": "Still owed",
+      "paid": "Paid",
+      "allStatuses": "All statuses",
+      "empty": "No expenses match this filter"
+    },
     "expenseRow": {
       "noVendor": "No vendor",
       "advancePaidBadge": "Advance paid",
@@ -428,7 +430,6 @@
       "filterEmpty": "No gifts match this filter"
     },
     "giftList": {
-      "title": "Gifts",
       "noAmount": "No amount",
       "addAmount": "Add amount"
     },
@@ -475,17 +476,33 @@
       "transport": "Transport"
     },
     "budgetCard": {
-      "title": "Budget overview",
-      "description": "Track spending against your total budget",
-      "emptyDescription": "Set a budget to track your spending progress",
-      "addBudget": "Add Budget",
-      "edit": "Edit",
-      "legendExpenses": "Expenses",
-      "legendRemaining": "Remaining"
+      "addBudget": "Add Budget"
     },
-    "pieCard": {
-      "title": "Cost breakdown",
-      "noData": "Add expenses to see breakdown"
+    "expensesHero": {
+      "label": "Your spending so far",
+      "budgetAria": "Budget used",
+      "ofBudget": "of a <b>{budget}</b> budget",
+      "ofBudgetShort": "of <b>{budget}</b>",
+      "editBudget": "Edit",
+      "editBudgetAria": "Edit budget",
+      "remaining": "{amount} left",
+      "over": "{amount} over",
+      "setBudgetHint": "Set a budget to see how much is used and how much is left",
+      "setBudget": "Set budget",
+      "paid": "Paid",
+      "owed": "Still owed",
+      "itemCount": "{count, plural, one {1 item} other {# items}}",
+      "byExpense": "By expense",
+      "other": "Other",
+      "segmentMeta": "{count, plural, one {{percent}%} other {# items · {percent}%}}",
+      "show": "Show",
+      "hide": "Hide",
+      "emptyLabel": "Your spending",
+      "emptyTitle": "Let's log your first expense",
+      "emptyBody": "Your budget is {budget}. Every expense you add is tracked here against it",
+      "emptyBodyNoBudget": "Every expense you add is totaled here by expense and by what's been paid",
+      "emptyCta": "Add expense",
+      "emptySplitHint": "Amounts show up here by venue, catering, photography and the rest"
     },
     "budgetDialog": {
       "titleAdd": "Set event budget",

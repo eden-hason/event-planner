@@ -11,9 +11,18 @@ interface DownloadSheetButtonProps {
   getRows: () => SheetRow[];
   fileName: string;
   sheetName: string;
+  /** Drops the label, leaving the icon (and the aria-label) only. */
+  iconOnly?: boolean;
+  className?: string;
 }
 
-export function DownloadSheetButton({ getRows, fileName, sheetName }: DownloadSheetButtonProps) {
+export function DownloadSheetButton({
+  getRows,
+  fileName,
+  sheetName,
+  iconOnly = false,
+  className,
+}: DownloadSheetButtonProps) {
   const t = useTranslations('budget.export');
   const locale = useLocale();
 
@@ -27,14 +36,15 @@ export function DownloadSheetButton({ getRows, fileName, sheetName }: DownloadSh
 
   return (
     <Button
-      size="sm"
+      size={iconOnly ? 'icon' : 'sm'}
       variant="outline"
       onClick={handleDownload}
       aria-label={t('downloadAria')}
       title={t('downloadAria')}
+      className={className}
     >
-      <IconDownload size={16} />
-      {t('download')}
+      <IconDownload size={iconOnly ? 18 : 16} />
+      {!iconOnly && t('download')}
     </Button>
   );
 }

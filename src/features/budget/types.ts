@@ -20,7 +20,9 @@ export function isPaymentMethodKey(value: string | null | undefined): value is P
 
 export type ExpenseStatus = 'fully-paid' | 'advance-paid' | 'advance-due' | 'not-paid';
 
-export function getExpenseStatus(exp: ExpenseApp): ExpenseStatus {
+export function getExpenseStatus(
+  exp: Pick<ExpenseApp, 'fullyPaid' | 'hasAdvance' | 'advancePaid'>,
+): ExpenseStatus {
   if (exp.fullyPaid) return 'fully-paid';
   if (exp.hasAdvance && exp.advancePaid) return 'advance-paid';
   if (exp.hasAdvance && !exp.advancePaid) return 'advance-due';
