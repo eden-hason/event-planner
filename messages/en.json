@@ -488,6 +488,24 @@
       "removingBudget": "Removing budget...",
       "budgetRemoved": "Budget removed",
       "error": "Something went wrong"
+    },
+    "export": {
+      "download": "Download",
+      "downloadAria": "Download as a spreadsheet",
+      "preparing": "Preparing file...",
+      "downloaded": "File downloaded",
+      "failed": "Couldn't create the file",
+      "total": "Total",
+      "giftsFileName": "Gifts",
+      "expensesFileName": "Expenses",
+      "expenseHeaders": {
+        "name": "Expense",
+        "vendor": "Vendor",
+        "phone": "Vendor phone",
+        "price": "Total price",
+        "advance": "Advance",
+        "status": "Status"
+      }
     }
   },
   "guests": {
