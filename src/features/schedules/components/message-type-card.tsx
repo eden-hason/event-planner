@@ -1,18 +1,21 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
 
-import { ScheduleLockBadge } from './schedule-lock-badge';
 import { SettingsCard } from './settings-card';
 import { useScheduleSettings, type MessageMode } from './schedule-settings-context';
 
 interface MessageTypeCardProps {
   /** Whether this Schedule Type has a Personal Message family to send. */
   offersPersonalMessage: boolean;
-  /** The Schedule has gone out, so the choice can no longer change. */
-  sent: boolean;
+  /**
+   * Shown once the Schedule has gone out and the choice can no longer change.
+   * Rendered server-side and passed in - see ScheduleLockBadge.
+   */
+  lockBadge?: ReactNode;
 }
 
 /**
@@ -28,7 +31,7 @@ interface MessageTypeCardProps {
  * The choice is not stored. A Schedule sends its Personal Message exactly when
  * it carries the text, so picking Kululu's here clears that text on save.
  */
-export function MessageTypeCard({ offersPersonalMessage, sent }: MessageTypeCardProps) {
+export function MessageTypeCard({ offersPersonalMessage, lockBadge }: MessageTypeCardProps) {
   const t = useTranslations('schedules.messageType');
   const { messageMode, setMessageMode, editable } = useScheduleSettings();
 
@@ -50,7 +53,7 @@ export function MessageTypeCard({ offersPersonalMessage, sent }: MessageTypeCard
   return (
     <SettingsCard
       title={t('cardTitle')}
-      aside={sent ? <ScheduleLockBadge /> : undefined}
+      aside={lockBadge}
     >
       <div role="radiogroup" aria-label={t('cardTitle')} className="flex flex-col gap-2">
         {options.map((option) => {

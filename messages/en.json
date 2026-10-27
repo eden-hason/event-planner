@@ -1881,9 +1881,6 @@
       "title": "Your personal message",
       "placeholder": "For example: We can't wait to celebrate with you! There is free parking next to the venue, and if you need a ride just message us",
       "help": {
-        "editable": "Goes between the opening line and the event details. Leave it empty to send the default wording",
-        "locked": "Your message is sent instead of the default wording. Available once sending is enabled",
-        "sent": "The message has already gone out, so the wording is kept for the record",
         "lineBreaks": "A line break shows as \"|\" in the message, because WhatsApp does not allow line breaks here"
       }
     },

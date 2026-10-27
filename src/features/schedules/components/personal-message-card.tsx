@@ -43,7 +43,6 @@ export function PersonalMessageCard({ lockReason }: { lockReason: 'locked' | 'se
         rows={5}
         className="read-only:bg-muted/60 resize-none"
       />
-      <p className="text-muted-foreground text-xs">{t(`help.${lockReason ?? 'editable'}`)}</p>
       {lockReason !== 'sent' && (
         <p className="text-muted-foreground text-xs">{t('help.lineBreaks')}</p>
       )}

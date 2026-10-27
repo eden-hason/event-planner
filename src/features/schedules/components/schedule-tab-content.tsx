@@ -82,7 +82,7 @@ export async function ScheduleTabContent({
           <div className="flex flex-col gap-3.5">
             <MessageTypeCard
               offersPersonalMessage={Boolean(offersPersonalMessage)}
-              sent={sent}
+              lockBadge={sent ? <ScheduleLockBadge /> : undefined}
             />
             {offersPersonalMessage && <PersonalMessageCard lockReason={lockReason} />}
             <ScheduleDetailsCard
