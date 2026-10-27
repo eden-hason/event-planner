@@ -70,6 +70,9 @@ export const getHomeViewer = cache(async function getHomeViewer(): Promise<HomeV
  * A dated one wins; with none dated it is the first Undated one in plan order,
  * the round that asks everyone (ADR 0029). The Test Message is about what the
  * message says, which an Undated Schedule already knows.
+ *
+ * A locked Schedule ('disabled', on an Event not paid for yet) has not gone out
+ * either: it is exactly what paying will send, so an unpaid Event tests it too.
  */
 export const getTestMessageSchedule = cache(async function getTestMessageSchedule(
   eventId: string,
@@ -80,7 +83,7 @@ export const getTestMessageSchedule = cache(async function getTestMessageSchedul
     .select('id, scheduled_date, target_status, schedule_types!inner (key)')
     .eq('event_id', eventId)
     .eq('schedule_types.key', 'confirmation')
-    .is('status', null);
+    .or('status.is.null,status.eq.disabled');
   if (error) {
     console.error('Error fetching the test message schedule:', error);
     return null;
