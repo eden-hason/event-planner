@@ -5,15 +5,15 @@ import type { OverviewStats } from '../types';
 
 /**
  * The headline of the Overview: four stat cards the Operator reads first. Every
- * number carries a supporting sub-line. Paid Users counts Owners and Payments
- * sums what they paid, so an Owner who tops up adds money but not a user.
+ * number carries a supporting sub-line. Paid Events counts Events and Payments
+ * sums what was paid, so an Event that tops up adds money but not an event.
  */
 type StatCard = {
   label: string;
   value: string;
   sub: string;
   icon: LucideIcon;
-  /** Paid Users reads as an outcome, so it takes the success tint; the rest the brand. */
+  /** Paid Events reads as an outcome, so it takes the success tint; the rest the brand. */
   tone: 'brand' | 'success';
 };
 
@@ -43,9 +43,9 @@ export function StatCards({ stats }: { stats: OverviewStats }) {
       tone: 'brand',
     },
     {
-      label: 'משתמשים משלמים',
-      value: integer(stats.paidUsers),
-      sub: `${integer(stats.paidUsersThisMonth)} שילמו החודש`,
+      label: 'אירועים ששולמו',
+      value: integer(stats.paidEvents),
+      sub: `${integer(stats.paidEventsThisMonth)} שילמו החודש`,
       icon: BadgeCheck,
       tone: 'success',
     },
