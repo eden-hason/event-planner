@@ -173,22 +173,14 @@ grant execute on function public.apply_event_billing_transition(
 ) to service_role;
 
 -- ---------------------------------------------------------------------------
--- 4. Guard: every payment has a kind, and every package exactly one Plan, its oldest
+-- 4. Guard: every package opens with exactly one Plan, its oldest payment
 -- ---------------------------------------------------------------------------
+-- A payment left without a kind already fails the check constraint above.
 
 do $$
 declare
-  v_unkinded integer;
   v_misplaced integer;
 begin
-  select count(*) into v_unkinded
-  from public.event_billing_events
-  where record_count is not null and kind is null;
-
-  if v_unkinded > 0 then
-    raise exception 'billing_payment_kinds: % payments have no kind', v_unkinded;
-  end if;
-
   select count(*) into v_misplaced
   from (
     select event_id

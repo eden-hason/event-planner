@@ -5,9 +5,7 @@ import type {
   EventBillingStatus,
   RecordPackageChannel,
 } from '../types';
-import { isRecordsPayment } from '../utils/payment-kinds';
 import { onSale } from '../utils/pricing';
-import { listEventPayments } from './list-event-payments';
 
 export type BillingTransitionInput = {
   eventId: string;
@@ -60,11 +58,21 @@ export async function applyBillingTransition(
   supabase: SupabaseClient,
   input: BillingTransitionInput,
 ): Promise<BillingTransitionResult> {
-  if (input.recordCount != null && input.channel) {
-    const payments = await listEventPayments(supabase, input.eventId);
-    if (!payments) return { ok: false, message: 'Could not read the package' };
+  // Only a Top-up adds to records already on a Plan; the Plan opens the package, and an Extra
+  // Schedule carries no channel.
+  if (input.kind === 'top_up') {
+    const { data: latest, error } = await supabase
+      .from('event_billing_events')
+      .select('channel')
+      .eq('event_id', input.eventId)
+      .in('kind', ['plan', 'top_up'])
+      .order('occurred_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return { ok: false, message: 'Could not read the package' };
     // A package on a Plan no longer sold (SMS) may move to one that is.
-    const plan = onSale(payments.find(isRecordsPayment)?.channel);
+    const plan = onSale(latest?.channel as RecordPackageChannel | undefined);
     if (plan && plan !== input.channel) {
       return { ok: false, message: 'A top-up stays on the package Plan', reason: 'otherPlan' };
     }

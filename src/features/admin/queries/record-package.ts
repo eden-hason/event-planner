@@ -27,17 +27,16 @@ export async function getEventRecordPackage(eventId: string): Promise<EventRecor
     : { data: [], error: null };
   if (error) throw new Error(error.message);
   const names = new Map((operators ?? []).map((o) => [o.id as string, (o.email || o.full_name) as string | null]));
-  const recordsPayments = payments.filter(isRecordsPayment);
 
   return {
     billingStatus: eventRes.data.billing_status as EventBillingStatus,
     package: loaded.package,
-    automaticBonus: automaticBonus(recordsPayments.map((p) => p.records)),
+    automaticBonus: automaticBonus(payments.filter(isRecordsPayment).map((p) => p.records)),
     used: loaded.split.used,
     uncounted: loaded.split.uncounted,
     left: loaded.split.left,
     over: loaded.split.over,
-    channel: recordsPayments[0]?.channel ?? null,
+    channel: loaded.channel,
     extraSchedules: payments.reduce((sum, p) => sum + (p.kind === 'extra_schedule' ? p.schedules : 0), 0),
     payments: payments.map((p) => ({
       ...p,

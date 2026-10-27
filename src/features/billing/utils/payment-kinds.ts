@@ -2,7 +2,7 @@ import type { BillingPaymentKind, EventPayment, RecordsPayment } from '../types'
 
 /** The payments that added Paid Records - all a Record Package is counted from. */
 export function isRecordsPayment(payment: EventPayment): payment is RecordsPayment {
-  return payment.kind !== 'extra_schedule';
+  return 'records' in payment;
 }
 
 /**

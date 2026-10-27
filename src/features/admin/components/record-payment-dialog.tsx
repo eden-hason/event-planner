@@ -36,6 +36,7 @@ import {
   paymentKindBlocker,
   recordEventPayment,
   recordPackage,
+  topUpTotal,
   type BillingPaymentKind,
   type BillingPaymentMethod,
   type EventBillingStatus,
@@ -45,13 +46,14 @@ import {
 } from '@/features/billing';
 
 const METHODS = Object.keys(PAYMENT_METHOD_LABELS) as BillingPaymentMethod[];
+const KINDS = Object.keys(PAYMENT_KIND_LABELS) as BillingPaymentKind[];
 
-/** Every kind, in the order the form offers them. A new kind is a hint here and its fields below. */
-const KINDS: { kind: BillingPaymentKind; hint: string }[] = [
-  { kind: 'plan', hint: 'פותחת את חבילת הרשומות ומפעילה את השליחה' },
-  { kind: 'top_up', hint: 'עוד רשומות לחבילה, באותה תוכנית ובלי בונוס' },
-  { kind: 'extra_schedule', hint: 'מעבר למה שכלול בתוכנית. את התזמון יוצרים ידנית' },
-];
+/** What each kind does, under its label. A new kind is a hint here and its fields below. */
+const KIND_HINTS: Record<BillingPaymentKind, string> = {
+  plan: 'פותחת את חבילת הרשומות ומפעילה את השליחה',
+  top_up: 'עוד רשומות לחבילה, באותה תוכנית ובלי בונוס',
+  extra_schedule: 'מעבר למה שכלול בתוכנית. את התזמון יוצרים ידנית',
+};
 
 /** Whole positive numbers only; anything else is NaN, so the form and the schema both refuse it. */
 function count(value: string): number {
@@ -83,7 +85,7 @@ export function RecordPaymentDialog({
 }) {
   const router = useRouter();
   const hasPlan = current !== null;
-  const firstOpenKind = KINDS.find(({ kind }) => !paymentKindBlocker(kind, hasPlan))!.kind;
+  const firstOpenKind = KINDS.find((kind) => !paymentKindBlocker(kind, hasPlan))!;
 
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<BillingPaymentKind>(firstOpenKind);
@@ -104,7 +106,7 @@ export function RecordPaymentDialog({
   const scheduleCount = count(schedules);
   const isGift = method === 'gift';
   const amountValue = isGift ? 0 : amount.trim() === '' ? Number.NaN : Number(amount);
-  const listPrice = addsRecords && !Number.isNaN(recordCount) ? recordCount * RECORD_PACKAGE_RATES[channel] : null;
+  const listPrice = addsRecords && !Number.isNaN(recordCount) ? topUpTotal(recordCount, channel) : null;
   const complete =
     (addsRecords ? !Number.isNaN(recordCount) : !Number.isNaN(scheduleCount)) &&
     !Number.isNaN(amountValue);
@@ -139,8 +141,8 @@ export function RecordPaymentDialog({
         return;
       }
       toast.success(result.message);
+      // The form resets when it opens next, against the refreshed package.
       setOpen(false);
-      reset();
       router.refresh();
     });
   }
@@ -176,7 +178,7 @@ export function RecordPaymentDialog({
             className="grid gap-2 sm:grid-cols-3"
             aria-label="מה נרכש"
           >
-            {KINDS.map(({ kind: option, hint }) => {
+            {KINDS.map((option) => {
               const blocker = paymentKindBlocker(option, hasPlan);
               return (
                 <Label
@@ -192,7 +194,7 @@ export function RecordPaymentDialog({
                     <RadioGroupItem id={`payment-kind-${option}`} value={option} disabled={blocker !== null} />
                     {PAYMENT_KIND_LABELS[option]}
                   </span>
-                  <span className="text-muted-foreground text-[12px] leading-snug">{blocker ?? hint}</span>
+                  <span className="text-muted-foreground text-[12px] leading-snug">{blocker ?? KIND_HINTS[option]}</span>
                 </Label>
               );
             })}

@@ -41,6 +41,7 @@ export {
   onSale,
   recordPackage,
   splitByPackage,
+  topUpTotal,
   UPSELL_CTA_CLASS,
   UPSELL_SURFACE_CLASS,
 } from './utils';

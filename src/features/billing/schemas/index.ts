@@ -44,9 +44,6 @@ export const BILLING_PAYMENT_METHODS = [
   'other',
 ] as const;
 
-/** What a payment bought (ADR 0045). The upsales need the `plan` to exist first. */
-export const BILLING_PAYMENT_KINDS = ['plan', 'top_up', 'extra_schedule'] as const;
-
 /** Upper bound on one payment, well past the homepage slider's 1000. */
 const MAX_RECORDS_PER_PAYMENT = 10_000;
 
@@ -82,8 +79,7 @@ const paymentFields = {
  */
 export const RecordEventPaymentSchema = z
   .discriminatedUnion('kind', [
-    z.object({ kind: z.literal('plan'), records, channel, ...paymentFields }),
-    z.object({ kind: z.literal('top_up'), records, channel, ...paymentFields }),
+    z.object({ kind: z.literal(['plan', 'top_up']), records, channel, ...paymentFields }),
     z.object({
       kind: z.literal('extra_schedule'),
       schedules: z
@@ -102,8 +98,6 @@ export const RecordEventPaymentSchema = z
     message: 'תשלום של ₪0 הוא מתנה - צריך לבחור מתנה כאמצעי התשלום',
     path: ['method'],
   });
-
-export type RecordEventPaymentInput = z.input<typeof RecordEventPaymentSchema>;
 
 /** Null resets the bonus to the automatic rule. */
 export const SetBonusOverrideSchema = z.object({

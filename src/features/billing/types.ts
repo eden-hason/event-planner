@@ -64,8 +64,10 @@ export type PackageSplit = {
  */
 export type BillingPaymentKind = 'plan' | 'top_up' | 'extra_schedule';
 
-/** The kinds that add Paid Records, and so carry records and a channel. */
-export type RecordsPaymentKind = Extract<BillingPaymentKind, 'plan' | 'top_up'>;
+/** What a payment bought, with the fields its kind carries. One union for every payment view. */
+export type PaymentPurchase =
+  | { kind: 'plan' | 'top_up'; records: number; channel: RecordPackageChannel }
+  | { kind: 'extra_schedule'; schedules: number };
 
 /** One recorded payment, newest first in any list. */
 export type EventPayment = {
@@ -77,10 +79,7 @@ export type EventPayment = {
   /** The Operator who recorded it; null for a provider webhook or a deleted user. */
   createdBy: string | null;
   occurredAt: string;
-} & (
-  | { kind: RecordsPaymentKind; records: number; channel: RecordPackageChannel }
-  | { kind: 'extra_schedule'; schedules: number }
-);
+} & PaymentPurchase;
 
 /** A payment that added Paid Records: what the package is counted from. */
 export type RecordsPayment = Extract<EventPayment, { records: number }>;
@@ -120,10 +119,7 @@ export type PackagePayment = {
   amount: number;
   gift: boolean;
   occurredAt: string;
-} & (
-  | { kind: RecordsPaymentKind; records: number; channel: RecordPackageChannel }
-  | { kind: 'extra_schedule'; schedules: number }
-);
+} & PaymentPurchase;
 
 /**
  * The Record Package page (Record Package Plan design): the package as the Guests page sees

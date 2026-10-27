@@ -33,54 +33,56 @@ export async function recordEventPayment(input: unknown): Promise<BillingActionR
 
   const supabase = createServiceClient();
 
-  const { data: event, error: readError } = await supabase
-    .from('events')
-    .select('status')
-    .eq('id', eventId)
-    .maybeSingle();
-  if (readError) {
-    console.error('recordEventPayment read failed:', readError);
+  // None of these reads depends on another. The plan count is held to by the unique index and
+  // the database function as well; reading it first gives the Operator a message instead of
+  // a failed insert.
+  const [eventRes, planRes, referenceRes] = await Promise.all([
+    supabase.from('events').select('status').eq('id', eventId).maybeSingle(),
+    supabase
+      .from('event_billing_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .eq('kind', 'plan'),
+    reference
+      ? supabase
+          .from('event_billing_events')
+          .select('event_id')
+          .eq('provider', 'manual')
+          .eq('provider_ref', reference)
+          .maybeSingle()
+      : null,
+  ]);
+
+  if (eventRes.error) {
+    console.error('recordEventPayment read failed:', eventRes.error);
     return { success: false, message: 'לא הצלחנו לטעון את האירוע' };
   }
+  const event = eventRes.data;
   if (!event) return { success: false, message: 'האירוע הזה כבר לא קיים' };
   if (event.status === 'draft') {
     return { success: false, message: 'לאירוע בטיוטה אין סביבת עבודה לרשום עבורה תשלום' };
   }
 
-  // The unique index and the database function hold to this as well; reading it here first
-  // gives the Operator a message instead of a failed insert.
-  const { count: plans, error: planError } = await supabase
-    .from('event_billing_events')
-    .select('id', { count: 'exact', head: true })
-    .eq('event_id', eventId)
-    .eq('kind', 'plan');
-  if (planError || plans === null) {
-    console.error('recordEventPayment plan check failed:', planError);
+  if (planRes.error || planRes.count === null) {
+    console.error('recordEventPayment plan check failed:', planRes.error);
     return { success: false, message: 'לא הצלחנו לטעון את החבילה' };
   }
-  const blocker = paymentKindBlocker(payment.kind, plans > 0);
+  const blocker = paymentKindBlocker(payment.kind, planRes.count > 0);
   if (blocker) return { success: false, message: blocker };
 
-  if (reference) {
-    const { data: existing, error } = await supabase
-      .from('event_billing_events')
-      .select('event_id')
-      .eq('provider', 'manual')
-      .eq('provider_ref', reference)
-      .maybeSingle();
-    if (error) {
-      console.error('recordEventPayment reference check failed:', error);
-      return { success: false, message: 'לא הצלחנו לבדוק את האסמכתה' };
-    }
-    if (existing) {
-      return {
-        success: false,
-        message:
-          existing.event_id === eventId
-            ? 'האסמכתה הזו כבר רשומה לאירוע הזה'
-            : 'האסמכתה הזו כבר רשומה לאירוע אחר',
-      };
-    }
+  if (referenceRes?.error) {
+    console.error('recordEventPayment reference check failed:', referenceRes.error);
+    return { success: false, message: 'לא הצלחנו לבדוק את האסמכתה' };
+  }
+  const existing = referenceRes?.data;
+  if (existing) {
+    return {
+      success: false,
+      message:
+        existing.event_id === eventId
+          ? 'האסמכתה הזו כבר רשומה לאירוע הזה'
+          : 'האסמכתה הזו כבר רשומה לאירוע אחר',
+    };
   }
 
   const result = await applyBillingTransition(supabase, {

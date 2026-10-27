@@ -37,7 +37,7 @@ import {
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
-import { rsvpLabel } from '../utils/labels';
+import { countLabel, rsvpLabel } from '../utils/labels';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -462,7 +462,7 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
                       <TableCell>{PAYMENT_KIND_LABELS[payment.kind]}</TableCell>
                       <TableCell className="text-end tabular-nums">
                         {payment.kind === 'extra_schedule'
-                          ? `${payment.schedules.toLocaleString('he-IL')} ${payment.schedules === 1 ? 'תזמון' : 'תזמונים'}`
+                          ? countLabel(payment.schedules, 'תזמון אחד', 'תזמונים')
                           : `+${payment.records.toLocaleString('he-IL')} רשומות`}
                       </TableCell>
                       <TableCell>{payment.kind === 'extra_schedule' ? '-' : RECORD_PACKAGE_CHANNEL_LABELS[payment.channel]}</TableCell>
