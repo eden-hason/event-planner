@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
+  BillingPaymentKind,
   BillingPaymentMethod,
   EventBillingStatus,
   RecordPackageChannel,
 } from '../types';
 import { onSale } from '../utils/pricing';
-import { listEventPayments } from './list-event-payments';
 
 export type BillingTransitionInput = {
   eventId: string;
@@ -20,9 +20,15 @@ export type BillingTransitionInput = {
   providerRef?: string;
   amount?: number;
   currency?: string;
-  /** A payment sets records, channel, amount and method together, and lands on `paid`. */
+  /**
+   * What a payment bought (ADR 0045); unset for a status change. A payment sets its kind's
+   * fields, an amount and a method together, and lands on `paid`: records and channel for a
+   * `plan` or `top_up`, a schedule count for an `extra_schedule`.
+   */
+  kind?: BillingPaymentKind;
   channel?: RecordPackageChannel;
   recordCount?: number;
+  scheduleCount?: number;
   paymentMethod?: BillingPaymentMethod;
   note?: string;
   /** The operator who made a manual transition; null for a webhook. */
@@ -52,11 +58,21 @@ export async function applyBillingTransition(
   supabase: SupabaseClient,
   input: BillingTransitionInput,
 ): Promise<BillingTransitionResult> {
-  if (input.recordCount != null && input.channel) {
-    const payments = await listEventPayments(supabase, input.eventId);
-    if (!payments) return { ok: false, message: 'Could not read the package' };
+  // Only a Top-up adds to records already on a Plan; the Plan opens the package, and an Extra
+  // Schedule carries no channel.
+  if (input.kind === 'top_up') {
+    const { data: latest, error } = await supabase
+      .from('event_billing_events')
+      .select('channel')
+      .eq('event_id', input.eventId)
+      .in('kind', ['plan', 'top_up'])
+      .order('occurred_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return { ok: false, message: 'Could not read the package' };
     // A package on a Plan no longer sold (SMS) may move to one that is.
-    const plan = onSale(payments[0]?.channel);
+    const plan = onSale(latest?.channel as RecordPackageChannel | undefined);
     if (plan && plan !== input.channel) {
       return { ok: false, message: 'A top-up stays on the package Plan', reason: 'otherPlan' };
     }
@@ -75,6 +91,8 @@ export async function applyBillingTransition(
     p_created_by: input.createdBy ?? null,
     p_occurred_at: input.occurredAt ?? new Date().toISOString(),
     p_payment_method: input.paymentMethod ?? null,
+    p_kind: input.kind ?? null,
+    p_schedule_count: input.scheduleCount ?? null,
   });
 
   const row = (Array.isArray(data) ? data[0] : data) as { id: string } | null;

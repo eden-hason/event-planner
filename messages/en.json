@@ -2719,8 +2719,12 @@
       "payments": {
         "title": "Payments",
         "records": "{count, plural, one {# record} other {{formatted} records}}",
-        "first": "First purchase",
-        "topUp": "Top-up",
+        "schedules": "{count, plural, one {# schedule} other {# schedules}}",
+        "kinds": {
+          "plan": "First purchase",
+          "top_up": "Top-up",
+          "extra_schedule": "Extra schedule"
+        },
         "gift": "Gift from Kululu"
       },
       "help": {

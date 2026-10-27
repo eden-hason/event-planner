@@ -14,6 +14,7 @@ import { Band, BandRow } from './band';
 import {
   BILLING_STATUS_LABELS,
   EventBillingStatusControl,
+  PAYMENT_KIND_LABELS,
   PAYMENT_METHOD_LABELS,
   RECORD_PACKAGE_CHANNEL_LABELS,
 } from '@/features/billing';
@@ -36,7 +37,7 @@ import {
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
-import { rsvpLabel } from '../utils/labels';
+import { countLabel, rsvpLabel } from '../utils/labels';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -377,8 +378,9 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
 
 /**
  * The Record Package (ADR 0027): what the Owner paid for, the bonus on top, how much of it
- * the guest list uses, and the payments behind it. Recording a payment is the only way Paid
- * Records grow, and it is also how sending is turned on.
+ * the guest list uses, and the payments behind it - the Plan and its upsales (ADR 0045).
+ * Recording a payment is the only way Paid Records grow, and it is also how sending is
+ * turned on.
  */
 export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
   try {
@@ -396,7 +398,9 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
             <RecordPaymentDialog
               eventId={eventId}
               current={pkg}
-              defaultChannel={view.channel}
+              channel={view.channel}
+              billingStatus={view.billingStatus}
+              extraSchedules={view.extraSchedules}
             />
           </div>
         }
@@ -433,14 +437,18 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
               ) : (
                 <PackageFigure label="נותרו" value={view.left} />
               )}
+              {view.extraSchedules > 0 && (
+                <PackageFigure label="תזמונים נוספים" value={view.extraSchedules} supporting="מעבר למה שכלול בתוכנית" />
+              )}
             </BandRow>
             <BandRow className="px-0 py-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="ps-4">תאריך</TableHead>
-                    <TableHead className="text-end">רשומות</TableHead>
-                    <TableHead>ערוץ</TableHead>
+                    <TableHead>מה נרכש</TableHead>
+                    <TableHead className="text-end">כמות</TableHead>
+                    <TableHead>תוכנית</TableHead>
                     <TableHead className="text-end">סכום</TableHead>
                     <TableHead>אמצעי תשלום</TableHead>
                     <TableHead>אסמכתה</TableHead>
@@ -448,14 +456,16 @@ export async function EventRecordPackageBand({ eventId }: { eventId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {view.payments.map((payment, index) => (
+                  {view.payments.map((payment) => (
                     <TableRow key={payment.id}>
-                      <TableCell className="ps-4 tabular-nums">
-                        {formatShortDate(payment.occurredAt)}
-                        {index === view.payments.length - 1 && <span className="text-muted-foreground ms-1.5 text-[12px]">פתיחה</span>}
+                      <TableCell className="ps-4 tabular-nums">{formatShortDate(payment.occurredAt)}</TableCell>
+                      <TableCell>{PAYMENT_KIND_LABELS[payment.kind]}</TableCell>
+                      <TableCell className="text-end tabular-nums">
+                        {payment.kind === 'extra_schedule'
+                          ? countLabel(payment.schedules, 'תזמון אחד', 'תזמונים')
+                          : `+${payment.records.toLocaleString('he-IL')} רשומות`}
                       </TableCell>
-                      <TableCell className="text-end tabular-nums">+{payment.records.toLocaleString('he-IL')}</TableCell>
-                      <TableCell>{RECORD_PACKAGE_CHANNEL_LABELS[payment.channel]}</TableCell>
+                      <TableCell>{payment.kind === 'extra_schedule' ? '-' : RECORD_PACKAGE_CHANNEL_LABELS[payment.channel]}</TableCell>
                       <TableCell className="text-end tabular-nums">₪{payment.amount.toLocaleString('he-IL')}</TableCell>
                       <TableCell>{PAYMENT_METHOD_LABELS[payment.method]}</TableCell>
                       <TableCell className="max-w-48">

@@ -1,4 +1,9 @@
-import type { BillingPaymentMethod, EventBillingStatus, RecordPackageChannel } from '../types';
+import type {
+  BillingPaymentKind,
+  BillingPaymentMethod,
+  EventBillingStatus,
+  RecordPackageChannel,
+} from '../types';
 
 /**
  * Hebrew labels for the billing statuses. The Back Office is Hebrew-only, so
@@ -27,4 +32,11 @@ export const PAYMENT_METHOD_LABELS: Record<BillingPaymentMethod, string> = {
   cash: 'מזומן',
   gift: 'מתנה',
   other: 'אחר',
+};
+
+/** Back Office labels for what a payment bought (ADR 0045). */
+export const PAYMENT_KIND_LABELS: Record<BillingPaymentKind, string> = {
+  plan: 'חבילה',
+  top_up: 'תוספת רשומות',
+  extra_schedule: 'תזמון נוסף',
 };

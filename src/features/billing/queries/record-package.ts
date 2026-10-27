@@ -86,13 +86,10 @@ export async function getRecordPackagePageView(
     view: {
       ...counts,
       bonusIsCustom: loaded.package.bonusIsCustom,
-      payments: payments.map((payment) => ({
-        id: payment.id,
-        records: payment.records,
-        channel: payment.channel,
-        amount: payment.amount,
-        gift: payment.method === 'gift',
-        occurredAt: payment.occurredAt,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept from the Owner
+      payments: payments.map(({ method, reference, note, createdBy, ...payment }) => ({
+        ...payment,
+        gift: method === 'gift',
       })),
     },
   };

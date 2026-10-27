@@ -81,7 +81,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
   const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const upcomingEndUtc = new Date(todayUtc.getTime() + UPCOMING_WINDOW_DAYS * 86_400_000);
 
-  // A payment is a billing log row that carries records (ADR 0027). Gifts are
+  // A payment is a billing log row with a kind (ADR 0045), upsales included. Gifts are
   // payments of 0 and say nothing about who paid, so they are left out. The rows
   // are read rather than counted because Paid Users is a distinct count of
   // Owners, which PostgREST cannot do; the Owner is reached through the Event.
@@ -90,7 +90,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       supabase
         .from('event_billing_events')
         .select('id, amount, occurred_at, events!inner(user_id)')
-        .not('record_count', 'is', null)
+        .not('kind', 'is', null)
         .neq('payment_method', 'gift'),
       'event_id',
       test.eventIds,

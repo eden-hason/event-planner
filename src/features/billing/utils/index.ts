@@ -2,6 +2,7 @@ export { deriveHeaderStatus } from './derive-header-status';
 export { billingWhatsAppUrl } from './contact';
 export {
   BILLING_STATUS_LABELS,
+  PAYMENT_KIND_LABELS,
   PAYMENT_METHOD_LABELS,
   RECORD_PACKAGE_CHANNEL_LABELS,
 } from './labels';
@@ -31,6 +32,8 @@ export {
   trackPct,
   type PricingChannel,
 } from './pricing';
+
+export { isRecordsPayment, paymentKindBlocker } from './payment-kinds';
 
 export { TOP_UP_STEP, clampTopUp, suggestedTopUp, topUpTotal } from './top-up';
 

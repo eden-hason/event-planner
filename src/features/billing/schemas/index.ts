@@ -47,30 +47,49 @@ export const BILLING_PAYMENT_METHODS = [
 /** Upper bound on one payment, well past the homepage slider's 1000. */
 const MAX_RECORDS_PER_PAYMENT = 10_000;
 
+/** Upper bound on Extra Schedules in one payment: more than any Event has Schedules. */
+const MAX_SCHEDULES_PER_PAYMENT = 20;
+
+const records = z
+  .number({ error: 'צריך להזין כמה רשומות שולמו' })
+  .int('מספר הרשומות צריך להיות שלם')
+  .min(1, 'לפחות רשומה אחת')
+  .max(MAX_RECORDS_PER_PAYMENT, `עד ${MAX_RECORDS_PER_PAYMENT.toLocaleString('he-IL')} רשומות בתשלום אחד`);
+
+// Only the Plans on sale (ADR 0034): past `sms` payments keep their channel, but no new one is recorded on it.
+const channel = z.enum(PRICING_CHANNELS);
+
+/** The money side, the same whatever was bought. */
+const paymentFields = {
+  eventId: z.uuid(),
+  amount: z
+    .number({ error: 'צריך להזין את הסכום שהתקבל' })
+    .min(0, 'הסכום לא יכול להיות שלילי')
+    .max(1_000_000, 'הסכום גדול מדי')
+    .refine((n) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6, 'עד שתי ספרות אחרי הנקודה'),
+  method: z.enum(BILLING_PAYMENT_METHODS),
+  reference: z.string().trim().max(100, 'האסמכתה צריכה להיות קצרה מ-100 תווים').optional(),
+  note: z.string().trim().max(500, 'ההערה צריכה להיות קצרה מ-500 תווים').optional(),
+};
+
 /**
- * An Operator recording a payment taken outside the system (ADR 0021, ADR 0027). Every
- * payment adds to Paid Records and moves the Event to `paid`. A free Event is a gift: a
- * payment of exactly 0.
+ * An Operator recording a payment taken outside the system (ADR 0021, ADR 0027, ADR 0045):
+ * the Plan that opens the package, or an upsale on it. A free Event is a gift: a payment of
+ * exactly 0. A new kind is one more branch here, with the fields it carries.
  */
 export const RecordEventPaymentSchema = z
-  .object({
-    eventId: z.uuid(),
-    records: z
-      .number({ error: 'צריך להזין כמה רשומות שולמו' })
-      .int('מספר הרשומות צריך להיות שלם')
-      .min(1, 'לפחות רשומה אחת')
-      .max(MAX_RECORDS_PER_PAYMENT, `At most ${MAX_RECORDS_PER_PAYMENT.toLocaleString('en-GB')} records in one payment`),
-    // Only the Plans on sale (ADR 0034): past `sms` payments keep their channel, but no new one is recorded on it.
-    channel: z.enum(PRICING_CHANNELS),
-    amount: z
-      .number({ error: 'צריך להזין את הסכום שהתקבל' })
-      .min(0, 'הסכום לא יכול להיות שלילי')
-      .max(1_000_000, 'הסכום גדול מדי')
-      .refine((n) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6, 'עד שתי ספרות אחרי הנקודה'),
-    method: z.enum(BILLING_PAYMENT_METHODS),
-    reference: z.string().trim().max(100, 'האסמכתה צריכה להיות קצרה מ-100 תווים').optional(),
-    note: z.string().trim().max(500, 'ההערה צריכה להיות קצרה מ-500 תווים').optional(),
-  })
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal(['plan', 'top_up']), records, channel, ...paymentFields }),
+    z.object({
+      kind: z.literal('extra_schedule'),
+      schedules: z
+        .number({ error: 'צריך להזין כמה תזמונים נוספים נרכשו' })
+        .int('מספר התזמונים צריך להיות שלם')
+        .min(1, 'לפחות תזמון אחד')
+        .max(MAX_SCHEDULES_PER_PAYMENT, `עד ${MAX_SCHEDULES_PER_PAYMENT} תזמונים בתשלום אחד`),
+      ...paymentFields,
+    }),
+  ])
   .refine((p) => p.method !== 'gift' || p.amount === 0, {
     message: 'מתנה היא תשלום של ₪0',
     path: ['amount'],

@@ -3,6 +3,7 @@ import { postWhatsAppTemplate } from '@/features/schedules/services/post-whatsap
 import { ownerMessageTag } from '@/features/schedules/utils/whatsapp-callback-tag';
 import { recordPackage } from '@/features/billing/utils/record-package';
 import { listEventPayments } from '@/features/billing/services/list-event-payments';
+import { isRecordsPayment } from '@/features/billing/utils/payment-kinds';
 import { buildOwnerMessagePayload } from '../utils/payload';
 import { ownerMessageStatusUpdate } from '../utils/status';
 import type {
@@ -51,8 +52,9 @@ async function loadOwnerMessageFacts(
     return null;
   }
 
+  const recordsPayments = payments.filter(isRecordsPayment);
   const pkg = recordPackage({
-    payments: payments.map((p) => p.records),
+    payments: recordsPayments.map((p) => p.records),
     bonusOverride: event.bonus_records_override,
   });
 
@@ -60,7 +62,7 @@ async function loadOwnerMessageFacts(
     ownerUserId: event.user_id,
     ownerFullName: (profile?.full_name as string | null) ?? null,
     ownerPhone: (profile?.phone_number as string | null) ?? null,
-    channel: payments[0]?.channel ?? null,
+    channel: recordsPayments[0]?.channel ?? null,
     packageSize: pkg?.size ?? null,
   };
 }

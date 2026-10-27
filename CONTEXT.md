@@ -683,6 +683,14 @@ Only a paid package can be topped up, and only until the Event day is over.
 
 _Avoid_: upgrade (that would change the Plan, which a Top-up never does)
 
+## Extra Schedule
+
+A Schedule bought beyond what the Plan includes. It is a payment of its own, recorded by an
+Operator once the package is open, and it adds no records. The Operator creates the
+Schedule by hand; the payment does not point to it.
+
+_Avoid_: add-on (say what was bought)
+
 ## Bonus Records
 
 Free Guest Records added on top of the Paid Records as a gift: 10 once 200 or more are paid
