@@ -86,14 +86,17 @@ export async function getRecordPackagePageView(
     view: {
       ...counts,
       bonusIsCustom: loaded.package.bonusIsCustom,
-      payments: payments.map((payment) => ({
-        id: payment.id,
-        records: payment.records,
-        channel: payment.channel,
-        amount: payment.amount,
-        gift: payment.method === 'gift',
-        occurredAt: payment.occurredAt,
-      })),
+      payments: payments.map((payment) => {
+        const facts = {
+          id: payment.id,
+          amount: payment.amount,
+          gift: payment.method === 'gift',
+          occurredAt: payment.occurredAt,
+        };
+        return payment.kind === 'extra_schedule'
+          ? { ...facts, kind: payment.kind, schedules: payment.schedules }
+          : { ...facts, kind: payment.kind, records: payment.records, channel: payment.channel };
+      }),
     },
   };
 }

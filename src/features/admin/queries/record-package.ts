@@ -2,7 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { automaticBonus } from '@/features/billing/utils';
+import { automaticBonus, isRecordsPayment } from '@/features/billing/utils';
 import { listEventPayments, loadRecordPackage } from '@/features/billing/services';
 import type { EventBillingStatus } from '@/features/billing';
 import type { EventRecordPackageView } from '../types';
@@ -27,16 +27,18 @@ export async function getEventRecordPackage(eventId: string): Promise<EventRecor
     : { data: [], error: null };
   if (error) throw new Error(error.message);
   const names = new Map((operators ?? []).map((o) => [o.id as string, (o.email || o.full_name) as string | null]));
+  const recordsPayments = payments.filter(isRecordsPayment);
 
   return {
     billingStatus: eventRes.data.billing_status as EventBillingStatus,
     package: loaded.package,
-    automaticBonus: automaticBonus(payments.map((p) => p.records)),
+    automaticBonus: automaticBonus(recordsPayments.map((p) => p.records)),
     used: loaded.split.used,
     uncounted: loaded.split.uncounted,
     left: loaded.split.left,
     over: loaded.split.over,
-    channel: payments[0]?.channel ?? null,
+    channel: recordsPayments[0]?.channel ?? null,
+    extraSchedules: payments.reduce((sum, p) => sum + (p.kind === 'extra_schedule' ? p.schedules : 0), 0),
     payments: payments.map((p) => ({
       ...p,
       recordedBy: p.createdBy ? (names.get(p.createdBy) ?? null) : null,

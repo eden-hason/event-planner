@@ -1,9 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
+  BillingPaymentKind,
   BillingPaymentMethod,
   EventBillingStatus,
   RecordPackageChannel,
 } from '../types';
+import { isRecordsPayment } from '../utils/payment-kinds';
 import { onSale } from '../utils/pricing';
 import { listEventPayments } from './list-event-payments';
 
@@ -20,9 +22,15 @@ export type BillingTransitionInput = {
   providerRef?: string;
   amount?: number;
   currency?: string;
-  /** A payment sets records, channel, amount and method together, and lands on `paid`. */
+  /**
+   * What a payment bought (ADR 0045); unset for a status change. A payment sets its kind's
+   * fields, an amount and a method together, and lands on `paid`: records and channel for a
+   * `plan` or `top_up`, a schedule count for an `extra_schedule`.
+   */
+  kind?: BillingPaymentKind;
   channel?: RecordPackageChannel;
   recordCount?: number;
+  scheduleCount?: number;
   paymentMethod?: BillingPaymentMethod;
   note?: string;
   /** The operator who made a manual transition; null for a webhook. */
@@ -56,7 +64,7 @@ export async function applyBillingTransition(
     const payments = await listEventPayments(supabase, input.eventId);
     if (!payments) return { ok: false, message: 'Could not read the package' };
     // A package on a Plan no longer sold (SMS) may move to one that is.
-    const plan = onSale(payments[0]?.channel);
+    const plan = onSale(payments.find(isRecordsPayment)?.channel);
     if (plan && plan !== input.channel) {
       return { ok: false, message: 'A top-up stays on the package Plan', reason: 'otherPlan' };
     }
@@ -75,6 +83,8 @@ export async function applyBillingTransition(
     p_created_by: input.createdBy ?? null,
     p_occurred_at: input.occurredAt ?? new Date().toISOString(),
     p_payment_method: input.paymentMethod ?? null,
+    p_kind: input.kind ?? null,
+    p_schedule_count: input.scheduleCount ?? null,
   });
 
   const row = (Array.isArray(data) ? data[0] : data) as { id: string } | null;

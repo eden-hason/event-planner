@@ -58,11 +58,18 @@ export type PackageSplit = {
   over: number;
 };
 
+/**
+ * What a payment bought (ADR 0045): the `plan` that opened the Record Package, or an upsale
+ * on it - a `top_up` of Paid Records, or an `extra_schedule` beyond what the Plan includes.
+ */
+export type BillingPaymentKind = 'plan' | 'top_up' | 'extra_schedule';
+
+/** The kinds that add Paid Records, and so carry records and a channel. */
+export type RecordsPaymentKind = Extract<BillingPaymentKind, 'plan' | 'top_up'>;
+
 /** One recorded payment, newest first in any list. */
 export type EventPayment = {
   id: string;
-  records: number;
-  channel: RecordPackageChannel;
   amount: number;
   method: BillingPaymentMethod;
   reference: string | null;
@@ -70,7 +77,13 @@ export type EventPayment = {
   /** The Operator who recorded it; null for a provider webhook or a deleted user. */
   createdBy: string | null;
   occurredAt: string;
-};
+} & (
+  | { kind: RecordsPaymentKind; records: number; channel: RecordPackageChannel }
+  | { kind: 'extra_schedule'; schedules: number }
+);
+
+/** A payment that added Paid Records: what the package is counted from. */
+export type RecordsPayment = Extract<EventPayment, { records: number }>;
 
 export type BillingActionResult = { success: boolean; message: string };
 
@@ -103,13 +116,14 @@ export type GuestPackageView = {
 /** One payment as the Owner's package page lists it: what it bought and what it cost. */
 export type PackagePayment = {
   id: string;
-  records: number;
-  channel: RecordPackageChannel;
   /** Shekels; 0 for a gift. */
   amount: number;
   gift: boolean;
   occurredAt: string;
-};
+} & (
+  | { kind: RecordsPaymentKind; records: number; channel: RecordPackageChannel }
+  | { kind: 'extra_schedule'; schedules: number }
+);
 
 /**
  * The Record Package page (Record Package Plan design): the package as the Guests page sees

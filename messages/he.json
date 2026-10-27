@@ -2719,8 +2719,12 @@
       "payments": {
         "title": "תשלומים",
         "records": "{count, plural, one {רשומה אחת} other {{formatted} רשומות}}",
-        "first": "רכישה ראשונה",
-        "topUp": "תוספת",
+        "schedules": "{count, plural, one {תזמון אחד} other {# תזמונים}}",
+        "kinds": {
+          "plan": "רכישה ראשונה",
+          "top_up": "תוספת",
+          "extra_schedule": "תזמון נוסף"
+        },
         "gift": "מתנה מ-Kululu"
       },
       "help": {

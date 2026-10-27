@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   IconAlertTriangle,
   IconBrandWhatsapp,
+  IconCalendarPlus,
   IconGift,
   IconPackage,
   IconReceipt,
@@ -186,9 +187,6 @@ function PackageDetails({
       : { key: 'left', label: t('rows.left'), value: view.left },
   ];
 
-  // The oldest payment opened the package; the list is newest first.
-  const firstPaymentId = view.payments.at(-1)?.id;
-
   return (
     <div className="grid w-full grid-cols-1 items-start gap-3.5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-3.5">
@@ -328,7 +326,11 @@ function PackageDetails({
             {t('payments.title')}
           </span>
           {view.payments.map((payment, index) => {
-            const Icon = payment.gift ? IconGift : IconReceipt;
+            const Icon = payment.gift
+              ? IconGift
+              : payment.kind === 'extra_schedule'
+                ? IconCalendarPlus
+                : IconReceipt;
             return (
               <div
                 key={payment.id}
@@ -343,18 +345,21 @@ function PackageDetails({
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex items-center gap-[7px]">
                     <span className="text-sm font-bold tabular-nums">
-                      {t('payments.records', {
-                        count: payment.records,
-                        formatted: fmt(payment.records),
-                      })}
+                      {payment.kind === 'extra_schedule'
+                        ? t('payments.schedules', { count: payment.schedules })
+                        : t('payments.records', {
+                            count: payment.records,
+                            formatted: fmt(payment.records),
+                          })}
                     </span>
                     <span className="bg-muted text-muted-foreground inline-flex h-5 items-center rounded-md px-[7px] text-[11px] font-bold">
-                      {payment.id === firstPaymentId ? t('payments.first') : t('payments.topUp')}
+                      {t(`payments.kinds.${payment.kind}`)}
                     </span>
                   </div>
                   <span className="text-muted-foreground text-[12.5px]">
-                    {dateFormat.format(new Date(payment.occurredAt))} ·{' '}
-                    {tSheet(`channels.${payment.channel}`)}
+                    {dateFormat.format(new Date(payment.occurredAt))}
+                    {payment.kind !== 'extra_schedule' &&
+                      ` · ${tSheet(`channels.${payment.channel}`)}`}
                   </span>
                 </div>
                 <span className="text-sm font-bold whitespace-nowrap tabular-nums">

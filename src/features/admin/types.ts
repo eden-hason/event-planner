@@ -428,5 +428,7 @@ export type EventRecordPackageView = {
   over: number;
   /** The channel of the latest payment: what the Owner sees as their package's channel. */
   channel: RecordPackageChannel | null;
+  /** Schedules bought beyond the Plan, all payments together (ADR 0045). */
+  extraSchedules: number;
   payments: (EventPayment & { recordedBy: string | null })[];
 };
