@@ -18,7 +18,7 @@ import { type EventApp } from '@/features/events/schemas';
 
 import { toWhatsAppTemplate } from '../schemas';
 import type { PreviewMessages } from '../types';
-import { hasNote } from '../utils/event-config';
+import { hasNote, hasPersonalMessage } from '../utils/event-config';
 import { splitMessageLinks } from '../utils/message-links';
 import { missingDetails } from '../utils/missing-details';
 import {
@@ -81,25 +81,30 @@ export function MessagePreview({
   event,
 }: MessagePreviewProps) {
   const t = useTranslations('schedules.messagePreview');
-  const { note } = useScheduleSettings();
+  const { note, effectivePersonalMessage } = useScheduleSettings();
 
-  // The send's own rule, so the preview switches to the note version exactly
-  // where the send would - while the note is still being typed. Trimmed as the
-  // save stores it.
+  // The send's own rules, so the preview switches versions exactly where the
+  // send would - while the fields are still being typed. Trimmed as the save
+  // stores them. A Personal Message wins over Kululu's message, note or not; a
+  // blank one is none, and Kululu's goes (ADR 0046).
   const savedNote = note.trim();
+  const savedPersonalMessage = effectivePersonalMessage.trim();
   const message = messages
-    ? hasNote(savedNote)
-      ? messages.withNote
-      : messages.withoutNote
+    ? hasPersonalMessage(savedPersonalMessage) && messages.personalMessage
+      ? messages.personalMessage
+      : hasNote(savedNote)
+        ? messages.withNote
+        : messages.withoutNote
     : null;
+  const scheduleText = { customText: savedNote, personalMessage: savedPersonalMessage };
   const template = message ? toWhatsAppTemplate(message) : null;
   const smsBody =
     message?.channel === 'sms'
-      ? resolveSmsBodyForPreview(message.payload, event, savedNote).resolvedBody
+      ? resolveSmsBodyForPreview(message.payload, event, scheduleText).resolvedBody
       : null;
 
   const { resolvedBody, missingSources } = template
-    ? resolveTemplateBodyForPreview(template, event, savedNote)
+    ? resolveTemplateBodyForPreview(template, event, scheduleText)
     : { resolvedBody: '', missingSources: [] };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];

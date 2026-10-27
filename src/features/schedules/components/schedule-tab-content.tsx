@@ -5,6 +5,7 @@ import type { OutreachItemStatus, PreviewMessages } from '../types';
 import { MessagePreview } from './message-preview';
 import { MessageTypeCard } from './message-type-card';
 import { PastDueTimeDialog } from './past-due-time-dialog';
+import { PersonalMessageCard } from './personal-message-card';
 import { PersonalNoteCard } from './personal-note-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { ScheduleLockBadge } from './schedule-lock-badge';
@@ -21,6 +22,8 @@ interface ScheduleTabContentProps {
   offersNote?: boolean;
   /** Whether the note version folds the note onto one line (see foldsNote). */
   foldsNote?: boolean;
+  /** Whether this Schedule Type has a Personal Message family to send. */
+  offersPersonalMessage?: boolean;
   eventDate: string | null;
   event: EventApp | null;
   status: OutreachItemStatus;
@@ -34,6 +37,7 @@ export async function ScheduleTabContent({
   seatingGap,
   offersNote,
   foldsNote,
+  offersPersonalMessage,
   eventDate,
   event,
   status,
@@ -76,7 +80,11 @@ export async function ScheduleTabContent({
             phone as the result of those choices. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="flex flex-col gap-3.5">
-            <MessageTypeCard offersNote={Boolean(offersNote)} sent={sent} />
+            <MessageTypeCard
+              offersPersonalMessage={Boolean(offersPersonalMessage)}
+              sent={sent}
+            />
+            {offersPersonalMessage && <PersonalMessageCard lockReason={lockReason} />}
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}
@@ -84,7 +92,9 @@ export async function ScheduleTabContent({
               sendWindow={sendWindow}
               lockBadge={sent ? <ScheduleLockBadge /> : undefined}
             />
-            {offersNote && (
+            {/* The note is retired (ADR 0046): only a Schedule that already
+                carries one still shows it, so its Owner can clear it. */}
+            {offersNote && schedule.customText && (
               <PersonalNoteCard lockReason={lockReason} foldsNote={Boolean(foldsNote)} />
             )}
             <TargetAudienceCard

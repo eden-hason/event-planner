@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { includesGiftButton } from './event-config';
+import { hasPersonalMessage, includesGiftButton } from './event-config';
 
 const bit = { bitConfig: { enabled: true, link: 'https://www.bitpay.co.il/app/me/abc' } };
 
@@ -33,5 +33,15 @@ describe('includesGiftButton', () => {
 
   it('leaves types without a gift variant off', () => {
     assert.equal(includesGiftButton(bit, 'confirmation'), false);
+  });
+});
+
+describe('hasPersonalMessage', () => {
+  it('counts only text that trims to something', () => {
+    assert.equal(hasPersonalMessage('נשמח לראותכם'), true);
+    assert.equal(hasPersonalMessage('  \n\t '), false);
+    assert.equal(hasPersonalMessage(''), false);
+    assert.equal(hasPersonalMessage(null), false);
+    assert.equal(hasPersonalMessage(undefined), false);
   });
 });

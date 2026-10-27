@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   MessageTemplateDbToAppSchema,
+  type MessageChannel,
   type MessageTemplateApp,
 } from '../schemas/message-templates';
+import { hasPersonalMessage } from '../utils/event-config';
 
 /**
  * Resolves which template a schedule actually sends, from the event's current
@@ -99,6 +101,40 @@ export async function loadTemplateFamily(
   if (error) {
     console.error(
       `[resolve-templates] Query failed for family ${familyName(anchor)}:`,
+      error,
+    );
+    return { success: false, message: 'Could not load message templates' };
+  }
+
+  return {
+    success: true,
+    candidates: (data ?? []).map((row: Record<string, unknown>) =>
+      MessageTemplateDbToAppSchema.parse(row),
+    ),
+  };
+}
+
+/**
+ * Every row of a Schedule Type's Personal Message family on one channel (ADR
+ * 0046). Found by schedule type rather than by key: the frame is the same
+ * whichever Variant the Schedule is anchored on, so there is one family per
+ * Schedule Type, not one per Variant family.
+ */
+export async function loadPersonalMessageFamily(
+  supabase: SupabaseClient,
+  params: { scheduleTypeId: string; channel: MessageChannel; languageCode: string },
+): Promise<LoadTemplateFamilyResult> {
+  const { data, error } = await supabase
+    .from('message_templates')
+    .select('*')
+    .eq('personal_message', true)
+    .eq('schedule_type_id', params.scheduleTypeId)
+    .eq('channel', params.channel)
+    .eq('language_code', params.languageCode);
+
+  if (error) {
+    console.error(
+      `[resolve-templates] Personal Message query failed for ${params.scheduleTypeId}/${params.channel}:`,
       error,
     );
     return { success: false, message: 'Could not load message templates' };
@@ -212,4 +248,59 @@ export async function resolveTemplatesForEvent(
   if (!family.success) return family;
 
   return pickTemplates({ ...axes, candidates: family.candidates });
+}
+
+/**
+ * Resolves from a Schedule Type's Personal Message family. A Schedule that
+ * carries Personal Message text with no family to send it is a seeding bug, and
+ * fails rather than quietly sending the Variant the Owner chose not to.
+ */
+export async function resolvePersonalMessageTemplates(
+  params: TemplateAxes & {
+    supabase: SupabaseClient;
+    scheduleTypeId: string;
+    channel: MessageChannel;
+    languageCode: string;
+  },
+): Promise<ResolveTemplatesResult> {
+  const { supabase, scheduleTypeId, channel, languageCode, ...axes } = params;
+  const family = await loadPersonalMessageFamily(supabase, {
+    scheduleTypeId,
+    channel,
+    languageCode,
+  });
+  if (!family.success) return family;
+
+  const [anchor] = family.candidates;
+  if (!anchor) {
+    const message = `No Personal Message templates for schedule type ${scheduleTypeId} (${channel}/${languageCode})`;
+    console.error(`[resolve-templates] ${message}`);
+    return { success: false, message };
+  }
+
+  return pickTemplates({ ...axes, anchor, candidates: family.candidates });
+}
+
+/**
+ * What a Schedule sends: its Schedule Type's Personal Message family when it
+ * carries Personal Message text, its anchor's family otherwise. A blank
+ * Personal Message is no Personal Message - the Variant goes.
+ */
+export async function resolveTemplatesForSchedule(
+  params: TemplateAxes & {
+    supabase: SupabaseClient;
+    anchor: MessageTemplateApp;
+    personalMessage: string | null | undefined;
+  },
+): Promise<ResolveTemplatesResult> {
+  const { personalMessage, ...rest } = params;
+  if (!hasPersonalMessage(personalMessage)) return resolveTemplatesForEvent(rest);
+
+  const { anchor, ...axes } = rest;
+  return resolvePersonalMessageTemplates({
+    ...axes,
+    scheduleTypeId: anchor.scheduleTypeId,
+    channel: anchor.channel,
+    languageCode: anchor.languageCode,
+  });
 }

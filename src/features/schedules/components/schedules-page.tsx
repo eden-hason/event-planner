@@ -51,6 +51,8 @@ type ScheduleWithTemplate = {
   offersNote: boolean;
   /** Whether the note version folds the note onto one line (see foldsNote). */
   foldsNote: boolean;
+  /** Whether this Schedule Type has a Personal Message family to send. */
+  offersPersonalMessage: boolean;
 };
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -104,6 +106,7 @@ export async function SchedulesPage({
           seatingGap: null,
           offersNote: false,
           foldsNote: false,
+          offersPersonalMessage: false,
         };
       }
 
@@ -127,9 +130,18 @@ export async function SchedulesPage({
         resolution.success
           ? (resolution.templates.withTable ?? resolution.templates.withoutTable)
           : anchor;
+      // A Personal Message family that fails to resolve is a seeding bug the
+      // send would hit too; the option is hidden rather than previewing a frame
+      // that cannot go out.
+      const personalMessage =
+        resolutions.personalMessage?.success
+          ? (resolutions.personalMessage.templates.withTable ??
+            resolutions.personalMessage.templates.withoutTable)
+          : null;
       const messages = {
         withNote: previewOf(resolutions.withNote),
         withoutNote: previewOf(resolutions.withoutNote),
+        personalMessage,
       };
 
       // The note axis never decides whether there is a table variant or a note
@@ -153,6 +165,7 @@ export async function SchedulesPage({
         seatingGap,
         offersNote: resolution.success ? resolution.templates.offersNote : false,
         foldsNote: foldsNote(messages.withNote.payload.parameters),
+        offersPersonalMessage: personalMessage !== null,
       };
     }),
   );
@@ -201,7 +214,7 @@ export async function SchedulesPage({
 
   // Built in plan order, which the hero reads; the timeline reorders below.
   const planItems: OutreachItem[] = resolved.map(
-    ({ schedule, messages, seatingGap, offersNote, foldsNote }) => {
+    ({ schedule, messages, seatingGap, offersNote, foldsNote, offersPersonalMessage }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
       // to its own DB name so it still renders with a sensible label.
@@ -276,6 +289,7 @@ export async function SchedulesPage({
             seatingGap={seatingGap}
             offersNote={offersNote}
             foldsNote={foldsNote}
+            offersPersonalMessage={offersPersonalMessage}
             eventDate={eventDate}
             event={event}
             status={status}

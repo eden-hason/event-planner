@@ -262,23 +262,41 @@ never re-sent to the ones who were.
 ## Variant
 
 The **editorial tone** a Schedule's message is written in - the same message, said
-differently (warm, formal, playful, wartime). It is the only axis of message choice the
-Owner ever sees.
+differently (warm, formal, playful, wartime). A Variant is always written by Kululu.
+Besides the Variants, the only other message choice the Owner sees is a **Personal
+Message**.
 
 A Variant is *not* an event type: a bar mitzva confirmation reading differently from a
 wedding one is the two Event Types having different content, not a "bar mitzva" tone. Nor
 is it a version: a rewrite of the same tone supersedes it, and is not a new Variant.
 
-The Event carries one Variant and every Schedule on it inherits that tone; an Owner may
-override a single Schedule without disturbing the rest. Not every Schedule Type offers a
-choice - where only one Variant is authored, the Owner is shown no picker at all rather
-than a picker with one option.
+A Variant is chosen per Schedule; a new Schedule starts on its Event Type's default. Not
+every Schedule Type offers a choice - where only one Variant is authored, the Owner is
+shown no picker at all rather than a picker with one option.
+
+## Personal Message
+
+A Schedule's message in the Owner's own words: one paragraph the Owner writes, set inside
+a fixed frame Kululu writes. The frame carries the facts the Schedule Type needs a Guest
+to have - the Event's date and place, a table number on a reminder, and the stage's
+buttons - so the Owner never retypes them. Who is inviting and to what is the Owner's to
+say: the frame opens on a greeting and the Owner's words follow it.
+
+A Personal Message is an alternative to a **Variant**, not one of them: a Variant is
+Kululu's wording, a Personal Message is the Owner's. Its text belongs to the one Schedule
+it is written on. A Personal Message left blank is no Personal Message: the Schedule sends
+its Variant.
+
+It replaces the personal note, a line the Owner added under Kululu's wording. An Owner
+who wants to say something of their own writes a Personal Message.
+_Avoid_: free form, custom message, note (for the whole message), Owner Message (that is
+Kululu writing to the Owner)
 
 ## Template
 
 The message a Schedule sends, as the Owner chooses and previews it: one Schedule Type, in
-one Variant, in one language. A Template carries no channel - it is the editorial thing,
-not the sendable artifact.
+one Variant or as a Personal Message, in one language. A Template carries no channel - it
+is the editorial thing, not the sendable artifact.
 
 The bare word "template" always means this. The visual skin of the guest-facing page is an
 **Invitation Design**, never a template, even though Meta and the Owner-facing UI have both

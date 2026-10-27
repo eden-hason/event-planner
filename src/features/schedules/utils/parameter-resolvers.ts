@@ -95,6 +95,17 @@ const transformers: Record<TransformerType, TransformerFunction> = {
       .replace(/ {2,}/g, ' ')
       .trim(),
 
+  // The Personal Message (ADR 0046), on both channels so the preview is what
+  // every Guest gets. Meta refuses a line break in a parameter, so each one the
+  // Owner typed is kept as a visible " | " rather than folded away; blank lines
+  // collapse into the one break around them.
+  personalMessage: (value: unknown) =>
+    String(value ?? '')
+      .split(/[\r\n]+/)
+      .map((line) => line.replace(/[\t ]+/g, ' ').trim())
+      .filter(Boolean)
+      .join(' | '),
+
   formatDate: (value: unknown, options?: Record<string, unknown>) => {
     if (!value) return '';
 
@@ -502,10 +513,19 @@ export type PreviewResolution = {
   missingSources: string[];
 };
 
+/**
+ * The Schedule's own text the preview fills in - the note and the Personal
+ * Message - taken from the fields as typed rather than from the saved row.
+ */
+export type PreviewScheduleText = {
+  customText?: string | null;
+  personalMessage?: string | null;
+};
+
 export function resolveSmsBodyForPreview(
   smsConfig: { bodyText: string; parameters?: { placeholders?: NamedPlaceholderConfig[] } },
   event: EventApp | null,
-  customText?: string | null,
+  schedule: PreviewScheduleText = {},
 ): PreviewResolution {
   event = withOccasionPhrase(event);
   const placeholders = smsConfig.parameters?.placeholders;
@@ -518,7 +538,7 @@ export function resolveSmsBodyForPreview(
   const mockContext = {
     event: event ?? {},
     guest: {},
-    schedule: { customText },
+    schedule,
   } as unknown as ParameterResolutionContext;
 
   for (const config of placeholders) {
@@ -553,7 +573,7 @@ export function resolveSmsBodyForPreview(
 export function resolveTemplateBodyForPreview(
   template: WhatsAppTemplateApp,
   event: EventApp | null,
-  customText?: string | null,
+  schedule: PreviewScheduleText = {},
 ): PreviewResolution {
   event = withOccasionPhrase(event);
   const placeholders = template.parameters?.placeholders;
@@ -567,7 +587,7 @@ export function resolveTemplateBodyForPreview(
   const mockContext = {
     event: event ?? {},
     guest: {},
-    schedule: { customText },
+    schedule,
   } as unknown as ParameterResolutionContext;
 
   for (const config of placeholders) {

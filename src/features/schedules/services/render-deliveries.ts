@@ -11,7 +11,7 @@ import {
   type GroupApp,
   type GuestApp,
 } from '@/features/guests/schemas';
-import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
@@ -163,9 +163,10 @@ export async function renderScheduleDeliveries(
   const anchor = schedule.template;
   if (!anchor) return { ok: false, reason: 'No template assigned to schedule' };
 
-  const resolution = await resolveTemplatesForEvent({
+  const resolution = await resolveTemplatesForSchedule({
     supabase,
     anchor,
+    personalMessage: schedule.personalMessage,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: hasNote(schedule.customText),

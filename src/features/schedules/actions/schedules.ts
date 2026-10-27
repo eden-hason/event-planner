@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { sendingConfig } from '@/lib/config/sending';
-import { CustomTextSchema } from '../schemas';
+import { CustomTextSchema, PersonalMessageSchema } from '../schemas';
 import { dueTimeIssue } from '../utils/due-time-guards';
 
 /**
@@ -222,6 +222,75 @@ export async function updateCustomText(
     return { success: true, message: 'Note updated' };
   } catch (error) {
     console.error('Error in updateCustomText:', error);
+    return { success: false, message: 'An unexpected error occurred' };
+  }
+}
+
+export type UpdatePersonalMessageState = {
+  success: boolean;
+  message?: string | null;
+};
+
+/**
+ * Updates the Owner's Personal Message (schedules.personal_message, ADR 0046).
+ * Blank is stored as null, which sends the Schedule's Variant - the same
+ * "blank is none" rule as the note. Line breaks are kept as typed: the
+ * personalMessage transformer turns them into " | " at send time, so the field
+ * shows the Owner what they wrote.
+ * RLS ensures the user can only update their own schedules.
+ */
+export async function updatePersonalMessage(
+  scheduleId: string,
+  personalMessage: string,
+): Promise<UpdatePersonalMessageState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
+  try {
+    const supabase = await createClient();
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('schedules')
+      .select('status, schedule_types (execution_kind)')
+      .eq('id', scheduleId)
+      .single();
+
+    if (fetchError || !existing) {
+      return { success: false, message: 'Schedule not found' };
+    }
+
+    if (existing.status === 'cancelled') {
+      return { success: false, message: 'This schedule is turned off' };
+    }
+
+    const rejection = editRejection(existing.status);
+    if (rejection) return { success: false, message: rejection };
+
+    if (!isMessageScheduleRow(existing)) {
+      return { success: false, message: 'A call round has no message to write' };
+    }
+
+    // The textarea caps it too, but a cap only the UI enforces is not one.
+    const parsed = PersonalMessageSchema.safeParse(personalMessage);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0].message };
+    }
+
+    const trimmed = parsed.data.trim();
+    const { error } = await supabase
+      .from('schedules')
+      .update({ personal_message: trimmed === '' ? null : trimmed })
+      .eq('id', scheduleId);
+
+    if (error) {
+      console.error('Error updating personal message:', error);
+      return { success: false, message: 'Failed to update the message' };
+    }
+
+    revalidatePath('/app');
+
+    return { success: true, message: 'Message updated' };
+  } catch (error) {
+    console.error('Error in updatePersonalMessage:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
 }

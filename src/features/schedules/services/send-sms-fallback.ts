@@ -5,7 +5,10 @@ import {
   type MessageTemplateApp,
 } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
-import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import {
+  resolvePersonalMessageTemplates,
+  resolveTemplatesForEvent,
+} from './resolve-reminder-templates';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { mapEventRow } from './map-event-row';
 import {
@@ -15,6 +18,7 @@ import {
   includesGiftButton,
   hasInvitationImage,
   hasNote,
+  hasPersonalMessage,
   isMessageSchedule,
   sendSmsToGuest,
   shouldSendTableNumbers,
@@ -156,6 +160,32 @@ async function resolveSmsTemplates(
     return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
   }
 
+  const axes = {
+    gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
+    tableNumbers: shouldSendTableNumbers(event.guestExperience),
+    note: hasNote(schedule.customText),
+    followUp: await loadIsFollowUpConfirmation(supabase, schedule),
+    invitationImage: hasInvitationImage(event.invitations),
+  };
+
+  // A Personal Message falls back on its own family's SMS rows, whatever
+  // Variant the Schedule is anchored on (ADR 0046).
+  if (hasPersonalMessage(schedule.personalMessage)) {
+    const resolution = await resolvePersonalMessageTemplates({
+      supabase,
+      ...axes,
+      scheduleTypeId: schedule.scheduleTypeId,
+      channel: 'sms',
+      languageCode: anchor.languageCode,
+    });
+    if (!resolution.success) return { ok: false, reason: resolution.message };
+    return {
+      ok: true,
+      withTable: resolution.templates.withTable,
+      withoutTable: resolution.templates.withoutTable,
+    };
+  }
+
   const { data, error } = await supabase
     .from('message_templates')
     .select('*')
@@ -172,11 +202,7 @@ async function resolveSmsTemplates(
   const resolution = await resolveTemplatesForEvent({
     supabase,
     anchor: MessageTemplateDbToAppSchema.parse(data[0]),
-    gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
-    tableNumbers: shouldSendTableNumbers(event.guestExperience),
-    note: hasNote(schedule.customText),
-    followUp: await loadIsFollowUpConfirmation(supabase, schedule),
-    invitationImage: hasInvitationImage(event.invitations),
+    ...axes,
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
   return {

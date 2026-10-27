@@ -113,3 +113,12 @@ export function hasInvitationImage(invitations: InvitationSettings): boolean {
 export function hasNote(customText: string | null | undefined): boolean {
   return Boolean(customText?.trim());
 }
+
+/**
+ * Whether the Schedule carries a Personal Message (ADR 0046). Blank is none,
+ * and the Schedule sends its Variant - the one rule for the send, the SMS
+ * Fallback, the Test Message and the preview.
+ */
+export function hasPersonalMessage(personalMessage: string | null | undefined): boolean {
+  return Boolean(personalMessage?.trim());
+}

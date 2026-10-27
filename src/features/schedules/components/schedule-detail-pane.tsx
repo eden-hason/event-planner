@@ -15,6 +15,7 @@ interface ScheduleDetailPaneProps {
   seatingGap: { withoutTable: number; total: number } | null;
   offersNote: boolean;
   foldsNote: boolean;
+  offersPersonalMessage: boolean;
   eventDate: string | null;
   event: EventApp | null;
   status: OutreachItemStatus;
@@ -33,6 +34,7 @@ export async function ScheduleDetailPane({
   seatingGap,
   offersNote,
   foldsNote,
+  offersPersonalMessage,
   eventDate,
   event,
   status,
@@ -48,6 +50,7 @@ export async function ScheduleDetailPane({
       seatingGap={seatingGap}
       offersNote={offersNote}
       foldsNote={foldsNote}
+      offersPersonalMessage={offersPersonalMessage}
       eventDate={eventDate}
       event={event}
       status={status}

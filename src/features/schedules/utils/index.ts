@@ -22,6 +22,7 @@ export {
   shouldSendTableNumbers,
   hasInvitationImage,
   hasNote,
+  hasPersonalMessage,
   type GiftingSettings,
   type InvitationSettings,
   type TableNumberSettings,
