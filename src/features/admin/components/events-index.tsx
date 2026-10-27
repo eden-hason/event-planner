@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Surface } from './band';
 import { EventsIndexToolbar } from './events-index-toolbar';
+import { LinkedTableRow } from './linked-table-row';
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, Search, X } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -234,13 +235,12 @@ function EventTableRow({
           </TableCell>
         </TableRow>
       )}
-      {/* The owner link's overlay spans the row, so the whole row opens the Event. */}
-      <TableRow className="group relative">
+      <LinkedTableRow href={`/admin/events/${row.id}`} className="group">
         <TableCell className="max-w-0 py-3 ps-4">
           <div className="flex items-center gap-2">
             <Link
               href={`/admin/events/${row.id}`}
-              className="truncate font-medium group-hover:underline after:absolute after:inset-0"
+              className="truncate font-medium group-hover:underline"
             >
               {row.ownerName}
             </Link>
@@ -294,7 +294,7 @@ function EventTableRow({
         <TableCell className={cn('py-3 pe-4 text-end text-[13px] tabular-nums', row.guestRecords === 0 && 'text-muted-foreground')}>
           {row.guestRecords.toLocaleString('he-IL')}
         </TableCell>
-      </TableRow>
+      </LinkedTableRow>
     </>
   );
 }
