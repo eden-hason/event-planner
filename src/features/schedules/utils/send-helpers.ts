@@ -2,13 +2,10 @@ import { randomBytes } from 'crypto';
 import { toE164 } from '@/lib/phone';
 import type { GuestApp } from '@/features/guests/schemas';
 import type { DeliveryMethod } from '../schemas';
-import type { SmsPayload, WhatsAppTemplateApp } from '../schemas/message-templates';
-import { sendWhatsAppTemplateMessage } from '../actions/whatsapp';
+import type { SmsPayload } from '../schemas/message-templates';
 import { sendSmsMessage } from '../actions/sms';
 import {
   buildDynamicTemplateParameters,
-  buildDynamicButtonParameters,
-  buildDynamicHeaderParameters,
   type ParameterResolutionContext,
 } from './parameter-resolvers';
 
@@ -35,81 +32,6 @@ export type GuestSendResult = {
    */
   templateId: string;
 };
-
-// ─── Single-guest send ────────────────────────────────────────────────────────
-
-export async function sendToGuest(params: {
-  guest: GuestApp;
-  context: ParameterResolutionContext;
-  template: WhatsAppTemplateApp;
-  templateId: string;
-  confirmationToken: string;
-}): Promise<GuestSendResult> {
-  const { guest, context, template, templateId, confirmationToken } = params;
-
-  // Callers filter the audience on isValidPhone first, so a null here is a
-  // guest whose stored number does not parse at all. Fail the send rather than
-  // dialling a number we had to guess at.
-  const phoneE164 = toE164(guest.phone);
-  if (!phoneE164) {
-    return {
-      guest,
-      success: false,
-      message: 'No usable phone number',
-      channel: 'whatsapp',
-      confirmationToken,
-      templateId,
-    };
-  }
-
-  const parameters = buildDynamicTemplateParameters(
-    template.parameters!.placeholders,
-    context,
-  );
-
-  const headerParameters = template.parameters?.headerPlaceholders?.length
-    ? buildDynamicHeaderParameters(template.parameters.headerPlaceholders, context)
-    : undefined;
-
-  const buttonParameters = template.parameters?.buttonPlaceholders?.length
-    ? buildDynamicButtonParameters(template.parameters.buttonPlaceholders, context)
-    : undefined;
-
-  const waResult = await sendWhatsAppTemplateMessage({
-    to: phoneE164,
-    templateName: template.templateName,
-    languageCode: template.languageCode,
-    parameters,
-    headerParameters,
-    buttonParameters,
-  });
-
-  if (waResult.outcome === 'accepted') {
-    return {
-      guest,
-      success: true,
-      messageId: waResult.messageId ?? undefined,
-      message: 'Message sent successfully',
-      channel: 'whatsapp',
-      confirmationToken,
-      templateId,
-    };
-  }
-
-  // This path has no Delivery and no retry - it is a one-off test message an
-  // Owner sent themselves - so a rejection and an unknown outcome are reported
-  // the same way. The pipeline, where the difference decides whether a guest
-  // can be written to twice, handles them separately in the Worker.
-  return {
-    guest,
-    success: false,
-    message: waResult.message,
-    channel: 'whatsapp',
-    errorCode: waResult.outcome === 'rejected' ? (waResult.errorCode ?? undefined) : undefined,
-    confirmationToken,
-    templateId,
-  };
-}
 
 // ─── SMS primary send ─────────────────────────────────────────────────────────
 
@@ -165,52 +87,6 @@ export async function sendSmsToGuest(params: {
     confirmationToken,
     templateId,
   };
-}
-
-// ─── Chunked batch sender ─────────────────────────────────────────────────────
-// Sends in chunks of CHUNK_SIZE to stay within Meta's 80 MPS throughput limit.
-
-const CHUNK_SIZE = 25;
-const CHUNK_DELAY_MS = 500;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function sendInChunks(
-  guests: GuestApp[],
-  buildParams: (
-    guest: GuestApp,
-  ) => Omit<Parameters<typeof sendToGuest>[0], 'guest'>,
-  onChunkComplete?: (
-    results: PromiseSettledResult<GuestSendResult>[],
-    chunkIndex: number,
-    totalChunks: number,
-  ) => Promise<void>,
-): Promise<PromiseSettledResult<GuestSendResult>[]> {
-  const allResults: PromiseSettledResult<GuestSendResult>[] = [];
-  const totalChunks = Math.ceil(guests.length / CHUNK_SIZE);
-
-  for (let i = 0; i < guests.length; i += CHUNK_SIZE) {
-    const chunkIndex = Math.floor(i / CHUNK_SIZE);
-    const chunk = guests.slice(i, i + CHUNK_SIZE);
-
-    const chunkResults = await Promise.allSettled(
-      chunk.map((guest) => sendToGuest({ guest, ...buildParams(guest) })),
-    );
-
-    allResults.push(...chunkResults);
-
-    if (onChunkComplete) {
-      await onChunkComplete(chunkResults, chunkIndex, totalChunks);
-    }
-
-    if (i + CHUNK_SIZE < guests.length) {
-      await sleep(CHUNK_DELAY_MS);
-    }
-  }
-
-  return allResults;
 }
 
 // ─── Attempt record builder ───────────────────────────────────────────────────

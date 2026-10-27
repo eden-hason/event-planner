@@ -594,9 +594,10 @@ Like a Signal, a Featured Action is never stored and cannot be dismissed: it dis
 only because its eligibility rule turned false, never because the Owner hid it. There is
 no per-Owner "seen" or "snoozed" state to track.
 
-Up to four are shown, drawn from three tiers in priority order - every unfinished setup
-step first, then the **Guest List Health Check**, then discovery (**Test Message**,
-seating, digital gifting, **Live Invite Preview Link**, budget). After setup, each tier
+Up to four are shown. The **Test Message** comes first whenever it is offered, ahead of
+everything else. The rest are drawn from three tiers in priority order - every unfinished setup
+step first, then the **Guest List Health Check**, then discovery (seating, digital gifting,
+**Live Invite Preview Link**, budget). After setup, each tier
 contributes its top eligible action before the rest fill in tier order, with "add a
 guest", "ask the assistant" and "view the guest list" filling any slot left over.
 
@@ -606,16 +607,26 @@ dismissal.
 
 ## Test Message
 
-A copy of a real outbound Schedule message, sent to the Owner's own phone instead of any
-Guest's, so the Owner can see exactly what a Guest will receive before the Schedule
-actually goes out. It previews the Event's earliest confirmation Schedule that has not
-gone out yet, and goes to the viewer's own profile phone - or, when the profile has none,
-to a number they type for that one send, which is not saved. Sending one has no effect on any Guest's RSVP or delivery
-history: it is not a Delivery, and its RSVP link opens the **Live Invite Preview Link**
-rather than any Guest's page.
+A copy of the Event's confirmation, sent by WhatsApp to the Owner's own phone instead of
+any Guest's, so the Owner can see and try exactly what a Guest will receive before it goes
+out. It is the Event's earliest Confirmation Schedule that has not gone out yet, in its own
+wording (its Variant or **Personal Message**). It is always a WhatsApp message, even when
+that Schedule would reach Guests by SMS. It goes to the viewer's own profile phone or, when
+the profile has none, to a number they type for that one send, which is not saved.
 
-An Event gets three accepted Test Messages for its whole life, across all its Owners. Each
-viewer is offered one until they have received it.
+It is interactive. The Owner can answer it the way a Guest would, and the whole
+Confirmation Conversation plays out on their phone. When it ends, Kululu adds a line of its
+own to say it was a test. Sending one, or answering it, has no effect on any Guest's RSVP or
+delivery history: it is not a Delivery, nothing the Owner answers is recorded, and its RSVP
+link opens the **Live Invite Preview Link** rather than any Guest's page.
+
+Every Owner is offered one, paid or not. A **Visitor** is offered one too, but taking it
+means saving the Event first. It is offered only while one can actually go out: the Event
+has a Confirmation left to send and the names it is sent in.
+
+An Event gets three accepted Test Messages for its whole life, across all its Owners, and
+an account gets three across all its Events. Each viewer is offered one per Event until
+they have received it.
 
 ## Install Card
 

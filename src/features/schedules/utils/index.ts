@@ -38,10 +38,8 @@ export {
 
 // Re-export send helpers
 export {
-  sendToGuest,
   sendSmsToGuest,
   buildSmsBody,
-  sendInChunks,
   buildAttemptRecord,
   generateConfirmationToken,
   isSmsFallbackTrigger,

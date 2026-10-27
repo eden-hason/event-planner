@@ -1,6 +1,6 @@
 # A Test Message can still go out as an SMS
 
-Status: open
+Status: done - see [ADR 0048](../adr/0048-a-test-message-is-always-whatsapp.md)
 
 ## The problem
 

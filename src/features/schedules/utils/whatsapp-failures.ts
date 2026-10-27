@@ -56,7 +56,7 @@ export function describeGuestLevelFailure(
 /**
  * Whether a rejection Meta actually answered with is worth trying again.
  *
- * The line that matters is drawn elsewhere - in `sendWhatsAppTemplateMessage`,
+ * The line that matters is drawn elsewhere - in `postWhatsAppTemplate`,
  * between a rejection and an unknown outcome. Only a rejection reaches this
  * function, and only a rejection may ever be retried: the message provably did
  * not go out, so there is no duplicate to create. A thrown fetch may well have

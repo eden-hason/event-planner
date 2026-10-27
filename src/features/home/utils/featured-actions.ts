@@ -12,6 +12,13 @@ export const FEATURED_ACTION_SLOTS = 4;
 export const HEALTH_CHECK_MIN_RECORDS = 20;
 
 /**
+ * Above everything, the blocking warnings included: seeing the message on your
+ * own phone is the fastest way to trust Kululu with your Guests. It costs one
+ * slot, and leaves for good once the viewer has received it.
+ */
+const FIRST_TIER: readonly RankedActionKey[] = ['test'];
+
+/**
  * Above even setup: a list over its Record Package means guests are about to miss
  * messages, and setup steps like "invite a collaborator" can stay eligible for weeks -
  * enough of them would push the warning out of the four slots entirely.
@@ -34,7 +41,7 @@ const LATER_TIERS: ReadonlyArray<readonly RankedActionKey[]> = [
   // Urgent ongoing
   ['health'],
   // Discovery
-  ['test', 'seating', 'gifting', 'budget'],
+  ['seating', 'gifting', 'budget'],
 ];
 
 const FALLBACK: readonly FallbackActionKey[] = ['addGuest', 'ai', 'viewList'];
@@ -49,9 +56,7 @@ const ELIGIBLE: Record<RankedActionKey, (f: FeaturedActionFacts) => boolean> = {
   health: (f) =>
     f.guestRecords >= HEALTH_CHECK_MIN_RECORDS &&
     (f.duplicateRecords > 0 || f.noPhoneRecords > 0),
-  // Temporarily hidden until the test message issue is fixed. To restore, return
-  // `f.canReceiveTestMessage` again.
-  test: () => false,
+  test: (f) => f.canReceiveTestMessage,
   seating: (f) => f.confirmedHeads > 0 && f.tableCount === 0,
   gifting: (f) => !f.giftingConfigured,
   budget: (f) => f.expenseCount === 0,
@@ -69,7 +74,7 @@ export function isDetailsComplete(event: EventApp): boolean {
 }
 
 /**
- * Picks the Featured Actions for this render: a blocking package warning, every eligible setup step, then
+ * Picks the Featured Actions for this render: the Test Message, the blocking warnings, every eligible setup step, then
  * the highest-priority eligible action from each later tier, then the rest of
  * those in tier order, then the fallback trio. Computed, never stored, never
  * dismissed - an action leaves only when its rule turns false (ADR 0010).
@@ -79,6 +84,7 @@ export function rankFeaturedActions(facts: FeaturedActionFacts): FeaturedActionK
   const later = LATER_TIERS.map((keys) => keys.filter(isEligible));
 
   const picked: FeaturedActionKey[] = [
+    ...FIRST_TIER.filter(isEligible),
     ...BLOCKING_TIER.filter(isEligible),
     ...SETUP_TIER.filter(isEligible),
     ...later.flatMap((keys) => keys.slice(0, 1)),

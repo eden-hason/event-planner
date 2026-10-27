@@ -13,7 +13,11 @@ import {
   planEntryFromRow,
 } from '@/features/schedules/utils';
 import { daysUntil } from '@/lib/date-time';
-import { TEST_MESSAGE_CAP } from '@/features/schedules/services/send-test-message';
+import { buildOccasionPhrase } from '@/features/events/utils/event-title';
+import {
+  TEST_MESSAGE_ACCOUNT_CAP,
+  TEST_MESSAGE_CAP,
+} from '@/features/schedules/services/send-test-message';
 import type { EventApp } from '@/features/events/schemas';
 import type { FeaturedActionFacts, StatusStripData } from '../types';
 import { countHeads } from '../utils/counts';
@@ -87,24 +91,39 @@ export const getTestMessageSchedule = cache(async function getTestMessageSchedul
   return first ? { id: first.id } : null;
 });
 
-async function canReceiveTestMessage(eventId: string, viewer: HomeViewer): Promise<boolean> {
-  const schedule = await getTestMessageSchedule(eventId);
+/**
+ * Whether a Test Message can really go out to this viewer right now, so the
+ * action is never offered only to fail on tap: an unsent Confirmation to copy,
+ * the host names it is sent in, and room under every cap - the Event's, the
+ * account's (ADR 0047), and one per viewer per Event.
+ */
+async function canReceiveTestMessage(event: EventApp, viewer: HomeViewer): Promise<boolean> {
+  const occasion = buildOccasionPhrase({
+    eventTypeKey: event.eventType,
+    hostDetails: event.hostDetails as Record<string, unknown> | undefined,
+  });
+  if (!occasion) return false;
+
+  const schedule = await getTestMessageSchedule(event.id);
   if (!schedule) return false;
 
   const { supabase } = await getEffectiveClient();
   const { data, error } = await supabase
     .from('test_messages')
-    .select('user_id')
-    .eq('event_id', eventId)
+    .select('event_id, user_id')
+    .or(`event_id.eq.${event.id},user_id.eq.${viewer.userId}`)
     .eq('status', 'accepted');
   if (error) {
     console.error('Error fetching test messages:', error);
     return false;
   }
   const accepted = data ?? [];
+  const onEvent = accepted.filter((row) => row.event_id === event.id);
+  const byViewer = accepted.filter((row) => row.user_id === viewer.userId);
   return (
-    accepted.length < TEST_MESSAGE_CAP &&
-    !accepted.some((row) => row.user_id === viewer.userId)
+    onEvent.length < TEST_MESSAGE_CAP &&
+    byViewer.length < TEST_MESSAGE_ACCOUNT_CAP &&
+    !onEvent.some((row) => row.user_id === viewer.userId)
   );
 }
 
@@ -157,7 +176,7 @@ export async function getFeaturedActionFacts(
     getHomeGuests(event.id),
     getHomeGroups(event.id),
     getCollaboratorCount(event.id),
-    canReceiveTestMessage(event.id, viewer),
+    canReceiveTestMessage(event, viewer),
     countRows('tables', event.id),
     countRows('expenses', event.id),
     hasNoAskPlannedForEvent(event),

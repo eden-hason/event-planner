@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   IconAlertTriangle,
@@ -21,7 +22,7 @@ import {
   IconUsers,
   type Icon,
 } from '@tabler/icons-react';
-import { Link, useRouter } from '@/i18n/navigation';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useRecordPackage } from '@/features/billing';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -105,6 +106,12 @@ function HealthTile({
   );
 }
 
+/**
+ * Set on the way to Save by a Visitor who tapped the Test Message, so they come
+ * back to it with the send panel open rather than having to find it again.
+ */
+const OPEN_TEST_PARAM = 'test';
+
 type TestState =
   | { step: 'closed' }
   | { step: 'confirm'; error?: Extract<SendTestMessageState, { success: false }>['reason'] }
@@ -133,8 +140,22 @@ export function FeaturedActionList({
   const [phoneInput, setPhoneInput] = useState('');
   const [sending, startSending] = useTransition();
   const { isVisitor, openSave, requireSaved } = useSaveEvent();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const needsPhone = !maskedPhone;
+  const testOffered = actions.some((action) => action.key === 'test');
+  const reopenTest = !isVisitor && searchParams.get(OPEN_TEST_PARAM) === '1';
+
+  useEffect(() => {
+    if (!reopenTest) return;
+    // Opened only while a test can still go out; the param is dropped either
+    // way, so a reload or a shared link does not reopen it.
+    if (testOffered) setTest({ step: 'confirm' });
+    const rest = new URLSearchParams(searchParams);
+    rest.delete(OPEN_TEST_PARAM);
+    router.replace(rest.size > 0 ? `${pathname}?${rest}` : pathname, { scroll: false });
+  }, [reopenTest, testOffered, searchParams, pathname, router]);
   const listHref = `/app/${eventId}/guests`;
 
   const sendTest = () => {
@@ -150,8 +171,9 @@ export function FeaturedActionList({
 
   const onInlineClick = (key: FeaturedActionKey) => {
     if (key === 'test') {
-      // A test goes to a real phone: a Visitor saves first (ADR 0028).
-      if (!requireSaved('send')) return;
+      // A test goes to a real phone: a Visitor saves first (ADR 0028), and
+      // comes back here with the panel open.
+      if (!requireSaved('test', { [OPEN_TEST_PARAM]: '1' })) return;
       setTest((prev) => (prev.step === 'closed' ? { step: 'confirm' } : { step: 'closed' }));
     } else if (key === 'health') {
       setHealthOpen((open) => !open);
