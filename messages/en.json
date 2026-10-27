@@ -1837,13 +1837,16 @@
     },
     "messageType": {
       "cardTitle": "Message type",
-      "supportsNote": "Supports a note",
       "lockReason": {
         "sent": "Sent"
       },
       "default": {
         "label": "Default",
         "description": "The wording guests receive for this schedule"
+      },
+      "personal": {
+        "label": "Personal message",
+        "description": "Write the message in your own words, and the event details and buttons are added to it"
       }
     },
     "deliveryInfo": {
@@ -1872,6 +1875,13 @@
       "unsupported": {
         "title": "No automatic plan for this event yet",
         "description": "Invitations and reminders are built from a default set that has not been configured for this event. The Kululu team can set one up"
+      }
+    },
+    "personalMessage": {
+      "title": "Your personal message",
+      "placeholder": "For example: We can't wait to celebrate with you! There is free parking next to the venue, and if you need a ride just message us",
+      "help": {
+        "lineBreaks": "A line break shows as \"|\" in the message, because WhatsApp does not allow line breaks here"
       }
     },
     "personalNote": {

@@ -99,3 +99,33 @@ describe('Event Reminder buttons', () => {
     );
   });
 });
+
+describe('personalMessage transformer', () => {
+  const sent = (personalMessage: string) => {
+    const context = { schedule: { personalMessage } } as unknown as ParameterResolutionContext;
+    const [param] = buildDynamicTemplateParameters(
+      [
+        {
+          name: 'schedule.personalMessage',
+          source: 'schedule.personalMessage',
+          transformer: 'personalMessage',
+        },
+      ],
+      context,
+    );
+    return param.text;
+  };
+
+  it('keeps each line break the Owner typed as a visible separator', () => {
+    assert.equal(sent('מתרגשים לחגוג איתכם\nחניה חינם ליד האולם'), 'מתרגשים לחגוג איתכם | חניה חינם ליד האולם');
+    assert.equal(sent('שורה אחת\r\nשורה שתיים'), 'שורה אחת | שורה שתיים');
+  });
+
+  it('collapses blank lines, tabs and space runs so Meta accepts it as a parameter', () => {
+    assert.equal(sent('  פסקה ראשונה  \n\n\n\tפסקה   שנייה\t\n  '), 'פסקה ראשונה | פסקה שנייה');
+  });
+
+  it('leaves a one-line message as typed', () => {
+    assert.equal(sent('נשמח לראותכם'), 'נשמח לראותכם');
+  });
+});

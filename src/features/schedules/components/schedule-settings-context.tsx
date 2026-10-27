@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 
 import { israelWallClockParts } from '@/lib/date-time';
 
-import { updateCustomText, updateScheduledDate } from '../actions';
+import { updateCustomText, updatePersonalMessage, updateScheduledDate } from '../actions';
 import { DEFAULT_SEND_TIME } from '../utils/timeline';
 import type { ScheduleApp } from '../schemas';
 import {
@@ -30,6 +30,21 @@ interface ScheduleSettings {
   editable: boolean;
   note: string;
   setNote: (note: string) => void;
+  /**
+   * Which message the Owner has chosen: Kululu's Variant or their own Personal
+   * Message (ADR 0046). Not stored - a Schedule is on its Personal Message
+   * exactly when it carries the text, so this only starts from the saved text.
+   */
+  messageMode: MessageMode;
+  setMessageMode: (mode: MessageMode) => void;
+  /** The Personal Message as typed, kept while the Owner looks at Kululu's. */
+  personalMessage: string;
+  setPersonalMessage: (text: string) => void;
+  /**
+   * What the Schedule will send as its Personal Message once saved: the typed
+   * text, or nothing while Kululu's message is chosen. The preview reads this.
+   */
+  effectivePersonalMessage: string;
   /** The Due Time, as an instant. Empty while an Undated Schedule has no date picked. */
   scheduledDate: string;
   setScheduledDate: (iso: string) => void;
@@ -53,6 +68,8 @@ interface ScheduleSettings {
   confirmPastDueTime: () => void;
   cancelPastDueTime: () => void;
 }
+
+export type MessageMode = 'variant' | 'personal';
 
 const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
 
@@ -88,6 +105,13 @@ export function ScheduleSettingsProvider({
 
   const [savedNote, setSavedNote] = useState(schedule.customText ?? '');
   const [note, setNote] = useState(schedule.customText ?? '');
+  const [savedPersonalMessage, setSavedPersonalMessage] = useState(
+    schedule.personalMessage ?? '',
+  );
+  const [personalMessage, setPersonalMessage] = useState(schedule.personalMessage ?? '');
+  const [messageMode, setMessageMode] = useState<MessageMode>(
+    schedule.personalMessage ? 'personal' : 'variant',
+  );
   const [savedDate, setSavedDate] = useState(schedule.scheduledDate ?? '');
   const [scheduledDate, setScheduledDateState] = useState(schedule.scheduledDate ?? '');
   const [now, setNow] = useState(() => new Date());
@@ -116,9 +140,21 @@ export function ScheduleSettingsProvider({
     setNote(schedule.customText ?? '');
   }, [schedule.customText]);
 
+  useEffect(() => {
+    setSavedPersonalMessage(schedule.personalMessage ?? '');
+    setPersonalMessage(schedule.personalMessage ?? '');
+    setMessageMode(schedule.personalMessage ? 'personal' : 'variant');
+  }, [schedule.personalMessage]);
+
+  // Choosing Kululu's message clears the Personal Message on save; the typed
+  // text stays in the field in case the Owner switches back before saving.
+  const effectivePersonalMessage = messageMode === 'personal' ? personalMessage : '';
+
   const noteDirty = editable && note !== savedNote;
+  const personalMessageDirty =
+    editable && effectivePersonalMessage.trim() !== savedPersonalMessage;
   const dateDirty = editable && scheduledDate !== savedDate;
-  const dirty = noteDirty || dateDirty;
+  const dirty = noteDirty || personalMessageDirty || dateDirty;
 
   // Only an edited Due Time is judged: one the organiser did not touch is not
   // theirs to fix here (a moved Event date is backlog 0008), and the note must
@@ -153,6 +189,12 @@ export function ScheduleSettingsProvider({
     if (noteDirty) {
       tasks.push(write(updateCustomText(schedule.id, note), () => setSavedNote(note)));
     }
+    if (personalMessageDirty) {
+      const text = effectivePersonalMessage;
+      tasks.push(
+        write(updatePersonalMessage(schedule.id, text), () => setSavedPersonalMessage(text.trim())),
+      );
+    }
     if (dateDirty) {
       tasks.push(
         write(updateScheduledDate(schedule.id, scheduledDate), () => setSavedDate(scheduledDate)),
@@ -173,7 +215,17 @@ export function ScheduleSettingsProvider({
         // error toast handled above
       }
     });
-  }, [dirty, noteDirty, dateDirty, note, scheduledDate, schedule.id, t]);
+  }, [
+    dirty,
+    noteDirty,
+    personalMessageDirty,
+    dateDirty,
+    note,
+    effectivePersonalMessage,
+    scheduledDate,
+    schedule.id,
+    t,
+  ]);
 
   // The past-time check belongs here, at Save, and not on each field: date and
   // time are picked separately, so the Due Time is only final when saved. The
@@ -208,6 +260,11 @@ export function ScheduleSettingsProvider({
       editable,
       note,
       setNote,
+      messageMode,
+      setMessageMode,
+      personalMessage,
+      setPersonalMessage,
+      effectivePersonalMessage,
       scheduledDate,
       setScheduledDate,
       scheduledTime,
@@ -224,6 +281,9 @@ export function ScheduleSettingsProvider({
     [
       editable,
       note,
+      messageMode,
+      personalMessage,
+      effectivePersonalMessage,
       scheduledDate,
       setScheduledDate,
       scheduledTime,

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { sendingConfig } from '@/lib/config/sending';
-import { CustomTextSchema } from '../schemas';
+import { CustomTextSchema, PersonalMessageSchema } from '../schemas';
 import { dueTimeIssue } from '../utils/due-time-guards';
 
 /**
@@ -159,16 +159,24 @@ export type UpdateCustomTextState = {
   message?: string | null;
 };
 
+export type UpdatePersonalMessageState = UpdateCustomTextState;
+
 /**
- * Updates the organiser-authored note (schedules.custom_text) for a schedule.
- * A blank value is stored as null so "no note" reads the same way whether the
- * organiser never typed one or cleared it - the resolver only checks for a
- * non-empty trimmed value.
+ * Writes one of a Schedule's Owner-typed texts - the note or the Personal
+ * Message - behind the same edit guards. A blank value is stored as null so
+ * "none" reads the same whether the Owner never typed one or cleared it; the
+ * resolver only checks for a non-empty trimmed value. Both fields cap their
+ * length too, but a cap only the UI enforces is not one.
  * RLS ensures the user can only update their own schedules.
  */
-export async function updateCustomText(
+async function updateScheduleText(
   scheduleId: string,
-  customText: string,
+  value: string,
+  field: {
+    column: 'custom_text' | 'personal_message';
+    schema: typeof CustomTextSchema;
+    copy: { callRound: string; failed: string; updated: string };
+  },
 ): Promise<UpdateCustomTextState> {
   const blocked = await assertNotImpersonating();
   if (blocked) return { success: false, message: blocked };
@@ -193,15 +201,10 @@ export async function updateCustomText(
     if (rejection) return { success: false, message: rejection };
 
     if (!isMessageScheduleRow(existing)) {
-      return {
-        success: false,
-        message: 'A call round has no message content to note',
-      };
+      return { success: false, message: field.copy.callRound };
     }
 
-    // The note is appended to an already long WhatsApp body, and the textarea
-    // caps it - but a cap only the UI enforces is not one.
-    const parsed = CustomTextSchema.safeParse(customText);
+    const parsed = field.schema.safeParse(value);
     if (!parsed.success) {
       return { success: false, message: parsed.error.issues[0].message };
     }
@@ -209,21 +212,58 @@ export async function updateCustomText(
     const trimmed = parsed.data.trim();
     const { error } = await supabase
       .from('schedules')
-      .update({ custom_text: trimmed === '' ? null : trimmed })
+      .update({ [field.column]: trimmed === '' ? null : trimmed })
       .eq('id', scheduleId);
 
     if (error) {
-      console.error('Error updating custom text:', error);
-      return { success: false, message: 'Failed to update note' };
+      console.error(`Error updating ${field.column}:`, error);
+      return { success: false, message: field.copy.failed };
     }
 
     revalidatePath('/app');
 
-    return { success: true, message: 'Note updated' };
+    return { success: true, message: field.copy.updated };
   } catch (error) {
-    console.error('Error in updateCustomText:', error);
+    console.error(`Error updating ${field.column}:`, error);
     return { success: false, message: 'An unexpected error occurred' };
   }
+}
+
+/** Updates the organiser-authored note (schedules.custom_text) for a schedule. */
+export async function updateCustomText(
+  scheduleId: string,
+  customText: string,
+): Promise<UpdateCustomTextState> {
+  return updateScheduleText(scheduleId, customText, {
+    column: 'custom_text',
+    schema: CustomTextSchema,
+    copy: {
+      callRound: 'A call round has no message content to note',
+      failed: 'Failed to update note',
+      updated: 'Note updated',
+    },
+  });
+}
+
+/**
+ * Updates the Owner's Personal Message (schedules.personal_message, ADR 0046).
+ * Blank sends the Schedule's Variant. Line breaks are kept as typed: the
+ * personalMessage transformer turns them into " | " at send time, so the field
+ * shows the Owner what they wrote.
+ */
+export async function updatePersonalMessage(
+  scheduleId: string,
+  personalMessage: string,
+): Promise<UpdatePersonalMessageState> {
+  return updateScheduleText(scheduleId, personalMessage, {
+    column: 'personal_message',
+    schema: PersonalMessageSchema,
+    copy: {
+      callRound: 'A call round has no message to write',
+      failed: 'Failed to update the message',
+      updated: 'Message updated',
+    },
+  });
 }
 
 export type UpdateScheduleStatusState = {

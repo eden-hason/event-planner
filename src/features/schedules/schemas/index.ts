@@ -57,6 +57,23 @@ export const CustomTextSchema = z
     `Keep the note under ${CUSTOM_TEXT_MAX_LENGTH} characters`,
   );
 
+/**
+ * How long the Owner's Personal Message paragraph may be (ADR 0046).
+ *
+ * Set by SMS, not by Meta: the paragraph rides on every SMS Fallback, and in
+ * Hebrew each 67 characters is another segment. WhatsApp's 1,024 for the filled
+ * body leaves room for this with any Occasion Phrase and venue. Mirrored by the
+ * schedules_personal_message_length check.
+ */
+export const PERSONAL_MESSAGE_MAX_LENGTH = 300;
+
+export const PersonalMessageSchema = z
+  .string()
+  .max(
+    PERSONAL_MESSAGE_MAX_LENGTH,
+    `Keep the message under ${PERSONAL_MESSAGE_MAX_LENGTH} characters`,
+  );
+
 // Delivery methods
 export const DELIVERY_METHODS = ['whatsapp', 'sms'] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
@@ -127,6 +144,10 @@ export const ScheduleDbSchema = z.object({
   // custom note). Read by templates whose family offers requires_note - see
   // services/resolve-reminder-templates.ts.
   custom_text: z.string().nullable(),
+  // The Owner's Personal Message (ADR 0046). When set, the Schedule Type's
+  // Personal Message family is sent instead of template_id's - see
+  // services/resolve-reminder-templates.ts.
+  personal_message: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   schedule_types: z.object({
@@ -158,6 +179,7 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   // Derived from the template row - the single source of truth for channel
   deliveryMethod: db.message_templates?.channel ?? null,
   customText: db.custom_text ?? null,
+  personalMessage: db.personal_message ?? null,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));

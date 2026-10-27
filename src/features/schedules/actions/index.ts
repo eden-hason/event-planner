@@ -3,6 +3,8 @@ export {
   type UpdateScheduledDateState,
   updateCustomText,
   type UpdateCustomTextState,
+  updatePersonalMessage,
+  type UpdatePersonalMessageState,
   updateScheduleStatus,
   type UpdateScheduleStatusState,
 } from './schedules';

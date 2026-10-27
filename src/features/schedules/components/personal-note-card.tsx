@@ -11,8 +11,9 @@ import { useScheduleSettings } from './schedule-settings-context';
 /**
  * The organiser's own line at the end of the message, above the reply buttons.
  *
- * Shown only for a Schedule whose family has a note variant at all. Saved by
- * the page's one Save, not from here.
+ * Retired in favour of the Personal Message (ADR 0046): shown only for a
+ * Schedule that already carries a note, on a family with a note variant, so
+ * its Owner can still see and clear it. Saved by the page's one Save.
  */
 export function PersonalNoteCard({
   lockReason,

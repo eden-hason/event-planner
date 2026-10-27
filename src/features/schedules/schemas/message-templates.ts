@@ -52,6 +52,10 @@ export const MessageTemplateDbSchema = z.object({
   // Carries the Event's invitation image as an image header, resolved per event
   // from whether one is uploaded - see hasInvitationImage.
   requires_invitation_image: z.boolean(),
+  // A row of its Schedule Type's Personal Message family (ADR 0046): a Kululu
+  // frame around schedule.personalMessage, found by schedule type rather than
+  // by key - see loadPersonalMessageFamily.
+  personal_message: z.boolean().optional(),
   payload: z.unknown(),
 });
 
@@ -72,6 +76,7 @@ type MessageTemplateBase = {
   requiresNote: boolean;
   requiresFollowUp: boolean;
   requiresInvitationImage: boolean;
+  personalMessage: boolean;
 };
 
 export type MessageTemplateApp =
@@ -103,6 +108,7 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       requiresNote: db.requires_note,
       requiresFollowUp: db.requires_follow_up,
       requiresInvitationImage: db.requires_invitation_image,
+      personalMessage: db.personal_message ?? false,
     };
 
     if (db.channel === 'whatsapp') {

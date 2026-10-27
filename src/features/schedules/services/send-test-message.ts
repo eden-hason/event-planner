@@ -14,7 +14,7 @@ import {
   type ParameterResolutionContext,
 } from '../utils';
 import { mapEventRow } from './map-event-row';
-import { resolveTemplatesForEvent } from './resolve-reminder-templates';
+import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { missingOccasionPhrase } from '../utils/send-payload';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 
@@ -73,9 +73,10 @@ export async function sendTestMessage(params: {
     return { success: false, reason: 'not-found', message: 'Schedule has no message to test' };
   }
 
-  const resolution = await resolveTemplatesForEvent({
+  const resolution = await resolveTemplatesForSchedule({
     supabase,
     anchor: schedule.template,
+    personalMessage: schedule.personalMessage,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: hasNote(schedule.customText),

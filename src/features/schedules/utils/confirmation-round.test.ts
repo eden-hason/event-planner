@@ -40,6 +40,7 @@ const template: MessageTemplateApp = {
   requiresNote: false,
   requiresFollowUp: false,
   requiresInvitationImage: false,
+  personalMessage: false,
   channel: 'whatsapp',
   whatsappTemplateName: 'confirmation_1',
   payload: {

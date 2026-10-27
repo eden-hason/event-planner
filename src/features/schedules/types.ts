@@ -83,12 +83,15 @@ export type OutreachItem = {
 };
 
 /**
- * The message a schedule would send with the organiser's note and without it.
- * Both are resolved on the server so the preview can follow the note field as
- * it is typed, before it is saved. The same message twice when the family has
- * no note variant; null when the schedule has no template.
+ * The message a schedule would send with the organiser's note, without it, and
+ * as a Personal Message. All are resolved on the server so the preview can
+ * follow the fields as they are typed, before they are saved. The same message
+ * twice when the family has no note variant; `personalMessage` is null when the
+ * Schedule Type has no Personal Message family. Null when the schedule has no
+ * template.
  */
 export type PreviewMessages = {
   withNote: MessageTemplateApp;
   withoutNote: MessageTemplateApp;
+  personalMessage: MessageTemplateApp | null;
 } | null;

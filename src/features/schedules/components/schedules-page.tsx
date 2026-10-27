@@ -22,7 +22,10 @@ import {
 } from '../utils';
 import { comparePlanOrder, numberPlan, offsetDays, timelineStatus } from '../utils/timeline';
 import { heroModel, type HeroEntry } from '../utils/hero';
-import { resolveTemplatesForPreview } from '../queries/resolve-templates';
+import {
+  getPersonalMessageCatalog,
+  resolveTemplatesForPreview,
+} from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoCard } from './delivery-info-card';
@@ -51,6 +54,8 @@ type ScheduleWithTemplate = {
   offersNote: boolean;
   /** Whether the note version folds the note onto one line (see foldsNote). */
   foldsNote: boolean;
+  /** Whether this Schedule Type has a Personal Message family to send. */
+  offersPersonalMessage: boolean;
 };
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -79,7 +84,7 @@ export async function SchedulesPage({
     );
   }
 
-  const [guests, roundsBySchedule, sentCounts] = await Promise.all([
+  const [guests, roundsBySchedule, sentCounts, personalMessageCatalog] = await Promise.all([
     getEventGuests(eventId),
     // RLS-bound: a viewer without Owner access gets an empty map, so a call
     // plan renders as planned rather than exposing its results.
@@ -87,6 +92,8 @@ export async function SchedulesPage({
     // One aggregate for the whole Event, so a seven-card timeline costs one
     // round trip rather than seven.
     getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
+    // Every Personal Message frame in one read, rather than one per card.
+    getPersonalMessageCatalog(),
   ]);
 
   // schedule.template is only the family anchor. Resolve what would actually be
@@ -104,6 +111,7 @@ export async function SchedulesPage({
           seatingGap: null,
           offersNote: false,
           foldsNote: false,
+          offersPersonalMessage: false,
         };
       }
 
@@ -117,6 +125,7 @@ export async function SchedulesPage({
         tableNumbers,
         followUp: isFollowUpConfirmation(schedule, schedules),
         invitationImage,
+        personalMessageCatalog,
       });
 
       // Preview the table variant when there is one, and let the gap line
@@ -127,9 +136,16 @@ export async function SchedulesPage({
         resolution.success
           ? (resolution.templates.withTable ?? resolution.templates.withoutTable)
           : anchor;
+      // A Personal Message family that fails to resolve is a seeding bug the
+      // send would hit too; the option is hidden rather than previewing a frame
+      // that cannot go out.
+      const personalMessage = resolutions.personalMessage?.success
+        ? previewOf(resolutions.personalMessage)
+        : null;
       const messages = {
         withNote: previewOf(resolutions.withNote),
         withoutNote: previewOf(resolutions.withoutNote),
+        personalMessage,
       };
 
       // The note axis never decides whether there is a table variant or a note
@@ -153,6 +169,7 @@ export async function SchedulesPage({
         seatingGap,
         offersNote: resolution.success ? resolution.templates.offersNote : false,
         foldsNote: foldsNote(messages.withNote.payload.parameters),
+        offersPersonalMessage: personalMessage !== null,
       };
     }),
   );
@@ -201,7 +218,7 @@ export async function SchedulesPage({
 
   // Built in plan order, which the hero reads; the timeline reorders below.
   const planItems: OutreachItem[] = resolved.map(
-    ({ schedule, messages, seatingGap, offersNote, foldsNote }) => {
+    ({ schedule, messages, seatingGap, offersNote, foldsNote, offersPersonalMessage }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
       // to its own DB name so it still renders with a sensible label.
@@ -276,6 +293,7 @@ export async function SchedulesPage({
             seatingGap={seatingGap}
             offersNote={offersNote}
             foldsNote={foldsNote}
+            offersPersonalMessage={offersPersonalMessage}
             eventDate={eventDate}
             event={event}
             status={status}
