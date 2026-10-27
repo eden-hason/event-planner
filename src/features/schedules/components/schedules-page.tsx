@@ -22,7 +22,10 @@ import {
 } from '../utils';
 import { comparePlanOrder, numberPlan, offsetDays, timelineStatus } from '../utils/timeline';
 import { heroModel, type HeroEntry } from '../utils/hero';
-import { resolveTemplatesForPreview } from '../queries/resolve-templates';
+import {
+  getPersonalMessageCatalog,
+  resolveTemplatesForPreview,
+} from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoCard } from './delivery-info-card';
@@ -81,7 +84,7 @@ export async function SchedulesPage({
     );
   }
 
-  const [guests, roundsBySchedule, sentCounts] = await Promise.all([
+  const [guests, roundsBySchedule, sentCounts, personalMessageCatalog] = await Promise.all([
     getEventGuests(eventId),
     // RLS-bound: a viewer without Owner access gets an empty map, so a call
     // plan renders as planned rather than exposing its results.
@@ -89,6 +92,8 @@ export async function SchedulesPage({
     // One aggregate for the whole Event, so a seven-card timeline costs one
     // round trip rather than seven.
     getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
+    // Every Personal Message frame in one read, rather than one per card.
+    getPersonalMessageCatalog(),
   ]);
 
   // schedule.template is only the family anchor. Resolve what would actually be
@@ -120,6 +125,7 @@ export async function SchedulesPage({
         tableNumbers,
         followUp: isFollowUpConfirmation(schedule, schedules),
         invitationImage,
+        personalMessageCatalog,
       });
 
       // Preview the table variant when there is one, and let the gap line
@@ -133,11 +139,9 @@ export async function SchedulesPage({
       // A Personal Message family that fails to resolve is a seeding bug the
       // send would hit too; the option is hidden rather than previewing a frame
       // that cannot go out.
-      const personalMessage =
-        resolutions.personalMessage?.success
-          ? (resolutions.personalMessage.templates.withTable ??
-            resolutions.personalMessage.templates.withoutTable)
-          : null;
+      const personalMessage = resolutions.personalMessage?.success
+        ? previewOf(resolutions.personalMessage)
+        : null;
       const messages = {
         withNote: previewOf(resolutions.withNote),
         withoutNote: previewOf(resolutions.withoutNote),

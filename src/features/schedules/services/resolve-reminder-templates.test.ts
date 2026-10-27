@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { SupabaseClient } from '@supabase/supabase-js';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { pickTemplates, resolveTemplatesForSchedule } from './resolve-reminder-templates.ts';
+import { pickPersonalMessageTemplates, pickTemplates, resolveTemplatesForSchedule } from './resolve-reminder-templates.ts';
 import {
   MessageTemplateDbToAppSchema,
   type MessageTemplateApp,
@@ -227,4 +227,34 @@ test('a Personal Message with no family for its Schedule Type fails rather than 
     tableNumbers: false,
   });
   assert.equal(result.success, false);
+});
+
+test('the SMS Fallback resolves the same family on the SMS channel, Personal Message or not', async () => {
+  // A WhatsApp anchor: every row in this catalog is on SMS, so only a resolve on
+  // the 'sms' channel can find anything.
+  const whatsappAnchor = { ...anchor, channel: 'whatsapp' } as MessageTemplateApp;
+  const resolveSms = (personalMessage: string | null) =>
+    resolveTemplatesForSchedule({
+      supabase: fakeSupabase(catalog),
+      anchor: whatsappAnchor,
+      channel: 'sms',
+      personalMessage,
+      gifting: false,
+      tableNumbers: false,
+    });
+
+  const variant = await resolveSms(null);
+  assert.ok(variant.success);
+  assert.equal(variant.templates.withoutTable.name, 'variant');
+
+  const personalMessage = await resolveSms('מתרגשים');
+  assert.ok(personalMessage.success);
+  assert.equal(personalMessage.templates.withoutTable.name, 'personal');
+});
+
+test('picking from an empty Personal Message family gives nothing to preview', () => {
+  assert.equal(
+    pickPersonalMessageTemplates({ candidates: [], gifting: false, tableNumbers: false }),
+    null,
+  );
 });

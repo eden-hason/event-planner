@@ -1,14 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '../schemas';
-import {
-  MessageTemplateDbToAppSchema,
-  type MessageTemplateApp,
-} from '../schemas/message-templates';
+import type { MessageTemplateApp } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
-import {
-  resolvePersonalMessageTemplates,
-  resolveTemplatesForEvent,
-} from './resolve-reminder-templates';
+import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { mapEventRow } from './map-event-row';
 import {
@@ -18,7 +12,6 @@ import {
   includesGiftButton,
   hasInvitationImage,
   hasNote,
-  hasPersonalMessage,
   isMessageSchedule,
   sendSmsToGuest,
   shouldSendTableNumbers,
@@ -141,8 +134,9 @@ async function loadSchedule(
 }
 
 /**
- * The SMS version of the schedule's template: same key, variant and language
- * on the SMS channel, resolved across the same axes the WhatsApp send used. An
+ * The SMS version of the schedule's template: the family the WhatsApp send used
+ * (the anchor's, or the Personal Message's) on the SMS channel, resolved across
+ * the same axes. An
  * axis the SMS family does not offer (gifting, today) resolves as off. No SMS
  * version means no fallback - never a generic body sent to real guests.
  */
@@ -160,49 +154,18 @@ async function resolveSmsTemplates(
     return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
   }
 
-  const axes = {
+  // The same family the WhatsApp send used - the Personal Message's when the
+  // Schedule carries one (ADR 0046) - on its SMS channel.
+  const resolution = await resolveTemplatesForSchedule({
+    supabase,
+    anchor,
+    channel: 'sms',
+    personalMessage: schedule.personalMessage,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: hasNote(schedule.customText),
     followUp: await loadIsFollowUpConfirmation(supabase, schedule),
     invitationImage: hasInvitationImage(event.invitations),
-  };
-
-  // A Personal Message falls back on its own family's SMS rows, whatever
-  // Variant the Schedule is anchored on (ADR 0046).
-  if (hasPersonalMessage(schedule.personalMessage)) {
-    const resolution = await resolvePersonalMessageTemplates({
-      supabase,
-      ...axes,
-      scheduleTypeId: schedule.scheduleTypeId,
-      channel: 'sms',
-      languageCode: anchor.languageCode,
-    });
-    if (!resolution.success) return { ok: false, reason: resolution.message };
-    return {
-      ok: true,
-      withTable: resolution.templates.withTable,
-      withoutTable: resolution.templates.withoutTable,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('message_templates')
-    .select('*')
-    .eq('key', anchor.key)
-    .eq('channel', 'sms')
-    .eq('variant', anchor.variant)
-    .eq('language_code', anchor.languageCode)
-    .limit(1);
-  if (error) return { ok: false, reason: 'לא הצלחנו לטעון את תבניות ההודעה' };
-  if (!data?.length) {
-    return { ok: false, reason: `אין גרסת SMS ל-${anchor.key}` };
-  }
-
-  const resolution = await resolveTemplatesForEvent({
-    supabase,
-    anchor: MessageTemplateDbToAppSchema.parse(data[0]),
-    ...axes,
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
   return {

@@ -1,12 +1,24 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
-  loadPersonalMessageFamily,
+  loadPersonalMessageCatalog,
   loadTemplateFamily,
+  pickPersonalMessageTemplates,
   pickTemplates,
   type ResolveTemplatesResult,
   type TemplateAxes,
 } from '../services/resolve-reminder-templates';
 import type { MessageTemplateApp } from '../schemas/message-templates';
+
+/**
+ * Every Personal Message frame, read once for a page of previews and handed to
+ * each resolveTemplatesForPreview call. A failed read previews no Personal
+ * Message, which also hides the option - the send would fail the same way.
+ */
+export async function getPersonalMessageCatalog(): Promise<MessageTemplateApp[]> {
+  const { supabase } = await getEffectiveClient();
+  const catalog = await loadPersonalMessageCatalog(supabase);
+  return catalog.success ? catalog.candidates : [];
+}
 
 /**
  * Preview-side wrapper around the send engine's resolver.
@@ -17,46 +29,43 @@ import type { MessageTemplateApp } from '../schemas/message-templates';
  * the effective (impersonation-aware) client the rest of the catalog uses.
  *
  * Resolves both sides of the note axis from one read of the family, and the
- * Schedule Type's Personal Message family beside them: the note and the
- * Personal Message are typed on the client, and the preview follows them before
- * they are saved, so it needs the message the send would pick either way.
- * `personalMessage` is null when the Schedule Type has no Personal Message
- * family on the anchor's channel, which is also what hides the option.
+ * Schedule Type's Personal Message family beside them, picked from the catalog
+ * the page read once: the note and the Personal Message are typed on the
+ * client, and the preview follows them before they are saved, so it needs the
+ * message the send would pick either way. `personalMessage` is null when the
+ * Schedule Type has no Personal Message family on the anchor's channel, which
+ * is also what hides the option.
  */
 export async function resolveTemplatesForPreview(
-  params: Omit<TemplateAxes, 'note'> & { anchor: MessageTemplateApp },
+  params: Omit<TemplateAxes, 'note'> & {
+    anchor: MessageTemplateApp;
+    personalMessageCatalog: MessageTemplateApp[];
+  },
 ): Promise<{
   withNote: ResolveTemplatesResult;
   withoutNote: ResolveTemplatesResult;
   personalMessage: ResolveTemplatesResult | null;
 }> {
   const { supabase } = await getEffectiveClient();
-  const { anchor } = params;
-  const [family, personalFamily] = await Promise.all([
-    loadTemplateFamily(supabase, anchor),
-    loadPersonalMessageFamily(supabase, {
-      scheduleTypeId: anchor.scheduleTypeId,
-      channel: anchor.channel,
-      languageCode: anchor.languageCode,
-    }),
-  ]);
+  const { anchor, personalMessageCatalog, ...axes } = params;
 
-  const personalAnchor = personalFamily.success ? personalFamily.candidates[0] : undefined;
-  const personalMessage =
-    personalFamily.success && personalAnchor
-      ? pickTemplates({
-          ...params,
-          anchor: personalAnchor,
-          candidates: personalFamily.candidates,
-        })
-      : null;
+  const personalMessage = pickPersonalMessageTemplates({
+    ...axes,
+    candidates: personalMessageCatalog.filter(
+      (row) =>
+        row.scheduleTypeId === anchor.scheduleTypeId &&
+        row.channel === anchor.channel &&
+        row.languageCode === anchor.languageCode,
+    ),
+  });
 
+  const family = await loadTemplateFamily(supabase, anchor);
   if (!family.success) return { withNote: family, withoutNote: family, personalMessage };
 
   const { candidates } = family;
   return {
-    withNote: pickTemplates({ ...params, note: true, candidates }),
-    withoutNote: pickTemplates({ ...params, note: false, candidates }),
+    withNote: pickTemplates({ ...axes, anchor, note: true, candidates }),
+    withoutNote: pickTemplates({ ...axes, anchor, note: false, candidates }),
     personalMessage,
   };
 }

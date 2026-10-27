@@ -81,28 +81,33 @@ export type LoadTemplateFamilyResult =
   | { success: true; candidates: MessageTemplateApp[] }
   | { success: false; message: string };
 
-function familyName(anchor: MessageTemplateApp): string {
-  return `${anchor.key}/${anchor.channel}/${anchor.variant}/${anchor.languageCode}`;
+/**
+ * What names a family: key + channel + variant + language. A full template row
+ * satisfies it, and so does an anchor with its channel swapped for the SMS
+ * Fallback.
+ */
+export type FamilyKey = Pick<MessageTemplateApp, 'key' | 'variant' | 'languageCode'> & {
+  channel: MessageChannel;
+};
+
+function familyName(family: FamilyKey): string {
+  return `${family.key}/${family.channel}/${family.variant}/${family.languageCode}`;
 }
 
-/** Every row of the anchor's family, the candidates pickTemplates chooses from. */
-export async function loadTemplateFamily(
+/** The one catalog read both kinds of family go through. */
+async function loadFamily(
   supabase: SupabaseClient,
-  anchor: MessageTemplateApp,
+  filters: Record<string, string | boolean>,
+  label: string,
 ): Promise<LoadTemplateFamilyResult> {
-  const { data, error } = await supabase
-    .from('message_templates')
-    .select('*')
-    .eq('key', anchor.key)
-    .eq('channel', anchor.channel)
-    .eq('variant', anchor.variant)
-    .eq('language_code', anchor.languageCode);
+  let query = supabase.from('message_templates').select('*');
+  for (const [column, value] of Object.entries(filters)) {
+    query = query.eq(column, value);
+  }
+  const { data, error } = await query;
 
   if (error) {
-    console.error(
-      `[resolve-templates] Query failed for family ${familyName(anchor)}:`,
-      error,
-    );
+    console.error(`[resolve-templates] Query failed for ${label}:`, error);
     return { success: false, message: 'Could not load message templates' };
   }
 
@@ -112,6 +117,23 @@ export async function loadTemplateFamily(
       MessageTemplateDbToAppSchema.parse(row),
     ),
   };
+}
+
+/** Every row of the anchor's family, the candidates pickTemplates chooses from. */
+export function loadTemplateFamily(
+  supabase: SupabaseClient,
+  family: FamilyKey,
+): Promise<LoadTemplateFamilyResult> {
+  return loadFamily(
+    supabase,
+    {
+      key: family.key,
+      channel: family.channel,
+      variant: family.variant,
+      language_code: family.languageCode,
+    },
+    `family ${familyName(family)}`,
+  );
 }
 
 /**
@@ -120,36 +142,34 @@ export async function loadTemplateFamily(
  * whichever Variant the Schedule is anchored on, so there is one family per
  * Schedule Type, not one per Variant family.
  */
-export async function loadPersonalMessageFamily(
+export function loadPersonalMessageFamily(
   supabase: SupabaseClient,
   params: { scheduleTypeId: string; channel: MessageChannel; languageCode: string },
 ): Promise<LoadTemplateFamilyResult> {
-  const { data, error } = await supabase
-    .from('message_templates')
-    .select('*')
-    .eq('personal_message', true)
-    .eq('schedule_type_id', params.scheduleTypeId)
-    .eq('channel', params.channel)
-    .eq('language_code', params.languageCode);
+  return loadFamily(
+    supabase,
+    {
+      personal_message: true,
+      schedule_type_id: params.scheduleTypeId,
+      channel: params.channel,
+      language_code: params.languageCode,
+    },
+    `Personal Message family ${params.scheduleTypeId}/${params.channel}/${params.languageCode}`,
+  );
+}
 
-  if (error) {
-    console.error(
-      `[resolve-templates] Personal Message query failed for ${params.scheduleTypeId}/${params.channel}:`,
-      error,
-    );
-    return { success: false, message: 'Could not load message templates' };
-  }
-
-  return {
-    success: true,
-    candidates: (data ?? []).map((row: Record<string, unknown>) =>
-      MessageTemplateDbToAppSchema.parse(row),
-    ),
-  };
+/**
+ * Every Personal Message frame in the catalog, for a page that previews many
+ * Schedules: one read, filtered in memory, instead of one per Schedule.
+ */
+export function loadPersonalMessageCatalog(
+  supabase: SupabaseClient,
+): Promise<LoadTemplateFamilyResult> {
+  return loadFamily(supabase, { personal_message: true }, 'Personal Message catalog');
 }
 
 type PickParams = TemplateAxes & {
-  anchor: MessageTemplateApp;
+  anchor: FamilyKey;
   candidates: MessageTemplateApp[];
 };
 
@@ -240,7 +260,7 @@ function pick(
 export async function resolveTemplatesForEvent(
   params: TemplateAxes & {
     supabase: SupabaseClient;
-    anchor: MessageTemplateApp;
+    anchor: FamilyKey;
   },
 ): Promise<ResolveTemplatesResult> {
   const { supabase, ...axes } = params;
@@ -251,56 +271,54 @@ export async function resolveTemplatesForEvent(
 }
 
 /**
- * Resolves from a Schedule Type's Personal Message family. A Schedule that
- * carries Personal Message text with no family to send it is a seeding bug, and
- * fails rather than quietly sending the Variant the Owner chose not to.
+ * Picks from a Schedule Type's Personal Message family already loaded, or null
+ * when the type has none - the preview hides the option then, and the send
+ * fails. The family's first row stands in as its anchor: every row shares the
+ * key, channel, variant and language that name it.
  */
-export async function resolvePersonalMessageTemplates(
-  params: TemplateAxes & {
-    supabase: SupabaseClient;
-    scheduleTypeId: string;
-    channel: MessageChannel;
-    languageCode: string;
-  },
-): Promise<ResolveTemplatesResult> {
-  const { supabase, scheduleTypeId, channel, languageCode, ...axes } = params;
-  const family = await loadPersonalMessageFamily(supabase, {
-    scheduleTypeId,
-    channel,
-    languageCode,
-  });
-  if (!family.success) return family;
-
-  const [anchor] = family.candidates;
-  if (!anchor) {
-    const message = `No Personal Message templates for schedule type ${scheduleTypeId} (${channel}/${languageCode})`;
-    console.error(`[resolve-templates] ${message}`);
-    return { success: false, message };
-  }
-
-  return pickTemplates({ ...axes, anchor, candidates: family.candidates });
+export function pickPersonalMessageTemplates(
+  params: TemplateAxes & { candidates: MessageTemplateApp[] },
+): ResolveTemplatesResult | null {
+  const [anchor] = params.candidates;
+  return anchor ? pickTemplates({ ...params, anchor }) : null;
 }
 
 /**
  * What a Schedule sends: its Schedule Type's Personal Message family when it
  * carries Personal Message text, its anchor's family otherwise. A blank
  * Personal Message is no Personal Message - the Variant goes.
+ *
+ * `channel` defaults to the anchor's own; the SMS Fallback passes 'sms' to get
+ * the same family's SMS Renditions. A Schedule with Personal Message text and
+ * no family to send it is a seeding bug, and fails rather than quietly sending
+ * the Variant the Owner chose not to.
  */
 export async function resolveTemplatesForSchedule(
   params: TemplateAxes & {
     supabase: SupabaseClient;
     anchor: MessageTemplateApp;
     personalMessage: string | null | undefined;
+    channel?: MessageChannel;
   },
 ): Promise<ResolveTemplatesResult> {
-  const { personalMessage, ...rest } = params;
-  if (!hasPersonalMessage(personalMessage)) return resolveTemplatesForEvent(rest);
+  const { supabase, anchor, personalMessage, channel = anchor.channel, ...axes } = params;
 
-  const { anchor, ...axes } = rest;
-  return resolvePersonalMessageTemplates({
-    ...axes,
+  if (!hasPersonalMessage(personalMessage)) {
+    return resolveTemplatesForEvent({ supabase, ...axes, anchor: { ...anchor, channel } });
+  }
+
+  const scope = {
     scheduleTypeId: anchor.scheduleTypeId,
-    channel: anchor.channel,
+    channel,
     languageCode: anchor.languageCode,
-  });
+  };
+  const family = await loadPersonalMessageFamily(supabase, scope);
+  if (!family.success) return family;
+
+  const resolution = pickPersonalMessageTemplates({ ...axes, candidates: family.candidates });
+  if (resolution) return resolution;
+
+  const message = `No Personal Message templates for schedule type ${scope.scheduleTypeId} (${scope.channel}/${scope.languageCode})`;
+  console.error(`[resolve-templates] ${message}`);
+  return { success: false, message };
 }
