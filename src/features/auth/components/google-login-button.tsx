@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { signInWithGoogle } from '@/features/auth';
+import { isRedirectError } from '../utils/redirect';
 
 export function GoogleLoginButton({ next }: { next?: string }) {
   const t = useTranslations('auth');
@@ -31,9 +32,7 @@ export function GoogleLoginButton({ next }: { next?: string }) {
       // before this point, so we don't need to handle that here.
     } catch (error: unknown) {
       // Ignore Next.js redirect "errors" which are expected during successful auth
-      if (error instanceof Error && error.message?.includes('NEXT_REDIRECT')) {
-        return;
-      }
+      if (isRedirectError(error)) return;
 
       console.error('Google login error:', error);
       setError(t('googleLoginFailed'));

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { AuthTakeover } from '@/features/auth/components/auth-takeover';
 import { isVisitor } from '@/features/auth';
+import { getLastSignInMethod } from '@/features/auth/services/last-method';
 
 /**
  * TEMPORARY. Records what a signed-out tap on an Owner Message's `/app` link
@@ -37,12 +38,14 @@ export default async function LoginPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; method?: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const { next } = await searchParams;
+  // `method=phone` is onboarding's switch to the other Sign-in Method, which
+  // has already chosen the phone (backlog 0029).
+  const { next, method } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
@@ -56,6 +59,7 @@ export default async function LoginPage({
 
   const h = await headers();
   const inAppBrowser = detectInAppBrowser(h.get('user-agent'), h.get('sec-ch-ua'));
+  const lastMethod = await getLastSignInMethod();
 
   // Signing in from here replaces a Visitor's session, and their Event goes
   // with it once the sign-in succeeds - so they are told before they start.
@@ -64,6 +68,8 @@ export default async function LoginPage({
       next={next}
       holdsUnsavedEvent={isVisitor(data.user)}
       inAppBrowser={inAppBrowser}
+      lastMethod={lastMethod}
+      startAt={method === 'phone' ? 'phone' : 'choose'}
     />
   );
 }

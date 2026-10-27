@@ -11,7 +11,7 @@ import {
   setDraftLocation,
   setDraftNames,
 } from '../../actions';
-import { updateUserProfile } from '@/features/auth';
+import { OtherMethodPrompt, updateUserProfile, type SignInMethod } from '@/features/auth';
 import { buildEventTitle } from '../../utils/event-title';
 import type { EventTypeKey, Location } from '../../schemas';
 import type { DraftEventResume, OnboardingStep } from '../../types';
@@ -65,6 +65,7 @@ export function OnboardingTakeover({
   profile,
   needsProfile,
   hasAccount,
+  usedMethod,
   exitHref,
 }: {
   /** An unfinished event to resume, if the couple has one. */
@@ -78,6 +79,13 @@ export function OnboardingTakeover({
    * first screen offers a way to sign in instead.
    */
   hasAccount: boolean;
+  /**
+   * Set only for a brand-new account - no Event, no Draft, not a Visitor - to
+   * the Sign-in Method it just used. It may be an Owner who opened their Event
+   * with the other one on another device (backlog 0029), so the first screens
+   * say which method this was and offer the other.
+   */
+  usedMethod?: SignInMethod;
   /**
    * Where "back" leads from the first screen. Set only when there is already a
    * workspace behind the takeover - a first-time couple has nowhere to go back
@@ -334,6 +342,7 @@ export function OnboardingTakeover({
               onSubmit={handleProfile}
               pending={isSavingProfile}
             />
+            {usedMethod && <OtherMethodPrompt usedMethod={usedMethod} />}
           </div>
         </main>
       </TakeoverShell>
@@ -375,7 +384,9 @@ export function OnboardingTakeover({
           <TypeScreen selected={answers.eventType} onPick={handlePickType} />
           {/* The one door is /start, so a returning Owner on a new device
               lands here too. Signing in from here drops anything started
-              without an account (ADR 0028). */}
+              without an account (ADR 0028). An account that is brand new may
+              be that Owner, signed in with the other method. */}
+          {usedMethod && <OtherMethodPrompt usedMethod={usedMethod} />}
           {!hasAccount && (
             <p className="mt-4 text-center text-[13.5px] text-[var(--kt-ink-muted)]">
               {t('haveAccount')}{' '}

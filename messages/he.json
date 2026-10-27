@@ -49,6 +49,18 @@
       "signingOut": "מתנתקים...",
       "signOutFailed": "ההתנתקות נכשלה",
       "tryAgain": "נסו שוב"
+    },
+    "continueWithPhone": "המשך עם מספר טלפון",
+    "lastUsed": "בפעם הקודמת",
+    "phoneTitle": "מה מספר הטלפון שלכם?",
+    "phoneSubtitle": "נשלח לכם קוד התחברות בוואטסאפ",
+    "otherMethod": {
+      "phone": "נכנסתם עם מספר הטלפון. פתחתם את האירוע עם Google?",
+      "google": "נכנסתם עם Google. פתחתם את האירוע עם מספר הטלפון?",
+      "switchTo": {
+        "google": "התחברות עם Google",
+        "phone": "התחברות עם הטלפון"
+      }
     }
   },
   "navigation": {
@@ -2808,7 +2820,7 @@
     },
     "nameLabel": "השם המלא שלכם",
     "namePlaceholder": "למשל: דנה לוי",
-    "savePhone": "שמירה עם קוד בוואטסאפ",
+    "savePhone": "שמירה עם מספר טלפון",
     "saveGoogle": "שמירה עם Google",
     "phoneExistsTitle": "למספר הזה כבר יש חשבון ב-Kululu",
     "googleExistsTitle": "לחשבון Google הזה כבר יש חשבון ב-Kululu",
@@ -2817,7 +2829,8 @@
     "useDifferentAccount": "חשבון אחר",
     "signInAndDiscard": "להתחבר ולמחוק את האירוע הזה",
     "wrongCode": "הקוד לא נכון. בדקו את ההודעה בוואטסאפ ונסו שוב",
-    "saved": "האירוע נשמר"
+    "saved": "האירוע נשמר",
+    "otherWay": "שמירה בדרך אחרת"
   },
   "installApp": {
     "card": {

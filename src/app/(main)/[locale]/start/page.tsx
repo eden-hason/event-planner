@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
-import { getUserProfile, getVisitorId } from '@/features/auth/queries';
+import { getCurrentUser, getUserProfile, getVisitorId } from '@/features/auth/queries';
 import { getDraftEvent, getLastUserEvent } from '@/features/events/queries';
 import { VisitorDroppedDialog } from '@/features/auth';
 import { OnboardingTakeover } from '@/features/events/components/onboarding/onboarding-takeover';
@@ -21,10 +21,11 @@ export default async function StartPage({
   // control, and says the takeover was asked for rather than fallen into.
   const { new: requestedNew } = await searchParams;
 
-  const [draft, profile, visitorId] = await Promise.all([
+  const [draft, profile, visitorId, user] = await Promise.all([
     getDraftEvent(),
     getUserProfile(),
     getVisitorId(),
+    getCurrentUser(),
   ]);
 
   // No account: someone new, with no session until their first answer makes
@@ -56,6 +57,12 @@ export default async function StartPage({
       }}
       needsProfile={hasAccount && !profile?.initialSetupComplete}
       hasAccount={hasAccount}
+      // A brand-new account - nothing to return to and nothing started - may
+      // be an Owner who signed in with the other method (backlog 0029). A
+      // co-planner has a workspace, so `existing` already rules them out.
+      usedMethod={
+        hasAccount && !draft && !existing ? user?.signInMethod : undefined
+      }
     />
     {/* An account with no event to land on lands here after a sign-in that
         dropped a Visitor's draft; it is told so once (ADR 0028). */}

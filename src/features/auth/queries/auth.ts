@@ -4,6 +4,7 @@ import { getImpersonation } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { User, ProfileData } from '../schemas';
 import { isVisitor } from '../utils/visitor';
+import { signInMethodOf } from '../utils/sign-in-method';
 
 // Wrapped with React cache() so a single render resolves the auth call once,
 // however many server components ask for it - the same reason getImpersonation
@@ -125,6 +126,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Use
       avatar:
         user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
       isVisitor: isVisitor(user),
+      signInMethod: signInMethodOf(user),
     };
   } catch (error) {
     console.error('Get current user error:', error);
