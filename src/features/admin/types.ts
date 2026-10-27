@@ -67,6 +67,22 @@ export type UpcomingEvent = {
   confirmationRate: number | null;
 };
 
+/** An Event that took place yesterday, so its Owner gets a manual follow-up today. */
+export type FollowUpEvent = {
+  id: string;
+  title: string;
+  eventTypeName: string;
+  ownerName: string;
+  ownerPhone: string | null;
+  guestRecords: number;
+};
+
+export type FollowUpEvents = {
+  /** Yesterday's `event_date` value (00:00 UTC), so the band can name the day even when empty. */
+  day: string;
+  events: FollowUpEvent[];
+};
+
 /**
  * One hit in the header search. Carries the owner because an Operator searching
  * "noa" is looking for a couple, not a title, and needs to see which event is

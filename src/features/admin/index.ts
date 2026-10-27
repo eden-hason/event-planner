@@ -26,6 +26,7 @@ export { StatCards } from './components/stat-cards';
 export { SignalList } from './components/signal-list';
 export { SignalRow } from './components/signal-row';
 export { UpcomingEvents } from './components/upcoming-events';
+export { FollowUpEvents } from './components/follow-up-events';
 export { CallRounds } from './components/call-rounds';
 export { ImpersonationBanner } from './components/impersonation-banner';
 export { ImpersonateOwnerButton } from './components/impersonate-owner-button';

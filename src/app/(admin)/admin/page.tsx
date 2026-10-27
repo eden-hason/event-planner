@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import {
   getOverviewStats,
   getUpcomingEvents,
+  getYesterdayEvents,
 } from '@/features/admin/queries/overview';
 import { getOverviewCallRounds } from '@/features/admin/queries/operations';
 import {
@@ -14,6 +15,11 @@ import {
   CallRoundsError,
   CallRoundsSkeleton,
 } from '@/features/admin/components/call-rounds';
+import {
+  FollowUpEvents,
+  FollowUpEventsError,
+  FollowUpEventsSkeleton,
+} from '@/features/admin/components/follow-up-events';
 import {
   UpcomingEvents,
   UpcomingEventsError,
@@ -31,6 +37,11 @@ export default function OverviewPage() {
 
       {/* Each band streams and fails on its own - one broken query must not take
           the page down or, worse, render as an all-clear. */}
+      {/* First: the one list that is only true today. */}
+      <Suspense fallback={<FollowUpEventsSkeleton />}>
+        <FollowUpBand />
+      </Suspense>
+
       <Suspense fallback={<StatCardsSkeleton />}>
         <StatsBand />
       </Suspense>
@@ -52,6 +63,16 @@ async function StatsBand() {
   } catch (error) {
     console.error('Overview stats failed:', error);
     return <StatCardsError />;
+  }
+}
+
+async function FollowUpBand() {
+  try {
+    const { day, events } = await getYesterdayEvents();
+    return <FollowUpEvents day={day} events={events} />;
+  } catch (error) {
+    console.error('Overview follow-up events failed:', error);
+    return <FollowUpEventsError />;
   }
 }
 

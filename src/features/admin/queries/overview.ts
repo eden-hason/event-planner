@@ -3,7 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
-import type { OverviewStats, Signal, UpcomingEvent } from '../types';
+import type { FollowUpEvents, OverviewStats, Signal, UpcomingEvent } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { eventDaysFromToday } from '@/lib/date-time';
 import { daysText, formatDateTime, hoursText } from '../utils/format';
@@ -12,6 +12,7 @@ import { ASK_TYPE_KEYS } from '@/features/schedules/utils/ask-plan';
 import { planEntryFromRow } from '@/features/schedules/utils/timeline';
 import { isNoAskPlanned, NO_ASK_PLANNED_DAYS } from '../utils/no-ask-planned';
 import { israelMonthStart, tallyPayments } from '../utils/payments';
+import { yesterdayEventDateRange } from '../utils/follow-up';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -448,4 +449,60 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
       confirmationRate: counts.total > 0 ? counts.confirmed / counts.total : null,
     };
   });
+}
+
+/**
+ * Yesterday's Events, whose Owners the Operator follows up with by hand today.
+ * A reminder only - nothing here sends. Published only, like the Upcoming band:
+ * a Draft Event is interest, not an event that took place.
+ */
+export async function getYesterdayEvents(): Promise<FollowUpEvents> {
+  await assertAdmin();
+  const supabase = createServiceClient();
+
+  const test = await getTestScope();
+  const { start, end } = yesterdayEventDateRange();
+  const events = unwrap(
+    await excludeIds(
+      supabase
+        .from('events')
+        .select('id, title, user_id, event_types(key, name), guests(count)')
+        .eq('status', 'published')
+        .gte('event_date', start)
+        .lt('event_date', end)
+        .order('title', { ascending: true }),
+      'user_id',
+      test.userIds,
+    ),
+  );
+
+  if (!events.length) return { day: start, events: [] };
+
+  // events.user_id points at auth.users, not profiles, so the owner is looked up separately.
+  const owners = unwrap(
+    await supabase
+      .from('profiles')
+      .select('id, full_name, email, phone_number')
+      .in(
+        'id',
+        events.map((e) => e.user_id),
+      ),
+  );
+  const ownerById = new Map(owners.map((o) => [o.id, o]));
+
+  return {
+    day: start,
+    events: events.map((event) => {
+      const type = event.event_types as unknown as { key: string | null; name: string | null } | null;
+      const owner = ownerById.get(event.user_id);
+      return {
+        id: event.id,
+        title: eventTitle(event.title),
+        eventTypeName: eventTypeName(type?.key, type?.name),
+        ownerName: owner?.full_name?.trim() || owner?.email || UNKNOWN_OWNER,
+        ownerPhone: owner?.phone_number ?? null,
+        guestRecords: embeddedCount(event.guests),
+      };
+    }),
+  };
 }

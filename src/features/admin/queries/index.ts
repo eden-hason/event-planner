@@ -1,4 +1,4 @@
-export { getOverviewStats, getSignals, getUpcomingEvents } from './overview';
+export { getOverviewStats, getSignals, getUpcomingEvents, getYesterdayEvents } from './overview';
 export { getOperatorIdentity } from './operator';
 export {
   getEventGuestSummary,
