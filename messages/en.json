@@ -1562,7 +1562,7 @@
       },
       "testMessage": {
         "confirmTitle": "Sent only to you, at <ltr>{phone}</ltr>",
-        "confirmBody": "The RSVP message exactly as a guest gets it. Arrives within a minute. No guest receives anything.",
+        "confirmBody": "The RSVP message exactly as a guest gets it, and you can answer it like one. Arrives within a minute. No guest receives anything, and nothing you answer is recorded.",
         "phoneTitle": "Which number should we send to?",
         "phoneHint": "Only for this test, not saved. No guest receives anything",
         "phonePlaceholder": "050-0000000",
@@ -1574,7 +1574,7 @@
         "errors": {
           "invalid-phone": "That phone number isn't valid",
           "no-phone": "Enter a phone number to get the message",
-          "cap-reached": "This event has used all its test messages",
+          "cap-reached": "All the test messages have been used",
           "no-schedule": "There's no RSVP message to send yet",
           "not-allowed": "Only the event's owners can get a test message",
           "send-failed": "We couldn't send it, try again",
@@ -2830,7 +2830,8 @@
       "invite": "Before you invite anyone, save your event",
       "import": "Before importing from WhatsApp, save your event",
       "pay": "Before choosing a package, save your event",
-      "share": "Before you share your event's links, save it"
+      "share": "Before you share your event's links, save it",
+      "test": "Save your event, and the test message goes to your WhatsApp"
     },
     "nameLabel": "Your full name",
     "namePlaceholder": "e.g. Dana Levi",

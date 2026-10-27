@@ -1,25 +1,33 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '../schemas';
-import { toWhatsAppTemplate, type MessageTemplateApp } from '../schemas/message-templates';
+import { toWhatsAppTemplate, type WhatsAppTemplateApp } from '../schemas/message-templates';
 import type { GuestApp } from '@/features/guests/schemas';
 import {
   includesGiftButton,
   hasInvitationImage,
   hasNote,
   isMessageSchedule,
-  sendSmsToGuest,
-  sendToGuest,
   shouldSendTableNumbers,
-  type GuestSendResult,
   type ParameterResolutionContext,
 } from '../utils';
+import {
+  buildDynamicButtonParameters,
+  buildDynamicHeaderParameters,
+  buildDynamicTemplateParameters,
+} from '../utils/parameter-resolvers';
+import { buildWhatsAppComponents } from '../utils/send-payload';
+import { TEST_MESSAGE_TAG } from '../utils/whatsapp-callback-tag';
 import { mapEventRow } from './map-event-row';
+import { postWhatsAppTemplate, type WhatsAppSendResult } from './post-whatsapp';
 import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { missingOccasionPhrase } from '../utils/send-payload';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 
 /** Accepted Test Messages an event may send over its whole life. */
 export const TEST_MESSAGE_CAP = 3;
+
+/** Accepted Test Messages an account may send across all its Events (ADR 0047). */
+export const TEST_MESSAGE_ACCOUNT_CAP = 3;
 
 export type SendTestMessageOutcome =
   | { success: true; phone: string }
@@ -31,13 +39,14 @@ export type SendTestMessageOutcome =
 
 /**
  * Sends a copy of a Schedule's message to the Owner's own phone (see Test
- * Message in CONTEXT.md).
+ * Message in CONTEXT.md). Always by WhatsApp: a Schedule whose template is an
+ * SMS is tested with the WhatsApp member of the same family.
  *
  * The recipient stands in for a Guest only inside parameter resolution: no
  * Guest Record is read or written, nothing lands in message_deliveries, and
- * the RSVP link carries the event's preview token, so tapping it opens the
- * preview page instead of answering for anyone. The send is logged in
- * test_messages, which is also what enforces TEST_MESSAGE_CAP.
+ * the RSVP link and the buttons carry the event's preview token, so tapping
+ * them plays the conversation out without answering for anyone. The send is
+ * logged in test_messages, which is also what enforces the caps.
  *
  * Expects a service-role client: the caller has already checked that the
  * viewer owns the event.
@@ -77,6 +86,7 @@ export async function sendTestMessage(params: {
     supabase,
     anchor: schedule.template,
     personalMessage: schedule.personalMessage,
+    channel: 'whatsapp',
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: hasNote(schedule.customText),
@@ -85,6 +95,12 @@ export async function sendTestMessage(params: {
   });
   if (!resolution.success) {
     return { success: false, reason: 'send-failed', message: resolution.message };
+  }
+
+  // The table-number variant needs a real seating assignment; the Owner has none.
+  const template = toWhatsAppTemplate(resolution.templates.withoutTable);
+  if (!template) {
+    return { success: false, reason: 'send-failed', message: 'No WhatsApp template to test' };
   }
 
   // Checked before a send is reserved, so a message that could never go out
@@ -105,6 +121,7 @@ export async function sendTestMessage(params: {
       p_schedule_id: scheduleId,
       p_phone_number: recipient.phone,
       p_cap: TEST_MESSAGE_CAP,
+      p_account_cap: TEST_MESSAGE_ACCOUNT_CAP,
     },
   );
   if (reserveError) {
@@ -131,8 +148,6 @@ export async function sendTestMessage(params: {
     invitationToken: previewToken,
   };
 
-  // The table-number variant needs a real seating assignment; the Owner has none.
-  const template: MessageTemplateApp = resolution.templates.withoutTable;
   const context: ParameterResolutionContext = {
     guest,
     event,
@@ -142,51 +157,64 @@ export async function sendTestMessage(params: {
     confirmationToken: previewToken,
   };
 
-  let result: GuestSendResult;
+  let result: WhatsAppSendResult;
   try {
-    result =
-      template.channel === 'sms'
-        ? await sendSmsToGuest({
-            guest,
-            context,
-            smsPayload: template.payload,
-            templateId: template.id,
-            confirmationToken: previewToken,
-          })
-        : await sendToGuest({
-            guest,
-            context,
-            template: toWhatsAppTemplate(template)!,
-            templateId: template.id,
-            confirmationToken: previewToken,
-          });
+    result = await postTestTemplate(recipient.phone, template, context);
   } catch (error) {
     result = {
-      guest,
-      success: false,
+      outcome: 'unknown',
       message: error instanceof Error ? error.message : 'Send failed',
-      channel: template.channel,
-      confirmationToken: previewToken,
-      templateId: template.id,
     };
   }
+  const accepted = result.outcome === 'accepted';
 
   const { error: updateError } = await supabase
     .from('test_messages')
     .update({
-      status: result.success ? 'accepted' : 'failed',
-      external_message_id: result.messageId ?? null,
-      error_message: result.success ? null : result.message,
+      status: accepted ? 'accepted' : 'failed',
+      external_message_id: result.outcome === 'accepted' ? result.messageId : null,
+      error_message: result.outcome === 'accepted' ? null : result.message,
     })
     .eq('id', reservationId);
   if (updateError) {
     console.error('[send-test-message] Could not record the outcome:', updateError);
   }
 
-  if (!result.success) {
-    console.error('[send-test-message] Provider rejected the send:', result.message);
+  if (result.outcome !== 'accepted') {
+    console.error('[send-test-message] Provider did not accept the send:', result.message);
     return { success: false, reason: 'send-failed', message: 'Could not send the test message' };
   }
 
   return { success: true, phone: recipient.phone };
+}
+
+/**
+ * Renders the template for the Owner and posts it, tagged as a test so the
+ * webhook knows its statuses touch no Delivery (ADR 0019). There is no Delivery
+ * and no retry here, so a rejection and an unknown outcome end the same way.
+ */
+function postTestTemplate(
+  to: string,
+  template: WhatsAppTemplateApp,
+  context: ParameterResolutionContext,
+): Promise<WhatsAppSendResult> {
+  const placeholders = template.parameters;
+  return postWhatsAppTemplate(
+    {
+      channel: 'whatsapp',
+      to,
+      templateName: template.templateName,
+      languageCode: template.languageCode,
+      components: buildWhatsAppComponents({
+        parameters: buildDynamicTemplateParameters(placeholders?.placeholders ?? [], context),
+        headerParameters: placeholders?.headerPlaceholders?.length
+          ? buildDynamicHeaderParameters(placeholders.headerPlaceholders, context)
+          : undefined,
+        buttonParameters: placeholders?.buttonPlaceholders?.length
+          ? buildDynamicButtonParameters(placeholders.buttonPlaceholders, context)
+          : undefined,
+      }),
+    },
+    TEST_MESSAGE_TAG,
+  );
 }

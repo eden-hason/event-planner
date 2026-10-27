@@ -1,6 +1,7 @@
 import type { MealChoice } from '@/lib/meal-choices';
 import {
   encodeConversationId,
+  parseConversationId,
   type ConversationAction,
 } from './conversation-ids';
 import { mealLabel, type MealOption } from './meal-options';
@@ -401,6 +402,17 @@ export function conversationStep(params: {
       if (!event.askTransportation) return respond(null, summary);
       return respond({ needsTransportation: action.answer }, summary);
   }
+}
+
+/**
+ * Whether a reply is where the conversation ends: the summary, whose only
+ * button is "change the answer", or the word that answers are closed. Nothing
+ * else is asked after it.
+ */
+export function endsConversation(reply: OutgoingMessage): boolean {
+  if (reply.kind === 'text') return reply.body === RSVP_CLOSED_MESSAGE;
+  if (reply.kind !== 'buttons' || reply.buttons.length !== 1) return false;
+  return parseConversationId(reply.buttons[0].id)?.action.type === 'change';
 }
 
 /**

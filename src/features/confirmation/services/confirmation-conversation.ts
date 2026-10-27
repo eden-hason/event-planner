@@ -3,10 +3,14 @@ import {
   postWhatsAppSessionMessage,
   type WhatsAppSendResult,
 } from '@/features/schedules/services/post-whatsapp';
-import { conversationTag } from '@/features/schedules/utils/whatsapp-callback-tag';
+import {
+  conversationTag,
+  TEST_MESSAGE_TAG,
+} from '@/features/schedules/utils/whatsapp-callback-tag';
 import { buildOccasionPhrase, readEventTypeKey } from '@/features/events/utils/event-title';
 import {
   conversationStep,
+  endsConversation,
   typedCountStep,
   TYPED_TEXT_REPLY,
   type AwaitedAnswer,
@@ -201,6 +205,39 @@ async function reply(
   return result;
 }
 
+/**
+ * Kululu's own word once a Test Message's conversation has ended: the Owner
+ * saw exactly what a Guest goes through, and nothing they answered was kept.
+ * Free like any reply - the Owner's tap opened the window - and tagged as part
+ * of the Test Message, so its statuses record nothing either.
+ */
+async function closeTestConversation(
+  to: string,
+  eventId: string,
+  answered: WhatsAppSendResult,
+  reply: OutgoingMessage,
+): Promise<void> {
+  if (answered.outcome !== 'accepted' || !endsConversation(reply)) return;
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000';
+  const result = await postWhatsAppSessionMessage(
+    to,
+    {
+      kind: 'text',
+      body: [
+        'זו הייתה הודעת ניסיון 🙂',
+        'ככה האורחים שלכם יאשרו הגעה. שום תשובה שלכם לא נשמרה.',
+        '',
+        `לתזמון ההודעות לאורחים: ${siteUrl}/app/${eventId}/schedules`,
+      ].join('\n'),
+    },
+    TEST_MESSAGE_TAG,
+  );
+  if (result.outcome !== 'accepted') {
+    console.error(`${TAG} Test closing line not sent (${result.outcome}): ${result.message}`);
+  }
+}
+
 // --- Loading ---------------------------------------------------------------
 
 type EventRow = {
@@ -372,6 +409,7 @@ async function handleTap(
     });
     const result = await reply(message.from, step.reply, claimId);
     await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
+    await closeTestConversation(message.from, event.id, result, step.reply);
     return;
   }
 
@@ -465,6 +503,7 @@ async function handleTypedCount(
     });
     const result = await reply(message.from, step.reply, claimId);
     await finish(supabase, claimId, { eventId: event.id, action, result, awaits: step.awaits });
+    await closeTestConversation(message.from, event.id, result, step.reply);
     return;
   }
 

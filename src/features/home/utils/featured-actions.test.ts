@@ -61,3 +61,21 @@ describe('package warning', () => {
     assert.equal(ranked[0], 'package');
   });
 });
+
+describe('test message', () => {
+  it('is not offered while a test cannot go out', () => {
+    assert.ok(!rankFeaturedActions(settled).includes('test'));
+  });
+
+  it('comes first, ahead of the blocking warnings and every setup step', () => {
+    const ranked = rankFeaturedActions({
+      ...settled,
+      canReceiveTestMessage: true,
+      recordsOverPackage: 3,
+      noAskPlanned: true,
+      detailsComplete: false,
+      collaboratorCount: 1,
+    });
+    assert.deepEqual(ranked, ['test', 'package', 'planAsk', 'details']);
+  });
+});

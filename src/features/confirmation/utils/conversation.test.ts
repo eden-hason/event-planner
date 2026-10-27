@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   conversationStep,
+  endsConversation,
   MAX_TYPED_COUNT,
   typedCountStep,
   type ConversationEvent,
@@ -493,5 +494,29 @@ describe('isRsvpOpen', () => {
 
   it('has no cutoff without a date', () => {
     assert.equal(isRsvpOpen(null), true);
+  });
+});
+
+describe('endsConversation', () => {
+  const confirmed = guest({ rsvpStatus: 'confirmed' });
+
+  it('ends on the summary, whether coming or not', () => {
+    assert.ok(endsConversation(step({ type: 'no' }).reply));
+    assert.ok(endsConversation(step({ type: 'mealQuestion', answer: false }, confirmed).reply));
+  });
+
+  it('ends when answers are closed', () => {
+    assert.ok(endsConversation(step({ type: 'yes' }, guest(), event({ rsvpOpen: false })).reply));
+  });
+
+  it('does not end while a question is still open', () => {
+    assert.ok(!endsConversation(step({ type: 'yes' }).reply));
+    assert.ok(!endsConversation(step({ type: 'change' }, confirmed).reply));
+    assert.ok(!endsConversation(step({ type: 'count', count: 2 }, confirmed).reply));
+    assert.ok(
+      !endsConversation(
+        step({ type: 'mealQuestion', answer: false }, confirmed, event({ askTransportation: true })).reply,
+      ),
+    );
   });
 });

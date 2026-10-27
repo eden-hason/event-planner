@@ -9,7 +9,6 @@ export { SchedulesHeader } from './components/schedules-header';
 export {
   executeSchedule,
   type ExecuteScheduleResult,
-  sendWhatsAppTemplateMessage,
   type WhatsAppSendResult,
   sendSelectedDeliveriesAdmin,
   type ManualSendResult,

@@ -74,7 +74,7 @@ export function safeReturnPath(path: string | null | undefined, fallback = '/app
  * Why a Visitor was sent to save. A gated action names itself, so the page can
  * say why saving comes first; the header pill and the other ways in give none.
  */
-const SAVE_REASONS = ['send', 'invite', 'import', 'pay', 'share'] as const;
+const SAVE_REASONS = ['send', 'invite', 'import', 'pay', 'share', 'test'] as const;
 export type SaveReason = (typeof SAVE_REASONS)[number];
 
 export function parseSaveReason(value: string | null | undefined): SaveReason | undefined {

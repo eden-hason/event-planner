@@ -44,7 +44,10 @@ export type FeaturedActionFacts = {
   collaboratorCount: number;
   duplicateRecords: number;
   noPhoneRecords: number;
-  /** A confirmation Schedule exists, the viewer has not received a test of it, and the event is under its cap. */
+  /**
+   * A Test Message can go out now: an unsent Confirmation, the host names it is
+   * sent in, and room under the Event's, the account's and the viewer's caps.
+   */
   canReceiveTestMessage: boolean;
   confirmedHeads: number;
   tableCount: number;

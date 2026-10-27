@@ -13,12 +13,14 @@ import { savePageHref, type SaveReason } from '../utils/visitor';
 type SaveEventContext = {
   /** The person in this workspace is a Visitor who has not saved yet. */
   isVisitor: boolean;
-  openSave: (reason?: SaveReason) => void;
+  openSave: (reason?: SaveReason, returnParams?: Record<string, string>) => void;
   /**
    * For a gated action's click handler: true when it may go ahead. For a
-   * Visitor it opens the save page instead and returns false.
+   * Visitor it opens the save page instead and returns false. `returnParams`
+   * are added to the page they come back to, so the action can pick up where
+   * it left off once they have saved.
    */
-  requireSaved: (reason: SaveReason) => boolean;
+  requireSaved: (reason: SaveReason, returnParams?: Record<string, string>) => boolean;
 };
 
 const Context = createContext<SaveEventContext>({
@@ -62,18 +64,21 @@ export function SaveEventProvider({
   const pathname = usePathname();
 
   const openSave = useCallback(
-    (reason?: SaveReason) => {
+    (reason?: SaveReason, returnParams?: Record<string, string>) => {
       // The query too, read at the moment of leaving so a filter or tab the
       // Visitor was on is still there when they come back.
-      router.push(savePageHref(`${pathname}${window.location.search}`, { reason }));
+      const search = new URLSearchParams(window.location.search);
+      for (const [key, value] of Object.entries(returnParams ?? {})) search.set(key, value);
+      const query = search.size > 0 ? `?${search}` : '';
+      router.push(savePageHref(`${pathname}${query}`, { reason }));
     },
     [router, pathname],
   );
 
   const requireSaved = useCallback(
-    (reason: SaveReason) => {
+    (reason: SaveReason, returnParams?: Record<string, string>) => {
       if (!isVisitor) return true;
-      openSave(reason);
+      openSave(reason, returnParams);
       return false;
     },
     [isVisitor, openSave],
