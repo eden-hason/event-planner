@@ -9,6 +9,7 @@ import {
   safeReturnPath,
   SaveEventPage,
 } from '@/features/auth';
+import { getLastSignInMethod } from '@/features/auth/services/last-method';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,10 @@ export default async function SavePage({
 
   const h = await headers();
   const inAppBrowser = !!detectInAppBrowser(h.get('user-agent'), h.get('sec-ch-ua'));
+  // A device that has signed in before may be someone with an account planning
+  // as a Visitor; the mark leads them to the "already has an account" question
+  // before they build a second Event.
+  const lastMethod = await getLastSignInMethod();
 
   return (
     <SaveEventPage
@@ -51,6 +56,7 @@ export default async function SavePage({
       reason={parseSaveReason(reason)}
       startAt={exists === '1' ? 'googleExists' : 'details'}
       inAppBrowser={inAppBrowser}
+      lastMethod={lastMethod}
     />
   );
 }

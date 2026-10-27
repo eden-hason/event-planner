@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { updateUserProfile } from '@/features/auth';
 import { settleRememberedVisitor } from '@/features/auth/services/visitor-session';
+import { rememberSignInMethod } from '@/features/auth/services/last-method';
 import {
   isExistingAccountError,
   isVisitor,
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
       if (picture) formData.set('avatar_url', picture);
       if (data.user.email) formData.set('email', data.user.email);
       await updateUserProfile(formData);
+      await rememberSignInMethod('google');
     }
     return redirectTo(request, returnTo);
   }
@@ -72,6 +74,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
       await settleRememberedVisitor(data.user.id);
+      await rememberSignInMethod('google');
       return redirectTo(request, next);
     }
   }

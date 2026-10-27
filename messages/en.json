@@ -49,6 +49,16 @@
       "signingOut": "Signing you out...",
       "signOutFailed": "We couldn't sign you out",
       "tryAgain": "Try again"
+    },
+    "continueWithPhone": "Continue with phone number",
+    "lastUsed": "Last used",
+    "phoneTitle": "What's your phone number?",
+    "phoneSubtitle": "We'll send you a sign-in code on WhatsApp",
+    "otherMethod": {
+      "phone": "You signed in with your phone number. Opened your event with Google?",
+      "google": "You signed in with Google. Opened your event with your phone number?",
+      "switchToGoogle": "Sign in with Google",
+      "switchToPhone": "Sign in with your phone"
     }
   },
   "navigation": {
@@ -2808,7 +2818,7 @@
     },
     "nameLabel": "Your full name",
     "namePlaceholder": "e.g. Dana Levi",
-    "savePhone": "Save with a WhatsApp code",
+    "savePhone": "Save with your phone number",
     "saveGoogle": "Save with Google",
     "phoneExistsTitle": "This number already has a Kululu account",
     "googleExistsTitle": "This Google account already has a Kululu account",
@@ -2817,7 +2827,8 @@
     "useDifferentAccount": "Use a different account",
     "signInAndDiscard": "Sign in and discard this event",
     "wrongCode": "That code isn't right. Check the WhatsApp message and try again",
-    "saved": "Your event is saved"
+    "saved": "Your event is saved",
+    "otherWay": "Save another way"
   },
   "installApp": {
     "card": {

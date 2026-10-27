@@ -29,9 +29,11 @@ import {
   type SaveState,
 } from '../actions';
 import { isExistingAccountError, type SaveReason } from '../utils/visitor';
+import type { SignInMethod } from '../utils/sign-in-method';
+import { LastUsedBadge } from './last-used-badge';
 import { OtpCodeInput } from './otp-code-input';
 
-type Step = 'details' | 'otp' | 'phoneExists' | 'googleExists';
+type Step = 'details' | 'phone' | 'otp' | 'phoneExists' | 'googleExists';
 
 const INITIAL: SaveState = { success: false, message: '' };
 
@@ -55,6 +57,7 @@ export function SaveEventPage({
   reason,
   startAt = 'details',
   inAppBrowser = false,
+  lastMethod,
 }: {
   /** Where they opened it from: where back goes, and where saving returns. */
   from: string;
@@ -67,6 +70,8 @@ export function SaveEventPage({
    * cookies - so phone is the only way to save, and Google is not offered.
    */
   inAppBrowser?: boolean;
+  /** The method this device last signed in with, marked on its button. */
+  lastMethod?: SignInMethod;
 }) {
   const t = useTranslations('saveEvent');
   const tAuth = useTranslations('auth');
@@ -163,11 +168,12 @@ export function SaveEventPage({
     });
   };
 
-  const backToDetails = () => {
-    setStep('details');
+  const backTo = (to: 'details' | 'phone') => {
+    setStep(to);
     setOtp('');
     setCodeRefused(false);
   };
+  const backToDetails = () => backTo('details');
 
   const sendError =
     sendState.message && !sendState.success ? (
@@ -217,49 +223,17 @@ export function SaveEventPage({
                 className={PLACEHOLDER}
               />
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  sendCode(false);
-                }}
-                className="mt-5 flex flex-col gap-3"
+              {/* The choice of Sign-in Method, as on /login: two buttons, the
+                  device's Last-used Method marked, the number on its own step. */}
+              <TakeoverButton
+                onClick={() => setStep('phone')}
+                disabled={!named || busy}
+                className="relative mt-5 flex items-center justify-center gap-2"
               >
-                {/* `dir="ltr"` keeps the digits in dialling order; the end
-                    alignment keeps the placeholder on the side the page reads
-                    from. */}
-                <div dir="ltr">
-                  <TakeoverInput
-                    id="savePhone"
-                    type="tel"
-                    inputMode="numeric"
-                    placeholder={tAuth('phoneNumber')}
-                    aria-label={tAuth('phoneNumber')}
-                    value={localPhone}
-                    onChange={(e) => setLocalPhone(e.target.value)}
-                    autoComplete="tel"
-                    className={cn('px-4 text-right font-rubik placeholder:font-heebo', PLACEHOLDER)}
-                  />
-                </div>
-                {sendError}
-                <TakeoverButton
-                  type="submit"
-                  disabled={!named || !e164Phone || isLeaving}
-                  pending={isSending}
-                  className="flex items-center justify-center gap-2"
-                >
-                  {isSending ? (
-                    <>
-                      <Spinner />
-                      {tAuth('sendingCode')}
-                    </>
-                  ) : (
-                    <>
-                      <WhatsAppIcon size={20} />
-                      {t('savePhone')}
-                    </>
-                  )}
-                </TakeoverButton>
-              </form>
+                <Smartphone className="size-5" aria-hidden />
+                {t('savePhone')}
+                {lastMethod === 'phone' && <LastUsedBadge />}
+              </TakeoverButton>
 
               {!inAppBrowser && (
                 <>
@@ -274,10 +248,74 @@ export function SaveEventPage({
                       <GoogleIcon />
                     </span>
                     {t('saveGoogle')}
+                    {lastMethod === 'google' && <LastUsedBadge />}
                   </OutlineButton>
                   {googleErrorLine && <div className="mt-3">{googleErrorLine}</div>}
                 </>
               )}
+            </>
+          )}
+
+          {step === 'phone' && (
+            <>
+              <h2 className="text-[26px] leading-tight font-bold">{tAuth('phoneTitle')}</h2>
+              <p className="mt-2 mb-6 text-[15px] text-[var(--kt-ink-muted)]">
+                {tAuth('phoneSubtitle')}
+              </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendCode(false);
+                }}
+                className="flex flex-col gap-3"
+              >
+                {/* `dir="ltr"` keeps the digits in dialling order; the end
+                    alignment keeps the placeholder on the side the page reads
+                    from. */}
+                <div dir="ltr">
+                  <TakeoverInput
+                    id="savePhone"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder={tAuth('phoneNumber')}
+                    aria-label={tAuth('phoneNumber')}
+                    value={localPhone}
+                    onChange={(e) => setLocalPhone(e.target.value)}
+                    autoFocus
+                    autoComplete="tel"
+                    className={cn('px-4 text-right font-rubik placeholder:font-heebo', PLACEHOLDER)}
+                  />
+                </div>
+                {sendError}
+                <TakeoverButton
+                  type="submit"
+                  disabled={!e164Phone || isLeaving}
+                  pending={isSending}
+                  className="flex items-center justify-center gap-2"
+                >
+                  {isSending ? (
+                    <>
+                      <Spinner />
+                      {tAuth('sendingCode')}
+                    </>
+                  ) : (
+                    <>
+                      <WhatsAppIcon size={20} />
+                      {tAuth('sendCode')}
+                    </>
+                  )}
+                </TakeoverButton>
+              </form>
+
+              <button
+                type="button"
+                onClick={backToDetails}
+                disabled={busy}
+                className="mt-4 self-center text-[14px] font-semibold text-[var(--kt-brand-text)] transition-colors hover:text-[var(--kt-brand)]"
+              >
+                {t('otherWay')}
+              </button>
             </>
           )}
 
@@ -293,7 +331,7 @@ export function SaveEventPage({
                 </span>
                 <button
                   type="button"
-                  onClick={backToDetails}
+                  onClick={() => backTo('phone')}
                   className="font-semibold text-[var(--kt-brand-text)] transition-colors hover:text-[var(--kt-brand)]"
                 >
                   {tAuth('editPhone')}
@@ -374,7 +412,10 @@ export function SaveEventPage({
                   {busy ? <Spinner /> : <Trash2 className="size-4" aria-hidden />}
                   {t('signInAndDiscard')}
                 </TakeoverButton>
-                <OutlineButton onClick={backToDetails} disabled={busy}>
+                <OutlineButton
+                  onClick={() => backTo(isPhoneExists ? 'phone' : 'details')}
+                  disabled={busy}
+                >
                   {isPhoneExists ? t('useDifferentNumber') : t('useDifferentAccount')}
                 </OutlineButton>
                 {sendError}
@@ -404,7 +445,7 @@ function OutlineButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex h-[54px] items-center justify-center gap-2.5 rounded-2xl border-[1.5px] text-[15px] font-semibold transition-colors',
+        'relative flex h-[54px] items-center justify-center gap-2.5 rounded-2xl border-[1.5px] text-[15px] font-semibold transition-colors',
         // Disabled drops to an outline-only ghost, so neither save path looks
         // tappable before there is a name.
         disabled

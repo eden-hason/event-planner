@@ -1,3 +1,5 @@
+import type { SignInMethod } from '../utils/sign-in-method';
+
 export interface User {
   id: string;
   email?: string;
@@ -9,6 +11,8 @@ export interface User {
    * workspace, but nothing that reaches people or costs money until they save.
    */
   isVisitor?: boolean;
+  /** The one Sign-in Method this account uses, if it has exactly one. */
+  signInMethod?: SignInMethod;
 }
 
 export interface ProfileData {

@@ -60,3 +60,4 @@ in the diff, not here.
 | [0026](0026-the-co-planner-link-cannot-be-shut-off.md) | The Co-planner Link cannot be shut off, and a removed Owner can rejoin | collaborate / security | open |
 | [0027](0027-no-sms-fallback-for-sign-in-codes.md) | A sign-in code has no SMS fallback, so a number without WhatsApp cannot sign in by phone | auth | open |
 | [0028](0028-the-android-install-sheet-is-the-small-one.md) | The Android install sheet is the small one: the manifest has no description or screenshots | install-app / growth | open |
+| [0029](0029-the-other-sign-in-method-opens-an-empty-account.md) | The other Sign-in Method opens an empty account instead of the Event | auth / onboarding | in progress |

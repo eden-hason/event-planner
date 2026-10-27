@@ -14,6 +14,7 @@ import {
   rememberVisitor,
   settleRememberedVisitor,
 } from '../services/visitor-session';
+import { rememberSignInMethod } from '../services/last-method';
 import {
   isExistingAccountError,
   ROUND_TRIP_COOKIE_OPTIONS,
@@ -120,6 +121,8 @@ export async function verifyPhoneSave(
   if (error || !data.user) {
     return { success: false, message: error?.message || 'Invalid verification code' };
   }
+
+  await rememberSignInMethod('phone');
 
   if (signingIn) {
     await settleRememberedVisitor(data.user.id);

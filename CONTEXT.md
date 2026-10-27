@@ -32,6 +32,15 @@ who signs in to an account that already exists, or who never saves, is forgotten
 with their Event.
 _Avoid_: anonymous user, anonymous Owner, guest (a **Guest** is invited to an Event)
 
+## Sign-in Method
+
+How someone proves who they are: a code sent by WhatsApp to their phone, or Google. Each
+method is its own account. Signing in with the other method does not find the Event - it
+opens a second, empty account.
+
+The **Last-used Method** is the one this device signed in with most recently. It belongs to
+the device, not to the person, so a new device has none.
+
 ## Couple
 
 The people planning the wedding. The buyer and the primary user. Used in

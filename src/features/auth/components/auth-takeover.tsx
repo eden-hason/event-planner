@@ -8,10 +8,13 @@ import {
   useState,
 } from 'react';
 import { useTranslations } from 'next-intl';
+import { Smartphone } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
 import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
+import type { SignInMethod } from '../utils/sign-in-method';
+import { LastUsedBadge } from './last-used-badge';
 import { OpenInBrowserButton } from './open-in-browser-button';
 import { OtpCodeInput } from './otp-code-input';
 import {
@@ -30,12 +33,18 @@ import {
  * language as the flow they lead into rather than reading as a generic auth
  * page. A first-time user and a returning one use the identical form - there is
  * no separate sign-up, and no email/password.
+ *
+ * It opens on the choice of Sign-in Method, two buttons of equal standing, so
+ * the device's Last-used Method can be marked on its own button. The phone
+ * number is asked on a step of its own, then the code on the next.
  */
 
 export function AuthTakeover({
   next,
   holdsUnsavedEvent = false,
   inAppBrowser = null,
+  lastMethod,
+  startAt = 'choose',
 }: {
   next?: string;
   /**
@@ -49,9 +58,14 @@ export function AuthTakeover({
    * instead. Safe even for a Visitor: signing in discards their Event anyway.
    */
   inAppBrowser?: 'android' | 'ios' | 'other' | null;
+  /** The method this device last signed in with, marked on its button. */
+  lastMethod?: SignInMethod;
+  /** `phone` when sent here to sign in by phone, skipping the choice. */
+  startAt?: 'choose' | 'phone';
 }) {
   const t = useTranslations('auth');
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const tNav = useTranslations('navigation');
+  const [step, setStep] = useState<'choose' | 'phone' | 'otp'>(startAt);
   const [localPhone, setLocalPhone] = useState('');
   const [e164Phone, setE164Phone] = useState('');
   const [otp, setOtp] = useState('');
@@ -126,8 +140,53 @@ export function AuthTakeover({
     }
   };
 
-  const phonePane = (
+  const choosePane = (
     <div className="flex w-full max-w-[400px] flex-col gap-3">
+      <TakeoverButton
+        onClick={() => setStep('phone')}
+        className="relative flex items-center justify-center gap-2"
+      >
+        <Smartphone className="size-5" aria-hidden />
+        {t('continueWithPhone')}
+        {lastMethod === 'phone' && <LastUsedBadge />}
+      </TakeoverButton>
+
+      <div className="my-1 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
+        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+        {t('or')}
+        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+      </div>
+
+      {inAppBrowser ? (
+        <div className="relative">
+          <OpenInBrowserButton platform={inAppBrowser} />
+          {lastMethod === 'google' && <LastUsedBadge />}
+        </div>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            className="relative flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
+          >
+            <GoogleIcon />
+            {t('signInWithGoogle')}
+            {lastMethod === 'google' && <LastUsedBadge />}
+          </button>
+          {googleError && <TakeoverError>{googleError}</TakeoverError>}
+        </>
+      )}
+    </div>
+  );
+
+  const phonePane = (
+    <div className="flex w-full max-w-[400px] animate-[kt-enter-fwd_0.4s_cubic-bezier(0.16,1,0.3,1)_both] flex-col gap-2.5">
+      <TakeoverBackButton onClick={() => setStep('choose')} label={tNav('back')} />
+      <h1 className="mt-2 text-[26px] leading-tight font-bold md:text-[28px]">
+        {t('phoneTitle')}
+      </h1>
+      <p className="mb-3 text-[15px] text-[var(--kt-ink-muted)]">{t('phoneSubtitle')}</p>
+
       <form action={handleSend} className="flex flex-col gap-3">
         {/* `dir="ltr"` keeps the digits in dialling order - a phone number is
             never mirrored - while the right alignment keeps the field reading
@@ -148,6 +207,7 @@ export function AuthTakeover({
             value={localPhone}
             onChange={(e) => setLocalPhone(e.target.value)}
             required
+            autoFocus
             autoComplete="tel"
             className="px-4 text-right font-rubik"
           />
@@ -166,28 +226,6 @@ export function AuthTakeover({
           {isSending ? t('sendingCode') : t('sendCode')}
         </TakeoverButton>
       </form>
-
-      <div className="my-1 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
-        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-        {t('or')}
-        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-      </div>
-
-      {inAppBrowser ? (
-        <OpenInBrowserButton platform={inAppBrowser} />
-      ) : (
-        <>
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="flex h-[54px] cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-[var(--kt-border)] bg-white text-[15px] font-semibold text-[var(--kt-ink)] transition-colors hover:border-[rgba(26,11,46,0.22)]"
-          >
-            <GoogleIcon />
-            {t('signInWithGoogle')}
-          </button>
-          {googleError && <TakeoverError>{googleError}</TakeoverError>}
-        </>
-      )}
     </div>
   );
 
@@ -265,7 +303,7 @@ export function AuthTakeover({
           is the first thing to go when there is no room for it. */}
       <div className="grid flex-1 md:grid-cols-2">
         <div className="flex animate-[kt-fade-up_0.5s_cubic-bezier(0.16,1,0.3,1)_both] flex-col justify-center gap-2 px-7 py-16 md:px-[88px]">
-          {step === 'phone' ? (
+          {step === 'choose' && (
             <>
               <h1 className="text-[26px] leading-tight font-bold text-balance md:text-[32px]">
                 {t('takeoverTitle')}
@@ -284,11 +322,11 @@ export function AuthTakeover({
                   </Link>
                 </div>
               )}
-              {phonePane}
+              {choosePane}
             </>
-          ) : (
-            otpPane
           )}
+          {step === 'phone' && phonePane}
+          {step === 'otp' && otpPane}
         </div>
 
         <div className="relative hidden flex-col items-center justify-center gap-6 overflow-hidden bg-[linear-gradient(150deg,#FFE7F8_0%,#F1E8FF_50%,#FFE6DC_100%)] p-12 md:flex">

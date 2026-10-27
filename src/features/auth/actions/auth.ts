@@ -1,12 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { toE164 } from '@/lib/phone';
+import { detectInAppBrowser } from '@/lib/in-app-browser';
 import { requestOrigin } from './origin';
 import { rememberVisitor, settleRememberedVisitor } from '../services/visitor-session';
+import { rememberSignInMethod } from '../services/last-method';
+import type { SignInMethod } from '../utils/sign-in-method';
 import { getVisitorId } from '../queries/auth';
 import { sendNewUserAdminEmail } from '@/lib/email/send-new-user-admin-email';
 
@@ -177,6 +181,7 @@ export async function verifyOtp(
   }
 
   await settleRememberedVisitor(data.user.id);
+  await rememberSignInMethod('phone');
 
   revalidatePath('/', 'layout');
   redirect(next);
@@ -212,4 +217,29 @@ export async function signInWithGoogle(next?: string) {
     success: false,
     message: 'Failed to initiate Google login',
   };
+}
+
+/**
+ * From onboarding, for a brand-new account that may have been opened with the
+ * wrong Sign-in Method (backlog 0029): sign out of it and go straight to the
+ * other one. The empty account is left as it is.
+ *
+ * Google refuses to sign in inside an app's own browser, so there it goes to
+ * /login, whose Google button leads out to the real browser. So does a Google
+ * hand-off that fails: they are signed out by then, and /login can retry.
+ */
+export async function switchSignInMethod(method: SignInMethod) {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  if (method === 'google') {
+    const h = await headers();
+    // Redirects to Google; if it cannot, /login below has the button to retry.
+    if (!detectInAppBrowser(h.get('user-agent'), h.get('sec-ch-ua'))) {
+      await signInWithGoogle();
+    }
+  }
+
+  revalidatePath('/', 'layout');
+  redirect(method === 'phone' ? '/login?method=phone' : '/login');
 }
