@@ -18,6 +18,7 @@ import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
 import {
   TakeoverBackButton,
   TakeoverButton,
+  TakeoverDivider,
   TakeoverError,
   TakeoverInput,
 } from '@/features/events/components/onboarding/takeover-shell';
@@ -29,6 +30,7 @@ import {
   type SaveState,
 } from '../actions';
 import { isExistingAccountError, type SaveReason } from '../utils/visitor';
+import { isRedirectError } from '../utils/redirect';
 import type { SignInMethod } from '../utils/sign-in-method';
 import { LastUsedBadge } from './last-used-badge';
 import { OtpCodeInput } from './otp-code-input';
@@ -162,7 +164,7 @@ export function SaveEventPage({
         }
       } catch (error) {
         // Leaving for Google surfaces here as a thrown NEXT_REDIRECT.
-        if (error instanceof Error && error.message?.includes('NEXT_REDIRECT')) return;
+        if (isRedirectError(error)) return;
         setGoogleError(tAuth('googleLoginFailed'));
       }
     });
@@ -173,7 +175,6 @@ export function SaveEventPage({
     setOtp('');
     setCodeRefused(false);
   };
-  const backToDetails = () => backTo('details');
 
   const sendError =
     sendState.message && !sendState.success ? (
@@ -237,11 +238,7 @@ export function SaveEventPage({
 
               {!inAppBrowser && (
                 <>
-                  <div className="my-4 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
-                    <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-                    {tAuth('or')}
-                    <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-                  </div>
+                  <TakeoverDivider className="my-4">{tAuth('or')}</TakeoverDivider>
 
                   <OutlineButton onClick={() => goGoogle(false)} disabled={!named || busy}>
                     <span className={cn('flex', (!named || busy) && 'opacity-35 grayscale')}>
@@ -310,7 +307,7 @@ export function SaveEventPage({
 
               <button
                 type="button"
-                onClick={backToDetails}
+                onClick={() => backTo('details')}
                 disabled={busy}
                 className="mt-4 self-center text-[14px] font-semibold text-[var(--kt-brand-text)] transition-colors hover:text-[var(--kt-brand)]"
               >
@@ -429,7 +426,7 @@ export function SaveEventPage({
   );
 }
 
-/** The quieter of two paths: Google beside WhatsApp, the way back beside signing in. */
+/** The quieter of two paths: Google beside the phone, the way back beside signing in. */
 function OutlineButton({
   children,
   onClick,

@@ -3,6 +3,7 @@
 import { useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { switchSignInMethod } from '../actions';
+import { isRedirectError } from '../utils/redirect';
 import { otherSignInMethod, type SignInMethod } from '../utils/sign-in-method';
 
 /**
@@ -22,7 +23,7 @@ export function OtherMethodPrompt({ usedMethod }: { usedMethod: SignInMethod }) 
         await switchSignInMethod(other);
       } catch (error) {
         // Leaving for Google or /login surfaces here as a thrown NEXT_REDIRECT.
-        if (error instanceof Error && error.message?.includes('NEXT_REDIRECT')) return;
+        if (isRedirectError(error)) return;
         // The sign-out may have gone through; /login works either way.
         window.location.assign('/login');
       }
@@ -38,7 +39,7 @@ export function OtherMethodPrompt({ usedMethod }: { usedMethod: SignInMethod }) 
         disabled={isSwitching}
         className="font-semibold text-[var(--kt-brand)] hover:text-[var(--kt-brand-deep)] disabled:cursor-wait"
       >
-        {other === 'google' ? t('switchToGoogle') : t('switchToPhone')}
+        {t(`switchTo.${other}`)}
       </button>
     </p>
   );

@@ -13,6 +13,7 @@ import { Link } from '@/i18n/navigation';
 import { toE164 } from '@/lib/phone';
 import { sendOtp, signInWithGoogle, verifyOtp } from '@/features/auth';
 import { GoogleIcon, WhatsAppIcon } from '@/components/icons';
+import { isRedirectError } from '../utils/redirect';
 import type { SignInMethod } from '../utils/sign-in-method';
 import { LastUsedBadge } from './last-used-badge';
 import { OpenInBrowserButton } from './open-in-browser-button';
@@ -20,6 +21,7 @@ import { OtpCodeInput } from './otp-code-input';
 import {
   TakeoverBackButton,
   TakeoverButton,
+  TakeoverDivider,
   TakeoverError,
   TakeoverInput,
   TakeoverLogo,
@@ -133,9 +135,7 @@ export function AuthTakeover({
     } catch (error) {
       // A successful sign-in redirects, which surfaces here as a thrown
       // NEXT_REDIRECT - not an error worth showing.
-      if (error instanceof Error && error.message?.includes('NEXT_REDIRECT')) {
-        return;
-      }
+      if (isRedirectError(error)) return;
       setGoogleError(t('googleLoginFailed'));
     }
   };
@@ -151,11 +151,7 @@ export function AuthTakeover({
         {lastMethod === 'phone' && <LastUsedBadge />}
       </TakeoverButton>
 
-      <div className="my-1 flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]">
-        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-        {t('or')}
-        <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
-      </div>
+      <TakeoverDivider className="my-1">{t('or')}</TakeoverDivider>
 
       {inAppBrowser ? (
         <div className="relative">

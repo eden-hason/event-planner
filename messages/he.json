@@ -57,8 +57,10 @@
     "otherMethod": {
       "phone": "נכנסתם עם מספר הטלפון. פתחתם את האירוע עם Google?",
       "google": "נכנסתם עם Google. פתחתם את האירוע עם מספר הטלפון?",
-      "switchToGoogle": "התחברות עם Google",
-      "switchToPhone": "התחברות עם הטלפון"
+      "switchTo": {
+        "google": "התחברות עם Google",
+        "phone": "התחברות עם הטלפון"
+      }
     }
   },
   "navigation": {

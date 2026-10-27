@@ -1,3 +1,5 @@
+import { ROUND_TRIP_COOKIE_OPTIONS } from './visitor';
+
 /**
  * A Sign-in Method is how someone proves who they are: a WhatsApp code to their
  * phone, or Google. Each method is its own account, so using the other one on a
@@ -12,10 +14,7 @@ export type SignInMethod = 'phone' | 'google';
 export const LAST_METHOD_COOKIE = 'kululu_last_method';
 
 export const LAST_METHOD_COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
+  ...ROUND_TRIP_COOKIE_OPTIONS,
   // The most a browser will keep a cookie for.
   maxAge: 60 * 60 * 24 * 400,
 };

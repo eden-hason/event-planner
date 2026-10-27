@@ -230,6 +230,25 @@ export function TakeoverHeading({
   );
 }
 
+/** A hairline either side of a word ("or") between two ways forward. */
+export function TakeoverDivider({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn('flex items-center gap-3 text-xs text-[var(--kt-ink-faint)]', className)}
+    >
+      <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+      {children}
+      <div className="h-px flex-1 bg-[var(--kt-border-soft)]" />
+    </div>
+  );
+}
+
 /** Inline validation message. */
 export function TakeoverError({ children }: { children: ReactNode }) {
   return (

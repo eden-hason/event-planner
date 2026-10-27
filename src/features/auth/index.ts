@@ -21,11 +21,7 @@ export { OtherMethodPrompt } from './components/other-method-prompt';
 
 // Utils
 export { isVisitor, parseSaveReason, safeReturnPath, SAVE_REQUIRED } from './utils/visitor';
-export {
-  otherSignInMethod,
-  signInMethodOf,
-  type SignInMethod,
-} from './utils/sign-in-method';
+export type { SignInMethod } from './utils/sign-in-method';
 
 // Schemas/Types
 export type { User, ProfileData } from './schemas';

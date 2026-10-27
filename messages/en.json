@@ -57,8 +57,10 @@
     "otherMethod": {
       "phone": "You signed in with your phone number. Opened your event with Google?",
       "google": "You signed in with Google. Opened your event with your phone number?",
-      "switchToGoogle": "Sign in with Google",
-      "switchToPhone": "Sign in with your phone"
+      "switchTo": {
+        "google": "Sign in with Google",
+        "phone": "Sign in with your phone"
+      }
     }
   },
   "navigation": {
