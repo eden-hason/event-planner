@@ -17,7 +17,6 @@ function summarise(logs: { outcome: CallOutcome | null }[]) {
     confirmed: logs.filter((l) => l.outcome === 'confirmed').length,
     declined: logs.filter((l) => l.outcome === 'declined').length,
     noAnswer: logs.filter((l) => l.outcome === 'no_answer').length,
-    willUpdate: logs.filter((l) => l.outcome === 'guest_will_update').length,
   };
 }
 
@@ -120,7 +119,9 @@ export async function getCallRoundResults(
 
   const { data, error } = await supabase
     .from('call_logs')
-    .select('guest_id, outcome, notes, updated_at, guests!inner(name, rsvp_status, amount)')
+    .select(
+      'guest_id, outcome, notes, updated_at, guests!inner(name, phone_number, rsvp_status, amount)',
+    )
     .eq('round_id', roundId);
 
   const empty: CallRoundResults = {
@@ -130,9 +131,8 @@ export async function getCallRoundResults(
       confirmed: 0,
       declined: 0,
       noAnswer: 0,
-      willUpdate: 0,
     },
-    people: { confirmed: 0, declined: 0, noAnswer: 0, willUpdate: 0, awaiting: 0 },
+    people: { confirmed: 0, declined: 0, noAnswer: 0, awaiting: 0 },
     lastUpdatedAt: null,
     guests: [],
   };
@@ -145,6 +145,7 @@ export async function getCallRoundResults(
   const guests: CallRoundGuestRow[] = data.map((log) => {
     const guest = log.guests as unknown as {
       name: string;
+      phone_number: string | null;
       rsvp_status: string | null;
       amount: number | null;
     };
@@ -152,6 +153,7 @@ export async function getCallRoundResults(
     return {
       guestId: log.guest_id as string,
       guestName: guest?.name ?? '',
+      phone: guest?.phone_number || null,
       outcome: (log.outcome ?? null) as CallOutcome | null,
       currentRsvpStatus: (guest?.rsvp_status ??
         'pending') as CallRoundGuestRow['currentRsvpStatus'],

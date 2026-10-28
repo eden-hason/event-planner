@@ -27,7 +27,6 @@ const OUTCOME_LABELS: Record<CallOutcome, string> = {
   no_answer: 'לא ענו',
   confirmed: 'אישרו',
   declined: 'לא מגיעים',
-  guest_will_update: 'יעדכנו בעצמם',
 };
 
 /** The filter chips, and the label each one shows - the label is the identifier. */
@@ -38,7 +37,6 @@ const FILTERS = [
   OUTCOME_LABELS.no_answer,
   OUTCOME_LABELS.confirmed,
   OUTCOME_LABELS.declined,
-  OUTCOME_LABELS.guest_will_update,
 ] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -47,15 +45,7 @@ const FILTER_OUTCOME: Record<Exclude<Filter, typeof ALL>, CallOutcome | null> = 
   [OUTCOME_LABELS.no_answer]: 'no_answer',
   [OUTCOME_LABELS.confirmed]: 'confirmed',
   [OUTCOME_LABELS.declined]: 'declined',
-  [OUTCOME_LABELS.guest_will_update]: 'guest_will_update',
 };
-
-/**
- * The outcomes an operator can record from this page. Will update is no longer
- * offered: rounds that already recorded it still show it in the tally and the
- * filters, but a new call ends as one of these.
- */
-const RECORDABLE_OUTCOMES = CALL_OUTCOMES.filter((outcome) => outcome !== 'guest_will_update');
 
 /*
  * RSVP is a category, not a severity - it is the only colour on this page that
@@ -90,10 +80,6 @@ const OUTCOME_STYLES: Record<CallOutcome, { idle: string; active: string }> = {
   declined: {
     idle: callOutcomePresentation('declined').chip,
     active: callOutcomePresentation('declined').filled,
-  },
-  guest_will_update: {
-    idle: callOutcomePresentation('guest_will_update').chip,
-    active: callOutcomePresentation('guest_will_update').filled,
   },
 };
 
@@ -153,7 +139,7 @@ function OutcomeCell({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {RECORDABLE_OUTCOMES.map((outcome) => {
+      {CALL_OUTCOMES.map((outcome) => {
         if (outcome === 'confirmed') {
           return (
             <Popover
@@ -293,7 +279,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       if (guest.outcome === 'confirmed') counts.confirmedGuests += guest.amount;
       return counts;
     },
-    { confirmed: 0, declined: 0, no_answer: 0, guest_will_update: 0, confirmedGuests: 0 },
+    { confirmed: 0, declined: 0, no_answer: 0, confirmedGuests: 0 },
   );
 
   const visible = useMemo(() => {
@@ -453,13 +439,6 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             value={tally.no_answer}
             className={callOutcomePresentation('no_answer').text}
           />
-          {tally.guest_will_update > 0 && (
-            <Tally
-              label={OUTCOME_LABELS.guest_will_update}
-              value={tally.guest_will_update}
-              className={callOutcomePresentation('guest_will_update').text}
-            />
-          )}
           <Tally label="לא התקשרנו" value={total - called} className="text-muted-foreground" />
         </div>
       )}
@@ -474,9 +453,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-[13.5px]"
           />
         </div>
-        {FILTERS.filter(
-          (option) => option !== OUTCOME_LABELS.guest_will_update || tally.guest_will_update > 0,
-        ).map((option) => (
+        {FILTERS.map((option) => (
           <button
             key={option}
             type="button"

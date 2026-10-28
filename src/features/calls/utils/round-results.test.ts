@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, filterGuestRows, isAlreadyAnswered, pageWindow, peopleByOutcome, roundProgress } from './round-results.ts';
+import { availableFilters, filterGuestRows, guestCallStatus, isAlreadyAnswered, peopleByOutcome, roundProgress } from './round-results.ts';
 
 type Row = Parameters<typeof filterGuestRows>[0][number];
 
 const row = (over: Partial<Row>): Row => ({
   guestId: over.guestName ?? 'g',
   guestName: 'משפחת לוי',
+  phone: null,
   outcome: null,
   currentRsvpStatus: 'pending',
   amount: 1,
@@ -18,13 +19,13 @@ const row = (over: Partial<Row>): Row => ({
 // ─── roundProgress ────────────────────────────────────────────────────────────
 
 test('progress counts every guest with an outcome as handled', () => {
-  const p = roundProgress({ total: 38, awaiting: 14, confirmed: 15, declined: 5, noAnswer: 4, willUpdate: 0 });
+  const p = roundProgress({ total: 38, awaiting: 14, confirmed: 15, declined: 5, noAnswer: 4 });
   assert.equal(p.handled, 24);
   assert.equal(p.total, 38);
 });
 
 test('progress segments are shares of the whole list, not of the handled part', () => {
-  const p = roundProgress({ total: 40, awaiting: 20, confirmed: 10, declined: 6, noAnswer: 4, willUpdate: 0 });
+  const p = roundProgress({ total: 40, awaiting: 20, confirmed: 10, declined: 6, noAnswer: 4 });
   assert.deepEqual(p.segments, [
     { key: 'confirmed', percent: 25 },
     { key: 'declined', percent: 15 },
@@ -32,13 +33,8 @@ test('progress segments are shares of the whole list, not of the handled part', 
   ]);
 });
 
-test('a will-update segment appears only once a call ended that way', () => {
-  const p = roundProgress({ total: 10, awaiting: 5, confirmed: 2, declined: 1, noAnswer: 1, willUpdate: 1 });
-  assert.deepEqual(p.segments.map((s) => s.key), ['confirmed', 'declined', 'noAnswer', 'willUpdate']);
-});
-
 test('an empty round has no segments and nothing handled', () => {
-  const p = roundProgress({ total: 0, awaiting: 0, confirmed: 0, declined: 0, noAnswer: 0, willUpdate: 0 });
+  const p = roundProgress({ total: 0, awaiting: 0, confirmed: 0, declined: 0, noAnswer: 0 });
   assert.deepEqual(p, { handled: 0, total: 0, segments: [] });
 });
 
@@ -50,14 +46,13 @@ test('people are summed from the headcount on each record, per outcome', () => {
     row({ outcome: 'confirmed', amount: 2 }),
     row({ outcome: 'declined', amount: 2 }),
     row({ outcome: 'no_answer', amount: 3 }),
-    row({ outcome: 'guest_will_update', amount: 1 }),
     row({ outcome: null, amount: 6 }),
   ]);
-  assert.deepEqual(people, { confirmed: 6, declined: 2, noAnswer: 3, willUpdate: 1, awaiting: 6 });
+  assert.deepEqual(people, { confirmed: 6, declined: 2, noAnswer: 3, awaiting: 6 });
 });
 
 test('no rows means no people', () => {
-  assert.deepEqual(peopleByOutcome([]), { confirmed: 0, declined: 0, noAnswer: 0, willUpdate: 0, awaiting: 0 });
+  assert.deepEqual(peopleByOutcome([]), { confirmed: 0, declined: 0, noAnswer: 0, awaiting: 0 });
 });
 
 // ─── isAlreadyAnswered ────────────────────────────────────────────────────────
@@ -69,7 +64,53 @@ test('a guest who confirmed by WhatsApp before the call is flagged', () => {
 
 test('a guest still pending, or called, is not flagged', () => {
   assert.equal(isAlreadyAnswered(row({ outcome: null, currentRsvpStatus: 'pending' })), false);
-  assert.equal(isAlreadyAnswered(row({ outcome: 'no_answer', currentRsvpStatus: 'confirmed' })), false);
+  assert.equal(
+    isAlreadyAnswered(row({ outcome: 'no_answer', currentRsvpStatus: 'confirmed' })),
+    false,
+  );
+});
+
+// ─── guestCallStatus ──────────────────────────────────────────────────────────
+
+test('a call that matches the RSVP leads with the call and explains nothing', () => {
+  assert.deepEqual(guestCallStatus(row({ outcome: 'confirmed', currentRsvpStatus: 'confirmed' })), {
+    kind: 'confirmed',
+    now: null,
+    explain: null,
+  });
+  assert.deepEqual(guestCallStatus(row({ outcome: 'no_answer', currentRsvpStatus: 'pending' })), {
+    kind: 'noAnswer',
+    now: null,
+    explain: null,
+  });
+});
+
+test('no outcome splits into waiting for the call and answered first', () => {
+  assert.equal(
+    guestCallStatus(row({ outcome: null, currentRsvpStatus: 'pending' })).kind,
+    'notCalled',
+  );
+  assert.deepEqual(guestCallStatus(row({ outcome: null, currentRsvpStatus: 'declined' })), {
+    kind: 'answeredFirst',
+    now: null,
+    explain: 'answeredFirst',
+  });
+});
+
+test('an RSVP that moved after an unanswered call shows as the answer now', () => {
+  assert.deepEqual(guestCallStatus(row({ outcome: 'no_answer', currentRsvpStatus: 'confirmed' })), {
+    kind: 'noAnswer',
+    now: 'confirmed',
+    explain: 'answeredSince',
+  });
+});
+
+test('an answer changed after the call shows as the answer now', () => {
+  assert.deepEqual(guestCallStatus(row({ outcome: 'confirmed', currentRsvpStatus: 'declined' })), {
+    kind: 'confirmed',
+    now: 'declined',
+    explain: 'changed',
+  });
 });
 
 // ─── filterGuestRows ──────────────────────────────────────────────────────────
@@ -121,27 +162,17 @@ test('search and filter narrow together', () => {
 // ─── availableFilters ─────────────────────────────────────────────────────────
 
 test('a filter is offered only when something would match it', () => {
-  assert.deepEqual(availableFilters(rows), ['all', 'awaiting', 'confirmed', 'declined', 'noAnswer', 'hasNote']);
+  assert.deepEqual(availableFilters(rows), [
+    'all',
+    'awaiting',
+    'confirmed',
+    'declined',
+    'noAnswer',
+    'hasNote',
+  ]);
 });
 
 test('a round with nobody left to call does not offer the waiting filter', () => {
   const done = rows.filter((r) => r.outcome !== null);
   assert.ok(!availableFilters(done).includes('awaiting'));
-});
-
-test('will-update is offered only once a call ended that way', () => {
-  assert.ok(!availableFilters(rows).includes('willUpdate'));
-  assert.ok(availableFilters([...rows, row({ outcome: 'guest_will_update' })]).includes('willUpdate'));
-});
-
-// ─── pageWindow ───────────────────────────────────────────────────────────────
-
-test('a pager shows every page when there are few', () => {
-  assert.deepEqual(pageWindow(0, 4), [0, 1, 2, 3]);
-});
-
-test('a pager window centres on the current page and stays inside the range', () => {
-  assert.deepEqual(pageWindow(5, 10), [3, 4, 5, 6, 7]);
-  assert.deepEqual(pageWindow(0, 10), [0, 1, 2, 3, 4]);
-  assert.deepEqual(pageWindow(9, 10), [5, 6, 7, 8, 9]);
 });

@@ -426,8 +426,7 @@ create temp table _calls as
 select g.id as guest_id,
        case
          when g.answer is not null or g.no_phone then null
-         when pg_temp.h(g.rn, 80) < 0.28 then 'no_answer'
-         when pg_temp.h(g.rn, 80) < 0.38 then 'guest_will_update'
+         when pg_temp.h(g.rn, 80) < 0.33 then 'no_answer'
          when pg_temp.h(g.rn, 80) < 0.48 then 'confirmed'
          when pg_temp.h(g.rn, 80) < 0.53 then 'declined'
        end::call_outcome as outcome,
@@ -443,7 +442,7 @@ insert into call_logs (round_id, guest_id, outcome, notes, called_by, called_at)
 select '00000000-0000-4000-8e10-000000000001', guest_id, outcome,
        case
          when outcome = 'no_answer' and rn % 3 = 0 then 'ביקשו לחזור אליהם בערב'
-         when outcome = 'guest_will_update' then 'יעדכנו אחרי שיבדקו עם הבייביסיטר'
+         when outcome = 'confirmed' and rn % 4 = 0 then 'מגיעים, אולי רק לחופה. תלוי אם יסתדרו עם בייביסיטר'
        end,
        case when outcome is not null then '00000000-0000-4000-a000-000000000004'::uuid end,
        case when outcome is not null then called_at end

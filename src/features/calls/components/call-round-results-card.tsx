@@ -9,7 +9,7 @@ import { roundProgress } from '../utils/round-results';
 import { CallProgressBar } from './call-progress-bar';
 
 type Tile = {
-  key: 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate';
+  key: 'confirmed' | 'declined' | 'noAnswer';
   records: number;
   people: number;
   className: string;
@@ -64,17 +64,6 @@ export async function CallRoundResultsCard({
       dot: 'bg-muted-foreground/60',
     },
   ];
-  // The fourth outcome only earns a tile once a call ended that way; three
-  // tiles share a row on a phone, four would have to wrap.
-  if (summary.willUpdate > 0) {
-    tiles.push({
-      key: 'willUpdate',
-      records: summary.willUpdate,
-      people: people.willUpdate,
-      className: 'bg-outcome-will-update-tint text-outcome-will-update-strong',
-      dot: 'bg-outcome-will-update',
-    });
-  }
 
   const time = results.lastUpdatedAt
     ? new Intl.DateTimeFormat(locale, {

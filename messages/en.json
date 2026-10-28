@@ -1388,8 +1388,7 @@
         "callOutcome": {
           "no_answer": "No answer",
           "confirmed": "Confirmed",
-          "declined": "Not coming",
-          "guest_will_update": "Will update themselves"
+          "declined": "Not coming"
         },
         "callBy": "Operator, on the phone",
         "answerConfirmed": "{count, plural, =0 {Confirmed} other {Confirmed for #}}",
@@ -2477,14 +2476,12 @@
     "outcome": {
       "confirmed": "Confirmed",
       "declined": "Declined",
-      "noAnswer": "No answer",
-      "willUpdate": "Will update themselves",
-      "notCalled": "Not called yet"
+      "noAnswer": "No answer"
     },
     "rsvp": {
+      "pending": "Waiting for reply",
       "confirmed": "Confirmed",
-      "declined": "Declined",
-      "pending": "Pending"
+      "declined": "Not coming"
     },
     "when": {
       "title": "When we call",
@@ -2532,28 +2529,64 @@
       "count": "{count, plural, one {1 guest} other {# guests}}",
       "people": "{count, plural, one {1 person} other {# people}}",
       "search": "Search by name",
+      "searchLabel": "Search guests by name",
+      "filtersLabel": "Filter guests",
       "filters": {
         "all": "All",
         "awaiting": "Waiting for a call",
         "confirmed": "Confirmed",
-        "declined": "Declined",
+        "declined": "Not coming",
         "noAnswer": "No answer",
-        "willUpdate": "Will update themselves",
-        "hasNote": "Has a remark"
+        "hasNote": "Has a note"
       },
-      "rsvpNow": "RSVP now",
-      "answeredFirst": "Answered on WhatsApp before we reached them",
+      "status": {
+        "confirmed": "Confirmed",
+        "declined": "Not coming",
+        "noAnswer": "No answer",
+        "notCalled": "Not called yet"
+      },
+      "answeredFirst": "Replied on WhatsApp first",
+      "now": {
+        "confirmed": "Now confirmed",
+        "declined": "Now not coming"
+      },
+      "noteSr": "Note:",
       "showMore": "{count, plural, one {Show 1 more} other {Show # more}}",
-      "none": "No guests found",
+      "shown": "{shown} of {total}",
       "pager": "{from}-{to} of {total}",
       "previous": "Previous",
       "next": "Next",
+      "empty": {
+        "title": "No guests found",
+        "query": "Nothing matches \"{query}\"",
+        "queryInFilter": "Nothing matches \"{query}\" in {filter}",
+        "filter": "No guests in this filter",
+        "clearSearch": "Clear search",
+        "showAll": "Show all guests"
+      },
       "columns": {
         "guest": "Guest",
+        "phone": "Phone",
         "amount": "People",
-        "outcome": "Call result",
+        "status": "Status",
+        "note": "Note",
+        "open": "Details"
+      },
+      "details": {
+        "phone": "Phone",
+        "noPhone": "No number",
+        "call": "On the call",
         "rsvp": "RSVP now",
-        "note": "Team remarks"
+        "skipped": "Skipped, replied first",
+        "note": "Note from the call",
+        "noNote": "No note",
+        "close": "Close",
+        "explain": {
+          "answeredFirst": "They replied on WhatsApp before we reached them, so we skipped them on purpose. No call needed",
+          "answeredSince": "No one picked up, and they replied on WhatsApp afterwards",
+          "notCalled": "Still in the queue for this round",
+          "changed": "Their RSVP changed after the call"
+        }
       }
     },
     "footer": {

@@ -17,8 +17,7 @@ export type DeliveryChannel = 'whatsapp' | 'sms';
 export type CallOutcome =
   | 'no_answer'
   | 'confirmed'
-  | 'declined'
-  | 'guest_will_update';
+  | 'declined';
 
 /**
  * What the Owner sees of a Delivery. The five Delivery states stay internal;

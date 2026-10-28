@@ -3,10 +3,10 @@ import type { CallRoundGuestRow, CallRoundSummary } from '../types';
 /** The counts a round keeps, in records (one record can be a whole family). */
 export type RoundCounts = Pick<
   CallRoundSummary,
-  'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate'
+  'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer'
 >;
 
-export type RoundSegmentKey = 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate';
+export type RoundSegmentKey = 'confirmed' | 'declined' | 'noAnswer';
 
 /**
  * How far a round has got: the guests with an outcome, and each outcome's share
@@ -14,8 +14,6 @@ export type RoundSegmentKey = 'confirmed' | 'declined' | 'noAnswer' | 'willUpdat
  *
  * Shares are of the whole list, not of the handled part, so the bar fills as the
  * round works through its guests and an unfinished round reads as unfinished.
- * The will-update segment appears only once a call ended that way, matching the
- * fourth outcome tile.
  */
 export function roundProgress(counts: RoundCounts): {
   handled: number;
@@ -31,9 +29,6 @@ export function roundProgress(counts: RoundCounts): {
     { key: 'declined', percent: share(counts.declined) },
     { key: 'noAnswer', percent: share(counts.noAnswer) },
   ];
-  if (counts.willUpdate > 0) {
-    segments.push({ key: 'willUpdate', percent: share(counts.willUpdate) });
-  }
 
   return { handled: total - counts.awaiting, total, segments };
 }
@@ -44,7 +39,7 @@ export function roundProgress(counts: RoundCounts): {
  * under-states every outcome.
  */
 export function peopleByOutcome(rows: CallRoundGuestRow[]) {
-  const people = { confirmed: 0, declined: 0, noAnswer: 0, willUpdate: 0, awaiting: 0 };
+  const people = { confirmed: 0, declined: 0, noAnswer: 0, awaiting: 0 };
   for (const row of rows) {
     switch (row.outcome) {
       case 'confirmed':
@@ -55,9 +50,6 @@ export function peopleByOutcome(rows: CallRoundGuestRow[]) {
         break;
       case 'no_answer':
         people.noAnswer += row.amount;
-        break;
-      case 'guest_will_update':
-        people.willUpdate += row.amount;
         break;
       default:
         people.awaiting += row.amount;
@@ -75,21 +67,50 @@ export function isAlreadyAnswered(row: CallRoundGuestRow): boolean {
   return row.outcome === null && row.currentRsvpStatus !== 'pending';
 }
 
-export type GuestFilter =
-  | 'all'
-  | 'awaiting'
-  | 'confirmed'
-  | 'declined'
-  | 'noAnswer'
-  | 'willUpdate'
-  | 'hasNote';
+/**
+ * What a guest's row leads with, and what the details explain.
+ *
+ * `kind` is the call when there was one. Without one it splits on the RSVP: a
+ * guest still pending is waiting for the call, and a guest who already answered
+ * was skipped on purpose (`answeredFirst`), which is never "not called".
+ *
+ * `now` is the RSVP only when it says something the call did not: a guest who
+ * did not pick up and confirmed on WhatsApp later, or one who changed their
+ * answer after the call. A confirmed call with a confirmed RSVP repeats itself.
+ */
+export type GuestCallStatus = {
+  kind: 'confirmed' | 'declined' | 'noAnswer' | 'notCalled' | 'answeredFirst';
+  now: 'confirmed' | 'declined' | null;
+  explain: 'answeredFirst' | 'answeredSince' | 'notCalled' | 'changed' | null;
+};
+
+const OUTCOME_KIND = {
+  confirmed: 'confirmed',
+  declined: 'declined',
+  no_answer: 'noAnswer',
+} as const;
+
+export function guestCallStatus(row: CallRoundGuestRow): GuestCallStatus {
+  const rsvp = row.currentRsvpStatus;
+  if (row.outcome === null) {
+    return rsvp === 'pending'
+      ? { kind: 'notCalled', now: null, explain: 'notCalled' }
+      : { kind: 'answeredFirst', now: null, explain: 'answeredFirst' };
+  }
+
+  const kind = OUTCOME_KIND[row.outcome];
+  const now = rsvp !== 'pending' && rsvp !== row.outcome ? rsvp : null;
+  if (!now) return { kind, now, explain: null };
+  return { kind, now, explain: kind === 'noAnswer' ? 'answeredSince' : 'changed' };
+}
+
+export type GuestFilter = 'all' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'hasNote';
 
 const OUTCOME_FOR_FILTER: Partial<Record<GuestFilter, CallRoundGuestRow['outcome']>> = {
   awaiting: null,
   confirmed: 'confirmed',
   declined: 'declined',
   noAnswer: 'no_answer',
-  willUpdate: 'guest_will_update',
 };
 
 export function filterGuestRows(
@@ -113,7 +134,7 @@ export function filterGuestRows(
  */
 export function availableFilters(rows: CallRoundGuestRow[]): GuestFilter[] {
   const offered: GuestFilter[] = ['all'];
-  const order: GuestFilter[] = ['awaiting', 'confirmed', 'declined', 'noAnswer', 'willUpdate'];
+  const order: GuestFilter[] = ['awaiting', 'confirmed', 'declined', 'noAnswer'];
 
   for (const filter of order) {
     if (rows.some((row) => row.outcome === OUTCOME_FOR_FILTER[filter])) offered.push(filter);
@@ -121,15 +142,4 @@ export function availableFilters(rows: CallRoundGuestRow[]): GuestFilter[] {
   if (rows.some((row) => row.notes)) offered.push('hasNote');
 
   return offered;
-}
-
-/**
- * The page numbers a pager shows: all of them when there are few, otherwise a
- * window of `max` around the current page (zero-based in and out), kept inside
- * the range so the window does not shrink at either end.
- */
-export function pageWindow(current: number, total: number, max = 5): number[] {
-  const size = Math.min(max, total);
-  const start = Math.min(Math.max(current - Math.floor(size / 2), 0), total - size);
-  return Array.from({ length: size }, (_, i) => start + i);
 }

@@ -48,12 +48,6 @@ const PRESENTATION: Record<CallOutcome, CallOutcomePresentation> = {
    * still pending - the two sit side by side in the Owner's results list.
    */
   no_answer: NEUTRAL,
-  guest_will_update: {
-    chip: 'bg-outcome-will-update-tint text-outcome-will-update-strong',
-    filled: 'bg-outcome-will-update-strong text-background',
-    accent: 'text-outcome-will-update',
-    text: 'text-outcome-will-update-strong',
-  },
 };
 
 export function callOutcomePresentation(

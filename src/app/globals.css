@@ -71,9 +71,6 @@
   --color-info-tint-border: var(--info-tint-border);
   --color-info-solid: var(--info-solid);
   --color-info-strong: var(--info-strong);
-  --color-outcome-will-update: var(--outcome-will-update);
-  --color-outcome-will-update-tint: var(--outcome-will-update-tint);
-  --color-outcome-will-update-strong: var(--outcome-will-update-strong);
   --color-channel-whatsapp: var(--channel-whatsapp);
   --color-channel-sms: var(--channel-sms);
   --color-home-violet: var(--home-violet);
@@ -157,21 +154,11 @@
    * The blue of a call round being worked and of the notes that explain the
    * service, lifted from the Call Rounds design (tint #E8F1FB, border
    * #CFE0F2, solid #3B82C4, strong #1C5FA0). Strong clears 4.5:1 on the tint.
-   * Not the 'will update' outcome blue below: that one colours a guest's
-   * answer, this one colours a state of the round.
    */
   --info-tint: oklch(0.954 0.017 251);
   --info-tint-border: oklch(0.899 0.031 250);
   --info-solid: oklch(0.592 0.124 249);
   --info-strong: oklch(0.479 0.123 252);
-  /*
-   * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
-   * because the RSVP trio has no word for it: amber already means "we could not
-   * reach them", and this guest we did.
-   */
-  --outcome-will-update: oklch(0.685 0.169 237.323);
-  --outcome-will-update-tint: oklch(0.951 0.026 236.824);
-  --outcome-will-update-strong: oklch(0.443 0.11 240.79);
   /*
    * The two message channels, lifted from the Schedule Results design (WhatsApp
    * #25D366, SMS #2F80ED). Channel is an attribute of a Delivery, never a state,
@@ -266,9 +253,6 @@
   --info-tint-border: oklch(0.42 0.08 250);
   --info-solid: oklch(0.65 0.13 249);
   --info-strong: oklch(0.8 0.1 250);
-  --outcome-will-update: oklch(0.75 0.15 237.323);
-  --outcome-will-update-tint: oklch(0.28 0.06 240);
-  --outcome-will-update-strong: oklch(0.828 0.111 230.318);
   /* No dark channel colours in the design; same hues, lifted slightly. */
   --channel-whatsapp: oklch(0.8 0.19 149);
   --channel-sms: oklch(0.68 0.15 257);
@@ -401,21 +385,11 @@
    * The blue of a call round being worked and of the notes that explain the
    * service, lifted from the Call Rounds design (tint #E8F1FB, border
    * #CFE0F2, solid #3B82C4, strong #1C5FA0). Strong clears 4.5:1 on the tint.
-   * Not the 'will update' outcome blue below: that one colours a guest's
-   * answer, this one colours a state of the round.
    */
   --info-tint: oklch(0.954 0.017 251);
   --info-tint-border: oklch(0.899 0.031 250);
   --info-solid: oklch(0.592 0.124 249);
   --info-strong: oklch(0.479 0.123 252);
-  /*
-   * The answered-but-undecided Call Outcome (`guest_will_update`). Its own hue
-   * because the RSVP trio has no word for it: amber already means "we could not
-   * reach them", and this guest we did.
-   */
-  --outcome-will-update: oklch(0.685 0.169 237.323);
-  --outcome-will-update-tint: oklch(0.951 0.026 236.824);
-  --outcome-will-update-strong: oklch(0.443 0.11 240.79);
   /*
    * The two message channels, lifted from the Schedule Results design (WhatsApp
    * #25D366, SMS #2F80ED). Channel is an attribute of a Delivery, never a state,

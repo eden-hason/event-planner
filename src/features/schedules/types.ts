@@ -77,7 +77,6 @@ export type OutreachItem = {
     confirmed: number;
     declined: number;
     noAnswer: number;
-    willUpdate: number;
   } | null;
   details: ReactNode;
 };
