@@ -287,7 +287,7 @@ export function HomepageClient() {
         .reviews-link a:hover{color:var(--primary-deep)}
         /* Drifts left-to-right: in RTL the next card comes in from the left, where the eye goes next */
         .rv-marquee{--rv-card:380px;--rv-gap:24px;overflow:hidden;padding:12px 0 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}
-        .rv-track{display:flex;width:max-content;animation:rv-drift 110s linear infinite}
+        .rv-track{display:flex;width:max-content;animation:rv-drift 147s linear infinite}
         .rv-marquee:hover .rv-track,.rv-marquee:focus-within .rv-track{animation-play-state:paused}
         @keyframes rv-drift{from{transform:translateX(0)}to{transform:translateX(50%)}}
         .rv-group{display:flex;gap:var(--rv-gap);padding:0;padding-inline-end:var(--rv-gap);margin:0;list-style:none}
@@ -310,7 +310,7 @@ export function HomepageClient() {
         @media(max-width:720px){
           .reviews .section-head{margin-bottom:28px}
           .rv-marquee{--rv-card:min(300px,82vw);--rv-gap:16px;-webkit-mask-image:none;mask-image:none}
-          .rv-track{animation-duration:90s}
+          .rv-track{animation-duration:120s}
           .rv-card{padding:20px 20px 22px}
           .rv-text{font-size:14.5px}
         }
