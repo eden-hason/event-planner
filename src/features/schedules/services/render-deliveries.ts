@@ -167,6 +167,7 @@ export async function renderScheduleDeliveries(
     supabase,
     anchor,
     personalMessage: schedule.personalMessage,
+    bareFrame: schedule.personalMessageBareFrame,
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),
     note: hasNote(schedule.customText),

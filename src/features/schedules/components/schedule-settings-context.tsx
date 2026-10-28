@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl';
 import { israelWallClockParts } from '@/lib/date-time';
 
 import { updateCustomText, updatePersonalMessage, updateScheduledDate } from '../actions';
+import { hasPersonalMessage } from '../utils/event-config';
 import { DEFAULT_SEND_TIME } from '../utils/timeline';
 import type { ScheduleApp } from '../schemas';
 import {
@@ -41,10 +42,18 @@ interface ScheduleSettings {
   personalMessage: string;
   setPersonalMessage: (text: string) => void;
   /**
+   * Whether the Personal Message goes in its Bare Frame, with no Event details.
+   * Kept like the text while the Owner looks at Kululu's message.
+   */
+  bareFrame: boolean;
+  setBareFrame: (bare: boolean) => void;
+  /**
    * What the Schedule will send as its Personal Message once saved: the typed
    * text, or nothing while Kululu's message is chosen. The preview reads this.
    */
   effectivePersonalMessage: string;
+  /** Whether the saved Personal Message will be in its Bare Frame. False with no text. */
+  effectiveBareFrame: boolean;
   /** The Due Time, as an instant. Empty while an Undated Schedule has no date picked. */
   scheduledDate: string;
   setScheduledDate: (iso: string) => void;
@@ -109,6 +118,8 @@ export function ScheduleSettingsProvider({
     schedule.personalMessage ?? '',
   );
   const [personalMessage, setPersonalMessage] = useState(schedule.personalMessage ?? '');
+  const [savedBareFrame, setSavedBareFrame] = useState(schedule.personalMessageBareFrame);
+  const [bareFrame, setBareFrame] = useState(schedule.personalMessageBareFrame);
   const [messageMode, setMessageMode] = useState<MessageMode>(
     schedule.personalMessage ? 'personal' : 'variant',
   );
@@ -146,13 +157,22 @@ export function ScheduleSettingsProvider({
     setMessageMode(schedule.personalMessage ? 'personal' : 'variant');
   }, [schedule.personalMessage]);
 
+  useEffect(() => {
+    setSavedBareFrame(schedule.personalMessageBareFrame);
+    setBareFrame(schedule.personalMessageBareFrame);
+  }, [schedule.personalMessageBareFrame]);
+
   // Choosing Kululu's message clears the Personal Message on save; the typed
   // text stays in the field in case the Owner switches back before saving.
   const effectivePersonalMessage = messageMode === 'personal' ? personalMessage : '';
+  // Stored the way the action stores it: the Bare Frame is cleared with the text.
+  const effectiveBareFrame = hasPersonalMessage(effectivePersonalMessage) && bareFrame;
 
   const noteDirty = editable && note !== savedNote;
   const personalMessageDirty =
-    editable && effectivePersonalMessage.trim() !== savedPersonalMessage;
+    editable &&
+    (effectivePersonalMessage.trim() !== savedPersonalMessage ||
+      effectiveBareFrame !== savedBareFrame);
   const dateDirty = editable && scheduledDate !== savedDate;
   const dirty = noteDirty || personalMessageDirty || dateDirty;
 
@@ -191,8 +211,12 @@ export function ScheduleSettingsProvider({
     }
     if (personalMessageDirty) {
       const text = effectivePersonalMessage;
+      const bare = effectiveBareFrame;
       tasks.push(
-        write(updatePersonalMessage(schedule.id, text), () => setSavedPersonalMessage(text.trim())),
+        write(updatePersonalMessage(schedule.id, text, bare), () => {
+          setSavedPersonalMessage(text.trim());
+          setSavedBareFrame(bare);
+        }),
       );
     }
     if (dateDirty) {
@@ -222,6 +246,7 @@ export function ScheduleSettingsProvider({
     dateDirty,
     note,
     effectivePersonalMessage,
+    effectiveBareFrame,
     scheduledDate,
     schedule.id,
     t,
@@ -264,7 +289,10 @@ export function ScheduleSettingsProvider({
       setMessageMode,
       personalMessage,
       setPersonalMessage,
+      bareFrame,
+      setBareFrame,
       effectivePersonalMessage,
+      effectiveBareFrame,
       scheduledDate,
       setScheduledDate,
       scheduledTime,
@@ -283,7 +311,9 @@ export function ScheduleSettingsProvider({
       note,
       messageMode,
       personalMessage,
+      bareFrame,
       effectivePersonalMessage,
+      effectiveBareFrame,
       scheduledDate,
       setScheduledDate,
       scheduledTime,

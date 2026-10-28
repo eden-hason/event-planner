@@ -142,10 +142,15 @@ export async function SchedulesPage({
       const personalMessage = resolutions.personalMessage?.success
         ? previewOf(resolutions.personalMessage)
         : null;
+      const personalMessageBareFrame =
+        personalMessage && resolutions.personalMessageBareFrame?.success
+          ? previewOf(resolutions.personalMessageBareFrame)
+          : null;
       const messages = {
         withNote: previewOf(resolutions.withNote),
         withoutNote: previewOf(resolutions.withoutNote),
         personalMessage,
+        personalMessageBareFrame,
       };
 
       // The note axis never decides whether there is a table variant or a note

@@ -56,6 +56,9 @@ export const MessageTemplateDbSchema = z.object({
   // frame around schedule.personalMessage, found by schedule type rather than
   // by key - see loadPersonalMessageFamily.
   personal_message: z.boolean().optional(),
+  // A Personal Message frame with no Event details, only the greeting and the
+  // closing line around the Owner's paragraph - see TemplateAxes.bareFrame.
+  bare_frame: z.boolean().optional(),
   payload: z.unknown(),
 });
 
@@ -77,6 +80,7 @@ type MessageTemplateBase = {
   requiresFollowUp: boolean;
   requiresInvitationImage: boolean;
   personalMessage: boolean;
+  bareFrame: boolean;
 };
 
 export type MessageTemplateApp =
@@ -109,6 +113,7 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       requiresFollowUp: db.requires_follow_up,
       requiresInvitationImage: db.requires_invitation_image,
       personalMessage: db.personal_message ?? false,
+      bareFrame: db.bare_frame ?? false,
     };
 
     if (db.channel === 'whatsapp') {

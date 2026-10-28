@@ -287,6 +287,10 @@ Kululu's wording, a Personal Message is the Owner's. Its text belongs to the one
 it is written on. A Personal Message left blank is no Personal Message: the Schedule sends
 its Variant.
 
+On a Confirmation the Owner may also send it in its **Bare Frame**: the frame keeps only
+its greeting, its closing line and the buttons, and every Event detail is the Owner's to
+write or leave out.
+
 It replaces the personal note, a line the Owner added under Kululu's wording. An Owner
 who wants to say something of their own writes a Personal Message.
 _Avoid_: free form, custom message, note (for the whole message), Owner Message (that is

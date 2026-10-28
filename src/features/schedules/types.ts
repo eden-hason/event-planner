@@ -87,11 +87,13 @@ export type OutreachItem = {
  * as a Personal Message. All are resolved on the server so the preview can
  * follow the fields as they are typed, before they are saved. The same message
  * twice when the family has no note variant; `personalMessage` is null when the
- * Schedule Type has no Personal Message family. Null when the schedule has no
+ * Schedule Type has no Personal Message family, and `personalMessageBareFrame`
+ * when that family offers no Bare Frame. Null when the schedule has no
  * template.
  */
 export type PreviewMessages = {
   withNote: MessageTemplateApp;
   withoutNote: MessageTemplateApp;
   personalMessage: MessageTemplateApp | null;
+  personalMessageBareFrame: MessageTemplateApp | null;
 } | null;

@@ -75,6 +75,12 @@ export type TemplateAxes = {
    * send never goes to Meta missing the image its template was approved with.
    */
   invitationImage?: boolean;
+  /**
+   * Per schedule instance: whether the Owner chose to send their Personal
+   * Message with no Event details, only the greeting and closing line around
+   * it. Only the Confirmation's Personal Message family offers the axis.
+   */
+  bareFrame?: boolean;
 };
 
 export type LoadTemplateFamilyResult =
@@ -198,6 +204,7 @@ function pick(
     note = false,
     followUp = false,
     invitationImage = false,
+    bareFrame = false,
   } = params;
 
   const family = familyName(anchor);
@@ -218,6 +225,7 @@ function pick(
   const wantFollowUp = followUp && candidates.some((t) => t.requiresFollowUp);
   const wantImage =
     invitationImage && candidates.some((t) => t.requiresInvitationImage);
+  const wantBareFrame = bareFrame && candidates.some((t) => t.bareFrame);
 
   const pickRow = (requiresTable: boolean) =>
     candidates.find(
@@ -226,7 +234,8 @@ function pick(
         t.requiresTableNumbers === requiresTable &&
         t.requiresNote === wantNote &&
         t.requiresFollowUp === wantFollowUp &&
-        t.requiresInvitationImage === wantImage,
+        t.requiresInvitationImage === wantImage &&
+        t.bareFrame === wantBareFrame,
     ) ?? null;
 
   const withoutTable = pickRow(false);
@@ -234,7 +243,7 @@ function pick(
   if (!withoutTable) {
     return {
       success: false,
-      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}, bareFrame=${wantBareFrame})`,
     };
   }
 
@@ -250,7 +259,7 @@ function pick(
   if (!withTable) {
     return {
       success: false,
-      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage}, bareFrame=${wantBareFrame})`,
     };
   }
 
@@ -281,6 +290,11 @@ export function pickPersonalMessageTemplates(
 ): ResolveTemplatesResult | null {
   const [anchor] = params.candidates;
   return anchor ? pickTemplates({ ...params, anchor }) : null;
+}
+
+/** Whether a Personal Message family offers its Bare Frame, so the Owner may choose it. */
+export function offersBareFrame(candidates: MessageTemplateApp[]): boolean {
+  return candidates.some((t) => t.bareFrame);
 }
 
 /**

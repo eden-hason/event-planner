@@ -84,7 +84,12 @@ export async function ScheduleTabContent({
               offersPersonalMessage={Boolean(offersPersonalMessage)}
               lockBadge={sent ? <ScheduleLockBadge /> : undefined}
             />
-            {offersPersonalMessage && <PersonalMessageCard lockReason={lockReason} />}
+            {offersPersonalMessage && (
+              <PersonalMessageCard
+                lockReason={lockReason}
+                offersBareFrame={Boolean(messages?.personalMessageBareFrame)}
+              />
+            )}
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}

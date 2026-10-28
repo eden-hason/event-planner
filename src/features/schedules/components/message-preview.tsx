@@ -81,7 +81,7 @@ export function MessagePreview({
   event,
 }: MessagePreviewProps) {
   const t = useTranslations('schedules.messagePreview');
-  const { note, effectivePersonalMessage } = useScheduleSettings();
+  const { note, effectivePersonalMessage, effectiveBareFrame } = useScheduleSettings();
 
   // The send's own rules, so the preview switches versions exactly where the
   // send would - while the fields are still being typed. Trimmed as the save
@@ -89,9 +89,13 @@ export function MessagePreview({
   // blank one is none, and Kululu's goes (ADR 0046).
   const savedNote = note.trim();
   const savedPersonalMessage = effectivePersonalMessage.trim();
+  const personalMessage =
+    effectiveBareFrame && messages?.personalMessageBareFrame
+      ? messages.personalMessageBareFrame
+      : messages?.personalMessage;
   const message = messages
-    ? hasPersonalMessage(savedPersonalMessage) && messages.personalMessage
-      ? messages.personalMessage
+    ? hasPersonalMessage(savedPersonalMessage) && personalMessage
+      ? personalMessage
       : hasNote(savedNote)
         ? messages.withNote
         : messages.withoutNote

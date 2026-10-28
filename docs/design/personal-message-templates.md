@@ -1,11 +1,12 @@
 # Personal Message templates
 
-The ten Meta WhatsApp templates behind the **Personal Message** (ADR 0046). They are catalog
-Templates: `supabase/migrations/20261027000001_personal_message_templates.sql` holds them
-in `message_templates` (`personal_message = true`), with the six SMS Renditions beside
-them. If a body, button or parameter changes here, change the migration's row too.
+The twelve Meta WhatsApp templates behind the **Personal Message** (ADR 0046). They are
+catalog Templates: `supabase/migrations/20261027000001_personal_message_templates.sql` and
+`20261028000000_personal_message_bare_frame.sql` hold them in `message_templates`
+(`personal_message = true`), with the seven SMS Renditions beside them. If a body, button
+or parameter changes here, change the migration's row too.
 
-Language `he`, category **`MARKETING`** for all ten, on purpose. Kululu does not write the
+Language `he`, category **`MARKETING`** for all twelve, on purpose. Kululu does not write the
 Owner's paragraph, so it cannot promise Meta it is non-promotional. Do not submit them as
 Utility.
 
@@ -73,6 +74,31 @@ Conversation starts from their payloads:
 1. `נגיע בשמחה`
 2. `לא נוכל להגיע`
 
+### Bare Frame
+
+`personal_message_confirmation_bare` (no header) and
+`personal_message_confirmation_bare_image` (image header), `bare_frame = true`. Sent when
+the Owner turns off "Show the date and venue": no Event details at all, only the greeting
+before the Owner's paragraph and the closing line after it, which is what keeps `{{1}}` off
+the start and end of the body. The Owner writes the date and venue, or leaves them out.
+
+```
+משפחה וחברים יקרים,
+{{1}}
+
+נשמח לדעת אם תגיעו 🙏🏼
+```
+
+| Param | Value | Example |
+|---|---|---|
+| `{{1}}` | The Owner's paragraph | (above) |
+
+**Buttons:** the same two quick replies.
+
+SMS Rendition: the same body, then `לאישור הגעה: {{2}}` with the RSVP link.
+
+Only the Confirmation has a Bare Frame. The other stages keep the facts in their frame.
+
 ## Event Reminder
 
 `personal_message_event_reminder`, `_gift`, `_tables`, `_tables_gift`.
@@ -125,7 +151,7 @@ follows the time.
 ## Before turning it on
 
 - The option is shown as soon as the migration is on production, before Meta approves the
-  ten templates (accepted in ADR 0046). Until a template is approved, a Personal Message on
+  templates (accepted in ADR 0046). Until a template is approved, a Personal Message on
   it is rejected by Meta and recorded as failed, visible in the Back Office.
 - Expect 131049 failures on these sends. Meta caps how many marketing messages a user
   receives. They count toward the Fallback Freeze like any other 131049.

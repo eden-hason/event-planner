@@ -1882,6 +1882,10 @@
       "placeholder": "For example: We can't wait to celebrate with you! There is free parking next to the venue, and if you need a ride just message us",
       "help": {
         "lineBreaks": "A line break shows as \"|\" in the message, because WhatsApp does not allow line breaks here"
+      },
+      "eventDetails": {
+        "label": "Show the date and venue",
+        "description": "Turn off to write every detail of the event yourself"
       }
     },
     "personalNote": {

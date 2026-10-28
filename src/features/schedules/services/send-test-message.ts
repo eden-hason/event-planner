@@ -86,6 +86,7 @@ export async function sendTestMessage(params: {
     supabase,
     anchor: schedule.template,
     personalMessage: schedule.personalMessage,
+    bareFrame: schedule.personalMessageBareFrame,
     channel: 'whatsapp',
     gifting: includesGiftButton(event.eventSettings, schedule.scheduleTypeKey),
     tableNumbers: shouldSendTableNumbers(event.guestExperience),

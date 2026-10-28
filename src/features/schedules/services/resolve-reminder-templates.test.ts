@@ -23,6 +23,7 @@ function row(id: string, flags: Partial<MessageTemplateApp> = {}): MessageTempla
     requiresFollowUp: false,
     requiresInvitationImage: false,
     personalMessage: false,
+    bareFrame: false,
     ...flags,
     channel: 'sms',
     payload: { bodyText: id, parameters: { headerPlaceholders: [], placeholders: [], buttonPlaceholders: [] } },
@@ -125,6 +126,7 @@ function dbRow(
     requires_follow_up: false,
     requires_invitation_image: false,
     personal_message: false,
+    bare_frame: false,
     payload: {
       bodyText: name,
       parameters: { headerPlaceholders: [], placeholders: [], buttonPlaceholders: [] },
@@ -170,7 +172,7 @@ const anchor = MessageTemplateDbToAppSchema.parse(catalog[0]);
 
 async function sentNames(
   personalMessage: string | null,
-  axes: { tableNumbers?: boolean; note?: boolean } = {},
+  axes: { tableNumbers?: boolean; note?: boolean; bareFrame?: boolean } = {},
   rows = catalog,
 ) {
   const result = await resolveTemplatesForSchedule({
@@ -180,6 +182,7 @@ async function sentNames(
     gifting: false,
     tableNumbers: axes.tableNumbers ?? false,
     note: axes.note ?? false,
+    bareFrame: axes.bareFrame ?? false,
   });
   assert.ok(result.success, result.success ? '' : result.message);
   return {
@@ -257,4 +260,48 @@ test('picking from an empty Personal Message family gives nothing to preview', (
     pickPersonalMessageTemplates({ candidates: [], gifting: false, tableNumbers: false }),
     null,
   );
+});
+
+// A Confirmation-shaped catalog: its Personal Message family offers the Bare
+// Frame, with no table axis.
+const CONFIRMATION_TYPE_ID = '33333333-3333-4333-8333-333333333333';
+const confirmationPersonal = {
+  key: 'personal_message_confirmation',
+  schedule_type_id: CONFIRMATION_TYPE_ID,
+  personal_message: true,
+};
+const confirmationCatalog = [
+  dbRow('confirmation', { key: 'confirmation_1', schedule_type_id: CONFIRMATION_TYPE_ID }),
+  dbRow('confirmation-personal', confirmationPersonal),
+  dbRow('confirmation-personal-bare', { ...confirmationPersonal, bare_frame: true }),
+];
+const confirmationAnchor = MessageTemplateDbToAppSchema.parse(confirmationCatalog[0]);
+
+async function sentConfirmation(personalMessage: string | null, bareFrame: boolean) {
+  const result = await resolveTemplatesForSchedule({
+    supabase: fakeSupabase(confirmationCatalog),
+    anchor: confirmationAnchor,
+    personalMessage,
+    bareFrame,
+    gifting: false,
+    tableNumbers: true,
+  });
+  assert.ok(result.success, result.success ? '' : result.message);
+  return result.templates.withoutTable.name;
+}
+
+test('a Personal Message in its Bare Frame sends the frame with no Event details', async () => {
+  assert.equal(await sentConfirmation('מתרגשים', true), 'confirmation-personal-bare');
+  assert.equal(await sentConfirmation('מתרגשים', false), 'confirmation-personal');
+});
+
+test('the Bare Frame means nothing without a Personal Message', async () => {
+  assert.equal(await sentConfirmation(null, true), 'confirmation');
+});
+
+test('a family that offers no Bare Frame sends its full frame', async () => {
+  assert.deepEqual(await sentNames('מתרגשים', { bareFrame: true }), {
+    withTable: null,
+    withoutTable: 'personal',
+  });
 });

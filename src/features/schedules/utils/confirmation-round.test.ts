@@ -41,6 +41,7 @@ const template: MessageTemplateApp = {
   requiresFollowUp: false,
   requiresInvitationImage: false,
   personalMessage: false,
+  bareFrame: false,
   channel: 'whatsapp',
   whatsappTemplateName: 'confirmation_1',
   payload: {

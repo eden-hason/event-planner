@@ -2,6 +2,7 @@ import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
   loadPersonalMessageCatalog,
   loadTemplateFamily,
+  offersBareFrame,
   pickPersonalMessageTemplates,
   pickTemplates,
   type ResolveTemplatesResult,
@@ -34,7 +35,8 @@ export async function getPersonalMessageCatalog(): Promise<MessageTemplateApp[]>
  * client, and the preview follows them before they are saved, so it needs the
  * message the send would pick either way. `personalMessage` is null when the
  * Schedule Type has no Personal Message family on the anchor's channel, which
- * is also what hides the option.
+ * is also what hides the option. `personalMessageBareFrame` is the same family
+ * in its Bare Frame, null when the family offers none - which hides that choice.
  */
 export async function resolveTemplatesForPreview(
   params: Omit<TemplateAxes, 'note'> & {
@@ -45,27 +47,36 @@ export async function resolveTemplatesForPreview(
   withNote: ResolveTemplatesResult;
   withoutNote: ResolveTemplatesResult;
   personalMessage: ResolveTemplatesResult | null;
+  personalMessageBareFrame: ResolveTemplatesResult | null;
 }> {
   const { supabase } = await getEffectiveClient();
   const { anchor, personalMessageCatalog, ...axes } = params;
 
+  const personalCandidates = personalMessageCatalog.filter(
+    (row) =>
+      row.scheduleTypeId === anchor.scheduleTypeId &&
+      row.channel === anchor.channel &&
+      row.languageCode === anchor.languageCode,
+  );
   const personalMessage = pickPersonalMessageTemplates({
     ...axes,
-    candidates: personalMessageCatalog.filter(
-      (row) =>
-        row.scheduleTypeId === anchor.scheduleTypeId &&
-        row.channel === anchor.channel &&
-        row.languageCode === anchor.languageCode,
-    ),
+    bareFrame: false,
+    candidates: personalCandidates,
   });
+  const personalMessageBareFrame = offersBareFrame(personalCandidates)
+    ? pickPersonalMessageTemplates({ ...axes, bareFrame: true, candidates: personalCandidates })
+    : null;
 
   const family = await loadTemplateFamily(supabase, anchor);
-  if (!family.success) return { withNote: family, withoutNote: family, personalMessage };
+  if (!family.success) {
+    return { withNote: family, withoutNote: family, personalMessage, personalMessageBareFrame };
+  }
 
   const { candidates } = family;
   return {
     withNote: pickTemplates({ ...axes, anchor, note: true, candidates }),
     withoutNote: pickTemplates({ ...axes, anchor, note: false, candidates }),
     personalMessage,
+    personalMessageBareFrame,
   };
 }

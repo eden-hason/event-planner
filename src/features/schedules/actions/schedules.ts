@@ -176,6 +176,8 @@ async function updateScheduleText(
     column: 'custom_text' | 'personal_message';
     schema: typeof CustomTextSchema;
     copy: { callRound: string; failed: string; updated: string };
+    /** Columns written beside the text, in the same update, from the stored value. */
+    alongside?: (stored: string | null) => Record<string, unknown>;
   },
 ): Promise<UpdateCustomTextState> {
   const blocked = await assertNotImpersonating();
@@ -210,9 +212,10 @@ async function updateScheduleText(
     }
 
     const trimmed = parsed.data.trim();
+    const stored = trimmed === '' ? null : trimmed;
     const { error } = await supabase
       .from('schedules')
-      .update({ [field.column]: trimmed === '' ? null : trimmed })
+      .update({ [field.column]: stored, ...field.alongside?.(stored) })
       .eq('id', scheduleId);
 
     if (error) {
@@ -246,14 +249,17 @@ export async function updateCustomText(
 }
 
 /**
- * Updates the Owner's Personal Message (schedules.personal_message, ADR 0046).
- * Blank sends the Schedule's Variant. Line breaks are kept as typed: the
- * personalMessage transformer turns them into " | " at send time, so the field
- * shows the Owner what they wrote.
+ * Updates the Owner's Personal Message (schedules.personal_message, ADR 0046)
+ * and whether it goes in its Bare Frame. Blank sends the Schedule's Variant,
+ * and clears the Bare Frame with it: the choice is about a paragraph there no
+ * longer is. Line breaks are kept as typed: the personalMessage transformer
+ * turns them into " | " at send time, so the field shows the Owner what they
+ * wrote.
  */
 export async function updatePersonalMessage(
   scheduleId: string,
   personalMessage: string,
+  bareFrame: boolean,
 ): Promise<UpdatePersonalMessageState> {
   return updateScheduleText(scheduleId, personalMessage, {
     column: 'personal_message',
@@ -263,6 +269,7 @@ export async function updatePersonalMessage(
       failed: 'Failed to update the message',
       updated: 'Message updated',
     },
+    alongside: (stored) => ({ personal_message_bare_frame: stored !== null && bareFrame }),
   });
 }
 
