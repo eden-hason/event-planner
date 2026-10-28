@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   CalendarDays,
+  Banknote,
   Wrench,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { label: 'סקירה', href: '/admin', icon: LayoutDashboard, stub: false },
   { label: 'משתמשים', href: '/admin/users', icon: Users, stub: false },
   { label: 'אירועים', href: '/admin/events', icon: CalendarDays, stub: false },
+  { label: 'תשלומים', href: '/admin/payments', icon: Banknote, stub: false },
   { label: 'תפעול', href: '/admin/operations', icon: Wrench, stub: false },
   {
     label: 'הגדרות',

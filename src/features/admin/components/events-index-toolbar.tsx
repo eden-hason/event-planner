@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useTransition, type ComponentProps } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
-import { ChevronDown, Search, X } from '@/components/icons';
+import { Search, X } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -39,6 +39,7 @@ import {
   TIMING_LABELS,
 } from '../utils/events-index';
 import { cn } from '@/lib/utils';
+import { FilterButton } from './filter-button';
 
 const ANY = 'any';
 const SEARCH_DEBOUNCE_MS = 250;
@@ -205,29 +206,6 @@ function TimingToggle({
         <ToggleGroupItem key={key} value={key} className="px-3 text-[12.5px]">{label}</ToggleGroupItem>
       ))}
     </ToggleGroup>
-  );
-}
-
-/** The filter bar's button: the filter's name, then what it is set to. */
-function FilterButton({
-  label,
-  selection,
-  ...props
-}: { label: string; selection: string | null } & ComponentProps<typeof Button>) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={cn(
-        'bg-card text-[12.5px] font-medium shadow-none',
-        selection && 'border-primary/40 bg-primary/5 hover:bg-primary/10',
-      )}
-      {...props}
-    >
-      <span className={cn(selection && 'text-muted-foreground font-normal')}>{label}</span>
-      {selection && <span>{selection}</span>}
-      <ChevronDown className="text-muted-foreground" />
-    </Button>
   );
 }
 

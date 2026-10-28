@@ -1,4 +1,6 @@
 import type {
+  BillingPaymentKind,
+  BillingPaymentMethod,
   EventBillingStatus,
   EventPayment,
   RecordPackage,
@@ -141,6 +143,50 @@ export type EventsIndexPage = {
   pageSize: number;
   pageCount: number;
   eventTypes: { key: string; name: string }[];
+};
+
+export type PaymentsIndexSortKey = 'date' | 'amount';
+
+export type PaymentsIndexFilters = {
+  /** Matches the paying Owner's name or email. */
+  q: string;
+  /** An Israel calendar month, YYYY-MM, by when the payment was made. */
+  month: string | null;
+  /** Inclusive shekel bounds. */
+  minAmount: number | null;
+  maxAmount: number | null;
+  sort: PaymentsIndexSortKey;
+  dir: SortDirection;
+  page: number;
+};
+
+/** One recorded payment (ADR 0045), with the Owner of the Event it was paid on. */
+export type PaymentIndexRow = {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  ownerName: string;
+  ownerEmail: string | null;
+  /** Shekels. */
+  amount: number;
+  method: BillingPaymentMethod;
+  kind: BillingPaymentKind;
+  /** The אסמכתה the Operator entered, if any. */
+  reference: string | null;
+  occurredAt: string;
+};
+
+export type PaymentsIndexPage = {
+  rows: PaymentIndexRow[];
+  /** Payments matching the search and filters, across every page. */
+  totalRows: number;
+  /** Shekels, across every matching payment rather than just this page. */
+  totalAmount: number;
+  /** Every payment in scope, before search and filters. */
+  totalPayments: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 };
 
 export type EventIdentity = {

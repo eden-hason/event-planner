@@ -9,6 +9,7 @@ test('top-level Back Office routes show global search', () => {
     ['events'],
     ['operations'],
     ['users'],
+    ['payments'],
     ['configuration'],
   ]) {
     assert.deepEqual(resolveAdminTopBar(segments), { kind: 'search' });
