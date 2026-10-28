@@ -83,13 +83,13 @@ export async function getOverviewStats(): Promise<OverviewStats> {
 
   // A payment is a billing log row with a kind (ADR 0045), upsales included. Gifts are
   // payments of 0 and say nothing about who paid, so they are left out. The rows
-  // are read rather than counted because Paid Users is a distinct count of
-  // Owners, which PostgREST cannot do; the Owner is reached through the Event.
+  // are read rather than counted because Paid Events is a distinct count of
+  // Events, which PostgREST cannot do.
   const paymentRows = pageAll((from, to) =>
     excludeIds(
       supabase
         .from('event_billing_events')
-        .select('id, amount, occurred_at, events!inner(user_id)')
+        .select('id, event_id, amount, occurred_at')
         .not('kind', 'is', null)
         .neq('payment_method', 'gift'),
       'event_id',
@@ -141,7 +141,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     eventsUpcoming: unwrapCount(eventsUpcoming),
     ...tallyPayments(
       payments.map((row) => ({
-        ownerId: (row.events as unknown as { user_id: string }).user_id,
+        eventId: row.event_id as string,
         amount: Number(row.amount),
         occurredAt: row.occurred_at as string,
       })),

@@ -1,11 +1,11 @@
 import { israelToday, israelWallClockToIso } from '@/lib/date-time';
 
 /** One recorded payment, reduced to what the Overview counts. */
-export type PaymentRow = { ownerId: string; amount: number; occurredAt: string };
+export type PaymentRow = { eventId: string; amount: number; occurredAt: string };
 
 export type PaymentTally = {
-  paidUsers: number;
-  paidUsersThisMonth: number;
+  paidEvents: number;
+  paidEventsThisMonth: number;
   /** Shekels. */
   paymentsTotal: number;
   /** Shekels. */
@@ -18,9 +18,10 @@ export function israelMonthStart(now: Date = new Date()): string {
 }
 
 /**
- * Paid Users are the distinct Owners behind the payments, so a top-up does not
- * count its Owner twice, while its amount does add to the total. "This month" is by when the payment was made, not when
- * it was recorded.
+ * Paid Events are the distinct Events behind the payments, so a top-up does not
+ * count its Event twice, while its amount does add to the total. An Owner with
+ * two paid Events counts twice. "This month" is by when the payment was made, not
+ * when it was recorded.
  */
 export function tallyPayments(rows: PaymentRow[], monthStart: string): PaymentTally {
   const start = Date.parse(monthStart);
@@ -28,8 +29,8 @@ export function tallyPayments(rows: PaymentRow[], monthStart: string): PaymentTa
   const total = (list: PaymentRow[]) => list.reduce((sum, row) => sum + row.amount, 0);
 
   return {
-    paidUsers: new Set(rows.map((row) => row.ownerId)).size,
-    paidUsersThisMonth: new Set(thisMonth.map((row) => row.ownerId)).size,
+    paidEvents: new Set(rows.map((row) => row.eventId)).size,
+    paidEventsThisMonth: new Set(thisMonth.map((row) => row.eventId)).size,
     paymentsTotal: total(rows),
     paymentsTotalThisMonth: total(thisMonth),
   };

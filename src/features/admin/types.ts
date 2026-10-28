@@ -20,10 +20,10 @@ export type OverviewStats = {
   events: number;
   /** Published events dated within the next 30 days - the sub-line. */
   eventsUpcoming: number;
-  /** Distinct Owners with at least one payment. Gifts (payments of 0) do not count. */
-  paidUsers: number;
-  /** Distinct Owners with a payment made this calendar month, Israel time - the sub-line. */
-  paidUsersThisMonth: number;
+  /** Distinct Events with at least one payment. Gifts (payments of 0) do not count. */
+  paidEvents: number;
+  /** Distinct Events with a payment made this calendar month, Israel time - the sub-line. */
+  paidEventsThisMonth: number;
   /** Sum of every recorded payment in shekels, top-ups included. */
   paymentsTotal: number;
   /** Sum of the payments made this calendar month, Israel time - the sub-line. */
