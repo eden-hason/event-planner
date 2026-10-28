@@ -1388,8 +1388,7 @@
         "callOutcome": {
           "no_answer": "לא ענו",
           "confirmed": "אישרו הגעה",
-          "declined": "לא מגיעים",
-          "guest_will_update": "יעדכנו בעצמם"
+          "declined": "לא מגיעים"
         },
         "callBy": "נציג, בשיחה טלפונית",
         "answerConfirmed": "{count, plural, =0 {אישרו הגעה} one {אישרו הגעה של אחד} other {אישרו הגעה של #}}",
@@ -2477,14 +2476,12 @@
     "outcome": {
       "confirmed": "אישרו הגעה",
       "declined": "לא יגיעו",
-      "noAnswer": "לא ענו",
-      "willUpdate": "יעדכנו בעצמם",
-      "notCalled": "טרם התקשרנו"
+      "noAnswer": "לא ענו"
     },
     "rsvp": {
+      "pending": "ממתינים לתשובה",
       "confirmed": "אישרו",
-      "declined": "לא יגיעו",
-      "pending": "ממתין"
+      "declined": "לא יגיעו"
     },
     "when": {
       "title": "מתי מתקשרים",
@@ -2532,28 +2529,64 @@
       "count": "{count, plural, one {אורח אחד} other {# אורחים}}",
       "people": "{count, plural, one {אדם אחד} other {# אנשים}}",
       "search": "חיפוש לפי שם",
+      "searchLabel": "חיפוש אורח לפי שם",
+      "filtersLabel": "סינון אורחים",
       "filters": {
         "all": "הכל",
         "awaiting": "ממתינים לשיחה",
         "confirmed": "אישרו",
         "declined": "לא יגיעו",
         "noAnswer": "לא ענו",
-        "willUpdate": "יעדכנו בעצמם",
         "hasNote": "יש הערה"
       },
-      "rsvpNow": "RSVP עכשיו",
-      "answeredFirst": "ענו בוואטסאפ לפני שהגענו אליהם",
+      "status": {
+        "confirmed": "אישרו",
+        "declined": "לא יגיעו",
+        "noAnswer": "לא ענו",
+        "notCalled": "טרם התקשרנו"
+      },
+      "answeredFirst": "ענו בוואטסאפ לפני השיחה",
+      "now": {
+        "confirmed": "עכשיו: אישרו",
+        "declined": "עכשיו: לא יגיעו"
+      },
+      "noteSr": "הערה:",
       "showMore": "{count, plural, one {הצגת עוד אחד} other {הצגת עוד #}}",
-      "none": "לא נמצאו אורחים",
+      "shown": "{shown} מתוך {total}",
       "pager": "{from}-{to} מתוך {total}",
       "previous": "הקודם",
       "next": "הבא",
+      "empty": {
+        "title": "לא נמצאו אורחים",
+        "query": "אין תוצאות ל״{query}״",
+        "queryInFilter": "אין תוצאות ל״{query}״ בסינון ״{filter}״",
+        "filter": "אין אורחים בסינון הזה",
+        "clearSearch": "ניקוי החיפוש",
+        "showAll": "הצגת כל האורחים"
+      },
       "columns": {
         "guest": "אורח",
-        "amount": "כמות",
-        "outcome": "תוצאת השיחה",
-        "rsvp": "RSVP עכשיו",
-        "note": "הערות הצוות"
+        "phone": "טלפון",
+        "amount": "אנשים",
+        "status": "סטטוס",
+        "note": "הערה",
+        "open": "פרטים"
+      },
+      "details": {
+        "phone": "טלפון",
+        "noPhone": "אין מספר",
+        "call": "בשיחה",
+        "rsvp": "סטטוס הגעה עכשיו",
+        "skipped": "דילגנו, ענו קודם",
+        "note": "הערה מהשיחה",
+        "noNote": "אין הערה",
+        "close": "סגירה",
+        "explain": {
+          "answeredFirst": "ענו בוואטסאפ לפני שהגענו אליהם, ולכן דילגנו עליהם בכוונה. אין צורך להתקשר",
+          "answeredSince": "לא ענו לשיחה, ועדכנו מאז בוואטסאפ",
+          "notCalled": "עדיין בתור לשיחה בסבב הזה",
+          "changed": "סטטוס ההגעה השתנה אחרי השיחה"
+        }
       }
     },
     "footer": {

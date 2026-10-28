@@ -283,7 +283,6 @@ export async function SchedulesPage({
               confirmed: round.confirmed,
               declined: round.declined,
               noAnswer: round.noAnswer,
-              willUpdate: round.willUpdate,
             }
           : null,
         details: isMessage ? (

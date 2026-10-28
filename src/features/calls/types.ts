@@ -1,18 +1,7 @@
 // View-model types for the calls feature.
 // These are not Zod-backed DB schemas - use schemas/ for those.
 
-/**
- * `guest_will_update` is the answered-but-undecided case: the guest picked up,
- * would not commit on the phone, and said they will respond to the WhatsApp
- * invitation themselves. Like `no_answer` it never moves the guest's RSVP - it
- * records a promise, not an answer - but unlike it, the call did reach someone.
- */
-export const CALL_OUTCOMES = [
-  'no_answer',
-  'confirmed',
-  'declined',
-  'guest_will_update',
-] as const;
+export const CALL_OUTCOMES = ['no_answer', 'confirmed', 'declined'] as const;
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 
 // A round is in progress until whoever ran it declares it over. Derived
@@ -40,7 +29,6 @@ export type CallRoundSummary = {
   confirmed: number;
   declined: number;
   noAnswer: number;
-  willUpdate: number;
 };
 
 /**
@@ -58,6 +46,8 @@ export type CallRoundSummary = {
 export type CallRoundGuestRow = {
   guestId: string;
   guestName: string;
+  /** The number on the guest record, as stored (E.164); null when there is none */
+  phone: string | null;
   outcome: CallOutcome | null;
   currentRsvpStatus: 'pending' | 'confirmed' | 'declined';
   /** Headcount on the guest record - one record can cover a whole family */
@@ -79,14 +69,13 @@ export type CallRoundPeople = {
   confirmed: number;
   declined: number;
   noAnswer: number;
-  willUpdate: number;
   awaiting: number;
 };
 
 export type CallRoundResults = {
   summary: Pick<
     CallRoundSummary,
-    'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer' | 'willUpdate'
+    'total' | 'awaiting' | 'confirmed' | 'declined' | 'noAnswer'
   >;
   people: CallRoundPeople;
   /**

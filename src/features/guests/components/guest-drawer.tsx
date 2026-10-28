@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   IconCheck,
   IconCopy,
@@ -36,8 +36,9 @@ const FORM_ID = 'guest-drawer-form';
 /**
  * The `?guest=` drawer - the one editor of a Guest Record. A sheet with the
  * record's identity on top, the form in flat sections, then its read-only
- * Activity and invitation link. On desktop it floats in from the side; on a
- * phone it rises from the bottom to 92% of the screen (Guests Mobile design).
+ * Activity and invitation link. On desktop it floats in from the end side - the
+ * left in Hebrew - like the Call Round details; on a phone it rises from the
+ * bottom to 92% of the screen (Guests Mobile design).
  */
 export function GuestDrawer({
   open,
@@ -68,11 +69,12 @@ export function GuestDrawer({
   const t = useTranslations('guests.list');
   const [submitting, setSubmitting] = useState(false);
   const mobile = variant === 'mobile';
+  const isRTL = useLocale() === 'he';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side={mobile ? 'bottom' : 'right'}
+        side={mobile ? 'bottom' : isRTL ? 'left' : 'right'}
         className={cn(
           'flex flex-col gap-0 overflow-hidden p-0 [&>button:last-child]:hidden',
           mobile

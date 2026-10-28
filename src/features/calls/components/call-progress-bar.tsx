@@ -9,7 +9,6 @@ const SEGMENT_FILL: Record<RoundSegmentKey, string> = {
   confirmed: 'bg-rsvp-confirmed',
   declined: 'bg-rsvp-declined',
   noAnswer: 'bg-muted-foreground/50',
-  willUpdate: 'bg-outcome-will-update',
 };
 
 const SIZE = { sm: 'h-1.5', md: 'h-2.5', lg: 'h-3' } as const;
