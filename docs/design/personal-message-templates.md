@@ -3,7 +3,7 @@
 The twelve Meta WhatsApp templates behind the **Personal Message** (ADR 0046). They are
 catalog Templates: `supabase/migrations/20261027000001_personal_message_templates.sql` and
 `20261028000000_personal_message_bare_frame.sql` hold them in `message_templates`
-(`personal_message = true`), with the seven SMS Renditions beside them. If a body, button
+(`personal_message = true`), with the six SMS Renditions beside them. If a body, button
 or parameter changes here, change the migration's row too.
 
 Language `he`, category **`MARKETING`** for all twelve, on purpose. Kululu does not write the
@@ -95,7 +95,8 @@ the start and end of the body. The Owner writes the date and venue, or leaves th
 
 **Buttons:** the same two quick replies.
 
-SMS Rendition: the same body, then `לאישור הגעה: {{2}}` with the RSVP link.
+No SMS Rendition: an SMS Fallback of a Bare Frame goes in the ordinary Confirmation SMS
+frame above, date and venue included.
 
 Only the Confirmation has a Bare Frame. The other stages keep the facts in their frame.
 

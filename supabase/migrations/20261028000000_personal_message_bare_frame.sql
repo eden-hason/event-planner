@@ -22,6 +22,10 @@
 -- something while there is a paragraph: a blank Personal Message sends the Variant,
 -- so the flag is cleared with it.
 --
+-- WhatsApp only. There is no SMS Bare Frame: the SMS family offers no choice on the
+-- axis, so the resolver sends an SMS Fallback in the ordinary SMS frame, date and
+-- venue included.
+--
 -- Meta category: MARKETING, as every Personal Message frame (ADR 0046). Templates are
 -- specified in docs/design/personal-message-templates.md.
 
@@ -61,7 +65,7 @@ create unique index message_templates_personal_message_cell_key
    requires_note, requires_follow_up, requires_invitation_image, bare_frame)
   where personal_message;
 
--- 3. The Confirmation's Bare Frames: 2 WhatsApp + 1 SMS ------------------------
+-- 3. The Confirmation's Bare Frames: 2 WhatsApp -------------------------------
 
 insert into public.message_templates
   (key, channel, schedule_type_id, variant, name, description, language_code,
@@ -129,32 +133,12 @@ $json$::jsonb
   }
 }
 $json$::jsonb
-),
-(
-  'personal_message_confirmation', 'sms',
-  (select id from public.schedule_types where key = 'confirmation'),
-  '1', 'Personal Message - Confirmation, bare frame',
-  'Confirmation entirely in the Owner''s words, SMS rendition, no Event details. Link only - the conversation is WhatsApp-only.',
-  'he', null, false, false, false, false, false, true, true,
-  $json$
-{
-  "bodyText": "משפחה וחברים יקרים,\n{{1}}\n\nנשמח לדעת אם תגיעו 🙏🏼\nלאישור הגעה: {{2}}",
-  "parameters": {
-    "headerPlaceholders": [],
-    "placeholders": [
-      { "name": "schedule.personalMessage", "source": "schedule.personalMessage", "transformer": "personalMessage" },
-      { "name": "rsvpUrl", "source": "confirmationToken", "transformer": "rsvpUrl" }
-    ],
-    "buttonPlaceholders": []
-  }
-}
-$json$::jsonb
 );
 
 -- 4. Guard ---------------------------------------------------------------------
 -- The resolver hard-fails on a missing cell once a family offers the axis, so the
--- Confirmation family must be complete on both sides of it. No other family may
--- carry a Bare Frame yet.
+-- Confirmation's WhatsApp family must be complete on both sides of it. No other
+-- family, and no SMS Rendition, may carry a Bare Frame yet.
 
 do $$
 declare
@@ -164,7 +148,7 @@ begin
   for expected in
     select * from (values
       ('confirmation', 'whatsapp', false, 2), ('confirmation', 'sms', false, 1),
-      ('confirmation', 'whatsapp', true,  2), ('confirmation', 'sms', true,  1)
+      ('confirmation', 'whatsapp', true,  2), ('confirmation', 'sms', true,  0)
     ) as e(schedule_type, channel, bare_frame, row_count)
   loop
     select count(*) into found
@@ -185,9 +169,10 @@ begin
   select count(*) into found
   from public.message_templates mt
   join public.schedule_types st on st.id = mt.schedule_type_id
-  where mt.bare_frame and (not mt.personal_message or st.key <> 'confirmation');
+  where mt.bare_frame
+    and (not mt.personal_message or st.key <> 'confirmation' or mt.channel::text <> 'whatsapp');
 
   if found <> 0 then
-    raise exception '% Bare Frame rows outside the Confirmation''s Personal Message family', found;
+    raise exception '% Bare Frame rows outside the Confirmation''s WhatsApp Personal Message family', found;
   end if;
 end $$;

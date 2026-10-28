@@ -305,3 +305,19 @@ test('a family that offers no Bare Frame sends its full frame', async () => {
     withoutTable: 'personal',
   });
 });
+
+test('the SMS Fallback of a Bare Frame sends the ordinary SMS frame, which has no Bare Frame', async () => {
+  const smsFrame = dbRow('confirmation-personal-sms', confirmationPersonal);
+  const whatsappRows = confirmationCatalog.map((row) => ({ ...row, channel: 'whatsapp' }));
+  const result = await resolveTemplatesForSchedule({
+    supabase: fakeSupabase([...whatsappRows, smsFrame]),
+    anchor: { ...confirmationAnchor, channel: 'whatsapp' } as MessageTemplateApp,
+    channel: 'sms',
+    personalMessage: 'מתרגשים',
+    bareFrame: true,
+    gifting: false,
+    tableNumbers: false,
+  });
+  assert.ok(result.success, result.success ? '' : result.message);
+  assert.equal(result.templates.withoutTable.name, 'confirmation-personal-sms');
+});
