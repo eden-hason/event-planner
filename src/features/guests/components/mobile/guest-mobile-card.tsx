@@ -11,7 +11,11 @@ import { cn } from '@/lib/utils';
 import { AmountBadge } from '../amount-badge';
 import { OutsidePackageTag } from '../package';
 
-/** Fixed card height: the list is virtualized, so cards must never grow. */
+/**
+ * Fixed card height: the list is virtualized, so cards must never grow. Set
+ * inline in px so it stays in step with the virtualizer when `--ui-scale`
+ * shrinks everything else.
+ */
 export const CARD_HEIGHT = 72;
 /** How long a press has to last to start a selection. */
 const LONG_PRESS_MS = 450;
@@ -62,7 +66,7 @@ export function GuestMobileCard({
       role={selecting ? 'checkbox' : 'button'}
       aria-checked={selecting ? checked : undefined}
       tabIndex={0}
-      style={style}
+      style={{ height: CARD_HEIGHT, ...style }}
       onPointerDown={() => {
         fired.current = false;
         if (selecting) return;
@@ -89,7 +93,7 @@ export function GuestMobileCard({
         else onOpen();
       }}
       className={cn(
-        'focus-visible:ring-ring/50 flex h-[72px] cursor-pointer items-center gap-2.5 rounded-[14px] border ps-3 pe-1.5 outline-none transition-colors select-none focus-visible:ring-[3px] [-webkit-touch-callout:none]',
+        'focus-visible:ring-ring/50 flex cursor-pointer items-center gap-2.5 rounded-[14px] border ps-3 pe-1.5 outline-none transition-colors select-none focus-visible:ring-[3px] [-webkit-touch-callout:none]',
         checked && selecting
           ? 'bg-primary/6 border-primary/40 border-dashed'
           : 'bg-card active:bg-muted/60',
