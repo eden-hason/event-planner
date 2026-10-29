@@ -10,27 +10,22 @@ import { Button } from '@/components/ui/button';
 import { usePlansHref } from '@/features/billing';
 
 /**
- * The bar stuck to the bottom of an open Schedule: whatever action the
- * Schedule has, and the one sentence that says what to expect.
+ * The bar stuck to the bottom of a Schedule the Owner cannot edit: the one
+ * sentence that says what to expect, and the way to unlock it when there is one.
+ * An editable message has ScheduleSaveBar instead.
  *
- * `aboveNav` is for a pane that keeps the phone's bottom nav: the bar then
- * sticks above the nav instead of behind it, and leaves the safe-area padding
- * to the nav that already carries it.
+ * It sticks above the phone's bottom nav rather than behind it, and leaves the
+ * safe-area padding to the nav that already carries it.
  *
  * `upgrade` adds the one action a locked Schedule has - the way to the plans
- * page, for the Owner who would pay. Phone only: from md up the bar is hidden. Children are the Schedule's own action, if it
- * has one (Save on a message, nothing on a call round).
+ * page, for the Owner who would pay. Phone only: from md up the bar is hidden.
  */
 export function ScheduleFooter({
   note,
   upgrade = false,
-  aboveNav = false,
-  children,
 }: {
   note: string;
   upgrade?: boolean;
-  aboveNav?: boolean;
-  children?: React.ReactNode;
 }) {
   const t = useTranslations('schedules.detail');
   const plansHref = usePlansHref();
@@ -38,16 +33,12 @@ export function ScheduleFooter({
   return (
     <div
       className={cn(
-        'bg-card md:bg-app-shell sticky z-10 -mx-4 flex flex-col gap-1.5 border-t px-4 pt-3 md:bottom-0 md:mx-0 md:px-0 md:pb-3',
-        aboveNav
-          ? 'bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] pb-3'
-          : 'bottom-0 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+        'bg-card md:bg-app-shell sticky bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] z-10 -mx-4 flex flex-col gap-1.5 border-t px-4 py-3 md:bottom-0 md:mx-0 md:px-0',
         // A locked Schedule's bar is only the upgrade and its line. At md the
         // upgrade banner above the timeline stays in view, so the bar goes.
         upgrade && 'md:hidden',
       )}
     >
-      {children}
       {upgrade && plansHref && (
         <Button asChild className="w-full rounded-xl text-base font-bold">
           <Link href={plansHref}>

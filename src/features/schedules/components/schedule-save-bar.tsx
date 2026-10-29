@@ -1,39 +1,35 @@
 'use client';
 
-import { IconCheck } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 
-import { Button } from '@/components/ui/button';
+import { PageSaveBar } from '@/components/page-save-bar';
 
-import { ScheduleFooter } from './schedule-footer';
 import { useScheduleSettings } from './schedule-settings-context';
 
 /**
- * The one Save for an open message Schedule, stuck to the bottom of the screen.
+ * The Save for an open message Schedule, and it only shows while there is
+ * something to save - the same bar as the Event details page.
  *
- * While something can still be edited it holds Save, inert until a field
- * changes so pressing it is always meaningful, and while the edited Due Time
- * is one the details card has flagged as unsaveable. A locked Schedule holds the one
- * action that unlocks it instead. A sent Schedule keeps the bar only for the
- * sentence that says why nothing here saves.
+ * A single change is named rather than counted, so the Owner sees what is left
+ * as well as that something is. Save stays inert while the edited Due Time is
+ * one the details card has flagged as unsaveable; Cancel puts every field back.
  */
-export function ScheduleSaveBar({ note }: { note: 'editable' | 'locked' | 'sent' }) {
-  const t = useTranslations('schedules.detail');
-  const { editable, dirty, isSaving, save, dueTimeIssue } = useScheduleSettings();
+export function ScheduleSaveBar() {
+  const t = useTranslations('schedules.detail.saveBar');
+  const { changes, isSaving, save, revert, dueTimeIssue } =
+    useScheduleSettings();
+
+  const only = changes.length === 1 ? changes[0] : null;
 
   return (
-    <ScheduleFooter note={t(`footNote.${note}`)} upgrade={note === 'locked'}>
-      {editable && (
-        <Button
-          type="button"
-          onClick={save}
-          disabled={!dirty || isSaving || dueTimeIssue !== null}
-          className="w-full rounded-xl text-base font-bold"
-        >
-          <IconCheck stroke={2.4} />
-          {isSaving ? t('save.saving') : t('save.action')}
-        </Button>
-      )}
-    </ScheduleFooter>
+    <PageSaveBar
+      open={changes.length > 0}
+      count={changes.length}
+      field={only ? t(`fields.${only}`) : undefined}
+      isSaving={isSaving}
+      onCancel={revert}
+      onSave={save}
+      saveDisabled={dueTimeIssue !== null}
+    />
   );
 }

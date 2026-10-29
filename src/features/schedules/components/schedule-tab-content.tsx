@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp } from '../schemas';
@@ -10,6 +12,7 @@ import { PersonalNoteCard } from './personal-note-card';
 import { ScheduleDetailsCard } from './schedule-details-card';
 import { ScheduleLockBadge } from './schedule-lock-badge';
 import { ScheduleLockedNotice } from './schedule-locked-notice';
+import { ScheduleFooter } from './schedule-footer';
 import { ScheduleSaveBar } from './schedule-save-bar';
 import { ScheduleSettingsProvider } from './schedule-settings-context';
 import { TargetAudienceCard } from './target-audience-card';
@@ -43,6 +46,7 @@ export async function ScheduleTabContent({
   status,
   audienceCount,
 }: ScheduleTabContentProps) {
+  const t = await getTranslations('schedules.detail');
   const locked = status === 'locked';
   const sent = status === 'sent';
   const lockReason = locked ? ('locked' as const) : sent ? ('sent' as const) : null;
@@ -115,7 +119,11 @@ export async function ScheduleTabContent({
           </div>
         </div>
 
-        <ScheduleSaveBar note={lockReason ?? 'editable'} />
+        {/* An editable Schedule's bar appears with its first unsaved change. A
+            locked one keeps a bar for the way to unlock it; a sent one has
+            nothing left to save, and its cards already say so. */}
+        {editable && <ScheduleSaveBar />}
+        {locked && <ScheduleFooter note={t('footNote.locked')} upgrade />}
         {editable && (
           <PastDueTimeDialog
             targetStatus={schedule.targetStatus}

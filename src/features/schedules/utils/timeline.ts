@@ -55,6 +55,23 @@ export function offsetDays(
 }
 
 /**
+ * Whole Israel calendar days from `now` until a Due Time that is still ahead:
+ * 0 later today, 1 tomorrow. Null once the Due Time has passed, when the card
+ * stops counting down and shows the date instead.
+ *
+ * Calendar days for the same reason as `offsetDays`: a message due at 09:00
+ * tomorrow is "tomorrow" at 22:00 tonight, though barely eleven hours away.
+ */
+export function daysUntil(scheduledDate: string, now: Date): number | null {
+  if (Date.parse(scheduledDate) <= now.getTime()) return null;
+
+  const dueDay = israelDay(scheduledDate);
+  const today = israelDay(now.toISOString());
+
+  return Math.round((Date.parse(`${dueDay}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY_MS);
+}
+
+/**
  * How a Schedule reads on the timeline.
  *
  * Two mappings that are not one-to-one with the column:

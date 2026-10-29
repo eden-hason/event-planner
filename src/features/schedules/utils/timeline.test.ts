@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { comparePlanOrder, numberPlan, offsetDays, offsetPhrase, sendWindowHours, timelineStatus, withDayMarker } from './timeline.ts';
+import { comparePlanOrder, daysUntil, numberPlan, offsetDays, offsetPhrase, sendWindowHours, timelineStatus, withDayMarker } from './timeline.ts';
 
 // The Event date is a calendar date pinned at 00:00 UTC; a Due Time is an
 // instant authored as an Israel wall clock. The offset between them is a count
@@ -259,4 +259,26 @@ test('numbers a repeated type in plan order, so a dated round is the first', () 
   assert.deepEqual(numbers.get('ask'), { index: 1, total: 2 });
   assert.deepEqual(numbers.get('chase'), { index: 2, total: 2 });
   assert.deepEqual(numbers.get('invite'), { index: 1, total: 1 });
+});
+
+// ─── daysUntil ────────────────────────────────────────────────────────────────
+
+test('daysUntil counts Israel calendar days to a Due Time still ahead', () => {
+  const now = new Date(due('2026-09-11T22:00'));
+  assert.equal(daysUntil(due('2026-09-11T23:00'), now), 0);
+  assert.equal(daysUntil(due('2026-09-12T09:00'), now), 1);
+  assert.equal(daysUntil(due('2026-09-18T09:00'), now), 7);
+});
+
+test('daysUntil reads today in Israel, not UTC', () => {
+  // 01:00 Israel on the 12th is still 22:00 UTC on the 11th. Counting in UTC
+  // would call a Due Time later on the 12th tomorrow; in Israel it is today.
+  const now = new Date(due('2026-09-12T01:00'));
+  assert.equal(daysUntil(due('2026-09-12T10:00'), now), 0);
+});
+
+test('daysUntil is null once the Due Time has passed', () => {
+  const now = new Date(due('2026-09-11T10:00'));
+  assert.equal(daysUntil(due('2026-09-11T10:00'), now), null);
+  assert.equal(daysUntil(due('2026-09-01T10:00'), now), null);
 });

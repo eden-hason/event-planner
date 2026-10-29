@@ -16,6 +16,7 @@ import { israelWallClockParts } from '@/lib/date-time';
 
 import { updateCustomText, updatePersonalMessage, updateScheduledDate } from '../actions';
 import { DEFAULT_SEND_TIME } from '../utils/timeline';
+import { useReportUnsavedChanges } from './unsaved-changes-guard';
 import type { ScheduleApp } from '../schemas';
 import {
   dueTimeIssue as findDueTimeIssue,
@@ -59,7 +60,10 @@ interface ScheduleSettings {
   now: Date;
   /** Why the edited Due Time cannot be saved, or null. Never set while unedited. */
   dueTimeIssue: DueTimeIssue | null;
-  dirty: boolean;
+  /** What is unsaved, one entry per thing the save bar can name. */
+  changes: ScheduleChange[];
+  /** Puts every field back to what is saved. */
+  revert: () => void;
   isSaving: boolean;
   /** Saves, first asking to confirm when the edited Due Time has already passed. */
   save: () => void;
@@ -70,6 +74,26 @@ interface ScheduleSettings {
 }
 
 export type MessageMode = 'variant' | 'personal';
+
+/** The message a Schedule is on, read from its Personal Message text. */
+function modeOf(personalMessage: string | null): MessageMode {
+  return personalMessage ? 'personal' : 'variant';
+}
+
+// Read back out of the Due Time rather than stored beside it: there is one
+// instant, and the clock face is a view of it (ADR 0015).
+// An Undated Schedule starts on the default hour: a time alone sends nothing,
+// so only the date is left for the Owner to choose (ADR 0029).
+function timeOf(dueTime: string | null): string {
+  return dueTime ? israelWallClockParts(dueTime).time : DEFAULT_SEND_TIME;
+}
+
+/**
+ * An unsaved edit as the save bar names it. Switching between Kululu's message
+ * and a Personal Message is 'messageType' even when text came with it - it is
+ * one decision, and the bar names the bigger one.
+ */
+export type ScheduleChange = 'messageType' | 'personalMessage' | 'dueTime' | 'note';
 
 const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
 
@@ -110,7 +134,7 @@ export function ScheduleSettingsProvider({
   );
   const [personalMessage, setPersonalMessage] = useState(schedule.personalMessage ?? '');
   const [messageMode, setMessageMode] = useState<MessageMode>(
-    schedule.personalMessage ? 'personal' : 'variant',
+    modeOf(schedule.personalMessage),
   );
   const [savedDate, setSavedDate] = useState(schedule.scheduledDate ?? '');
   const [scheduledDate, setScheduledDateState] = useState(schedule.scheduledDate ?? '');
@@ -122,14 +146,8 @@ export function ScheduleSettingsProvider({
     setNow(new Date());
   }, []);
 
-  // Read back out of the Due Time rather than stored beside it: there is one
-  // instant, and the clock face is a view of it (ADR 0015).
-  // An Undated Schedule starts on the default hour: a time alone sends nothing,
-  // so only the date is left for the Owner to choose (ADR 0029).
   const [scheduledTime, setScheduledTime] = useState(() =>
-    schedule.scheduledDate
-      ? israelWallClockParts(schedule.scheduledDate).time
-      : DEFAULT_SEND_TIME,
+    timeOf(schedule.scheduledDate),
   );
 
   // `useState` only seeds on mount, and this provider outlives a server
@@ -143,7 +161,7 @@ export function ScheduleSettingsProvider({
   useEffect(() => {
     setSavedPersonalMessage(schedule.personalMessage ?? '');
     setPersonalMessage(schedule.personalMessage ?? '');
-    setMessageMode(schedule.personalMessage ? 'personal' : 'variant');
+    setMessageMode(modeOf(schedule.personalMessage));
   }, [schedule.personalMessage]);
 
   // Choosing Kululu's message clears the Personal Message on save; the typed
@@ -155,6 +173,28 @@ export function ScheduleSettingsProvider({
     editable && effectivePersonalMessage.trim() !== savedPersonalMessage;
   const dateDirty = editable && scheduledDate !== savedDate;
   const dirty = noteDirty || personalMessageDirty || dateDirty;
+
+  const savedMode = modeOf(savedPersonalMessage);
+  const changes = useMemo(() => {
+    const list: ScheduleChange[] = [];
+    if (personalMessageDirty) {
+      list.push(messageMode === savedMode ? 'personalMessage' : 'messageType');
+    }
+    if (dateDirty) list.push('dueTime');
+    if (noteDirty) list.push('note');
+    return list;
+  }, [personalMessageDirty, messageMode, savedMode, dateDirty, noteDirty]);
+
+  const revert = useCallback(() => {
+    setNote(savedNote);
+    setPersonalMessage(savedPersonalMessage);
+    setMessageMode(savedMode);
+    setScheduledDateState(savedDate);
+    setScheduledTime(timeOf(savedDate));
+    setPendingPastDueTime(null);
+  }, [savedNote, savedPersonalMessage, savedMode, savedDate]);
+
+  useReportUnsavedChanges(dirty, revert);
 
   // Only an edited Due Time is judged: one the organiser did not touch is not
   // theirs to fix here (a moved Event date is backlog 0008), and the note must
@@ -271,7 +311,8 @@ export function ScheduleSettingsProvider({
       setScheduledTime,
       now,
       dueTimeIssue,
-      dirty,
+      changes,
+      revert,
       isSaving,
       save,
       pendingPastDueTime,
@@ -289,7 +330,8 @@ export function ScheduleSettingsProvider({
       scheduledTime,
       now,
       dueTimeIssue,
-      dirty,
+      changes,
+      revert,
       isSaving,
       save,
       pendingPastDueTime,

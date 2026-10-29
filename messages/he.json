@@ -9,7 +9,14 @@
     "save": "שמור",
     "cancel": "ביטול",
     "close": "סגור",
-    "loading": "טוען..."
+    "loading": "טוען...",
+    "saveBar": {
+      "pending": "{count, plural, one {שינוי אחד לא נשמר} two {שני שינויים לא נשמרו} other {# שינויים לא נשמרו}}",
+      "pendingSingle": "שינוי אחד לא נשמר · {field}",
+      "save": "שמירת השינויים",
+      "saving": "שומר...",
+      "cancel": "ביטול"
+    }
   },
   "auth": {
     "welcomeBack": "ברוך השב",
@@ -1805,34 +1812,44 @@
       "call": "שיחת טלפון"
     },
     "timeline": {
-      "dayOf": "ביום האירוע",
-      "daysBefore": "{count, plural, one {יום אחד לפני} other {# ימים לפני}}",
-      "daysAfter": "{count, plural, one {יום אחד אחרי} other {# ימים אחרי}}",
       "eventDay": "יום האירוע · {date}",
       "eventDayUndated": "יום האירוע",
       "recipientCount": "{count, plural, one {נמען אחד} other {# נמענים}}",
       "callCount": "{count, plural, one {שיחה אחת} other {# שיחות}}",
-      "callLiveStat": "{confirmed} אישרו · {awaiting} נותרו",
-      "callDoneStat": "{confirmed} אישרו · {noAnswer} לא ענו",
       "callOff": "הסבב בוטל. לפרטים אפשר לפנות אלינו",
       "noDate": "עוד אין תאריך",
+      "datedTitle": "ציר הזמן",
       "undatedTitle": "עוד לא תוזמנו",
-      "undatedHint": "בחרו מתי כל אחת תישלח - שום דבר לא נשלח עד שתבחרו"
+      "undatedHint": "בחרו מתי כל אחת תישלח - שום דבר לא נשלח עד שתבחרו",
+      "today": "היום",
+      "tomorrow": "מחר",
+      "inDays": "{count, plural, one {בעוד יום} two {בעוד יומיים} other {בעוד # ימים}}"
     },
     "detail": {
       "back": "חזרה לציר הזמן",
       "footNote": {
-        "editable": "השינויים נשמרים לתזמון הזה בלבד",
-        "locked": "התוכן והתאריכים נשמרים - ההפעלה רק מאשרת שליחה",
-        "sent": "התזמון נשלח ולכן נעול לעריכה"
+        "locked": "התוכן והתאריכים נשמרים - ההפעלה רק מאשרת שליחה"
       },
       "save": {
-        "action": "שמירה",
         "saving": "שומר",
         "updated": "השינויים נשמרו",
         "error": "משהו השתבש"
       },
-      "upgrade": "שדרוג לפרימיום כדי להפעיל"
+      "upgrade": "שדרוג לפרימיום כדי להפעיל",
+      "saveBar": {
+        "fields": {
+          "messageType": "סוג ההודעה",
+          "personalMessage": "ההודעה האישית",
+          "dueTime": "מועד השליחה",
+          "note": "הערה אישית"
+        }
+      },
+      "leave": {
+        "title": "לצאת בלי לשמור?",
+        "body": "השינויים בתזמון הזה עוד לא נשמרו, ואם תצאו עכשיו הם יימחקו",
+        "keepEditing": "המשך עריכה",
+        "leave": "יציאה בלי לשמור"
+      }
     },
     "messageType": {
       "cardTitle": "סוג ההודעה",
@@ -1849,12 +1866,31 @@
       }
     },
     "deliveryInfo": {
+      "trigger": "איך ההודעות נשלחות?",
       "title": "איך ההודעה מגיעה לאורחים",
-      "points": {
-        "official": "כל ההודעות נשלחות דרך ה-API הרשמי של וואטסאפ, מחשבון עסקי מאומת",
-        "fallback": "אם וואטסאפ לא מצליח למסור - אין חשבון, חסימה או מגבלת Meta - נשלח SMS אחרי מספר ניסיונות",
-        "results": "התוצאה של כל אורח מוצגת כאן בשקיפות: נמסר, נקרא או הושלם ב-SMS"
-      }
+      "subtitle": "הכול קורה אוטומטית, בשלושה שלבים",
+      "steps": {
+        "whatsapp": {
+          "title": "נשלחת בוואטסאפ",
+          "tag": "ערוץ ראשי",
+          "body": "דרך ה-API הרשמי של וואטסאפ, מחשבון עסקי מאומת"
+        },
+        "sms": {
+          "title": "גיבוי ב-SMS",
+          "tag": "רק אם צריך",
+          "body": "אין לאורח וואטסאפ, הוא חסם או שיש מגבלת Meta? אחרי כמה ניסיונות נשלח אליו SMS"
+        },
+        "results": {
+          "title": "רואים הכול כאן",
+          "body": "הסטטוס של כל אורח מופיע ב\"תוצאות שליחה\"",
+          "statuses": {
+            "delivered": "נמסר",
+            "read": "נקרא",
+            "sms": "הושלם ב-SMS"
+          }
+        }
+      },
+      "done": "הבנתי"
     },
     "locked": {
       "title": "התזמון הזה נעול",
@@ -2244,11 +2280,6 @@
       }
     },
     "saveBar": {
-      "pending": "{count, plural, one {שינוי אחד לא נשמר} two {שני שינויים לא נשמרו} other {# שינויים לא נשמרו}}",
-      "pendingSingle": "שינוי אחד לא נשמר · {field}",
-      "save": "שמירת השינויים",
-      "saving": "שומר...",
-      "cancel": "ביטול",
       "fields": {
         "eventDate": "תאריך האירוע",
         "receptionTime": "שעת קבלת פנים",
