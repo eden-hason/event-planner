@@ -26,6 +26,7 @@ import {
   resolveTemplateBodyForPreview,
 } from '../utils/parameter-resolvers';
 import { useScheduleSettings } from './schedule-settings-context';
+import { SettingsCard } from './settings-card';
 
 function resolveSourcePath(source: string, event: EventApp | null): string | null {
   if (!event) return null;
@@ -115,11 +116,10 @@ export function MessagePreview({
   const buttons = template?.parameters?.buttonPlaceholders ?? [];
 
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-muted-foreground text-[13px] font-bold">{t('cardTitle')}</h3>
-        <span className="text-muted-foreground/80 text-[11.5px]">{t('hint')}</span>
-      </div>
+    <SettingsCard
+      title={t('cardTitle')}
+      aside={<span className="text-muted-foreground/80 text-[11.5px]">{t('hint')}</span>}
+    >
 
       {/* Phone mockup - the WhatsApp header bar and chat wallpaper only where the
           message actually arrives in WhatsApp; an SMS sits on a plain thread */}
@@ -258,7 +258,7 @@ export function MessagePreview({
           </AlertDescription>
         </Alert>
       )}
-    </section>
+    </SettingsCard>
   );
 }
 

@@ -7,12 +7,18 @@ import {
   IconChevronRight,
   IconClock,
   IconCrown,
-  IconLock,
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '@/components/ui/item';
 import { usePlansHref } from '@/features/billing';
 
 import type {
@@ -25,9 +31,12 @@ import { STATUS_TONE } from './schedule-status-chip';
 
 type UnlockedModel = Extract<HeroModel, { locked: false }>;
 
-/** The card's two-column split from md up, shared by both of its states. */
+/**
+ * The card's two-column split from md up, shared by both of its states. Even
+ * on smaller desktops, so the end side has room; the stepper takes more from xl.
+ */
 const SPLIT =
-  'md:grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] md:items-center md:gap-5';
+  'md:grid md:grid-cols-2 md:items-center md:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]';
 
 const SEGMENT: Record<HeroSegment, string> = {
   sent: 'bg-success',
@@ -357,34 +366,34 @@ function LockedHero({ total }: { total: number }) {
           segments={Array.from({ length: total }, () => 'off' as const)}
         />
       </div>
-      <div className="bg-muted/60 mx-3 mb-3 flex flex-col gap-3 rounded-[14px] p-3.5 md:m-0 md:items-start md:gap-2 md:rounded-none md:border-s md:bg-transparent md:p-0 md:ps-5">
-        <div className="flex items-center gap-2.5 md:gap-[9px]">
-          <span
-            aria-hidden
-            className="bg-card text-primary md:bg-primary/10 flex size-8 shrink-0 items-center justify-center rounded-[10px] md:size-[30px] md:rounded-[9px]"
-          >
-            <IconLock size={16} stroke={2} />
-          </span>
-          <span className="text-[14.5px] font-extrabold">
-            {tUpsell('title')}
-          </span>
-        </div>
-        {/* Under the title on mobile (past the 32px chip and its gap), under
-            the whole row on desktop. */}
-        <span className="text-muted-foreground -mt-2.5 ps-[42px] text-[12.5px] leading-normal text-pretty md:mt-0 md:ps-0">
-          {tUpsell('description', { count: total })}
-        </span>
-        {plansHref && (
-          <Button
-            asChild
-            className="rounded-xl text-[15px] font-bold md:rounded-[11px] md:text-sm"
-          >
-            <Link href={plansHref}>
-              <IconCrown aria-hidden size={16} stroke={2} />
-              {tUpsell('cta')}
-            </Link>
-          </Button>
-        )}
+      <div className="min-w-0 px-3 pb-3 md:border-s md:p-0 md:ps-5">
+        <Item
+          variant="muted"
+          size="xs"
+          className="rounded-[14px] md:rounded-none md:bg-transparent md:p-0"
+        >
+          <ItemContent className="min-w-0">
+            <ItemTitle>{tUpsell('title')}</ItemTitle>
+            <ItemDescription className="line-clamp-none text-pretty">
+              {tUpsell('description', { count: total })}
+            </ItemDescription>
+          </ItemContent>
+          {/* Its own full-width row on mobile, the end side of the row on
+              desktop. */}
+          {plansHref && (
+            <ItemActions className="basis-full md:basis-auto">
+              <Button
+                asChild
+                className="flex-1 rounded-xl text-[15px] font-bold md:flex-none md:rounded-[11px] md:text-sm"
+              >
+                <Link href={plansHref}>
+                  <IconCrown aria-hidden size={16} stroke={2} />
+                  {tUpsell('cta')}
+                </Link>
+              </Button>
+            </ItemActions>
+          )}
+        </Item>
       </div>
     </section>
   );

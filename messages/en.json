@@ -1862,7 +1862,7 @@
     },
     "upsell": {
       "title": "Your messages are written and waiting",
-      "description": "All {count} of your event's messages and calls are already written and timed against your date. Premium turns on sending",
+      "description": "{count, plural, one {# schedule is} other {# schedules are}} already timed to your date. Premium turns on sending",
       "cta": "Upgrade to Premium"
     },
     "empty": {

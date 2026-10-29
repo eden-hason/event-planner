@@ -1,30 +1,34 @@
 import { IconInfoCircle, type Icon } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 
 type Tone = 'warning' | 'info' | 'success';
 
-const TONE: Record<Tone, { box: string; chip: string; text: string }> = {
+const TONE: Record<Tone, { box: string; text: string }> = {
   warning: {
     box: 'bg-warning-tint border-warning-tint-border',
-    chip: 'bg-warning-solid text-warning-foreground',
     text: 'text-warning-strong',
   },
   info: {
     box: 'bg-info-tint border-info-tint-border',
-    chip: 'bg-info-solid text-white',
     text: 'text-info-strong',
   },
   success: {
     box: 'bg-rsvp-confirmed-tint border-rsvp-confirmed/30',
-    chip: 'bg-rsvp-confirmed text-white',
     text: 'text-rsvp-confirmed-strong',
   },
 };
 
 /**
  * The one line a Schedule says about itself at the top of its pane: locked,
- * being worked, finished. An icon chip, a bold title and the sentence under it.
+ * being worked, finished. An icon, a title and the sentence under it.
  * The tone says which kind of news it is; the words say the news.
  */
 export function NoticeBanner({
@@ -41,21 +45,17 @@ export function NoticeBanner({
   const styles = TONE[tone];
 
   return (
-    <div className={cn('flex items-start gap-3 rounded-xl border p-3.5', styles.box)}>
-      <span
-        aria-hidden
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-lg',
-          styles.chip,
-        )}
-      >
-        <Icon size={15} stroke={2.2} />
-      </span>
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className={cn('text-sm font-bold', styles.text)}>{title}</p>
-        <p className={cn('text-xs leading-relaxed', styles.text)}>{children}</p>
-      </div>
-    </div>
+    <Item size="xs"className={cn('items-start rounded-xl', styles.box)}>
+      <ItemMedia aria-hidden className={styles.text}>
+        <Icon size={14} stroke={2.2} />
+      </ItemMedia>
+      <ItemContent className="min-w-0">
+        <ItemTitle className={styles.text}>{title}</ItemTitle>
+        <ItemDescription className={cn('line-clamp-none text-pretty', styles.text)}>
+          {children}
+        </ItemDescription>
+      </ItemContent>
+    </Item>
   );
 }
 
