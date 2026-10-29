@@ -11,8 +11,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import {
   PAYMENT_KIND_LABELS,
@@ -66,6 +74,9 @@ function count(value: string): number {
  * first says what was bought - the Plan that opens the Record Package, or an upsale on it -
  * then how it was paid. Every payment moves the Event to `paid`, so this is also how a free
  * Event is given: a gift, at ₪0.
+ *
+ * A dialog on desktop, a bottom drawer on a phone. Either way the title and the buttons stay
+ * put and the form between them scrolls, so a short screen never hides the submit.
  */
 export function RecordPaymentDialog({
   eventId,
@@ -84,6 +95,7 @@ export function RecordPaymentDialog({
   extraSchedules: number;
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const hasPlan = current !== null;
   const firstOpenKind = KINDS.find((kind) => !paymentKindBlocker(kind, hasPlan))!;
 
@@ -147,195 +159,218 @@ export function RecordPaymentDialog({
     });
   }
 
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (pending) return;
-        if (next) reset();
-        setOpen(next);
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button type="button" size="sm" className="shrink-0 text-[13px]">
-          <Plus className="size-3.5" />
-          רישום תשלום
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle>רישום תשלום</DialogTitle>
-          <DialogDescription>
-            מה נרכש ואיך שולם. אירוע בחינם נרשם כמתנה של ₪0
-          </DialogDescription>
-        </DialogHeader>
+  function changeOpen(next: boolean) {
+    if (pending) return;
+    if (next) reset();
+    setOpen(next);
+  }
 
-        <section className="space-y-3">
-          <h3 className="text-[13px] font-semibold">מה נרכש</h3>
-          <RadioGroup
-            value={kind}
-            onValueChange={(v) => setKind(v as BillingPaymentKind)}
-            className="grid gap-2 sm:grid-cols-3"
-            aria-label="מה נרכש"
-          >
-            {KINDS.map((option) => {
-              const blocker = paymentKindBlocker(option, hasPlan);
-              return (
-                <Label
-                  key={option}
-                  htmlFor={`payment-kind-${option}`}
-                  className={cn(
-                    'flex cursor-pointer flex-col items-start gap-1 rounded-lg border p-3 font-normal transition-colors',
-                    kind === option && 'border-primary bg-primary/5',
-                    blocker && 'cursor-not-allowed opacity-50',
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-[13.5px] font-medium">
-                    <RadioGroupItem id={`payment-kind-${option}`} value={option} disabled={blocker !== null} />
-                    {PAYMENT_KIND_LABELS[option]}
-                  </span>
-                  <span className="text-muted-foreground text-[12px] leading-snug">{blocker ?? KIND_HINTS[option]}</span>
-                </Label>
-              );
-            })}
-          </RadioGroup>
+  const title = 'רישום תשלום';
+  const description = 'מה נרכש ואיך שולם. אירוע בחינם נרשם כמתנה של ₪0';
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {addsRecords ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="payment-records">רשומות</Label>
-                  <Input
-                    id="payment-records"
-                    inputMode="numeric"
-                    value={records}
-                    onChange={(e) => setRecords(e.target.value.replace(/\D/g, ''))}
-                    placeholder={kind === 'plan' ? '200' : '50'}
-                    className="tabular-nums"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="payment-channel">תוכנית</Label>
-                  <Select
-                    value={channel}
-                    onValueChange={(v) => setPicked(v as PricingChannel)}
-                    disabled={lockedChannel !== null}
-                  >
-                    <SelectTrigger id="payment-channel" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRICING_CHANNELS.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {RECORD_PACKAGE_CHANNEL_LABELS[c]} · ₪{RECORD_PACKAGE_RATES[c]} לרשומה
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {lockedChannel && (
-                    <p className="text-muted-foreground text-[12px]">תוספת נרשמת בתוכנית של החבילה</p>
-                  )}
-                </div>
-              </>
-            ) : (
+  const form = (
+    <>
+      <section className="space-y-3">
+        <h3 className="text-[13px] font-semibold">מה נרכש</h3>
+        <RadioGroup
+          value={kind}
+          onValueChange={(v) => setKind(v as BillingPaymentKind)}
+          className="grid gap-2 sm:grid-cols-3"
+          aria-label="מה נרכש"
+        >
+          {KINDS.map((option) => {
+            const blocker = paymentKindBlocker(option, hasPlan);
+            return (
+              <Label
+                key={option}
+                htmlFor={`payment-kind-${option}`}
+                className={cn(
+                  'flex cursor-pointer flex-col items-start gap-1 rounded-lg border p-3 font-normal transition-colors',
+                  kind === option && 'border-primary bg-primary/5',
+                  blocker && 'cursor-not-allowed opacity-50',
+                )}
+              >
+                <span className="flex items-center gap-2 text-[13.5px] font-medium">
+                  <RadioGroupItem id={`payment-kind-${option}`} value={option} disabled={blocker !== null} />
+                  {PAYMENT_KIND_LABELS[option]}
+                </span>
+                <span className="text-muted-foreground text-[12px] leading-snug">{blocker ?? KIND_HINTS[option]}</span>
+              </Label>
+            );
+          })}
+        </RadioGroup>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {addsRecords ? (
+            <>
               <div className="space-y-2">
-                <Label htmlFor="payment-schedules">תזמונים</Label>
+                <Label htmlFor="payment-records">רשומות</Label>
                 <Input
-                  id="payment-schedules"
+                  id="payment-records"
                   inputMode="numeric"
-                  value={schedules}
-                  onChange={(e) => setSchedules(e.target.value.replace(/\D/g, ''))}
+                  value={records}
+                  onChange={(e) => setRecords(e.target.value.replace(/\D/g, ''))}
+                  placeholder={kind === 'plan' ? '200' : '50'}
                   className="tabular-nums"
                 />
               </div>
-            )}
-          </div>
-        </section>
-
-        <section className="space-y-3 border-t pt-4">
-          <h3 className="text-[13px] font-semibold">תשלום</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="payment-channel">תוכנית</Label>
+                <Select
+                  value={channel}
+                  onValueChange={(v) => setPicked(v as PricingChannel)}
+                  disabled={lockedChannel !== null}
+                >
+                  <SelectTrigger id="payment-channel" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRICING_CHANNELS.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {RECORD_PACKAGE_CHANNEL_LABELS[c]} · ₪{RECORD_PACKAGE_RATES[c]} לרשומה
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {lockedChannel && (
+                  <p className="text-muted-foreground text-[12px]">תוספת נרשמת בתוכנית של החבילה</p>
+                )}
+              </div>
+            </>
+          ) : (
             <div className="space-y-2">
-              <Label htmlFor="payment-method">אמצעי תשלום</Label>
-              <Select value={method} onValueChange={(v) => setMethod(v as BillingPaymentMethod)}>
-                <SelectTrigger id="payment-method" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {METHODS.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {PAYMENT_METHOD_LABELS[m]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment-amount">סכום (₪)</Label>
+              <Label htmlFor="payment-schedules">תזמונים</Label>
               <Input
-                id="payment-amount"
-                inputMode="decimal"
-                value={isGift ? '0' : amount}
-                disabled={isGift}
-                onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
-                placeholder={listPrice !== null ? String(listPrice) : undefined}
+                id="payment-schedules"
+                inputMode="numeric"
+                value={schedules}
+                onChange={(e) => setSchedules(e.target.value.replace(/\D/g, ''))}
                 className="tabular-nums"
               />
-              {!isGift && listPrice !== null && (
-                <p className="text-muted-foreground text-[12px] tabular-nums">
-                  מחיר מחירון ₪{listPrice.toLocaleString('he-IL')}
-                </p>
-              )}
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="payment-reference">אסמכתה (לא חובה)</Label>
-              <Input
-                id="payment-reference"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                placeholder="מספר אישור העברה או ביט"
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="payment-note">הערה (לא חובה)</Label>
-              <Textarea
-                id="payment-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="מי אישר ומה סוכם"
-                maxLength={500}
-                rows={2}
-              />
-            </div>
-          </div>
-        </section>
-
-        <div className="bg-muted text-muted-foreground space-y-1 rounded-md px-3 py-2 text-[13px] tabular-nums">
-          <p>
-            <Outcome
-              kind={kind}
-              current={current}
-              records={recordCount}
-              schedules={scheduleCount}
-              extraSchedules={extraSchedules}
-            />
-          </p>
-          {hasPlan && billingStatus !== 'paid' && (
-            <p className="text-foreground">התשלום יחזיר את האירוע למצב שולם ויפעיל את השליחה</p>
           )}
         </div>
+      </section>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-            ביטול
-          </Button>
-          <Button type="button" onClick={submit} disabled={pending || !complete}>
-            {pending ? 'שומרים' : isGift ? 'רישום מתנה' : 'רישום תשלום'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <section className="space-y-3 border-t pt-4">
+        <h3 className="text-[13px] font-semibold">תשלום</h3>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="payment-method">אמצעי תשלום</Label>
+            <Select value={method} onValueChange={(v) => setMethod(v as BillingPaymentMethod)}>
+              <SelectTrigger id="payment-method" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {METHODS.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {PAYMENT_METHOD_LABELS[m]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="payment-amount">סכום (₪)</Label>
+            <Input
+              id="payment-amount"
+              inputMode="decimal"
+              value={isGift ? '0' : amount}
+              disabled={isGift}
+              onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
+              placeholder={listPrice !== null ? String(listPrice) : undefined}
+              className="tabular-nums"
+            />
+            {!isGift && listPrice !== null && (
+              <p className="text-muted-foreground text-[12px] tabular-nums">
+                מחיר מחירון ₪{listPrice.toLocaleString('he-IL')}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="payment-reference">אסמכתה (לא חובה)</Label>
+            <Input
+              id="payment-reference"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="מספר אישור העברה או ביט"
+              maxLength={100}
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="payment-note">הערה (לא חובה)</Label>
+            <Textarea
+              id="payment-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="מי אישר ומה סוכם"
+              maxLength={500}
+              rows={2}
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="bg-muted text-muted-foreground space-y-1 rounded-md px-3 py-2 text-[13px] tabular-nums">
+        <p>
+          <Outcome
+            kind={kind}
+            current={current}
+            records={recordCount}
+            schedules={scheduleCount}
+            extraSchedules={extraSchedules}
+          />
+        </p>
+        {hasPlan && billingStatus !== 'paid' && (
+          <p className="text-foreground">התשלום יחזיר את האירוע למצב שולם ויפעיל את השליחה</p>
+        )}
+      </div>
+    </>
+  );
+
+  const buttons = (
+    <>
+      <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+        ביטול
+      </Button>
+      <Button type="button" onClick={submit} disabled={pending || !complete}>
+        {pending ? 'שומרים' : isGift ? 'רישום מתנה' : 'רישום תשלום'}
+      </Button>
+    </>
+  );
+
+  return (
+    <>
+      <Button type="button" size="sm" className="shrink-0 text-[13px]" onClick={() => changeOpen(true)}>
+        <Plus className="size-3.5" />
+        רישום תשלום
+      </Button>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={changeOpen}>
+          <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[92dvh]">
+            <DrawerHeader className="border-b text-start">
+              <DrawerTitle>{title}</DrawerTitle>
+              <DrawerDescription>{description}</DrawerDescription>
+            </DrawerHeader>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">{form}</div>
+            <DrawerFooter className="flex-col-reverse border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+              {buttons}
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={open} onOpenChange={changeOpen}>
+          <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 sm:max-w-[560px]">
+            <DialogHeader className="border-b px-6 pt-6 pb-4">
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">{form}</div>
+            <DialogFooter className="border-t px-6 py-4">{buttons}</DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
 
