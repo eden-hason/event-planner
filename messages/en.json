@@ -9,7 +9,14 @@
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "saveBar": {
+      "pending": "{count, plural, one {One unsaved change} other {# unsaved changes}}",
+      "pendingSingle": "One unsaved change · {field}",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    }
   },
   "auth": {
     "welcomeBack": "Welcome back",
@@ -1805,34 +1812,44 @@
       "call": "Phone call"
     },
     "timeline": {
-      "dayOf": "On the day",
-      "daysBefore": "{count, plural, one {1 day before} other {# days before}}",
-      "daysAfter": "{count, plural, one {1 day after} other {# days after}}",
       "eventDay": "Event day · {date}",
       "eventDayUndated": "Event day",
       "recipientCount": "{count, plural, one {1 recipient} other {# recipients}}",
       "callCount": "{count, plural, one {1 call} other {# calls}}",
-      "callLiveStat": "{confirmed} confirmed · {awaiting} to go",
-      "callDoneStat": "{confirmed} confirmed · {noAnswer} no answer",
       "callOff": "This round was switched off. Get in touch for details",
       "noDate": "No date yet",
+      "datedTitle": "Timeline",
       "undatedTitle": "Not scheduled yet",
-      "undatedHint": "Pick when each one goes out - nothing is sent until you do"
+      "undatedHint": "Pick when each one goes out - nothing is sent until you do",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "{count, plural, one {In 1 day} other {In # days}}"
     },
     "detail": {
       "back": "Back to the timeline",
       "footNote": {
-        "editable": "Changes are saved to this schedule only",
-        "locked": "The content and dates are saved - enabling only permits sending",
-        "sent": "This schedule has been sent, so it can no longer be edited"
+        "locked": "The content and dates are saved - enabling only permits sending"
       },
       "save": {
-        "action": "Save",
         "saving": "Saving",
         "updated": "Changes saved",
         "error": "Something went wrong"
       },
-      "upgrade": "Upgrade to premium to enable"
+      "upgrade": "Upgrade to premium to enable",
+      "saveBar": {
+        "fields": {
+          "messageType": "Message type",
+          "personalMessage": "Personal message",
+          "dueTime": "Send time",
+          "note": "Personal note"
+        }
+      },
+      "leave": {
+        "title": "Leave without saving?",
+        "body": "Your changes to this Schedule aren't saved yet, and leaving now will discard them",
+        "keepEditing": "Keep editing",
+        "leave": "Leave without saving"
+      }
     },
     "messageType": {
       "cardTitle": "Message type",
@@ -1849,12 +1866,31 @@
       }
     },
     "deliveryInfo": {
+      "trigger": "How are messages sent?",
       "title": "How the message reaches your guests",
-      "points": {
-        "official": "Every message goes out through WhatsApp's official API, from a verified business account",
-        "fallback": "If WhatsApp cannot deliver - no account, a block or a Meta limit - we send an SMS after a few attempts",
-        "results": "Each guest's result is shown here openly: delivered, read or completed by SMS"
-      }
+      "subtitle": "It all happens automatically, in three steps",
+      "steps": {
+        "whatsapp": {
+          "title": "Sent on WhatsApp",
+          "tag": "Main channel",
+          "body": "Through WhatsApp's official API, from a verified business account"
+        },
+        "sms": {
+          "title": "SMS backup",
+          "tag": "Only if needed",
+          "body": "Guest has no WhatsApp, blocked it, or hit a Meta limit? After a few attempts we send them an SMS"
+        },
+        "results": {
+          "title": "See it all here",
+          "body": "Every guest's status shows in \"Send Results\"",
+          "statuses": {
+            "delivered": "Delivered",
+            "read": "Read",
+            "sms": "Completed by SMS"
+          }
+        }
+      },
+      "done": "Got it"
     },
     "locked": {
       "title": "This schedule is locked",
@@ -2244,11 +2280,6 @@
       }
     },
     "saveBar": {
-      "pending": "{count, plural, one {One unsaved change} other {# unsaved changes}}",
-      "pendingSingle": "One unsaved change · {field}",
-      "save": "Save changes",
-      "saving": "Saving...",
-      "cancel": "Cancel",
       "fields": {
         "eventDate": "Event date",
         "receptionTime": "Reception time",

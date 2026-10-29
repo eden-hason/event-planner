@@ -68,29 +68,18 @@ export function MessageTypeCard({ offersPersonalMessage, lockBadge }: MessageTyp
               disabled={!selectable}
               onClick={() => setMessageMode(option.mode)}
               className={cn(
-                'flex items-start gap-2.5 rounded-xl border-[1.5px] p-3 text-start transition-colors',
+                'flex flex-col gap-0.5 rounded-xl border-[1.5px] p-3 text-start transition-colors',
                 checked ? 'border-primary bg-primary/5' : 'border-border',
                 selectable && !checked && 'hover:border-primary/50',
                 !selectable && 'cursor-default',
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  'mt-0.5 flex size-[18px] shrink-0 items-center justify-center rounded-full border-2',
-                  checked ? 'border-primary' : 'border-muted-foreground/40',
-                )}
-              >
-                {checked && <span className="bg-primary size-[7px] rounded-full" />}
-              </span>
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-sm font-semibold">{option.label}</span>
-                {/* Deliberately not `message_templates.description`: that column
-                    is operator-facing English for the Back Office, and it would
-                    surface untranslated on a Hebrew page. */}
-                <span className="text-muted-foreground text-xs leading-relaxed">
-                  {option.description}
-                </span>
+              <span className="text-sm font-semibold">{option.label}</span>
+              {/* Deliberately not `message_templates.description`: that column
+                  is operator-facing English for the Back Office, and it would
+                  surface untranslated on a Hebrew page. */}
+              <span className="text-muted-foreground text-xs leading-relaxed">
+                {option.description}
               </span>
             </button>
           );

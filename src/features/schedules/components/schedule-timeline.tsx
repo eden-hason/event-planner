@@ -8,18 +8,25 @@ import {
   IconMail,
   IconPhone,
   IconUserCheck,
-  IconUsers,
   type IconProps,
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import { WhatsAppIcon } from '@/components/icons';
 import {
   Timeline,
   TimelineIndicator,
   TimelineItem,
   TimelineSeparator,
 } from '@/components/ui/timeline';
-import { CallProgressBar } from '@/features/calls';
 import type { ScheduleTypeKey } from '../schemas';
 import type { OutreachItem } from '../types';
 import { withDayMarker } from '../utils/timeline';
@@ -51,6 +58,8 @@ interface ScheduleTimelineProps {
   onSelect: (id: string) => void;
   /** Formatted label for the "day of the event" divider. */
   dayLabel: string;
+  /** Sits at the end of the list's first title row. */
+  headerAction?: React.ReactNode;
 }
 
 /**
@@ -69,6 +78,7 @@ export function ScheduleTimeline({
   activeId,
   onSelect,
   dayLabel,
+  headerAction,
 }: ScheduleTimelineProps) {
   const t = useTranslations('schedules');
   const undated = items.filter((item) => item.undated);
@@ -79,12 +89,14 @@ export function ScheduleTimeline({
       {undated.length > 0 && (
         <section aria-labelledby="undated-schedules" className="flex flex-col gap-3">
           <div className="flex flex-col gap-0.5">
-            <h2 id="undated-schedules" className="text-foreground text-sm font-bold">
+            <SectionHeading id="undated-schedules" lead action={headerAction}>
               {t('timeline.undatedTitle')}
-            </h2>
-            <p className="text-muted-foreground text-xs">{t('timeline.undatedHint')}</p>
+            </SectionHeading>
+            <p className="text-muted-foreground text-xs md:-mt-2.5">
+              {t('timeline.undatedHint')}
+            </p>
           </div>
-          <Timeline value={0} role="list">
+          <Timeline value={0} role="list" className="gap-2">
             {undated.map((item, index) => (
               <TimelineCard
                 key={item.id}
@@ -92,20 +104,58 @@ export function ScheduleTimeline({
                 item={item}
                 isActive={item.id === activeId}
                 onSelect={onSelect}
-                offsetLabel={null}
               />
             ))}
           </Timeline>
         </section>
       )}
       {dated.length > 0 && (
-        <DatedTimeline
-          items={dated}
-          activeId={activeId}
-          onSelect={onSelect}
-          dayLabel={dayLabel}
-        />
+        <section aria-labelledby="dated-schedules" className="flex flex-col gap-3">
+          <SectionHeading
+            id="dated-schedules"
+            lead={undated.length === 0}
+            action={headerAction}
+          >
+            {t('timeline.datedTitle')}
+          </SectionHeading>
+          <DatedTimeline
+            items={dated}
+            activeId={activeId}
+            onSelect={onSelect}
+            dayLabel={dayLabel}
+          />
+        </section>
       )}
+    </div>
+  );
+}
+
+/**
+ * A section's title. The list's first one (`lead`) also carries the header
+ * action, and from md up sits level with the open Schedule's tabs beside it: a
+ * row of the tabs' 42px height, the words centred in it as the tab labels are.
+ */
+function SectionHeading({
+  id,
+  lead,
+  action,
+  children,
+}: {
+  id: string;
+  lead: boolean;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const title = (
+    <h2 id={id} className="text-foreground text-sm font-bold">
+      {children}
+    </h2>
+  );
+  if (!lead) return title;
+  return (
+    <div className="flex items-center justify-between gap-3 md:h-[42px]">
+      {title}
+      {action}
     </div>
   );
 }
@@ -116,7 +166,6 @@ function DatedTimeline({
   onSelect,
   dayLabel,
 }: ScheduleTimelineProps) {
-  const t = useTranslations('schedules');
   const rows = withDayMarker(items);
 
   // The Timeline lights its rail up to the last step it is told is reached, so
@@ -128,7 +177,7 @@ function DatedTimeline({
   );
 
   return (
-    <Timeline value={reached} role="list">
+    <Timeline value={reached} role="list" className="gap-2">
       {rows.map((row, index) =>
         row.kind === 'dayMarker' ? (
           <TimelineItem
@@ -138,8 +187,8 @@ function DatedTimeline({
             aria-hidden
             className={RAIL_ITEM}
           >
-            <TimelineIndicator className="bg-primary ring-primary/15 top-0.5 size-3.5 border-0 ring-4" />
-            <div className="flex items-center gap-2.5 pt-0.5">
+            <TimelineIndicator className={cn(RAIL_CENTER, 'bg-primary ring-primary/15 size-3.5 border-0 ring-4')} />
+            <div className="flex items-center gap-2.5">
               <span className="border-primary/30 h-0 flex-1 border-t-2 border-dashed" />
               <span className="text-primary text-xs font-bold whitespace-nowrap">
                 {dayLabel}
@@ -153,7 +202,6 @@ function DatedTimeline({
             item={row.item}
             isActive={row.item.id === activeId}
             onSelect={onSelect}
-            offsetLabel={offsetLabel(t, row.item.offset)}
           />
         ),
       )}
@@ -164,53 +212,49 @@ function DatedTimeline({
 /**
  * The rail's geometry, where the design's differs from the Timeline's own: the
  * node is a 30px icon circle in a 40px column rather than a 16px dot in a 32px
- * one, and the line runs from just under the node to the next one. The
- * `has-[+[data-completed]]` line is the Timeline's "reached" colour, kept for
- * the same idea in the design's green.
+ * one, and it sits at the middle of its card rather than at the top.
+ *
+ * Cards are spaced by the list's gap rather than by padding, so each item is
+ * exactly its card and "the middle" is 50%. The line between two nodes is two
+ * halves: the upper item's separator runs from its node down to its bottom, and
+ * the lower item's `before` bridges the gap from above down to its own node.
+ * Both turn the design's green once the lower item is reached - the separator
+ * through the Timeline's `has-[+[data-completed]]`, the `before` through the
+ * item's own `data-completed`.
  */
 const RAIL_ITEM =
-  'group-data-[orientation=vertical]/timeline:ms-10 group-data-[orientation=vertical]/timeline:not-last:pb-3 has-[+[data-completed]]:**:data-[slot=timeline-separator]:bg-success/30';
+  'group-data-[orientation=vertical]/timeline:ms-10 group-data-[orientation=vertical]/timeline:not-last:pb-0 has-[+[data-completed]]:**:data-[slot=timeline-separator]:bg-success/30 not-first:before:bg-border not-first:before:absolute not-first:before:-start-[26px] not-first:before:-top-2 not-first:before:h-[calc(50%+0.5rem)] not-first:before:w-0.5 data-completed:not-first:before:bg-success/30';
+const RAIL_CENTER =
+  'group-data-[orientation=vertical]/timeline:top-1/2 z-10 -translate-y-1/2';
 const RAIL_NODE =
-  'border-card group-data-completed/timeline-item:border-card flex size-[30px] items-center justify-center group-data-[orientation=vertical]/timeline:-start-10';
+  'border-0 flex size-[30px] items-center justify-center group-data-[orientation=vertical]/timeline:-start-10';
 const RAIL_LINE =
-  'bg-border group-data-[orientation=vertical]/timeline:-start-[26px] group-data-[orientation=vertical]/timeline:h-[calc(100%-34px)] group-data-[orientation=vertical]/timeline:translate-y-[34px]';
+  'bg-border group-data-[orientation=vertical]/timeline:-start-[26px] group-data-[orientation=vertical]/timeline:top-1/2 group-data-[orientation=vertical]/timeline:h-1/2 group-data-[orientation=vertical]/timeline:translate-y-0';
 
 function isDone(status: OutreachItem['status']) {
   return status === 'sent' || status === 'completed';
 }
 
-function offsetLabel(
-  t: ReturnType<typeof useTranslations<'schedules'>>,
-  offset: number | null,
-): string | null {
-  if (offset === null) return null;
-  if (offset === 0) return t('timeline.dayOf');
-  if (offset < 0) return t('timeline.daysBefore', { count: Math.abs(offset) });
-  return t('timeline.daysAfter', { count: offset });
-}
-
+/**
+ * One Schedule: what it is, when, and how it stands - nothing the open pane
+ * says better. The rail's node says what kind of outreach it is and, once it
+ * has gone out, fills in; the chip is the only place status is told in words.
+ * The one line under the title says when and to how many - messages and call
+ * rounds alike; how a round is going is the open pane's to tell.
+ */
 function TimelineCard({
   step,
   item,
   isActive,
   onSelect,
-  offsetLabel,
 }: {
   step: number;
   item: OutreachItem;
   isActive: boolean;
   onSelect: (id: string) => void;
-  offsetLabel: string | null;
 }) {
   const t = useTranslations('schedules');
   const Icon = typeIcon(item.typeKey);
-  const done = isDone(item.status);
-  const live = item.status === 'in_progress';
-  const undated = item.status === 'undated';
-  const muted =
-    item.status === 'locked' ||
-    item.status === 'cancelled' ||
-    item.status === 'expired';
 
   return (
     <TimelineItem step={step} role="listitem" className={RAIL_ITEM}>
@@ -218,92 +262,68 @@ function TimelineCard({
       <TimelineIndicator
         className={cn(
           RAIL_NODE,
-          done
+          RAIL_CENTER,
+          isDone(item.status)
             ? 'bg-success text-success-foreground'
-            : live
-              ? 'bg-info-solid text-white'
-              : muted
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-primary/10 text-primary',
+            : 'bg-muted text-muted-foreground',
         )}
       >
         <Icon className="size-[15px]" />
       </TimelineIndicator>
       <TimelineSeparator className={RAIL_LINE} />
 
-      <button
-        type="button"
-        onClick={() => onSelect(item.id)}
-        aria-current={isActive ? 'true' : undefined}
+      <Item
+        asChild
+        variant="outline"
+        size="sm"
         className={cn(
-          'bg-card flex min-w-0 cursor-pointer flex-col gap-2 rounded-xl border p-3 text-start transition-colors',
-          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-          isActive ? 'border-primary shadow-xs' : 'hover:bg-accent/40',
-          undated && !isActive && 'border-primary/40 border-dashed',
-          done && !isActive && 'border-success/25',
-          live && !isActive && 'border-info-tint-border',
+          'bg-card w-full cursor-pointer rounded-xl text-start',
+          // Below md the list and the open Schedule never share the screen, so
+          // nothing in the list reads as selected there.
+          isActive ? 'md:border-primary md:shadow-xs' : 'hover:bg-accent/40',
         )}
       >
-        <div className="flex w-full items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <span
-              className={cn(
-                'truncate text-[15px] font-bold',
-                muted ? 'text-muted-foreground' : 'text-foreground',
-              )}
-            >
-              {item.label}
-            </span>
-            <span className="text-muted-foreground truncate text-xs">
-              {t(item.kind === 'call' ? 'kind.call' : 'kind.message')}
-              {offsetLabel ? ` · ${offsetLabel}` : ''} · {item.when}
-            </span>
-          </div>
-          <ScheduleStatusChip status={item.status} />
-        </div>
-
-        <div className="flex w-full flex-wrap items-center gap-1.5">
-          <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px]">
-            <IconUsers className="text-primary size-3" />
-            {item.audience}
-          </span>
-          {item.audienceCount !== null && (
-            <span className="text-muted-foreground text-[11.5px]">
-              {t(
-                item.kind === 'call'
-                  ? 'timeline.callCount'
-                  : 'timeline.recipientCount',
-                { count: item.audienceCount },
-              )}
-            </span>
-          )}
-          {item.callProgress && (
-            <span
-              className={cn(
-                'ms-auto text-[11.5px] font-bold',
-                live ? 'text-info-strong' : 'text-success',
-              )}
-            >
-              {live
-                ? t('timeline.callLiveStat', {
-                    confirmed: item.callProgress.confirmed,
-                    awaiting: item.callProgress.awaiting,
-                  })
-                : t('timeline.callDoneStat', {
-                    confirmed: item.callProgress.confirmed,
-                    noAnswer: item.callProgress.noAnswer,
-                  })}
-            </span>
-          )}
-        </div>
-
-        {item.callProgress && <CallProgressBar counts={item.callProgress} />}
-
-        {/* A switched-off call has nothing to report in the row above. */}
-        {item.kind === 'call' && item.status === 'cancelled' && (
-          <p className="text-muted-foreground text-xs leading-relaxed">{t('timeline.callOff')}</p>
-        )}
-      </button>
+        <button
+          type="button"
+          onClick={() => onSelect(item.id)}
+          aria-current={isActive ? 'true' : undefined}
+        >
+          {/* The channel: a message goes out on WhatsApp, a call round by phone */}
+          <ItemMedia variant="icon" aria-hidden className="text-muted-foreground rounded-lg">
+            {item.kind === 'call' ? <IconPhone /> : <WhatsAppIcon size={16} />}
+          </ItemMedia>
+          <ItemContent className="min-w-0">
+            <ItemTitle className="w-full font-bold">
+              <span className="truncate">{item.label}</span>
+            </ItemTitle>
+            <ItemDescription className="truncate text-xs">
+              {description(t, item)}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <ScheduleStatusChip status={item.status} />
+          </ItemActions>
+        </button>
+      </Item>
     </TimelineItem>
   );
+}
+
+function description(
+  t: ReturnType<typeof useTranslations<'schedules'>>,
+  item: OutreachItem,
+): string {
+  // A switched-off call has nothing else to report.
+  if (item.kind === 'call' && item.status === 'cancelled') return t('timeline.callOff');
+
+  // An undated card's chip already says there is no date.
+  const parts = item.status === 'undated' ? [] : [item.listWhen];
+  if (item.audienceCount !== null) {
+    parts.push(
+      t(item.kind === 'call' ? 'timeline.callCount' : 'timeline.recipientCount', {
+        count: item.audienceCount,
+      }),
+    );
+  }
+  return parts.join(' · ');
 }

@@ -177,7 +177,7 @@ export async function CallRoundPane({
       {/* Outcomes land as the team logs each call; no push, so a live round polls */}
       {state === 'live' && <AutoRefresh />}
       {body}
-      {footNote && <ScheduleFooter note={footNote} upgrade={state === 'locked'} aboveNav />}
+      {footNote && <ScheduleFooter note={footNote} upgrade={state === 'locked'} />}
     </div>
   );
 }

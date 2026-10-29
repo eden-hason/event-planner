@@ -20,7 +20,13 @@ import {
   isMessageSchedule,
   shouldSendTableNumbers,
 } from '../utils';
-import { comparePlanOrder, numberPlan, offsetDays, timelineStatus } from '../utils/timeline';
+import {
+  comparePlanOrder,
+  daysUntil,
+  numberPlan,
+  offsetDays,
+  timelineStatus,
+} from '../utils/timeline';
 import { heroModel, type HeroEntry } from '../utils/hero';
 import {
   getPersonalMessageCatalog,
@@ -28,7 +34,7 @@ import {
 } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
-import { DeliveryInfoCard } from './delivery-info-card';
+import { DeliveryInfoButton } from './delivery-info-button';
 import { ScheduleDetailPane } from './schedule-detail-pane';
 import { SchedulesEmptyState } from './schedules-empty-state';
 import { SchedulesLayout } from './schedules-layout';
@@ -184,9 +190,8 @@ export async function SchedulesPage({
   // the follow-up - so "Confirmation 2" is always the one that says so.
   const numbers = numberPlan(resolved.map(({ schedule }) => schedule));
 
-  // Numeric rather than a month name: the card's meta line already carries the
-  // channel and the offset, and "21 August" pushed it into an ellipsis on a
-  // 375px screen.
+  // Numeric rather than a month name: a date shares its line with a count, and
+  // "21 August" pushed that line into an ellipsis on a 375px screen.
   const dayMonth = new Intl.DateTimeFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,
     day: 'numeric',
@@ -204,12 +209,21 @@ export async function SchedulesPage({
   const formatWhenDetailed = (iso: string | null) =>
     iso ? `${dayMonth.format(new Date(iso))} · ${clock.format(new Date(iso))}` : noDate;
 
-  const audienceLabel = (targetStatus: ScheduleApp['targetStatus']) =>
-    targetStatus === 'confirmed'
-      ? t('audience.confirmedGuests')
-      : targetStatus === 'pending'
-        ? t('audience.pendingGuests')
-        : t('audience.allGuests');
+  // The list card counts down to what is ahead and dates what has passed, the
+  // date slash-separated whatever the locale's own numeric form.
+  const now = new Date();
+  const formatListWhen = (iso: string | null) => {
+    if (!iso) return noDate;
+    const days = daysUntil(iso, now);
+    if (days === null) {
+      const parts = dayMonth.formatToParts(new Date(iso));
+      const part = (type: 'day' | 'month') => parts.find((p) => p.type === type)?.value;
+      return `${part('day')}/${part('month')}`;
+    }
+    if (days === 0) return t('timeline.today');
+    if (days === 1) return t('timeline.tomorrow');
+    return t('timeline.inDays', { count: days });
+  };
 
   // A call round's place among the Event's rounds, and the size of the plan it
   // belongs to - the pane's footer says "round 2 of 2 in your package".
@@ -273,8 +287,8 @@ export async function SchedulesPage({
         offset: offsetDays(eventDate, schedule.scheduledDate),
         undated: schedule.scheduledDate === null,
         when: formatWhen(schedule.scheduledDate),
+        listWhen: formatListWhen(schedule.scheduledDate),
         whenDetailed,
-        audience: audienceLabel(schedule.targetStatus),
         audienceCount: round ? round.total : audienceCount,
         callProgress: round
           ? {
@@ -383,7 +397,7 @@ export async function SchedulesPage({
       subtitle={subtitle}
       eventId={eventId}
       eventDate={eventDate}
-      deliveryInfo={whatsappPending ? <DeliveryInfoCard /> : null}
+      deliveryInfo={whatsappPending ? <DeliveryInfoButton /> : null}
     />
   );
 }

@@ -38,7 +38,7 @@ export type OutreachItem = {
   /** Card label, already localized and disambiguated server-side */
   label: string;
   status: OutreachItemStatus;
-  /** Which kind of outreach this is - it picks the icon and the channel line */
+  /** Which kind of outreach this is - it picks the channel icon and the count's noun */
   kind: 'message' | 'call';
   /** The Schedule type key, for the icon lookup */
   typeKey: string;
@@ -55,21 +55,26 @@ export type OutreachItem = {
   undated: boolean;
   /**
    * The Due Time's date, formatted server-side in the viewer's locale. Date
-   * only: the card's meta line already carries the channel and the offset, and
-   * a clock face as well pushed it into an ellipsis on a 375px screen. Says
-   * that there is no date yet for an Undated Schedule.
+   * only: it shares the card's one line with the recipient count, and a clock
+   * face as well pushed that line into an ellipsis on a 375px screen. Says that
+   * there is no date yet for an Undated Schedule.
    */
   when: string;
+  /**
+   * When, as the list card says it: how many days until a Due Time still
+   * ahead ("in 5 days", "tomorrow", "today"), and the date once it has passed
+   * ("12/10") - what is coming is counted, what went out is dated. Says that
+   * there is no date yet for an Undated Schedule.
+   */
+  listWhen: string;
   /** The same instant with its clock face, for the detail header's one line. */
   whenDetailed: string;
-  /** Who this goes to, e.g. "Guests who have not answered" */
-  audience: string;
   /** How many records that audience currently holds, or null for a call plan the viewer cannot count */
   audienceCount: number | null;
   /**
-   * How a started call round is going, in records. Null for a message and for
-   * a call plan that has not started - the card has nothing to report until
-   * the Operator presses Start.
+   * How a started call round is going, in records, for the hero's live line.
+   * Null for a message and for a call plan that has not started - there is
+   * nothing to report until the Operator presses Start.
    */
   callProgress: {
     total: number;

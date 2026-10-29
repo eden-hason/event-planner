@@ -1,9 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { IconDeviceFloppy } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { PageSaveBar } from '@/components/page-save-bar';
 import type { ChangeKey } from '../../utils/event-details-form';
 
 /** The message key each change is named by in the bar. */
@@ -27,7 +25,7 @@ const FIELD_KEYS: Record<ChangeKey, string> = {
 };
 
 /**
- * One save for the whole page, and it only exists while there is something to
+ * One save for the whole page, and it only shows while there is something to
  * save.
  *
  * Replaces the per-section Save this page used to carry: an Owner correcting the
@@ -49,8 +47,6 @@ export function SaveBar({
 }) {
   const t = useTranslations('eventDetails.saveBar');
 
-  if (changes.length === 0) return null;
-
   const only = changes.length === 1 ? changes[0] : null;
   // The celebrant's name is gendered in Hebrew, and a bat mitzva takes the
   // feminine copy.
@@ -60,39 +56,15 @@ export function SaveBar({
       : only && FIELD_KEYS[only];
 
   return (
-    <div
-      // Tells floating buttons to lift clear of the bar - see AiAssistant.
-      data-bottom-bar
-      className={cn(
-        // Bleeds over the page card's side padding (`px-4`, `md:px-6`) so the
-        // top border runs edge to edge.
-        'bg-card md:bg-app-shell sticky z-20 -mx-4 border-t px-4 py-3 md:-mx-6 md:px-6',
-        // Above the phone's bottom nav rather than behind it; from md the nav is
-        // gone and the bar sits on the bottom edge.
-        'bottom-[calc(var(--app-bottom-nav-height)+env(safe-area-inset-bottom))] md:bottom-0',
-      )}
-    >
-      <div className="mx-auto flex max-w-6xl items-center gap-3">
-        <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs font-medium">
-          {only && fieldKey
-            ? t('pendingSingle', { field: t(`fields.${fieldKey}`) })
-            : t('pending', { count: changes.length })}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          {t('cancel')}
-        </Button>
-        {/* The page's one form owns the submit, so Enter in a field saves too. */}
-        <Button type="submit" size="sm" disabled={isSaving}>
-          <IconDeviceFloppy className="size-4" />
-          {isSaving ? t('saving') : t('save')}
-        </Button>
-      </div>
-    </div>
+    <PageSaveBar
+      open={changes.length > 0}
+      count={changes.length}
+      field={fieldKey ? t(`fields.${fieldKey}`) : undefined}
+      isSaving={isSaving}
+      onCancel={onCancel}
+      // Capped like the page's content, so the buttons sit under it rather
+      // than at the far edge of a wide screen.
+      className="mx-auto max-w-6xl"
+    />
   );
 }

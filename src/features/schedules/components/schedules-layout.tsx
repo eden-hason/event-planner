@@ -9,7 +9,6 @@ import { setSearchParams } from '@/lib/shallow-navigation';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { Separator } from '@/components/ui/separator';
 import { useFeatureLayoutContext } from '@/components/feature-layout';
-import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import type { OutreachItem } from '../types';
@@ -17,6 +16,10 @@ import type { HeroModel } from '../utils/hero';
 import { ScheduleStatusChip } from './schedule-status-chip';
 import { ScheduleTimeline } from './schedule-timeline';
 import { SchedulesHero } from './schedules-hero';
+import {
+  UnsavedChangesProvider,
+  useUnsavedChangesGuard,
+} from './unsaved-changes-guard';
 
 /** The query parameter that addresses the open Schedule. */
 const PARAM = 'schedule';
@@ -28,7 +31,7 @@ interface SchedulesLayoutProps {
   subtitle: string;
   eventId: string;
   eventDate: string | null;
-  /** How a WhatsApp message reaches the guest, shown under the timeline. */
+  /** How a WhatsApp message reaches the guest, a pill in the timeline header. */
   deliveryInfo?: ReactNode;
 }
 
@@ -63,23 +66,34 @@ export function SchedulesLayout({
   // to the timeline rather than to a blank pane.
   const openItem = items.find((item) => item.id === openId) ?? null;
   // The wide layout always has something in the pane; the narrow one shows the
-  // pane only when the organiser opened it.
-  const paneItem = openItem ?? items[0] ?? null;
+  // pane only when the organiser opened it. Unasked, it shows the latest thing
+  // that went out - what the Owner most likely came to check on - or, before
+  // anything has, the plan's first Schedule. A round being called counts as
+  // gone out, as it does in the hero.
+  const lastSent = items.findLast(
+    (item) =>
+      item.status === 'sent' ||
+      item.status === 'completed' ||
+      item.status === 'in_progress',
+  );
+  const paneItem = openItem ?? lastSent ?? items[0] ?? null;
 
-  // An open message is a full screen with its own Save at the bottom edge, so
-  // it takes over from the bottom nav. A call round has no Save - it is watched,
-  // not edited - and keeps the nav so the Owner can move on from it.
-  useHideBottomNav(openItem?.kind === 'message');
+  // Moving to another Schedule, or back to the timeline, unmounts the open one,
+  // so either asks first while it has unsaved edits.
+  const { guard, report, dialog } = useUnsavedChangesGuard();
 
   // Shallow: every pane is already in `items`, and the server never reads the
   // param, so a router navigation would only wait for an identical payload.
-  const select = useCallback((id: string) => {
-    setSearchParams((params) => params.set(PARAM, id));
-  }, []);
+  const select = useCallback(
+    (id: string) =>
+      guard(() => setSearchParams((params) => params.set(PARAM, id))),
+    [guard],
+  );
 
-  const close = useCallback(() => {
-    setSearchParams((params) => params.delete(PARAM));
-  }, []);
+  const close = useCallback(
+    () => guard(() => setSearchParams((params) => params.delete(PARAM))),
+    [guard],
+  );
 
   // Below md an open Schedule is the whole screen, so the app header stops
   // naming the page and names the Schedule instead - what it is, when, and how
@@ -115,45 +129,51 @@ export function SchedulesLayout({
     : t('timeline.eventDayUndated');
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6">
-      {/* The hero spans both columns from md up. Below md an open Schedule is
+    <UnsavedChangesProvider report={report}>
+      <div className="flex flex-col gap-4 md:gap-6">
+        {/* The hero spans both columns from md up. Below md an open Schedule is
           the whole screen, so the hero yields with the timeline. */}
-      <div className={cn(openItem && 'hidden md:block')}>
-        <SchedulesHero model={hero} eventId={eventId} onOpen={select} />
-      </div>
+        <div className={cn(openItem && 'hidden md:block')}>
+          <SchedulesHero model={hero} eventId={eventId} onOpen={select} />
+        </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-        {/* The timeline. Below md it yields the screen to an open pane; at md and
+        {/* From md the columns sit 8px either side of the divider, so list and pane
+            are as far apart as the pane's own columns (16px). */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-2">
+          {/* The timeline. Below md it yields the screen to an open pane; at md and
           up it stays in view while a long pane scrolls, and scrolls on its own
-          when it is taller than the viewport. */}
-        <div
-          className={cn(
-            'flex min-w-0 flex-col gap-4 md:w-80 md:shrink-0 lg:w-96',
-            'md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto',
-            openItem && 'hidden md:flex',
-          )}
-        >
-          <ScheduleTimeline
-            items={items}
-            activeId={paneItem?.id ?? null}
-            onSelect={select}
-            dayLabel={dayLabel}
+          when it is taller than the viewport. It stays narrow until xl - the
+          hero's own break - so a smaller desktop gives its width to the pane. */}
+          <div
+            className={cn(
+              'flex min-w-0 flex-col gap-4 md:w-72 md:shrink-0 xl:w-96',
+              'md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto',
+              openItem && 'hidden md:flex',
+            )}
+          >
+            <ScheduleTimeline
+              items={items}
+              activeId={paneItem?.id ?? null}
+              onSelect={select}
+              dayLabel={dayLabel}
+              headerAction={deliveryInfo}
+            />
+          </div>
+
+          <Separator
+            orientation="vertical"
+            className="hidden h-auto self-stretch md:block"
           />
-          {deliveryInfo}
-        </div>
 
-        <Separator
-          orientation="vertical"
-          className="hidden h-auto self-stretch md:block"
-        />
-
-        {/* The open Schedule. Below md this is the whole screen. */}
-        <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
-          {paneItem && (
-            <div className="flex flex-col gap-4">{paneItem.details}</div>
-          )}
+          {/* The open Schedule. Below md this is the whole screen. */}
+          <div className={cn('min-w-0 flex-1', !openItem && 'hidden md:block')}>
+            {paneItem && (
+              <div className="flex flex-col gap-4">{paneItem.details}</div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+      {dialog}
+    </UnsavedChangesProvider>
   );
 }
