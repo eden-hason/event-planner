@@ -34,7 +34,7 @@ export const OWNER_MESSAGE_QUICK_REPLIES = {
     {
       label: 'להמלצה בגוגל',
       action: 'review',
-      reply: (siteUrl) => `תודה שבחרתם להמליץ עלינו 💜\n${siteUrl}${REVIEW_PATH}`,
+      reply: (siteUrl) => `לכתיבת המלצה לחצו על הקישור\n${siteUrl}${REVIEW_PATH}`,
     },
   ],
 } as const satisfies Record<OwnerMessageKind, readonly QuickReply[]>;
