@@ -582,9 +582,50 @@
   transform-origin: right center;
 }
 
-/* Smooth scrolling */
+/*
+ * UI scale. Tailwind's spacing, type and radius scales are rem, and
+ * postcss-pxtorem (postcss.config.mjs) rewrites the arbitrary px values as rem
+ * too, so this one root font-size scales nearly the whole UI. 1 is the
+ * original size. Phones get the smaller step. Breakpoints are unaffected:
+ * media queries resolve rem against the browser default, not this.
+ */
+:root {
+  --ui-scale: 0.875;
+}
+
+@media (width >= 48rem) {
+  :root {
+    --ui-scale: 0.9375;
+  }
+}
+
 html {
+  font-size: calc(var(--ui-scale) * 100%);
+  /* Smooth scrolling */
   scroll-behavior: smooth;
+}
+
+/*
+ * iOS Safari zooms the page into any focused field under 16px. Text fields
+ * are 16px on mobile at scale 1 (`text-base`), so undo the scale for them on
+ * iOS only. Unlayered, so it outranks the utility classes on the field.
+ */
+@supports (-webkit-touch-callout: none) {
+  input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="file"],
+      [type="color"],
+      [type="button"],
+      [type="submit"],
+      [type="reset"],
+      [type="image"]
+    ),
+  textarea,
+  select {
+    font-size: max(1rem, calc(1rem / var(--ui-scale)));
+  }
 }
 
 a:focus-visible {
