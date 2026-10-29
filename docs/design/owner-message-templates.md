@@ -83,7 +83,7 @@ Sent at 18:00 Israel the day after the Event, or Sunday if that day is Saturday.
 1. Quick reply, static (no payload sent): text `להמלצה בגוגל`. Answered with:
 
    ```
-   תודה שבחרתם להמליץ עלינו 💜
+   לכתיבת המלצה לחצו על הקישור
    https://kulu-lu.com/review
    ```
 
