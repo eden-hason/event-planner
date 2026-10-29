@@ -5,6 +5,8 @@ Date: 2026-10-17
 ## Status
 
 Accepted. Built on this branch; the Meta templates are specified in `docs/design/owner-message-templates.md`.
+The "links in the text, not buttons" point is superseded by ADR 0049: links are quick-reply
+buttons answered with the link.
 
 ## Context
 

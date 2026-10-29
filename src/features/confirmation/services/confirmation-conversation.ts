@@ -8,6 +8,7 @@ import {
   TEST_MESSAGE_TAG,
 } from '@/features/schedules/utils/whatsapp-callback-tag';
 import { buildOccasionPhrase, readEventTypeKey } from '@/features/events/utils/event-title';
+import { findOwnerMessageQuickReply } from '@/features/owner-messages/services';
 import {
   conversationStep,
   endsConversation,
@@ -34,7 +35,9 @@ import { recordGuestRsvp } from './record-rsvp';
  * text - which is read as the tap when it is an RSVP button's label quoting the
  * template (some Guests' WhatsApp sends a tap that way), as a Guest count when
  * the latest reply to that phone asked for one (ADR 0023), and otherwise gets
- * the fixed prompt (ADR 0040). Replies are posted inline, not queued - they
+ * the fixed prompt (ADR 0040). The one exception is a tap on an Owner Message's
+ * quick reply, which is answered with its link and goes no further (ADR 0049).
+ * Replies are posted inline, not queued - they
  * answer something the Guest did seconds ago - and are free, because the
  * Guest's own message opened the 24-hour window.
  *
@@ -590,6 +593,20 @@ export async function handleInboundWhatsAppMessage(
 
   const claimed = await claim(supabase, message, tap?.title ?? text);
   if (!claimed) return;
+
+  // An Owner tapping a button on Kululu's own message to them (ADR 0049), not
+  // a Guest answering. Checked first, so an Owner who is also a Guest on their
+  // Event is never read as an RSVP here.
+  const ownerReply = await findOwnerMessageQuickReply(supabase, message.context?.id, tap?.title ?? text);
+  if (ownerReply) {
+    const result = await reply(message.from, { kind: 'text', body: ownerReply.body }, claimed.id);
+    await finish(supabase, claimed.id, {
+      eventId: ownerReply.eventId,
+      action: `owner:${ownerReply.action}`,
+      result,
+    });
+    return;
+  }
 
   if (tap) {
     const parsed = parseConversationId(tap.id);

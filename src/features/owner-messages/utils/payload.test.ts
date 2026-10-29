@@ -27,7 +27,7 @@ describe('buildOwnerMessagePayload - welcome', () => {
         { type: 'text', text: (1020).toLocaleString('he-IL') },
       ],
     });
-    // The app link is static text in the body, and the support button is static.
+    // The app quick reply and the support button are both static in Meta.
     assert.equal(payload.components.length, 1);
   });
 

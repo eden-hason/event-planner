@@ -12,8 +12,10 @@
  *
  *  - `attempt:<id>`       - a Delivery Attempt, posted by the Worker or a
  *                           manual send. Its statuses are applied to that row.
- *  - `conversation:<id>`  - a Confirmation Conversation reply (ADR 0017),
- *                           keyed by the inbound message it answers. No attempt.
+ *  - `conversation:<id>`  - a reply to an inbound message, keyed by that
+ *                           message: a Confirmation Conversation step (ADR 0017)
+ *                           or an Owner Message quick reply's link (ADR 0049).
+ *                           No attempt.
  *  - `test`               - a Test Message. Nothing is recorded for it.
  *  - `owner:<id>`         - an Owner Message (ADR 0039). Its statuses are
  *                           applied to that owner_messages row.
