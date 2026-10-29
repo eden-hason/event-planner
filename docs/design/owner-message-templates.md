@@ -17,16 +17,19 @@ Sent the first time an Event is paid.
 היי {{1}}, איזה כיף שהצטרפת ל-Kululu! 🎉
 
 החבילה שלך: {{2}}, {{3}} רשומות.
-ההזמנות וסבבי האישורים כבר מחכים לך במערכת - אפשר לראות, לערוך ולתזמן הכל משם:
-https://kulu-lu.com/app
+ההזמנות וסבבי האישורים כבר מחכים לך בדף האירוע - הכפתור "ניהול האירוע" למטה מוביל ישר לשם 👇
 
-יש שאלה? אנחנו זמינים בוואטסאפ, בכפתור למטה
+יש שאלה? אנחנו זמינים בוואטסאפ, בכפתור "דברו איתנו"
 ```
 
-The app link is plain text in the body, not a button. WhatsApp opens a template button in
-its own in-app browser, where the Owner is not signed in. A link in the body opens in the
-phone's own browser. It is static: `/app` sends a signed-in Owner to their latest Event's
-Home, and asks anyone else to sign in first.
+The body names each button, because there are two of them: "בכפתור למטה" alone would not
+say which. The quick reply comes first, under the line that points to it.
+
+The app link is not in the template (ADR 0049). Any link in a template, in the body or on a
+button, opens in WhatsApp's in-app browser, where the Owner is not signed in. The
+"ניהול האירוע" quick reply is answered with a session message carrying
+`https://kulu-lu.com/app`, which opens in the phone's own browser. `/app` sends a
+signed-in Owner to their latest Event's Home, and asks anyone else to sign in first.
 
 Addressed to one person, because it goes to the Event's creator only. Every second-person
 word (הצטרפת, שלך, לך) is spelled the same for a man and a woman in unpointed Hebrew, so
@@ -41,7 +44,14 @@ would force a guess.
 
 **Buttons**
 
-1. URL, static: text `דברו איתנו`, URL `https://kulu-lu.com/support`. Meta does not
+1. Quick reply, static (no payload sent): text `ניהול האירוע`. Answered with:
+
+   ```
+   הנה הקישור לניהול האירוע 👇
+   https://kulu-lu.com/app
+   ```
+
+2. URL, static: text `דברו איתנו`, URL `https://kulu-lu.com/support`. Meta does not
    accept a `wa.me` link in a template button, so the button opens Kululu's own domain and
    `next.config.ts` redirects to `wa.me/972552639234` (`KULULU_WHATSAPP_NUMBER` in
    `src/features/billing/utils/contact.ts`, the same line the homepage uses).
@@ -59,8 +69,7 @@ Sent at 18:00 Israel the day after the Event, or Sunday if that day is Saturday.
 כל המידע מהאירוע נשאר זמין לכם במערכת.
 יש לכם אפשרות לתעד במערכת את המתנות שקיבלתם, בצורה פשוטה ונוחה 🎁
 
-אם הייתם מרוצים מהחוויה איתנו, נשמח ממש להמלצה קצרה מכם בדף העסק שלנו 💜
-https://kulu-lu.com/review
+אם הייתם מרוצים מהחוויה איתנו, נשמח ממש להמלצה קצרה מכם בדף העסק שלנו, בכפתור למטה 💜
 
 תודה ענקית על האמון והבחירה ב-Kululu 🙏🏼
 ```
@@ -69,12 +78,29 @@ https://kulu-lu.com/review
 |---|---|---|
 | `{{1}}` | Owner's first name | נועה |
 
-**Buttons:** none. The gifting page is mentioned in the text only. The review link is plain
-text in the body, so it opens in the phone's own browser rather than WhatsApp's.
-`/review` is Kululu's own short link: `next.config.ts` redirects it to
+**Buttons**
+
+1. Quick reply, static (no payload sent): text `להמלצה בגוגל`. Answered with:
+
+   ```
+   תודה שבחרתם להמליץ עלינו 💜
+   https://kulu-lu.com/review
+   ```
+
+The gifting page is mentioned in the text only. The review link is in the answer, not the
+template, so it opens in the phone's own browser, where the Owner is signed in to Google
+(ADR 0049). `/review` is Kululu's own short link: `next.config.ts` redirects it to
 `GOOGLE_REVIEW_URL` in `src/lib/config/contact.ts`, the Business Profile's "Ask for
 reviews" link (`https://g.page/r/CdLdsV8gjwUVEAI/review`), which opens the review form
 directly. Changing it there changes nothing in the template.
+
+## Quick replies
+
+A button label here must match `OWNER_MESSAGE_QUICK_REPLIES` in
+`src/features/owner-messages/utils/quick-replies.ts` exactly, which also holds the answers.
+Change both together. The quick replies were added by editing the approved `_1` templates in
+place. Deploy the code before submitting an edit, so no tap arrives before there is an
+answer for it.
 
 ## Before turning it on
 

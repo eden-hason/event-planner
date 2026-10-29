@@ -16,10 +16,10 @@ export const SUPPORT_PATH = '/support';
 /**
  * Where Kululu asks for a Google review: the Business Profile's "Ask for
  * reviews" link, which opens the review form directly. The Post-event Owner
- * Message links REVIEW_PATH as plain text (a body link opens in the phone's own
- * browser, a button in WhatsApp's), and next.config.ts redirects it here.
+ * Message's review quick reply answers with REVIEW_PATH (ADR 0049), and
+ * next.config.ts redirects it here.
  */
 export const GOOGLE_REVIEW_URL = 'https://g.page/r/CdLdsV8gjwUVEAI/review';
 
-/** The short link the Post-event Owner Message shows for the review. */
+/** The short link the Post-event Owner Message's review button answers with. */
 export const REVIEW_PATH = '/review';

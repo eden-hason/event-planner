@@ -9,10 +9,11 @@ import type { OwnerMessageFacts, OwnerMessageKind } from '../types';
  * are named here rather than in message_templates. Their approved text and
  * buttons are in docs/design/owner-message-templates.md.
  *
- * Their links (`/app`, `/review`) are plain text in the body, fixed in Meta,
- * not buttons: WhatsApp opens a button in its own browser, where the Owner is
- * not signed in, and a body link in their own. The Welcome's one button
- * (support) is static. So the only parameters are the body's.
+ * Their links (`/app`, `/review`) are not in the template at all: each is a
+ * quick-reply button, answered with the link in a session message, which opens
+ * in the phone's own browser rather than WhatsApp's (ADR 0049,
+ * utils/quick-replies.ts). The buttons, and the Welcome's support URL button,
+ * are static. So the only parameters are the body's.
  */
 export const OWNER_MESSAGE_TEMPLATES = {
   welcome: 'owner_welcome_1',

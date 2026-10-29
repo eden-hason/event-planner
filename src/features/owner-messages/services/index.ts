@@ -2,3 +2,4 @@
 // through the feature barrel.
 export { applyOwnerMessageStatus, sendOwnerMessageNow } from './send-owner-message';
 export { sweepOwnerMessages } from './sweep-owner-messages';
+export { findOwnerMessageQuickReply, type OwnerMessageQuickReplyAnswer } from './quick-reply';
