@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { sendingConfig } from '@/lib/config/sending';
@@ -264,6 +265,66 @@ export async function updatePersonalMessage(
       updated: 'Message updated',
     },
   });
+}
+
+export type UpdateInvitationVideoState = {
+  success: boolean;
+  message?: string | null;
+};
+
+/**
+ * Stores the video a Bespoke Template sends as its header
+ * (events.invitation_video_url). The file is uploaded from the browser straight
+ * to the invitation-videos bucket; this only records its URL, or clears it.
+ *
+ * Asked through the Schedule rather than the Event, so it closes when the
+ * Schedule does: once the invitation is sent, WhatsApp Guests already hold the
+ * video, and a swap would only change what the /v/ page plays.
+ * RLS on events ensures only the Event's owners can write it.
+ */
+export async function updateInvitationVideo(
+  scheduleId: string,
+  videoUrl: string | null,
+): Promise<UpdateInvitationVideoState> {
+  const blocked = await assertNotImpersonating();
+  if (blocked) return { success: false, message: blocked };
+  if (videoUrl !== null && !z.url().safeParse(videoUrl).success) {
+    return { success: false, message: 'Invalid video address' };
+  }
+  try {
+    const supabase = await createClient();
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('schedules')
+      .select('event_id, status, dispatched_at')
+      .eq('id', scheduleId)
+      .single();
+
+    if (fetchError || !existing) {
+      return { success: false, message: 'Schedule not found' };
+    }
+
+    // A claimed Schedule is as good as sent: its messages are already queued.
+    const rejection = editRejection(existing.dispatched_at ? 'sent' : existing.status);
+    if (rejection) return { success: false, message: rejection };
+
+    const { error } = await supabase
+      .from('events')
+      .update({ invitation_video_url: videoUrl })
+      .eq('id', existing.event_id);
+
+    if (error) {
+      console.error('Error updating invitation_video_url:', error);
+      return { success: false, message: 'Failed to save the video' };
+    }
+
+    revalidatePath('/app');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating invitation_video_url:', error);
+    return { success: false, message: 'An unexpected error occurred' };
+  }
 }
 
 export type UpdateScheduleStatusState = {

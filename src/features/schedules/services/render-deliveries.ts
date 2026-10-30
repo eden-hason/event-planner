@@ -12,7 +12,7 @@ import {
   type GuestApp,
 } from '@/features/guests/schemas';
 import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
-import { mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
 import { loadOutsidePackageIds } from '@/features/billing/services';
@@ -130,9 +130,7 @@ export async function renderScheduleDeliveries(
       .from('schedules')
       .select(
         `${SCHEDULE_SELECT},
-         events (id, user_id, title, event_date, location, host_details,
-                 invitations, reception_time, short_code, event_settings,
-                 guests_experience, event_types (key))`,
+         events (${MAPPED_EVENT_COLUMNS})`,
       )
       .eq('id', scheduleId)
       .maybeSingle();

@@ -4,7 +4,7 @@ import type { MessageTemplateApp } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
 import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
-import { mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import {
   buildSmsBody,
   classifyWhatsAppFailure,
@@ -120,9 +120,7 @@ async function loadSchedule(
     .from('schedules')
     .select(
       `${SCHEDULE_SELECT},
-       events (id, user_id, title, event_date, location, host_details,
-               invitations, reception_time, short_code, event_settings,
-               guests_experience, event_types (key))`,
+       events (${MAPPED_EVENT_COLUMNS})`,
     )
     .eq('id', scheduleId)
     .single();

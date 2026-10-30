@@ -13,6 +13,14 @@ import {
 
 import { cn } from '@/lib/utils';
 import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
   Item,
   ItemActions,
   ItemContent,
@@ -87,15 +95,13 @@ export function ScheduleTimeline({
   return (
     <div className="flex flex-col gap-5">
       {undated.length > 0 && (
-        <section aria-labelledby="undated-schedules" className="flex flex-col gap-3">
-          <div className="flex flex-col gap-0.5">
-            <SectionHeading id="undated-schedules" lead action={headerAction}>
-              {t('timeline.undatedTitle')}
-            </SectionHeading>
-            <p className="text-muted-foreground text-xs md:-mt-2.5">
-              {t('timeline.undatedHint')}
-            </p>
-          </div>
+        <TimelineSection
+          id="undated-schedules"
+          title={t('timeline.undatedTitle')}
+          description={t('timeline.undatedHint')}
+          action={headerAction}
+          lead
+        >
           <Timeline value={0} role="list" className="gap-2">
             {undated.map((item, index) => (
               <TimelineCard
@@ -107,56 +113,67 @@ export function ScheduleTimeline({
               />
             ))}
           </Timeline>
-        </section>
+        </TimelineSection>
       )}
       {dated.length > 0 && (
-        <section aria-labelledby="dated-schedules" className="flex flex-col gap-3">
-          <SectionHeading
-            id="dated-schedules"
-            lead={undated.length === 0}
-            action={headerAction}
-          >
-            {t('timeline.datedTitle')}
-          </SectionHeading>
+        <TimelineSection
+          id="dated-schedules"
+          title={t('timeline.datedTitle')}
+          action={headerAction}
+          lead={undated.length === 0}
+        >
           <DatedTimeline
             items={dated}
             activeId={activeId}
             onSelect={onSelect}
             dayLabel={dayLabel}
           />
-        </section>
+        </TimelineSection>
       )}
     </div>
   );
 }
 
 /**
- * A section's title. The list's first one (`lead`) also carries the header
- * action, and from md up sits level with the open Schedule's tabs beside it: a
- * row of the tabs' 42px height, the words centred in it as the tab labels are.
+ * One group of the list - its title, an optional line under it, and its cards -
+ * on a Card with the card's own surface taken away, so the header parts keep
+ * their slots without boxing the cards in a second frame.
+ *
+ * The list's first section (`lead`) also carries the header action, and from md
+ * up its header is at least the 42px of the open Schedule's tabs beside it, so
+ * a title with no line under it sits level with the tab labels. The action
+ * stays on the title's row, as the Card's own action slot puts it.
  */
-function SectionHeading({
+function TimelineSection({
   id,
-  lead,
+  title,
+  description,
   action,
+  lead,
   children,
 }: {
   id: string;
-  lead: boolean;
+  title: string;
+  description?: string;
   action?: React.ReactNode;
+  lead: boolean;
   children: React.ReactNode;
 }) {
-  const title = (
-    <h2 id={id} className="text-foreground text-sm font-bold">
-      {children}
-    </h2>
-  );
-  if (!lead) return title;
   return (
-    <div className="flex items-center justify-between gap-3 md:h-[42px]">
-      {title}
-      {action}
-    </div>
+    <Card
+      role="region"
+      aria-labelledby={id}
+      className="gap-3 rounded-none border-0 bg-transparent py-0 shadow-none"
+    >
+      <CardHeader className={cn('gap-0.5 px-0', lead && 'content-center md:min-h-[42px]')}>
+        <CardTitle className="text-foreground text-sm leading-normal font-bold">
+          <h2 id={id}>{title}</h2>
+        </CardTitle>
+        {description && <CardDescription className="text-xs">{description}</CardDescription>}
+        {lead && action && <CardAction>{action}</CardAction>}
+      </CardHeader>
+      <CardContent className="px-0">{children}</CardContent>
+    </Card>
   );
 }
 

@@ -534,14 +534,10 @@ function FileUploadRoot(props: FileUploadRootProps) {
       }
 
       if (acceptedFiles.length > 0) {
+        // ADD_FILES reports the new list through onValueChange itself, for
+        // controlled and uncontrolled use alike; calling it again here gave
+        // every controlled caller each pick twice.
         store.dispatch({ type: 'ADD_FILES', files: acceptedFiles });
-
-        if (isControlled && onValueChange) {
-          const currentFiles = Array.from(store.getState().files.values()).map(
-            (f) => f.file,
-          );
-          onValueChange([...currentFiles]);
-        }
 
         if (onAccept) {
           onAccept(acceptedFiles);
@@ -560,8 +556,6 @@ function FileUploadRoot(props: FileUploadRootProps) {
     },
     [
       store,
-      isControlled,
-      onValueChange,
       onAccept,
       onFileAccept,
       onUpload,
