@@ -32,14 +32,15 @@ const ATTEMPTS =
  * answers the guest gave, which those rows end in.
  *
  * The one Schedule-wide fact in a row is whether an SMS Fallback is on its way,
- * which waits on the Schedule's Fallback Freeze. It is asked only for the
+ * which waits on the Schedule's Fallback Freeze and never comes under the Event's
+ * SMS Fallback Opt-out. The Freeze is asked only for the
  * Schedules where this guest's Delivery failed, the only kind it can change.
  */
 export async function loadGuestJourneys(
   supabase: SupabaseClient,
   guest: { id: string; name: string; amount: number; phone: string | null },
 ): Promise<{ deliveries: GuestJourneyDelivery[]; answers: GuestAnswer[] } | null> {
-  const [deliveriesResult, answersResult] = await Promise.all([
+  const [deliveriesResult, answersResult, eventResult] = await Promise.all([
     supabase
       .from('message_deliveries')
       .select(
@@ -52,7 +53,16 @@ export async function loadGuestJourneys(
       .eq('guest_id', guest.id)
       .in('interaction_type', ['rsvp_confirm', 'rsvp_decline'])
       .order('created_at', { ascending: false }),
+    supabase
+      .from('guests')
+      .select('events!inner(sms_fallback_enabled)')
+      .eq('id', guest.id)
+      .maybeSingle(),
   ]);
+  // Every Delivery here is the one Event's, so its SMS Fallback Opt-out is read once.
+  const optedOut =
+    (eventResult.data?.events as { sms_fallback_enabled?: boolean } | null | undefined)
+      ?.sms_fallback_enabled === false;
 
   const failed = deliveriesResult.error ?? answersResult.error;
   if (failed) {
@@ -114,6 +124,7 @@ export async function loadGuestJourneys(
       row.status === 'failed' &&
       awaitingSmsFallback([toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts)], {
         frozen: frozen.get(scheduleId) ?? false,
+        optedOut,
         window: stuckWindow(),
       }).has(id);
 

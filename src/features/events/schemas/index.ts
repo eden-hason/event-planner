@@ -171,6 +171,9 @@ export const EventAppSchema = z.object({
   // read-only send gate every outreach path already checks.
   billingStatus: z.enum(EVENT_BILLING_STATUSES).default('free'),
   canCreateSchedules: z.boolean().default(false),
+  // False under an SMS Fallback Opt-out (CONTEXT.md): set in the Back Office at the
+  // Owner's request, after which the Owner's screens speak of WhatsApp only.
+  smsFallbackEnabled: z.boolean().default(true),
   shortCode: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -219,6 +222,7 @@ export const EventDbSchema = z.object({
   budget: z.number().optional().nullable(),
   billing_status: z.enum(EVENT_BILLING_STATUSES).default('free'),
   can_create_schedules: z.boolean().default(false),
+  sms_fallback_enabled: z.boolean().default(true),
   short_code: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -254,6 +258,7 @@ export function dbToAppTransformer(dbData: {
   budget?: number | null;
   billing_status?: string | null;
   can_create_schedules?: boolean | null;
+  sms_fallback_enabled?: boolean | null;
   short_code: string;
   created_at: string;
   updated_at: string;
@@ -312,6 +317,7 @@ export function dbToAppTransformer(dbData: {
     budget: dbData.budget ?? undefined,
     billingStatus,
     canCreateSchedules: dbData.can_create_schedules ?? false,
+    smsFallbackEnabled: dbData.sms_fallback_enabled !== false,
     shortCode: dbData.short_code,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,

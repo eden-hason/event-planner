@@ -34,6 +34,8 @@ interface ScheduleResultsProps {
   collectsRsvp: boolean;
   channel: 'whatsapp' | 'sms' | null;
   sentAt?: string;
+  /** False under an SMS Fallback Opt-out: no SMS placeholder before results arrive. */
+  smsFallback: boolean;
   /** When the server produced `data`; every relative time is measured from it. */
   renderedAt: string;
 }
@@ -63,6 +65,7 @@ export function ScheduleResults({
   collectsRsvp,
   channel,
   sentAt,
+  smsFallback,
   renderedAt,
 }: ScheduleResultsProps) {
   const locale = useLocale();
@@ -106,7 +109,7 @@ export function ScheduleResults({
     return (
       <div ref={rootRef} className="flex flex-col gap-3.5">
         {live}
-        <ScheduleResultsGhost collectsRsvp={collectsRsvp} channel={channel} />
+        <ScheduleResultsGhost collectsRsvp={collectsRsvp} channel={channel} smsFallback={smsFallback} />
       </div>
     );
   }
@@ -593,9 +596,12 @@ function RsvpCard({ summary }: { summary: Summary }) {
 export function ScheduleResultsGhost({
   collectsRsvp,
   channel,
+  smsFallback = true,
 }: {
   collectsRsvp: boolean;
   channel: 'whatsapp' | 'sms' | null;
+  /** False under an SMS Fallback Opt-out: a WhatsApp Schedule's ghost has no SMS bar. */
+  smsFallback?: boolean;
 }) {
   const t = useTranslations('schedules.results');
   const isSms = channel === 'sms';
@@ -613,11 +619,9 @@ export function ScheduleResultsGhost({
     ...(isSms
       ? []
       : [{ key: 'wa', color: 'bg-channel-whatsapp/35', width: 'w-[62%]' }]),
-    {
-      key: 'sms',
-      color: 'bg-channel-sms/35',
-      width: isSms ? 'w-[78%]' : 'w-[22%]',
-    },
+    ...(isSms || smsFallback
+      ? [{ key: 'sms', color: 'bg-channel-sms/35', width: isSms ? 'w-[78%]' : 'w-[22%]' }]
+      : []),
     { key: 'way', color: 'bg-warning-solid/35', width: 'flex-1' },
   ];
 

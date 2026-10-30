@@ -81,11 +81,13 @@ export async function ScheduleDetailPane({
             collectsRsvp={collectsRsvp}
             channel={schedule.deliveryMethod}
             sentAt={schedule.sentAt}
+            smsFallback={event?.smsFallbackEnabled ?? true}
           />
         ) : (
           <ScheduleResultsGhost
             collectsRsvp={collectsRsvp}
             channel={schedule.deliveryMethod}
+            smsFallback={event?.smsFallbackEnabled ?? true}
           />
         )}
       </TabsContent>

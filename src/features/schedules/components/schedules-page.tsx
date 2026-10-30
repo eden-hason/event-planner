@@ -397,7 +397,7 @@ export async function SchedulesPage({
       subtitle={subtitle}
       eventId={eventId}
       eventDate={eventDate}
-      deliveryInfo={whatsappPending ? <DeliveryInfoButton /> : null}
+      deliveryInfo={whatsappPending ? <DeliveryInfoButton smsFallback={event?.smsFallbackEnabled ?? true} /> : null}
     />
   );
 }

@@ -106,7 +106,12 @@ export type FallbackDeliveryRow = {
 type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
   event: ReturnType<typeof mapEventRow>;
+  /** False under an SMS Fallback Opt-out (CONTEXT.md). */
+  smsFallbackEnabled: boolean;
 };
+
+/** Why an Event under an SMS Fallback Opt-out offers no fallback. */
+export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
 type Resolution =
   | { ok: true; withTable: MessageTemplateApp | null; withoutTable: MessageTemplateApp }
@@ -120,7 +125,7 @@ async function loadSchedule(
     .from('schedules')
     .select(
       `${SCHEDULE_SELECT},
-       events (${MAPPED_EVENT_COLUMNS})`,
+       events (${MAPPED_EVENT_COLUMNS}, sms_fallback_enabled)`,
     )
     .eq('id', scheduleId)
     .single();
@@ -128,6 +133,8 @@ async function loadSchedule(
   return {
     schedule: ScheduleDbToAppSchema.parse(data),
     event: mapEventRow(data.events),
+    smsFallbackEnabled:
+      (data.events as unknown as { sms_fallback_enabled: boolean }).sms_fallback_enabled !== false,
   };
 }
 
@@ -143,6 +150,10 @@ async function resolveSmsTemplates(
   loaded: LoadedSchedule,
 ): Promise<Resolution> {
   const { schedule, event } = loaded;
+  // The Owner's choice, so it is checked before anything else and nothing
+  // overrides it - not the button, not the retry (unlike a Freeze, which only
+  // the sweeper respects).
+  if (!loaded.smsFallbackEnabled) return { ok: false, reason: SMS_FALLBACK_OPTED_OUT_REASON };
   if (!isMessageSchedule(schedule)) {
     return { ok: false, reason: 'רק תזמוני הודעות יכולים לעבור ל-SMS' };
   }
@@ -314,14 +325,19 @@ export function classifySmsFallbackCandidates(
  * The Failed deliveries an SMS is on its way to without anyone pressing a
  * button: one whose SMS attempt is already being made, or one the sweeper will
  * pick up once the Schedule settles. Nothing while a Freeze holds the
- * automatic batch - that waits on an Operator, so it is not on its way.
+ * automatic batch - that waits on an Operator, so it is not on its way - and
+ * nothing for an Event under an SMS Fallback Opt-out, where nothing ever is.
  *
  * Asks the engine's own classifier, so the results screen promises exactly the
  * guests `sendSmsFallback` would send to.
  */
 export function awaitingSmsFallback(
   rows: FallbackDeliveryRow[],
-  { frozen, window }: { frozen: boolean; window: StuckWindow },
+  {
+    frozen,
+    optedOut = false,
+    window,
+  }: { frozen: boolean; optedOut?: boolean; window: StuckWindow },
 ): Set<string> {
   const failed = rows.filter((row) => row.status === 'failed');
   const awaiting = new Set(
@@ -331,7 +347,7 @@ export function awaitingSmsFallback(
       )
       .map((row) => row.id),
   );
-  if (!frozen) {
+  if (!frozen && !optedOut) {
     for (const recipient of classifySmsFallbackCandidates(failed, window).eligible) {
       awaiting.add(recipient.deliveryId);
     }
@@ -385,6 +401,11 @@ export async function buildSmsFallbackPlan(
   const loaded = await loadSchedule(supabase, scheduleId);
   if (!loaded) {
     return { scheduleId, unavailableReason: 'התזמון הזה כבר לא קיים', eligible: [], excluded: [], preview: null };
+  }
+  // No list under an Opt-out: guests who would be eligible are not a choice the
+  // Operator has, so counting them would only invite a press that cannot send.
+  if (!loaded.smsFallbackEnabled) {
+    return { scheduleId, unavailableReason: SMS_FALLBACK_OPTED_OUT_REASON, eligible: [], excluded: [], preview: null };
   }
 
   const [resolution, rows] = await Promise.all([
