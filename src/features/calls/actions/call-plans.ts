@@ -43,7 +43,7 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
     // A Draft Event cannot have schedules - it is interest, not an event.
     const { data: event } = await supabase
       .from('events')
-      .select('status, can_create_schedules')
+      .select('status, can_create_schedules, plan_includes_calls')
       .eq('id', input.eventId)
       .single();
 
@@ -52,6 +52,11 @@ export async function createCallPlan(input: CreateCallPlanInput): Promise<CallPl
     }
     if (!event.can_create_schedules) {
       return { success: false, message: 'השליחה לא מופעלת לאירוע הזה' };
+    }
+
+    // The WhatsApp Plan has no Call Rounds (ADR 0034).
+    if (!event.plan_includes_calls) {
+      return { success: false, message: 'החבילה של האירוע הזה לא כוללת סבבי שיחות' };
     }
 
     // No audience check: a plan is only a date and a target. Who gets called
