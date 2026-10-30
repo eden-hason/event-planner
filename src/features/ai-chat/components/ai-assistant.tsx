@@ -98,7 +98,7 @@ export function AiAssistant({ eventId }: AiAssistantProps) {
         </button>
       </SheetTrigger>
       <SheetContent
-        side={isMobile ? 'bottom' : 'left'}
+        side={isMobile ? 'bottom' : 'right'}
         className={
           isMobile
             ? 'flex h-[85dvh] w-full flex-col gap-0 overflow-clip rounded-t-xl border-0 p-0 [&>button]:hidden'
