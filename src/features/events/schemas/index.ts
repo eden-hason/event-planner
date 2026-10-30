@@ -153,6 +153,9 @@ export const EventAppSchema = z.object({
   eventSettings: EventSettingsAppSchema.optional(),
   hostDetails: HostDetailsSchema.optional(),
   invitations: InvitationsSchema.optional(),
+  // A Bespoke Template's video (events.invitation_video_url), uploaded from the
+  // schedule page. Its own column, not part of invitations.
+  invitationVideoUrl: z.string().optional(),
   guestExperience: GuestExperienceSchema.optional(),
   status: z
     .enum(['draft', 'published', 'archived'], {
@@ -207,6 +210,7 @@ export const EventDbSchema = z.object({
   event_settings: EventSettingsSchema.optional().nullable(),
   host_details: HostDetailsSchema.optional().nullable(),
   invitations: InvitationsDbSchema.optional().nullable(),
+  invitation_video_url: z.string().optional().nullable(),
   guests_experience: GuestExperienceDbSchema.optional().nullable(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   is_default: z.boolean().optional().nullable(),
@@ -241,6 +245,7 @@ export function dbToAppTransformer(dbData: {
   event_settings?: EventSettings | null;
   host_details?: HostDetails | null;
   invitations?: InvitationsDb | null;
+  invitation_video_url?: string | null;
   guests_experience?: GuestExperienceDb | null;
   status?: string | null;
   is_default?: boolean | null;
@@ -298,6 +303,7 @@ export function dbToAppTransformer(dbData: {
     eventSettings,
     hostDetails: dbData.host_details ?? undefined,
     invitations,
+    invitationVideoUrl: dbData.invitation_video_url ?? undefined,
     guestExperience,
     status,
     isDefault: dbData.is_default ?? undefined,

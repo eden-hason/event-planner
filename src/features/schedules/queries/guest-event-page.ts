@@ -7,8 +7,9 @@ import {
 } from '@/features/events';
 
 /**
- * Loads the little the public per-event pages need - the reminder page (/r)
- * and the save-the-date page (/s) - keyed by the event's public short code.
+ * Loads the little the public per-event pages need - the reminder page (/r),
+ * the save-the-date page (/s) and the invitation video page (/v) - keyed by the
+ * event's public short code.
  *
  * Unauthenticated and service-role, exactly like /nav/[code]: a guest holding
  * the link has no session, and RLS scopes events to their owner. The defence
@@ -30,6 +31,8 @@ export type GuestEventPageEvent = {
   bit: { link: string } | null;
   /** The uploaded invitation, shown at the top of the save-the-date page. */
   invitationImageUrl: string | null;
+  /** A Bespoke Template's video, played by the invitation video page. */
+  invitationVideoUrl: string | null;
 };
 
 export async function getGuestEventPageEvent(
@@ -40,7 +43,7 @@ export async function getGuestEventPageEvent(
   const { data, error } = await supabase
     .from('events')
     .select(
-      'title, location, event_settings, event_date, reception_time, host_details, invitations, event_types (key)',
+      'title, location, event_settings, event_date, reception_time, host_details, invitations, invitation_video_url, event_types (key)',
     )
     .eq('short_code', code)
     .single();
@@ -86,5 +89,6 @@ export async function getGuestEventPageEvent(
     bit: bit?.enabled && bit.link?.trim() ? { link: bit.link } : null,
     invitationImageUrl:
       (data.invitations as { image_url?: string } | null)?.image_url?.trim() || null,
+    invitationVideoUrl: data.invitation_video_url?.trim() || null,
   };
 }

@@ -1752,7 +1752,9 @@
         "link": "Seating"
       },
       "hint": "How it looks to your guest",
-      "business": "Business"
+      "business": "Business",
+      "videoPlaceholder": "Video",
+      "playVideo": "Play video"
     },
     "sendDialog": {
       "sendNow": "Send Now",
@@ -2065,6 +2067,28 @@
       "heldUntil": "Messages only go out between {start} and {end}, so saving will send this message on {when}",
       "cancel": "Pick another time",
       "confirm": "Save and send"
+    },
+    "invitationVideo": {
+      "title": "Invitation video",
+      "upload": "Upload the invitation video",
+      "hint": "Sent to guests with the invitation · MP4 up to {max}",
+      "uploading": "Uploading the video",
+      "uploaded": "Video uploaded",
+      "uploadedHint": "Shown in the message preview",
+      "fileMeta": "{name} · {size}",
+      "replace": "Replace video",
+      "remove": "Remove",
+      "failed": "The video upload failed",
+      "tooLargeTitle": "The file is too large",
+      "tooLarge": "{name} is {size}, the maximum is {max}",
+      "wrongTypeTitle": "File type not supported",
+      "wrongType": "{name} is not an MP4 file",
+      "pickAnother": "Pick another video",
+      "saving": "Saving the video",
+      "saved": "Video saved",
+      "removed": "Video removed",
+      "saveFailed": "Could not save the video",
+      "missing": "No video uploaded yet. The invitation will not go out without it"
     }
   },
   "newEventDialog": {

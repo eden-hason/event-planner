@@ -121,7 +121,7 @@ async function loadSchedule(
     .select(
       `${SCHEDULE_SELECT},
        events (id, user_id, title, event_date, location, host_details,
-               invitations, reception_time, short_code, event_settings,
+               invitations, invitation_video_url, reception_time, short_code, event_settings,
                guests_experience, event_types (key))`,
     )
     .eq('id', scheduleId)

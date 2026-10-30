@@ -1752,7 +1752,9 @@
         "link": "סידור הושבה"
       },
       "hint": "כך זה נראה אצל האורח",
-      "business": "עסקי"
+      "business": "עסקי",
+      "videoPlaceholder": "סרטון",
+      "playVideo": "הפעלת הסרטון"
     },
     "sendDialog": {
       "sendNow": "שלח עכשיו",
@@ -2065,6 +2067,28 @@
       "heldUntil": "הודעות יוצאות רק בין {start} ל-{end}, ולכן שמירה תשלח את ההודעה ב{when}",
       "cancel": "בחירת שעה אחרת",
       "confirm": "שמירה ושליחה"
+    },
+    "invitationVideo": {
+      "title": "סרטון ההזמנה",
+      "upload": "העלאת סרטון ההזמנה",
+      "hint": "נשלח לאורחים עם ההזמנה · MP4 עד {max}",
+      "uploading": "מעלה את הסרטון",
+      "uploaded": "הסרטון הועלה",
+      "uploadedHint": "מוצג בתצוגה המקדימה של ההודעה",
+      "fileMeta": "{name} · {size}",
+      "replace": "החלפת סרטון",
+      "remove": "הסרה",
+      "failed": "העלאת הסרטון נכשלה",
+      "tooLargeTitle": "הקובץ גדול מדי",
+      "tooLarge": "{name} במשקל {size}, הגודל המרבי הוא {max}",
+      "wrongTypeTitle": "סוג הקובץ לא נתמך",
+      "wrongType": "{name} אינו קובץ MP4",
+      "pickAnother": "בחירת סרטון אחר",
+      "saving": "שומר את הסרטון",
+      "saved": "הסרטון נשמר",
+      "removed": "הסרטון הוסר",
+      "saveFailed": "שמירת הסרטון נכשלה",
+      "missing": "עוד לא הועלה סרטון. ההזמנה לא תצא בלעדיו"
     }
   },
   "newEventDialog": {

@@ -80,3 +80,16 @@ export async function uploadInvitationImage(
 
   return uploadToStorage(file, 'invitations', path);
 }
+
+/**
+ * Uploads the video a Bespoke Template sends as its WhatsApp header.
+ * Foldered by event ID like the invitation image, so the same ownership check
+ * guards both buckets.
+ */
+export async function uploadInvitationVideo(
+  file: File,
+  eventId: string,
+): Promise<UploadResult> {
+  const path = `${eventId}/invitation-video-${Date.now()}.mp4`;
+  return uploadToStorage(file, 'invitation-videos', path);
+}

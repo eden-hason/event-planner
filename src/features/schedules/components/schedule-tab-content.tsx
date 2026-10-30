@@ -5,6 +5,7 @@ import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp } from '../schemas';
 import type { OutreachItemStatus, PreviewMessages } from '../types';
 import { MessagePreview } from './message-preview';
+import { InvitationVideoCard } from './invitation-video-card';
 import { MessageTypeCard } from './message-type-card';
 import { PastDueTimeDialog } from './past-due-time-dialog';
 import { PersonalMessageCard } from './personal-message-card';
@@ -65,6 +66,12 @@ export async function ScheduleTabContent({
   // The one Send Window, read where the Dispatcher's own config is readable and
   // handed to the client card rather than duplicated inside it.
   const { sendWindow, scheduleMaxLatenessHours } = sendingConfig();
+  // A Bespoke Template is the Event's message by Kululu's choice: the Owner is
+  // offered no message choice, only what the template needs from them.
+  const bespoke = schedule.template?.eventId != null;
+  const sendsVideo =
+    messages?.withoutNote.channel === 'whatsapp' &&
+    messages.withoutNote.payload.headerType?.toUpperCase() === 'VIDEO';
 
   return (
     <ScheduleSettingsProvider
@@ -84,11 +91,22 @@ export async function ScheduleTabContent({
             phone as the result of those choices. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="flex flex-col gap-3.5">
-            <MessageTypeCard
-              offersPersonalMessage={Boolean(offersPersonalMessage)}
-              lockBadge={sent ? <ScheduleLockBadge /> : undefined}
-            />
+            {!bespoke && (
+              <MessageTypeCard
+                offersPersonalMessage={Boolean(offersPersonalMessage)}
+                lockBadge={sent ? <ScheduleLockBadge /> : undefined}
+              />
+            )}
             {offersPersonalMessage && <PersonalMessageCard lockReason={lockReason} />}
+            {sendsVideo && event && (
+              <InvitationVideoCard
+                scheduleId={schedule.id}
+                eventId={event.id}
+                videoUrl={event.invitationVideoUrl ?? null}
+                editable={editable}
+                lockBadge={sent ? <ScheduleLockBadge /> : undefined}
+              />
+            )}
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}

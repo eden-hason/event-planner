@@ -286,7 +286,8 @@ export function pickPersonalMessageTemplates(
 /**
  * What a Schedule sends: its Schedule Type's Personal Message family when it
  * carries Personal Message text, its anchor's family otherwise. A blank
- * Personal Message is no Personal Message - the Variant goes.
+ * Personal Message is no Personal Message - the Variant goes. A Bespoke
+ * Template (anchor.eventId set) always sends its own family.
  *
  * `channel` defaults to the anchor's own; the SMS Fallback passes 'sms' to get
  * the same family's SMS Renditions. A Schedule with Personal Message text and
@@ -303,7 +304,9 @@ export async function resolveTemplatesForSchedule(
 ): Promise<ResolveTemplatesResult> {
   const { supabase, anchor, personalMessage, channel = anchor.channel, ...axes } = params;
 
-  if (!hasPersonalMessage(personalMessage)) {
+  // A Bespoke Template is the Event's message by Kululu's choice, and the Owner
+  // is offered no Personal Message on it, so any text on the Schedule is ignored.
+  if (!hasPersonalMessage(personalMessage) || anchor.eventId !== null) {
     return resolveTemplatesForEvent({ supabase, ...axes, anchor: { ...anchor, channel } });
   }
 

@@ -63,7 +63,7 @@ export async function sendTestMessage(params: {
     .select(
       `${SCHEDULE_SELECT},
        events (id, user_id, title, event_date, location, host_details,
-               invitations, reception_time, short_code, event_settings,
+               invitations, invitation_video_url, reception_time, short_code, event_settings,
                guests_experience, preview_token, event_types (key))`,
     )
     .eq('id', scheduleId)

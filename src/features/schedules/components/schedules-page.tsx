@@ -144,10 +144,12 @@ export async function SchedulesPage({
           : anchor;
       // A Personal Message family that fails to resolve is a seeding bug the
       // send would hit too; the option is hidden rather than previewing a frame
-      // that cannot go out.
-      const personalMessage = resolutions.personalMessage?.success
-        ? previewOf(resolutions.personalMessage)
-        : null;
+      // that cannot go out. A Bespoke Template offers none: Kululu chose the
+      // Event's message, and the send ignores any text on it.
+      const personalMessage =
+        resolutions.personalMessage?.success && anchor.eventId === null
+          ? previewOf(resolutions.personalMessage)
+          : null;
       const messages = {
         withNote: previewOf(resolutions.withNote),
         withoutNote: previewOf(resolutions.withoutNote),

@@ -69,6 +69,8 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
     invitations: invitations
       ? { imageUrl: invitations.image_url }
       : undefined,
+    // A Bespoke Template's video header (event.invitationVideoUrl).
+    invitationVideoUrl: (rawEvent.invitation_video_url as string | null) ?? undefined,
     receptionTime: (rawEvent.reception_time as string | null) ?? undefined,
     shortCode: (rawEvent.short_code as string | null) ?? undefined,
     // Read by the template resolver, not by any placeholder.
