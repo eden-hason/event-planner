@@ -23,6 +23,7 @@ function row(id: string, flags: Partial<MessageTemplateApp> = {}): MessageTempla
     requiresFollowUp: false,
     requiresInvitationImage: false,
     personalMessage: false,
+    eventId: null,
     ...flags,
     channel: 'sms',
     payload: { bodyText: id, parameters: { headerPlaceholders: [], placeholders: [], buttonPlaceholders: [] } },

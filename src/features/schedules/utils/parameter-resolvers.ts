@@ -83,6 +83,23 @@ type TransformerFunction = (
   options?: Record<string, unknown>,
 ) => string;
 
+/**
+ * A transformer that turns a short code or token into the public link Guests
+ * open - `${site}/r/<code>` and the like. Blank in, blank out, so a missing code
+ * renders an empty parameter rather than a link to nothing.
+ */
+function publicPageUrl(prefix: string): TransformerFunction {
+  return (value: unknown) => {
+    const code = String(value ?? '').trim();
+    if (!code) return '';
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_VERCEL_URL ||
+      'http://localhost:3000';
+    return `${siteUrl}/${prefix}/${code}`;
+  };
+}
+
 const transformers: Record<TransformerType, TransformerFunction> = {
   none: (value: unknown) => String(value ?? ''),
 
@@ -167,45 +184,11 @@ const transformers: Record<TransformerType, TransformerFunction> = {
     return `${encodeURIComponent(str)}&navigate=yes`;
   },
 
-  navShortUrl: (value: unknown) => {
-    const code = String(value ?? '').trim();
-    if (!code) return '';
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXT_PUBLIC_VERCEL_URL ||
-      'http://localhost:3000';
-    return `${siteUrl}/nav/${code}`;
-  },
-
-  reminderUrl: (value: unknown) => {
-    const code = String(value ?? '').trim();
-    if (!code) return '';
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXT_PUBLIC_VERCEL_URL ||
-      'http://localhost:3000';
-    return `${siteUrl}/r/${code}`;
-  },
-
-  saveTheDateUrl: (value: unknown) => {
-    const code = String(value ?? '').trim();
-    if (!code) return '';
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXT_PUBLIC_VERCEL_URL ||
-      'http://localhost:3000';
-    return `${siteUrl}/s/${code}`;
-  },
-
-  rsvpUrl: (value: unknown) => {
-    const token = String(value ?? '').trim();
-    if (!token) return '';
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXT_PUBLIC_VERCEL_URL ||
-      'http://localhost:3000';
-    return `${siteUrl}/c/${token}`;
-  },
+  navShortUrl: publicPageUrl('nav'),
+  reminderUrl: publicPageUrl('r'),
+  saveTheDateUrl: publicPageUrl('s'),
+  videoPageUrl: publicPageUrl('v'),
+  rsvpUrl: publicPageUrl('c'),
 
   rsvpYesPayload: (value: unknown) => {
     const token = String(value ?? '').trim();

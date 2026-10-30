@@ -164,10 +164,12 @@ export function DeliveryInfoButton() {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'border-primary/25 text-primary hover:bg-primary/5 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors',
+          // A text link rather than a badge: it sits on the title's line in the
+          // section header, so it is no taller than that line.
+          'text-primary inline-flex h-5 shrink-0 cursor-pointer items-center gap-1 rounded-sm text-xs font-semibold underline-offset-4 hover:underline',
           'focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]',
-          // A 44px target on a phone without a taller pill.
-          'relative after:absolute after:inset-x-0 after:-inset-y-1.5',
+          // A 44px target on a phone without a taller link.
+          'relative after:absolute after:-inset-x-1 after:-inset-y-3',
         )}
       >
         <IconInfoCircle className="size-3.5" stroke={2} />

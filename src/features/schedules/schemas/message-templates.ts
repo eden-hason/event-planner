@@ -56,6 +56,9 @@ export const MessageTemplateDbSchema = z.object({
   // frame around schedule.personalMessage, found by schedule type rather than
   // by key - see loadPersonalMessageFamily.
   personal_message: z.boolean().optional(),
+  // Set on a Bespoke Template: the one Event it was written for. Such a family
+  // is bound by Kululu, so the Owner is shown no message choice on it.
+  event_id: z.uuid().nullable().optional(),
   payload: z.unknown(),
 });
 
@@ -77,6 +80,8 @@ type MessageTemplateBase = {
   requiresFollowUp: boolean;
   requiresInvitationImage: boolean;
   personalMessage: boolean;
+  /** The one Event a Bespoke Template belongs to; null for every other row. */
+  eventId: string | null;
 };
 
 export type MessageTemplateApp =
@@ -109,6 +114,7 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       requiresFollowUp: db.requires_follow_up,
       requiresInvitationImage: db.requires_invitation_image,
       personalMessage: db.personal_message ?? false,
+      eventId: db.event_id ?? null,
     };
 
     if (db.channel === 'whatsapp') {

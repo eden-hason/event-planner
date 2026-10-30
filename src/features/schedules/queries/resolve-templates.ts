@@ -33,8 +33,8 @@ export async function getPersonalMessageCatalog(): Promise<MessageTemplateApp[]>
  * the page read once: the note and the Personal Message are typed on the
  * client, and the preview follows them before they are saved, so it needs the
  * message the send would pick either way. `personalMessage` is null when the
- * Schedule Type has no Personal Message family on the anchor's channel, which
- * is also what hides the option.
+ * Schedule Type has no Personal Message family on the anchor's channel, or the
+ * anchor is a Bespoke Template, which is also what hides the option.
  */
 export async function resolveTemplatesForPreview(
   params: Omit<TemplateAxes, 'note'> & {
@@ -49,15 +49,20 @@ export async function resolveTemplatesForPreview(
   const { supabase } = await getEffectiveClient();
   const { anchor, personalMessageCatalog, ...axes } = params;
 
-  const personalMessage = pickPersonalMessageTemplates({
-    ...axes,
-    candidates: personalMessageCatalog.filter(
-      (row) =>
-        row.scheduleTypeId === anchor.scheduleTypeId &&
-        row.channel === anchor.channel &&
-        row.languageCode === anchor.languageCode,
-    ),
-  });
+  // A Bespoke Template offers no Personal Message: the send ignores any text
+  // on it (resolveTemplatesForSchedule), so the preview resolves none either.
+  const personalMessage =
+    anchor.eventId === null
+      ? pickPersonalMessageTemplates({
+          ...axes,
+          candidates: personalMessageCatalog.filter(
+            (row) =>
+              row.scheduleTypeId === anchor.scheduleTypeId &&
+              row.channel === anchor.channel &&
+              row.languageCode === anchor.languageCode,
+          ),
+        })
+      : null;
 
   const family = await loadTemplateFamily(supabase, anchor);
   if (!family.success) return { withNote: family, withoutNote: family, personalMessage };

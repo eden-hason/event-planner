@@ -72,6 +72,8 @@ export function GuestDrawer({
   const tc = useTranslations('guests.list.communication');
   const [submitting, setSubmitting] = useState(false);
   const mobile = variant === 'mobile';
+  // The drawer always opens from the right (#586); its tabs still read the
+  // locale's direction, which Radix does not take from the page.
   const isRTL = useLocale() === 'he';
 
   const body = (
@@ -133,7 +135,7 @@ export function GuestDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side={mobile ? 'bottom' : isRTL ? 'left' : 'right'}
+        side={mobile ? 'bottom' : 'right'}
         className={cn(
           'flex flex-col gap-0 overflow-hidden p-0 [&>button:last-child]:hidden',
           mobile

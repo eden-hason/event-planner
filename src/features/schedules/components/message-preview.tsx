@@ -7,7 +7,10 @@ import {
   IconInfoCircle,
   IconListDetails,
   IconPhoto,
+  IconPlayerPlayFilled,
+  IconVideo,
 } from '@tabler/icons-react';
+import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
@@ -109,7 +112,7 @@ export function MessagePreview({
     : { resolvedBody: '', missingSources: [] };
 
   const headerPlaceholder = template?.parameters?.headerPlaceholders?.[0];
-  const imageUrl = headerPlaceholder?.source
+  const headerMediaUrl = headerPlaceholder?.source
     ? resolveSourcePath(headerPlaceholder.source, event)
     : null;
 
@@ -176,10 +179,10 @@ export function MessagePreview({
                 >
                   {/* Image header */}
                   {template.headerType?.toUpperCase() === 'IMAGE' &&
-                    (imageUrl ? (
+                    (headerMediaUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={imageUrl}
+                        src={headerMediaUrl}
                         alt="Header"
                         className="h-auto w-full rounded-t-xl p-1.5 pb-0"
                       />
@@ -187,6 +190,19 @@ export function MessagePreview({
                       <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
                         <IconPhoto size={28} className="text-zinc-400" />
                         <span className="text-[10px] text-zinc-400">{t('imagePlaceholder')}</span>
+                      </div>
+                    ))}
+                  {/* Video header - a Bespoke Template's uploaded video. Full
+                      bubble width at the video's own aspect ratio, as WhatsApp
+                      shows it: no height cap, so a portrait video is never
+                      letterboxed. */}
+                  {template.headerType?.toUpperCase() === 'VIDEO' &&
+                    (headerMediaUrl ? (
+                      <PreviewVideo src={headerMediaUrl} playLabel={t('playVideo')} />
+                    ) : (
+                      <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
+                        <IconVideo size={28} className="text-zinc-400" />
+                        <span className="text-[10px] text-zinc-400">{t('videoPlaceholder')}</span>
                       </div>
                     ))}
                   {/* Text content */}
@@ -259,6 +275,44 @@ export function MessagePreview({
         </Alert>
       )}
     </SettingsCard>
+  );
+}
+
+/**
+ * The video header as WhatsApp shows it: the first frame with one round play
+ * button in the middle and no player controls. Playing hides the button;
+ * tapping the video pauses it and the button comes back, as it does at the end.
+ */
+function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <div className="relative p-1.5 pb-0">
+      <video
+        ref={videoRef}
+        src={src}
+        playsInline
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onClick={() => videoRef.current?.pause()}
+        className="block h-auto w-full rounded-t-xl"
+      />
+      {!playing && (
+        <button
+          type="button"
+          aria-label={playLabel}
+          onClick={() => void videoRef.current?.play()}
+          className="absolute inset-0 flex cursor-pointer items-center justify-center"
+        >
+          <span className="flex size-12 items-center justify-center rounded-full bg-zinc-100/90 text-zinc-700 shadow-sm">
+            <IconPlayerPlayFilled size={22} className="translate-x-px" />
+          </span>
+        </button>
+      )}
+    </div>
   );
 }
 

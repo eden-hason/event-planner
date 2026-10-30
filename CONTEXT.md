@@ -321,10 +321,22 @@ who wants to say something of their own writes a Personal Message.
 _Avoid_: free form, custom message, note (for the whole message), Owner Message (that is
 Kululu writing to the Owner)
 
+## Bespoke Template
+
+A Template written for one Event only, and set on that Event's Schedule by Kululu rather
+than chosen by the Owner. Its wording is fixed; the Owner neither picks it nor edits it,
+and no other Event ever sees it.
+
+A Bespoke Template is neither a **Variant** nor a **Personal Message**: a Variant is
+Kululu's wording offered to every Event of a type, a Personal Message is the Owner's words,
+and a Bespoke Template is wording made for this one Event. A Schedule carrying one shows
+the Owner no message choice.
+_Avoid_: custom template, private template, special template
+
 ## Template
 
 The message a Schedule sends, as the Owner chooses and previews it: one Schedule Type, in
-one Variant or as a Personal Message, in one language. A Template carries no channel - it
+one Variant, as a Personal Message or as a Bespoke Template, in one language. A Template carries no channel - it
 is the editorial thing, not the sendable artifact.
 
 The bare word "template" always means this. The visual skin of the guest-facing page is an
