@@ -575,7 +575,7 @@ export function CallRoundGuestList({ guests }: { guests: CallRoundGuestRow[] }) 
 
       <Sheet open={!!open} onOpenChange={(next) => !next && setOpenId(null)}>
         <SheetContent
-          side={isMobile ? 'bottom' : isRTL ? 'left' : 'right'}
+          side={isMobile ? 'bottom' : 'right'}
           dir={isRTL ? 'rtl' : 'ltr'}
           showCloseButton={false}
           onOpenAutoFocus={(e) => e.preventDefault()}

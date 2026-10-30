@@ -40,7 +40,7 @@ export function UserSheetShell({ children }: { children: React.ReactNode }) {
 
   return (
     <Sheet open onOpenChange={(open) => !open && close()}>
-      <SheetContent side="left" className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[452px]">
         {children}
       </SheetContent>
     </Sheet>

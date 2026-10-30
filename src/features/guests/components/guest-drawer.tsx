@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import {
   IconCheck,
   IconCopy,
@@ -69,12 +69,11 @@ export function GuestDrawer({
   const t = useTranslations('guests.list');
   const [submitting, setSubmitting] = useState(false);
   const mobile = variant === 'mobile';
-  const isRTL = useLocale() === 'he';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side={mobile ? 'bottom' : isRTL ? 'left' : 'right'}
+        side={mobile ? 'bottom' : 'right'}
         className={cn(
           'flex flex-col gap-0 overflow-hidden p-0 [&>button:last-child]:hidden',
           mobile
