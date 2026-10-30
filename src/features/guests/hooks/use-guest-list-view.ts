@@ -14,13 +14,15 @@ import { useRecordPackage } from '@/features/billing';
 import { useGuestListParams } from './use-guest-list-params';
 import { useDeferredDelete } from './use-deferred-delete';
 
-const filterOf = (view: GuestListParams): GuestFilterParams => ({
+const filterOf = (view: GuestListParams, missedIds: ReadonlySet<string>): GuestFilterParams => ({
   searchTerm: view.q,
   groupIds: view.groups,
   statuses: view.status ? [view.status] : [],
   sides: view.side ? [view.side] : [],
   noPhoneOnly: view.noPhone,
   transport: view.transport,
+  // A stale `?missed=1` once nobody is missing shows everyone rather than nothing.
+  missedIds: view.missed && missedIds.size > 0 ? missedIds : null,
   sortKey: view.sort,
 });
 
@@ -29,7 +31,12 @@ const filterOf = (view: GuestListParams): GuestFilterParams => ({
  * URL's filters, the selection, the deferred delete, and the rows they leave.
  * Each surface keeps only its own layout and interactions.
  */
-export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string) {
+export function useGuestListView(
+  allGuests: GuestWithGroupApp[],
+  eventId: string,
+  /** Records that missed the latest Invitation or Confirmation that went out, from the server */
+  missedCatchUpIds: readonly string[] = [],
+) {
   const { params, update, reset } = useGuestListParams();
   const deferred = useDeferredDelete(eventId);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -69,14 +76,19 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
       : issueScoped;
   }, [guests, params.issue, outsideOnly, outsideIds]);
 
+  const missedIds = useMemo(() => {
+    const live = new Set(guests.map((guest) => guest.id));
+    return new Set(missedCatchUpIds.filter((id) => live.has(id)));
+  }, [guests, missedCatchUpIds]);
+
   // Only a selection-only view reads `selected`; a tap must not re-sort the list.
   const selectionFilter = selectionOnly ? selected : null;
   const rows = useMemo(
     () =>
       selectionFilter
         ? guests.filter((guest) => selectionFilter.has(guest.id))
-        : filterAndSortGuests(scoped, filterOf(params)),
-    [selectionFilter, guests, scoped, params],
+        : filterAndSortGuests(scoped, filterOf(params, missedIds)),
+    [selectionFilter, guests, scoped, params, missedIds],
   );
   const visibleIds = useMemo(() => rows.map((guest) => guest.id), [rows]);
 
@@ -88,8 +100,8 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
 
   /** Records a view would show - for previewing filters before applying them. */
   const countFor = useCallback(
-    (view: GuestListParams) => filterGuests(scoped, filterOf(view)).length,
-    [scoped],
+    (view: GuestListParams) => filterGuests(scoped, filterOf(view, missedIds)).length,
+    [scoped, missedIds],
   );
 
   const changeFilters: typeof update = (patch, mode) => {
@@ -112,6 +124,7 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     params.noPhone ||
     !!params.transport ||
     !!params.issue ||
+    (params.missed && missedIds.size > 0) ||
     outsideOnly;
 
   /** Hides the records behind the Undo toast and drops them from the selection. */
@@ -139,6 +152,7 @@ export function useGuestListView(allGuests: GuestWithGroupApp[], eventId: string
     outsideIds,
     outsideCount,
     outsideOnly,
+    missedCount: missedIds.size,
     filtered,
     countFor,
     selected,

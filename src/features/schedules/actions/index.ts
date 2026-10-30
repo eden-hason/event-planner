@@ -13,3 +13,4 @@ export {
 export type { WhatsAppSendResult } from '../services/post-whatsapp';
 export { executeSchedule, type ExecuteScheduleResult } from './execute-schedule';
 export { sendSelectedDeliveriesAdmin, type ManualSendResult } from './manual-send';
+export { sendCatchUp, type CatchUpSendState } from './catch-up';

@@ -4,6 +4,7 @@
 // queries/catalog.ts -> next/headers dependency chain), which would leak
 // into any client bundle that imports anything from this root barrel.
 export { SchedulesHeader } from './components/schedules-header';
+export { GuestJourney } from './components/guest-journey';
 
 // Actions
 export {
@@ -12,6 +13,8 @@ export {
   type WhatsAppSendResult,
   sendSelectedDeliveriesAdmin,
   type ManualSendResult,
+  sendCatchUp,
+  type CatchUpSendState,
 } from './actions';
 
 // Utils
@@ -38,6 +41,8 @@ export {
   isFollowUpConfirmation,
   DEFAULT_SEND_TIME,
 } from './utils';
+
+export type { GuestInteractionRow } from './utils/delivery-outcome';
 
 // Schemas/Types
 export {

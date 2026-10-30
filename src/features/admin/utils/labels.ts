@@ -1,3 +1,9 @@
+import type { ScheduleSendGateRefusal } from '@/features/schedules/services/schedule-send-gate';
+import type {
+  CatchUpExclusion,
+  CatchUpNote,
+  CatchUpRejection,
+} from '@/features/schedules/utils/catch-up';
 import type { SignalKind } from '../types';
 
 /**
@@ -89,3 +95,50 @@ export const SIGNAL_GROUP_LABELS: Record<SignalKind, string> = {
   no_ask_planned: 'אין בקשת אישור מתוכננת',
   stale_call_round: 'סבבי שיחות תקועים',
 };
+
+// Catch-up and send-gate codes (features/schedules), worded for an Operator.
+
+const SEND_GATE_REFUSALS: Record<ScheduleSendGateRefusal, string> = {
+  not_found: 'התזמון הזה כבר לא קיים',
+  not_message: 'סבבי שיחות לא נשלחים מכאן',
+  sending_off: 'השליחה לא מופעלת לאירוע הזה',
+};
+
+export function sendGateRefusalLabel(reason: ScheduleSendGateRefusal): string {
+  return SEND_GATE_REFUSALS[reason];
+}
+
+const CATCH_UP_REJECTIONS: Record<CatchUpRejection, string> = {
+  cancelled: 'התזמון בוטל',
+  expired: 'התזמון פג בלי שנשלח, אז אין למי להשלים',
+  disabled: 'השליחה לא הופעלה לתזמון הזה',
+  not_sent_yet:
+    'התזמון עוד לא נשלח - כשיישלח הוא יכלול את כל האורחים שברשימה באותו רגע',
+  event_over: 'האירוע כבר עבר',
+};
+
+export function catchUpRejectionLabel(reason: CatchUpRejection): string {
+  return CATCH_UP_REJECTIONS[reason];
+}
+
+const CATCH_UP_EXCLUSIONS: Record<CatchUpExclusion, string> = {
+  failed: 'השליחה אליו נכשלה - שליחה חוזרת נעשית מהשורה של התזמון בציר התקשורת',
+  outside_package:
+    'מחוץ לחבילת הרשומות - צריך להגדיל את החבילה לפני שאפשר לשלוח',
+  no_phone: 'אין מספר טלפון תקין',
+  sms_abroad: 'מספר מחו"ל - התזמון הזה נשלח ב-SMS, שמגיע רק למספרים בישראל',
+};
+
+export function catchUpExclusionLabel(reason: CatchUpExclusion): string {
+  return CATCH_UP_EXCLUSIONS[reason];
+}
+
+const CATCH_UP_NOTES: Record<CatchUpNote, string> = {
+  no_phone: 'לא נשלח בזמנו - לא היה מספר טלפון',
+  outside_package: 'לא נשלח בזמנו - הרשומה הייתה מחוץ לחבילה',
+  other: 'לא נשלח בזמנו',
+};
+
+export function catchUpNoteLabel(note: CatchUpNote): string {
+  return CATCH_UP_NOTES[note];
+}

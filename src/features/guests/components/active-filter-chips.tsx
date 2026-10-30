@@ -78,6 +78,15 @@ export function ActiveFilterChips({
           },
         ]
       : []),
+    ...(params.missed
+      ? [
+          {
+            key: 'missed',
+            label: t('list.chips.missedLatest'),
+            remove: () => onChange({ missed: false }),
+          },
+        ]
+      : []),
     ...(params.transport
       ? [
           {

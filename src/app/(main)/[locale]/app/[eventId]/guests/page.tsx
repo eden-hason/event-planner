@@ -4,6 +4,7 @@ import {
 } from '@/features/guests/queries';
 import { getEventGroupsWithGuests } from '@/features/guests/queries/groups';
 import { getEventMessagedGuestIds } from '@/features/guests/queries/activity';
+import { getMissedCatchUpGuestIds } from '@/features/schedules/queries/missed-catch-up';
 import { GuestsPage as GuestsPageComponent } from '@/features/guests';
 import { getEventById } from '@/features/events/queries';
 import { getEventTableOptions } from '@/features/seating/queries';
@@ -23,6 +24,7 @@ export default async function GuestsPage({
     tables,
     messagedGuestIds,
     recordPackage,
+    missedCatchUpIds,
   ] = await Promise.all([
     getEventGuestsWithGroups(eventId),
     getEventGroupsWithGuests(eventId),
@@ -31,6 +33,7 @@ export default async function GuestsPage({
     getEventTableOptions(eventId),
     getEventMessagedGuestIds(eventId),
     getGuestPackageView(eventId),
+    getMissedCatchUpGuestIds(eventId),
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
@@ -47,6 +50,7 @@ export default async function GuestsPage({
       showTransportation={showTransportation}
       tables={tables}
       messagedGuestIds={messagedGuestIds}
+      missedCatchUpIds={missedCatchUpIds}
       recordPackage={recordPackage}
     />
   );

@@ -49,7 +49,7 @@ import { useGuestWrites } from '@/features/guests/hooks/use-guest-writes';
 import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
 import { cn } from '@/lib/utils';
 import { ActiveFilterChips } from '../active-filter-chips';
-import { GuestDrawer } from '../guest-drawer';
+import { GuestDrawer, type GuestDrawerTab } from '../guest-drawer';
 import { UndoToast } from '../undo-toast';
 import { CARD_HEIGHT, GuestMobileCard } from './guest-mobile-card';
 import { OutsidePackageBanner, PackageLine } from '../package';
@@ -91,12 +91,16 @@ interface GuestsMobileProps {
   eventName?: string;
   /** Guest Records a Delivery has reached - named in the delete confirm. */
   messagedGuestIds: string[];
+  /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
+  missedCatchUpIds: string[];
   showDietary: boolean;
   showTransportation: boolean;
   tables: TableOption[];
   drawer: {
     open: boolean;
     guest: GuestWithGroupApp | null;
+    tab: GuestDrawerTab;
+    onTabChange: (tab: GuestDrawerTab) => void;
     onOpenChange: (open: boolean) => void;
   };
   onOpenGuest: (guest: GuestWithGroupApp) => void;
@@ -118,6 +122,7 @@ export function GuestsMobile({
   eventId,
   eventName,
   messagedGuestIds,
+  missedCatchUpIds,
   showDietary,
   showTransportation,
   tables,
@@ -146,13 +151,14 @@ export function GuestsMobile({
     outsideIds,
     outsideCount,
     outsideOnly,
+    missedCount,
     filtered,
     countFor,
     selected,
     setSelected,
     selectionOnly,
     setSelectionOnly,
-  } = useGuestListView(allGuests, eventId);
+  } = useGuestListView(allGuests, eventId, missedCatchUpIds);
 
   const [selecting, setSelecting] = useState(false);
   const [sheet, setSheet] = useState<OpenSheet>(null);
@@ -244,6 +250,8 @@ export function GuestsMobile({
       variant="mobile"
       open={drawer.open}
       guest={drawer.guest}
+      tab={drawer.tab}
+      onTabChange={drawer.onTabChange}
       eventId={eventId}
       groups={groups}
       tables={tables}
@@ -500,6 +508,7 @@ export function GuestsMobile({
         onClose={closeSheet}
         params={params}
         groups={groups}
+        missedCount={missedCount}
         countFor={countFor}
         onApply={(patch) => changeFilters(patch)}
       />

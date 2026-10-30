@@ -243,6 +243,9 @@ The window is judged when the message would go out, not when the Schedule was wr
 That is what makes it cover the case it exists for: Kululu being unavailable all evening
 and returning at midnight to a backlog of Schedules that all came due while it was away.
 
+The Send Window governs Schedules sending by themselves. A **Catch-up Send** goes the
+moment the Owner presses it, at any hour - the Owner chose the hour, not Kululu.
+
 ## Expired Schedule
 
 A Schedule that will never be sent, because sending it now would be wrong rather than
@@ -258,6 +261,32 @@ A Schedule the Dispatcher claimed but never finished queueing - the run died par
 part of the audience got the message and the rest got nothing. Recognised by a claim with no
 `dispatched` row in the dispatch log, and resumed for the Guests who were never attempted,
 never re-sent to the ones who were.
+
+## Catch-up Send
+
+The Owner sending one Guest the latest message that already went out without them - because
+the Guest Record was added after it, or had no usable phone number when it went. It gives
+that Guest their **Delivery** for the Schedule; the Schedule itself stays sent and
+unchanged, and its results count the Guest like any other. Nothing new is billed: the
+Schedule's **Entitlement** was spent when it sent, though the Guest Record must still fit
+the **Record Package**.
+
+Only one Schedule is offered: the latest Initial Invitation or Confirmation that went out.
+While only the Invitation has gone, that is the Invitation; once a Confirmation has, it is
+the latest Confirmation. An Event Reminder or Thank You is never caught up on, so once one
+has gone out the offer stays on the last Invitation or Confirmation. Whatever is still
+planned reaches the Guest by itself, since a Schedule's audience is decided when it sends.
+
+It is offered only to a Guest still in that Schedule's audience whose Delivery for it is
+missing or Not sent. A Failed Delivery is not caught up: a Guest-level failure would fail
+again, and an SMS Fallback is an Operator's to launch.
+
+It is offered until the **RSVP Cutoff**, and sent when pressed, at any hour - the **Send
+Window** does not apply to it.
+
+An Operator makes the same send from the Back Office, for up to ten Guest Records at a time.
+
+_Avoid_: Top-up (a billing term), late-guest send, resend
 
 ## Variant
 

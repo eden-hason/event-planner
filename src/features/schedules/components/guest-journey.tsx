@@ -92,12 +92,18 @@ export function GuestJourney({
   now,
   locale,
   onClose,
+  bare = false,
 }: {
   row: GuestInteractionRow;
   now: Date;
   locale: string;
   /** Draws a close button in the header; a sheet brings its own */
   onClose?: () => void;
+  /**
+   * Only the steps, for a view already about this guest (the guest drawer):
+   * no name header and no call button.
+   */
+  bare?: boolean;
 }) {
   const t = useTranslations('schedules.results');
   const answerMeta = useAnswerMeta();
@@ -179,24 +185,26 @@ export function GuestJourney({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-2">
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-[15.5px] font-extrabold">
-            {row.guestName}
-          </span>
-          {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
+      {!bare && (
+        <div className="flex items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="truncate text-[15.5px] font-extrabold">
+              {row.guestName}
+            </span>
+            {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('journey.close')}
+              className="bg-muted text-muted-foreground hover:text-foreground flex size-[26px] shrink-0 items-center justify-center rounded-lg"
+            >
+              <IconX size={14} />
+            </button>
+          )}
         </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('journey.close')}
-            className="bg-muted text-muted-foreground hover:text-foreground flex size-[26px] shrink-0 items-center justify-center rounded-lg"
-          >
-            <IconX size={14} />
-          </button>
-        )}
-      </div>
+      )}
 
       <ol className="flex flex-col">
         {steps.map((step, index) => {
@@ -236,7 +244,7 @@ export function GuestJourney({
         })}
       </ol>
 
-      {row.phone && (
+      {!bare && row.phone && (
         <Button asChild variant="outline">
           <a href={`tel:${row.phone}`}>
             <IconPhone size={15} />

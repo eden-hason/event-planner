@@ -2,14 +2,9 @@
 
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  IconCheck,
-  IconCopy,
-  IconLink,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
+import { IconMessage, IconTrash, IconUser, IconX } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Sheet,
   SheetClose,
@@ -27,16 +22,18 @@ import { amountDisplay } from '@/features/guests/utils/guest-amount';
 import { avatarTintFor } from '@/lib/avatar-tint';
 import { cn } from '@/lib/utils';
 import { GuestForm } from './guest-form';
-import { GuestActivity } from './guest-activity';
+import { GuestCommunication } from './guest-communication';
 import { OutsidePackageNotice } from './package';
-import { useSaveEvent } from '@/features/auth';
 
 const FORM_ID = 'guest-drawer-form';
 
+export type GuestDrawerTab = 'details' | 'communication';
+
 /**
  * The `?guest=` drawer - the one editor of a Guest Record. A sheet with the
- * record's identity on top, the form in flat sections, then its read-only
- * Activity and invitation link. On desktop it floats in from the end side - the
+ * record's identity on top, then two tabs: Details, the form in flat sections
+ * with its Save footer, and Communication, what every Schedule and Call Round
+ * did for this guest (ADR 0050). Adding a guest is the form alone. On desktop it floats in from the end side - the
  * left in Hebrew - like the Call Round details; on a phone it rises from the
  * bottom to 92% of the screen (Guests Mobile design).
  */
@@ -51,12 +48,17 @@ export function GuestDrawer({
   onOpenChange,
   onSaved,
   onDelete,
+  tab,
+  onTabChange,
   variant = 'desktop',
 }: {
   variant?: 'desktop' | 'mobile';
   open: boolean;
   /** `null` is the add-guest form. */
   guest: GuestWithGroupApp | null;
+  /** The open tab, kept in the URL by the page (`?guestTab=`) */
+  tab: GuestDrawerTab;
+  onTabChange: (tab: GuestDrawerTab) => void;
   eventId: string;
   groups: GroupWithGuestsApp[];
   tables: TableOption[];
@@ -67,9 +69,66 @@ export function GuestDrawer({
   onDelete: (guest: GuestWithGroupApp) => void;
 }) {
   const t = useTranslations('guests.list');
+  const tc = useTranslations('guests.list.communication');
   const [submitting, setSubmitting] = useState(false);
   const mobile = variant === 'mobile';
   const isRTL = useLocale() === 'he';
+
+  const body = (
+    <div
+      className={cn(
+        'flex min-h-0 flex-1 flex-col overflow-y-auto',
+        mobile ? 'gap-4 px-4 pt-3.5 pb-4' : 'gap-[18px] px-5 pt-4 pb-5',
+      )}
+    >
+      {guest && <OutsidePackageNotice guestId={guest.id} />}
+      <GuestForm
+        key={guest?.id ?? 'new'}
+        formId={FORM_ID}
+        eventId={eventId}
+        guest={guest}
+        groups={groups}
+        layout="sections"
+        compact={mobile}
+        hideActions
+        onPendingChange={setSubmitting}
+        showDietary={showDietary}
+        showTransportation={showTransportation}
+        tables={tables}
+        onSuccess={() => onSaved(guest?.id ?? null)}
+        onCancel={() => onOpenChange(false)}
+      />
+    </div>
+  );
+
+  const footer = (
+    <div
+      className={cn(
+        'flex items-center gap-2 border-t',
+        mobile
+          ? 'px-4 pt-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]'
+          : 'px-5 py-3',
+      )}
+    >
+      {guest && (
+        <Button
+          variant="ghost"
+          onClick={() => onDelete(guest)}
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <IconTrash size={16} />
+          {t('drawer.delete')}
+        </Button>
+      )}
+      <div className="flex-1" />
+      <Button variant="outline" onClick={() => onOpenChange(false)}>
+        {t('drawer.cancel')}
+      </Button>
+      <Button type="submit" form={FORM_ID} disabled={submitting}>
+        {guest ? t('drawer.save') : t('drawer.add')}
+      </Button>
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -87,63 +146,61 @@ export function GuestDrawer({
       >
         <DrawerHeader guest={guest} compact={mobile} />
 
-        <div
-          className={cn(
-            'flex min-h-0 flex-1 flex-col overflow-y-auto',
-            mobile ? 'gap-4 px-4 pt-3.5 pb-4' : 'gap-[18px] px-5 pt-4 pb-5',
-          )}
-        >
-          {guest && <OutsidePackageNotice guestId={guest.id} />}
-          <GuestForm
-            key={guest?.id ?? 'new'}
-            formId={FORM_ID}
-            eventId={eventId}
-            guest={guest}
-            groups={groups}
-            layout="sections"
-            compact={mobile}
-            hideActions
-            onPendingChange={setSubmitting}
-            showDietary={showDietary}
-            showTransportation={showTransportation}
-            tables={tables}
-            onSuccess={() => onSaved(guest?.id ?? null)}
-            onCancel={() => onOpenChange(false)}
-          />
-          {guest && (
-            <>
-              <GuestActivity guestId={guest.id} />
-              <InvitationLink token={guest.invitationToken} />
-            </>
-          )}
-        </div>
-
-        <div
-          className={cn(
-            'flex items-center gap-2 border-t',
-            mobile
-              ? 'px-4 pt-2.5 pb-[max(1rem,env(safe-area-inset-bottom))]'
-              : 'px-5 py-3',
-          )}
-        >
-          {guest && (
-            <Button
-              variant="ghost"
-              onClick={() => onDelete(guest)}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        {guest ? (
+          <Tabs
+            value={tab}
+            onValueChange={(value) => onTabChange(value as GuestDrawerTab)}
+            // Radix writes its own `dir`, `ltr` unless told - which would flip
+            // the whole drawer body in Hebrew.
+            dir={isRTL ? 'rtl' : 'ltr'}
+            className="flex min-h-0 flex-1 flex-col gap-0"
+          >
+            <div
+              className={cn('border-b', mobile ? 'px-4 py-2.5' : 'px-5 py-3')}
             >
-              <IconTrash size={16} />
-              {t('drawer.delete')}
-            </Button>
-          )}
-          <div className="flex-1" />
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t('drawer.cancel')}
-          </Button>
-          <Button type="submit" form={FORM_ID} disabled={submitting}>
-            {guest ? t('drawer.save') : t('drawer.add')}
-          </Button>
-        </div>
+              <TabsList className="w-full">
+                <TabsTrigger value="details">
+                  <IconUser />
+                  {tc('tabs.details')}
+                </TabsTrigger>
+                <TabsTrigger value="communication">
+                  <IconMessage />
+                  {tc('tabs.communication')}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            {/* Kept mounted while hidden, so an edit survives a look at the
+                guest's messages. Save belongs to the form, so its footer too. */}
+            <TabsContent
+              value="details"
+              forceMount
+              className="flex min-h-0 flex-col data-[state=inactive]:hidden"
+            >
+              {body}
+              {footer}
+            </TabsContent>
+            <TabsContent
+              value="communication"
+              className={cn(
+                'min-h-0 overflow-y-auto',
+                mobile
+                  ? 'px-4 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))]'
+                  : 'px-5 pt-4 pb-5',
+              )}
+            >
+              <GuestCommunication
+                guestId={guest.id}
+                guestName={guest.name}
+                invitationToken={guest.invitationToken}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <>
+            {body}
+            {footer}
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );
@@ -224,45 +281,6 @@ function DrawerHeader({
       >
         <IconX size={16} stroke={2.2} />
       </SheetClose>
-    </div>
-  );
-}
-
-function InvitationLink({ token }: { token: string }) {
-  const t = useTranslations('guests');
-  const [copied, setCopied] = useState(false);
-  const url = () => `${window.location.origin}/c/${token}`;
-
-  const { requireSaved } = useSaveEvent();
-
-  const copy = () => {
-    // A Visitor's RSVP link reaches nobody until they save (ADR 0028).
-    if (!requireSaved('share')) return;
-    navigator.clipboard
-      .writeText(`${t('sheet.copyInvitationLinkPrefix')}\n${url()}`)
-      .catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  return (
-    <div className="flex items-center gap-2 rounded-xl border px-3 py-2.5">
-      <IconLink size={16} className="text-primary shrink-0" />
-      <span className="flex-1 text-[13px] font-semibold">
-        {t('list.drawer.link')}
-      </span>
-      <button
-        type="button"
-        onClick={copy}
-        className="bg-muted hover:bg-muted/70 flex h-[30px] items-center gap-[5px] rounded-lg px-2.5 text-[12.5px] font-semibold"
-      >
-        {copied ? (
-          <IconCheck size={14} className="text-success" />
-        ) : (
-          <IconCopy size={14} />
-        )}
-        {copied ? t('list.drawer.copied') : t('list.drawer.copy')}
-      </button>
     </div>
   );
 }

@@ -63,3 +63,4 @@ in the diff, not here.
 | [0029](0029-the-other-sign-in-method-opens-an-empty-account.md) | The other Sign-in Method opens an empty account instead of the Event | auth / onboarding | in progress |
 | [0030](0030-back-office-row-click-opens-the-wrong-event.md) | On one phone, every row of the Back Office events list opens the same Event | back office | open |
 | [0031](0031-a-test-message-that-never-arrives-still-counts.md) | A Test Message that never arrives still counts against the caps and leaves Home | schedules / home | open |
+| [0033](0033-the-owner-cannot-stop-kululu-messaging-one-guest.md) | The Owner cannot stop Kululu messaging one guest | guests / outreach | open |

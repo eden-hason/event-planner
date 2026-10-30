@@ -11,7 +11,7 @@ import {
 import { buildLateGuestPlan, type LateGuestPlan, type LateGuestPlanResult } from '../services/late-guest-plan';
 
 export type { LateGuestPlan, LateGuestPlanResult } from '../services/late-guest-plan';
-export type { LateGuestCandidate, LateGuestExcluded } from '../utils/late-guests';
+export type { LateGuestCandidate, LateGuestExcluded } from '../services/late-guest-plan';
 
 export type LateGuestSendResult = ManualSendOutcome & {
   /** The plan after the send, so the dialog shows who is left */

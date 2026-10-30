@@ -1212,7 +1212,8 @@
         "transport": "הסעה",
         "transportAll": "הכל",
         "noPhoneOnly": "בלי מספר טלפון",
-        "noGroups": "עוד אין קבוצות"
+        "noGroups": "עוד אין קבוצות",
+        "missedLatest": "לא קיבלו את ההודעה האחרונה ({count})"
       },
       "sort": "מיון",
       "more": "עוד פעולות",
@@ -1227,7 +1228,8 @@
         "noPhone": "בלי טלפון",
         "transport": "הסעה: {answer}",
         "clearAll": "ניקוי הכל",
-        "remove": "הסרת {label}"
+        "remove": "הסרת {label}",
+        "missedLatest": "לא קיבלו את ההודעה האחרונה"
       },
       "sides": {
         "bride": "כלה",
@@ -1351,10 +1353,8 @@
         "add": "הוספת אורח",
         "delete": "מחיקה",
         "cancel": "ביטול",
-        "activity": "פעילות",
-        "activityEmpty": "עוד אין הודעות או שיחות",
-        "activityFailed": "לא הצלחנו לטעון את הפעילות",
         "link": "הקישור האישי להזמנה",
+        "linkDescription": "אפשר להעתיק את הקישור האישי של האורח לאישור הגעה ולשתף אותו בעצמכם",
         "copy": "העתקה",
         "copied": "הועתק",
         "notesPlaceholder": "הערה פנימית, האורח לא רואה אותה",
@@ -1371,46 +1371,78 @@
         "transportNo": "לא",
         "transportUnanswered": "לא ענו"
       },
-      "activity": {
-        "schedule": {
-          "initial_invitation": "הזמנה לאירוע",
-          "confirmation": "בקשת אישור הגעה",
-          "event_reminder": "תזכורת לאירוע",
-          "post_event": "הודעת תודה",
+      "communication": {
+        "tabs": {
+          "details": "פרטים",
+          "communication": "הודעות"
+        },
+        "failed": "לא הצלחנו לטעון את התקשורת",
+        "empty": "עוד אין הודעות מתוכננות לאירוע",
+        "rsvpTitle": "אישור הגעה",
+        "rsvp": {
+          "confirmed": "מגיעים",
+          "declined": "לא מגיעים",
+          "pending": "עוד לא ענו",
+          "coming": "{count, plural, one {מגיע אחד} other {# מגיעים}}"
+        },
+        "source": {
+          "chat": "ענו בצ׳אט · {date}",
+          "page": "ענו בדף אישור ההגעה · {date}",
+          "call": "בשיחה עם הצוות של קולולו · {date}",
+          "manual": "עודכן על ידי {name} · {date}",
+          "manualByYou": "עודכן על ידך · {date}",
+          "manualByOwner": "עודכן ברשימת האורחים · {date}"
+        },
+        "planTitle": "הודעות ושיחות",
+        "type": {
           "other": "הודעה"
         },
-        "outcome": {
+        "state": {
           "seen": "נקראה",
           "reached": "נמסרה",
           "on_its_way": "בדרך",
+          "sms_on_its_way": "SMS בדרך",
           "not_delivered": "לא נמסרה",
-          "no_phone": "לא נשלחה, אין טלפון"
+          "no_phone": "לא נשלחה - אין מספר טלפון",
+          "outside_package": "לא נשלחה - מחוץ לחבילה",
+          "added_after": "פספסו - נוספו אחרי שנשלחה",
+          "not_in_audience": "לא נשלחה לאורח הזה",
+          "will_get": "תישלח אליהם",
+          "undated": "עוד אין תאריך",
+          "locked": "נעולה",
+          "off": "לא נשלחה",
+          "called": "התקשרנו",
+          "call_queued": "ברשימת השיחות",
+          "call_planned": "מתוכנן"
         },
-        "delivery": "{schedule} · {outcome}",
-        "viaWhatsapp": "ב-WhatsApp",
-        "viaSms": "ב-SMS",
-        "fallback": "WhatsApp לא נמסר, נשלח SMS במקום",
-        "fallbackUnconfirmed": "וואטסאפ לא אישר מסירה, אז נשלח גם SMS",
-        "call": "שיחה בסבב שיחות {round}",
         "callOutcome": {
           "no_answer": "לא ענו",
           "confirmed": "אישרו הגעה",
           "declined": "לא מגיעים"
         },
-        "callBy": "נציג, בשיחה טלפונית",
-        "answerConfirmed": "{count, plural, =0 {אישרו הגעה} one {אישרו הגעה של אחד} other {אישרו הגעה של #}}",
-        "answerDeclined": "ענו שלא יגיעו",
-        "answerInChat": "האורח, בצ׳אט",
-        "answerOnPage": "האורח, בדף אישור ההגעה",
-        "manual": "אישור ההגעה עודכן ל{status}",
-        "manualByYou": "על ידך",
-        "manualStatus": {
-          "confirmed": "מאושר",
-          "pending": "ממתין",
-          "declined": "לא מגיע"
-        },
-        "manualCount": "מספר המגיעים עודכן ל-{count}",
-        "manualConfirmed": "אישור ההגעה עודכן למאושר, {count} מגיעים"
+        "catchUp": {
+          "button": "שליחה עכשיו",
+          "reason": {
+            "failed": "הצוות של קולולו מטפל בהודעות שלא נמסרו",
+            "outside_package": "מחוץ לחבילה - צריך להוסיף רשומות כדי לשלוח",
+            "no_phone": "צריך להוסיף מספר טלפון בפרטים כדי לשלוח",
+            "sms_abroad": "ההודעה הזו נשלחת ב-SMS, שמגיע רק למספרים בישראל",
+            "event_over": "האירוע כבר עבר",
+            "sending_off": "השליחה עוד לא פעילה לאירוע הזה"
+          },
+          "confirmTitle": "לשלוח את {schedule} ל{name}?",
+          "confirmBody": "{name} יקבלו עכשיו את אותה ההודעה ששאר האורחים קיבלו",
+          "confirm": "שליחה",
+          "cancel": "ביטול",
+          "sending": "שולחים",
+          "sent": "נשלח ל{name}",
+          "error": {
+            "save-required": "צריך לשמור את האירוע כדי לשלוח הודעות",
+            "not-allowed": "אי אפשר לשלוח מכאן",
+            "not-eligible": "האורח כבר לא צריך את ההודעה הזו - הרשימה עודכנה",
+            "send-failed": "ההודעה לא נשלחה"
+          }
+        }
       },
       "drawerSections": {
         "contact": "פרטי קשר",
