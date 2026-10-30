@@ -347,7 +347,9 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
                 schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
               />
             )}
-            <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
+            {event.planIncludesCalls && (
+              <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
+            )}
           </div>
         ) : null}
       >

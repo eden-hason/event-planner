@@ -201,6 +201,8 @@ export type EventIdentity = {
   receptionTime: string | null;
   shortCode: string;
   canCreateSchedules: boolean;
+  /** False on a Plan without Call Rounds (ADR 0034), so none can be planned. */
+  planIncludesCalls: boolean;
   /** The commercial state - see `@/features/billing`. `canCreateSchedules` derives from it. */
   billingStatus: EventBillingStatus;
   onboardingStep: string | null;
