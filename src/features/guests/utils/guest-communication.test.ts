@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { GuestInteractionRow } from '@/features/schedules/utils/delivery-outcome';
+import type { GuestJourneyDelivery } from '@/features/schedules/services/guest-journeys';
 import {
   buildGuestCommunication,
-  type CommunicationDelivery,
   type CommunicationSchedule,
   type GuestCommunicationInput,
 } from './guest-communication';
@@ -45,8 +45,8 @@ function journey(
 
 function delivery(
   scheduleId: string,
-  overrides: Partial<CommunicationDelivery> = {},
-): CommunicationDelivery {
+  overrides: Partial<GuestJourneyDelivery> = {},
+): GuestJourneyDelivery {
   return {
     scheduleId,
     status: 'delivered',
@@ -218,8 +218,8 @@ describe('buildGuestCommunication states', () => {
           }),
         ],
         calls: [
-          { scheduleId: 'called', outcome: 'no_answer', at: SENT_AT },
-          { scheduleId: 'queued', outcome: null, at: null },
+          { scheduleId: 'called', outcome: 'no_answer' },
+          { scheduleId: 'queued', outcome: null },
         ],
       }),
       NOW,
@@ -275,11 +275,7 @@ describe('buildGuestCommunication catch-up', () => {
       }),
       NOW,
     );
-    assert.deepEqual(rowOf(result, 'round-2')?.catchUp, {
-      available: true,
-      addedAfterSend: true,
-      note: null,
-    });
+    assert.deepEqual(rowOf(result, 'round-2')?.catchUp, { available: true });
     assert.equal(rowOf(result, 'round-1')?.catchUp, null);
     assert.equal(rowOf(result, 'invite')?.catchUp, null);
   });
@@ -297,11 +293,7 @@ describe('buildGuestCommunication catch-up', () => {
     ];
     const result = buildGuestCommunication(input({ guest: lateGuest(), schedules: plan }), NOW);
     assert.equal(rowOf(result, 'invite')?.state, 'added_after');
-    assert.deepEqual(rowOf(result, 'invite')?.catchUp, {
-      available: true,
-      addedAfterSend: true,
-      note: null,
-    });
+    assert.deepEqual(rowOf(result, 'invite')?.catchUp, { available: true });
     assert.equal(rowOf(result, 'round-1')?.state, 'will_get');
     assert.equal(rowOf(result, 'round-1')?.catchUp, null);
   });
@@ -340,11 +332,7 @@ describe('buildGuestCommunication catch-up', () => {
       }),
       NOW,
     );
-    assert.deepEqual(rowOf(result, 'round-2')?.catchUp, {
-      available: true,
-      addedAfterSend: false,
-      note: 'no_phone',
-    });
+    assert.deepEqual(rowOf(result, 'round-2')?.catchUp, { available: true });
   });
 
   it('says nothing for a guest already reached, mid-send, or not in the audience', () => {
@@ -430,12 +418,8 @@ describe('buildGuestCommunication RSVP summary', () => {
           rsvpChangedAt: '2026-10-12T10:00:00Z',
         },
         answers: [
-          { response: 'declined', channel: 'web', at: '2026-10-11T10:00:00Z' },
-          {
-            response: 'confirmed',
-            channel: 'whatsapp',
-            at: '2026-10-12T10:00:00Z',
-          },
+          { channel: 'web', at: '2026-10-11T10:00:00Z' },
+          { channel: 'whatsapp', at: '2026-10-12T10:00:00Z' },
         ],
       }),
       NOW,

@@ -8,8 +8,7 @@ import { getCollaboratorAccess } from '@/features/collaborate/queries';
 import { isVisitor } from '@/features/auth';
 import { revalidateOutreach } from '../services/revalidate-outreach';
 import { sendSelectedDeliveries } from '../services/manual-send';
-import { buildCatchUpPlan } from '../services/catch-up-plan';
-import { CATCH_UP_TYPE_KEYS, pickCatchUpSchedule } from '../utils/catch-up';
+import { buildCatchUpPlan, loadCatchUpSchedule } from '../services/catch-up-plan';
 
 export type CatchUpSendState =
   | { success: true }
@@ -17,14 +16,6 @@ export type CatchUpSendState =
       success: false;
       reason: 'save-required' | 'not-allowed' | 'not-eligible' | 'send-failed';
     };
-
-type ScheduleRow = {
-  id: string;
-  status: string | null;
-  sent_at: string | null;
-  dispatched_at: string | null;
-  schedule_types: { key: string } | { key: string }[] | null;
-};
 
 /**
  * The Owner's Catch-up Send (CONTEXT.md, ADR 0050): the latest Initial
@@ -71,27 +62,7 @@ export async function sendCatchUp(guestId: string): Promise<CatchUpSendState> {
 
   const service = createServiceClient();
   try {
-    const { data: schedules, error } = await service
-      .from('schedules')
-      .select('id, status, sent_at, dispatched_at, schedule_types!inner(key)')
-      .eq('event_id', guest.event_id)
-      .in('schedule_types.key', [...CATCH_UP_TYPE_KEYS]);
-    if (error) throw error;
-
-    const schedule = pickCatchUpSchedule(
-      ((schedules ?? []) as ScheduleRow[]).map((row) => {
-        const type = Array.isArray(row.schedule_types)
-          ? row.schedule_types[0]
-          : row.schedule_types;
-        return {
-          id: row.id,
-          typeKey: type?.key ?? '',
-          status: row.status,
-          sentAt: row.sent_at,
-          dispatchedAt: row.dispatched_at,
-        };
-      }),
-    );
+    const schedule = await loadCatchUpSchedule(service, guest.event_id);
     if (!schedule) return { success: false, reason: 'not-eligible' };
 
     const planned = await buildCatchUpPlan(service, schedule.id, {

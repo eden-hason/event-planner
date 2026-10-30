@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   catchUpRejection,
+  missedCatchUpIds,
   pickCatchUpSchedule,
   splitCatchUp,
   type CatchUpDeliveryRow,
@@ -263,5 +264,31 @@ describe('pickCatchUpSchedule', () => {
 
   it('never takes a cancelled one', () => {
     assert.equal(pickCatchUpSchedule([schedule('cancelled', { status: 'cancelled' })]), null);
+  });
+});
+
+describe('missedCatchUpIds', () => {
+  it('lists audience guests with no Delivery or a Not sent one, never failures or the reached', () => {
+    const ids = missedCatchUpIds(
+      [
+        guest('late', { createdAt: '2026-10-05T09:00:00Z' }),
+        guest('no-phone-then'),
+        guest('reached'),
+        guest('failed'),
+        guest('queued'),
+        guest('confirmed', { rsvpStatus: 'confirmed' }),
+      ],
+      {
+        targetStatus: 'pending',
+        sentAt: SENT_AT,
+        deliveries: [
+          delivery('no-phone-then', { status: 'not_sent', notSentReason: 'no_phone' }),
+          delivery('reached', { status: 'read' }),
+          delivery('failed', { status: 'failed' }),
+          delivery('queued', { status: 'pending', queued: true }),
+        ],
+      },
+    );
+    assert.deepEqual(ids, ['late', 'no-phone-then']);
   });
 });

@@ -4,15 +4,12 @@ import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
   toDeliveryOutcome,
   toDeliverySteps,
+  toFallbackRow,
   type DeliveryAttemptRow,
   type GuestDeliveryOutcome,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
-import {
-  awaitingSmsFallback,
-  stuckWindow,
-  type FallbackDeliveryRow,
-} from '../services/send-sms-fallback';
+import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
 export type {
@@ -144,29 +141,13 @@ export async function getScheduleInteractionData(
 
   const deliveryRows = deliveriesResult.data ?? [];
   const smsComing = awaitingSmsFallback(
-    deliveryRows.map((row) => {
-      const guest = row.guests as unknown as {
-        name: string;
-        phone_number: string | null;
-      };
-      return {
-        id: row.id as string,
-        status: row.status,
-        guest_id: row.guest_id as string,
-        confirmation_token: null,
-        guests: { name: guest.name, phone_number: guest.phone_number },
-        message_delivery_attempts: (
-          (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? []
-        ).map((attempt) => ({
-          channel: attempt.channel,
-          status: attempt.status,
-          error_code: attempt.error_code,
-          error_message: null,
-          sent_at: attempt.sent_at,
-          created_at: attempt.created_at,
-        })),
-      } as FallbackDeliveryRow;
-    }),
+    deliveryRows.map((row) =>
+      toFallbackRow(
+        { id: row.id as string, status: row.status, guest_id: row.guest_id as string },
+        row.guests as unknown as { name: string; phone_number: string | null },
+        (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
+      ),
+    ),
     {
       frozen: scheduleFreeze(
         deliveryRows.flatMap(

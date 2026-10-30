@@ -1,16 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadOutsidePackageIds } from '@/features/billing/services';
-import { pageAll } from '@/lib/supabase/row-cap';
+import { embeddedOne, pageAll } from '@/lib/supabase/row-cap';
 import {
   gateScheduleForSend,
   type ScheduleSendGateRefusal,
 } from './schedule-send-gate';
 import {
+  CATCH_UP_TYPE_KEYS,
   catchUpRejection,
   phoneProblemFor,
+  pickCatchUpSchedule,
   splitCatchUp,
   wentOutAt,
+  type CatchUpDeliveryRow,
   type CatchUpRejection,
+  type CatchUpScheduleRow,
   type CatchUpSplit,
 } from '../utils/catch-up';
 
@@ -48,11 +52,66 @@ type DeliveryRow = {
   message_delivery_attempts: { status: string }[] | null;
 };
 
-function groupName(value: unknown): string | null {
-  const group = (Array.isArray(value) ? value[0] : value) as {
-    name: string;
-  } | null;
-  return group?.name ?? null;
+/** What a catch-up reads of a Delivery: its state, and whether a send is under way */
+export const CATCH_UP_DELIVERY_SELECT =
+  'guest_id, status, next_attempt_at, not_sent_reason, message_delivery_attempts(status)';
+
+export function toCatchUpDelivery(row: DeliveryRow): CatchUpDeliveryRow {
+  return {
+    guestId: row.guest_id,
+    status: row.status,
+    queued: row.next_attempt_at !== null,
+    attemptPending: (row.message_delivery_attempts ?? []).some(
+      (attempt) => attempt.status === 'pending',
+    ),
+    notSentReason: row.not_sent_reason,
+  };
+}
+
+export type CatchUpSchedule = CatchUpScheduleRow & {
+  targetStatus: string | null;
+  eventDate: string | null;
+};
+
+type CatchUpScheduleDbRow = {
+  id: string;
+  status: string | null;
+  target_status: string | null;
+  sent_at: string | null;
+  dispatched_at: string | null;
+  schedule_types: { key: string } | { key: string }[] | null;
+  events: { event_date: string | null } | { event_date: string | null }[] | null;
+};
+
+/**
+ * The Event's Schedule a guest can be caught up on (`pickCatchUpSchedule`), or
+ * null when none has gone out. The Owner's send and the guest list's missed
+ * filter both start here, so they never pick two different Schedules.
+ */
+export async function loadCatchUpSchedule(
+  supabase: SupabaseClient,
+  eventId: string,
+): Promise<CatchUpSchedule | null> {
+  const { data, error } = await supabase
+    .from('schedules')
+    .select(
+      'id, status, target_status, sent_at, dispatched_at, schedule_types!inner(key), events!inner(event_date)',
+    )
+    .eq('event_id', eventId)
+    .in('schedule_types.key', [...CATCH_UP_TYPE_KEYS]);
+  if (error) throw error;
+
+  return pickCatchUpSchedule(
+    ((data ?? []) as unknown as CatchUpScheduleDbRow[]).map((row) => ({
+      id: row.id,
+      typeKey: embeddedOne(row.schedule_types)?.key ?? '',
+      status: row.status,
+      sentAt: row.sent_at,
+      dispatchedAt: row.dispatched_at,
+      targetStatus: row.target_status,
+      eventDate: embeddedOne(row.events)?.event_date ?? null,
+    })),
+  );
 }
 
 /**
@@ -102,9 +161,7 @@ export async function buildCatchUpPlan(
     pageAll<DeliveryRow>((from, to) => {
       let query = supabase
         .from('message_deliveries')
-        .select(
-          'guest_id, status, next_attempt_at, not_sent_reason, message_delivery_attempts(status)',
-        )
+        .select(CATCH_UP_DELIVERY_SELECT)
         .eq('schedule_id', scheduleId);
       if (guestId) query = query.eq('guest_id', guestId);
       return query.order('id').range(from, to);
@@ -121,18 +178,10 @@ export async function buildCatchUpPlan(
       name: row.name,
       phone: row.phone_number,
       rsvpStatus: row.rsvp_status,
-      groupName: groupName(row.groups),
+      groupName: embeddedOne(row.groups as { name: string } | null)?.name ?? null,
       createdAt: row.created_at,
     })),
-    deliveries: deliveries.map((row) => ({
-      guestId: row.guest_id,
-      status: row.status,
-      queued: row.next_attempt_at !== null,
-      attemptPending: (row.message_delivery_attempts ?? []).some(
-        (attempt) => attempt.status === 'pending',
-      ),
-      notSentReason: row.not_sent_reason,
-    })),
+    deliveries: deliveries.map(toCatchUpDelivery),
     targetStatus: gate.targetStatus,
     outsideIds,
     phoneProblem: phoneProblemFor(gate.channel),

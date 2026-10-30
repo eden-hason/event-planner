@@ -4,7 +4,8 @@
 // queries/catalog.ts -> next/headers dependency chain), which would leak
 // into any client bundle that imports anything from this root barrel.
 export { SchedulesHeader } from './components/schedules-header';
-export { GuestJourney } from './components/guest-journey';
+export { GuestJourneySteps } from './components/guest-journey';
+export { RESULT_TONE, type ResultTone } from './components/results-presentation';
 
 // Actions
 export {

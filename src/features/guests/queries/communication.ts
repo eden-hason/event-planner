@@ -1,12 +1,13 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
+import { embeddedOne } from '@/lib/supabase/row-cap';
 import { loadOutsidePackageIds } from '@/features/billing/services';
 import { loadGuestJourneys } from '@/features/schedules/services/guest-journeys';
 import {
   phoneProblemFor,
   pickCatchUpSchedule,
 } from '@/features/schedules/utils/catch-up';
+import type { CallOutcome } from '@/features/calls';
 import type {
-  CallOutcome,
   CommunicationSchedule,
   GuestCommunicationInput,
 } from '@/features/guests/utils/guest-communication';
@@ -24,13 +25,8 @@ type ScheduleRow = {
 
 type CallRow = {
   outcome: CallOutcome | null;
-  called_at: string | null;
   call_rounds: { schedule_id: string | null } | null;
 };
-
-function one<T>(value: T | T[] | null): T | null {
-  return Array.isArray(value) ? (value[0] ?? null) : value;
-}
 
 /**
  * Everything the guest drawer's Communication tab needs for one Guest Record:
@@ -55,34 +51,34 @@ export async function getGuestCommunicationInput(
     return null;
   }
   if (!guest) return null;
-  const event = one(
+  const event = embeddedOne(
     guest.events as unknown as {
       event_date: string | null;
       can_create_schedules: boolean;
     } | null,
   );
 
-  const [schedules, journeys, calls, answers, outsideIds] = await Promise.all([
+  const [schedules, journeys, calls, outsideIds] = await Promise.all([
     supabase
       .from('schedules')
       .select(
         'id, status, target_status, scheduled_date, sent_at, dispatched_at, schedule_types!inner(key, execution_kind), message_templates(channel)',
       )
       .eq('event_id', guest.event_id),
-    loadGuestJourneys(supabase, guestId),
+    loadGuestJourneys(supabase, {
+      id: guest.id,
+      name: guest.name,
+      amount: guest.amount ?? 1,
+      phone: guest.phone_number,
+    }),
     supabase
       .from('call_logs')
-      .select('outcome, called_at, call_rounds!inner(schedule_id)')
+      .select('outcome, call_rounds!inner(schedule_id)')
       .eq('guest_id', guestId),
-    supabase
-      .from('guest_interactions')
-      .select('interaction_type, created_at, metadata')
-      .eq('guest_id', guestId)
-      .in('interaction_type', ['rsvp_confirm', 'rsvp_decline']),
     loadOutsidePackageIds(supabase, guest.event_id),
   ]);
 
-  const failed = schedules.error ?? calls.error ?? answers.error;
+  const failed = schedules.error ?? calls.error;
   if (failed || !journeys) {
     console.error('Error fetching guest communication:', failed);
     return null;
@@ -91,7 +87,7 @@ export async function getGuestCommunicationInput(
   const scheduleRows = (schedules.data ?? []) as unknown as ScheduleRow[];
   const plan: (CommunicationSchedule & { channel: string | null })[] =
     scheduleRows.map((row) => {
-      const type = one(row.schedule_types);
+      const type = embeddedOne(row.schedule_types);
       return {
         id: row.id,
         typeKey: type?.key ?? '',
@@ -101,7 +97,7 @@ export async function getGuestCommunicationInput(
         scheduledDate: row.scheduled_date,
         sentAt: row.sent_at,
         dispatchedAt: row.dispatched_at,
-        channel: one(row.message_templates)?.channel ?? null,
+        channel: embeddedOne(row.message_templates)?.channel ?? null,
       };
     });
   const catchUp = pickCatchUpSchedule(plan);
@@ -111,16 +107,12 @@ export async function getGuestCommunicationInput(
     GuestCommunicationInput['calls'][number]
   >();
   for (const row of (calls.data ?? []) as unknown as CallRow[]) {
-    const scheduleId = one(row.call_rounds)?.schedule_id;
+    const scheduleId = embeddedOne(row.call_rounds)?.schedule_id;
     if (!scheduleId) continue;
     // One call per round; a round re-run keeps the one with an outcome.
     const existing = callsBySchedule.get(scheduleId);
     if (existing?.outcome && !row.outcome) continue;
-    callsBySchedule.set(scheduleId, {
-      scheduleId,
-      outcome: row.outcome,
-      at: row.called_at,
-    });
+    callsBySchedule.set(scheduleId, { scheduleId, outcome: row.outcome });
   }
 
   return {
@@ -141,19 +133,9 @@ export async function getGuestCommunicationInput(
     // Unknown package standing never offers a send (ADR 0027): treated as outside.
     outsidePackage: outsideIds ? outsideIds.has(guest.id) : true,
     schedules: plan,
-    deliveries: journeys,
+    deliveries: journeys.deliveries,
     calls: [...callsBySchedule.values()],
-    answers: (answers.data ?? []).map((row) => {
-      const meta = row.metadata as { channel?: unknown } | null;
-      return {
-        response:
-          row.interaction_type === 'rsvp_confirm'
-            ? ('confirmed' as const)
-            : ('declined' as const),
-        channel: typeof meta?.channel === 'string' ? meta.channel : null,
-        at: row.created_at,
-      };
-    }),
+    answers: journeys.answers,
     catchUpPhoneProblem: catchUp
       ? phoneProblemFor(catchUp.channel)(guest.phone_number)
       : null,

@@ -108,6 +108,9 @@ export function sendGateRefusalLabel(reason: ScheduleSendGateRefusal): string {
   return SEND_GATE_REFUSALS[reason];
 }
 
+/** A send that could not check the Record Package is never made on a guess (ADR 0027) */
+export const PACKAGE_UNKNOWN_LABEL = 'לא הצלחנו לבדוק את חבילת הרשומות';
+
 const CATCH_UP_REJECTIONS: Record<CatchUpRejection, string> = {
   cancelled: 'התזמון בוטל',
   expired: 'התזמון פג בלי שנשלח, אז אין למי להשלים',

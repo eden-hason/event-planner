@@ -7,14 +7,20 @@
  * Pure: the query loads the rows, this decides what each one means.
  */
 
+import type { CallOutcome } from '@/features/calls';
 import type { GuestInteractionRow } from '@/features/schedules/utils/delivery-outcome';
+import type {
+  GuestAnswer,
+  GuestJourneyDelivery,
+} from '@/features/schedules/services/guest-journeys';
 import {
+  addedAfter,
   catchUpRejection,
+  classifyCatchUp,
+  inAudience,
   pickCatchUpSchedule,
-  splitCatchUp,
   wentOutAt,
   type CatchUpExclusion,
-  type CatchUpNote,
 } from '@/features/schedules/utils/catch-up';
 import {
   comparePlanOrder,
@@ -33,31 +39,11 @@ export type CommunicationSchedule = {
   dispatchedAt: string | null;
 };
 
-/** This guest's Delivery for one Schedule, as the Results tab reads it, plus the queue facts */
-export type CommunicationDelivery = {
-  scheduleId: string;
-  status: string;
-  queued: boolean;
-  attemptPending: boolean;
-  notSentReason: string | null;
-  journey: GuestInteractionRow;
-};
-
-export type CallOutcome = 'no_answer' | 'confirmed' | 'declined';
-
 /** This guest's place in a Call Round, if the round put them on its list */
 export type CommunicationCall = {
   scheduleId: string;
   /** Null while they are on the list and not yet called */
   outcome: CallOutcome | null;
-  at: string | null;
-};
-
-/** An RSVP the Guest gave themselves, in the chat or on the RSVP page */
-export type CommunicationAnswer = {
-  response: 'confirmed' | 'declined';
-  channel: string | null;
-  at: string;
 };
 
 export type GuestCommunicationInput = {
@@ -78,9 +64,10 @@ export type GuestCommunicationInput = {
   canSend: boolean;
   outsidePackage: boolean;
   schedules: CommunicationSchedule[];
-  deliveries: CommunicationDelivery[];
+  deliveries: GuestJourneyDelivery[];
   calls: CommunicationCall[];
-  answers: CommunicationAnswer[];
+  /** RSVPs the Guest gave themselves, in the chat or on the RSVP page */
+  answers: GuestAnswer[];
   /**
    * Why this guest's phone cannot receive the catch-up message, judged
    * on the server for that Schedule's channel (libphonenumber does not load
@@ -113,7 +100,7 @@ export type CommunicationState =
   | 'call_planned';
 
 export type CatchUpOffer =
-  | { available: true; addedAfterSend: boolean; note: CatchUpNote | null }
+  | { available: true }
   | {
       available: false;
       reason: CatchUpExclusion | 'event_over' | 'sending_off';
@@ -121,7 +108,6 @@ export type CatchUpOffer =
 
 export type CommunicationRow = {
   scheduleId: string;
-  kind: 'message' | 'call';
   typeKey: string;
   /** Its place among the Event's Schedules of the same type - "Confirmation 2" */
   number: { index: number; total: number } | null;
@@ -130,7 +116,8 @@ export type CommunicationRow = {
   state: CommunicationState;
   /** The Delivery's Journey, as on the Results tab; null with no Delivery */
   journey: GuestInteractionRow | null;
-  call: { outcome: CallOutcome | null; at: string | null } | null;
+  /** How this guest's call ended, for a Call Round that called them */
+  callOutcome: CallOutcome | null;
   /** Only on the latest Invitation or Confirmation that went out, and only when it means something */
   catchUp: CatchUpOffer | null;
 };
@@ -172,13 +159,9 @@ function deliveryState(journey: GuestInteractionRow): CommunicationState {
   }
 }
 
-function inAudience(schedule: CommunicationSchedule, rsvpStatus: string) {
-  return !schedule.targetStatus || schedule.targetStatus === rsvpStatus;
-}
-
 function messageState(
   schedule: CommunicationSchedule,
-  delivery: CommunicationDelivery | undefined,
+  delivery: GuestJourneyDelivery | undefined,
   guest: GuestCommunicationInput['guest'],
 ): CommunicationState | null {
   if (delivery) return deliveryState(delivery.journey);
@@ -196,13 +179,12 @@ function messageState(
       // Every Guest Record a Schedule targeted got a Delivery row, a not-sent
       // one included - so no Delivery means it was not on the list when it
       // went: added since, or not in the audience at the time.
-      const went = Date.parse(wentOutAt(schedule) ?? '');
-      return Number.isFinite(went) && Date.parse(guest.createdAt) > went
+      return addedAfter(guest.createdAt, wentOutAt(schedule))
         ? 'added_after'
         : 'not_in_audience';
     }
     default:
-      return inAudience(schedule, guest.rsvpStatus)
+      return inAudience(schedule.targetStatus, guest.rsvpStatus)
         ? 'will_get'
         : 'not_in_audience';
   }
@@ -227,7 +209,7 @@ function callState(
     case 'undated':
       return 'undated';
     default:
-      return inAudience(schedule, rsvpStatus)
+      return inAudience(schedule.targetStatus, rsvpStatus)
         ? 'call_planned'
         : 'not_in_audience';
   }
@@ -236,7 +218,7 @@ function callState(
 function catchUpOffer(
   input: GuestCommunicationInput,
   schedule: CommunicationSchedule,
-  delivery: CommunicationDelivery | undefined,
+  delivery: GuestJourneyDelivery | undefined,
   now: Date,
 ): CatchUpOffer | null {
   const rejection = catchUpRejection({
@@ -247,50 +229,26 @@ function catchUpOffer(
     now,
   });
 
-  const split = splitCatchUp({
-    guests: [
-      {
-        id: input.guest.id,
-        name: input.guest.name,
-        phone: null,
-        rsvpStatus: input.guest.rsvpStatus,
-        groupName: null,
-        createdAt: input.guest.createdAt,
-      },
-    ],
-    deliveries: delivery
-      ? [
-          {
-            guestId: input.guest.id,
-            status: delivery.status,
-            queued: delivery.queued,
-            attemptPending: delivery.attemptPending,
-            notSentReason: delivery.notSentReason,
-          },
-        ]
-      : [],
-    targetStatus: schedule.targetStatus,
-    outsideIds: new Set(input.outsidePackage ? [input.guest.id] : []),
-    phoneProblem: () => input.catchUpPhoneProblem,
-    sentAt: wentOutAt(schedule),
-  });
-
-  const [eligible] = split.eligible;
-  const [excluded] = split.excluded;
+  const standing = classifyCatchUp(
+    { phone: null, rsvpStatus: input.guest.rsvpStatus, createdAt: input.guest.createdAt },
+    delivery,
+    {
+      targetStatus: schedule.targetStatus,
+      outside: input.outsidePackage,
+      phoneProblem: () => input.catchUpPhoneProblem,
+      sentAt: wentOutAt(schedule),
+    },
+  );
   // Reached, mid-send, or not in the audience: nothing to catch up, so nothing to say.
-  if (!eligible && !excluded) return null;
+  if (standing.kind !== 'eligible' && standing.kind !== 'excluded') return null;
 
   // Past the RSVP Cutoff, or an Event that cannot send: the guest still
   // missed it, and the row says why it cannot be sent now.
   if (rejection === 'event_over')
     return { available: false, reason: 'event_over' };
   if (!input.canSend) return { available: false, reason: 'sending_off' };
-  if (excluded) return { available: false, reason: excluded.reason };
-  return {
-    available: true,
-    addedAfterSend: eligible.addedAfterSend,
-    note: eligible.note,
-  };
+  if (standing.kind === 'excluded') return { available: false, reason: standing.reason };
+  return { available: true };
 }
 
 function rsvpSummary(input: GuestCommunicationInput): RsvpSummary {
@@ -362,13 +320,12 @@ export function buildGuestCommunication(
     const number = numbers.get(schedule.id);
     rows.push({
       scheduleId: schedule.id,
-      kind: schedule.kind,
       typeKey: schedule.typeKey,
       number: number && number.total > 1 ? number : null,
       at: wentOutAt(schedule) ?? schedule.scheduledDate,
       state,
       journey: delivery?.journey ?? null,
-      call: call ? { outcome: call.outcome, at: call.at } : null,
+      callOutcome: call?.outcome ?? null,
       catchUp:
         catchUpSchedule?.id === schedule.id
           ? catchUpOffer(input, schedule, delivery, now)

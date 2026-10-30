@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -37,9 +37,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  GuestJourney,
+  GuestJourneySteps,
+  RESULT_TONE,
+  SCHEDULE_TYPE_KEYS,
   sendCatchUp,
   type CatchUpSendState,
+  type ResultTone,
+  type ScheduleTypeKey,
 } from '@/features/schedules';
 import { useSaveEvent } from '@/features/auth';
 import { loadGuestCommunication } from '@/features/guests/actions/communication';
@@ -54,15 +58,7 @@ import { cn } from '@/lib/utils';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { daysUntil } from '@/features/schedules/utils/timeline';
 
-const KNOWN_TYPES = [
-  'initial_invitation',
-  'confirmation',
-  'event_reminder',
-  'post_event',
-  'phone_call',
-] as const;
-
-const TYPE_ICONS: Record<string, React.ComponentType<IconProps>> = {
+const TYPE_ICONS: Record<ScheduleTypeKey, React.ComponentType<IconProps>> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   event_reminder: IconBell,
@@ -70,33 +66,29 @@ const TYPE_ICONS: Record<string, React.ComponentType<IconProps>> = {
   phone_call: IconPhone,
 };
 
-const TONE = {
-  ok: 'bg-rsvp-confirmed-tint text-rsvp-confirmed-strong',
-  pending: 'bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300',
-  bad: 'bg-rsvp-declined-tint text-rsvp-declined-strong',
-  missed:
-    'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300',
-  neutral: 'bg-muted text-muted-foreground',
-};
-
-const STATE_TONE: Record<CommunicationState, keyof typeof TONE> = {
+// The Results tab's tones, so a row and its Journey read in one palette.
+const STATE_TONE: Record<CommunicationState, ResultTone> = {
   seen: 'ok',
   reached: 'ok',
-  on_its_way: 'pending',
-  sms_on_its_way: 'pending',
+  on_its_way: 'info',
+  sms_on_its_way: 'info',
   not_delivered: 'bad',
-  no_phone: 'missed',
-  outside_package: 'missed',
-  added_after: 'missed',
+  no_phone: 'pending',
+  outside_package: 'pending',
+  added_after: 'pending',
   not_in_audience: 'neutral',
-  will_get: 'pending',
+  will_get: 'info',
   undated: 'neutral',
   locked: 'neutral',
   off: 'neutral',
   called: 'ok',
-  call_queued: 'pending',
+  call_queued: 'info',
   call_planned: 'neutral',
 };
+
+function isScheduleTypeKey(key: string): key is ScheduleTypeKey {
+  return (SCHEDULE_TYPE_KEYS as readonly string[]).includes(key);
+}
 
 type State = { guestId: string; data: Communication | null } | null;
 
@@ -133,6 +125,8 @@ export function GuestCommunication({
 
   const loading = state?.guestId !== guestId;
   const data = loading ? null : state.data;
+  // One clock for every row's countdown and Journey in this render.
+  const now = new Date();
 
   return (
     <div className="flex flex-col gap-4">
@@ -175,6 +169,7 @@ export function GuestCommunication({
                   <li key={row.scheduleId}>
                     <OutreachRow
                       row={row}
+                      now={now}
                       guestId={guestId}
                       guestName={guestName}
                       expanded={open === row.scheduleId}
@@ -199,11 +194,15 @@ export function GuestCommunication({
 
 function useShortDate() {
   const locale = useLocale();
-  const format = new Intl.DateTimeFormat(locale, {
-    timeZone: ADMIN_TIME_ZONE,
-    day: 'numeric',
-    month: 'short',
-  });
+  const format = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        timeZone: ADMIN_TIME_ZONE,
+        day: 'numeric',
+        month: 'short',
+      }),
+    [locale],
+  );
   return (iso: string) => format.format(new Date(iso));
 }
 
@@ -253,6 +252,7 @@ function RsvpCard({ rsvp }: { rsvp: RsvpSummary }) {
 
 function OutreachRow({
   row,
+  now,
   guestId,
   guestName,
   expanded,
@@ -260,6 +260,7 @@ function OutreachRow({
   onSent,
 }: {
   row: CommunicationRow;
+  now: Date;
   guestId: string;
   guestName: string;
   expanded: boolean;
@@ -274,31 +275,26 @@ function OutreachRow({
 
   // What is ahead is counted down, what went out is dated - as on the
   // schedules list card. A Due Time already past but not sent reads as a date.
-  const days = row.at ? daysUntil(row.at, new Date()) : null;
-  const when = !row.at
-    ? null
-    : days === null
-      ? date(row.at)
-      : days === 0
-        ? tTimeline('today')
-        : days === 1
-          ? tTimeline('tomorrow')
-          : tTimeline('inDays', { count: days });
+  const days = row.at ? daysUntil(row.at, now) : null;
+  const countdown = (count: number) => {
+    if (count === 0) return tTimeline('today');
+    if (count === 1) return tTimeline('tomorrow');
+    return tTimeline('inDays', { count });
+  };
+  const when = !row.at ? null : days === null ? date(row.at) : countdown(days);
 
-  const base = (KNOWN_TYPES as readonly string[]).includes(row.typeKey)
-    ? tTypes(row.typeKey as (typeof KNOWN_TYPES)[number])
-    : t('type.other');
+  const known = isScheduleTypeKey(row.typeKey) ? row.typeKey : null;
+  const base = known ? tTypes(known) : t('type.other');
   const label = row.number ? `${base} ${row.number.index}` : base;
-  const Icon = TYPE_ICONS[row.typeKey] ?? IconSend;
+  const Icon = known ? TYPE_ICONS[known] : IconSend;
 
   const status =
-    row.state === 'called' && row.call?.outcome
-      ? `${t('state.called')} · ${t(`callOutcome.${row.call.outcome}`)}`
+    row.state === 'called' && row.callOutcome
+      ? `${t('state.called')} · ${t(`callOutcome.${row.callOutcome}`)}`
       : t(`state.${row.state}`);
   const canExpand = row.journey !== null;
 
   const catchUp = row.catchUp;
-  const toggle = canExpand ? onToggle : undefined;
 
   return (
     <div className="flex flex-col">
@@ -307,11 +303,11 @@ function OutreachRow({
         role={canExpand ? 'button' : undefined}
         tabIndex={canExpand ? 0 : undefined}
         aria-expanded={canExpand ? expanded : undefined}
-        onClick={toggle}
+        onClick={canExpand ? onToggle : undefined}
         onKeyDown={(event) => {
-          if (!toggle || (event.key !== 'Enter' && event.key !== ' ')) return;
+          if (!canExpand || (event.key !== 'Enter' && event.key !== ' ')) return;
           event.preventDefault();
-          toggle();
+          onToggle();
         }}
         className={cn(
           'rounded-none px-3',
@@ -327,14 +323,14 @@ function OutreachRow({
             <span
               className={cn(
                 'inline-flex h-5 items-center rounded-md px-1.5 text-[11px] font-bold',
-                TONE[STATE_TONE[row.state]],
+                RESULT_TONE[STATE_TONE[row.state]],
               )}
             >
               {status}
             </span>
-            {row.at && when && (
+            {when && (
               <span
-                title={days === null ? undefined : date(row.at)}
+                title={days === null || !row.at ? undefined : date(row.at)}
                 className="text-muted-foreground text-xs tabular-nums"
               >
                 {when}
@@ -376,12 +372,7 @@ function OutreachRow({
 
       {expanded && row.journey && (
         <div className="px-3 pt-1 pb-1">
-          <GuestJourney
-            row={row.journey}
-            now={new Date()}
-            locale={locale}
-            bare
-          />
+          <GuestJourneySteps row={row.journey} now={now} locale={locale} />
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@
  */
 
 import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from './send-helpers';
+import type { FallbackDeliveryRow } from '../services/send-sms-fallback';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -128,4 +129,30 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
       readAt: attempt.read_at ?? undefined,
       failedAt: attempt.status === 'failed' ? attempt.updated_at : undefined,
     }));
+}
+
+/**
+ * A Delivery in the shape the SMS Fallback classifier reads, so the results
+ * tab and the guest drawer ask `awaitingSmsFallback` the same question.
+ */
+export function toFallbackRow(
+  row: { id: string; status: string; guest_id: string },
+  guest: { name: string; phone_number: string | null },
+  attempts: readonly DeliveryAttemptRow[],
+): FallbackDeliveryRow {
+  return {
+    id: row.id,
+    status: row.status,
+    guest_id: row.guest_id,
+    confirmation_token: null,
+    guests: { name: guest.name, phone_number: guest.phone_number },
+    message_delivery_attempts: attempts.map((attempt) => ({
+      channel: attempt.channel,
+      status: attempt.status,
+      error_code: attempt.error_code,
+      error_message: null,
+      sent_at: attempt.sent_at,
+      created_at: attempt.created_at,
+    })),
+  } as FallbackDeliveryRow;
 }

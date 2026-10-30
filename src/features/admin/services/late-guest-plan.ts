@@ -8,6 +8,7 @@ import {
   catchUpExclusionLabel,
   catchUpNoteLabel,
   catchUpRejectionLabel,
+  PACKAGE_UNKNOWN_LABEL,
   sendGateRefusalLabel,
 } from '../utils/labels';
 
@@ -42,7 +43,7 @@ function refusalLabel(reason: CatchUpPlanRefusal): string {
     case 'sending_off':
       return sendGateRefusalLabel(reason);
     case 'package_unknown':
-      return 'לא הצלחנו לבדוק את חבילת הרשומות';
+      return PACKAGE_UNKNOWN_LABEL;
     default:
       return catchUpRejectionLabel(reason);
   }

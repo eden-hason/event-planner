@@ -103,86 +103,124 @@ function noteFor(notSentReason: string | null): CatchUpNote {
     : 'other';
 }
 
+/**
+ * The same audience predicate the send engine uses (`filterGuestsByTarget`): a
+ * guest outside a Schedule's target - a confirmed guest, for a round to the
+ * pending - was never meant to get it.
+ */
+export function inAudience(targetStatus: string | null, rsvpStatus: string) {
+  return !targetStatus || rsvpStatus === targetStatus;
+}
+
+/** The guest joined the list after the Schedule went out */
+export function addedAfter(createdAt: string, sentAt: string | null) {
+  const sent = sentAt ? Date.parse(sentAt) : NaN;
+  return Number.isFinite(sent) && Date.parse(createdAt) > sent;
+}
+
+/** Where one guest stands with a Schedule that went out, as a catch-up sees it */
+export type CatchUpStanding =
+  | { kind: 'not_in_audience' }
+  /** Already received it - never offered again */
+  | { kind: 'reached' }
+  /** Queued or mid-attempt - offering it would race the send already under way */
+  | { kind: 'in_flight' }
+  /** Never got it, but cannot be sent it */
+  | { kind: 'excluded'; reason: CatchUpExclusion }
+  | { kind: 'eligible'; addedAfterSend: boolean; note: CatchUpNote | null };
+
+/**
+ * One guest's standing with a sent Schedule. The single rule behind the
+ * Back Office's late-guest list, the Owner's Catch-up Send and the guest
+ * list's "didn't get the latest message" filter.
+ */
+export function classifyCatchUp(
+  guest: { phone: string | null; rsvpStatus: string; createdAt: string },
+  delivery: Omit<CatchUpDeliveryRow, 'guestId'> | undefined,
+  context: {
+    /** The Schedule's audience filter; null means every guest record */
+    targetStatus: string | null;
+    /** Outside the Record Package (ADR 0027) - never sent to */
+    outside: boolean;
+    /** Why this phone cannot receive the Schedule, or null - see phoneProblemFor */
+    phoneProblem: (phone: string | null) => CatchUpExclusion | null;
+    /** When the Schedule went out, to mark who joined after it */
+    sentAt: string | null;
+  },
+): CatchUpStanding {
+  if (!inAudience(context.targetStatus, guest.rsvpStatus)) {
+    return { kind: 'not_in_audience' };
+  }
+  if (delivery && REACHED.has(delivery.status)) return { kind: 'reached' };
+  if (delivery?.status === 'failed') {
+    // A failure has its own handling - the Operator's resend and SMS
+    // Fallback (ADR 0012), beside the error. Offering it here would hide why
+    // it failed, and a Guest-level failure would only fail again.
+    return { kind: 'excluded', reason: 'failed' };
+  }
+  if (
+    delivery?.status === 'pending' &&
+    (delivery.queued || delivery.attemptPending)
+  ) {
+    return { kind: 'in_flight' };
+  }
+
+  // No delivery at all, a not-sent record, or a reservation nothing ever
+  // attempted: this guest never got the message.
+  if (context.outside) return { kind: 'excluded', reason: 'outside_package' };
+  const problem = context.phoneProblem(guest.phone);
+  if (problem) return { kind: 'excluded', reason: problem };
+
+  return {
+    kind: 'eligible',
+    addedAfterSend: addedAfter(guest.createdAt, context.sentAt),
+    note: delivery ? noteFor(delivery.notSentReason) : null,
+  };
+}
+
 export function splitCatchUp(params: {
   guests: CatchUpGuestRow[];
   deliveries: CatchUpDeliveryRow[];
-  /** The Schedule's audience filter; null means every guest record */
   targetStatus: string | null;
   /** Records outside the Record Package (ADR 0027) - never sent to */
   outsideIds: ReadonlySet<string>;
-  /** Why this phone cannot receive the Schedule, or null - see phoneProblemFor */
   phoneProblem: (phone: string | null) => CatchUpExclusion | null;
-  /** When the Schedule went out, to mark who joined after it */
   sentAt: string | null;
 }): CatchUpSplit {
   const { guests, targetStatus, outsideIds, phoneProblem, sentAt } = params;
   const byGuest = new Map(params.deliveries.map((row) => [row.guestId, row]));
-  const sentAtMs = sentAt ? Date.parse(sentAt) : NaN;
 
-  // The same audience predicate the send engine uses: a guest outside the
-  // Schedule's target (a confirmed guest, for a reminder to the pending) is not
-  // late, they were never meant to get it, so they are not listed at all.
-  const audience = guests.filter(
-    (guest) => !targetStatus || guest.rsvpStatus === targetStatus,
-  );
-
+  let audienceCount = 0;
   let reachedCount = 0;
   let inFlightCount = 0;
   const eligible: CatchUpCandidate[] = [];
   const excluded: CatchUpExcluded[] = [];
 
-  for (const guest of audience) {
-    const delivery = byGuest.get(guest.id);
-    const exclude = (reason: CatchUpExclusion) =>
-      excluded.push({
+  for (const guest of guests) {
+    const standing = classifyCatchUp(guest, byGuest.get(guest.id), {
+      targetStatus,
+      outside: outsideIds.has(guest.id),
+      phoneProblem,
+      sentAt,
+    });
+    if (standing.kind === 'not_in_audience') continue;
+    audienceCount += 1;
+    if (standing.kind === 'reached') reachedCount += 1;
+    else if (standing.kind === 'in_flight') inFlightCount += 1;
+    else if (standing.kind === 'excluded') {
+      excluded.push({ id: guest.id, name: guest.name, phone: guest.phone, reason: standing.reason });
+    } else {
+      eligible.push({
         id: guest.id,
         name: guest.name,
-        phone: guest.phone,
-        reason,
+        phone: guest.phone!,
+        groupName: guest.groupName,
+        rsvpStatus: guest.rsvpStatus,
+        createdAt: guest.createdAt,
+        addedAfterSend: standing.addedAfterSend,
+        note: standing.note,
       });
-
-    if (delivery && REACHED.has(delivery.status)) {
-      reachedCount += 1;
-      continue;
     }
-    if (delivery?.status === 'failed') {
-      // A failure has its own handling - the Operator's resend and SMS
-      // Fallback (ADR 0012), beside the error. Offering it here would hide why
-      // it failed, and a Guest-level failure would only fail again.
-      exclude('failed');
-      continue;
-    }
-    if (
-      delivery?.status === 'pending' &&
-      (delivery.queued || delivery.attemptPending)
-    ) {
-      inFlightCount += 1;
-      continue;
-    }
-
-    // No delivery at all, a not-sent record, or a reservation nothing ever
-    // attempted: this guest never got the message.
-    if (outsideIds.has(guest.id)) {
-      exclude('outside_package');
-      continue;
-    }
-    const problem = phoneProblem(guest.phone);
-    if (problem) {
-      exclude(problem);
-      continue;
-    }
-
-    const createdMs = Date.parse(guest.createdAt);
-    eligible.push({
-      id: guest.id,
-      name: guest.name,
-      phone: guest.phone!,
-      groupName: guest.groupName,
-      rsvpStatus: guest.rsvpStatus,
-      createdAt: guest.createdAt,
-      addedAfterSend: Number.isFinite(sentAtMs) && createdMs > sentAtMs,
-      note: delivery ? noteFor(delivery.notSentReason) : null,
-    });
   }
 
   eligible.sort((a, b) => {
@@ -192,13 +230,38 @@ export function splitCatchUp(params: {
     );
   });
 
-  return {
-    audienceCount: audience.length,
-    reachedCount,
-    inFlightCount,
-    eligible,
-    excluded,
+  return { audienceCount, reachedCount, inFlightCount, eligible, excluded };
+}
+
+/**
+ * Guest Records that did not get a sent Schedule and could be caught up on it,
+ * phone and package aside: the guest list's "didn't get the latest message"
+ * filter (ADR 0050). Those with no phone or outside the package are included -
+ * they missed it too, and their drawer says why it cannot be sent yet. A
+ * failure is not: it is the Operator's to handle.
+ */
+export function missedCatchUpIds(
+  guests: readonly { id: string; rsvpStatus: string; createdAt: string }[],
+  schedule: {
+    targetStatus: string | null;
+    sentAt: string | null;
+    deliveries: readonly CatchUpDeliveryRow[];
+  },
+): string[] {
+  const byGuest = new Map(schedule.deliveries.map((row) => [row.guestId, row]));
+  const context = {
+    targetStatus: schedule.targetStatus,
+    outside: false,
+    phoneProblem: () => null,
+    sentAt: schedule.sentAt,
   };
+  return guests
+    .filter(
+      (guest) =>
+        classifyCatchUp({ ...guest, phone: null }, byGuest.get(guest.id), context).kind ===
+        'eligible',
+    )
+    .map((guest) => guest.id);
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

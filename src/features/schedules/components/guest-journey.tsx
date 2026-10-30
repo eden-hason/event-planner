@@ -92,22 +92,79 @@ export function GuestJourney({
   now,
   locale,
   onClose,
-  bare = false,
 }: {
   row: GuestInteractionRow;
   now: Date;
   locale: string;
   /** Draws a close button in the header; a sheet brings its own */
   onClose?: () => void;
-  /**
-   * Only the steps, for a view already about this guest (the guest drawer):
-   * no name header and no call button.
-   */
-  bare?: boolean;
+}) {
+  const t = useTranslations('schedules.results');
+  const channelLabel = useChannelLabel();
+
+  const answer =
+    row.response === 'rsvp_confirm'
+      ? [
+          t('guests.answer.confirmed'),
+          row.guestCount ? t('people', { count: row.guestCount }) : '',
+        ]
+          .filter(Boolean)
+          .join(', ')
+      : row.response === 'rsvp_decline'
+        ? t('guests.answer.declined')
+        : null;
+  const sub = [channelLabel(row), answer].filter(Boolean).join(' · ');
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-[15.5px] font-extrabold">
+            {row.guestName}
+          </span>
+          {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('journey.close')}
+            className="bg-muted text-muted-foreground hover:text-foreground flex size-[26px] shrink-0 items-center justify-center rounded-lg"
+          >
+            <IconX size={14} />
+          </button>
+        )}
+      </div>
+
+      <GuestJourneySteps row={row} now={now} locale={locale} />
+
+      {row.phone && (
+        <Button asChild variant="outline">
+          <a href={`tel:${row.phone}`}>
+            <IconPhone size={15} />
+            {t('journey.call')}
+          </a>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The steps alone - sent, delivered, seen, answered - for a view already
+ * about this guest, such as the guest drawer's Messages tab.
+ */
+export function GuestJourneySteps({
+  row,
+  now,
+  locale,
+}: {
+  row: GuestInteractionRow;
+  now: Date;
+  locale: string;
 }) {
   const t = useTranslations('schedules.results');
   const answerMeta = useAnswerMeta();
-  const channelLabel = useChannelLabel();
   const steps = buildJourney(row);
   // An SMS already accepted and waiting on its report, as opposed to a
   // Fallback the sweeper has yet to send.
@@ -170,88 +227,44 @@ export function GuestJourney({
     }
   };
 
-  const answer =
-    row.response === 'rsvp_confirm'
-      ? [
-          t('guests.answer.confirmed'),
-          row.guestCount ? t('people', { count: row.guestCount }) : '',
-        ]
-          .filter(Boolean)
-          .join(', ')
-      : row.response === 'rsvp_decline'
-        ? t('guests.answer.declined')
-        : null;
-  const sub = [channelLabel(row), answer].filter(Boolean).join(' · ');
 
   return (
-    <div className="flex flex-col gap-3">
-      {!bare && (
-        <div className="flex items-start gap-2">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="truncate text-[15.5px] font-extrabold">
-              {row.guestName}
-            </span>
-            {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
-          </div>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('journey.close')}
-              className="bg-muted text-muted-foreground hover:text-foreground flex size-[26px] shrink-0 items-center justify-center rounded-lg"
-            >
-              <IconX size={14} />
-            </button>
-          )}
-        </div>
-      )}
-
-      <ol className="flex flex-col">
-        {steps.map((step, index) => {
-          const { icon: StepIcon, tone } = stepLook(step);
-          const { label, meta } = describe(step);
-          const last = index === steps.length - 1;
-          return (
-            <li key={`${step.kind}-${index}`} className="flex gap-2.5 pb-3">
-              <div className="relative flex w-[22px] shrink-0 justify-center">
-                {!last && (
-                  <span className="bg-muted absolute top-6 bottom-0 w-0.5" />
+    <ol className="flex flex-col">
+      {steps.map((step, index) => {
+        const { icon: StepIcon, tone } = stepLook(step);
+        const { label, meta } = describe(step);
+        const last = index === steps.length - 1;
+        return (
+          <li key={`${step.kind}-${index}`} className="flex gap-2.5 pb-3">
+            <div className="relative flex w-[22px] shrink-0 justify-center">
+              {!last && (
+                <span className="bg-muted absolute top-6 bottom-0 w-0.5" />
+              )}
+              <span
+                className={cn(
+                  'z-[1] flex size-[22px] items-center justify-center rounded-full',
+                  RESULT_TONE[tone],
                 )}
-                <span
-                  className={cn(
-                    'z-[1] flex size-[22px] items-center justify-center rounded-full',
-                    RESULT_TONE[tone],
-                  )}
-                >
-                  <StepIcon size={12} stroke={2.2} />
-                </span>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="text-[13px] font-semibold">{label}</span>
-                {meta && (
-                  <span className="text-muted-foreground text-[11.5px]">
-                    {meta}
-                  </span>
-                )}
-              </div>
-              {step.at && (
-                <span className="text-muted-foreground shrink-0 text-[11.5px] tabular-nums">
-                  {formatMoment(step.at, { now, locale })}
+              >
+                <StepIcon size={12} stroke={2.2} />
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-px">
+              <span className="text-[13px] font-semibold">{label}</span>
+              {meta && (
+                <span className="text-muted-foreground text-[11.5px]">
+                  {meta}
                 </span>
               )}
-            </li>
-          );
-        })}
-      </ol>
-
-      {!bare && row.phone && (
-        <Button asChild variant="outline">
-          <a href={`tel:${row.phone}`}>
-            <IconPhone size={15} />
-            {t('journey.call')}
-          </a>
-        </Button>
-      )}
-    </div>
+            </div>
+            {step.at && (
+              <span className="text-muted-foreground shrink-0 text-[11.5px] tabular-nums">
+                {formatMoment(step.at, { now, locale })}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
