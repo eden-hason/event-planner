@@ -17,6 +17,14 @@ export function embeddedCount(value: { count: number }[] | null | undefined): nu
 }
 
 /**
+ * A to-one embed (`schedule_types(key)`), which PostgREST may hand back as an
+ * object or as a one-element array depending on how it reads the relation.
+ */
+export function embeddedOne<T>(value: T | T[] | null | undefined): T | null {
+  return (Array.isArray(value) ? value[0] : value) ?? null;
+}
+
+/**
  * Every row a query matches, read a page at a time past the `max_rows` cap.
  *
  * Reach for this only when the rows themselves are needed. A count or a

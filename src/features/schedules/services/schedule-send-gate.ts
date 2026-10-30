@@ -17,20 +17,24 @@ export type ScheduleSendGate = {
   eventDate: string | null;
 };
 
+/** Why a Schedule cannot be sent from a manual entry point */
+export type ScheduleSendGateRefusal = 'not_found' | 'not_message' | 'sending_off';
+
 export type ScheduleSendGateResult =
   | { ok: true; gate: ScheduleSendGate }
-  | { ok: false; message: string };
+  | { ok: false; reason: ScheduleSendGateRefusal };
 
 /**
- * Shared gate for every Back Office send entry point: the schedule has to
- * exist, be a message schedule, and belong to an event with sending enabled.
- * Returns the event id so callers can scope their own guest lookups to it, and
- * the targeting fields so a caller that picks its own recipients can reproduce
- * the audience the engine would have selected.
+ * Shared gate for every manual send entry point: the schedule has to exist, be
+ * a message schedule, and belong to an event with sending enabled. Returns the
+ * event id so callers can scope their own guest lookups to it, and the
+ * targeting fields so a caller that picks its own recipients can reproduce the
+ * audience the engine would have selected.
  *
- * Lives in services/ rather than in either action file because the SMS
- * Fallback and the late-guest send both need it and it takes its client as a
- * parameter, so it is not itself a Server Action.
+ * Lives in services/ because the Back Office's SMS Fallback and late-guest
+ * send and the Owner's Catch-up Send all need it, and it takes its client as a
+ * parameter, so it is not itself a Server Action. It answers in codes: each
+ * caller words the refusal for its own reader.
  */
 export async function gateScheduleForSend(
   supabase: SupabaseClient,
@@ -44,20 +48,20 @@ export async function gateScheduleForSend(
     .eq('id', scheduleId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return { ok: false, message: 'התזמון הזה כבר לא קיים' };
+  if (!data) return { ok: false, reason: 'not_found' };
 
   const scheduleType = (Array.isArray(data.schedule_types)
     ? data.schedule_types[0]
     : data.schedule_types) as { key: string; name: string; execution_kind: string } | null;
   if (scheduleType?.execution_kind !== 'message') {
-    return { ok: false, message: 'סבבי שיחות לא נשלחים מכאן' };
+    return { ok: false, reason: 'not_message' };
   }
 
   const event = (Array.isArray(data.events) ? data.events[0] : data.events) as
     | { can_create_schedules: boolean; event_date: string | null }
     | null;
   if (!event?.can_create_schedules) {
-    return { ok: false, message: 'השליחה לא מופעלת לאירוע הזה' };
+    return { ok: false, reason: 'sending_off' };
   }
 
   const template = (Array.isArray(data.message_templates)

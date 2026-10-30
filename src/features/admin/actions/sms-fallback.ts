@@ -9,7 +9,8 @@ import {
   type SmsFallbackOutcome,
   type SmsFallbackPlan,
 } from '@/features/schedules/services/send-sms-fallback';
-import { gateScheduleForSend } from '../services/schedule-send-gate';
+import { gateScheduleForSend } from '@/features/schedules/services/schedule-send-gate';
+import { sendGateRefusalLabel } from '../utils/labels';
 import { MAX_BATCH_SIZE } from '../utils/sms-fallback';
 
 export type {
@@ -36,7 +37,7 @@ export async function getSmsFallbackPlan(scheduleId: string): Promise<SmsFallbac
 
   try {
     const gate = await gateScheduleForSend(supabase, scheduleId);
-    if (!gate.ok) return gate;
+    if (!gate.ok) return { ok: false, message: sendGateRefusalLabel(gate.reason) };
     return { ok: true, plan: await buildSmsFallbackPlan(supabase, scheduleId) };
   } catch (error) {
     console.error('getSmsFallbackPlan failed:', error);
@@ -57,7 +58,9 @@ export async function launchSmsFallback(scheduleId: string): Promise<SmsFallback
 
   try {
     const gate = await gateScheduleForSend(supabase, scheduleId);
-    if (!gate.ok) return { success: false, message: gate.message, ...empty };
+    if (!gate.ok) {
+      return { success: false, message: sendGateRefusalLabel(gate.reason), ...empty };
+    }
 
     const outcome = await sendSmsFallback(supabase, scheduleId, {
       limit: MAX_BATCH_SIZE,

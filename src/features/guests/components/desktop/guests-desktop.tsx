@@ -36,7 +36,7 @@ import { BulkActionBar, type BulkAction } from './bulk-action-bar';
 import { GuestConfirmDialog } from './guest-confirm-dialog';
 import { UndoToast } from '../undo-toast';
 import { NewGroupDialog } from './new-group-dialog';
-import { GuestDrawer } from '../guest-drawer';
+import { GuestDrawer, type GuestDrawerTab } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
 import { OutsidePackageBanner, PackageLine } from '../package';
 
@@ -48,12 +48,16 @@ interface GuestsDesktopProps {
   existingPhones: Map<string, string>;
   /** Guest Records a Delivery has reached - named in the delete confirm. */
   messagedGuestIds: string[];
+  /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
+  missedCatchUpIds: string[];
   showDietary: boolean;
   showTransportation: boolean;
   tables: TableOption[];
   drawer: {
     open: boolean;
     guest: GuestWithGroupApp | null;
+    tab: GuestDrawerTab;
+    onTabChange: (tab: GuestDrawerTab) => void;
     onOpenChange: (open: boolean) => void;
   };
   onOpenGuest: (guest: GuestWithGroupApp) => void;
@@ -74,6 +78,7 @@ export function GuestsDesktop({
   eventName,
   existingPhones,
   messagedGuestIds,
+  missedCatchUpIds,
   showDietary,
   showTransportation,
   tables,
@@ -98,12 +103,13 @@ export function GuestsDesktop({
     outsideIds,
     outsideCount,
     outsideOnly,
+    missedCount,
     filtered,
     selected,
     setSelected,
     selectionOnly,
     setSelectionOnly,
-  } = useGuestListView(allGuests, eventId);
+  } = useGuestListView(allGuests, eventId, missedCatchUpIds);
   const anchorRef = useRef<string | null>(null);
   const [newGroupFor, setNewGroupFor] = useState<string[] | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -222,6 +228,8 @@ export function GuestsDesktop({
     <GuestDrawer
       open={drawer.open}
       guest={drawer.guest}
+      tab={drawer.tab}
+      onTabChange={drawer.onTabChange}
       eventId={eventId}
       groups={groups}
       tables={tables}
@@ -311,6 +319,7 @@ export function GuestsDesktop({
         statusCounts={statusCounts}
         outsideCount={outsideCount}
         outsideOnly={outsideOnly}
+        missedCount={missedCount}
         groups={groups}
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}

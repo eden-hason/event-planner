@@ -1,6 +1,17 @@
 # A guest added after a Schedule went out never receives it
 
-Status: in progress - the Back Office half is built; the Owner-facing half is open
+Status: in progress - the Back Office half is built; the Owner-facing half is decided
+(ADR 0050, the **Catch-up Send**) and not built yet
+
+## Decided: the Owner half (2026-10-30)
+
+The Owner gets a **Catch-up Send** from the guest drawer's new Communication tab, one
+Guest at a time, for the latest Initial Invitation or Confirmation that went out (never an
+Event Reminder or Thank You), until the RSVP Cutoff. It reuses `sendSelectedDeliveries` and
+goes when pressed, outside the Send Window too. The guest list gets a "didn't get the latest
+message" filter so the Owner can find who needs one. See ADR 0050 for the rules and the
+options rejected. Still open from this item: a bulk action on the sent Schedule (the
+design's `שליחה לאורחים שנוספו מאז (4)`).
 
 ## The problem
 

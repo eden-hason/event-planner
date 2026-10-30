@@ -1212,7 +1212,8 @@
         "transport": "Transportation",
         "transportAll": "All",
         "noPhoneOnly": "No phone number",
-        "noGroups": "No groups yet"
+        "noGroups": "No groups yet",
+        "missedLatest": "Didn't get the latest message ({count})"
       },
       "sort": "Sort",
       "more": "More actions",
@@ -1227,7 +1228,8 @@
         "noPhone": "No phone",
         "transport": "Transportation: {answer}",
         "clearAll": "Clear all",
-        "remove": "Remove {label}"
+        "remove": "Remove {label}",
+        "missedLatest": "Didn't get the latest message"
       },
       "sides": {
         "bride": "Bride",
@@ -1351,10 +1353,8 @@
         "add": "Add guest",
         "delete": "Delete",
         "cancel": "Cancel",
-        "activity": "Activity",
-        "activityEmpty": "No messages or calls yet",
-        "activityFailed": "Could not load the activity",
         "link": "Personal invitation link",
+        "linkDescription": "Copy this guest's personal RSVP link to share it yourself",
         "copy": "Copy",
         "copied": "Copied",
         "notesPlaceholder": "Internal note, the guest never sees it",
@@ -1371,46 +1371,78 @@
         "transportNo": "No",
         "transportUnanswered": "Not answered"
       },
-      "activity": {
-        "schedule": {
-          "initial_invitation": "Invitation",
-          "confirmation": "RSVP request",
-          "event_reminder": "Event reminder",
-          "post_event": "Thank you message",
+      "communication": {
+        "tabs": {
+          "details": "Details",
+          "communication": "Messages"
+        },
+        "failed": "Could not load the communication",
+        "empty": "No messages planned for this event yet",
+        "rsvpTitle": "RSVP",
+        "rsvp": {
+          "confirmed": "Coming",
+          "declined": "Not coming",
+          "pending": "No answer yet",
+          "coming": "{count, plural, one {# coming} other {# coming}}"
+        },
+        "source": {
+          "chat": "Answered in the chat · {date}",
+          "page": "Answered on the RSVP page · {date}",
+          "call": "On a call with the Kululu team · {date}",
+          "manual": "Updated by {name} · {date}",
+          "manualByYou": "Updated by you · {date}",
+          "manualByOwner": "Updated on the guest list · {date}"
+        },
+        "planTitle": "Messages and calls",
+        "type": {
           "other": "Message"
         },
-        "outcome": {
-          "seen": "seen",
-          "reached": "reached",
-          "on_its_way": "on its way",
-          "not_delivered": "not delivered",
-          "no_phone": "not sent, no phone"
+        "state": {
+          "seen": "Seen",
+          "reached": "Reached",
+          "on_its_way": "On its way",
+          "sms_on_its_way": "SMS on its way",
+          "not_delivered": "Not delivered",
+          "no_phone": "Not sent - no phone number",
+          "outside_package": "Not sent - outside the package",
+          "added_after": "Missed - added after it went out",
+          "not_in_audience": "Not sent to this guest",
+          "will_get": "Will get it",
+          "undated": "No date yet",
+          "locked": "Locked",
+          "off": "Not sent",
+          "called": "Called",
+          "call_queued": "On the call list",
+          "call_planned": "Planned"
         },
-        "delivery": "{schedule} · {outcome}",
-        "viaWhatsapp": "via WhatsApp",
-        "viaSms": "via SMS",
-        "fallback": "WhatsApp was not delivered, sent by SMS instead",
-        "fallbackUnconfirmed": "WhatsApp didn't confirm delivery, so it was also sent by SMS",
-        "call": "Call in call round {round}",
         "callOutcome": {
           "no_answer": "No answer",
           "confirmed": "Confirmed",
           "declined": "Not coming"
         },
-        "callBy": "Operator, on the phone",
-        "answerConfirmed": "{count, plural, =0 {Confirmed} other {Confirmed for #}}",
-        "answerDeclined": "Answered not coming",
-        "answerInChat": "The guest, in the chat",
-        "answerOnPage": "The guest, on the RSVP page",
-        "manual": "RSVP updated to {status}",
-        "manualByYou": "By you",
-        "manualStatus": {
-          "confirmed": "confirmed",
-          "pending": "pending",
-          "declined": "not coming"
-        },
-        "manualCount": "Coming updated to {count}",
-        "manualConfirmed": "RSVP updated to confirmed, {count} coming"
+        "catchUp": {
+          "button": "Send it now",
+          "reason": {
+            "failed": "Kululu's team takes care of messages that were not delivered",
+            "outside_package": "Outside the package - add records to send it",
+            "no_phone": "Add a phone number in Details to send it",
+            "sms_abroad": "This message goes by SMS, which reaches Israeli numbers only",
+            "event_over": "The event is over",
+            "sending_off": "Sending is not on for this event yet"
+          },
+          "confirmTitle": "Send {schedule} to {name}?",
+          "confirmBody": "{name} gets the same message the other guests got, now",
+          "confirm": "Send",
+          "cancel": "Cancel",
+          "sending": "Sending",
+          "sent": "Sent to {name}",
+          "error": {
+            "save-required": "Save your event to send messages",
+            "not-allowed": "You can't send from here",
+            "not-eligible": "This guest no longer needs it - the list was updated",
+            "send-failed": "The message was not sent"
+          }
+        }
       },
       "drawerSections": {
         "contact": "Contact",

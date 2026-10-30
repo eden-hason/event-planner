@@ -23,7 +23,7 @@ test('an empty query is the default view', () => {
 test('every filter reads back from the query', () => {
   assert.deepEqual(
     parse(
-      'q=%D7%9B%D7%94%D7%9F&status=pending&group=a,b&side=groom&noPhone=1&sort=name_desc',
+      'q=%D7%9B%D7%94%D7%9F&status=pending&group=a,b&side=groom&noPhone=1&sort=name_desc&missed=1',
     ),
     {
       q: 'כהן',
@@ -35,6 +35,7 @@ test('every filter reads back from the query', () => {
       issue: null,
       outside: false,
       transport: null,
+      missed: true,
     },
   );
 });
@@ -101,6 +102,7 @@ test('a written view reads back as itself', () => {
     issue: 'duplicates' as const,
     outside: true,
     transport: 'unanswered' as const,
+    missed: true,
   };
   assert.deepEqual(parse(write(view)), view);
 });
@@ -114,7 +116,7 @@ test('the name sort an issue implies is not written out', () => {
   assert.equal(query, 'issue=duplicates');
 });
 
-test('the filter badge counts group, side, no-phone and transportation, never status or search', () => {
+test('the filter badge counts group, side, no-phone, transportation and missed, never status or search', () => {
   assert.equal(activeFilterCount(DEFAULT_GUEST_LIST_PARAMS), 0);
   assert.equal(
     activeFilterCount({
@@ -125,7 +127,13 @@ test('the filter badge counts group, side, no-phone and transportation, never st
       side: 'groom',
       noPhone: true,
       transport: 'yes',
+      missed: true,
     }),
-    5,
+    6,
   );
+});
+
+test('the missed filter is written only while it is on', () => {
+  assert.equal(write({ ...DEFAULT_GUEST_LIST_PARAMS, missed: true }), 'missed=1');
+  assert.equal(write({ ...DEFAULT_GUEST_LIST_PARAMS, missed: false }, 'missed=1'), '');
 });

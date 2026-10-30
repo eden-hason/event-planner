@@ -15,7 +15,10 @@ import { TRANSPORTATION_ANSWERS } from '@/features/guests/utils/transportation-s
 import { cn } from '@/lib/utils';
 import { MobileSheet } from './mobile-sheet';
 
-type Draft = Pick<GuestListParams, 'sort' | 'groups' | 'side' | 'noPhone' | 'transport'>;
+type Draft = Pick<
+  GuestListParams,
+  'sort' | 'groups' | 'side' | 'noPhone' | 'transport' | 'missed'
+>;
 
 const draftOf = (params: GuestListParams): Draft => ({
   sort: params.sort,
@@ -23,6 +26,7 @@ const draftOf = (params: GuestListParams): Draft => ({
   side: params.side,
   noPhone: params.noPhone,
   transport: params.transport,
+  missed: params.missed,
 });
 
 /**
@@ -36,6 +40,7 @@ export function GuestFiltersSheet({
   params,
   groups,
   showTransportation,
+  missedCount,
   countFor,
   onApply,
 }: {
@@ -45,6 +50,8 @@ export function GuestFiltersSheet({
   groups: GroupWithGuestsApp[];
   /** The Event asks the transportation question, so its answers can filter the list. */
   showTransportation: boolean;
+  /** Records that missed the latest Invitation or Confirmation; the switch shows only while there are some. */
+  missedCount: number;
   /** Records the list would show with these filters, for the apply button. */
   countFor: (params: GuestListParams) => number;
   onApply: (patch: Draft) => void;
@@ -143,6 +150,16 @@ export function GuestFiltersSheet({
           onCheckedChange={(noPhone) => patch({ noPhone })}
         />
       </label>
+
+      {(missedCount > 0 || draft.missed) && (
+        <label className="flex min-h-[50px] items-center justify-between gap-3 text-[15px] font-medium">
+          {t('list.filters.missedLatest', { count: missedCount })}
+          <Switch
+            checked={draft.missed}
+            onCheckedChange={(missed) => patch({ missed })}
+          />
+        </label>
+      )}
 
       <div className="mt-1 flex gap-2">
         <Button

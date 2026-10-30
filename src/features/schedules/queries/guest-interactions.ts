@@ -1,88 +1,22 @@
 'use server';
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
-import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from '../utils';
 import {
-  awaitingSmsFallback,
-  stuckWindow,
-  type FallbackDeliveryRow,
-} from '../services/send-sms-fallback';
+  toDeliveryOutcome,
+  toDeliverySteps,
+  toFallbackRow,
+  type DeliveryAttemptRow,
+  type GuestDeliveryOutcome,
+  type GuestInteractionRow,
+} from '../utils/delivery-outcome';
+import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
-/**
- * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
- *
- * - `whatsapp` / `sms`: Reached, over that channel - the provider confirmed
- *   delivery. For SMS that is the ActiveTrail report the SMS poll reads.
- * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
- * - `sms_on_its_way`: an SMS is on its way and not confirmed yet - either
- *   accepted by ActiveTrail with no report back, or, after WhatsApp failed, an
- *   automatic SMS Fallback being sent or due once the Schedule settles. Never
- *   the second while a Fallback Freeze holds the batch.
- * - `not_delivered`: every attempt failed and no SMS is coming by itself - a
- *   System-level Failure, a frozen Schedule, or an SMS that failed too.
- * - `no_phone`: targeted, but no attempt was possible, so no send ever
- *   happened. Listed in the table and excluded from the audience total.
- * - `outside_package`: targeted, but the Guest Record was outside the Record
- *   Package when the Schedule sent (ADR 0027). Listed and excluded the same way.
- */
-export type GuestDeliveryOutcome =
-  | 'whatsapp'
-  | 'sms'
-  | 'on_its_way'
-  | 'sms_on_its_way'
-  | 'not_delivered'
-  | 'no_phone'
-  | 'outside_package';
-
-/**
- * One message on one channel, as the Owner may see it: which channel, and how
- * far it got. Deliberately without the error code, the provider id or who
- * pressed the button - those are Operator facts (CONTEXT.md: Delivery Attempt).
- */
-export type GuestDeliveryStep = {
-  channel: 'whatsapp' | 'sms';
-  /** Why this message is an SMS Fallback; null when it is not one */
-  fallback: SmsFallbackReason | null;
-  sentAt?: string;
-  deliveredAt?: string;
-  readAt?: string;
-  /**
-   * When this message was found not to have arrived. The table has no failed-at
-   * column, so it is the attempt's last update - the moment the failure landed.
-   */
-  failedAt?: string;
-};
-
-export type GuestInteractionRow = {
-  guestId: string;
-  guestName: string;
-  /** For calling a guest the message did not reach */
-  phone?: string;
-  /** The Delivery's messages, oldest first. Empty for a guest never sent to */
-  steps: GuestDeliveryStep[];
-  /** Reached over SMS only because WhatsApp could not reach them */
-  viaFallback: boolean;
-  /** Null for a guest who interacted but has no delivery record (a shared link) */
-  delivery: GuestDeliveryOutcome | null;
-  /**
-   * WhatsApp read receipt - the guest opened the message itself. SMS reports
-   * delivery at most, never reading, so an SMS guest stays false here forever
-   * and the UI shows those as not-applicable rather than unseen.
-   */
-  seen: boolean;
-  seenAt?: string;
-  /** When the message left us - the only timestamp a guest who did nothing has */
-  sentAt?: string;
-  response?: 'rsvp_confirm' | 'rsvp_decline';
-  respondedAt?: string;
-  /** What the guest entered on the RSVP form at the time they responded */
-  guestCount?: number;
-  /** Headcount on the guest record now - one record can cover a whole family */
-  amount: number;
-  /** Special Meals per type as answered at the time, e.g. { vegan: 1 } */
-  mealCounts?: Record<string, number>;
-};
+export type {
+  GuestDeliveryOutcome,
+  GuestDeliveryStep,
+  GuestInteractionRow,
+} from '../utils/delivery-outcome';
 
 export type ScheduleInteractionData = {
   summary: {
@@ -126,55 +60,6 @@ export type ScheduleInteractionData = {
   };
   guests: GuestInteractionRow[];
 };
-
-function toOutcome(
-  status: string | null,
-  channel: string | null,
-  notSentReason: string | null,
-): GuestDeliveryOutcome {
-  switch (status) {
-    case 'delivered':
-    case 'read':
-      return channel === 'sms' ? 'sms' : 'whatsapp';
-    case 'sent':
-      // Accepted, not confirmed - on either channel.
-      return channel === 'sms' ? 'sms_on_its_way' : 'on_its_way';
-    case 'failed':
-      return 'not_delivered';
-    case 'not_sent':
-      return notSentReason === 'outside_package' ? 'outside_package' : 'no_phone';
-    default:
-      // pending: reserved just before sending, the attempt not recorded yet
-      return 'on_its_way';
-  }
-}
-
-type AttemptRow = {
-  channel: string;
-  status: string;
-  error_code: number | null;
-  triggered_by: string;
-  sent_at: string | null;
-  delivered_at: string | null;
-  read_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-function toSteps(attempts: AttemptRow[] | null): GuestDeliveryStep[] {
-  const reason = smsFallbackReason(attempts ?? []);
-  return (attempts ?? [])
-    .slice()
-    .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .map((attempt) => ({
-      channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
-      fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
-      sentAt: attempt.sent_at ?? undefined,
-      deliveredAt: attempt.delivered_at ?? undefined,
-      readAt: attempt.read_at ?? undefined,
-      failedAt: attempt.status === 'failed' ? attempt.updated_at : undefined,
-    }));
-}
 
 export async function getScheduleInteractionData(
   scheduleId: string,
@@ -256,33 +141,17 @@ export async function getScheduleInteractionData(
 
   const deliveryRows = deliveriesResult.data ?? [];
   const smsComing = awaitingSmsFallback(
-    deliveryRows.map((row) => {
-      const guest = row.guests as unknown as {
-        name: string;
-        phone_number: string | null;
-      };
-      return {
-        id: row.id as string,
-        status: row.status,
-        guest_id: row.guest_id as string,
-        confirmation_token: null,
-        guests: { name: guest.name, phone_number: guest.phone_number },
-        message_delivery_attempts: (
-          (row.message_delivery_attempts as AttemptRow[] | null) ?? []
-        ).map((attempt) => ({
-          channel: attempt.channel,
-          status: attempt.status,
-          error_code: attempt.error_code,
-          error_message: null,
-          sent_at: attempt.sent_at,
-          created_at: attempt.created_at,
-        })),
-      } as FallbackDeliveryRow;
-    }),
+    deliveryRows.map((row) =>
+      toFallbackRow(
+        { id: row.id as string, status: row.status, guest_id: row.guest_id as string },
+        row.guests as unknown as { name: string; phone_number: string | null },
+        (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
+      ),
+    ),
     {
       frozen: scheduleFreeze(
         deliveryRows.flatMap(
-          (row) => (row.message_delivery_attempts as AttemptRow[] | null) ?? [],
+          (row) => (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
         ),
       ).frozen,
       window: stuckWindow(),
@@ -298,14 +167,14 @@ export async function getScheduleInteractionData(
     const entry = rowFor(row.guest_id as string, guest);
     entry.delivery = smsComing.has(row.id as string)
       ? 'sms_on_its_way'
-      : toOutcome(
+      : toDeliveryOutcome(
           row.status,
           row.delivery_method,
           (row.not_sent_reason as string | null) ?? null,
         );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
-    entry.steps = toSteps(row.message_delivery_attempts as AttemptRow[] | null);
+    entry.steps = toDeliverySteps(row.message_delivery_attempts as DeliveryAttemptRow[] | null);
     entry.viaFallback =
       entry.delivery === 'sms' &&
       entry.steps.some((step) => step.fallback && !step.failedAt);

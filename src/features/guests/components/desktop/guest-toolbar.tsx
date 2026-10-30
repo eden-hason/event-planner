@@ -59,6 +59,8 @@ interface GuestToolbarProps {
   /** Guest Records outside the Record Package; the chip shows only while there are some. */
   outsideCount: number;
   outsideOnly: boolean;
+  /** Records that missed the latest Invitation or Confirmation; the switch shows only while there are some. */
+  missedCount: number;
   groups: GroupWithGuestsApp[];
   /** The Event asks the transportation question, so its answers can filter the list. */
   showTransportation: boolean;
@@ -75,6 +77,7 @@ export function GuestToolbar({
   statusCounts,
   outsideCount,
   outsideOnly,
+  missedCount,
   groups,
   showTransportation,
   onAddGuest,
@@ -355,6 +358,15 @@ export function GuestToolbar({
               onCheckedChange={(noPhone) => onChange({ noPhone })}
             />
           </label>
+          {(missedCount > 0 || params.missed) && (
+            <label className="flex items-center justify-between gap-3 text-[13.5px] font-medium">
+              {t('list.filters.missedLatest', { count: missedCount })}
+              <Switch
+                checked={params.missed}
+                onCheckedChange={(missed) => onChange({ missed })}
+              />
+            </label>
+          )}
         </PopoverContent>
       </Popover>
 

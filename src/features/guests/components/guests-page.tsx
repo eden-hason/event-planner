@@ -11,6 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { setSearchParams } from '@/lib/shallow-navigation';
 import { GuestsDesktop } from './desktop/guests-desktop';
+import type { GuestDrawerTab } from './guest-drawer';
 import { Button } from '@/components/ui/button';
 import { IconPlus } from '@tabler/icons-react';
 import { GuestWithGroupApp, GroupWithGuestsApp, GroupSide } from '../schemas';
@@ -41,6 +42,11 @@ import { rsvpHeadcounts } from '../utils/rsvp-headcounts';
 const GUEST_PARAM = 'guest';
 /** `?guest=new` opens the drawer on an empty add-guest form. */
 const NEW_GUEST = 'new';
+/**
+ * The open drawer's tab, `?guestTab=communication`; absent is Details. Not
+ * `tab`, which is already the page's guests/groups switch.
+ */
+const GUEST_TAB_PARAM = 'guestTab';
 
 interface GuestsPageProps {
   guests: GuestWithGroupApp[];
@@ -52,6 +58,8 @@ interface GuestsPageProps {
   showTransportation?: boolean;
   tables?: TableOption[];
   messagedGuestIds?: string[];
+  /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
+  missedCatchUpIds?: string[];
   /** The Record Package, counts only; null when the event has none. */
   recordPackage?: GuestPackageView | null;
 }
@@ -75,6 +83,7 @@ export function GuestsPage({
   showTransportation = false,
   tables = [],
   messagedGuestIds = [],
+  missedCatchUpIds = [],
   recordPackage = null,
 }: GuestsPageProps) {
   const t = useTranslations('guests');
@@ -174,8 +183,32 @@ export function GuestsPage({
     setSelectedGuest(openGuest);
   }
 
-  const openGuestDrawer = (id: string, mode: 'push' | 'replace' = 'push') => {
-    setSearchParams((params) => params.set(GUEST_PARAM, id), mode);
+  // Opened from "didn't get the latest message", a guest lands on what they missed.
+  const guestOpenTab: GuestDrawerTab =
+    searchParams.get('missed') === '1' ? 'communication' : 'details';
+
+  const drawerTab: GuestDrawerTab =
+    searchParams.get(GUEST_TAB_PARAM) === 'communication' ? 'communication' : 'details';
+
+  const openGuestDrawer = (
+    id: string,
+    mode: 'push' | 'replace' = 'push',
+    tab: GuestDrawerTab = 'details',
+  ) => {
+    setSearchParams((params) => {
+      params.set(GUEST_PARAM, id);
+      if (tab === 'communication') params.set(GUEST_TAB_PARAM, tab);
+      else params.delete(GUEST_TAB_PARAM);
+    }, mode);
+  };
+
+  // Switching tabs replaces rather than pushes: back closes the drawer, it
+  // does not walk through every tab the Owner looked at.
+  const handleDrawerTabChange = (tab: GuestDrawerTab) => {
+    setSearchParams((params) => {
+      if (tab === 'communication') params.set(GUEST_TAB_PARAM, tab);
+      else params.delete(GUEST_TAB_PARAM);
+    }, 'replace');
   };
 
   const handleAddGuest = () => openGuestDrawer(NEW_GUEST);
@@ -197,7 +230,12 @@ export function GuestsPage({
   }, [searchParams, hasMounted]);
 
   const handleDrawerClose = (open: boolean) => {
-    if (!open) setSearchParams((params) => params.delete(GUEST_PARAM));
+    if (!open) {
+      setSearchParams((params) => {
+        params.delete(GUEST_PARAM);
+        params.delete(GUEST_TAB_PARAM);
+      });
+    }
   };
 
   // Mobile routes the header button through a source sheet (single guest vs.
@@ -380,15 +418,18 @@ export function GuestsPage({
               eventId={eventId}
               eventName={eventName}
               messagedGuestIds={messagedGuestIds}
+              missedCatchUpIds={missedCatchUpIds}
               showDietary={showDietary}
               showTransportation={showTransportation}
               tables={tables}
               drawer={{
                 open: isDrawerOpen,
                 guest: selectedGuest,
+                tab: drawerTab,
+                onTabChange: handleDrawerTabChange,
                 onOpenChange: handleDrawerClose,
               }}
-              onOpenGuest={(guest) => openGuestDrawer(guest.id)}
+              onOpenGuest={(guest) => openGuestDrawer(guest.id, 'push', guestOpenTab)}
               onAddGuest={handleAddGuest}
               onImportFile={() => goToImportRoute()}
               onImportDrive={() => goToImportRoute('drive')}
@@ -402,15 +443,18 @@ export function GuestsPage({
               eventName={eventName}
               existingPhones={existingPhones}
               messagedGuestIds={messagedGuestIds}
+              missedCatchUpIds={missedCatchUpIds}
               showDietary={showDietary}
               showTransportation={showTransportation}
               tables={tables}
               drawer={{
                 open: isDrawerOpen,
                 guest: selectedGuest,
+                tab: drawerTab,
+                onTabChange: handleDrawerTabChange,
                 onOpenChange: handleDrawerClose,
               }}
-              onOpenGuest={(guest) => openGuestDrawer(guest.id)}
+              onOpenGuest={(guest) => openGuestDrawer(guest.id, 'push', guestOpenTab)}
               onAddGuest={handleAddGuest}
               onImportDrive={() => goToImportRoute('drive')}
               onImportWhatsApp={() => goToImportRoute('whatsapp')}
