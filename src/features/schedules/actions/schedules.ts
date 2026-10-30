@@ -288,6 +288,9 @@ export async function updateInvitationVideo(
 ): Promise<UpdateInvitationVideoState> {
   const blocked = await assertNotImpersonating();
   if (blocked) return { success: false, message: blocked };
+  if (videoUrl !== null && !z.url().safeParse(videoUrl).success) {
+    return { success: false, message: 'Invalid video address' };
+  }
   try {
     const supabase = await createClient();
 
@@ -301,15 +304,9 @@ export async function updateInvitationVideo(
       return { success: false, message: 'Schedule not found' };
     }
 
-    const rejection = editRejection(existing.status);
+    // A claimed Schedule is as good as sent: its messages are already queued.
+    const rejection = editRejection(existing.dispatched_at ? 'sent' : existing.status);
     if (rejection) return { success: false, message: rejection };
-    if (existing.dispatched_at) {
-      return { success: false, message: 'Cannot modify a schedule that has already been sent' };
-    }
-
-    if (videoUrl !== null && !z.url().safeParse(videoUrl).success) {
-      return { success: false, message: 'Invalid video address' };
-    }
 
     const { error } = await supabase
       .from('events')
@@ -323,7 +320,7 @@ export async function updateInvitationVideo(
 
     revalidatePath('/app');
 
-    return { success: true, message: videoUrl ? 'Video saved' : 'Video removed' };
+    return { success: true };
   } catch (error) {
     console.error('Error updating invitation_video_url:', error);
     return { success: false, message: 'An unexpected error occurred' };

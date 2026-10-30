@@ -279,12 +279,6 @@ export function MessagePreview({
 }
 
 /**
- * The body text with its URLs as links, the way the guest's phone shows them -
- * WhatsApp and SMS apps both link a URL found anywhere in the text, the
- * organiser's note included. Opens in a new tab so the organiser can check
- * where a link goes without leaving the page.
- */
-/**
  * The video header as WhatsApp shows it: the first frame with one round play
  * button in the middle and no player controls. Playing hides the button;
  * tapping the video pauses it and the button comes back, as it does at the end.
@@ -322,6 +316,12 @@ function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
   );
 }
 
+/**
+ * The body text with its URLs as links, the way the guest's phone shows them -
+ * WhatsApp and SMS apps both link a URL found anywhere in the text, the
+ * organiser's note included. Opens in a new tab so the organiser can check
+ * where a link goes without leaving the page.
+ */
 function MessageBody({ body }: { body: string }) {
   return splitMessageLinks(body).map((segment, i) =>
     segment.kind === 'link' ? (

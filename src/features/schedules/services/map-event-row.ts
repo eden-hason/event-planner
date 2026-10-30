@@ -20,6 +20,15 @@ import {
   readEventTypeKey,
 } from '@/features/events/utils/event-title';
 
+/**
+ * The `events` columns mapEventRow reads, for every send-path query that embeds
+ * the Event. One list, so a column the parameter resolvers start reading is
+ * added once rather than to each query - a path that missed it would send an
+ * empty parameter with no type error to say so.
+ */
+export const MAPPED_EVENT_COLUMNS =
+  'id, user_id, title, event_date, location, host_details, invitations, invitation_video_url, reception_time, short_code, event_settings, guests_experience, event_types (key)';
+
 export function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
   const settings = rawEvent.event_settings as {

@@ -17,7 +17,7 @@ import {
 } from '../utils/parameter-resolvers';
 import { buildWhatsAppComponents } from '../utils/send-payload';
 import { TEST_MESSAGE_TAG } from '../utils/whatsapp-callback-tag';
-import { mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import { postWhatsAppTemplate, type WhatsAppSendResult } from './post-whatsapp';
 import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { missingOccasionPhrase } from '../utils/send-payload';
@@ -62,9 +62,7 @@ export async function sendTestMessage(params: {
     .from('schedules')
     .select(
       `${SCHEDULE_SELECT},
-       events (id, user_id, title, event_date, location, host_details,
-               invitations, invitation_video_url, reception_time, short_code, event_settings,
-               guests_experience, preview_token, event_types (key))`,
+       events (${MAPPED_EVENT_COLUMNS}, preview_token)`,
     )
     .eq('id', scheduleId)
     .single();

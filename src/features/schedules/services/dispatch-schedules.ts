@@ -5,7 +5,7 @@ import {
   ScheduleDbToAppSchema,
   type ScheduleApp,
 } from '../schemas';
-import { mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import { renderScheduleDeliveries } from './render-deliveries';
 import { isMessageSchedule } from '../utils';
 import { isWithinSendWindow, nextOpenSlot } from '../utils/send-window';
@@ -401,9 +401,7 @@ async function resumeOne(
     .from('schedules')
     .select(
       `${SCHEDULE_SELECT},
-       events (id, user_id, title, event_date, location, host_details,
-               invitations, invitation_video_url, reception_time, short_code, event_settings,
-               guests_experience, event_types (key))`,
+       events (${MAPPED_EVENT_COLUMNS})`,
     )
     .eq('id', scheduleId)
     .maybeSingle();
@@ -554,9 +552,7 @@ export async function dispatchDueSchedules(
     .from('schedules')
     .select(
       `${DISPATCH_SCHEDULE_SELECT},
-       events (id, user_id, title, event_date, location, host_details,
-               invitations, invitation_video_url, reception_time, short_code, event_settings,
-               guests_experience, event_types (key))`,
+       events (${MAPPED_EVENT_COLUMNS})`,
     )
     .eq('schedule_types.execution_kind', 'message')
     .is('status', null)
@@ -660,9 +656,7 @@ export async function dispatchScheduleById(
     .from('schedules')
     .select(
       `${SCHEDULE_SELECT},
-       events (id, user_id, title, event_date, location, host_details,
-               invitations, invitation_video_url, reception_time, short_code, event_settings,
-               guests_experience, event_types (key))`,
+       events (${MAPPED_EVENT_COLUMNS})`,
     )
     .eq('id', scheduleId)
     .maybeSingle();

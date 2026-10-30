@@ -113,7 +113,7 @@ declare
   v_template_id uuid;
   v_bound int;
 begin
-  if v_event_id is null or not exists (select 1 from public.events where id = v_event_id) then
+  if not exists (select 1 from public.events where id = v_event_id) then
     raise notice 'bespoke_video_invitation: event % not found, family not written', v_event_id;
     return;
   end if;
@@ -144,14 +144,7 @@ begin
         'buttonPlaceholders', jsonb_build_array()
       )
     )
-  )
-  returning id into v_template_id;
-
-  insert into public.message_templates
-    (key, channel, schedule_type_id, variant, name, description, language_code,
-     whatsapp_template_name, requires_table_numbers, requires_gifting, requires_note,
-     requires_follow_up, requires_invitation_image, personal_message, event_id, payload)
-  values
+  ),
   (
     'bespoke_video_invitation', 'sms', v_schedule_type_id,
     '1', 'Bespoke - Video Invitation',
@@ -171,6 +164,11 @@ begin
       )
     )
   );
+
+  -- The WhatsApp row is the family's anchor: schedules.template_id names it.
+  select id into strict v_template_id
+  from public.message_templates
+  where event_id = v_event_id and channel = 'whatsapp';
 
   -- Point the Event's Initial Invitation at the family. Its Personal Message text,
   -- if any, is cleared: the Owner is shown no message choice on this Schedule.

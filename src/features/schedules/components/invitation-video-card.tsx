@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   IconCircleCheckFilled,
@@ -70,54 +69,48 @@ export function InvitationVideoCard({
 }: InvitationVideoCardProps) {
   const t = useTranslations('schedules.invitationVideo');
   const locale = useLocale();
-  const router = useRouter();
 
   // Kept in step with the picker's own list so its one slot frees up after each
   // pick - see InvitationSection.
   const [files, setFiles] = React.useState<File[]>([]);
-  const [busy, setBusy] = React.useState(false);
+  const [removing, setRemoving] = React.useState(false);
   const [rejected, setRejected] = React.useState<RejectedFile | null>(null);
   const [pending, setPending] = React.useState<{ name: string; size: number } | null>(null);
 
   const maxLabel = formatMegabytes(MAX_BYTES);
 
-  const save = async (url: string | null) => {
-    const result = await updateInvitationVideo(scheduleId, url);
-    if (!result.success) throw new Error(result.message ?? t('saveFailed'));
-    router.refresh();
+  // Saves the URL (or clears it) behind a toast. The page picks up the new
+  // video from the refresh the Server Action triggers. Never throws: a failure
+  // is the toast's to show.
+  const save = (url: string | null, success: string) => {
+    const promise = updateInvitationVideo(scheduleId, url).then((result) => {
+      if (!result.success) throw new Error(result.message ?? t('saveFailed'));
+    });
+    toast.promise(promise, {
+      loading: t('saving'),
+      success,
+      error: (err) => (err instanceof Error ? err.message : t('saveFailed')),
+    });
+    return promise.catch(() => undefined);
   };
-
-  // The picker can report one pick twice in quick succession; a second upload
-  // would leave an orphan copy in the bucket, so only the first is acted on.
-  const inFlight = React.useRef(false);
 
   const handleValueChange = async (next: File[]) => {
     setFiles(next);
     const file = next[0];
-    if (!file || inFlight.current) return;
-    inFlight.current = true;
+    if (!file) return;
 
     setRejected(null);
     setPending({ name: file.name, size: file.size });
-    setBusy(true);
     try {
       const upload = await uploadInvitationVideo(file, eventId);
       if (upload.error || !upload.url) {
         setRejected({ name: file.name, size: file.size, reason: 'failed' });
         return;
       }
-      const promise = save(upload.url);
-      toast.promise(promise, {
-        loading: t('saving'),
-        success: t('saved'),
-        error: (err) => (err instanceof Error ? err.message : t('saveFailed')),
-      });
-      await promise.catch(() => undefined);
+      await save(upload.url, t('saved'));
     } catch {
       setRejected({ name: file.name, size: file.size, reason: 'failed' });
     } finally {
-      inFlight.current = false;
-      setBusy(false);
       setPending(null);
       setFiles([]);
     }
@@ -134,15 +127,9 @@ export function InvitationVideoCard({
 
   const handleRemove = async () => {
     setRejected(null);
-    setBusy(true);
-    const promise = save(null);
-    toast.promise(promise, {
-      loading: t('saving'),
-      success: t('removed'),
-      error: (err) => (err instanceof Error ? err.message : t('saveFailed')),
-    });
-    await promise.catch(() => undefined);
-    setBusy(false);
+    setRemoving(true);
+    await save(null, t('removed'));
+    setRemoving(false);
   };
 
   if (!editable) {
@@ -169,7 +156,7 @@ export function InvitationVideoCard({
         dir={locale === 'he' ? 'rtl' : 'ltr'}
         maxFiles={1}
         maxSize={MAX_BYTES}
-        disabled={busy}
+        disabled={removing || pending !== null}
         className="contents"
       >
         {rejected ? (
@@ -230,7 +217,7 @@ export function InvitationVideoCard({
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={busy}
+                  disabled={removing}
                   className="h-9 rounded-[10px] font-semibold sm:flex-1"
                 >
                   <IconReplace size={15} />
@@ -240,7 +227,7 @@ export function InvitationVideoCard({
               <Button
                 type="button"
                 variant="outline"
-                disabled={busy}
+                disabled={removing}
                 className="border-destructive/25 text-destructive hover:text-destructive hover:bg-destructive/5 h-9 rounded-[10px] font-semibold"
                 onClick={handleRemove}
               >
