@@ -34,7 +34,7 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
   try {
     const { data: plan, error: planError } = await supabase
       .from('schedules')
-      .select('id, event_id, target_status, status, schedule_types!inner(execution_kind)')
+      .select('id, event_id, target_status, status, schedule_types!inner(execution_kind), events!inner(plan_includes_calls)')
       .eq('id', scheduleId)
       .single();
 
@@ -51,6 +51,15 @@ export async function startCallRound(scheduleId: string): Promise<StartCallRound
     }
     if (plan.status === 'cancelled') {
       return { success: false, message: 'התוכנית הזו בוטלה' };
+    }
+
+    // A plan made before the Event paid for WhatsApp, or handed back by deleting its round,
+    // is not called: that Plan has no Call Rounds (ADR 0034).
+    const event = (Array.isArray(plan.events) ? plan.events[0] : plan.events) as
+      | { plan_includes_calls: boolean }
+      | null;
+    if (!event?.plan_includes_calls) {
+      return { success: false, message: 'החבילה של האירוע הזה לא כוללת סבבי שיחות' };
     }
 
     const { data: claimed, error: claimError } = await supabase

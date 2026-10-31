@@ -392,6 +392,7 @@ export async function listEventsForPlanning(): Promise<
         .select(`title, ${AUDIENCE_COUNTS}`)
         .eq('status', 'published')
         .eq('can_create_schedules', true)
+        .eq('plan_includes_calls', true)
         .eq('pending.rsvp_status', 'pending')
         .eq('confirmed.rsvp_status', 'confirmed')
         .order('event_date', { ascending: true }),
@@ -400,8 +401,9 @@ export async function listEventsForPlanning(): Promise<
     ),
   ) as unknown as (AudienceRow & { title: string | null })[];
 
-  // Every event that can send, guests or not: the audience is snapshotted when
-  // a round starts, so an empty list today does not stop a plan.
+  // Every event that can send and whose Plan has Call Rounds (ADR 0034), guests
+  // or not: the audience is snapshotted when a round starts, so an empty list
+  // today does not stop a plan.
   return events.map((event) => {
     const { pending, confirmed } = audienceCounts(event);
     return { id: event.id, title: eventTitle(event.title), pending, confirmed };
