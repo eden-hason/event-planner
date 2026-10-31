@@ -1644,6 +1644,7 @@
         "scheduleTypes": {
           "initial_invitation": "הזמנה ראשונית",
           "confirmation": "אישור הגעה",
+          "advance_reminder": "תזכורת מוקדמת",
           "event_reminder": "תזכורת אירוע",
           "post_event": "תודה",
           "phone_call": "סבב שיחות"
@@ -1744,6 +1745,7 @@
       },
       "invalid": {
         "afterEvent": "יש לבחור תאריך עד יום האירוע",
+        "notBeforeEvent": "יש לבחור תאריך עד יום לפני האירוע",
         "expires": "השעה הזו עברה לפני יותר מ-{hours} שעות, ולכן ההודעה תפוג במקום להישלח - יש לבחור שעה מאוחרת יותר"
       },
       "eventDayHelper": "התאריך נקבע לפי יום האירוע - אפשר לשנות רק את השעה",
@@ -1755,7 +1757,8 @@
       "allGuests": "כל האורחים",
       "confirmedGuests": "אישרו הגעה",
       "pendingGuests": "מי שלא ענה",
-      "sentTo": "{target, select, pending {נשלח לאורחים שטרם ענו ביום השליחה} confirmed {נשלח לאורחים שאישרו הגעה עד יום השליחה} other {נשלח לכל האורחים עם מספר טלפון}}",
+      "notDeclinedGuests": "מי שלא סירב",
+      "sentTo": "{target, select, pending {נשלח לאורחים שטרם ענו ביום השליחה} confirmed {נשלח לאורחים שאישרו הגעה עד יום השליחה} not_declined {נשלח לאורחים שלא סירבו עד יום השליחה} other {נשלח לכל האורחים עם מספר טלפון}}",
       "calling": "מתקשרים אל",
       "recomputedNote": "הרשימה מתעדכנת אוטומטית ביום השליחה"
     },
@@ -1814,6 +1817,7 @@
     "actionTypes": {
       "initial_invitation": "הזמנה ראשונית",
       "confirmation": "אישור הגעה",
+      "advance_reminder": "תזכורת מוקדמת",
       "event_reminder": "תזכורת אירוע",
       "post_event": "תודה",
       "phone_call": "סבב שיחות"

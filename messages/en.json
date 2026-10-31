@@ -1644,6 +1644,7 @@
         "scheduleTypes": {
           "initial_invitation": "Initial Invitation",
           "confirmation": "RSVP Confirmation",
+          "advance_reminder": "Advance Reminder",
           "event_reminder": "Event Reminder",
           "post_event": "Thank You",
           "phone_call": "Call Round"
@@ -1744,6 +1745,7 @@
       },
       "invalid": {
         "afterEvent": "Pick a date on or before the event day",
+        "notBeforeEvent": "Pick a date before the event day",
         "expires": "This time is more than {hours} hours ago, so the message would expire instead of sending - pick a later time"
       },
       "eventDayHelper": "The date follows the event - only the time can change",
@@ -1755,7 +1757,8 @@
       "allGuests": "All Guests",
       "confirmedGuests": "Confirmed",
       "pendingGuests": "Not yet answered",
-      "sentTo": "{target, select, pending {Sent to guests who had not answered by the send day} confirmed {Sent to guests who had confirmed by the send day} other {Sent to every guest with a phone number}}",
+      "notDeclinedGuests": "Not declined",
+      "sentTo": "{target, select, pending {Sent to guests who had not answered by the send day} confirmed {Sent to guests who had confirmed by the send day} not_declined {Sent to guests who had not declined by the send day} other {Sent to every guest with a phone number}}",
       "calling": "Calling",
       "recomputedNote": "Recalculated automatically on the day of the send"
     },
@@ -1814,6 +1817,7 @@
     "actionTypes": {
       "initial_invitation": "Initial Invitation",
       "confirmation": "RSVP Confirmation",
+      "advance_reminder": "Advance Reminder",
       "event_reminder": "Event Reminder",
       "post_event": "Thank You",
       "phone_call": "Call Round"

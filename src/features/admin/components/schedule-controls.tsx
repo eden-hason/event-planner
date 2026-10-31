@@ -25,7 +25,7 @@ import { israelWallClockParts, israelWallClockToIso } from '@/lib/date-time';
 import { DEFAULT_SEND_TIME } from '@/features/schedules';
 import {
   convertInvitationToConfirmationAdmin,
-  deleteInitialInvitationAdmin,
+  deleteUnsentScheduleAdmin,
   sendScheduleNowAdmin,
   setScheduleDueTimeAdmin,
 } from '../actions/event-controls';
@@ -80,7 +80,7 @@ export function ScheduleControls({
               {(row.dueTimeEditable || row.sendableNow || row.convertible) && <DropdownMenuSeparator />}
               <DropdownMenuItem variant="destructive" onSelect={() => setOpen('delete')}>
                 <Trash2 />
-                מחיקת ההזמנה
+                מחיקת התזמון
               </DropdownMenuItem>
             </>
           )}
@@ -285,17 +285,17 @@ function DeleteDialog({
         <DialogHeader>
           <DialogTitle>למחוק את {row.title}?</DialogTitle>
           <DialogDescription>
-            ההזמנה תוסר מתוכנית השליחות של האירוע ולא תישלח לאורחים. שאר התזמונים נשארים כמו שהם
+            התזמון יוסר מתוכנית השליחות של האירוע ולא יישלח לאורחים. שאר התזמונים נשארים כמו שהם
           </DialogDescription>
         </DialogHeader>
         <Alert variant="destructive">
           <TriangleAlert />
           <AlertTitle>אי אפשר לבטל את המחיקה</AlertTitle>
-          <AlertDescription>אי אפשר להחזיר את ההזמנה אחרי המחיקה, לא ממערכת הניהול ולא מצד בעלי האירוע</AlertDescription>
+          <AlertDescription>אי אפשר להחזיר את התזמון אחרי המחיקה, לא ממערכת הניהול ולא מצד בעלי האירוע</AlertDescription>
         </Alert>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>ביטול</Button>
-          <Button type="button" variant="destructive" onClick={() => run(() => deleteInitialInvitationAdmin(row.id))} disabled={pending}>
+          <Button type="button" variant="destructive" onClick={() => run(() => deleteUnsentScheduleAdmin(row.id))} disabled={pending}>
             {pending ? 'מוחקים' : 'מחיקה'}
           </Button>
         </DialogFooter>

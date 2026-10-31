@@ -3,6 +3,7 @@ import {
   MessageTemplateDbToAppSchema,
   type MessageTemplateApp,
 } from './message-templates';
+import { TARGET_STATUSES } from '../utils/audience';
 
 export { EVENT_TYPES, type EventType } from '@/features/events/utils/event-types';
 export * from './catalog';
@@ -137,7 +138,7 @@ export const ScheduleDbSchema = z.object({
   // When the Dispatcher claimed this Schedule and queued its Deliveries.
   dispatched_at: z.string().nullable().optional(),
   sent_at: z.string().nullable(),
-  target_status: z.enum(['pending', 'confirmed']).nullable(),
+  target_status: z.enum(TARGET_STATUSES).nullable(),
   schedule_type_id: z.uuid(),
   template_id: z.uuid().nullable(),
   // Organiser-authored free-text line for this schedule instance (e.g. a

@@ -1,6 +1,7 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import { isValidPhone } from '@/lib/phone';
 import { israelWallClockToIso } from '@/lib/date-time';
+import { inAudience, type TargetStatus } from './audience';
 
 // Re-export parameter resolution utilities
 export {
@@ -53,7 +54,8 @@ export {
 
 export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
 export { comparePlanOrder, DEFAULT_SEND_TIME, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
-export { dueTimeIssue } from './due-time-guards';
+export { dueTimeIssue, lastDueDay, type DueTimeIssue } from './due-time-guards';
+export { audienceLabelKey, inAudience } from './audience';
 export { isFollowUpConfirmation } from './confirmation-round';
 export {
   smsOutcomeFromReport,
@@ -156,16 +158,14 @@ export function calculateScheduledDate(
  * Filters guests based on targeting criteria.
  *
  * @param guests - Array of guests to filter
- * @param targetStatus - Optional RSVP status to filter by (null means all guests)
+ * @param targetStatus - Optional audience to filter by (null means all guests)
  * @returns Filtered array of guests
  */
 export function filterGuestsByTarget(
   guests: GuestApp[],
-  targetStatus?: 'pending' | 'confirmed' | null,
+  targetStatus?: TargetStatus | null,
 ): GuestApp[] {
-  if (!targetStatus) return guests;
-
-  return guests.filter((guest) => guest.rsvpStatus === targetStatus);
+  return guests.filter((guest) => inAudience(targetStatus, guest.rsvpStatus));
 }
 
 /**
@@ -190,16 +190,4 @@ export function isMessageSchedule(schedule: { executionKind: string }): boolean 
  */
 export function validatePhoneNumber(phone: string | undefined | null): boolean {
   return isValidPhone(phone);
-}
-
-/**
- * Returns a human-readable label for a schedule's target audience.
- *
- * @param targetStatus - Optional RSVP status filter
- * @returns Display label string
- */
-export function getAudienceLabel(targetStatus?: 'pending' | 'confirmed' | null): string {
-  if (targetStatus === 'confirmed') return 'Confirmed Guests';
-  if (targetStatus === 'pending') return 'Pending Guests';
-  return 'All Guests';
 }

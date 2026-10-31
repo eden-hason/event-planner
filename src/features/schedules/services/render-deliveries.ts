@@ -4,14 +4,13 @@ import {
   ScheduleDbToAppSchema,
   type ScheduleApp,
 } from '../schemas';
-import type { MessageTemplateApp } from '../schemas/message-templates';
 import {
   DbToAppTransformerSchema,
   GroupDbToAppTransformerSchema,
   type GroupApp,
   type GuestApp,
 } from '@/features/guests/schemas';
-import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
+import { resolveTemplatesForSchedule, templateForGuest } from './resolve-reminder-templates';
 import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
@@ -172,13 +171,11 @@ export async function renderScheduleDeliveries(
     invitationImage: hasInvitationImage(event.invitations),
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
+  // Table numbers and the RSVP ask are per-guest (see templateForGuest):
+  // seating is routinely incomplete on the day, so a guest with no assignment
+  // gets the variant that does not mention a table rather than a message with a
+  // blank where the number should be.
   const { withTable, withoutTable } = resolution.templates;
-
-  // Table numbers are per-guest: seating is routinely incomplete on the day, so
-  // a guest with no assignment gets the variant that does not mention a table
-  // rather than a message with a blank where the number should be.
-  const templateForGuest = (guest: GuestApp): MessageTemplateApp =>
-    withTable && guest.tableId ? withTable : withoutTable;
 
   let guestsQuery = supabase.from('guests').select('*').eq('event_id', schedule.eventId);
   if (options.guestIds?.length) {
@@ -254,7 +251,7 @@ export async function renderScheduleDeliveries(
     const delivery = reserved.get(guest.id);
     if (!delivery) continue; // no token reserved - nothing to link back to
 
-    const template = templateForGuest(guest);
+    const template = templateForGuest(resolution.templates, guest);
     const context: ParameterResolutionContext = {
       guest,
       event,

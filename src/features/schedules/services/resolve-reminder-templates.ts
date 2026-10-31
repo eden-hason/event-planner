@@ -30,7 +30,9 @@ import { hasPersonalMessage } from '../utils/event-config';
  * selects a single row. Follow-up is the Confirmation round axis: a repeat
  * round says "we haven't heard from you yet" (see isFollowUpConfirmation). Table numbers are per-guest - the number lives on the guest's
  * seating assignment, which is routinely incomplete on the day - so both
- * candidates come back and the caller picks per guest.
+ * candidates come back and the caller picks per guest. The RSVP ask is
+ * per-guest too (a Guest who has not answered is asked), so its row comes back
+ * beside them; templateForGuest makes both choices.
  */
 
 export type ResolvedTemplates = {
@@ -38,6 +40,12 @@ export type ResolvedTemplates = {
   withTable: MessageTemplateApp | null;
   /** Sent to everyone else, and to every guest when there is no table variant. */
   withoutTable: MessageTemplateApp;
+  /**
+   * Sent to a Guest who has not answered yet, asking them with RSVP quick
+   * replies. Null when the family asks no one. It has no table-number cell: a
+   * Guest who has not said they are coming is not told where they sit.
+   */
+  withRsvpAsk: MessageTemplateApp | null;
   /**
    * Whether this family offers a note variant at all, regardless of whether
    * `note` was requested - callers use this to decide whether to show a
@@ -218,30 +226,46 @@ function pick(
   const wantFollowUp = followUp && candidates.some((t) => t.requiresFollowUp);
   const wantImage =
     invitationImage && candidates.some((t) => t.requiresInvitationImage);
+  // Not a requested axis: a family that offers the ask always resolves its row,
+  // and the caller decides per guest who gets it.
+  const offersRsvpAsk = candidates.some((t) => t.requiresRsvpAsk);
 
-  const pickRow = (requiresTable: boolean) =>
+  const pickRow = (requiresTable: boolean, requiresRsvpAsk = false) =>
     candidates.find(
       (t) =>
         t.requiresGifting === wantGifting &&
         t.requiresTableNumbers === requiresTable &&
         t.requiresNote === wantNote &&
         t.requiresFollowUp === wantFollowUp &&
-        t.requiresInvitationImage === wantImage,
+        t.requiresInvitationImage === wantImage &&
+        t.requiresRsvpAsk === requiresRsvpAsk,
     ) ?? null;
+
+  // What the failures below name, so a seeding bug says which cell is missing.
+  const settings = `(${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`;
 
   const withoutTable = pickRow(false);
 
   if (!withoutTable) {
     return {
       success: false,
-      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No message template configured for this event's settings ${settings}`,
+    };
+  }
+
+  const withRsvpAsk = offersRsvpAsk ? pickRow(false, true) : null;
+
+  if (offersRsvpAsk && !withRsvpAsk) {
+    return {
+      success: false,
+      message: `No RSVP-ask message template configured for this event's settings ${settings}`,
     };
   }
 
   if (!wantTable) {
     return {
       success: true,
-      templates: { withTable: null, withoutTable, offersNote },
+      templates: { withTable: null, withoutTable, withRsvpAsk, offersNote },
     };
   }
 
@@ -250,11 +274,24 @@ function pick(
   if (!withTable) {
     return {
       success: false,
-      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No table-number message template configured for this event's settings ${settings}`,
     };
   }
 
-  return { success: true, templates: { withTable, withoutTable, offersNote } };
+  return { success: true, templates: { withTable, withoutTable, withRsvpAsk, offersNote } };
+}
+
+/**
+ * The one row of a resolution a given Guest is sent. A Guest who has not
+ * answered gets the RSVP ask when the family has one; otherwise a seated Guest
+ * gets the table-number row when there is one, and everyone else the plain row.
+ */
+export function templateForGuest(
+  templates: Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>,
+  guest: { tableId?: string | null; rsvpStatus: string },
+): MessageTemplateApp {
+  if (templates.withRsvpAsk && guest.rsvpStatus === 'pending') return templates.withRsvpAsk;
+  return templates.withTable && guest.tableId ? templates.withTable : templates.withoutTable;
 }
 
 export async function resolveTemplatesForEvent(

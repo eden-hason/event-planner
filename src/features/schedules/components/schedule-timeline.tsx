@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import {
   IconBell,
+  IconCalendarClock,
   IconCalendarEvent,
   IconHeart,
   IconMail,
@@ -45,6 +46,7 @@ type ScheduleTypeIcon = React.ComponentType<IconProps>;
 const TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
+  advance_reminder: IconCalendarClock,
   event_reminder: IconBell,
   post_event: IconHeart,
   phone_call: IconPhone,

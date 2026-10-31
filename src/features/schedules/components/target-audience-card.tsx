@@ -2,9 +2,10 @@ import { getTranslations } from 'next-intl/server';
 import { IconUsers, IconUserCheck } from '@tabler/icons-react';
 
 import { SettingsCard } from './settings-card';
+import { audienceLabelKey, type TargetStatus } from '../utils/audience';
 
 interface TargetAudienceCardProps {
-  targetStatus?: 'pending' | 'confirmed' | null;
+  targetStatus?: TargetStatus | null;
   disabled?: boolean;
   /** The message has gone out, so `count` is who it went to, not who matches now. */
   sent?: boolean;
@@ -25,12 +26,7 @@ export async function TargetAudienceCard({
 }: TargetAudienceCardProps) {
   const t = await getTranslations('schedules.audience');
 
-  const audienceLabel =
-    targetStatus === 'confirmed'
-      ? t('confirmedGuests')
-      : targetStatus === 'pending'
-        ? t('pendingGuests')
-        : t('allGuests');
+  const audienceLabel = t(audienceLabelKey(targetStatus));
 
   const AudienceIcon = targetStatus === 'confirmed' ? IconUserCheck : IconUsers;
   const note = sent

@@ -321,7 +321,9 @@ export async function SchedulesPage({
             eventId={eventId}
             state={callPaneState(status)}
             scheduledDate={schedule.scheduledDate}
-            targetStatus={schedule.targetStatus}
+            // A call plan targets one RSVP status or everyone (createCallPlan);
+            // only an Advance Reminder targets 'not_declined'.
+            targetStatus={schedule.targetStatus === 'not_declined' ? null : schedule.targetStatus}
             round={round ?? null}
             audienceCount={audienceCount}
             withoutPhone={targeted.filter((guest) => !guest.phone).length}
