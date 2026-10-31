@@ -52,6 +52,9 @@ export const MessageTemplateDbSchema = z.object({
   // Carries the Event's invitation image as an image header, resolved per event
   // from whether one is uploaded - see hasInvitationImage.
   requires_invitation_image: z.boolean(),
+  // Asks a Guest who has not answered yet, with RSVP quick replies. Resolved per
+  // guest from their RSVP status - see templateForGuest.
+  requires_rsvp_ask: z.boolean(),
   // A row of its Schedule Type's Personal Message family (ADR 0046): a Kululu
   // frame around schedule.personalMessage, found by schedule type rather than
   // by key - see loadPersonalMessageFamily.
@@ -79,6 +82,7 @@ type MessageTemplateBase = {
   requiresNote: boolean;
   requiresFollowUp: boolean;
   requiresInvitationImage: boolean;
+  requiresRsvpAsk: boolean;
   personalMessage: boolean;
   /** The one Event a Bespoke Template belongs to; null for every other row. */
   eventId: string | null;
@@ -113,6 +117,7 @@ export const MessageTemplateDbToAppSchema = MessageTemplateDbSchema.transform(
       requiresNote: db.requires_note,
       requiresFollowUp: db.requires_follow_up,
       requiresInvitationImage: db.requires_invitation_image,
+      requiresRsvpAsk: db.requires_rsvp_ask,
       personalMessage: db.personal_message ?? false,
       eventId: db.event_id ?? null,
     };

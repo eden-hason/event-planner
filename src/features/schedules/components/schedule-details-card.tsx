@@ -85,7 +85,7 @@ export function ScheduleDetailsCard({
   const pinnedDay = pinnedDueDay(eventDate, scheduleTypeKey);
 
   // Days that could never hold a valid Due Time are not offered at all: after
-  // the Event day (the Thank You aside), and so far back that the Dispatcher
+  // the Event day (the Thank You aside; from it, for the Advance Reminder), and so far back that the Dispatcher
   // would expire the message rather than send it. A day that is only partly
   // past stays pickable - an earlier hour on it asks to confirm at Save.
   const disabledDays = useMemo(() => {
@@ -164,7 +164,8 @@ export function ScheduleDetailsCard({
             className={cn(
               '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
               (!editable || pinnedDay) && '[&_button]:bg-muted/60',
-              dueTimeIssue === 'afterEvent' && '[&_button]:border-destructive',
+              (dueTimeIssue === 'afterEvent' || dueTimeIssue === 'notBeforeEvent') &&
+                '[&_button]:border-destructive',
             )}
           >
             <DatePicker

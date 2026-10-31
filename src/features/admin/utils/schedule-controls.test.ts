@@ -64,8 +64,17 @@ describe('deletionRejection', () => {
     assert.equal(deletionRejection({ ...invitation, status: 'expired' }), null);
   });
 
+  it('deletes either reminder that has not gone out', () => {
+    assert.equal(deletionRejection({ ...invitation, scheduleTypeKey: 'advance_reminder' }), null);
+    assert.equal(deletionRejection({ ...invitation, scheduleTypeKey: 'event_reminder' }), null);
+    assert.ok(
+      deletionRejection({ ...invitation, scheduleTypeKey: 'event_reminder', status: 'sent' }),
+    );
+  });
+
   it('refuses any other schedule type', () => {
     assert.ok(deletionRejection({ ...invitation, scheduleTypeKey: 'confirmation' }));
+    assert.ok(deletionRejection({ ...invitation, scheduleTypeKey: 'post_event' }));
     assert.ok(deletionRejection({ ...invitation, scheduleTypeKey: 'phone_call', kind: 'call' }));
   });
 

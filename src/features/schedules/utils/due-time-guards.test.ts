@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   dueTimeIssue,
   firstSendableDay,
-  isDueAfterEvent,
+  isDueAfterLastDay,
   lastDueDay,
   pastDueTime,
   pinnedDueDay,
@@ -17,12 +17,46 @@ const israel = (wallClock: string) => new Date(`${wallClock}+03:00`);
 const due = (wallClock: string) => `${wallClock}+03:00`;
 const RULES = { sendWindow: { start: '09:00', end: '21:00' }, maxLatenessHours: 48 };
 
-// ─── lastDueDay / isDueAfterEvent ─────────────────────────────────────────────
+// ─── lastDueDay / isDueAfterLastDay ─────────────────────────────────────────────
 
 test('lastDueDay is the Event day, and none for the Thank You or an undated Event', () => {
   assert.equal(lastDueDay(EVENT, 'initial_invitation'), '2026-09-26');
   assert.equal(lastDueDay(EVENT, 'post_event'), null);
   assert.equal(lastDueDay(null, 'initial_invitation'), null);
+});
+
+test('the Advance Reminder must go out before the Event day', () => {
+  // Its last day is the day before, also across a month boundary.
+  assert.equal(lastDueDay(EVENT, 'advance_reminder'), '2026-09-25');
+  assert.equal(lastDueDay('2026-10-01T00:00:00Z', 'advance_reminder'), '2026-09-30');
+  assert.equal(pinnedDueDay(EVENT, 'advance_reminder'), null);
+
+  const params = { eventDate: EVENT, scheduleTypeKey: 'advance_reminder' };
+  // Any earlier day is fine, the Event day is refused, even before the window opens.
+  assert.equal(isDueAfterLastDay({ ...params, scheduledDate: due('2026-09-24T10:00') }), false);
+  assert.equal(isDueAfterLastDay({ ...params, scheduledDate: due('2026-09-25T20:30') }), false);
+  assert.equal(isDueAfterLastDay({ ...params, scheduledDate: due('2026-09-26T08:00') }), true);
+
+  const now = israel('2026-09-20T12:00');
+  assert.equal(
+    dueTimeIssue({ ...params, scheduledDate: due('2026-09-26T10:00'), now, rules: RULES }),
+    'notBeforeEvent',
+  );
+  assert.equal(
+    dueTimeIssue({ ...params, scheduledDate: due('2026-09-25T10:00'), now, rules: RULES }),
+    null,
+  );
+  // The Event Reminder is still told it may not go after the Event, not before.
+  assert.equal(
+    dueTimeIssue({
+      eventDate: EVENT,
+      scheduleTypeKey: 'event_reminder',
+      scheduledDate: due('2026-09-27T10:00'),
+      now,
+      rules: RULES,
+    }),
+    'afterEvent',
+  );
 });
 
 test('pinnedDueDay pins only the Event Reminder, to the Event day', () => {
@@ -32,16 +66,16 @@ test('pinnedDueDay pins only the Event Reminder, to the Event day', () => {
   assert.equal(pinnedDueDay(null, 'event_reminder'), null);
 });
 
-test('isDueAfterEvent allows the Event day itself, at any hour', () => {
+test('isDueAfterLastDay allows the Event day itself, at any hour', () => {
   const params = { eventDate: EVENT, scheduleTypeKey: 'event_reminder' };
-  assert.equal(isDueAfterEvent({ ...params, scheduledDate: due('2026-09-26T20:00') }), false);
-  assert.equal(isDueAfterEvent({ ...params, scheduledDate: due('2026-09-27T09:00') }), true);
+  assert.equal(isDueAfterLastDay({ ...params, scheduledDate: due('2026-09-26T20:00') }), false);
+  assert.equal(isDueAfterLastDay({ ...params, scheduledDate: due('2026-09-27T09:00') }), true);
 });
 
-test('isDueAfterEvent reads the day in Israel, not UTC', () => {
+test('isDueAfterLastDay reads the day in Israel, not UTC', () => {
   // 00:30 Israel on the 27th is still the 26th in UTC.
   assert.equal(
-    isDueAfterEvent({
+    isDueAfterLastDay({
       eventDate: EVENT,
       scheduleTypeKey: 'event_reminder',
       scheduledDate: due('2026-09-27T00:30'),
@@ -50,9 +84,9 @@ test('isDueAfterEvent reads the day in Israel, not UTC', () => {
   );
 });
 
-test('isDueAfterEvent never applies to the Thank You', () => {
+test('isDueAfterLastDay never applies to the Thank You', () => {
   assert.equal(
-    isDueAfterEvent({
+    isDueAfterLastDay({
       eventDate: EVENT,
       scheduleTypeKey: 'post_event',
       scheduledDate: due('2026-09-27T10:00'),

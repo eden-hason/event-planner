@@ -8,6 +8,7 @@ import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/i
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AddAdvanceReminderDialog } from './add-advance-reminder-dialog';
 import { AddCallRoundDialog } from './add-call-round-dialog';
 import { LateGuestsDialog } from './late-guests-dialog';
 import { Band, BandRow } from './band';
@@ -333,6 +334,12 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     const sendingEnabled = event.canCreateSchedules;
     const guestSummary = sendingEnabled ? await getEventGuestSummary(eventId) : null;
     const messageSchedules = rows.filter((row) => row.kind === 'message');
+    // One per Event: a second would be a second reminder before the day, which
+    // nothing asked for. Offered before payment too, like dating the plan.
+    const advanceReminderEventDate =
+      event.status === 'published' && !rows.some((row) => row.scheduleTypeKey === 'advance_reminder')
+        ? event.eventDate
+        : null;
     return (
       <Band
         id="outreach-timeline"
@@ -348,6 +355,9 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
               <LateGuestsDialog
                 schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
               />
+            )}
+            {advanceReminderEventDate && (
+              <AddAdvanceReminderDialog eventId={event.id} eventDate={advanceReminderEventDate} />
             )}
             {guestSummary && event.planIncludesCalls && (
               <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />

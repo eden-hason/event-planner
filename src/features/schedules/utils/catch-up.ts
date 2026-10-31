@@ -1,4 +1,5 @@
 import { canReceiveSms, isValidPhone } from '@/lib/phone';
+import { inAudience } from './audience';
 
 /**
  * Sending a Schedule that already went out to the Guest Records it never
@@ -101,15 +102,6 @@ function noteFor(notSentReason: string | null): CatchUpNote {
   return notSentReason === 'no_phone' || notSentReason === 'outside_package'
     ? notSentReason
     : 'other';
-}
-
-/**
- * The same audience predicate the send engine uses (`filterGuestsByTarget`): a
- * guest outside a Schedule's target - a confirmed guest, for a round to the
- * pending - was never meant to get it.
- */
-export function inAudience(targetStatus: string | null, rsvpStatus: string) {
-  return !targetStatus || rsvpStatus === targetStatus;
 }
 
 /** The guest joined the list after the Schedule went out */

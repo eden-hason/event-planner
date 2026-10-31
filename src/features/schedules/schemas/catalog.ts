@@ -3,6 +3,7 @@ import {
   MessageTemplateDbToAppSchema,
   type MessageTemplateApp,
 } from './message-templates';
+import { TARGET_STATUSES } from '../utils/audience';
 
 // Known schedule type keys. The catalog lives in the schedule_types table;
 // this list only drives UI ordering and behavioral special cases, so unknown
@@ -10,6 +11,7 @@ import {
 export const SCHEDULE_TYPE_KEYS = [
   'initial_invitation',
   'confirmation',
+  'advance_reminder',
   'event_reminder',
   'post_event',
   'phone_call',
@@ -20,6 +22,7 @@ export type ScheduleTypeKey = (typeof SCHEDULE_TYPE_KEYS)[number];
 export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   initial_invitation: 'Initial Invitation',
   confirmation: 'Confirmation',
+  advance_reminder: 'Advance Reminder',
   event_reminder: 'Event Reminder',
   post_event: 'Thank You',
   phone_call: 'Call Round',
@@ -44,7 +47,7 @@ export const DefaultScheduleDbSchema = z.object({
   // Null when the Owner dates the Schedule: it is seeded undated (ADR 0029).
   days_offset: z.number().int().nullable(),
   default_time: z.string(),
-  target_status: z.enum(['pending', 'confirmed']).nullable(),
+  target_status: z.enum(TARGET_STATUSES).nullable(),
   sort_order: z.number().int(),
   // execution_kind is z.string(), not z.enum(EXECUTION_KINDS): the catalog is a
   // table and can grow past the kinds known at build time, and an unknown kind

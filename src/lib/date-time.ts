@@ -30,6 +30,17 @@ export function israelToday(now: Date = new Date()): string {
   return ISRAEL_DATE.format(now);
 }
 
+/**
+ * A calendar date ("YYYY-MM-DD") moved by whole days. Shifted at UTC midnight,
+ * where every day is 24 hours long, so no daylight-saving change can land it on
+ * the wrong day.
+ */
+export function addCalendarDays(day: string, days: number): string {
+  return new Date(Date.parse(`${day.slice(0, 10)}T00:00:00Z`) + days * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
 /** Today's calendar date in Israel as a UTC midnight. */
 function israelCalendarStart(now: Date): number {
   return Date.parse(`${israelToday(now)}T00:00:00Z`);

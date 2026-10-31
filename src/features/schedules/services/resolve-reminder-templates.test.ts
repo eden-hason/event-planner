@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { SupabaseClient } from '@supabase/supabase-js';
-// @ts-expect-error Node's type-stripping test runner requires the source extension
-import { pickPersonalMessageTemplates, pickTemplates, resolveTemplatesForSchedule } from './resolve-reminder-templates.ts';
+import {
+  pickPersonalMessageTemplates,
+  pickTemplates,
+  resolveTemplatesForSchedule,
+  templateForGuest,
+  // @ts-expect-error Node's type-stripping test runner requires the source extension
+} from './resolve-reminder-templates.ts';
 import {
   MessageTemplateDbToAppSchema,
   type MessageTemplateApp,
@@ -22,6 +27,7 @@ function row(id: string, flags: Partial<MessageTemplateApp> = {}): MessageTempla
     requiresNote: false,
     requiresFollowUp: false,
     requiresInvitationImage: false,
+    requiresRsvpAsk: false,
     personalMessage: false,
     eventId: null,
     ...flags,
@@ -92,6 +98,45 @@ test('a family missing a row on an axis it offers fails rather than sending a ne
   assert.equal(result.success, false);
 });
 
+// --- The RSVP ask (ADR 0051) ---------------------------------------------------
+
+const advance = [row('reminder'), row('ask', { requiresRsvpAsk: true })];
+
+test('a family that asks resolves both rows and never sends the ask by default', () => {
+  const result = pickTemplates({ anchor: advance[0], candidates: advance, gifting: false, tableNumbers: true });
+  assert.ok(result.success);
+  assert.equal(result.templates.withoutTable.id, 'reminder');
+  assert.equal(result.templates.withTable, null);
+  assert.equal(result.templates.withRsvpAsk?.id, 'ask');
+});
+
+test('a family that does not ask resolves no ask row', () => {
+  const result = pickTemplates({ anchor: reminder[0], candidates: reminder, gifting: false, tableNumbers: true });
+  assert.ok(result.success);
+  assert.equal(result.templates.withRsvpAsk, null);
+});
+
+test('a family that asks but has no ask row for these settings fails', () => {
+  const result = pickTemplates({
+    anchor: advance[0],
+    candidates: [row('reminder'), row('note'), row('ask+note', { requiresRsvpAsk: true, requiresNote: true })],
+    gifting: false,
+    tableNumbers: false,
+  });
+  assert.equal(result.success, false);
+});
+
+test('templateForGuest asks only a Guest who has not answered', () => {
+  const asks = { withTable: null, withoutTable: row('reminder'), withRsvpAsk: row('ask') };
+  assert.equal(templateForGuest(asks, { rsvpStatus: 'pending' }).id, 'ask');
+  assert.equal(templateForGuest(asks, { rsvpStatus: 'confirmed' }).id, 'reminder');
+
+  // Without an ask row a pending Guest gets the plain row, and seating still decides.
+  const seats = { withTable: row('table'), withoutTable: row('plain'), withRsvpAsk: null };
+  assert.equal(templateForGuest(seats, { rsvpStatus: 'pending', tableId: 't1' }).id, 'table');
+  assert.equal(templateForGuest(seats, { rsvpStatus: 'confirmed', tableId: null }).id, 'plain');
+});
+
 test('an empty family fails', () => {
   const result = pickTemplates({ anchor: reminder[0], candidates: [], gifting: false, tableNumbers: false });
   assert.equal(result.success, false);
@@ -125,6 +170,7 @@ function dbRow(
     requires_note: false,
     requires_follow_up: false,
     requires_invitation_image: false,
+    requires_rsvp_ask: false,
     personal_message: false,
     payload: {
       bodyText: name,

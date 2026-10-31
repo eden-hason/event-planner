@@ -285,7 +285,7 @@ export type EventTimelineRow = {
   dueTimeEditable: boolean;
   /** Whether this is an Initial Invitation that can still become a Confirmation. */
   convertible: boolean;
-  /** Whether this is an Initial Invitation that can still be deleted (see deletionRejection). */
+  /** Whether this Schedule can still be deleted (see deletionRejection). */
   deletable: boolean;
   /** Whether, once converted, it would send as a follow-up round (a Confirmation is due before it). */
   convertsToFollowUp: boolean;

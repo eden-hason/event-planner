@@ -17,6 +17,7 @@ import {
 
 import type { ScheduleApp } from '../schemas';
 import { useScheduleSettings } from './schedule-settings-context';
+import { audienceLabelKey } from '../utils/audience';
 
 interface PastDueTimeDialogProps {
   targetStatus: ScheduleApp['targetStatus'];
@@ -45,12 +46,7 @@ export function PastDueTimeDialog({
   const { pendingPastDueTime, scheduledTime, confirmPastDueTime, cancelPastDueTime } =
     useScheduleSettings();
 
-  const audienceLabel =
-    targetStatus === 'confirmed'
-      ? t('audience.confirmedGuests')
-      : targetStatus === 'pending'
-        ? t('audience.pendingGuests')
-        : t('audience.allGuests');
+  const audienceLabel = t(`audience.${audienceLabelKey(targetStatus)}`);
 
   const description =
     pendingPastDueTime?.kind === 'heldUntil'

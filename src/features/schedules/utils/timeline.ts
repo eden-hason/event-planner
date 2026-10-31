@@ -150,6 +150,7 @@ const STAGE_ORDER = [
   'initial_invitation',
   'confirmation',
   'phone_call',
+  'advance_reminder',
   'event_reminder',
   'post_event',
 ];

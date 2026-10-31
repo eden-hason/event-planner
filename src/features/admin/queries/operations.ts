@@ -12,7 +12,7 @@ import type {
 } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { ADMIN_TIME_ZONE, israelWallClockParts } from '@/lib/date-time';
-import { numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
+import { inAudience, numberPlan, planEntryFromRow, type PlanEntry } from '@/features/schedules';
 import { audienceCountLabel, eventTitle, scheduleTypeName } from '../utils/labels';
 import { daysText, formatShortDate, hoursText } from '../utils/format';
 import { callRoundDayKey, callRoundDays, callRoundWindow } from '../utils/call-round-days';
@@ -64,24 +64,26 @@ function channelLabel(channel: string | null): string {
 
 
 /**
- * Guest Records per Event by RSVP status, counted by the database through three
- * aliased embeds of the same relation. Select it on `events` and narrow two of
- * them with `.eq('pending.rsvp_status', 'pending')` and the confirmed twin.
+ * Guest Records per Event by RSVP status, counted by the database through four
+ * aliased embeds of the same relation. Select it on `events` and narrow each
+ * per-status one with `.eq('pending.rsvp_status', 'pending')` and its twins.
  */
-const AUDIENCE_COUNTS = 'id, total:guests(count), pending:guests(count), confirmed:guests(count)';
+const AUDIENCE_COUNTS =
+  'id, total:guests(count), pending:guests(count), confirmed:guests(count), declined:guests(count)';
 
-type AudienceRow = {
-  id: string;
-  total: { count: number }[];
-  pending: { count: number }[];
-  confirmed: { count: number }[];
-};
+const RSVP_STATUSES = ['pending', 'confirmed', 'declined'] as const;
+
+type AudienceRow = { id: string; total: { count: number }[] } & Record<
+  (typeof RSVP_STATUSES)[number],
+  { count: number }[]
+>;
 
 function audienceCounts(row: AudienceRow) {
   return {
     total: embeddedCount(row.total),
     pending: embeddedCount(row.pending),
     confirmed: embeddedCount(row.confirmed),
+    declined: embeddedCount(row.declined),
   };
 }
 
@@ -125,7 +127,8 @@ async function audienceTallies(supabase: ServiceClient, eventIds: string[]) {
       .select(AUDIENCE_COUNTS)
       .in('id', eventIds)
       .eq('pending.rsvp_status', 'pending')
-      .eq('confirmed.rsvp_status', 'confirmed'),
+      .eq('confirmed.rsvp_status', 'confirmed')
+      .eq('declined.rsvp_status', 'declined'),
   ) as unknown as AudienceRow[];
   return new Map(audiences.map((row) => [row.id, audienceCounts(row)]));
 }
@@ -135,9 +138,12 @@ function audienceFor(
   targetStatus: string | null,
 ): number {
   if (!counts) return 0;
-  if (targetStatus === 'pending') return counts.pending;
-  if (targetStatus === 'confirmed') return counts.confirmed;
-  return counts.total;
+  if (!targetStatus) return counts.total;
+  // The send engine's own audience rule, applied to each status's count.
+  return RSVP_STATUSES.filter((status) => inAudience(targetStatus, status)).reduce(
+    (sum, status) => sum + counts[status],
+    0,
+  );
 }
 
 type ScheduleRow = {
@@ -395,6 +401,7 @@ export async function listEventsForPlanning(): Promise<
         .eq('plan_includes_calls', true)
         .eq('pending.rsvp_status', 'pending')
         .eq('confirmed.rsvp_status', 'confirmed')
+        .eq('declined.rsvp_status', 'declined')
         .order('event_date', { ascending: true }),
       'user_id',
       test.userIds,
