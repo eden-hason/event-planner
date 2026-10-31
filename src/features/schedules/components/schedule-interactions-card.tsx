@@ -1,14 +1,15 @@
 import { getScheduleInteractionData } from '../queries/guest-interactions';
+import type { RsvpAsk } from '../utils/schedule-results';
 import { ScheduleResults } from './schedule-results';
 
 interface ScheduleInteractionsCardProps {
   scheduleId: string;
   /**
-   * Whether this schedule asks guests to RSVP (a Confirmation round). Other
-   * message types still report who they reached, but an answer column that
-   * reads "No response" on every row of a reminder is noise.
+   * Whom this schedule asks to RSVP (see RsvpAsk). Other message types still
+   * report who they reached, but an answer column that reads "No response" on
+   * every row of a reminder is noise.
    */
-  collectsRsvp: boolean;
+  rsvpAsk: RsvpAsk;
   /**
    * The schedule's own channel. An SMS schedule has nothing WhatsApp-shaped to
    * report - no read receipts - so it gets none of that layout. A WhatsApp
@@ -29,19 +30,19 @@ interface ScheduleInteractionsCardProps {
  */
 export async function ScheduleInteractionsCard({
   scheduleId,
-  collectsRsvp,
+  rsvpAsk,
   channel,
   sentAt,
   smsFallback,
 }: ScheduleInteractionsCardProps) {
-  const data = await getScheduleInteractionData(scheduleId);
+  const data = await getScheduleInteractionData(scheduleId, rsvpAsk);
 
   // Keyed so the filter and open guest reset when the pane switches schedule.
   return (
     <ScheduleResults
       key={scheduleId}
       data={data}
-      collectsRsvp={collectsRsvp}
+      collectsRsvp={rsvpAsk !== 'none'}
       channel={channel}
       sentAt={sentAt}
       smsFallback={smsFallback}

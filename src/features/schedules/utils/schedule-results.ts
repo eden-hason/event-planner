@@ -86,7 +86,9 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
       return row.delivery !== null && NOT_REACHED.includes(row.delivery);
     case 'noResponse':
       return (
-        (row.delivery === 'whatsapp' || row.delivery === 'sms') && !row.response
+        (row.delivery === 'whatsapp' || row.delivery === 'sms') &&
+        !row.response &&
+        !row.notAsked
       );
     case 'confirmed':
       return row.response === 'rsvp_confirm';
@@ -287,4 +289,16 @@ export function formatMoment(
     day: 'numeric',
     month: 'numeric',
   }).format(at);
+}
+
+/**
+ * Whom a Schedule asks for an RSVP: every Guest (a Confirmation), only those who
+ * had not answered (an Advance Reminder, whose family has an RSVP-ask row), or
+ * no one. Decides whether the Results tab shows answers, and against whom.
+ */
+export type RsvpAsk = 'everyone' | 'pending' | 'none';
+
+export function rsvpAskOf(scheduleTypeKey: string, asksPendingGuests: boolean): RsvpAsk {
+  if (scheduleTypeKey === 'confirmation') return 'everyone';
+  return asksPendingGuests ? 'pending' : 'none';
 }

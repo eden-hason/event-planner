@@ -346,6 +346,9 @@ export function ScheduleResultsGuests({
                     >
                       {ans.text}
                     </span>
+                  ) : row.notAsked ? (
+                    // Not asked: nothing to wait for, so no "no answer yet".
+                    <span className="text-muted-foreground text-[12.5px]">-</span>
                   ) : (
                     <span className="text-muted-foreground text-[12.5px]">
                       {t('answer.pending')}

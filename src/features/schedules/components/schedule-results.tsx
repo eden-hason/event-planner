@@ -390,7 +390,8 @@ function Funnel({
               declined: summary.declined,
             }),
             n: answered,
-            value: percent(answered, summary.audience),
+            // Against the Guests who were asked, not everyone it went to.
+            value: percent(answered, summary.askedAudience),
             bar: 'bg-rsvp-confirmed',
             num: 'text-rsvp-confirmed-strong',
           },
@@ -540,7 +541,7 @@ function RsvpCard({ summary }: { summary: Summary }) {
     // A shared link can answer without being reached, so this never goes negative.
     {
       key: 'noResponse',
-      n: Math.max(summary.reached - answered, 0),
+      n: Math.max(summary.askedReached - answered, 0),
       tone: RESULT_TONE.neutral,
     },
   ];
@@ -549,7 +550,7 @@ function RsvpCard({ summary }: { summary: Summary }) {
     <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4 @2xl:p-[18px]">
       <CardTitle
         title={t('title')}
-        note={t('note', { answered, reached: summary.reached })}
+        note={t('note', { answered, reached: summary.askedReached })}
       />
       <div className="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong flex items-end gap-3 rounded-[14px] px-3.5 py-3">
         <div className="flex flex-col gap-px">
