@@ -21,6 +21,9 @@ export {
 // Utils
 export {
   filterGuestsByTarget,
+  inAudience,
+  TARGET_STATUSES,
+  type TargetStatus,
   isMessageSchedule,
   validatePhoneNumber,
   classifyWhatsAppFailure,
@@ -39,6 +42,7 @@ export {
   planEntryFromRow,
   type PlanEntry,
   dueTimeIssue,
+  lastDueDay,
   isFollowUpConfirmation,
   DEFAULT_SEND_TIME,
 } from './utils';

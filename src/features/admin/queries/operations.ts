@@ -137,6 +137,8 @@ function audienceFor(
   if (!counts) return 0;
   if (targetStatus === 'pending') return counts.pending;
   if (targetStatus === 'confirmed') return counts.confirmed;
+  // An RSVP is pending, confirmed or declined, so the two counts already hold it.
+  if (targetStatus === 'not_declined') return counts.pending + counts.confirmed;
   return counts.total;
 }
 

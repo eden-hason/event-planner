@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '../schemas';
 import type { MessageTemplateApp } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
-import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
+import { resolveTemplatesForSchedule, templateForGuest } from './resolve-reminder-templates';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import {
@@ -114,7 +114,12 @@ type LoadedSchedule = {
 export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
 type Resolution =
-  | { ok: true; withTable: MessageTemplateApp | null; withoutTable: MessageTemplateApp }
+  | {
+      ok: true;
+      withTable: MessageTemplateApp | null;
+      withoutTable: MessageTemplateApp;
+      withRsvpAsk: MessageTemplateApp | null;
+    }
   | { ok: false; reason: string };
 
 async function loadSchedule(
@@ -181,6 +186,7 @@ async function resolveSmsTemplates(
     ok: true,
     withTable: resolution.templates.withTable,
     withoutTable: resolution.templates.withoutTable,
+    withRsvpAsk: resolution.templates.withRsvpAsk,
   };
 }
 
@@ -389,9 +395,9 @@ function smsTemplateFor(
   resolution: Extract<Resolution, { ok: true }>,
   guest: GuestApp,
 ) {
-  const template =
-    resolution.withTable && guest.tableId ? resolution.withTable : resolution.withoutTable;
-  return template as Extract<MessageTemplateApp, { channel: 'sms' }>;
+  // Picked from the Guest as they are now: one who answered since the WhatsApp
+  // send is no longer asked.
+  return templateForGuest(resolution, guest) as Extract<MessageTemplateApp, { channel: 'sms' }>;
 }
 
 export async function buildSmsFallbackPlan(

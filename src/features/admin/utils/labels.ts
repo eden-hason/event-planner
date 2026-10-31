@@ -25,6 +25,7 @@ const EVENT_TYPE_NAMES: Record<string, string> = {
 const SCHEDULE_TYPE_NAMES: Record<string, string> = {
   initial_invitation: 'הזמנה ראשונית',
   confirmation: 'אישור הגעה',
+  advance_reminder: 'תזכורת מוקדמת',
   event_reminder: 'תזכורת אירוע',
   post_event: 'הודעת תודה',
   phone_call: 'סבב שיחות',
@@ -85,6 +86,7 @@ export function countLabel(value: number, one: string, many: string): string {
 export function audienceCountLabel(targetStatus: string | null | undefined, count: number): string {
   if (targetStatus === 'pending') return countLabel(count, 'רשומה ממתינה אחת', 'רשומות ממתינות');
   if (targetStatus === 'confirmed') return countLabel(count, 'רשומה מאושרת אחת', 'רשומות מאושרות');
+  if (targetStatus === 'not_declined') return countLabel(count, 'רשומה אחת שלא סירבה', 'רשומות שלא סירבו');
   return countLabel(count, 'רשומת אורח אחת', 'רשומות אורחים');
 }
 

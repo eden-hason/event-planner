@@ -1,6 +1,7 @@
 import type { GuestApp } from '@/features/guests/schemas';
 import { isValidPhone } from '@/lib/phone';
 import { israelWallClockToIso } from '@/lib/date-time';
+import { inAudience, type TargetStatus } from './audience';
 
 // Re-export parameter resolution utilities
 export {
@@ -53,7 +54,8 @@ export {
 
 export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
 export { comparePlanOrder, DEFAULT_SEND_TIME, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
-export { dueTimeIssue } from './due-time-guards';
+export { dueTimeIssue, lastDueDay } from './due-time-guards';
+export { inAudience, TARGET_STATUSES, type TargetStatus } from './audience';
 export { isFollowUpConfirmation } from './confirmation-round';
 export {
   smsOutcomeFromReport,
@@ -156,16 +158,14 @@ export function calculateScheduledDate(
  * Filters guests based on targeting criteria.
  *
  * @param guests - Array of guests to filter
- * @param targetStatus - Optional RSVP status to filter by (null means all guests)
+ * @param targetStatus - Optional audience to filter by (null means all guests)
  * @returns Filtered array of guests
  */
 export function filterGuestsByTarget(
   guests: GuestApp[],
-  targetStatus?: 'pending' | 'confirmed' | null,
+  targetStatus?: TargetStatus | null,
 ): GuestApp[] {
-  if (!targetStatus) return guests;
-
-  return guests.filter((guest) => guest.rsvpStatus === targetStatus);
+  return guests.filter((guest) => inAudience(targetStatus, guest.rsvpStatus));
 }
 
 /**
@@ -198,8 +198,9 @@ export function validatePhoneNumber(phone: string | undefined | null): boolean {
  * @param targetStatus - Optional RSVP status filter
  * @returns Display label string
  */
-export function getAudienceLabel(targetStatus?: 'pending' | 'confirmed' | null): string {
+export function getAudienceLabel(targetStatus?: TargetStatus | null): string {
   if (targetStatus === 'confirmed') return 'Confirmed Guests';
   if (targetStatus === 'pending') return 'Pending Guests';
+  if (targetStatus === 'not_declined') return 'Guests Not Declined';
   return 'All Guests';
 }

@@ -23,6 +23,7 @@ import { executeSchedule } from '../actions/execute-schedule';
 import { type ScheduleApp } from '../schemas';
 import posthog from 'posthog-js';
 import { useSaveEvent } from '@/features/auth';
+import { audienceLabelKey } from '../utils/audience';
 
 interface SendConfirmDialogProps {
   scheduleId: string;
@@ -44,12 +45,7 @@ export function SendConfirmDialog({
   const t = useTranslations('schedules');
   const [isSending, startSendTransition] = useTransition();
 
-  const audienceLabel =
-    targetStatus === 'confirmed'
-      ? t('audience.confirmedGuests')
-      : targetStatus === 'pending'
-        ? t('audience.pendingGuests')
-        : t('audience.allGuests');
+  const audienceLabel = t(`audience.${audienceLabelKey(targetStatus)}`);
 
   const { requireSaved } = useSaveEvent();
 

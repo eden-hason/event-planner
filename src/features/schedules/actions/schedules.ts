@@ -120,6 +120,9 @@ export async function updateScheduledDate(
     if (issue === 'afterEvent') {
       return { success: false, message: 'Pick a date on or before the event day' };
     }
+    if (issue === 'notBeforeEvent') {
+      return { success: false, message: 'Pick a date before the event day' };
+    }
     if (issue === 'expires') {
       return {
         success: false,

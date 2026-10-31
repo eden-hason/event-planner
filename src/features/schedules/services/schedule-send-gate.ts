@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { TargetStatus } from '../utils/audience';
 
 export type ScheduleSendGate = {
   eventId: string;
@@ -8,7 +9,7 @@ export type ScheduleSendGate = {
   scheduleTypeKey: string;
   /** null = still planned; see SCHEDULE_STATUSES for the rest */
   status: string | null;
-  targetStatus: 'pending' | 'confirmed' | null;
+  targetStatus: TargetStatus | null;
   /** Set when the Dispatcher claimed it - a claimed Schedule went out even without status = 'sent' */
   dispatchedAt: string | null;
   sentAt: string | null;

@@ -3,6 +3,7 @@
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendingConfig } from '@/lib/config/sending';
+import { israelWallClockToIso } from '@/lib/date-time';
 import { dueTimeIssue } from '@/features/schedules';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import type { Location } from '@/features/events/schemas';
@@ -75,6 +76,9 @@ export async function setScheduleDueTimeAdmin(
     if (issue === 'afterEvent') {
       return { success: false, message: 'צריך לבחור תאריך עד יום האירוע' };
     }
+    if (issue === 'notBeforeEvent') {
+      return { success: false, message: 'צריך לבחור תאריך עד יום לפני האירוע' };
+    }
     if (issue === 'expires' && schedule.state.kind === 'message') {
       return { success: false, message: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר' };
     }
@@ -138,12 +142,13 @@ export async function convertInvitationToConfirmationAdmin(
 }
 
 /**
- * Deletes an Initial Invitation that has not gone out. Its Deliveries, Guest
- * replies and Dispatcher log cascade with it, so it also refuses one with any
- * Delivery or reply on record - those stay as history. The plan then reads
- * without an Initial Invitation, as it does after a conversion (ADR 0036).
+ * Deletes an Initial Invitation, Advance Reminder or Event Reminder that has not
+ * gone out. Its Deliveries, Guest replies and Dispatcher log cascade with it, so
+ * it also refuses one with any Delivery or reply on record - those stay as
+ * history. The plan then reads without it: an Invitation as after a conversion
+ * (ADR 0036), an Event Reminder as an Event reminded only in advance (ADR 0051).
  */
-export async function deleteInitialInvitationAdmin(
+export async function deleteUnsentScheduleAdmin(
   scheduleId: string,
 ): Promise<EventControlResult> {
   await assertAdmin();
@@ -162,7 +167,7 @@ export async function deleteInitialInvitationAdmin(
     if (deliveries.error) throw new Error(deliveries.error.message);
     if (interactions.error) throw new Error(interactions.error.message);
     if ((deliveries.count ?? 0) > 0 || (interactions.count ?? 0) > 0) {
-      return { success: false, message: 'כבר יש שליחות או תשובות של אורחים להזמנה הזו' };
+      return { success: false, message: 'כבר יש שליחות או תשובות של אורחים לתזמון הזה' };
     }
 
     // Guarded again in the delete itself, so a claim by the Dispatcher since the
@@ -175,16 +180,123 @@ export async function deleteInitialInvitationAdmin(
       .is('sent_at', null)
       .select('id');
     if (error) {
-      console.error('deleteInitialInvitationAdmin failed:', error);
-      return { success: false, message: 'לא הצלחנו למחוק את ההזמנה' };
+      console.error('deleteUnsentScheduleAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו למחוק את התזמון' };
     }
-    if (!deleted?.length) return { success: false, message: 'ההזמנה הזו כבר נשלחה' };
+    if (!deleted?.length) return { success: false, message: 'התזמון הזה כבר נשלח' };
 
     revalidateOutreach(schedule.eventId);
-    return { success: true, message: 'ההזמנה נמחקה' };
+    return { success: true, message: 'התזמון נמחק' };
   } catch (error) {
-    console.error('deleteInitialInvitationAdmin failed:', error);
-    return { success: false, message: 'לא הצלחנו למחוק את ההזמנה' };
+    console.error('deleteUnsentScheduleAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו למחוק את התזמון' };
+  }
+}
+
+export type CreateAdvanceReminderInput = {
+  eventId: string;
+  /** `YYYY-MM-DD` from the date field */
+  scheduledDate: string;
+  /** `HH:MM` from the time field */
+  scheduledTime: string;
+};
+
+/** The family every Advance Reminder is anchored on (20261031000000_advance_reminder.sql). */
+const ADVANCE_REMINDER_FAMILY_KEY = 'advance_reminder_1';
+
+/**
+ * Gives one Event an Advance Reminder: a reminder before the Event day, to every
+ * Guest who has not declined (ADR 0051). No Event Type is seeded one, so this is
+ * the only way an Event gets it. It is included in the Plan, so nothing is
+ * charged. An Event already planning one is refused rather than given a second.
+ *
+ * Locked like the seeded plan while the Event cannot send ('disabled'), so it
+ * arms with the rest of the plan when payment turns sending on.
+ */
+export async function createAdvanceReminderAdmin(
+  input: CreateAdvanceReminderInput,
+): Promise<EventControlResult> {
+  await assertAdmin();
+  try {
+    const supabase = createServiceClient();
+
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('status, event_date, can_create_schedules')
+      .eq('id', input.eventId)
+      .maybeSingle();
+    if (eventError) throw new Error(eventError.message);
+    if (!event) return { success: false, message: 'האירוע לא נמצא' };
+    // A Draft Event cannot have schedules - it is interest, not an event.
+    if (event.status !== 'published') return { success: false, message: 'האירוע הזה לא פורסם' };
+    if (!event.event_date) return { success: false, message: 'לאירוע הזה אין תאריך' };
+
+    const scheduledDate = israelWallClockToIso(input.scheduledDate, input.scheduledTime);
+    if (!scheduledDate) return { success: false, message: 'התאריך והשעה לא תקינים' };
+
+    const config = sendingConfig();
+    const issue = dueTimeIssue({
+      eventDate: event.event_date,
+      scheduleTypeKey: 'advance_reminder',
+      scheduledDate,
+      now: new Date(),
+      rules: { sendWindow: config.sendWindow, maxLatenessHours: config.scheduleMaxLatenessHours },
+    });
+    if (issue === 'notBeforeEvent' || issue === 'afterEvent') {
+      return { success: false, message: 'צריך לבחור תאריך עד יום לפני האירוע' };
+    }
+    if (issue === 'expires') {
+      return { success: false, message: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר' };
+    }
+
+    const [typeResult, anchorResult] = await Promise.all([
+      supabase.from('schedule_types').select('id').eq('key', 'advance_reminder').maybeSingle(),
+      // The confirmed Guests' WhatsApp row. The resolver reads the whole family
+      // from it, so which row anchors does not change what is sent.
+      supabase
+        .from('message_templates')
+        .select('id')
+        .eq('key', ADVANCE_REMINDER_FAMILY_KEY)
+        .eq('channel', 'whatsapp')
+        .eq('requires_rsvp_ask', false)
+        .is('event_id', null)
+        .maybeSingle(),
+    ]);
+    if (typeResult.error) throw new Error(typeResult.error.message);
+    if (anchorResult.error) throw new Error(anchorResult.error.message);
+    if (!typeResult.data || !anchorResult.data) {
+      console.error('createAdvanceReminderAdmin: the Advance Reminder is missing from the catalog');
+      return { success: false, message: 'אין בקטלוג תזכורת מוקדמת' };
+    }
+
+    const { count, error: existingError } = await supabase
+      .from('schedules')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', input.eventId)
+      .eq('schedule_type_id', typeResult.data.id);
+    if (existingError) throw new Error(existingError.message);
+    if ((count ?? 0) > 0) return { success: false, message: 'כבר יש לאירוע הזה תזכורת מוקדמת' };
+
+    const { error } = await supabase.from('schedules').insert({
+      event_id: input.eventId,
+      schedule_type_id: typeResult.data.id,
+      template_id: anchorResult.data.id,
+      // One Due Time: the wall clock is already folded into the instant above
+      // by israelWallClockToIso (ADR 0015).
+      scheduled_date: scheduledDate,
+      target_status: 'not_declined',
+      status: event.can_create_schedules ? null : 'disabled',
+    });
+    if (error) {
+      console.error('createAdvanceReminderAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
+    }
+
+    revalidateOutreach(input.eventId);
+    return { success: true, message: 'התזכורת המוקדמת נוספה' };
+  } catch (error) {
+    console.error('createAdvanceReminderAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
   }
 }
 

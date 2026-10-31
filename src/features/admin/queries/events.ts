@@ -8,6 +8,7 @@ import { canReceiveSms } from '@/lib/phone';
 import {
   classifyWhatsAppFailure,
   comparePlanOrder,
+  inAudience,
   isFollowUpConfirmation,
   numberPlan,
   planEntryFromRow,
@@ -373,7 +374,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
     const kind = isCall ? 'call' : 'message';
     const round = roundBySchedule.get(schedule.id);
     const logs = (round?.call_logs ?? []) as { id: string; notes: string | null; outcome: string | null }[];
-    const target = guests.filter((guest) => !schedule.target_status || guest.rsvp_status === schedule.target_status);
+    const target = guests.filter((guest) => inAudience(schedule.target_status, guest.rsvp_status));
     const scheduleDeliveries = deliveries.filter((delivery) => delivery.schedule_id === schedule.id);
     const template = schedule.message_templates as unknown as { channel: string | null } | null;
     // The Dispatcher claims a Schedule by setting dispatched_at and never writes

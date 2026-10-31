@@ -182,17 +182,28 @@ the two must be spoken of together, the word is **Outreach Item**.
 
 ## Schedule Type
 
-The stage of the message lifecycle a Schedule belongs to. There are exactly four, in
+The stage of the message lifecycle a Schedule belongs to. There are exactly five, in
 order:
 
 1. **Initial Invitation** - the invitation itself
 2. **Confirmation** - the RSVP round(s), asking for an answer
-3. **Event Reminder** - sent on/near the day, carrying table number, navigation link and
-   gift link
-4. **Thank You** (`post_event`) - sent after the Event
+3. **Advance Reminder** - sent on a day before the Event, telling Guests which day it is
+4. **Event Reminder** - sent on the Event day itself, carrying table number, navigation
+   link and gift link
+5. **Thank You** (`post_event`) - sent after the Event
 
-"Reminder" without qualification means Event Reminder (stage 3), never a chase-up during
-the Confirmation stage. A repeat ask during stage 2 is a *second Confirmation round*.
+"Reminder" without qualification means Event Reminder (stage 4), never a chase-up during
+the Confirmation stage and never the Advance Reminder. A repeat ask during stage 2 is a
+*second Confirmation round*.
+
+An Event Reminder speaks of "today" and so is always sent on the Event day; only its hour
+moves. An Advance Reminder names the Event's day instead, so it reads right on any earlier
+day. An Event may have either or both. An Advance Reminder is added to an Event by an
+Operator, never by default. It reaches every Guest who has not declined, and a Guest who
+has not answered yet may answer from it, the same way they would from a Confirmation.
+
+_Avoid_: day-before reminder (it need not be the day before), pre-event reminder (every
+message before the Event is pre-event)
 
 ## Due Time
 
@@ -212,8 +223,8 @@ an Undated Schedule is not late, not held and not expired, it simply has not bee
 for.
 
 Initial Invitations and Confirmations begin undated - when to invite and when to ask for an
-answer is the Owner's call, and Kululu does not guess it. Event Reminders and Thank Yous
-begin with a Due Time Kululu proposes, relative to the Event date, which the Owner may
+answer is the Owner's call, and Kululu does not guess it. Advance Reminders, Event
+Reminders and Thank Yous begin with a Due Time Kululu proposes, relative to the Event date, which the Owner may
 change. Call plans are proposed a date too: a person starts them, so a proposed date can
 never reach a Guest by itself.
 
@@ -273,7 +284,7 @@ the **Record Package**.
 
 Only one Schedule is offered: the latest Initial Invitation or Confirmation that went out.
 While only the Invitation has gone, that is the Invitation; once a Confirmation has, it is
-the latest Confirmation. An Event Reminder or Thank You is never caught up on, so once one
+the latest Confirmation. An Advance Reminder, Event Reminder or Thank You is never caught up on, so once one
 has gone out the offer stays on the last Invitation or Confirmation. Whatever is still
 planned reaches the Guest by itself, since a Schedule's audience is decided when it sends.
 
@@ -753,6 +764,9 @@ two:
 - **WhatsApp** - an Initial Invitation (or a Confirmation round in its place), two
   Confirmation rounds, an Event Reminder and a Thank You
 - **WhatsApp + calls** - all of that, plus two **Call Rounds**
+
+An **Advance Reminder** is included on either Plan whenever an Operator adds one, whether
+in place of the Event Reminder or beside it. It is never an **Extra Schedule**.
 
 A Plan has no size; the Record Package says how many. It is stored as the payment's channel
 (`record_package_channel`). SMS is no longer sold as a Plan - SMS reaches a Guest only as an
