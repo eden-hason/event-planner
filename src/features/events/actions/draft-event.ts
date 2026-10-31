@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/features/auth/queries';
 import { sendVisitorEventAdminEmail } from '@/lib/email/send-visitor-event-admin-email';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import {
   DraftDateSchema,
   DraftLocationSchema,
@@ -23,6 +24,7 @@ import {
   readHostNames,
 } from '../utils/event-title';
 import { ONBOARDING_STEPS, answeredIndex } from '../utils/onboarding-progress';
+import { removeEventStorage } from '../services/event-storage';
 import type { OnboardingStep } from '../types';
 
 /**
@@ -425,10 +427,19 @@ export async function discardDraftEvent(
     const { draft, message } = await loadDraft(supabase, eventId);
     if (!draft) return { success: false, message };
 
-    const { error } = await supabase.from('events').delete().eq('id', eventId);
+    const { data: deleted, error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .select('id');
     if (error) {
       console.error('Error discarding draft event:', error);
       return { success: false, message: 'Failed to discard the draft' };
+    }
+
+    // Only once RLS let this user delete the row - see removeEventStorage.
+    if (deleted?.length) {
+      await removeEventStorage(createServiceClient(), eventId);
     }
 
     revalidatePath('/app');
