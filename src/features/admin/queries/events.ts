@@ -33,6 +33,7 @@ import {
   conversionRejection,
   deletionRejection,
   dueTimeRejection,
+  sendNowRejection,
   type ScheduleControlState,
 } from '../utils/schedule-controls';
 
@@ -430,6 +431,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
         };
       }),
       dueTimeEditable: dueTimeRejection(controlState) === null,
+      sendableNow: sendNowRejection(controlState) === null,
       convertible,
       // A Delivery or reply on record also blocks it; the action checks those.
       deletable: deletionRejection(controlState) === null && scheduleDeliveries.length === 0,

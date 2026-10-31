@@ -244,7 +244,8 @@ That is what makes it cover the case it exists for: Kululu being unavailable all
 and returning at midnight to a backlog of Schedules that all came due while it was away.
 
 The Send Window governs Schedules sending by themselves. A **Catch-up Send** goes the
-moment the Owner presses it, at any hour - the Owner chose the hour, not Kululu.
+moment the Owner presses it, at any hour - the Owner chose the hour, not Kululu. So does
+an Operator's send-now of a whole Schedule from the Back Office, for the same reason.
 
 ## Expired Schedule
 

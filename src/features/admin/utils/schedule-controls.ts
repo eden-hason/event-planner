@@ -43,6 +43,22 @@ export function dueTimeRejection(schedule: ScheduleControlState): string | null 
 }
 
 /**
+ * Why an Operator cannot send this Schedule now, or null when they can.
+ *
+ * Only a message that is live: not gone out, not expired, not turned off by the
+ * Owner ('cancelled') and not locked because the Event cannot send ('disabled').
+ * A call plan is worked by a person, so there is nothing to dispatch.
+ */
+export function sendNowRejection(schedule: ScheduleControlState): string | null {
+  if (schedule.kind === 'call') return 'תוכנית שיחות לא נשלחת כהודעה';
+  if (wentOut(schedule)) return 'התזמון הזה כבר נשלח';
+  if (schedule.status === 'expired') return 'פג התוקף של התזמון הזה והוא לא יישלח';
+  if (schedule.status === 'disabled') return 'השליחה עוד לא מופעלת לאירוע הזה';
+  if (schedule.status === 'cancelled') return 'בעלי האירוע כיבו את התזמון הזה';
+  return null;
+}
+
+/**
  * Why this Schedule cannot be turned into the Event's first Confirmation, or
  * null when it can. Only an Initial Invitation that has not gone out converts.
  */

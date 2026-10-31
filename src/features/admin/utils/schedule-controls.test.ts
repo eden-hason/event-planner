@@ -4,6 +4,7 @@ import {
   conversionRejection,
   deletionRejection,
   dueTimeRejection,
+  sendNowRejection,
   type ScheduleControlState,
 } from './schedule-controls';
 
@@ -15,6 +16,27 @@ const invitation: ScheduleControlState = {
   sentAt: null,
   hasRound: false,
 };
+
+describe('sendNowRejection', () => {
+  it('allows a live message schedule, dated or not', () => {
+    assert.equal(sendNowRejection(invitation), null);
+  });
+
+  it('refuses one that went out, by status or by claim', () => {
+    assert.ok(sendNowRejection({ ...invitation, status: 'sent' }));
+    assert.ok(sendNowRejection({ ...invitation, dispatchedAt: '2026-10-01T07:00:00Z' }));
+  });
+
+  it('refuses an expired, turned-off or locked schedule', () => {
+    assert.ok(sendNowRejection({ ...invitation, status: 'expired' }));
+    assert.ok(sendNowRejection({ ...invitation, status: 'cancelled' }));
+    assert.ok(sendNowRejection({ ...invitation, status: 'disabled' }));
+  });
+
+  it('refuses a call plan', () => {
+    assert.ok(sendNowRejection({ ...invitation, scheduleTypeKey: 'phone_call', kind: 'call' }));
+  });
+});
 
 describe('dueTimeRejection', () => {
   it('allows an active, turned-off or locked schedule', () => {

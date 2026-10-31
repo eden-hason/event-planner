@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarClock, Ellipsis, MessageSquare, Trash2, TriangleAlert } from '@/components/icons';
+import { CalendarClock, Ellipsis, MessageSquare, Send, Trash2, TriangleAlert } from '@/components/icons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,12 +26,13 @@ import { DEFAULT_SEND_TIME } from '@/features/schedules';
 import {
   convertInvitationToConfirmationAdmin,
   deleteInitialInvitationAdmin,
+  sendScheduleNowAdmin,
   setScheduleDueTimeAdmin,
 } from '../actions/event-controls';
 import { useControlAction } from './use-control-action';
 import type { EventTimelineRow } from '../types';
 
-type Dialogs = 'dueTime' | 'convert' | 'delete' | null;
+type Dialogs = 'dueTime' | 'sendNow' | 'convert' | 'delete' | null;
 
 /**
  * The per-row overflow menu on the Back Office outreach timeline. Renders
@@ -46,7 +47,7 @@ export function ScheduleControls({
   sendingEnabled: boolean;
 }) {
   const [open, setOpen] = useState<Dialogs>(null);
-  if (!row.dueTimeEditable && !row.convertible && !row.deletable) return null;
+  if (!row.dueTimeEditable && !row.sendableNow && !row.convertible && !row.deletable) return null;
   return (
     <>
       <DropdownMenu>
@@ -62,6 +63,12 @@ export function ScheduleControls({
               {row.scheduledDate ? 'שינוי מועד השליחה' : 'קביעת מועד שליחה'}
             </DropdownMenuItem>
           )}
+          {row.sendableNow && (
+            <DropdownMenuItem onSelect={() => setOpen('sendNow')}>
+              <Send />
+              שליחה עכשיו
+            </DropdownMenuItem>
+          )}
           {row.convertible && (
             <DropdownMenuItem onSelect={() => setOpen('convert')}>
               <MessageSquare />
@@ -70,7 +77,7 @@ export function ScheduleControls({
           )}
           {row.deletable && (
             <>
-              {(row.dueTimeEditable || row.convertible) && <DropdownMenuSeparator />}
+              {(row.dueTimeEditable || row.sendableNow || row.convertible) && <DropdownMenuSeparator />}
               <DropdownMenuItem variant="destructive" onSelect={() => setOpen('delete')}>
                 <Trash2 />
                 מחיקת ההזמנה
@@ -81,6 +88,9 @@ export function ScheduleControls({
       </DropdownMenu>
       {row.dueTimeEditable && (
         <DueTimeDialog row={row} sendingEnabled={sendingEnabled} open={open === 'dueTime'} onOpenChange={(next) => setOpen(next ? 'dueTime' : null)} />
+      )}
+      {row.sendableNow && (
+        <SendNowDialog row={row} open={open === 'sendNow'} onOpenChange={(next) => setOpen(next ? 'sendNow' : null)} />
       )}
       {row.convertible && (
         <ConvertDialog row={row} open={open === 'convert'} onOpenChange={(next) => setOpen(next ? 'convert' : null)} />
@@ -155,6 +165,46 @@ function DueTimeDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>ביטול</Button>
           <Button type="button" onClick={() => iso && run(() => setScheduleDueTimeAdmin(row.id, iso))} disabled={pending || !iso}>
             {pending ? 'שומרים' : 'שמירה'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SendNowDialog({
+  row,
+  open,
+  onOpenChange,
+}: {
+  row: EventTimelineRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { pending, run } = useControlAction(() => onOpenChange(false));
+  const nobody = row.audienceCount === 0;
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
+      <DialogContent className="sm:max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>לשלוח את {row.title} עכשיו?</DialogTitle>
+          <DialogDescription>
+            {row.audienceCount === 1 ? 'ההודעה תצא עכשיו לאורח אחד' : `ההודעה תצא עכשיו ל-${row.audienceCount} אורחים`},
+            גם אם השעה מחוץ לחלון השליחה. מועד השליחה יעבור לעכשיו
+          </DialogDescription>
+        </DialogHeader>
+        {nobody && (
+          <Alert>
+            <TriangleAlert />
+            <AlertTitle>אין אורחים בקהל היעד</AlertTitle>
+            <AlertDescription>שליחה בלי אורחים תיכשל, והתזמון לא ייצא שוב. כדאי להוסיף אורחים קודם</AlertDescription>
+          </Alert>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>ביטול</Button>
+          <Button type="button" onClick={() => run(() => sendScheduleNowAdmin(row.id))} disabled={pending || nobody}>
+            {pending ? 'שולחים' : 'שליחה'}
           </Button>
         </DialogFooter>
       </DialogContent>

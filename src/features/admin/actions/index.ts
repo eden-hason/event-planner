@@ -4,6 +4,7 @@ export { setUserTestAccountFlag, type SetTestAccountResult } from './users';
 export {
   convertInvitationToConfirmationAdmin,
   deleteInitialInvitationAdmin,
+  sendScheduleNowAdmin,
   setEventSmsFallbackAdmin,
   setEventVenueNameAdmin,
   setScheduleDueTimeAdmin,

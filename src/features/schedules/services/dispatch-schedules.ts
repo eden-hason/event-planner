@@ -193,6 +193,7 @@ async function dispatchOne(
   supabase: SupabaseClient,
   rawSchedule: Record<string, unknown>,
   now: Date,
+  options: { ignoreSendWindow?: boolean } = {},
 ): Promise<DispatchResult> {
   const config = sendingConfig();
   // The id is read from the raw row, before anything that can throw, so a row
@@ -251,8 +252,10 @@ async function dispatchOne(
   // 2. Hold? Nothing else happens - deliberately not even expanding the
   //    audience, so a Schedule held overnight sends to the audience as it
   //    stands when it finally goes, not as it stood the evening before. An
-  //    RSVP that changes overnight is still respected.
-  if (!isWithinSendWindow(now, config.sendWindow)) {
+  //    RSVP that changes overnight is still respected. Skipped only for an
+  //    Operator's send-now, who chose the hour (dispatchScheduleById).
+  const outsideWindow = !isWithinSendWindow(now, config.sendWindow);
+  if (outsideWindow && !options.ignoreSendWindow) {
     // Say when it will go, not just that it is waiting. "Held" with no time is
     // the same unanswered question the dispatch log exists to end.
     const reason = heldReason(now);
@@ -287,7 +290,13 @@ async function dispatchOne(
     };
   }
 
-  return queueSchedule(supabase, { scheduleId, schedule, event, outsidePackage });
+  return queueSchedule(supabase, {
+    scheduleId,
+    schedule,
+    event,
+    outsidePackage,
+    outsideWindow,
+  });
 }
 
 /**
@@ -307,9 +316,18 @@ async function queueSchedule(
     event: EventRow;
     outsidePackage: ReadonlySet<string>;
     resumed?: boolean;
+    /** Queued outside the Send Window, which only an Operator's send-now does. */
+    outsideWindow?: boolean;
   },
 ): Promise<DispatchResult> {
-  const { scheduleId, schedule, event, outsidePackage, resumed = false } = params;
+  const {
+    scheduleId,
+    schedule,
+    event,
+    outsidePackage,
+    resumed = false,
+    outsideWindow = false,
+  } = params;
 
   const fail = async (reason: string): Promise<DispatchResult> => {
     await logDispatchAttempt(supabase, scheduleId, 'failed', reason);
@@ -333,6 +351,7 @@ async function queueSchedule(
     const reason =
       [
         resumed ? 'Resumed an interrupted dispatch' : null,
+        outsideWindow ? 'Sent by an Operator outside the send window' : null,
         render.outsidePackage > 0
           ? `${render.outsidePackage} outside the record package skipped`
           : null,
@@ -644,11 +663,16 @@ export async function dispatchDueSchedules(
  * Send Window still applies - an Owner pressing send at 3am is still a phone
  * buzzing at 3am - so the result may be `held`, and the caller is expected to
  * say so rather than claim the message went.
+ *
+ * `ignoreSendWindow` is the one exception, for an Operator's send-now from the
+ * Back Office: like a Catch-up Send, a person chose the hour, not Kululu. Every
+ * other rule - expiry, the Record Package, the claim - still holds. A dispatch
+ * sent this way that is interrupted resumes inside the window, as any other.
  */
 export async function dispatchScheduleById(
   supabase: SupabaseClient,
   scheduleId: string,
-  options: { now?: Date } = {},
+  options: { now?: Date; ignoreSendWindow?: boolean } = {},
 ): Promise<DispatchResult> {
   const now = options.now ?? new Date();
 
@@ -670,5 +694,7 @@ export async function dispatchScheduleById(
     };
   }
 
-  return dispatchOne(supabase, data as Record<string, unknown>, now);
+  return dispatchOne(supabase, data as Record<string, unknown>, now, {
+    ignoreSendWindow: options.ignoreSendWindow,
+  });
 }
