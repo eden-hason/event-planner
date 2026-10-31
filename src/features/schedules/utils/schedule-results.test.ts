@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, seenState } from './schedule-results.ts';
+import { availableFilters, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, rsvpAskOf, seenState } from './schedule-results.ts';
 
 type Row = Parameters<typeof guestStatus>[0];
 
@@ -325,3 +325,24 @@ test('records outside the package count as not reached', () => {
 
   assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
 });
+
+// ─── The RSVP ask (ADR 0051) ──────────────────────────────────────────────────
+
+test('a Confirmation asks everyone, an Advance Reminder only the pending, the rest no one', () => {
+  assert.equal(rsvpAskOf('confirmation', false), 'everyone');
+  assert.equal(rsvpAskOf('advance_reminder', true), 'pending');
+  assert.equal(rsvpAskOf('event_reminder', false), 'none');
+});
+
+test('a Guest the Schedule did not ask is never waiting on an answer', () => {
+  const rows = [
+    row({ guestName: 'asked' }),
+    row({ guestName: 'not asked', notAsked: true }),
+    row({ guestName: 'answered', response: 'rsvp_confirm' }),
+  ];
+  assert.deepEqual(
+    filterGuests(rows, { filter: 'noResponse', query: '' }).map((r: Row) => r.guestName),
+    ['asked'],
+  );
+});
+

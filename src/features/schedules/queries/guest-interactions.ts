@@ -9,6 +9,7 @@ import {
   type GuestDeliveryOutcome,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
+import type { RsvpAsk } from '../utils/schedule-results';
 import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
@@ -52,6 +53,13 @@ export type ScheduleInteractionData = {
      * out of the whole audience would score every SMS guest as unseen.
      */
     seenCapable: number;
+    /**
+     * `audience` and `reached` counting only the Guests the Schedule asked for an
+     * RSVP - every one of them on a Confirmation, only those who had not answered
+     * on an Advance Reminder. What every answer rate is read against.
+     */
+    askedAudience: number;
+    askedReached: number;
     /** Guest records that confirmed */
     confirmed: number;
     /** People those records cover - the number that actually seats and bills */
@@ -61,6 +69,9 @@ export type ScheduleInteractionData = {
   guests: GuestInteractionRow[];
 };
 
+/** The one field of an attempt's template the RSVP ask is read from. */
+type AskedAttempt = { message_templates: { requires_rsvp_ask: boolean } | null };
+
 /** An Event under an SMS Fallback Opt-out, read off an embedded `events` row. */
 function smsFallbackOptedOut(row: { events: unknown } | null): boolean {
   const event = row?.events as { sms_fallback_enabled?: boolean } | null | undefined;
@@ -69,6 +80,7 @@ function smsFallbackOptedOut(row: { events: unknown } | null): boolean {
 
 export async function getScheduleInteractionData(
   scheduleId: string,
+  rsvpAsk: RsvpAsk = 'everyone',
 ): Promise<ScheduleInteractionData> {
   const { supabase } = await getEffectiveClient();
 
@@ -83,7 +95,7 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
+        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
       )
       .eq('schedule_id', scheduleId),
     supabase
@@ -111,6 +123,8 @@ export async function getScheduleInteractionData(
       excludedOutsidePackage: 0,
       seen: 0,
       seenCapable: 0,
+      askedAudience: 0,
+      askedReached: 0,
       confirmed: 0,
       confirmedGuests: 0,
       declined: 0,
@@ -187,6 +201,16 @@ export async function getScheduleInteractionData(
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     entry.phone = guest.phone_number ?? undefined;
     entry.steps = toDeliverySteps(row.message_delivery_attempts as DeliveryAttemptRow[] | null);
+    // Asked when any message to this Guest carried the RSVP ask - the pending
+    // Guests' row of the family (resolve-reminder-templates, templateForGuest).
+    if (
+      rsvpAsk === 'pending' &&
+      !(row.message_delivery_attempts as unknown as AskedAttempt[] | null)?.some(
+        (attempt) => attempt.message_templates?.requires_rsvp_ask,
+      )
+    ) {
+      entry.notAsked = true;
+    }
     entry.viaFallback =
       entry.delivery === 'sms' &&
       entry.steps.some((step) => step.fallback && !step.failedAt);
@@ -221,6 +245,8 @@ export async function getScheduleInteractionData(
       !entry.response
     ) {
       entry.response = row.interaction_type as 'rsvp_confirm' | 'rsvp_decline';
+      // An answer counts wherever it came from, a shared link included.
+      delete entry.notAsked;
       entry.respondedAt = row.created_at;
       entry.guestCount = meta?.guestCount;
       entry.mealCounts = meta?.mealCounts;
@@ -246,6 +272,9 @@ export async function getScheduleInteractionData(
 
   const noPhone = count('no_phone');
   const outsidePackage = count('outside_package');
+  const asked = withDelivery.filter((g) => !g.notAsked);
+  const askedCount = (outcome: GuestDeliveryOutcome) =>
+    asked.filter((g) => g.delivery === outcome).length;
 
   const summary = {
     audience: withDelivery.length - noPhone - outsidePackage,
@@ -264,6 +293,8 @@ export async function getScheduleInteractionData(
     excludedOutsidePackage: outsidePackage,
     seen: guests.filter((g) => g.seen).length,
     seenCapable,
+    askedAudience: asked.length - askedCount('no_phone') - askedCount('outside_package'),
+    askedReached: askedCount('whatsapp') + askedCount('sms'),
     confirmed: confirmedGuestRecords.length,
     confirmedGuests: confirmedGuestRecords.reduce(
       (sum, g) => sum + g.amount,
