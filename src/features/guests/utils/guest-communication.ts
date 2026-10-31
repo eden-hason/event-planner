@@ -17,11 +17,11 @@ import {
   addedAfter,
   catchUpRejection,
   classifyCatchUp,
-  inAudience,
   pickCatchUpSchedule,
   wentOutAt,
   type CatchUpExclusion,
 } from '@/features/schedules/utils/catch-up';
+import { inAudience } from '@/features/schedules/utils/audience';
 import {
   comparePlanOrder,
   numberPlan,

@@ -241,12 +241,15 @@ function pick(
         t.requiresRsvpAsk === requiresRsvpAsk,
     ) ?? null;
 
+  // What the failures below name, so a seeding bug says which cell is missing.
+  const settings = `(${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`;
+
   const withoutTable = pickRow(false);
 
   if (!withoutTable) {
     return {
       success: false,
-      message: `No message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No message template configured for this event's settings ${settings}`,
     };
   }
 
@@ -255,7 +258,7 @@ function pick(
   if (offersRsvpAsk && !withRsvpAsk) {
     return {
       success: false,
-      message: `No RSVP-ask message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No RSVP-ask message template configured for this event's settings ${settings}`,
     };
   }
 
@@ -271,7 +274,7 @@ function pick(
   if (!withTable) {
     return {
       success: false,
-      message: `No table-number message template configured for this event's settings (${family}, gifting=${wantGifting}, note=${wantNote}, followUp=${wantFollowUp}, image=${wantImage})`,
+      message: `No table-number message template configured for this event's settings ${settings}`,
     };
   }
 

@@ -5,6 +5,7 @@ import type {
   CatchUpRejection,
 } from '@/features/schedules/utils/catch-up';
 import type { SignalKind } from '../types';
+import { audienceLabelKey } from '@/features/schedules';
 
 /**
  * The Back Office's Hebrew words (ADR 0037), in one place so each concept reads
@@ -84,11 +85,17 @@ export function countLabel(value: number, one: string, many: string): string {
  * size. The unit is Guest Records, always named.
  */
 export function audienceCountLabel(targetStatus: string | null | undefined, count: number): string {
-  if (targetStatus === 'pending') return countLabel(count, 'רשומה ממתינה אחת', 'רשומות ממתינות');
-  if (targetStatus === 'confirmed') return countLabel(count, 'רשומה מאושרת אחת', 'רשומות מאושרות');
-  if (targetStatus === 'not_declined') return countLabel(count, 'רשומה אחת שלא סירבה', 'רשומות שלא סירבו');
-  return countLabel(count, 'רשומת אורח אחת', 'רשומות אורחים');
+  const [one, many] = AUDIENCE_COUNT_UNITS[audienceLabelKey(targetStatus)];
+  return countLabel(count, one, many);
 }
+
+/** One and many, per audience - keyed so a new audience cannot go unworded. */
+const AUDIENCE_COUNT_UNITS: Record<ReturnType<typeof audienceLabelKey>, [string, string]> = {
+  pendingGuests: ['רשומה ממתינה אחת', 'רשומות ממתינות'],
+  confirmedGuests: ['רשומה מאושרת אחת', 'רשומות מאושרות'],
+  notDeclinedGuests: ['רשומה אחת שלא סירבה', 'רשומות שלא סירבו'],
+  allGuests: ['רשומת אורח אחת', 'רשומות אורחים'],
+};
 
 /** Signal kinds as group headings, plural. */
 export const SIGNAL_GROUP_LABELS: Record<SignalKind, string> = {

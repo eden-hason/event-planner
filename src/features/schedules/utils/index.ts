@@ -54,8 +54,8 @@ export {
 
 export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
 export { comparePlanOrder, DEFAULT_SEND_TIME, numberPlan, planEntryFromRow, type PlanEntry } from './timeline';
-export { dueTimeIssue, lastDueDay } from './due-time-guards';
-export { inAudience, TARGET_STATUSES, type TargetStatus } from './audience';
+export { dueTimeIssue, lastDueDay, type DueTimeIssue } from './due-time-guards';
+export { audienceLabelKey, inAudience } from './audience';
 export { isFollowUpConfirmation } from './confirmation-round';
 export {
   smsOutcomeFromReport,
@@ -190,17 +190,4 @@ export function isMessageSchedule(schedule: { executionKind: string }): boolean 
  */
 export function validatePhoneNumber(phone: string | undefined | null): boolean {
   return isValidPhone(phone);
-}
-
-/**
- * Returns a human-readable label for a schedule's target audience.
- *
- * @param targetStatus - Optional RSVP status filter
- * @returns Display label string
- */
-export function getAudienceLabel(targetStatus?: TargetStatus | null): string {
-  if (targetStatus === 'confirmed') return 'Confirmed Guests';
-  if (targetStatus === 'pending') return 'Pending Guests';
-  if (targetStatus === 'not_declined') return 'Guests Not Declined';
-  return 'All Guests';
 }

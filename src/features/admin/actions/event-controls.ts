@@ -4,7 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendingConfig } from '@/lib/config/sending';
 import { israelWallClockToIso } from '@/lib/date-time';
-import { dueTimeIssue } from '@/features/schedules';
+import { dueTimeIssue, type DueTimeIssue } from '@/features/schedules';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import type { Location } from '@/features/events/schemas';
 import { VENUE_NAME_MAX } from '../utils/venue';
@@ -16,6 +16,13 @@ import {
 } from '../utils/schedule-controls';
 
 export type EventControlResult = { success: boolean; message: string };
+
+/** Why a Due Time cannot be saved, as the Operator reads it. */
+const DUE_TIME_ISSUE_MESSAGES: Record<DueTimeIssue, string> = {
+  afterEvent: 'צריך לבחור תאריך עד יום האירוע',
+  notBeforeEvent: 'צריך לבחור תאריך עד יום לפני האירוע',
+  expires: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר',
+};
 
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -73,14 +80,9 @@ export async function setScheduleDueTimeAdmin(
       now: new Date(),
       rules: { sendWindow: config.sendWindow, maxLatenessHours: config.scheduleMaxLatenessHours },
     });
-    if (issue === 'afterEvent') {
-      return { success: false, message: 'צריך לבחור תאריך עד יום האירוע' };
-    }
-    if (issue === 'notBeforeEvent') {
-      return { success: false, message: 'צריך לבחור תאריך עד יום לפני האירוע' };
-    }
-    if (issue === 'expires' && schedule.state.kind === 'message') {
-      return { success: false, message: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר' };
+    // A call plan is started by a person, so a past date only reads as overdue.
+    if (issue && !(issue === 'expires' && schedule.state.kind === 'call')) {
+      return { success: false, message: DUE_TIME_ISSUE_MESSAGES[issue] };
     }
 
     const supabase = createServiceClient();
@@ -201,6 +203,8 @@ export type CreateAdvanceReminderInput = {
   scheduledTime: string;
 };
 
+const ADVANCE_REMINDER_TYPE_KEY = 'advance_reminder';
+
 /** The family every Advance Reminder is anchored on (20261031000000_advance_reminder.sql). */
 const ADVANCE_REMINDER_FAMILY_KEY = 'advance_reminder_1';
 
@@ -218,39 +222,17 @@ export async function createAdvanceReminderAdmin(
 ): Promise<EventControlResult> {
   await assertAdmin();
   try {
-    const supabase = createServiceClient();
-
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('status, event_date, can_create_schedules')
-      .eq('id', input.eventId)
-      .maybeSingle();
-    if (eventError) throw new Error(eventError.message);
-    if (!event) return { success: false, message: 'האירוע לא נמצא' };
-    // A Draft Event cannot have schedules - it is interest, not an event.
-    if (event.status !== 'published') return { success: false, message: 'האירוע הזה לא פורסם' };
-    if (!event.event_date) return { success: false, message: 'לאירוע הזה אין תאריך' };
-
     const scheduledDate = israelWallClockToIso(input.scheduledDate, input.scheduledTime);
     if (!scheduledDate) return { success: false, message: 'התאריך והשעה לא תקינים' };
 
-    const config = sendingConfig();
-    const issue = dueTimeIssue({
-      eventDate: event.event_date,
-      scheduleTypeKey: 'advance_reminder',
-      scheduledDate,
-      now: new Date(),
-      rules: { sendWindow: config.sendWindow, maxLatenessHours: config.scheduleMaxLatenessHours },
-    });
-    if (issue === 'notBeforeEvent' || issue === 'afterEvent') {
-      return { success: false, message: 'צריך לבחור תאריך עד יום לפני האירוע' };
-    }
-    if (issue === 'expires') {
-      return { success: false, message: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר' };
-    }
-
-    const [typeResult, anchorResult] = await Promise.all([
-      supabase.from('schedule_types').select('id').eq('key', 'advance_reminder').maybeSingle(),
+    const supabase = createServiceClient();
+    const [eventResult, typeResult, anchorResult, existingResult] = await Promise.all([
+      supabase
+        .from('events')
+        .select('status, event_date, can_create_schedules')
+        .eq('id', input.eventId)
+        .maybeSingle(),
+      supabase.from('schedule_types').select('id').eq('key', ADVANCE_REMINDER_TYPE_KEY).maybeSingle(),
       // The confirmed Guests' WhatsApp row. The resolver reads the whole family
       // from it, so which row anchors does not change what is sent.
       supabase
@@ -261,21 +243,38 @@ export async function createAdvanceReminderAdmin(
         .eq('requires_rsvp_ask', false)
         .is('event_id', null)
         .maybeSingle(),
+      supabase
+        .from('schedules')
+        .select('id, schedule_types!inner(key)', { count: 'exact', head: true })
+        .eq('event_id', input.eventId)
+        .eq('schedule_types.key', ADVANCE_REMINDER_TYPE_KEY),
     ]);
-    if (typeResult.error) throw new Error(typeResult.error.message);
-    if (anchorResult.error) throw new Error(anchorResult.error.message);
+    for (const result of [eventResult, typeResult, anchorResult, existingResult]) {
+      if (result.error) throw new Error(result.error.message);
+    }
+
+    const event = eventResult.data;
+    if (!event) return { success: false, message: 'האירוע לא נמצא' };
+    // A Draft Event cannot have schedules - it is interest, not an event.
+    if (event.status !== 'published') return { success: false, message: 'האירוע הזה לא פורסם' };
+    if (!event.event_date) return { success: false, message: 'לאירוע הזה אין תאריך' };
+    if ((existingResult.count ?? 0) > 0) {
+      return { success: false, message: 'כבר יש לאירוע הזה תזכורת מוקדמת' };
+    }
     if (!typeResult.data || !anchorResult.data) {
       console.error('createAdvanceReminderAdmin: the Advance Reminder is missing from the catalog');
       return { success: false, message: 'אין בקטלוג תזכורת מוקדמת' };
     }
 
-    const { count, error: existingError } = await supabase
-      .from('schedules')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', input.eventId)
-      .eq('schedule_type_id', typeResult.data.id);
-    if (existingError) throw new Error(existingError.message);
-    if ((count ?? 0) > 0) return { success: false, message: 'כבר יש לאירוע הזה תזכורת מוקדמת' };
+    const config = sendingConfig();
+    const issue = dueTimeIssue({
+      eventDate: event.event_date,
+      scheduleTypeKey: ADVANCE_REMINDER_TYPE_KEY,
+      scheduledDate,
+      now: new Date(),
+      rules: { sendWindow: config.sendWindow, maxLatenessHours: config.scheduleMaxLatenessHours },
+    });
+    if (issue) return { success: false, message: DUE_TIME_ISSUE_MESSAGES[issue] };
 
     const { error } = await supabase.from('schedules').insert({
       event_id: input.eventId,

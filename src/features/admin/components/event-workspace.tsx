@@ -336,10 +336,10 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     const messageSchedules = rows.filter((row) => row.kind === 'message');
     // One per Event: a second would be a second reminder before the day, which
     // nothing asked for. Offered before payment too, like dating the plan.
-    const canAddAdvanceReminder =
-      event.status === 'published' &&
-      event.eventDate !== null &&
-      !rows.some((row) => row.scheduleTypeKey === 'advance_reminder');
+    const advanceReminderEventDate =
+      event.status === 'published' && !rows.some((row) => row.scheduleTypeKey === 'advance_reminder')
+        ? event.eventDate
+        : null;
     return (
       <Band
         id="outreach-timeline"
@@ -356,8 +356,8 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
                 schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
               />
             )}
-            {canAddAdvanceReminder && event.eventDate && (
-              <AddAdvanceReminderDialog eventId={event.id} eventDate={event.eventDate} />
+            {advanceReminderEventDate && (
+              <AddAdvanceReminderDialog eventId={event.id} eventDate={advanceReminderEventDate} />
             )}
             {guestSummary && event.planIncludesCalls && (
               <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />

@@ -1,4 +1,4 @@
-import { ADMIN_TIME_ZONE } from '@/lib/date-time';
+import { addCalendarDays, ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import { nextOpenSlot, type SendWindow } from './send-window';
 import { offsetDays } from './timeline';
@@ -13,26 +13,27 @@ import { offsetDays } from './timeline';
 
 const HOUR_MS = 3_600_000;
 
-/** The one Schedule that is meant to go out after the Event. */
-const AFTER_EVENT_TYPE_KEY = 'post_event';
-
 /**
- * Schedules whose copy is written for one day relative to the Event, so the
- * day is not the organiser's to move - only the hour. The Event Reminder says
- * "today", and would be wrong on any other day.
+ * Where on the calendar a Schedule Type may be due, in days from the Event.
+ * `lastDay` is the latest day it may go out (null: no limit); `pinnedDay`, when
+ * set, is the one day it goes out, so only its hour is the organiser's to move.
+ * A type not listed may go out up to the Event day itself.
+ *
+ * - The Thank You is meant to land after the Event, for the same reason
+ *   `expiryReason` excepts it.
+ * - The Event Reminder says "today", and would be wrong on any other day.
+ * - The Advance Reminder names the Event's day instead, so it may go out on any
+ *   day before it, but not on it: there the Event Reminder is the message
+ *   (ADR 0051).
  */
-const EVENT_DAY_TYPE_KEYS = new Set(['event_reminder']);
+const DUE_DAY_RULES: Partial<Record<string, { lastDay: number | null; pinnedDay?: number }>> = {
+  post_event: { lastDay: null },
+  event_reminder: { lastDay: 0, pinnedDay: 0 },
+  advance_reminder: { lastDay: -1 },
+};
 
-/**
- * Schedules that must go out before the Event day, not on it. The Advance
- * Reminder names the Event's day instead of saying "today"; on the day itself
- * the Event Reminder is the message (ADR 0051).
- */
-const BEFORE_EVENT_DAY_TYPE_KEYS = new Set(['advance_reminder']);
-
-/** How many days from the Event the last allowed day is: 0 for the Event day. */
-function lastDueOffset(scheduleTypeKey: string): number {
-  return BEFORE_EVENT_DAY_TYPE_KEYS.has(scheduleTypeKey) ? -1 : 0;
+function dueDayRule(scheduleTypeKey: string) {
+  return DUE_DAY_RULES[scheduleTypeKey] ?? { lastDay: 0 };
 }
 
 export type DueTimeRules = {
@@ -50,22 +51,16 @@ const ISRAEL_DAY = new Intl.DateTimeFormat('en-CA', {
 
 /**
  * The last Israel calendar day a Schedule may be due on, "YYYY-MM-DD", or null
- * when there is no such limit.
- *
- * The Event day itself is allowed - the Event Reminder is seeded at day 0 -
- * except for the Advance Reminder, whose last day is the one before.
- * The Thank You is excepted for the same reason `expiryReason` excepts it.
+ * when there is no such limit (see DUE_DAY_RULES).
  */
 export function lastDueDay(
   eventDate: string | null,
   scheduleTypeKey: string,
 ): string | null {
-  if (!eventDate || scheduleTypeKey === AFTER_EVENT_TYPE_KEY) return null;
+  const { lastDay } = dueDayRule(scheduleTypeKey);
   // event_date is a calendar date pinned at 00:00 UTC, so its UTC day is the
-  // day the organiser picked, and shifting it in UTC never crosses a zone.
-  const day = new Date(`${eventDate.slice(0, 10)}T00:00:00Z`);
-  day.setUTCDate(day.getUTCDate() + lastDueOffset(scheduleTypeKey));
-  return day.toISOString().slice(0, 10);
+  // day the organiser picked.
+  return eventDate && lastDay !== null ? addCalendarDays(eventDate, lastDay) : null;
 }
 
 /**
@@ -76,8 +71,8 @@ export function pinnedDueDay(
   eventDate: string | null,
   scheduleTypeKey: string,
 ): string | null {
-  if (!eventDate || !EVENT_DAY_TYPE_KEYS.has(scheduleTypeKey)) return null;
-  return eventDate.slice(0, 10);
+  const { pinnedDay } = dueDayRule(scheduleTypeKey);
+  return eventDate && pinnedDay !== undefined ? addCalendarDays(eventDate, pinnedDay) : null;
 }
 
 /**
@@ -89,9 +84,10 @@ export function isDueAfterLastDay(params: {
   scheduleTypeKey: string;
   scheduledDate: string;
 }): boolean {
-  if (!lastDueDay(params.eventDate, params.scheduleTypeKey)) return false;
+  const { lastDay } = dueDayRule(params.scheduleTypeKey);
+  if (lastDay === null) return false;
   const offset = offsetDays(params.eventDate, params.scheduledDate);
-  return offset !== null && offset > lastDueOffset(params.scheduleTypeKey);
+  return offset !== null && offset > lastDay;
 }
 
 /**
@@ -156,7 +152,7 @@ export function dueTimeIssue(params: {
   rules: DueTimeRules;
 }): DueTimeIssue | null {
   if (isDueAfterLastDay(params)) {
-    return lastDueOffset(params.scheduleTypeKey) < 0 ? 'notBeforeEvent' : 'afterEvent';
+    return dueDayRule(params.scheduleTypeKey).lastDay === 0 ? 'afterEvent' : 'notBeforeEvent';
   }
   if (pastDueTime(params.scheduledDate, params.now, params.rules)?.kind === 'expires') {
     return 'expires';

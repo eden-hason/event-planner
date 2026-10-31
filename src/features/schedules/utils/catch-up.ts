@@ -104,11 +104,6 @@ function noteFor(notSentReason: string | null): CatchUpNote {
     : 'other';
 }
 
-// The same audience predicate the send engine uses (`filterGuestsByTarget`): a
-// guest outside a Schedule's target - a confirmed guest, for a round to the
-// pending - was never meant to get it.
-export { inAudience };
-
 /** The guest joined the list after the Schedule went out */
 export function addedAfter(createdAt: string, sentAt: string | null) {
   const sent = sentAt ? Date.parse(sentAt) : NaN;

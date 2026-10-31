@@ -17,9 +17,13 @@ export function inAudience(targetStatus: string | null | undefined, rsvpStatus: 
   return rsvpStatus === targetStatus;
 }
 
-/** The `schedules.audience` message naming an audience, for every page that shows one. */
+/**
+ * The `schedules.audience` message naming an audience, for every page that
+ * shows one. Takes the raw column, so a value this build does not know reads as
+ * everyone, the way `inAudience` treats no target.
+ */
 export function audienceLabelKey(
-  targetStatus: TargetStatus | null | undefined,
+  targetStatus: string | null | undefined,
 ): 'allGuests' | 'confirmedGuests' | 'pendingGuests' | 'notDeclinedGuests' {
   if (targetStatus === 'confirmed') return 'confirmedGuests';
   if (targetStatus === 'pending') return 'pendingGuests';

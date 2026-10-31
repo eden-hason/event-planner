@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import {
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DEFAULT_SEND_TIME, lastDueDay } from '@/features/schedules';
 import { createAdvanceReminderAdmin } from '../actions/event-controls';
+import { useControlAction } from './use-control-action';
 
 /**
  * Adds an Advance Reminder to one Event (ADR 0051). Proposes the day before the
@@ -33,7 +34,7 @@ export function AddAdvanceReminderDialog({
 }) {
   const lastDay = lastDueDay(eventDate, 'advance_reminder') ?? '';
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useControlAction(() => setOpen(false));
   const [date, setDate] = useState(lastDay);
   const [time, setTime] = useState(DEFAULT_SEND_TIME);
 
@@ -43,20 +44,7 @@ export function AddAdvanceReminderDialog({
       return;
     }
 
-    startTransition(async () => {
-      const result = await createAdvanceReminderAdmin({
-        eventId,
-        scheduledDate: date,
-        scheduledTime: time,
-      });
-
-      if (result.success) {
-        toast.success(result.message);
-        setOpen(false);
-      } else {
-        toast.error(result.message);
-      }
-    });
+    run(() => createAdvanceReminderAdmin({ eventId, scheduledDate: date, scheduledTime: time }));
   }
 
   return (

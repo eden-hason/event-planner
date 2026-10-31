@@ -2,7 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SCHEDULE_SELECT, ScheduleDbToAppSchema } from '../schemas';
 import type { MessageTemplateApp } from '../schemas/message-templates';
 import { DbToAppTransformerSchema, type GuestApp } from '@/features/guests/schemas';
-import { resolveTemplatesForSchedule, templateForGuest } from './resolve-reminder-templates';
+import {
+  resolveTemplatesForSchedule,
+  templateForGuest,
+  type ResolvedTemplates,
+} from './resolve-reminder-templates';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import {
@@ -114,12 +118,7 @@ type LoadedSchedule = {
 export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
 type Resolution =
-  | {
-      ok: true;
-      withTable: MessageTemplateApp | null;
-      withoutTable: MessageTemplateApp;
-      withRsvpAsk: MessageTemplateApp | null;
-    }
+  | ({ ok: true } & Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>)
   | { ok: false; reason: string };
 
 async function loadSchedule(
@@ -182,12 +181,7 @@ async function resolveSmsTemplates(
     invitationImage: hasInvitationImage(event.invitations),
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
-  return {
-    ok: true,
-    withTable: resolution.templates.withTable,
-    withoutTable: resolution.templates.withoutTable,
-    withRsvpAsk: resolution.templates.withRsvpAsk,
-  };
+  return { ok: true, ...resolution.templates };
 }
 
 async function loadFallbackDeliveries(

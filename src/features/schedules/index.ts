@@ -22,8 +22,7 @@ export {
 export {
   filterGuestsByTarget,
   inAudience,
-  TARGET_STATUSES,
-  type TargetStatus,
+  audienceLabelKey,
   isMessageSchedule,
   validatePhoneNumber,
   classifyWhatsAppFailure,
@@ -42,6 +41,7 @@ export {
   planEntryFromRow,
   type PlanEntry,
   dueTimeIssue,
+  type DueTimeIssue,
   lastDueDay,
   isFollowUpConfirmation,
   DEFAULT_SEND_TIME,
