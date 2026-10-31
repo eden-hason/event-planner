@@ -6,12 +6,15 @@ import { sendingConfig } from '@/lib/config/sending';
 import { israelWallClockToIso } from '@/lib/date-time';
 import { dueTimeIssue, type DueTimeIssue } from '@/features/schedules';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
+import { dispatchScheduleById } from '@/features/schedules/services/dispatch-schedules';
+import { nudgeWorker } from '@/features/schedules/services/nudge-worker';
 import type { Location } from '@/features/events/schemas';
 import { VENUE_NAME_MAX } from '../utils/venue';
 import {
   conversionRejection,
   deletionRejection,
   dueTimeRejection,
+  sendNowRejection,
   type ScheduleControlState,
 } from '../utils/schedule-controls';
 
@@ -100,6 +103,55 @@ export async function setScheduleDueTimeAdmin(
   } catch (error) {
     console.error('setScheduleDueTimeAdmin failed:', error);
     return { success: false, message: 'לא הצלחנו לעדכן את מועד השליחה' };
+  }
+}
+
+/**
+ * Sends a Schedule now from the Back Office, outside the Send Window if need be.
+ *
+ * The Owner's send-now waits for the window; this one does not, because an
+ * Operator chose the hour (`dispatchScheduleById`). It moves the Due Time to
+ * now first, as the Owner's does, so the Schedule reads as sent when it was and
+ * a dispatch that fails is picked up by the ordinary sweep rather than stranded.
+ */
+export async function sendScheduleNowAdmin(scheduleId: string): Promise<EventControlResult> {
+  await assertAdmin();
+  try {
+    const schedule = await readScheduleControlState(scheduleId);
+    if (!schedule) return { success: false, message: 'התזמון לא נמצא' };
+
+    const rejection = sendNowRejection(schedule.state);
+    if (rejection) return { success: false, message: rejection };
+
+    const supabase = createServiceClient();
+    const now = new Date();
+    const { error } = await supabase
+      .from('schedules')
+      .update({ scheduled_date: now.toISOString() })
+      .eq('id', scheduleId)
+      .is('status', null)
+      .is('dispatched_at', null);
+    if (error) {
+      console.error('sendScheduleNowAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו להעביר את התזמון לעכשיו' };
+    }
+
+    const result = await dispatchScheduleById(supabase, scheduleId, { now, ignoreSendWindow: true });
+    revalidateOutreach(schedule.eventId);
+
+    if (result.outcome !== 'dispatched') {
+      // The reason is the Dispatcher's own, in English, as the dispatch log has it.
+      return { success: false, message: `לא נשלח: ${result.reason ?? result.outcome}` };
+    }
+    await nudgeWorker();
+    const count = result.deliveriesQueued;
+    return {
+      success: true,
+      message: count === 1 ? 'יוצא לאורח אחד' : `יוצא ל-${count} אורחים`,
+    };
+  } catch (error) {
+    console.error('sendScheduleNowAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו לשלוח את התזמון' };
   }
 }
 

@@ -5,6 +5,7 @@ export {
   convertInvitationToConfirmationAdmin,
   createAdvanceReminderAdmin,
   deleteUnsentScheduleAdmin,
+  sendScheduleNowAdmin,
   type CreateAdvanceReminderInput,
   setEventSmsFallbackAdmin,
   setEventVenueNameAdmin,

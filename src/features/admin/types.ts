@@ -283,6 +283,8 @@ export type EventTimelineRow = {
   deliveries: EventTimelineDelivery[];
   /** Whether an Operator may still change the Due Time (see dueTimeRejection). */
   dueTimeEditable: boolean;
+  /** Whether an Operator may send it now, outside the Send Window too (see sendNowRejection). */
+  sendableNow: boolean;
   /** Whether this is an Initial Invitation that can still become a Confirmation. */
   convertible: boolean;
   /** Whether this Schedule can still be deleted (see deletionRejection). */
