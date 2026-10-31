@@ -5,6 +5,7 @@ import { type EventApp } from '@/features/events/schemas';
 
 import { type ScheduleApp } from '../schemas';
 import type { OutreachItemStatus, PreviewMessages } from '../types';
+import { rsvpAskOf } from '../utils/schedule-results';
 import { ScheduleInteractionsCard } from './schedule-interactions-card';
 import { ScheduleResultsGhost } from './schedule-results';
 import { ScheduleTabContent } from './schedule-tab-content';
@@ -16,6 +17,8 @@ interface ScheduleDetailPaneProps {
   offersNote: boolean;
   foldsNote: boolean;
   offersPersonalMessage: boolean;
+  /** Whether the family asks the Guests who have not answered for an RSVP (ADR 0051). */
+  asksPendingGuests: boolean;
   eventDate: string | null;
   event: EventApp | null;
   status: OutreachItemStatus;
@@ -35,6 +38,7 @@ export async function ScheduleDetailPane({
   offersNote,
   foldsNote,
   offersPersonalMessage,
+  asksPendingGuests,
   eventDate,
   event,
   status,
@@ -58,7 +62,10 @@ export async function ScheduleDetailPane({
     />
   );
 
-  const collectsRsvp = schedule.scheduleTypeKey === 'confirmation';
+  // A Confirmation asks everyone; an Advance Reminder asks only the Guests who
+  // had not answered, so its results show answers too, counted against them.
+  const rsvpAsk = rsvpAskOf(schedule.scheduleTypeKey, asksPendingGuests);
+  const collectsRsvp = rsvpAsk !== 'none';
 
   return (
     <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
@@ -78,7 +85,7 @@ export async function ScheduleDetailPane({
         {status === 'sent' ? (
           <ScheduleInteractionsCard
             scheduleId={schedule.id}
-            collectsRsvp={collectsRsvp}
+            rsvpAsk={rsvpAsk}
             channel={schedule.deliveryMethod}
             sentAt={schedule.sentAt}
             smsFallback={event?.smsFallbackEnabled ?? true}

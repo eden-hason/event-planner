@@ -62,6 +62,8 @@ type ScheduleWithTemplate = {
   foldsNote: boolean;
   /** Whether this Schedule Type has a Personal Message family to send. */
   offersPersonalMessage: boolean;
+  /** Whether its family asks the Guests who have not answered for an RSVP (ADR 0051). */
+  asksPendingGuests: boolean;
 };
 
 const KNOWN_SCHEDULE_TYPE_KEYS: readonly string[] = SCHEDULE_TYPE_KEYS;
@@ -118,6 +120,7 @@ export async function SchedulesPage({
           offersNote: false,
           foldsNote: false,
           offersPersonalMessage: false,
+          asksPendingGuests: false,
         };
       }
 
@@ -176,6 +179,7 @@ export async function SchedulesPage({
         offersNote: resolution.success ? resolution.templates.offersNote : false,
         foldsNote: foldsNote(messages.withNote.payload.parameters),
         offersPersonalMessage: personalMessage !== null,
+        asksPendingGuests: resolution.success && resolution.templates.withRsvpAsk !== null,
       };
     }),
   );
@@ -232,7 +236,15 @@ export async function SchedulesPage({
 
   // Built in plan order, which the hero reads; the timeline reorders below.
   const planItems: OutreachItem[] = resolved.map(
-    ({ schedule, messages, seatingGap, offersNote, foldsNote, offersPersonalMessage }) => {
+    ({
+      schedule,
+      messages,
+      seatingGap,
+      offersNote,
+      foldsNote,
+      offersPersonalMessage,
+      asksPendingGuests,
+    }) => {
       // Known types use the translated i18n label; anything else (a schedule
       // type added to the catalog outside this build's known set) falls back
       // to its own DB name so it still renders with a sensible label.
@@ -307,6 +319,7 @@ export async function SchedulesPage({
             offersNote={offersNote}
             foldsNote={foldsNote}
             offersPersonalMessage={offersPersonalMessage}
+            asksPendingGuests={asksPendingGuests}
             eventDate={eventDate}
             event={event}
             status={status}

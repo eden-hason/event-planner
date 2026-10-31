@@ -74,6 +74,12 @@ export type GuestInteractionRow = {
   sentAt?: string;
   response?: 'rsvp_confirm' | 'rsvp_decline';
   respondedAt?: string;
+  /**
+   * Set on a Schedule that asks only the Guests who had not answered (an Advance
+   * Reminder, ADR 0051) for a Guest it did not ask. Such a Guest has no answer to
+   * be waiting for, so they are left out of every RSVP count.
+   */
+  notAsked?: true;
   /** What the guest entered on the RSVP form at the time they responded */
   guestCount?: number;
   /** Headcount on the guest record now - one record can cover a whole family */
