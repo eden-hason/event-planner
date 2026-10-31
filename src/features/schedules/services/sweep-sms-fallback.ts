@@ -244,6 +244,10 @@ export function failedCandidateScheduleIds(
  * Schedules that might be ready: those with a Stuck WhatsApp (accepted inside
  * the Stuck window, still Sent) and those with a failed Delivery the engine
  * would still send to (see `failedCandidateScheduleIds`). Both newest first.
+ *
+ * An Event under an SMS Fallback Opt-out is left out of both here, in the
+ * query: the engine would refuse it anyway, and a Schedule it refuses must not
+ * hold one of the per-sweep slots.
  */
 async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promise<string[]> {
   const window = stuckWindow(now);
@@ -252,7 +256,10 @@ async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promis
   const [stuck, failed] = await Promise.all([
     supabase
       .from('message_delivery_attempts')
-      .select('message_deliveries!inner(schedule_id, message_delivery_attempts(channel))')
+      .select(
+        'message_deliveries!inner(schedule_id, message_delivery_attempts(channel), schedules!inner(events!inner(sms_fallback_enabled)))',
+      )
+      .eq('message_deliveries.schedules.events.sms_fallback_enabled', true)
       .eq('channel', 'whatsapp')
       .eq('status', 'sent')
       .eq('message_deliveries.status', 'sent')
@@ -263,8 +270,9 @@ async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promis
     supabase
       .from('message_deliveries')
       .select(
-        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
+        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at), schedules!inner(events!inner(sms_fallback_enabled))',
       )
+      .eq('schedules.events.sms_fallback_enabled', true)
       .eq('status', 'failed')
       .gte('updated_at', from.toISOString())
       .order('updated_at', { ascending: false })

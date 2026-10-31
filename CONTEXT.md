@@ -425,7 +425,8 @@ Fallback never retries.
 An SMS Fallback runs by itself once a Schedule has finished failing - every attempt
 resolved and every retry exhausted - unless a **Fallback Freeze** holds it. An Operator may
 also launch one by hand from the Back Office, for a Schedule's failed Deliveries in one
-batch, and doing so overrides a Freeze.
+batch, and doing so overrides a Freeze. Nothing runs, by itself or by hand, for an Event
+under an **SMS Fallback Opt-out**.
 
 Not to be confused with a Schedule whose own channel is SMS: that is a first attempt, not a
 fallback.
@@ -443,6 +444,25 @@ WhatsApp may be the cheaper remedy.
 
 A Freeze withholds only the automatic batch. An Operator who has read the failures and
 decided to send anyway is the intended way past it.
+
+## SMS Fallback Opt-out
+
+An Event whose Owner asked that its Guests never be sent an **SMS Fallback** - typically
+because the Guests are abroad, even where some keep an Israeli number. An Operator sets it
+in the Back Office at the Owner's request, and may unset it.
+
+Unlike a **Fallback Freeze**, it is the Owner's choice, not a cost control, so nothing
+overrides it: neither the automatic batch nor an Operator's launch or retry sends while it
+holds. A WhatsApp that does not reach a Guest is left to an Operator to handle by hand. The
+Owner sees WhatsApp as the only channel; SMS is simply never mentioned.
+
+It covers the Fallback only. A Schedule whose own channel is SMS is a deliberate first
+attempt, not a fallback, and is outside it.
+
+Once it is unset, the ordinary Fallback rules apply again, including to failures from while
+it held.
+
+_Avoid_: WhatsApp-only Event (it does not forbid every SMS), no-SMS mode
 
 ## Guest-level Failure
 

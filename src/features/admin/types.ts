@@ -205,6 +205,8 @@ export type EventIdentity = {
   planIncludesCalls: boolean;
   /** The commercial state - see `@/features/billing`. `canCreateSchedules` derives from it. */
   billingStatus: EventBillingStatus;
+  /** False under an SMS Fallback Opt-out (CONTEXT.md): the Owner asked for WhatsApp only. */
+  smsFallbackEnabled: boolean;
   onboardingStep: string | null;
   createdAt: string;
   /** The account the event belongs to - the identity an Operator impersonates. */

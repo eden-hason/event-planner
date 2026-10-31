@@ -18,6 +18,8 @@ interface ScheduleInteractionsCardProps {
   channel: 'whatsapp' | 'sms' | null;
   /** When the schedule went out, for the live header */
   sentAt?: string;
+  /** False under an SMS Fallback Opt-out: the Owner's screens show WhatsApp only. */
+  smsFallback: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export async function ScheduleInteractionsCard({
   collectsRsvp,
   channel,
   sentAt,
+  smsFallback,
 }: ScheduleInteractionsCardProps) {
   const data = await getScheduleInteractionData(scheduleId);
 
@@ -41,6 +44,7 @@ export async function ScheduleInteractionsCard({
       collectsRsvp={collectsRsvp}
       channel={channel}
       sentAt={sentAt}
+      smsFallback={smsFallback}
       renderedAt={new Date().toISOString()}
     />
   );

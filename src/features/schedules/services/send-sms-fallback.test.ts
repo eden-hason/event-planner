@@ -277,6 +277,14 @@ test('an SMS already being sent is on its way, even under a Freeze', () => {
   assert.deepEqual([...awaiting], ['delivery-1']);
 });
 
+test('an Event under an SMS Fallback Opt-out has no SMS on its way', () => {
+  const awaiting = awaitingSmsFallback(
+    [row({ status: 'failed', attempts: [{ channel: 'whatsapp', status: 'failed', error_code: 131026 }] })],
+    { frozen: false, optedOut: true, window: WINDOW },
+  );
+  assert.equal(awaiting.size, 0);
+});
+
 test('a system-level failure has no SMS on its way', () => {
   const awaiting = awaitingSmsFallback(
     [row({ status: 'failed', attempts: [{ channel: 'whatsapp', status: 'failed', error_code: 132000 }] })],

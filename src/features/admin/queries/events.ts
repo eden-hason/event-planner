@@ -166,7 +166,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
 
   const { data: event, error } = await supabase
     .from('events')
-    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, plan_includes_calls, billing_status, onboarding_step, created_at, host_details')
+    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, plan_includes_calls, billing_status, sms_fallback_enabled, onboarding_step, created_at, host_details')
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -208,6 +208,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     canCreateSchedules: event.can_create_schedules ?? false,
     planIncludesCalls: event.plan_includes_calls ?? false,
     billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
+    smsFallbackEnabled: event.sms_fallback_enabled !== false,
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,
@@ -486,8 +487,11 @@ export async function getEventSignals(eventId: string): Promise<EventWorkspaceSi
     );
     if (failures.length) {
       failedCount += failures.length;
+      // Under an SMS Fallback Opt-out no failure is an SMS case, but every one
+      // still raises the Signal: an Operator handles them by hand.
       fallbackCount += failures.filter(
-        (delivery) => delivery.channel === 'whatsapp'
+        (delivery) => event?.smsFallbackEnabled !== false
+          && delivery.channel === 'whatsapp'
           && classifyWhatsAppFailure(delivery.errorCode) === 'guest'
           && canReceiveSms(delivery.guestPhone),
       ).length;

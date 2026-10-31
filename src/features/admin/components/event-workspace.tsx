@@ -28,6 +28,7 @@ import {
   WorkspaceSignals,
 } from './event-workspace-client';
 import { RetryButton } from './retry-button';
+import { SmsFallbackToggle } from './sms-fallback-toggle';
 import { VenueNameDialog } from './venue-name-dialog';
 import {
   getEventGuestSummary,
@@ -340,18 +341,19 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
         // Bulk sending is gone (ADR 0013): a Schedule sends when its Due Time
         // comes. The manual paths left - the per-delivery resend on the
         // timeline and the late-guest send here - are capped at ten records.
-        action={guestSummary ? (
-          <div className="flex shrink-0 gap-2">
-            {messageSchedules.some((row) => row.status === 'sent') && (
+        action={(
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <SmsFallbackToggle eventId={event.id} smsFallbackEnabled={event.smsFallbackEnabled} />
+            {guestSummary && messageSchedules.some((row) => row.status === 'sent') && (
               <LateGuestsDialog
                 schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
               />
             )}
-            {event.planIncludesCalls && (
+            {guestSummary && event.planIncludesCalls && (
               <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />
             )}
           </div>
-        ) : null}
+        )}
       >
         {!sendingEnabled && (
           <BandRow>

@@ -61,12 +61,18 @@ export type ScheduleInteractionData = {
   guests: GuestInteractionRow[];
 };
 
+/** An Event under an SMS Fallback Opt-out, read off an embedded `events` row. */
+function smsFallbackOptedOut(row: { events: unknown } | null): boolean {
+  const event = row?.events as { sms_fallback_enabled?: boolean } | null | undefined;
+  return event?.sms_fallback_enabled === false;
+}
+
 export async function getScheduleInteractionData(
   scheduleId: string,
 ): Promise<ScheduleInteractionData> {
   const { supabase } = await getEffectiveClient();
 
-  const [interactionsResult, deliveriesResult] = await Promise.all([
+  const [interactionsResult, deliveriesResult, eventResult] = await Promise.all([
     supabase
       .from('guest_interactions')
       .select(
@@ -80,6 +86,11 @@ export async function getScheduleInteractionData(
         'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)',
       )
       .eq('schedule_id', scheduleId),
+    supabase
+      .from('schedules')
+      .select('events!inner(sms_fallback_enabled)')
+      .eq('id', scheduleId)
+      .maybeSingle(),
   ]);
 
   const empty: ScheduleInteractionData = {
@@ -154,6 +165,7 @@ export async function getScheduleInteractionData(
           (row) => (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
         ),
       ).frozen,
+      optedOut: smsFallbackOptedOut(eventResult.data),
       window: stuckWindow(),
     },
   );

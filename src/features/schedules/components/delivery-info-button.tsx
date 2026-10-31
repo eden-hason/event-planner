@@ -67,9 +67,14 @@ const STATUSES = [
  * what happens when WhatsApp cannot deliver, and where they will see the
  * outcome. Once every WhatsApp Schedule has been sent the results tabs answer
  * it with real numbers, so the pill leaves.
+ *
+ * Under an SMS Fallback Opt-out (CONTEXT.md) the SMS step and its reading are
+ * simply not there, and WhatsApp loses the tag that implied a second channel.
  */
-export function DeliveryInfoButton() {
+export function DeliveryInfoButton({ smsFallback = true }: { smsFallback?: boolean }) {
   const t = useTranslations('schedules.deliveryInfo');
+  const steps = smsFallback ? STEPS : STEPS.filter((step) => step.key !== 'sms');
+  const statuses = smsFallback ? STATUSES : STATUSES.filter((status) => status.key !== 'sms');
   const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -86,15 +91,15 @@ export function DeliveryInfoButton() {
       <div className="flex flex-col gap-1">
         <Title className="text-[19px] font-extrabold">{t('title')}</Title>
         <Description className="text-muted-foreground text-[13.5px]">
-          {t('subtitle')}
+          {t(smsFallback ? 'subtitle' : 'subtitleTwoSteps')}
         </Description>
       </div>
 
       <ol className="flex flex-col">
-        {STEPS.map(({ key, icon: StepIcon, tone }, index) => (
+        {steps.map(({ key, icon: StepIcon, tone }, index) => (
           <li key={key} className="relative flex gap-3 not-last:pb-5">
             {/* The dashed join from this step's tile down to the next one's */}
-            {index < STEPS.length - 1 && (
+            {index < steps.length - 1 && (
               <span
                 aria-hidden
                 className="border-border absolute start-5 top-12 bottom-1 border-s-[1.5px] border-dashed"
@@ -114,7 +119,7 @@ export function DeliveryInfoButton() {
                 <span className="text-[15px] font-bold">
                   {t(`steps.${key}.title`)}
                 </span>
-                {key !== 'results' && (
+                {key !== 'results' && smsFallback && (
                   <span
                     className={cn(
                       'rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -130,7 +135,7 @@ export function DeliveryInfoButton() {
               </p>
               {key === 'results' && (
                 <div className="flex flex-wrap gap-1.5 pt-1.5">
-                  {STATUSES.map((status) => (
+                  {statuses.map((status) => (
                     <span
                       key={status.key}
                       className={cn(

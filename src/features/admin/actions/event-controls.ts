@@ -229,3 +229,37 @@ export async function setEventVenueNameAdmin(
     return { success: false, message: 'לא הצלחנו לעדכן את מקום האירוע' };
   }
 }
+
+/**
+ * Sets or clears an SMS Fallback Opt-out (CONTEXT.md), at the Owner's request.
+ * Read live by the Fallback engine and the sweeper, so clearing it lets the
+ * ordinary rules pick up failures from while it held.
+ */
+export async function setEventSmsFallbackAdmin(
+  eventId: string,
+  enabled: boolean,
+): Promise<EventControlResult> {
+  await assertAdmin();
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('events')
+      .update({ sms_fallback_enabled: enabled })
+      .eq('id', eventId)
+      .select('id');
+    if (error) {
+      console.error('setEventSmsFallbackAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו לעדכן את השליחה ב-SMS' };
+    }
+    if (!data?.length) return { success: false, message: 'האירוע הזה כבר לא קיים' };
+
+    revalidateOutreach(eventId);
+    return {
+      success: true,
+      message: enabled ? 'SMS יישלח שוב לאורחים שהוואטסאפ לא הגיע אליהם' : 'האירוע בוואטסאפ בלבד - בלי SMS',
+    };
+  } catch (error) {
+    console.error('setEventSmsFallbackAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו לעדכן את השליחה ב-SMS' };
+  }
+}
