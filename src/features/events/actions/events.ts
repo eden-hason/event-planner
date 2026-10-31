@@ -13,7 +13,9 @@ import {
 import { eventDetailsUpdateToDb } from '../utils/event.transform';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { deleteInvitationImage } from '@/lib/storage.server';
+import { removeEventStorage } from '../services/event-storage';
 
 export type DeleteEventState = {
   success: boolean;
@@ -303,7 +305,11 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
 
     const supabase = await createClient();
 
-    const { error } = await supabase.from('events').delete().eq('id', eventId);
+    const { data: deleted, error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .select('id');
 
     if (error) {
       console.error(error);
@@ -311,6 +317,11 @@ export async function deleteEvent(eventId: string): Promise<DeleteEventState> {
         success: false,
         message: 'Database error: Could not delete event.',
       };
+    }
+
+    // Only once RLS let this user delete the row - see removeEventStorage.
+    if (deleted?.length) {
+      await removeEventStorage(createServiceClient(), eventId);
     }
 
     revalidatePath('/app/home');
