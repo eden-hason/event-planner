@@ -173,8 +173,10 @@ export function DeliveryInfoButton({ smsFallback = true }: { smsFallback?: boole
           // section header, so it is no taller than that line.
           'text-primary inline-flex h-5 shrink-0 cursor-pointer items-center gap-1 rounded-sm text-xs font-semibold underline-offset-4 hover:underline',
           'focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]',
-          // A 44px target on a phone without a taller link.
-          'relative after:absolute after:-inset-x-1 after:-inset-y-3',
+          // A 44px target on a phone without a taller link. Taller only: the link
+          // sits flush with the timeline column's edge, and that column scrolls,
+          // so a hit area wider than the link would give it a horizontal scrollbar.
+          'relative after:absolute after:inset-x-0 after:-inset-y-3',
         )}
       >
         <IconInfoCircle className="size-3.5" stroke={2} />
