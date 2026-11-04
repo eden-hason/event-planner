@@ -1,5 +1,6 @@
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { embeddedOne } from '@/lib/supabase/row-cap';
+import { createServiceClient } from '@/lib/supabase/service';
 import { loadOutsidePackageIds } from '@/features/billing/services';
 import { loadGuestJourneys } from '@/features/schedules/services/guest-journeys';
 import {
@@ -31,7 +32,8 @@ type CallRow = {
 /**
  * Everything the guest drawer's Communication tab needs for one Guest Record:
  * the Event's whole outreach plan, and what each part of it did for this
- * guest. Reads through RLS as the Owner, like the list itself.
+ * guest. Reads through RLS as the Owner, like the list itself - all but the
+ * Record Package, which needs the creator-only payments.
  */
 export async function getGuestCommunicationInput(
   guestId: string,
@@ -75,7 +77,12 @@ export async function getGuestCommunicationInput(
       .from('call_logs')
       .select('outcome, call_rounds!inner(schedule_id)')
       .eq('guest_id', guestId),
-    loadOutsidePackageIds(supabase, guest.event_id),
+    // Through the service client, like the Guests page's package line: the
+    // payments behind the package are creator-only under RLS (they carry
+    // amounts), so a co-owner's own client would see no package and every
+    // unreached record as outside it. Reading the guest above through RLS is
+    // the access check; only record ids leave the package.
+    loadOutsidePackageIds(createServiceClient(), guest.event_id),
   ]);
 
   const failed = schedules.error ?? calls.error;
