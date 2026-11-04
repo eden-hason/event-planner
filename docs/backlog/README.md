@@ -64,3 +64,4 @@ in the diff, not here.
 | [0030](0030-back-office-row-click-opens-the-wrong-event.md) | On one phone, every row of the Back Office events list opens the same Event | back office | open |
 | [0031](0031-a-test-message-that-never-arrives-still-counts.md) | A Test Message that never arrives still counts against the caps and leaves Home | schedules / home | open |
 | [0033](0033-the-owner-cannot-stop-kululu-messaging-one-guest.md) | The Owner cannot stop Kululu messaging one guest | guests / outreach | open |
+| [0034](0034-a-co-owner-sees-less-than-the-creator.md) | A co-owner sees less than the Event's creator, and the gap breaks package reads | collaborate / billing | open |
