@@ -1737,7 +1737,6 @@
       "scheduledDateHelper": "מחושב אוטומטית מתאריך האירוע",
       "scheduledTime": "שעה",
       "scheduledTimeHelper": "השעה שבה ההודעה תצא ביום המתוזמן",
-      "sendWindowHelper": "ההודעות יוצאות בין {start} ל-{end}",
       "relative": {
         "dayOf": "ביום האירוע",
         "before": "{count, plural, one {יום אחד לפני האירוע} other {# ימים לפני האירוע}}",

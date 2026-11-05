@@ -1737,7 +1737,6 @@
       "scheduledDateHelper": "Calculated automatically from the event date",
       "scheduledTime": "Time",
       "scheduledTimeHelper": "The time this message goes out on the scheduled day",
-      "sendWindowHelper": "Messages go out between {start} and {end}",
       "relative": {
         "dayOf": "On the day of the event",
         "before": "{count, plural, one {1 day before the event} other {# days before the event}}",

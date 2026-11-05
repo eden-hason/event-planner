@@ -147,6 +147,13 @@ export function ScheduleDetailsCard({
   if (!eventDate) return null;
 
   const relativeNote = relative ? t(`relative.${relative.key}`, { count: relative.count }) : null;
+  const helperNote = [
+    pinnedDay ? t('eventDayHelper') : null,
+    !scheduledDate && !pinnedDay ? t('undatedHelper') : null,
+    relativeNote,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const invalid = dueTimeIssue !== null;
 
   return (
@@ -229,16 +236,7 @@ export function ScheduleDetailsCard({
         </p>
       )}
 
-      <p className="text-muted-foreground text-xs">
-        {pinnedDay && `${t('eventDayHelper')} · `}
-        {!scheduledDate && !pinnedDay && `${t('undatedHelper')} · `}
-        {relativeNote}
-        {relativeNote ? ' · ' : ''}
-        {t('sendWindowHelper', {
-          start: hours[0] ?? sendWindow.start,
-          end: hours.at(-1) ?? sendWindow.start,
-        })}
-      </p>
+      {helperNote && <p className="text-muted-foreground text-xs">{helperNote}</p>}
     </SettingsCard>
   );
 }
