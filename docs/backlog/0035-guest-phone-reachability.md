@@ -84,9 +84,12 @@ Wikipedia, news reports), all undated:
   without WhatsApp was reached by SMS. The remedy for them is a call, never an SMS fallback.
 - It covers a third of the guests unreachable on both channels (21 of 61). The other 40 are
   spread across ordinary ranges: dead numbers, or kosher lines the list misses.
-- It is not a certainty: 9 in-range guests did get WhatsApp. Since the Ministry's portability
-  reform (Minister Hendel, about 2022) a kosher number can move to a regular line and keep its
-  number, so the prefix decays as a signal over time. Label it "probably kosher".
+- It is not a certainty: 9 in-range guests did get WhatsApp, 6 of them in the best-attested
+  ranges (050-41, 052-71, 052-76: 2 each). That points at numbers, not at wrong ranges. Two
+  likely causes, neither confirmed: since the Ministry's portability reform (Minister Hendel,
+  about 2022) a kosher number can move to a regular line and keep its number; and WhatsApp can
+  be registered on another device with a voice-call code, which a kosher line can take. So the
+  prefix decays as a signal over time. Label it "probably kosher".
 - `05598` and `05351` each had an SMS delivered, so those two entries are the least trusted.
   `05331`, `05532`, `05571` have no guests yet.
 
