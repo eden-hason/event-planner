@@ -55,7 +55,7 @@ export type GuestDeliveryStep = {
 export type GuestInteractionRow = {
   guestId: string;
   guestName: string;
-  /** For calling a guest the message did not reach */
+  /** As stored (E.164); missing for a record with no phone number */
   phone?: string;
   /** The Delivery's messages, oldest first. Empty for a guest never sent to */
   steps: GuestDeliveryStep[];

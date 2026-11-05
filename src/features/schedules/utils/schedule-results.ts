@@ -38,6 +38,105 @@ export function guestStatus(row: GuestInteractionRow): GuestStatus {
 }
 
 /**
+ * Where a guest's message stands, in the words of a messaging app's ticks
+ * rather than the Delivery's own states (CONTEXT.md, Delivery):
+ *
+ * - `pending`  nothing accepted yet - a Delivery reserved but not attempted, or
+ *              an SMS Fallback still to go out
+ * - `sent`     accepted and not confirmed (Sent): one tick
+ * - `received` reached the phone on either channel (Delivered): two ticks
+ * - `read`     a WhatsApp read receipt, or an answer, which implies one (Read)
+ * - `failed`   every attempt failed and nothing further is pending
+ *
+ * plus the records nothing was sent to, which keep their own reason.
+ */
+export type MessageState =
+  | 'pending'
+  | 'sent'
+  | 'received'
+  | 'read'
+  | 'failed'
+  | 'no_phone'
+  | 'outside_package'
+  | 'none';
+
+export function messageState(row: GuestInteractionRow): MessageState {
+  switch (row.delivery) {
+    case null:
+      return 'none';
+    case 'whatsapp':
+      return row.seen ? 'read' : 'received';
+    case 'sms':
+      return 'received';
+    case 'on_its_way':
+      // No attempt recorded yet: reserved just before sending
+      return row.steps.length > 0 ? 'sent' : 'pending';
+    case 'sms_on_its_way':
+      // An SMS accepted and awaiting its report is sent; a Fallback the
+      // sweeper has yet to send is still to go.
+      return row.steps.some((step) => step.channel === 'sms' && !step.failedAt)
+        ? 'sent'
+        : 'pending';
+    case 'not_delivered':
+      return 'failed';
+    default:
+      return row.delivery;
+  }
+}
+
+/**
+ * The guest's answer to this Schedule. `not_asked` for a guest it did not ask
+ * (a confirmed guest on an Advance Reminder), who has nothing to wait for.
+ */
+export type RsvpState = 'confirmed' | 'declined' | 'pending' | 'not_asked';
+
+export function rsvpState(row: GuestInteractionRow): RsvpState {
+  if (row.response === 'rsvp_confirm') return 'confirmed';
+  if (row.response === 'rsvp_decline') return 'declined';
+  return row.notAsked ? 'not_asked' : 'pending';
+}
+
+/**
+ * How much of the guest table a desktop pane has room for. The table is the
+ * desktop view at any width - the phone's list is the phone's, switched at the
+ * app's own breakpoint - so a narrowing pane folds columns away in steps rather
+ * than swapping layouts:
+ *
+ * - `full`    every column
+ * - `medium`  the phone number moves under the name
+ * - `compact` no last update either; the activity turns from a strip to a list
+ * - `tight`   no message column either, where the answer is there to read
+ *
+ * Widths are the table's own, in px, at Tailwind's container sizes.
+ */
+export type GuestTableTier = 'full' | 'medium' | 'compact' | 'tight';
+
+const TABLE_TIERS: [GuestTableTier, number][] = [
+  ['full', 672],
+  ['medium', 512],
+  ['compact', 448],
+];
+
+export function guestTableTier(width: number): GuestTableTier {
+  return TABLE_TIERS.find(([, min]) => width >= min)?.[0] ?? 'tight';
+}
+
+/** The columns a tier folds away, as TanStack column visibility */
+export function guestTableHiddenColumns(
+  tier: GuestTableTier,
+  collectsRsvp: boolean,
+): Record<string, false> {
+  const hidden: Record<string, false> = {};
+  if (tier === 'full') return hidden;
+  hidden.phone = false;
+  if (tier === 'medium') return hidden;
+  hidden.lastUpdate = false;
+  // Without an answer column, the message is all the row says about the send
+  if (tier === 'tight' && collectsRsvp) hidden.message = false;
+  return hidden;
+}
+
+/**
  * The read receipt, told apart from its absence. Only a WhatsApp message can
  * report one, so an SMS guest is `na` - not unseen, a different fact - and so
  * is a guest nothing reached.
@@ -256,6 +355,44 @@ function israelDayKey(date: Date): string {
     day: '2-digit',
   }).format(date);
 }
+
+/**
+ * How long ago a moment was: "5 minutes ago", "3 hours ago", "2 days ago".
+ * Minutes under an hour, hours under two days, days after that. `short` is the
+ * abbreviated form for a narrow column ("5 min. ago"). A moment after `now`
+ * (clock skew) reads as now, as does anything under a minute.
+ */
+export function formatAgo(
+  iso: string,
+  { now, locale, short = false }: { now: Date; locale: string; short?: boolean },
+): string {
+  const minutes = Math.max(
+    Math.round((now.getTime() - new Date(iso).getTime()) / 60_000),
+    0,
+  );
+  const hours = Math.round(minutes / 60);
+  const [value, unit]: [number, Intl.RelativeTimeFormatUnit] =
+    minutes === 0
+      ? [0, 'second']
+      : minutes < 60
+        ? [-minutes, 'minute']
+        : hours < 48
+          ? [-hours, 'hour']
+          : [-Math.round(hours / 24), 'day'];
+
+  const format = (style: Intl.RelativeTimeFormatStyle) =>
+    new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style }).format(value, unit);
+  const text = format(short ? 'short' : 'long');
+  // Hebrew's singular and dual carry the number in brackets as well - "לפני
+  // שעתיים (2)" - though the word already says it. Those take the full word,
+  // since the abbreviation alone ("לפני שע׳") reads as a fragment.
+  return BRACKETED_COUNT.test(text)
+    ? format('long').replace(BRACKETED_COUNT, '')
+    : text;
+}
+
+/** A count repeated in brackets after a word that already says it */
+const BRACKETED_COUNT = /\s*\(\d+\)/;
 
 /**
  * A moment on the results screen, the way a person says it: "18:08" today,

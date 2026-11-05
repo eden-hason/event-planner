@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, rsvpAskOf, seenState } from './schedule-results.ts';
+import { availableFilters, buildJourney, filterGuests, formatAgo, formatMoment, guestStatus, guestTableHiddenColumns, guestTableTier, lastActivityAt, messageState, percent, resultsLiveness, rsvpAskOf, rsvpState, seenState } from './schedule-results.ts';
 
 type Row = Parameters<typeof guestStatus>[0];
 
@@ -15,6 +15,66 @@ const row = (over: Partial<Row>): Row => ({
   seen: false,
   amount: 1,
   ...over,
+});
+
+// ─── messageState / rsvpState ─────────────────────────────────────────────────
+
+const wa = { channel: 'whatsapp' as const, fallback: null, sentAt: '2026-09-21T10:00:00Z' };
+const sms = { channel: 'sms' as const, fallback: 'failed' as const, sentAt: '2026-09-21T10:10:00Z' };
+
+test('a message reads as its ticks: received, read', () => {
+  assert.equal(messageState(row({})), 'received');
+  assert.equal(messageState(row({ seen: true })), 'read');
+  assert.equal(messageState(row({ delivery: 'sms' })), 'received');
+});
+
+test('on its way is sent once accepted, and pending before any attempt', () => {
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [wa] })), 'sent');
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [] })), 'pending');
+});
+
+test('an SMS on the way is sent once accepted, pending while the Fallback is still to go', () => {
+  const failedWa = { ...wa, failedAt: '2026-09-21T10:01:00Z' };
+  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa, sms] })), 'sent');
+  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa] })), 'pending');
+});
+
+test('a failure, and the records nothing was sent to, keep their reason', () => {
+  assert.equal(messageState(row({ delivery: 'not_delivered' })), 'failed');
+  assert.equal(messageState(row({ delivery: 'no_phone' })), 'no_phone');
+  assert.equal(messageState(row({ delivery: 'outside_package' })), 'outside_package');
+  assert.equal(messageState(row({ delivery: null })), 'none');
+});
+
+test('the answer, and no answer told apart from not being asked', () => {
+  assert.equal(rsvpState(row({ response: 'rsvp_confirm' })), 'confirmed');
+  assert.equal(rsvpState(row({ response: 'rsvp_decline' })), 'declined');
+  assert.equal(rsvpState(row({})), 'pending');
+  assert.equal(rsvpState(row({ notAsked: true })), 'not_asked');
+  // An answer counts even where the Schedule did not ask
+  assert.equal(rsvpState(row({ notAsked: true, response: 'rsvp_confirm' })), 'confirmed');
+});
+
+// ─── guestTableTier ───────────────────────────────────────────────────────────
+
+test('the table folds at fixed widths, never by layout', () => {
+  assert.equal(guestTableTier(1215), 'full');
+  assert.equal(guestTableTier(672), 'full');
+  assert.equal(guestTableTier(671), 'medium');
+  assert.equal(guestTableTier(512), 'medium');
+  assert.equal(guestTableTier(511), 'compact');
+  assert.equal(guestTableTier(448), 'compact');
+  assert.equal(guestTableTier(447), 'tight');
+  assert.equal(guestTableTier(0), 'tight');
+});
+
+test('each tier folds the columns of the one above it, and one more', () => {
+  assert.deepEqual(guestTableHiddenColumns('full', true), {});
+  assert.deepEqual(guestTableHiddenColumns('medium', true), { phone: false });
+  assert.deepEqual(guestTableHiddenColumns('compact', true), { phone: false, lastUpdate: false });
+  assert.deepEqual(guestTableHiddenColumns('tight', true), { phone: false, lastUpdate: false, message: false });
+  // With no answer column, the message stays: it is all the row has to say
+  assert.deepEqual(guestTableHiddenColumns('tight', false), { phone: false, lastUpdate: false });
 });
 
 // ─── guestStatus / seenState ──────────────────────────────────────────────────
@@ -300,6 +360,32 @@ test('moments read as time today, yesterday with time, then a date', () => {
     formatMoment('2026-09-18T18:14:00Z', { now, locale: 'en' }),
     '9/18',
   );
+});
+
+test('ago reads in minutes, then hours, then days, and never in the future', () => {
+  const now = new Date('2026-09-21T12:00:00Z');
+  const ago = (iso: string, short = false) => formatAgo(iso, { now, locale: 'en', short });
+  assert.equal(ago('2026-09-21T11:55:00Z'), '5 minutes ago');
+  assert.equal(ago('2026-09-21T11:55:00Z', true), '5 min. ago');
+  assert.equal(ago('2026-09-21T09:00:00Z'), '3 hours ago');
+  assert.equal(ago('2026-09-20T13:00:00Z'), '23 hours ago');
+  assert.equal(ago('2026-09-18T12:00:00Z'), '3 days ago');
+  assert.equal(ago('2026-09-21T11:59:50Z'), 'now');
+  assert.equal(ago('2026-09-21T12:03:00Z'), 'now');
+});
+
+test('ago in Hebrew never repeats the count in brackets', () => {
+  const now = new Date('2026-09-21T12:00:00Z');
+  const he = (iso: string, short = true) => formatAgo(iso, { now, locale: 'he', short });
+  assert.equal(he('2026-09-21T11:59:00Z'), 'לפני דקה');
+  assert.equal(he('2026-09-21T11:00:00Z'), 'לפני שעה');
+  assert.equal(he('2026-09-21T10:00:00Z'), 'לפני שעתיים');
+  assert.equal(he('2026-09-21T10:00:00Z', false), 'לפני שעתיים');
+  assert.equal(he('2026-09-21T09:00:00Z'), 'לפני 3 שע׳');
+  assert.equal(he('2026-09-21T11:55:00Z'), 'לפני 5 דק׳');
+  for (const iso of ['2026-09-21T11:59:00Z', '2026-09-21T11:00:00Z', '2026-09-21T10:00:00Z', '2026-09-19T12:00:00Z']) {
+    assert.doesNotMatch(he(iso), /\(\d+\)/);
+  }
 });
 
 // ─── outside the Record Package (ADR 0027) ────────────────────────────────────

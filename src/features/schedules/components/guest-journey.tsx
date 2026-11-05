@@ -9,7 +9,6 @@ import {
   IconHeart,
   IconMessage,
   IconPackage,
-  IconPhone,
   IconPhoneOff,
   IconSend,
   IconX,
@@ -17,7 +16,6 @@ import {
 } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 import type { GuestInteractionRow } from '../queries/guest-interactions';
 import {
@@ -62,93 +60,6 @@ const FALLBACK_META = {
   failed: 'journey.sentFallbackMeta',
   unconfirmed: 'journey.sentFallbackUnconfirmedMeta',
 } as const;
-
-/** The guest's channel as one phrase: "WhatsApp", "SMS", "SMS after WhatsApp" */
-export function useChannelLabel() {
-  const t = useTranslations('schedules.results.guests.channel');
-  return (row: GuestInteractionRow) => {
-    if (row.delivery === 'no_phone' || row.delivery === 'outside_package') {
-      return t('notSent');
-    }
-    // An SMS-only Schedule's unconfirmed SMS is on its way too, but no
-    // WhatsApp came before it, so it is not a Fallback.
-    const afterWhatsApp = row.steps.some((step) => step.channel === 'whatsapp');
-    if (row.viaFallback || (row.delivery === 'sms_on_its_way' && afterWhatsApp)) {
-      return t('fallback');
-    }
-    if (row.delivery === 'sms' || row.delivery === 'sms_on_its_way') return t('sms');
-    if (row.delivery === null) return null;
-    return t('whatsapp');
-  };
-}
-
-/**
- * One guest's timeline: every message on every channel, then what they did
- * with it. Drawn in the rail beside the list on a wide pane, in a sheet on a
- * narrow one - the caller decides where, this is only the content.
- */
-export function GuestJourney({
-  row,
-  now,
-  locale,
-  onClose,
-}: {
-  row: GuestInteractionRow;
-  now: Date;
-  locale: string;
-  /** Draws a close button in the header; a sheet brings its own */
-  onClose?: () => void;
-}) {
-  const t = useTranslations('schedules.results');
-  const channelLabel = useChannelLabel();
-
-  const answer =
-    row.response === 'rsvp_confirm'
-      ? [
-          t('guests.answer.confirmed'),
-          row.guestCount ? t('people', { count: row.guestCount }) : '',
-        ]
-          .filter(Boolean)
-          .join(', ')
-      : row.response === 'rsvp_decline'
-        ? t('guests.answer.declined')
-        : null;
-  const sub = [channelLabel(row), answer].filter(Boolean).join(' · ');
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-2">
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-[15.5px] font-extrabold">
-            {row.guestName}
-          </span>
-          {sub && <span className="text-muted-foreground text-xs">{sub}</span>}
-        </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('journey.close')}
-            className="bg-muted text-muted-foreground hover:text-foreground flex size-[26px] shrink-0 items-center justify-center rounded-lg"
-          >
-            <IconX size={14} />
-          </button>
-        )}
-      </div>
-
-      <GuestJourneySteps row={row} now={now} locale={locale} />
-
-      {row.phone && (
-        <Button asChild variant="outline">
-          <a href={`tel:${row.phone}`}>
-            <IconPhone size={15} />
-            {t('journey.call')}
-          </a>
-        </Button>
-      )}
-    </div>
-  );
-}
 
 /**
  * The steps alone - sent, delivered, seen, answered - for a view already
@@ -227,7 +138,6 @@ export function GuestJourneySteps({
     }
   };
 
-
   return (
     <ol className="flex flex-col">
       {steps.map((step, index) => {
@@ -238,7 +148,9 @@ export function GuestJourneySteps({
           <li key={`${step.kind}-${index}`} className="flex gap-2.5 pb-3">
             <div className="relative flex w-[22px] shrink-0 justify-center">
               {!last && (
-                <span className="bg-muted absolute top-6 bottom-0 w-0.5" />
+                // Icon to icon: from this one's foot, through the step's
+                // bottom padding (pb-3), to the top of the next
+                <span className="bg-muted-foreground/30 absolute top-[22px] -bottom-3 w-0.5" />
               )}
               <span
                 className={cn(

@@ -1,63 +1,84 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconSearch,
 } from '@tabler/icons-react';
+import {
+  flexRender,
+  getCoreRowModel,
+  getExpandedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ExpandedState,
+  type VisibilityState,
+} from '@tanstack/react-table';
 
 import { cn } from '@/lib/utils';
+import { formatPhone } from '@/lib/phone';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import type { GuestInteractionRow } from '../queries/guest-interactions';
 import {
   availableFilters,
   filterGuests,
+  formatAgo,
   formatMoment,
-  guestStatus,
+  guestTableHiddenColumns,
+  guestTableTier,
   lastActivityAt,
-  seenState,
   type GuestFilter,
-  type GuestStatus,
+  type GuestTableTier,
 } from '../utils/schedule-results';
-import { useChannelLabel } from './guest-journey';
-import { RESULT_TONE } from './results-presentation';
+import {
+  ConfirmedCount,
+  GuestStatusAvatar,
+  MessageActivityList,
+  MessageActivityStrip,
+  MessageStateLabel,
+  RsvpBadge,
+} from './guest-activity';
 
-/** Rows shown at first, and how many each "more" adds. 300+ records page in steps. */
+/** A desktop page of the table */
+const PAGE_SIZE = 10;
+/** Rows the phone's list shows at first, and how many each "more" adds */
 const FIRST = 10;
 const STEP = 25;
 
-const STATUS_TONE: Record<GuestStatus, keyof typeof RESULT_TONE> = {
-  seen: 'ok',
-  delivered: 'ok',
-  sms: 'info',
-  on_its_way: 'pending',
-  sms_on_its_way: 'pending',
-  not_delivered: 'bad',
-  no_phone: 'neutral',
-  outside_package: 'pending',
-  none: 'neutral',
-};
-
-const CHANNEL_SWATCH = {
-  whatsapp: 'bg-channel-whatsapp',
-  sms: 'bg-channel-sms',
-  none: 'bg-muted-foreground/40',
-} as const;
-
-function channelSwatch(row: GuestInteractionRow) {
-  if (row.delivery === 'sms' || row.delivery === 'sms_on_its_way')
-    return CHANNEL_SWATCH.sms;
-  if (
-    row.delivery === 'no_phone' ||
-    row.delivery === 'outside_package' ||
-    row.delivery === null
-  )
-    return CHANNEL_SWATCH.none;
-  return CHANNEL_SWATCH.whatsapp;
-}
+/**
+ * Widths for every column but the guest's, which takes the rest, so the table
+ * holds its shape as rows open and close. With no RSVP the answer columns'
+ * share goes to the others.
+ */
+const COLUMN_WIDTH = {
+  withRsvp: {
+    phone: 'w-[16%]',
+    message: 'w-[18%]',
+    rsvp: 'w-[17%]',
+    count: 'w-[9%]',
+    lastUpdate: 'w-[15%]',
+    expand: 'w-12',
+  },
+  withoutRsvp: {
+    phone: 'w-[20%]',
+    message: 'w-[24%]',
+    lastUpdate: 'w-[20%]',
+    expand: 'w-12',
+  },
+} as const satisfies Record<string, Record<string, string>>;
 
 interface ScheduleResultsGuestsProps {
   guests: GuestInteractionRow[];
@@ -65,7 +86,9 @@ interface ScheduleResultsGuestsProps {
   showSeen: boolean;
   filter: GuestFilter;
   onFilterChange: (filter: GuestFilter) => void;
+  /** The open guest: expanded under its table row, or in the phone's sheet */
   selectedId: string | null;
+  /** Opens a guest, or closes it when it is the open one */
   onSelect: (guestId: string) => void;
   now: Date;
   locale: string;
@@ -73,13 +96,21 @@ interface ScheduleResultsGuestsProps {
 }
 
 /**
- * Every guest the schedule went to, each on their current rung of the ladder,
- * with the channel that carried it and when they last moved. Search and
- * filters narrow it; a row opens that guest's journey.
+ * Every guest the Schedule went to, in one card: search and filters on top,
+ * then the guests (Guest list status options, screens 7 and 11).
  *
- * Stacked rows on a narrow pane, a table from `@3xl` - measured on the results
- * container, since the pane shares the screen with the timeline and a wide
- * viewport is not a wide pane.
+ * Two views, switched where the app switches between its phone and desktop
+ * layouts (`md`, the breakpoint `useIsMobile` reads) and nowhere else:
+ *
+ * - On a phone, a list - where the guest stands as one circle, name and
+ *   number, when they last moved - each row opening the guest's sheet.
+ * - On desktop, a Data Table (shadcn Table + TanStack) a page at a time, a row
+ *   opening the message's activity under it. However narrow the pane gets
+ *   beside the timeline it stays a table, folding columns away in steps
+ *   measured on its own width (`guestTableTier`).
+ *
+ * The header arranges itself on the pane's width the same way: search and
+ * filters side by side from `@2xl`, stacked below it.
  */
 export function ScheduleResultsGuests({
   guests,
@@ -94,271 +125,250 @@ export function ScheduleResultsGuests({
   isRTL,
 }: ScheduleResultsGuestsProps) {
   const t = useTranslations('schedules.results.guests');
-  const tPeople = useTranslations('schedules.results');
-  const channelLabel = useChannelLabel();
+  const [tableRef, tier] = useTableTier();
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState(FIRST);
+  const [page, setPage] = useState(0);
 
   const chips = availableFilters({ collectsRsvp, showSeen });
   const rows = useMemo(
     () => filterGuests(guests, { filter, query }),
     [guests, filter, query],
   );
-  const visible = rows.slice(0, shown);
+
+  // The phone's list grows with "more"; the table pages. Both are kept stable
+  // between renders: TanStack re-derives its rows whenever `data` changes.
+  const visible = useMemo(() => rows.slice(0, shown), [rows, shown]);
   const remaining = rows.length - visible.length;
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // A refresh can shorten the list under an open page
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = useMemo(
+    () => rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
+    [rows, safePage],
+  );
 
   const narrow = (next: () => void) => {
     next();
     setShown(FIRST);
+    setPage(0);
   };
 
+  // Relative ("5 minutes ago"), with the exact moment on hover
   const when = (row: GuestInteractionRow) => {
     const at = lastActivityAt(row);
-    return at ? formatMoment(at, { now, locale }) : '-';
+    return at
+      ? {
+          text: formatAgo(at, { now, locale }),
+          title: formatMoment(at, { now, locale }),
+        }
+      : { text: '–', title: undefined };
   };
 
-  const seenText = (row: GuestInteractionRow) => {
-    const state = seenState(row);
-    if (state === 'seen')
-      return {
-        text: t('seenState.seen'),
-        className: 'text-rsvp-confirmed-strong',
-      };
-    if (state === 'unseen')
-      return {
-        text: t('seenState.unseen'),
-        className: 'text-muted-foreground',
-      };
-    if (row.delivery === 'sms')
-      return {
-        text: t('seenState.sms'),
-        className: 'text-muted-foreground/60',
-      };
-    return { text: '-', className: 'text-muted-foreground/60' };
-  };
-
-  const answer = (row: GuestInteractionRow) => {
-    if (row.response === 'rsvp_confirm') {
-      return {
-        text: [
-          t('answer.confirmed'),
-          row.guestCount ? tPeople('people', { count: row.guestCount }) : '',
-        ]
-          .filter(Boolean)
-          .join(' · '),
-        className: RESULT_TONE.ok,
-      };
-    }
-    if (row.response === 'rsvp_decline')
-      return { text: t('answer.declined'), className: RESULT_TONE.bad };
-    return null;
-  };
-
-  const statusChip = (row: GuestInteractionRow) => {
-    const status = guestStatus(row);
-    return (
-      <span
-        className={cn(
-          'inline-flex items-center rounded-full px-2 py-[3px] text-[11px] font-bold whitespace-nowrap @3xl:px-[9px] @3xl:py-1 @3xl:text-[11.5px]',
-          RESULT_TONE[STATUS_TONE[status]],
-        )}
-      >
-        {t(`status.${status}`)}
-      </span>
+  const phone = (row: GuestInteractionRow, className?: string) =>
+    row.phone && (
+      // LTR inside a RTL row, sized to its text so it keeps to the start edge
+      <bdi dir="ltr" className={cn('self-start tabular-nums', className)}>
+        {formatPhone(row.phone)}
+      </bdi>
     );
-  };
 
-  const channelTag = (row: GuestInteractionRow) => {
-    const label = channelLabel(row);
-    if (!label) return null;
-    return (
-      <span className="text-muted-foreground inline-flex items-center gap-1 text-[11px] @3xl:text-[11.5px]">
-        <span className={cn('size-1.5 rounded-[2px]', channelSwatch(row))} />
-        {label}
-      </span>
-    );
-  };
+  const Forward = isRTL ? IconChevronLeft : IconChevronRight;
+  const widths = collectsRsvp
+    ? COLUMN_WIDTH.withRsvp
+    : COLUMN_WIDTH.withoutRsvp;
 
-  const Chevron = isRTL ? IconChevronLeft : IconChevronRight;
+  const columns: ColumnDef<GuestInteractionRow>[] = [
+    {
+      id: 'guest',
+      header: t('columns.guest'),
+      cell: ({ row }) => (
+        <span className="flex min-w-0 flex-col gap-px">
+          <span className="truncate font-semibold">
+            {row.original.guestName}
+          </span>
+          {/* The phone column folded away: the number moves under the name */}
+          {tier !== 'full' &&
+            phone(row.original, 'text-muted-foreground text-[13px]')}
+        </span>
+      ),
+    },
+    {
+      id: 'phone',
+      header: t('columns.phone'),
+      cell: ({ row }) => phone(row.original, 'text-foreground/70'),
+    },
+    {
+      id: 'message',
+      header: t('columns.message'),
+      cell: ({ row }) => <MessageStateLabel row={row.original} />,
+    },
+    ...(collectsRsvp
+      ? ([
+          {
+            id: 'rsvp',
+            header: t('columns.rsvp'),
+            cell: ({ row }) => <RsvpBadge row={row.original} />,
+          },
+          {
+            id: 'count',
+            header: t('columns.count'),
+            cell: ({ row }) => <ConfirmedCount row={row.original} />,
+          },
+        ] satisfies ColumnDef<GuestInteractionRow>[])
+      : []),
+    {
+      id: 'lastUpdate',
+      header: t('columns.lastUpdate'),
+      cell: ({ row }) => {
+        const at = when(row.original);
+        return (
+          <span title={at.title} className="text-muted-foreground text-[13px]">
+            {at.text}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'expand',
+      header: () => <span className="sr-only">{t('columns.actions')}</span>,
+      cell: ({ row }) => {
+        const open = row.getIsExpanded();
+        const RowChevron = open ? IconChevronDown : Forward;
+        return (
+          // The row's one control, for the keyboard; a click anywhere on the
+          // row bubbles to the row's own handler.
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={t('openActivity', { name: row.original.guestName })}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground ms-auto flex size-8 items-center justify-center rounded-lg transition-colors"
+          >
+            <RowChevron size={16} aria-hidden />
+          </button>
+        );
+      },
+    },
+  ];
 
-  // Guest, delivery, [seen], [answer], last update
-  const columns = [
-    'minmax(120px,1.4fr)',
-    '110px',
-    ...(showSeen ? ['84px'] : []),
-    ...(collectsRsvp ? ['128px'] : []),
-    '96px',
-  ].join(' ');
+  // One guest open at a time, owned by the caller (the phone's sheet reads it too)
+  const expanded: ExpandedState = selectedId ? { [selectedId]: true } : {};
+  const columnVisibility: VisibilityState = useMemo(
+    () => guestTableHiddenColumns(tier, collectsRsvp),
+    [tier, collectsRsvp],
+  );
+
+  const table = useReactTable({
+    data: pageRows,
+    columns,
+    // Folded columns are hidden through the table, not CSS, so the expanded
+    // row's colSpan counts only the columns on screen.
+    state: { expanded, columnVisibility },
+    // Paging is ours, not the table's. Left on, every new `data` queues a
+    // page-index reset as a microtask, the reset re-renders, and a new array
+    // re-queues it - an endless loop that froze the page on the first click.
+    autoResetPageIndex: false,
+    getRowId: (row) => row.guestId,
+    getRowCanExpand: () => true,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+  });
+
+  const from = rows.length === 0 ? 0 : safePage * PAGE_SIZE + 1;
+  const to = Math.min((safePage + 1) * PAGE_SIZE, rows.length);
 
   return (
     <section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
-      <div className="flex flex-col gap-2.5 px-4 pt-3.5 pb-3 @3xl:flex-row @3xl:flex-wrap @3xl:items-center @3xl:gap-3">
-        <div className="flex items-baseline justify-between gap-2 @3xl:justify-start">
-          <h3 className="text-sm font-bold @3xl:text-[15px]">{t('title')}</h3>
-          <span className="text-muted-foreground text-xs">
+      {/* Sizes follow the app's phone/desktop switch (md); the arrangement, the
+          pane's own width (@2xl), as the result cards above do. */}
+      <div className="flex flex-col gap-2.5 border-b px-3.5 pt-3.5 pb-3 md:gap-3 md:p-4">
+        {/* Titled like the other result cards (CardTitle in schedule-results) */}
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="text-sm font-bold @2xl:text-[15px]">{t('title')}</h3>
+          <span className="text-muted-foreground text-[11.5px]">
             {t('count', { count: guests.length })}
           </span>
         </div>
 
-        <div className="relative @3xl:ms-auto @3xl:w-56">
-          <IconSearch
-            size={15}
-            className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 -translate-y-1/2"
-          />
-          <Input
-            value={query}
-            onChange={(e) => narrow(() => setQuery(e.target.value))}
-            placeholder={t('search')}
-            aria-label={t('search')}
-            className="bg-background ps-9"
-          />
-        </div>
+        <div className="flex flex-col gap-2.5 @2xl:flex-row @2xl:items-center @2xl:justify-between @2xl:gap-3">
+          <div className="relative @2xl:w-80 @2xl:min-w-[220px] @2xl:shrink">
+            <IconSearch
+              size={16}
+              className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 -translate-y-1/2"
+            />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => narrow(() => setQuery(e.target.value))}
+              placeholder={t('search')}
+              aria-label={t('search')}
+              className="bg-card h-[34px] rounded-[10px] ps-9 md:h-9 md:rounded-lg"
+            />
+          </div>
 
-        <div className="flex gap-1.5 overflow-x-auto">
-          {chips.map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={filter === key}
-              onClick={() => narrow(() => onFilterChange(key))}
-              className={cn(
-                'shrink-0 rounded-full px-[11px] py-1.5 text-xs whitespace-nowrap transition-colors',
-                filter === key
-                  ? 'bg-foreground text-background font-bold'
-                  : 'bg-muted text-muted-foreground hover:bg-accent font-medium',
-              )}
-            >
-              {t(`filters.${key}`)}
-            </button>
-          ))}
+          {/* One row that scrolls rather than wraps, at every width */}
+          <div className="-mx-3.5 flex gap-1.5 overflow-x-auto px-3.5 md:-mx-4 md:px-4 @2xl:mx-0 @2xl:px-0">
+            {chips.map((key) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={filter === key}
+                onClick={() => narrow(() => onFilterChange(key))}
+                className={cn(
+                  'h-[26px] shrink-0 rounded-full border px-[11px] text-[12.5px] whitespace-nowrap transition-colors md:h-8 md:px-[13px] md:text-[13px]',
+                  // The Guests page's purple for an applied filter (active-filter-chips)
+                  filter === key
+                    ? 'bg-primary/8 text-primary border-primary/40 font-semibold'
+                    : 'bg-muted text-foreground/70 hover:bg-accent border-transparent',
+                )}
+              >
+                {t(`filters.${key}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {rows.length === 0 && (
-        <p className="text-muted-foreground border-t px-4 py-6 text-center text-[13px]">
+        <p className="text-muted-foreground px-4 py-6 text-center text-[13px]">
           {t('none')}
         </p>
       )}
 
-      {/* Narrow: each guest a stacked row */}
-      <div className="@3xl:hidden">
+      {/* Phone: a list, each guest one row opening its sheet */}
+      <div className="divide-y md:hidden">
         {visible.map((row) => {
-          const seen = seenText(row);
-          const ans = answer(row);
+          const open = selectedId === row.guestId;
+          const at = when(row);
           return (
             <button
               key={row.guestId}
               type="button"
               onClick={() => onSelect(row.guestId)}
+              aria-haspopup="dialog"
               className={cn(
-                'hover:bg-muted/50 flex w-full items-center gap-2.5 border-t px-4 py-[11px] text-start transition-colors',
-                selectedId === row.guestId && 'bg-primary/5',
+                'hover:bg-muted/50 flex h-[62px] w-full items-center gap-3 px-3.5 text-start transition-colors',
+                open && 'bg-muted/40',
               )}
             >
-              <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
-                <span className="truncate text-sm font-bold">
+              <GuestStatusAvatar row={row} />
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-[15px] font-semibold">
                   {row.guestName}
                 </span>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {statusChip(row)}
-                  {channelTag(row)}
-                  {showSeen &&
-                    guestStatus(row) !== 'seen' &&
-                    seenState(row) !== 'na' && (
-                      <span className={cn('text-[11px]', seen.className)}>
-                        {seen.text}
-                      </span>
-                    )}
-                </div>
+                {phone(row, 'text-muted-foreground text-[13px]')}
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                {ans && (
-                  <span
-                    className={cn(
-                      'rounded-lg px-2 py-[3px] text-[11.5px] font-bold whitespace-nowrap',
-                      ans.className,
-                    )}
-                  >
-                    {ans.text}
-                  </span>
-                )}
-                <span className="text-muted-foreground text-[11px] whitespace-nowrap tabular-nums">
-                  {when(row)}
+              <div className="flex shrink-0 items-center gap-1">
+                <span
+                  title={at.title}
+                  className="text-muted-foreground text-[12.5px] whitespace-nowrap"
+                >
+                  {at.text}
+                </span>
+                <span className="text-muted-foreground flex size-8 items-center justify-center">
+                  <Forward size={16} aria-hidden />
                 </span>
               </div>
-              <Chevron
-                size={15}
-                className="text-muted-foreground/50 shrink-0"
-              />
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Wide: a table */}
-      <div className="hidden @3xl:block">
-        {rows.length > 0 && (
-          <div
-            className="bg-muted/40 text-muted-foreground grid gap-2.5 border-y px-4 py-2 text-[11.5px] font-bold"
-            style={{ gridTemplateColumns: columns }}
-          >
-            <span>{t('columns.guest')}</span>
-            <span>{t('columns.delivery')}</span>
-            {showSeen && <span>{t('columns.seen')}</span>}
-            {collectsRsvp && <span>{t('columns.answer')}</span>}
-            <span className="text-end">{t('columns.lastUpdate')}</span>
-          </div>
-        )}
-        {visible.map((row) => {
-          const seen = seenText(row);
-          const ans = answer(row);
-          return (
-            <button
-              key={row.guestId}
-              type="button"
-              onClick={() => onSelect(row.guestId)}
-              className={cn(
-                'hover:bg-muted/50 grid w-full items-center gap-2.5 border-b px-4 py-3 text-start transition-colors last:border-b-0',
-                selectedId === row.guestId && 'bg-primary/5',
-              )}
-              style={{ gridTemplateColumns: columns }}
-            >
-              <span className="flex min-w-0 flex-col gap-px">
-                <span className="truncate text-sm font-semibold">
-                  {row.guestName}
-                </span>
-                {channelTag(row)}
-              </span>
-              <span>{statusChip(row)}</span>
-              {showSeen && (
-                <span className={cn('text-[12.5px]', seen.className)}>
-                  {seen.text}
-                </span>
-              )}
-              {collectsRsvp && (
-                <span>
-                  {ans ? (
-                    <span
-                      className={cn(
-                        'rounded-lg px-[9px] py-1 text-[11.5px] font-bold whitespace-nowrap',
-                        ans.className,
-                      )}
-                    >
-                      {ans.text}
-                    </span>
-                  ) : row.notAsked ? (
-                    // Not asked: nothing to wait for, so no "no answer yet".
-                    <span className="text-muted-foreground text-[12.5px]">-</span>
-                  ) : (
-                    <span className="text-muted-foreground text-[12.5px]">
-                      {t('answer.pending')}
-                    </span>
-                  )}
-                </span>
-              )}
-              <span className="text-muted-foreground text-end text-[12.5px] tabular-nums">
-                {when(row)}
-              </span>
             </button>
           );
         })}
@@ -368,11 +378,141 @@ export function ScheduleResultsGuests({
         <button
           type="button"
           onClick={() => setShown((n) => n + STEP)}
-          className="text-primary hover:bg-muted/50 border-t px-4 py-3 text-center text-[13px] font-semibold transition-colors"
+          className="text-primary hover:bg-muted/50 border-t px-4 py-3 text-center text-[13px] font-semibold transition-colors md:hidden"
         >
           {t('more', { count: remaining })}
         </button>
       )}
+
+      {/* Desktop: a Data Table, a page at a time, the open guest's activity
+          under its row. Measured, so it can fold columns on a narrow pane. */}
+      {rows.length > 0 && (
+        <div ref={tableRef} className="hidden md:block">
+          <Table className="table-fixed text-sm">
+            <TableHeader className="bg-muted/40">
+              {table.getHeaderGroups().map((group) => (
+                <TableRow key={group.id} className="hover:bg-transparent">
+                  {group.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        'text-muted-foreground h-[42px] px-2 text-[13px] font-semibold first:ps-4 last:pe-4',
+                        widths[header.column.id as keyof typeof widths],
+                      )}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => {
+                const open = row.getIsExpanded();
+                return (
+                  <Fragment key={row.id}>
+                    <TableRow
+                      data-state={open ? 'selected' : undefined}
+                      onClick={() => onSelect(row.id)}
+                      className={cn(
+                        'h-[53px] cursor-pointer',
+                        open &&
+                          'bg-muted/40 data-[state=selected]:bg-muted/40 border-b-0',
+                      )}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className="overflow-hidden px-2 py-0 first:ps-4 last:pe-4"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {open && (
+                      <TableRow className="bg-muted/40 hover:bg-muted/40">
+                        <TableCell
+                          colSpan={row.getVisibleCells().length}
+                          className="px-4 pt-2 pb-5 whitespace-normal"
+                        >
+                          {/* Across the row while there is room for its steps */}
+                          {tier === 'full' || tier === 'medium' ? (
+                            <MessageActivityStrip
+                              row={row.original}
+                              now={now}
+                              locale={locale}
+                            />
+                          ) : (
+                            <MessageActivityList
+                              row={row.original}
+                              now={now}
+                              locale={locale}
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-2.5">
+            <span className="text-muted-foreground text-[13px] tabular-nums">
+              {t('pagination.range', { from, to, total: rows.length })}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[13px] font-normal"
+                onClick={() => setPage(safePage - 1)}
+                disabled={safePage === 0}
+              >
+                {t('pagination.previous')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[13px] font-normal"
+                onClick={() => setPage(safePage + 1)}
+                disabled={safePage >= pageCount - 1}
+              >
+                {t('pagination.next')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
+}
+
+/**
+ * How much room the table has, as a `GuestTableTier`. Set only when the tier
+ * changes, and the table's width comes from the layout, never from its
+ * columns, so folding a column cannot feed back into another measurement.
+ * Until the first measurement the table renders whole, as the server did.
+ */
+function useTableTier() {
+  const [tier, setTier] = useState<GuestTableTier>('full');
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      // A hidden table (a phone) measures 0: nothing to fold for
+      if (entry.contentRect.width > 0) {
+        setTier(guestTableTier(entry.contentRect.width));
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, tier] as const;
 }

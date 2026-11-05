@@ -27,6 +27,9 @@
 --   call round      30 min ago    live round: some called, most not yet, and
 --                                 guests who answered the follow-up after the
 --                                 snapshot, who keep a null outcome forever
+--   advance reminder 6 min ago    live send, mostly still on its way: WhatsApp
+--                                 accepted but not yet delivered, and an SMS
+--                                 Fallback still to go out
 --
 -- Every guest's story is chosen by arithmetic on its row number rather than
 -- random(), so a given guest reads the same way after every re-run.
@@ -458,6 +461,83 @@ update guests
  where guests.id = c.guest_id and c.outcome in ('confirmed', 'declined');
 
 -- ---------------------------------------------------------------------------
+-- The live Advance Reminder
+--
+-- Operator-added (ADR 0051), so it is a row of its own rather than one claimed
+-- from the seeded plan, built the way createAdvanceReminderAdmin builds it:
+-- anchored on advance_reminder_1, to every Guest who has not declined. Sent six
+-- minutes ago, so most of it is still on its way:
+--   ~45% WhatsApp accepted, no delivery report yet ('sent')
+--   off_whatsapp failed (131026), the SMS Fallback not gone out yet
+-- and the rest delivered or already read. Runs after the call round, whose
+-- declines are not sent to. Confirmed Guests get the plain reminder, pending
+-- ones the row that asks for an RSVP, as the resolver picks per Guest.
+-- ---------------------------------------------------------------------------
+
+insert into schedules (id, event_id, schedule_type_id, template_id, scheduled_date, target_status, status, sent_at, dispatched_at)
+select '00000000-0000-4000-8d10-000000000005', '00000000-0000-4000-b000-000000000010', st.id,
+       (select id from message_templates
+         where key = 'advance_reminder_1' and channel = 'whatsapp' and not requires_rsvp_ask and event_id is null),
+       now() - interval '6 minutes', 'not_declined', 'sent',
+       now() - interval '6 minutes', now() - interval '6 minutes'
+from schedule_types st
+where st.key = 'advance_reminder';
+
+drop table if exists _adv;
+create temp table _adv as
+with base as (
+  select g.id as guest_id, g.rn, g.no_phone, g.off_whatsapp,
+         (select id from message_templates
+           where key = 'advance_reminder_1' and channel = 'whatsapp' and event_id is null
+             and requires_rsvp_ask = (cur.rsvp_status = 'pending')) as template_id,
+         now() - interval '6 minutes' + make_interval(secs => g.rn * 2) as sent_at
+  from _g g
+  join guests cur on cur.id = g.id
+  -- The late add stays the shared-link guest with no Delivery on any schedule
+  where cur.rsvp_status <> 'declined' and not g.late_add
+),
+outcome as (
+  select base.*,
+         case
+           when no_phone then 'not_sent'
+           when off_whatsapp then 'failed'
+           when pg_temp.h(rn, 90) < 0.45 then 'sent'
+           when pg_temp.h(rn, 90) < 0.75 then 'delivered'
+           else 'read'
+         end as wa
+  from base
+)
+select outcome.*,
+       case when wa in ('delivered', 'read') then sent_at + make_interval(secs => 3 + pg_temp.h(rn, 91) * 40) end as delivered_at,
+       case when wa = 'failed' then sent_at + make_interval(secs => 20 + pg_temp.h(rn, 92) * 40) end as failed_at
+from outcome;
+
+update _adv
+   set wa = 'delivered'
+ where wa = 'read' and delivered_at >= now() - interval '30 seconds';
+
+insert into message_deliveries (id, schedule_id, guest_id, status, not_sent_reason, delivery_method, triggered_by, template_id, created_at)
+select md5('00000000-0000-4000-8d10-000000000005' || guest_id::text)::uuid,
+       '00000000-0000-4000-8d10-000000000005', guest_id,
+       case when wa = 'not_sent' then 'not_sent' else 'pending' end::delivery_status,
+       case when wa = 'not_sent' then 'no_phone' end,
+       'whatsapp', 'scheduled', template_id, sent_at
+from _adv;
+
+insert into message_delivery_attempts (delivery_id, channel, status, template_id, error_code, error_message, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at)
+select md5('00000000-0000-4000-8d10-000000000005' || guest_id::text)::uuid, 'whatsapp', wa::delivery_status, template_id,
+       case when wa = 'failed' then 131026 end,
+       case when wa = 'failed' then 'Message undeliverable' end,
+       'scheduled', sent_at, delivered_at,
+       case when wa = 'read'
+            then least(now() - interval '20 seconds',
+                       delivered_at + interval '20 seconds' + pg_temp.h(rn, 93) * interval '4 minutes') end,
+       sent_at,
+       coalesce(failed_at, delivered_at, sent_at)
+from _adv
+where wa <> 'not_sent';
+
+-- ---------------------------------------------------------------------------
 -- Guard: every state the screens have to render actually landed
 -- ---------------------------------------------------------------------------
 
@@ -483,6 +563,11 @@ begin
       ('no phone',            exists (select 1 from d where status = 'not_sent')),
       ('on its way (live follow-up)', exists (select 1 from d where schedule_id = '00000000-0000-4000-8d10-000000000003'
                                                                 and delivery_method = 'whatsapp' and status = 'sent')),
+      ('on its way (live advance reminder)', exists (select 1 from d where schedule_id = '00000000-0000-4000-8d10-000000000005'
+                                                                    and delivery_method = 'whatsapp' and status = 'sent')),
+      ('SMS Fallback still to go out (live advance reminder)',
+        exists (select 1 from d where schedule_id = '00000000-0000-4000-8d10-000000000005'
+                                 and delivery_method = 'whatsapp' and status = 'failed' and not fell_back)),
       ('settled send with nothing on its way', not exists (select 1 from d where schedule_id = '00000000-0000-4000-8d10-000000000002'
                                                                             and delivery_method = 'whatsapp' and status = 'sent')),
       ('confirmed and declined answers', (select count(distinct interaction_type) from guest_interactions gi

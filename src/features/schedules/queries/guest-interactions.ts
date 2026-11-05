@@ -24,9 +24,9 @@ export type ScheduleInteractionData = {
     /**
      * Guest records this schedule could actually be sent to. A record with no
      * usable phone number was never a recipient - the send engine files it as
-     * `not_sent` before it ever reaches a channel - so counting it here made
-     * the audience (and every rate read against it) look bigger than the send
-     * ever was. Those records are excluded and reported as `excludedNoPhone`.
+     * `not_sent` before it ever reaches a channel - so it is left out here, out
+     * of `guests` too, and not mentioned: the Guests page is where a missing
+     * number gets fixed.
      */
     audience: number;
     reached: number;
@@ -38,11 +38,8 @@ export type ScheduleInteractionData = {
       onItsWay: number;
       smsOnItsWay: number;
       notDelivered: number;
-      noPhone: number;
       outsidePackage: number;
     };
-    /** Targeted records left out of `audience` for want of a phone number */
-    excludedNoPhone: number;
     /** Targeted records left out of `audience` because they were outside the package */
     excludedOutsidePackage: number;
     /** Guest records with a WhatsApp read receipt */
@@ -88,7 +85,7 @@ export async function getScheduleInteractionData(
     supabase
       .from('guest_interactions')
       .select(
-        'interaction_type, created_at, metadata, guest_id, guests!inner(name, amount)',
+        'interaction_type, created_at, metadata, guest_id, guests!inner(name, amount, phone_number)',
       )
       .eq('schedule_id', scheduleId)
       .order('created_at', { ascending: false }),
@@ -116,10 +113,8 @@ export async function getScheduleInteractionData(
         onItsWay: 0,
         smsOnItsWay: 0,
         notDelivered: 0,
-        noPhone: 0,
         outsidePackage: 0,
       },
-      excludedNoPhone: 0,
       excludedOutsidePackage: 0,
       seen: 0,
       seenCapable: 0,
@@ -143,13 +138,14 @@ export async function getScheduleInteractionData(
   const guestMap = new Map<string, GuestInteractionRow>();
   const rowFor = (
     guestId: string,
-    guest: { name: string; amount: number | null },
+    guest: { name: string; amount: number | null; phone_number: string | null },
   ) => {
     let entry = guestMap.get(guestId);
     if (!entry) {
       entry = {
         guestId,
         guestName: guest.name,
+        phone: guest.phone_number ?? undefined,
         steps: [],
         viaFallback: false,
         delivery: null,
@@ -199,7 +195,6 @@ export async function getScheduleInteractionData(
           (row.not_sent_reason as string | null) ?? null,
         );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
-    entry.phone = guest.phone_number ?? undefined;
     entry.steps = toDeliverySteps(row.message_delivery_attempts as DeliveryAttemptRow[] | null);
     // Asked when any message to this Guest carried the RSVP ask - the pending
     // Guests' row of the family (resolve-reminder-templates, templateForGuest).
@@ -232,6 +227,7 @@ export async function getScheduleInteractionData(
     const guest = row.guests as unknown as {
       name: string;
       amount: number | null;
+      phone_number: string | null;
     };
     const entry = rowFor(row.guest_id as string, guest);
     const meta = row.metadata as {
@@ -262,7 +258,11 @@ export async function getScheduleInteractionData(
     if (entry?.response && !entry.seen) entry.seen = true;
   }
 
-  const guests = Array.from(guestMap.values());
+  // No phone number, no recipient: dropped from the results altogether. One who
+  // answered anyway (a shared link) stays, so the answer is not lost.
+  const guests = Array.from(guestMap.values()).filter(
+    (g) => g.delivery !== 'no_phone' || g.response,
+  );
   const withDelivery = guests.filter((g) => g.delivery !== null);
   const count = (outcome: GuestDeliveryOutcome) =>
     withDelivery.filter((g) => g.delivery === outcome).length;
@@ -286,10 +286,8 @@ export async function getScheduleInteractionData(
       onItsWay: count('on_its_way'),
       smsOnItsWay: count('sms_on_its_way'),
       notDelivered: count('not_delivered'),
-      noPhone,
       outsidePackage,
     },
-    excludedNoPhone: noPhone,
     excludedOutsidePackage: outsidePackage,
     seen: guests.filter((g) => g.seen).length,
     seenCapable,
