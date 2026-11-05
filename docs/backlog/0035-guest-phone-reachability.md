@@ -54,12 +54,52 @@ shown to the other Owner as history, only as "this number may not have WhatsApp"
 
 ### 2. Kosher-line prefixes (free, offline, before any send)
 
-If the kosher ranges can be confirmed (from the carriers or the Ministry of Communications
-numbering plan, `https://www.gov.il/BlobFolder/rfp/27032023/he/Numbering_Plan_032023.pdf`),
-a static prefix list flags these guests when they are added: "kosher number - reach by
-phone call". This is the cheapest high-value signal for the Israeli market. Note number
-portability: a kosher SIM cannot be ported off its range, but a range list still goes stale,
-so keep it as data with a review date, not hard-coded logic spread around.
+Kosher lines were given their own ranges per carrier by design (the "kosher floor",
+קומה כשרה), so a prefix list flags them when the guest is added. **No official,
+machine-readable list was found.** The Rabbinical Committee for Communications and the
+carriers set the ranges; the Ministry of Communications numbering plan lists operator blocks,
+not which are kosher. The list below comes from secondary sources (a vendor help page, Hebrew
+Wikipedia, news reports), all undated:
+
+| Carrier | Ranges |
+|---|---|
+| Pelephone | 050-41 |
+| Cellcom | 052-71, 052-76 |
+| Partner | 054-84, 054-85 |
+| Hot Mobile | 053-31, 053-41, 053-51 |
+| Golan | 058-32 |
+| Rami Levy | 055-67 |
+| 019 (Telzar) | 055-98 |
+| Free Telecom / x2one | 055-32 |
+| Cellact | 055-71 |
+
+**Checked against production (2026-11-05):**
+
+| Israeli mobile guests sent to | Sent to | WhatsApp worked | Not on WhatsApp (`131026`) | Not on WhatsApp, and SMS failed too |
+|---|---|---|---|---|
+| In a range above | 35 | 9 (26%) | 21 (60%) | 21 (all of them) |
+| Everyone else | 3,934 | 3,255 (83%) | 77 (2%) | 40 |
+
+- The flag is a strong predictor: 60% "no WhatsApp" against 2%, and **not one** in-range guest
+  without WhatsApp was reached by SMS. The remedy for them is a call, never an SMS fallback.
+- It covers a third of the guests unreachable on both channels (21 of 61). The other 40 are
+  spread across ordinary ranges: dead numbers, or kosher lines the list misses.
+- It is not a certainty: 9 in-range guests did get WhatsApp. Since the Ministry's portability
+  reform (Minister Hendel, about 2022) a kosher number can move to a regular line and keep its
+  number, so the prefix decays as a signal over time. Label it "probably kosher".
+- `05598` and `05351` each had an SMS delivered, so those two entries are the least trusted.
+  `05331`, `05532`, `05571` have no guests yet.
+
+**Keeping the list honest.** Store it as data with a source and a review date, not as logic
+spread around. The send history can keep checking it: per range, the share of `131026` + SMS
+failed. A range on the list that keeps delivering should be questioned, and an unlisted range
+that keeps failing both ways is a candidate to add (needs a minimum count, since 61 guests are
+too few to find new ranges today).
+
+**Product shape.** A small marker on the guest ("מספר כשר - כנראה לא יקבל וואטסאפ או SMS"),
+a count on the guest list, and a nudge toward a call round on the plan that has calls
+(ADR 0034). It should not block sending: a WhatsApp still costs one attempt, and 26% of these
+numbers do have it.
 
 ### 3. Paid line lookup (before any send, per-lookup cost)
 
@@ -91,14 +131,17 @@ Per Event, it would be added to the flat per-record price (ADR 0002).
 
 1. Reachability from our own attempts (option 1), shown in the guest list and drawer as a
    small badge. This is mostly a query and a component.
-2. Verify the kosher ranges and flag them at entry (option 2).
+2. Flag the kosher ranges at entry (option 2). The production check above already supports it.
 3. Only if dead numbers remain a real share of failures, trial an HLR vendor on a sample of
    the 62 known-unreachable numbers to see whether it would have caught them before paying
    for it at scale.
 
 ## Still unknown
 
-- Whether the `05041` / `05484` / `05276` / `05271` ranges really are kosher, and the full list.
+- An authoritative kosher range list. Ask the carriers or the Rabbinical Committee for
+  Communications; the table above is from secondary sources.
+- Whether some kosher lines take SMS (banking and Home Front Command alerts pushed for it).
+  Production says none of ours did.
 - Whether an HLR vendor reports Israeli numbers accurately (some carriers answer HLR queries
   partly or not at all, so test on known numbers) and at what price.
 - Whether reachability should be shared across Events and Owners (privacy policy).
