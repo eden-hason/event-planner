@@ -4,6 +4,7 @@ import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import { CALL_OUTCOMES, type CallOutcome } from '../types';
+import { callTransportationRefusal } from '../utils/transportation';
 
 export type CallOutcomeResult = { success: boolean; message: string };
 
@@ -74,6 +75,12 @@ export async function recordCallOutcome(input: {
         guestUpdate.amount = input.amount;
       }
 
+      // A Guest Record that declines goes back to unanswered on the
+      // Transportation Question, as it does in the Confirmation Conversation.
+      if (input.outcome === 'declined') {
+        guestUpdate.needs_transportation = null;
+      }
+
       const { error: guestError } = await supabase
         .from('guests')
         .update(guestUpdate)
@@ -126,5 +133,74 @@ export async function saveCallNote(input: {
   } catch (error) {
     console.error('saveCallNote failed:', error);
     return { success: false, message: 'שמירת ההערה נכשלה' };
+  }
+}
+
+/**
+ * Records the answer to the Event's Transportation Question that the caller
+ * heard on the phone: yes, no, or null to clear it back to unanswered.
+ *
+ * Writes the Guest Record's own answer, the same column the Confirmation
+ * Conversation and the RSVP page write, so the Owner's guest list counts it
+ * like any other. Scoped to a record in this round, and only while the Event
+ * asks the question and the record is confirmed (see Transportation Question).
+ */
+export async function saveCallTransportation(input: {
+  roundId: string;
+  guestId: string;
+  eventId: string;
+  needsTransportation: boolean | null;
+}): Promise<CallOutcomeResult> {
+  await assertAdmin();
+  const supabase = createServiceClient();
+
+  try {
+    const { data: log, error: logError } = await supabase
+      .from('call_logs')
+      .select('guests!inner(rsvp_status, event_id, events!inner(guests_experience))')
+      .eq('round_id', input.roundId)
+      .eq('guest_id', input.guestId)
+      .maybeSingle();
+
+    if (logError) {
+      console.error('Failed to read the call log for transportation:', logError);
+      return { success: false, message: 'שמירת ההסעה נכשלה' };
+    }
+
+    const guest = log?.guests as unknown as {
+      rsvp_status: string | null;
+      event_id: string;
+      events: { guests_experience: { ask_transportation?: boolean } | null } | null;
+    } | null;
+
+    if (!guest || guest.event_id !== input.eventId) {
+      return { success: false, message: 'הרשומה לא נמצאה בסבב' };
+    }
+
+    const refusal = callTransportationRefusal({
+      asked: guest.events?.guests_experience?.ask_transportation ?? false,
+      rsvpStatus: guest.rsvp_status,
+      value: input.needsTransportation,
+    });
+    if (refusal) return { success: false, message: refusal };
+
+    const { error } = await supabase
+      .from('guests')
+      .update({
+        needs_transportation: input.needsTransportation,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', input.guestId);
+
+    if (error) {
+      console.error('Failed to save call transportation:', error);
+      return { success: false, message: 'שמירת ההסעה נכשלה' };
+    }
+
+    revalidateOutreach(input.eventId);
+    return { success: true, message: 'ההסעה נשמרה' };
+  } catch (error) {
+    console.error('saveCallTransportation failed:', error);
+    return { success: false, message: 'שמירת ההסעה נכשלה' };
   }
 }

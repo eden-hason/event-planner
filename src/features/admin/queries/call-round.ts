@@ -16,6 +16,8 @@ export type RoundGuestRow = {
   outcome: CallOutcome | null;
   notes: string | null;
   amount: number;
+  /** The Transportation Question answer: true / false, null when unanswered. */
+  needsTransportation: boolean | null;
 };
 
 export type RoundDetail = {
@@ -28,6 +30,8 @@ export type RoundDetail = {
   completedAt: string | null;
   /** The audience the plan targeted, snapshotted at start */
   targetStatus: string | null;
+  /** The Event asks the Transportation Question, so the caller asks it too. */
+  askTransportation: boolean;
   guests: RoundGuestRow[];
 };
 
@@ -38,7 +42,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
 
   const { data: round, error } = await supabase
     .from('call_rounds')
-    .select('id, event_id, schedule_id, created_at, completed_at, events(title)')
+    .select('id, event_id, schedule_id, created_at, completed_at, events(title, guests_experience)')
     .eq('id', roundId)
     .maybeSingle();
 
@@ -46,7 +50,10 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
   if (!round) return null;
   if (test.eventIds.includes(round.event_id)) return null;
 
-  const event = round.events as unknown as { title: string | null } | null;
+  const event = round.events as unknown as {
+    title: string | null;
+    guests_experience: { ask_transportation?: boolean } | null;
+  } | null;
 
   // Label parity with the Owner app: the index runs over every schedule of the
   // type on this event, whatever its status. See brief 3.10.
@@ -85,7 +92,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
   const logs = await pageAll((from, to) =>
     supabase
       .from('call_logs')
-      .select('id, guest_id, outcome, notes, guests!inner(name, phone_number, rsvp_status, amount)')
+      .select('id, guest_id, outcome, notes, guests!inner(name, phone_number, rsvp_status, amount, needs_transportation)')
       .eq('round_id', roundId)
       .order('id')
       .range(from, to),
@@ -97,6 +104,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
       phone_number: string | null;
       rsvp_status: string | null;
       amount: number | null;
+      needs_transportation: boolean | null;
     };
 
     return {
@@ -107,6 +115,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
       outcome: (log.outcome ?? null) as CallOutcome | null,
       notes: ((log.notes as string | null) ?? '').trim() || null,
       amount: guest?.amount ?? 1,
+      needsTransportation: guest?.needs_transportation ?? null,
     };
   });
 
@@ -125,6 +134,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
     startedAt: round.created_at,
     completedAt: round.completed_at,
     targetStatus,
+    askTransportation: event?.guests_experience?.ask_transportation ?? false,
     guests,
   };
 }
