@@ -150,7 +150,8 @@ never exceeds the number of Guests confirmed.
 An optional question the Owner switches on for the Event: does a confirmed Guest Record want
 transportation to the Event, yes or no. Asked after Special Meals, in the Confirmation
 Conversation (a yes / no question) and on the RSVP page (an opt-in checkbox; submitting the
-page with it unticked is a "no"). Unanswered is its own state, never a "no": a Guest who
+page with it unticked is a "no"), and by an Operator on a Call Round, once the Guest Record is
+confirmed. Unanswered is its own state, never a "no": a Guest who
 stops the conversation before it, or one confirmed some other way. A Guest Record that
 declines goes back to unanswered.
 

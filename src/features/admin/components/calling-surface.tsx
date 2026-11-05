@@ -4,11 +4,15 @@ import { useMemo, useOptimistic, useState, useTransition } from 'react';
 import { Surface } from './band';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Search, Info, Minus, Plus } from 'lucide-react';
+import { Search, Info, Minus, Plus, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { recordCallOutcome, saveCallNote } from '@/features/calls/actions/call-outcomes';
+import {
+  recordCallOutcome,
+  saveCallNote,
+  saveCallTransportation,
+} from '@/features/calls/actions/call-outcomes';
 import {
   finishCallRound,
   reopenCallRound,
@@ -243,6 +247,49 @@ function OutcomeCell({
   );
 }
 
+/**
+ * The Transportation Question, asked on the call: yes or no, and clicking the
+ * active answer clears it back to unanswered, as an outcome does. It belongs
+ * to a confirmed record only, so until the record is confirmed there is
+ * nothing to ask and the cell says so rather than offering buttons.
+ */
+function TransportationCell({
+  guest,
+  inProgress,
+  onSave,
+}: {
+  guest: RoundGuestRow;
+  inProgress: boolean;
+  onSave: (value: boolean | null) => void;
+}) {
+  if (guest.currentRsvpStatus !== 'confirmed') {
+    return <span className="text-muted-foreground text-[12px]">אחרי אישור הגעה</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-1.5" role="group" aria-label="צריכים הסעה">
+      {([true, false] as const).map((option) => {
+        const active = guest.needsTransportation === option;
+        return (
+          <button
+            key={String(option)}
+            type="button"
+            disabled={!inProgress}
+            aria-pressed={active}
+            onClick={() => onSave(active ? null : option)}
+            className={cn(
+              'rounded-md border px-2 py-1 text-[12.5px] font-medium disabled:opacity-60',
+              active ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent',
+            )}
+          >
+            {option ? 'כן' : 'לא'}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CallingSurface({ round }: { round: RoundDetail }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -256,6 +303,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const inProgress = round.completedAt === null;
+  const askTransportation = round.askTransportation;
 
   // Optimistic overlay on the server-fetched rows. Each mutation patches the
   // matching guest immediately; the Server Action then runs in the background
@@ -277,9 +325,13 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
     (counts, guest) => {
       if (guest.outcome) counts[guest.outcome] += 1;
       if (guest.outcome === 'confirmed') counts.confirmedGuests += guest.amount;
+      if (guest.currentRsvpStatus === 'confirmed' && guest.needsTransportation === true) {
+        counts.transport += 1;
+        counts.transportGuests += guest.amount;
+      }
       return counts;
     },
-    { confirmed: 0, declined: 0, no_answer: 0, confirmedGuests: 0 },
+    { confirmed: 0, declined: 0, no_answer: 0, confirmedGuests: 0, transport: 0, transportGuests: 0 },
   );
 
   const visible = useMemo(() => {
@@ -304,6 +356,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         if (amount !== undefined) changes.amount = Math.max(1, amount);
       } else if (outcome === 'declined') {
         changes.currentRsvpStatus = 'declined';
+        changes.needsTransportation = null;
       }
       patchGuest({ guestId: guest.guestId, changes });
 
@@ -313,6 +366,20 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         eventId: round.eventId,
         outcome,
         amount,
+      });
+      if (!result.success) toast.error(result.message);
+    });
+  }
+
+  function saveTransportation(guest: RoundGuestRow, value: boolean | null) {
+    startTransition(async () => {
+      patchGuest({ guestId: guest.guestId, changes: { needsTransportation: value } });
+
+      const result = await saveCallTransportation({
+        roundId: round.id,
+        guestId: guest.guestId,
+        eventId: round.eventId,
+        needsTransportation: value,
       });
       if (!result.success) toast.error(result.message);
     });
@@ -440,6 +507,14 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             className={callOutcomePresentation('no_answer').text}
           />
           <Tally label="לא התקשרנו" value={total - called} className="text-muted-foreground" />
+          {askTransportation && (
+            <Tally
+              label="צריכים הסעה"
+              value={tally.transport}
+              hint={countLabel(tally.transportGuests, 'אורח אחד', 'אורחים')}
+              className="text-foreground"
+            />
+          )}
         </div>
       )}
 
@@ -469,13 +544,26 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
       </div>
 
       <Surface className="overflow-x-auto">
-        <table className="w-full min-w-[760px] border-collapse text-[13px]">
+        <table
+          className={cn(
+            'w-full border-collapse text-[13px]',
+            askTransportation ? 'min-w-[900px]' : 'min-w-[760px]',
+          )}
+        >
           <thead>
             <tr className="text-muted-foreground border-b text-start text-[11.5px] font-semibold tracking-[0.06em] uppercase">
               <th className="px-3 py-2 font-semibold">רשומת אורח</th>
               <th className="w-[150px] px-3 py-2 font-semibold">טלפון</th>
               <th className="w-[110px] px-3 py-2 font-semibold">סטטוס עכשיו</th>
               <th className="w-[280px] px-3 py-2 font-semibold">תוצאת השיחה</th>
+              {askTransportation && (
+                <th className="w-[140px] px-3 py-2 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Bus className="size-3.5" aria-hidden />
+                    הסעה
+                  </span>
+                </th>
+              )}
               <th className="px-3 py-2 font-semibold">הערה, גלויה למארחים</th>
             </tr>
           </thead>
@@ -515,6 +603,15 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
                     onRecord={(outcome, amount) => recordOutcome(guest, outcome, amount)}
                   />
                 </td>
+                {askTransportation && (
+                  <td className="px-3 py-2">
+                    <TransportationCell
+                      guest={guest}
+                      inProgress={inProgress}
+                      onSave={(value) => saveTransportation(guest, value)}
+                    />
+                  </td>
+                )}
                 <td className="px-3 py-2">
                   <Input
                     defaultValue={guest.notes ?? ''}
@@ -531,7 +628,7 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             ))}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-muted-foreground px-3 py-8 text-center text-[13px]">
+                <td colSpan={askTransportation ? 6 : 5} className="text-muted-foreground px-3 py-8 text-center text-[13px]">
                   אין רשומות שמתאימות לסינון
                 </td>
               </tr>
@@ -545,6 +642,8 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
         <span>
           ההערות גלויות לבעלי האירוע באפליקציה. &quot;סטטוס עכשיו&quot; הוא מה שרשום ברשומת האורח היום,
           והתוצאה היא מה שקרה בשיחה
+          {askTransportation &&
+            '. האירוע שואל על הסעה, ותשובה שמסמנים כאן נשמרת ברשומת האורח כמו תשובה שהאורח נתן בעצמו'}
         </span>
       </p>
     </div>
