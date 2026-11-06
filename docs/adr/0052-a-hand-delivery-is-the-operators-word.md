@@ -40,6 +40,11 @@ SMS Rendition, rendered with the Delivery's own RSVP token.
 - **The SMS Rendition is the text.** It is already the WhatsApp body with its buttons as
   plain links, so a Hand Delivery adds no authored copy and the RSVP link comes with it. No
   intro line is added; the Operator can edit the text in WhatsApp before sending.
+- **No text, no block.** A Bespoke Template may be written for WhatsApp alone, with no
+  SMS Rendition, so there is nothing to render. The chat then opens empty, the dialog
+  offers the Guest's RSVP link to paste, and the Operator writes the message. Refusing
+  would leave exactly the custom Events that most need a person with no Hand Delivery,
+  and the Delivery is the Operator's word either way.
 - **Withdrawing erases it.** A Hand Delivery recorded by mistake is deleted, and the
   Delivery rolls back to Failed. It is the one Delivery Attempt that can be erased: a
   provider attempt records something that happened, while a mistaken Hand Delivery records

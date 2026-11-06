@@ -487,6 +487,8 @@ The Owner sees it as delivered by the Kululu team, after the failed attempts bef
 
 It is offered in the Back Office for any Failed Delivery, whatever the failure. The message
 is the Schedule's **SMS Rendition**, links included, carrying the Delivery's own RSVP link.
+A Schedule with none to render - a **Bespoke Template** written for WhatsApp alone - opens
+the chat empty, and the Operator writes the message, with the Guest's RSVP link at hand.
 
 Only the Operator's confirmation is recorded. Opening WhatsApp to send it records nothing,
 because Kululu cannot see whether the message went. A Hand Delivery recorded by mistake is
