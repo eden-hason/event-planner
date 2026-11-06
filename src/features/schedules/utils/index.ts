@@ -9,6 +9,7 @@ export {
   buildDynamicHeaderParameters,
   buildDynamicButtonParameters,
   extractPlaceholders,
+  rsvpPageUrl,
   type MediaParameter,
   type ParameterResolutionContext,
   type ButtonComponent,

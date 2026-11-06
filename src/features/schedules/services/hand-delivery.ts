@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { toE164 } from '@/lib/phone';
+import { rsvpPageUrl } from '../utils';
 import {
   HAND_TRIGGER,
   handDeliveryRefusal,
@@ -24,9 +25,17 @@ import {
 
 export type HandDeliveryMessage = {
   phone: string;
-  /** The Schedule's SMS Rendition for this Guest, their RSVP link included */
-  text: string;
-  /** Opens WhatsApp on the Operator's device with `text` typed in */
+  /**
+   * The Schedule's SMS Rendition for this Guest, their RSVP link included.
+   * Null when there is none to render - a Bespoke Template written for
+   * WhatsApp alone - and the Operator writes the message themselves.
+   */
+  text: string | null;
+  /** Why there is no text, for the Operator; null when there is */
+  noTextReason: string | null;
+  /** The Guest's own RSVP page, to paste into a message written by hand */
+  rsvpUrl: string | null;
+  /** Opens WhatsApp on the Operator's device with `text` typed in, or empty */
   chatUrl: string;
 };
 
@@ -39,6 +48,7 @@ type DeliveryRow = {
   guest_id: string;
   confirmation_token: string | null;
   schedules: { event_id: string };
+  guests: { phone_number: string | null } | null;
   message_delivery_attempts: { triggered_by: string | null }[];
 };
 
@@ -60,7 +70,7 @@ async function loadDelivery(
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
-      'id, status, schedule_id, guest_id, confirmation_token, schedules(event_id), message_delivery_attempts(triggered_by)',
+      'id, status, schedule_id, guest_id, confirmation_token, schedules(event_id), guests(phone_number), message_delivery_attempts(triggered_by)',
     )
     .eq('id', deliveryId)
     .maybeSingle();
@@ -82,6 +92,9 @@ async function loadDelivery(
  * The message to type into WhatsApp for one Failed Delivery: the Schedule's
  * SMS Rendition rendered for this Guest with the Delivery's own RSVP token, so
  * an answer through it lands on this Delivery like any other.
+ *
+ * A message Kululu cannot render still opens the chat, empty, for the Operator
+ * to write in: the Hand Delivery is the Operator's word either way.
  */
 export async function buildHandDeliveryMessage(
   supabase: SupabaseClient,
@@ -90,32 +103,48 @@ export async function buildHandDeliveryMessage(
   const loadedDelivery = await loadDelivery(supabase, deliveryId, { eligible: true });
   if (!loadedDelivery.ok) return loadedDelivery;
   const { delivery } = loadedDelivery;
-  if (!delivery.confirmation_token) {
-    return { ok: false, message: 'לשליחה הזו אין קישור אישור הגעה' };
-  }
 
-  const loaded = await loadFallbackSchedule(supabase, delivery.schedule_id);
-  if (!loaded) return { ok: false, message: 'התזמון הזה כבר לא קיים' };
-
-  const resolution = await resolveSmsRendition(supabase, loaded);
-  if (!resolution.ok) return { ok: false, message: resolution.reason };
-
-  const rendered = await renderSmsRenditionFor(
-    supabase,
-    loaded,
-    resolution,
-    delivery.guest_id,
-    delivery.confirmation_token,
-  );
-  if (!rendered) return { ok: false, message: 'רשומת האורח כבר לא קיימת' };
-
-  const phone = toE164(rendered.guest.phone);
+  const phone = toE164(delivery.guests?.phone_number);
   if (!phone) return { ok: false, message: 'אין לאורח מספר טלפון תקין' };
+
+  const token = delivery.confirmation_token;
+  const rendered = token
+    ? await renderHandText(supabase, delivery.schedule_id, delivery.guest_id, token)
+    : { text: null, reason: 'לשליחה הזו אין קישור אישור הגעה' };
 
   return {
     ok: true,
-    message: { phone, text: rendered.text, chatUrl: whatsappChatUrl(phone, rendered.text) },
+    message: {
+      phone,
+      text: rendered.text,
+      noTextReason: rendered.reason,
+      rsvpUrl: token ? rsvpPageUrl(token) : null,
+      chatUrl: whatsappChatUrl(phone, rendered.text),
+    },
   };
+}
+
+/** The SMS Rendition's text, or why there is none */
+async function renderHandText(
+  supabase: SupabaseClient,
+  scheduleId: string,
+  guestId: string,
+  token: string,
+): Promise<{ text: string; reason: null } | { text: null; reason: string }> {
+  const loaded = await loadFallbackSchedule(supabase, scheduleId);
+  if (!loaded) return { text: null, reason: 'התזמון הזה כבר לא קיים' };
+
+  const resolution = await resolveSmsRendition(supabase, loaded);
+  if (!resolution.ok) {
+    // Typically a Bespoke Template written for WhatsApp alone, with no SMS
+    // Rendition to type in. The cause is kept for whoever debugs it.
+    console.warn('[hand-delivery] No SMS Rendition for schedule', scheduleId, resolution.reason);
+    return { text: null, reason: 'לתזמון הזה אין נוסח טקסט שאפשר להכין מראש' };
+  }
+
+  const rendered = await renderSmsRenditionFor(supabase, loaded, resolution, guestId, token);
+  if (!rendered) return { text: null, reason: 'רשומת האורח כבר לא קיימת' };
+  return { text: rendered.text, reason: null };
 }
 
 /**
