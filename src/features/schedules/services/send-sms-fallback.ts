@@ -107,7 +107,7 @@ export type FallbackDeliveryRow = {
   message_delivery_attempts: AttemptRow[];
 };
 
-export type LoadedSchedule = {
+type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
   event: ReturnType<typeof mapEventRow>;
   /** False under an SMS Fallback Opt-out (CONTEXT.md). */
@@ -117,7 +117,7 @@ export type LoadedSchedule = {
 /** Why an Event under an SMS Fallback Opt-out offers no fallback. */
 export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
-export type Resolution =
+type Resolution =
   | ({ ok: true } & Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>)
   | { ok: false; reason: string };
 
@@ -369,7 +369,7 @@ export function awaitingSmsFallback(
   return awaiting;
 }
 
-export async function loadGuestsAndTables(
+async function loadGuestsAndTables(
   supabase: SupabaseClient,
   guestIds: string[],
   withTable: boolean,
@@ -399,13 +399,52 @@ export async function loadGuestsAndTables(
   return { guests, tables };
 }
 
-export function smsTemplateFor(
+function smsTemplateFor(
   resolution: Extract<Resolution, { ok: true }>,
   guest: GuestApp,
 ) {
   // Picked from the Guest as they are now: one who answered since the WhatsApp
   // send is no longer asked.
   return templateForGuest(resolution, guest) as Extract<MessageTemplateApp, { channel: 'sms' }>;
+}
+
+/** What one Guest's SMS Rendition is rendered from */
+function smsContext(
+  loaded: LoadedSchedule,
+  guest: GuestApp,
+  tables: Map<string, { tableNumber: number; label: string | null }>,
+  confirmationToken: string,
+): ParameterResolutionContext {
+  return {
+    guest,
+    event: loaded.event,
+    group: null,
+    table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
+    schedule: loaded.schedule,
+    confirmationToken,
+  };
+}
+
+/**
+ * One Guest's SMS Rendition as text, exactly as the Fallback sends it - the
+ * plan's preview and a Hand Delivery (ADR 0052) both read it from here. Null
+ * when the Guest Record no longer exists.
+ */
+export async function renderSmsRenditionFor(
+  supabase: SupabaseClient,
+  loaded: LoadedSchedule,
+  resolution: Extract<Resolution, { ok: true }>,
+  guestId: string,
+  confirmationToken: string,
+): Promise<{ guest: GuestApp; text: string } | null> {
+  const { guests, tables } = await loadGuestsAndTables(supabase, [guestId], Boolean(resolution.withTable));
+  const guest = guests.get(guestId);
+  if (!guest) return null;
+  const text = buildSmsBody(
+    smsTemplateFor(resolution, guest).payload,
+    smsContext(loaded, guest, tables, confirmationToken),
+  );
+  return { guest, text };
 }
 
 export async function buildSmsFallbackPlan(
@@ -434,19 +473,9 @@ export async function buildSmsFallbackPlan(
   let preview: string | null = null;
   if (resolution.ok && eligible.length > 0) {
     const first = eligible[0];
-    const { guests, tables } = await loadGuestsAndTables(supabase, [first.guestId], Boolean(resolution.withTable));
-    const guest = guests.get(first.guestId);
     const token = rows.find((r) => r.id === first.deliveryId)?.confirmation_token;
-    if (guest && token) {
-      const context: ParameterResolutionContext = {
-        guest,
-        event: loaded.event,
-        group: null,
-        table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-        schedule: loaded.schedule,
-        confirmationToken: token,
-      };
-      preview = buildSmsBody(smsTemplateFor(resolution, guest).payload, context);
+    if (token) {
+      preview = (await renderSmsRenditionFor(supabase, loaded, resolution, first.guestId, token))?.text ?? null;
     }
   }
 
@@ -533,14 +562,7 @@ export async function sendSmsFallback(
       return;
     }
 
-    const context: ParameterResolutionContext = {
-      guest,
-      event: loaded.event,
-      group: null,
-      table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-      schedule: loaded.schedule,
-      confirmationToken: token,
-    };
+    const context = smsContext(loaded, guest, tables, token);
 
     const result = await sendSmsToGuest({
       guest,

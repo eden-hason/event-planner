@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { toE164 } from '@/lib/phone';
-import { buildSmsBody, type ParameterResolutionContext } from '../utils';
 import {
   HAND_TRIGGER,
   handDeliveryRefusal,
@@ -9,9 +8,8 @@ import {
 } from '../utils/hand-delivery';
 import {
   loadFallbackSchedule,
-  loadGuestsAndTables,
+  renderSmsRenditionFor,
   resolveSmsRendition,
-  smsTemplateFor,
 } from './send-sms-fallback';
 
 /**
@@ -25,8 +23,6 @@ import {
  */
 
 export type HandDeliveryMessage = {
-  deliveryId: string;
-  guestName: string;
   phone: string;
   /** The Schedule's SMS Rendition for this Guest, their RSVP link included */
   text: string;
@@ -34,7 +30,7 @@ export type HandDeliveryMessage = {
   chatUrl: string;
 };
 
-type Result<T> = ({ ok: true } & T) | { ok: false; message: string };
+export type HandDeliveryResult<T = object> = ({ ok: true } & T) | { ok: false; message: string };
 
 type DeliveryRow = {
   id: string;
@@ -42,7 +38,7 @@ type DeliveryRow = {
   schedule_id: string;
   guest_id: string;
   confirmation_token: string | null;
-  schedules: { event_id: string } | null;
+  schedules: { event_id: string };
   message_delivery_attempts: { triggered_by: string | null }[];
 };
 
@@ -51,10 +47,16 @@ const REFUSAL_MESSAGES: Record<HandDeliveryRefusal, string> = {
   already_by_hand: 'השליחה הזו כבר סומנה כנמסרה ידנית',
 };
 
+/**
+ * The Delivery, or why there is nothing to act on. With `eligible`, also
+ * refuses one that offers no Hand Delivery - the same rule for showing the
+ * message and for recording it.
+ */
 async function loadDelivery(
   supabase: SupabaseClient,
   deliveryId: string,
-): Promise<DeliveryRow | null> {
+  { eligible = false } = {},
+): Promise<HandDeliveryResult<{ delivery: DeliveryRow }>> {
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
@@ -63,7 +65,17 @@ async function loadDelivery(
     .eq('id', deliveryId)
     .maybeSingle();
   if (error) throw error;
-  return (data as unknown as DeliveryRow | null) ?? null;
+  const delivery = data as unknown as DeliveryRow | null;
+  if (!delivery?.schedules) return { ok: false, message: 'השליחה הזו כבר לא קיימת' };
+
+  if (eligible) {
+    const refusal = handDeliveryRefusal({
+      status: delivery.status,
+      attempts: delivery.message_delivery_attempts,
+    });
+    if (refusal) return { ok: false, message: REFUSAL_MESSAGES[refusal] };
+  }
+  return { ok: true, delivery };
 }
 
 /**
@@ -74,15 +86,10 @@ async function loadDelivery(
 export async function buildHandDeliveryMessage(
   supabase: SupabaseClient,
   deliveryId: string,
-): Promise<Result<{ message: HandDeliveryMessage }>> {
-  const delivery = await loadDelivery(supabase, deliveryId);
-  if (!delivery) return { ok: false, message: 'השליחה הזו כבר לא קיימת' };
-
-  const refusal = handDeliveryRefusal({
-    status: delivery.status,
-    attempts: delivery.message_delivery_attempts,
-  });
-  if (refusal) return { ok: false, message: REFUSAL_MESSAGES[refusal] };
+): Promise<HandDeliveryResult<{ message: HandDeliveryMessage }>> {
+  const loadedDelivery = await loadDelivery(supabase, deliveryId, { eligible: true });
+  if (!loadedDelivery.ok) return loadedDelivery;
+  const { delivery } = loadedDelivery;
   if (!delivery.confirmation_token) {
     return { ok: false, message: 'לשליחה הזו אין קישור אישור הגעה' };
   }
@@ -93,36 +100,21 @@ export async function buildHandDeliveryMessage(
   const resolution = await resolveSmsRendition(supabase, loaded);
   if (!resolution.ok) return { ok: false, message: resolution.reason };
 
-  const { guests, tables } = await loadGuestsAndTables(
+  const rendered = await renderSmsRenditionFor(
     supabase,
-    [delivery.guest_id],
-    Boolean(resolution.withTable),
+    loaded,
+    resolution,
+    delivery.guest_id,
+    delivery.confirmation_token,
   );
-  const guest = guests.get(delivery.guest_id);
-  if (!guest) return { ok: false, message: 'רשומת האורח כבר לא קיימת' };
+  if (!rendered) return { ok: false, message: 'רשומת האורח כבר לא קיימת' };
 
-  const phone = toE164(guest.phone);
+  const phone = toE164(rendered.guest.phone);
   if (!phone) return { ok: false, message: 'אין לאורח מספר טלפון תקין' };
-
-  const context: ParameterResolutionContext = {
-    guest,
-    event: loaded.event,
-    group: null,
-    table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-    schedule: loaded.schedule,
-    confirmationToken: delivery.confirmation_token,
-  };
-  const text = buildSmsBody(smsTemplateFor(resolution, guest).payload, context);
 
   return {
     ok: true,
-    message: {
-      deliveryId,
-      guestName: guest.name,
-      phone,
-      text,
-      chatUrl: whatsappChatUrl(phone, text),
-    },
+    message: { phone, text: rendered.text, chatUrl: whatsappChatUrl(phone, rendered.text) },
   };
 }
 
@@ -138,15 +130,9 @@ export async function recordHandDelivery(
   supabase: SupabaseClient,
   deliveryId: string,
   operatorId: string,
-): Promise<Result<{ eventId: string }>> {
-  const delivery = await loadDelivery(supabase, deliveryId);
-  if (!delivery?.schedules) return { ok: false, message: 'השליחה הזו כבר לא קיימת' };
-
-  const refusal = handDeliveryRefusal({
-    status: delivery.status,
-    attempts: delivery.message_delivery_attempts,
-  });
-  if (refusal) return { ok: false, message: REFUSAL_MESSAGES[refusal] };
+): Promise<HandDeliveryResult<{ eventId: string }>> {
+  const loaded = await loadDelivery(supabase, deliveryId, { eligible: true });
+  if (!loaded.ok) return loaded;
 
   const now = new Date().toISOString();
   const { error } = await supabase.from('message_delivery_attempts').insert({
@@ -164,7 +150,7 @@ export async function recordHandDelivery(
     }
     throw error;
   }
-  return { ok: true, eventId: delivery.schedules.event_id };
+  return { ok: true, eventId: loaded.delivery.schedules.event_id };
 }
 
 /**
@@ -176,9 +162,9 @@ export async function recordHandDelivery(
 export async function withdrawHandDelivery(
   supabase: SupabaseClient,
   deliveryId: string,
-): Promise<Result<{ eventId: string }>> {
-  const delivery = await loadDelivery(supabase, deliveryId);
-  if (!delivery?.schedules) return { ok: false, message: 'השליחה הזו כבר לא קיימת' };
+): Promise<HandDeliveryResult<{ eventId: string }>> {
+  const loaded = await loadDelivery(supabase, deliveryId);
+  if (!loaded.ok) return loaded;
 
   const { data, error } = await supabase
     .from('message_delivery_attempts')
@@ -188,5 +174,5 @@ export async function withdrawHandDelivery(
     .select('id');
   if (error) throw error;
   if (!data?.length) return { ok: false, message: 'לשליחה הזו אין מסירה ידנית לבטל' };
-  return { ok: true, eventId: delivery.schedules.event_id };
+  return { ok: true, eventId: loaded.delivery.schedules.event_id };
 }

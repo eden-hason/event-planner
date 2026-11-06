@@ -1,6 +1,7 @@
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import type { SmsFallbackReason } from './send-helpers';
+import { carriesReadReceipt } from './hand-delivery';
 
 import type {
   GuestDeliveryOutcome,
@@ -150,7 +151,7 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
     case 'confirmed':
       return row.response === 'rsvp_confirm';
     case 'unseen':
-      return row.delivery === 'whatsapp' && !row.seen;
+      return row.delivery === 'whatsapp' && carriesReadReceipt(row) && !row.seen;
   }
 }
 

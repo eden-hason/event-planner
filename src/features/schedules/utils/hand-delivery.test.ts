@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { handDeliveryRefusal, reachedByHand, whatsappChatUrl } from './hand-delivery';
+import { carriesReadReceipt, handDeliveryRefusal, whatsappChatUrl } from './hand-delivery';
 
 describe('whatsappChatUrl', () => {
   it('opens a chat with the number as digits and the text encoded', () => {
@@ -41,29 +41,29 @@ describe('handDeliveryRefusal', () => {
   });
 });
 
-describe('reachedByHand', () => {
-  it('is the hand attempt when nothing else reached the Guest', () => {
+describe('carriesReadReceipt', () => {
+  const failedWa = { byHand: false };
+  const hand = { byHand: true, deliveredAt: '2026-11-02T09:00:00Z' };
+
+  it('is Kululu\'s own WhatsApp, reached or on its way', () => {
+    assert.equal(carriesReadReceipt({ delivery: 'whatsapp', steps: [{ deliveredAt: 'x' }] }), true);
+    assert.equal(carriesReadReceipt({ delivery: 'on_its_way', steps: [] }), true);
+  });
+
+  it('is never an SMS, a failure or a Guest nothing was sent to', () => {
+    for (const delivery of ['sms', 'sms_on_its_way', 'not_delivered', 'no_phone', null]) {
+      assert.equal(carriesReadReceipt({ delivery, steps: [] }), false);
+    }
+  });
+
+  it('is not a Guest reached by hand', () => {
+    assert.equal(carriesReadReceipt({ delivery: 'whatsapp', steps: [failedWa, hand] }), false);
+  });
+
+  it('counts again once a provider also reached them', () => {
     assert.equal(
-      reachedByHand([
-        { triggered_by: 'scheduled', status: 'failed' },
-        { triggered_by: 'fallback_auto', status: 'failed' },
-        { triggered_by: 'hand', status: 'delivered' },
-      ]),
+      carriesReadReceipt({ delivery: 'whatsapp', steps: [hand, { readAt: '2026-11-02T10:00:00Z' }] }),
       true,
     );
-  });
-
-  it('gives way to a provider report that reached them', () => {
-    assert.equal(
-      reachedByHand([
-        { triggered_by: 'fallback_auto', status: 'delivered' },
-        { triggered_by: 'hand', status: 'delivered' },
-      ]),
-      false,
-    );
-  });
-
-  it('is false with no Hand Delivery', () => {
-    assert.equal(reachedByHand([{ triggered_by: 'scheduled', status: 'delivered' }]), false);
   });
 });

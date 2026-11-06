@@ -6,9 +6,9 @@ import {
   type DeliveryAttemptRow,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
+import { carriesReadReceipt } from '../utils/hand-delivery';
 import { awaitingSmsFallback, stuckWindow } from './send-sms-fallback';
 import { scheduleFreeze } from './sweep-sms-fallback';
-import { reachedByHand } from '../utils/hand-delivery';
 
 /** One guest's Delivery for one Schedule: its Journey, and the queue facts a catch-up reads */
 export type GuestJourneyDelivery = {
@@ -137,12 +137,7 @@ export async function loadGuestJourneys(
     const read = row.delivery_method === 'whatsapp' && row.status === 'read';
     // A guest who answered opened the message, receipt or not - the same rule
     // the results tab applies to WhatsApp guests with read receipts turned off.
-    // A Hand Delivery can carry no receipt, so it is never read (ADR 0052).
-    const seenCapable =
-      row.delivery_method === 'whatsapp' &&
-      row.status !== 'not_sent' &&
-      row.status !== 'failed' &&
-      !reachedByHand(attempts);
+    const seenCapable = carriesReadReceipt({ delivery, steps });
 
     return {
       scheduleId,

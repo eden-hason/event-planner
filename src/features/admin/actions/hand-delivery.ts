@@ -8,15 +8,11 @@ import {
   recordHandDelivery,
   withdrawHandDelivery,
   type HandDeliveryMessage,
+  type HandDeliveryResult,
 } from '@/features/schedules/services/hand-delivery';
+import type { EventControlResult } from './event-controls';
 
 export type { HandDeliveryMessage } from '@/features/schedules/services/hand-delivery';
-
-export type HandDeliveryMessageResult =
-  | { ok: true; message: HandDeliveryMessage }
-  | { ok: false; message: string };
-
-export type HandDeliveryResult = { success: boolean; message: string };
 
 /**
  * The WhatsApp message a Hand Delivery would send (ADR 0052), fetched when the
@@ -24,41 +20,52 @@ export type HandDeliveryResult = { success: boolean; message: string };
  */
 export async function getHandDeliveryMessage(
   deliveryId: string,
-): Promise<HandDeliveryMessageResult> {
+): Promise<HandDeliveryResult<{ message: HandDeliveryMessage }>> {
   await assertAdmin();
   try {
-    const result = await buildHandDeliveryMessage(createServiceClient(), deliveryId);
-    return result.ok ? { ok: true, message: result.message } : result;
+    return await buildHandDeliveryMessage(createServiceClient(), deliveryId);
   } catch (error) {
     console.error('getHandDeliveryMessage failed:', error);
     return { ok: false, message: 'לא הצלחנו להכין את ההודעה' };
   }
 }
 
-/** The Operator's word that the message reached the Guest */
-export async function markHandDelivered(deliveryId: string): Promise<HandDeliveryResult> {
-  const operatorId = await assertAdmin();
+/** Runs a Hand Delivery write and revalidates the Event it touched */
+async function settle(
+  name: string,
+  write: () => Promise<HandDeliveryResult<{ eventId: string }>>,
+  done: string,
+  failed: string,
+): Promise<EventControlResult> {
   try {
-    const result = await recordHandDelivery(createServiceClient(), deliveryId, operatorId);
+    const result = await write();
     if (!result.ok) return { success: false, message: result.message };
     revalidateOutreach(result.eventId);
-    return { success: true, message: 'סומן כנמסר ידנית' };
+    return { success: true, message: done };
   } catch (error) {
-    console.error('markHandDelivered failed:', error);
-    return { success: false, message: 'הסימון נכשל' };
+    console.error(`${name} failed:`, error);
+    return { success: false, message: failed };
   }
 }
 
+/** The Operator's word that the message reached the Guest */
+export async function markHandDelivered(deliveryId: string): Promise<EventControlResult> {
+  const operatorId = await assertAdmin();
+  return settle(
+    'markHandDelivered',
+    () => recordHandDelivery(createServiceClient(), deliveryId, operatorId),
+    'סומן כנמסר ידנית',
+    'הסימון נכשל',
+  );
+}
+
 /** Takes back a Hand Delivery recorded by mistake; the Delivery is Failed again */
-export async function withdrawHandDelivered(deliveryId: string): Promise<HandDeliveryResult> {
+export async function withdrawHandDelivered(deliveryId: string): Promise<EventControlResult> {
   await assertAdmin();
-  try {
-    const result = await withdrawHandDelivery(createServiceClient(), deliveryId);
-    if (!result.ok) return { success: false, message: result.message };
-    revalidateOutreach(result.eventId);
-    return { success: true, message: 'המסירה הידנית בוטלה' };
-  } catch (error) {
-    console.error('withdrawHandDelivered failed:', error);
-    return { success: false, message: 'הביטול נכשל' };
-  }
+  return settle(
+    'withdrawHandDelivered',
+    () => withdrawHandDelivery(createServiceClient(), deliveryId),
+    'המסירה הידנית בוטלה',
+    'הביטול נכשל',
+  );
 }

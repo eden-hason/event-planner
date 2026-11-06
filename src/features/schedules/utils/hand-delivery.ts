@@ -22,6 +22,11 @@ export function whatsappChatUrl(phoneE164: string, text: string): string {
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 }
 
+/** Whether an Operator recorded a Hand Delivery among these attempts */
+export function hasHandDelivery(attempts: readonly { triggered_by: string | null }[]): boolean {
+  return attempts.some((attempt) => isHandTrigger(attempt.triggered_by));
+}
+
 export type HandDeliveryRefusal = 'not_failed' | 'already_by_hand';
 
 /**
@@ -34,26 +39,26 @@ export function handDeliveryRefusal(delivery: {
   status: string;
   attempts: readonly { triggered_by: string | null }[];
 }): HandDeliveryRefusal | null {
-  if (delivery.attempts.some((attempt) => isHandTrigger(attempt.triggered_by))) {
-    return 'already_by_hand';
-  }
+  if (hasHandDelivery(delivery.attempts)) return 'already_by_hand';
   return delivery.status === 'failed' ? null : 'not_failed';
 }
 
 /**
- * Whether the Guest was reached by the Hand Delivery itself rather than by a
- * message Kululu sent. Another attempt that reached them (a late SMS report)
- * is the provider's word, and that wins the telling.
+ * Whether a Delivery can carry a read receipt, so its Guest counts in the seen
+ * rate and may read as unseen. Only Kululu's own WhatsApp reports reading: an
+ * SMS never does, and a Hand Delivery went from a team phone. A Guest a
+ * provider also reached is told by that report, so it counts again.
+ *
+ * Lives here, free of imports, because the client-side results filter asks it
+ * as well as the server-side readers.
  */
-export function reachedByHand(
-  attempts: readonly { triggered_by: string | null; status: string }[],
-): boolean {
-  return (
-    attempts.some((attempt) => isHandTrigger(attempt.triggered_by)) &&
-    !attempts.some(
-      (attempt) =>
-        !isHandTrigger(attempt.triggered_by) &&
-        (attempt.status === 'delivered' || attempt.status === 'read'),
-    )
-  );
+export function carriesReadReceipt(row: {
+  delivery: string | null;
+  steps: readonly { byHand?: boolean; deliveredAt?: string; readAt?: string }[];
+}): boolean {
+  if (row.delivery !== 'whatsapp' && row.delivery !== 'on_its_way') return false;
+  const reachedByHand =
+    row.steps.some((step) => step.byHand) &&
+    !row.steps.some((step) => !step.byHand && (step.deliveredAt || step.readAt));
+  return !reachedByHand;
 }

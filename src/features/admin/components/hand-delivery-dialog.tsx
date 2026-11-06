@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import { WhatsAppIcon } from '@/components/icons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -21,37 +19,8 @@ import {
   getHandDeliveryMessage,
   markHandDelivered,
   withdrawHandDelivered,
-  type HandDeliveryMessage,
-  type HandDeliveryResult,
 } from '../actions/hand-delivery';
-
-function useHandAction() {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  function run(action: () => Promise<HandDeliveryResult>, loading: string, onDone?: () => void) {
-    startTransition(async () => {
-      const promise = action().then((result) => {
-        if (!result.success) throw new Error(result.message);
-        return result;
-      });
-      toast.promise(promise, {
-        loading,
-        success: (result) => {
-          onDone?.();
-          router.refresh();
-          return result.message;
-        },
-        error: (error) => (error instanceof Error ? error.message : 'הפעולה נכשלה'),
-      });
-      try {
-        await promise;
-      } catch {
-        // The toast owns the visible error state
-      }
-    });
-  }
-  return { pending, run };
-}
+import { useControlAction } from './use-control-action';
 
 /**
  * A Hand Delivery for one Failed Delivery (CONTEXT.md, ADR 0052): the message
@@ -61,18 +30,14 @@ function useHandAction() {
  */
 export function HandDeliveryDialog({ deliveryId, guestName }: { deliveryId: string; guestName: string }) {
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState<HandDeliveryMessage | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<Awaited<ReturnType<typeof getHandDeliveryMessage>> | null>(null);
   const [loading, startLoading] = useTransition();
-  const { pending, run } = useHandAction();
+  const { pending, run } = useControlAction(() => setOpen(false));
+  const message = loaded?.ok ? loaded.message : null;
+  const loadError = loaded && !loaded.ok ? loaded.message : null;
 
   function load() {
-    setLoadError(null);
-    startLoading(async () => {
-      const result = await getHandDeliveryMessage(deliveryId);
-      if (result.ok) setMessage(result.message);
-      else setLoadError(result.message);
-    });
+    startLoading(async () => setLoaded(await getHandDeliveryMessage(deliveryId)));
   }
 
   function onOpenChange(next: boolean) {
@@ -120,7 +85,7 @@ export function HandDeliveryDialog({ deliveryId, guestName }: { deliveryId: stri
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>סגירה</Button>
           <Button
-            onClick={() => run(() => markHandDelivered(deliveryId), 'מסמנים כנמסר ידנית', () => setOpen(false))}
+            onClick={() => run(() => markHandDelivered(deliveryId))}
             disabled={pending || !!loadError}
           >
             ההודעה הגיעה
@@ -137,7 +102,7 @@ export function HandDeliveryDialog({ deliveryId, guestName }: { deliveryId: stri
  */
 export function WithdrawHandDeliveryButton({ deliveryId, guestName }: { deliveryId: string; guestName: string }) {
   const [open, setOpen] = useState(false);
-  const { pending, run } = useHandAction();
+  const { pending, run } = useControlAction(() => setOpen(false));
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -156,7 +121,7 @@ export function WithdrawHandDeliveryButton({ deliveryId, guestName }: { delivery
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>השארה</Button>
           <Button
             variant="destructive"
-            onClick={() => run(() => withdrawHandDelivered(deliveryId), 'מבטלים את המסירה הידנית', () => setOpen(false))}
+            onClick={() => run(() => withdrawHandDelivered(deliveryId))}
             disabled={pending}
           >
             ביטול המסירה

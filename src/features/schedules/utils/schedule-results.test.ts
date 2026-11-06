@@ -231,6 +231,8 @@ test('a Hand Delivery follows the failures as one step, and is received but neve
     ['sent:whatsapp', 'not_delivered:whatsapp', 'sent:sms', 'not_delivered:sms', 'delivered_by_hand:whatsapp'],
   );
   assert.equal(messageState(handed), 'received');
+  // Never listed as unseen: no receipt can come for a message from a team phone
+  assert.deepEqual(filterGuests([handed], { filter: 'unseen', query: '' }), []);
 });
 
 test('an SMS on its way is not reached yet', () => {

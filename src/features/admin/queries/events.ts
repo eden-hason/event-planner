@@ -10,7 +10,7 @@ import {
   comparePlanOrder,
   inAudience,
   isFollowUpConfirmation,
-  isHandTrigger,
+  hasHandDelivery,
   numberPlan,
   planEntryFromRow,
   validatePhoneNumber,
@@ -416,6 +416,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
       notesCount: logs.filter((log) => !!log.notes?.trim()).length,
       deliveries: scheduleDeliveries.map((delivery) => {
         const guest = delivery.guests as unknown as { name: string; phone_number: string | null } | null;
+        const attempts = (delivery.message_delivery_attempts ?? []) as { channel: string; triggered_by: string | null }[];
         return {
           id: delivery.id,
           guestId: delivery.guest_id,
@@ -428,10 +429,8 @@ export const getEventTimeline = cache(async function getEventTimeline(
           sentAt: delivery.sent_at,
           triggeredBy: delivery.triggered_by,
           channel: delivery.delivery_method,
-          hasSmsAttempt: ((delivery.message_delivery_attempts ?? []) as { channel: string }[])
-            .some((attempt) => attempt.channel === 'sms'),
-          handDelivered: ((delivery.message_delivery_attempts ?? []) as { triggered_by: string | null }[])
-            .some((attempt) => isHandTrigger(attempt.triggered_by)),
+          hasSmsAttempt: attempts.some((attempt) => attempt.channel === 'sms'),
+          handDelivered: hasHandDelivery(attempts),
         };
       }),
       dueTimeEditable: dueTimeRejection(controlState) === null,
