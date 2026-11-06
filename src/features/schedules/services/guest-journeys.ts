@@ -150,7 +150,6 @@ export async function loadGuestJourneys(
         guestName: guest.name,
         phone: guest.phone ?? undefined,
         steps,
-        viaFallback: delivery === 'sms' && steps.some((step) => step.fallback && !step.failedAt),
         delivery,
         seen: read || (seenCapable && !!answer),
         seenAt: read ? (row.read_at ?? undefined) : undefined,

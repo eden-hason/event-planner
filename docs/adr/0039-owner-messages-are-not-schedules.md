@@ -31,8 +31,8 @@ An **Owner Message** is its own concept, not a Schedule Type and not a Template.
     payments) included. It is sent immediately, ignoring the Send Window, because the Owner
     has just paid and is expecting it. It is never sent again, not on a top-up and not on a
     re-payment after `canceled`. Events already paid when this ships count as welcomed.
-  - **Post-event.** Sent at 18:00 Israel on the day after the Event, or on Sunday if that
-    day is a Saturday. Every Event type gets it, if the Event's billing status is `paid`
+  - **Post-event.** Sent at 18:00 Israel on the day after the Event, at 12:00 if that day
+    is a Friday, or on Sunday at 18:00 if that day is a Saturday. Every Event type gets it, if the Event's billing status is `paid`
     when it falls due. It follows the Event date if the date moves.
 - **Lateness.** Either kind not sent within 48 hours of when it was due is recorded as
   expired and never sent, matching an **Expired Schedule**.
@@ -64,7 +64,9 @@ An **Owner Message** is its own concept, not a Schedule Type and not a Template.
 
 - **Owner Messages skip Saturday even though Schedules send on weekends (ADR 0018).** This is
   deliberate. A Schedule has a reason to arrive on Shabbat (a Saturday-night Event's
-  reminder). A thank-you and a review ask do not, and Sunday evening reads better.
+  reminder). A thank-you and a review ask do not, and Sunday evening reads better. For the
+  same reason a Friday send (a Thursday Event) goes out at 12:00: 18:00 on a Friday is
+  already Shabbat for much of the year.
 - **The Guest-facing Thank You is unchanged.** The two may land the same day, from the same
   WhatsApp number, to different people.
 - **Their WhatsApp statuses need their own correlation**, in the way ADR 0019 tags a

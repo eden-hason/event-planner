@@ -35,7 +35,6 @@ function journey(
     guestId: 'g',
     guestName: 'Dana',
     steps: [],
-    viaFallback: false,
     delivery: 'whatsapp',
     seen: false,
     amount: 2,

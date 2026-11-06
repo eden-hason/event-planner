@@ -65,8 +65,12 @@ export type UpcomingEvent = {
   ownerName: string;
   guestRecords: number;
   confirmed: number;
-  /** 0-1, or null when there is no guest list yet. Never render null as 0%. */
-  confirmationRate: number | null;
+  declined: number;
+  /**
+   * Share of guest records that answered, yes or no: (confirmed + declined) /
+   * total. 0-1, or null when there is no guest list yet. Never render null as 0%.
+   */
+  responseRate: number | null;
 };
 
 /**
