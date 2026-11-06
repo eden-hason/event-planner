@@ -2072,6 +2072,8 @@
         "sentFallbackUnconfirmedMeta": "Because WhatsApp hadn't confirmed delivery",
         "delivered": "Delivered",
         "deliveredMeta": "The phone confirmed it",
+        "deliveredByHand": "Delivered by the Kululu team",
+        "deliveredByHandMeta": "Our team sent it by hand after it didn't arrive",
         "seen": "Seen",
         "seenMeta": "WhatsApp read receipt",
         "notDelivered": "Not delivered",
@@ -2092,6 +2094,7 @@
         "title": "Message activity",
         "sentSms": "Sent by SMS",
         "smsOnItsWay": "SMS on the way",
+        "deliveredByHand": "Delivered by the Kululu team",
         "answered": "Answer received"
       },
       "details": {

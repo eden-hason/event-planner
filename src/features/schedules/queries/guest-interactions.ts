@@ -9,6 +9,7 @@ import {
   type GuestDeliveryOutcome,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
+import { carriesReadReceipt } from '../utils/hand-delivery';
 import type { RsvpAsk } from '../utils/schedule-results';
 import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
@@ -191,23 +192,23 @@ export async function getScheduleInteractionData(
           (row.not_sent_reason as string | null) ?? null,
         );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
-    entry.steps = toDeliverySteps(row.message_delivery_attempts as DeliveryAttemptRow[] | null);
+    const attempts = row.message_delivery_attempts as unknown as
+      | (DeliveryAttemptRow & AskedAttempt)[]
+      | null;
+    entry.steps = toDeliverySteps(attempts);
     // Asked when any message to this Guest carried the RSVP ask - the pending
     // Guests' row of the family (resolve-reminder-templates, templateForGuest).
     if (
       rsvpAsk === 'pending' &&
-      !(row.message_delivery_attempts as unknown as AskedAttempt[] | null)?.some(
-        (attempt) => attempt.message_templates?.requires_rsvp_ask,
-      )
+      !attempts?.some((attempt) => attempt.message_templates?.requires_rsvp_ask)
     ) {
       entry.notAsked = true;
     }
-    // `read` is the only status carrying a receipt, and only WhatsApp reports it.
-    if (row.delivery_method === 'whatsapp') {
-      if (row.status !== 'not_sent' && row.status !== 'failed') {
-        seenCapable++;
-        seenCapableIds.add(entry.guestId);
-      }
+    // `read` is the only status carrying a receipt, and only some Deliveries
+    // can carry one - never an SMS or a Hand Delivery.
+    if (carriesReadReceipt(entry)) {
+      seenCapable++;
+      seenCapableIds.add(entry.guestId);
       if (row.status === 'read') {
         entry.seen = true;
         entry.seenAt = (row.read_at as string | null) ?? undefined;

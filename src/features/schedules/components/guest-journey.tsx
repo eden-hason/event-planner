@@ -11,6 +11,7 @@ import {
   IconPackage,
   IconPhoneOff,
   IconSend,
+  IconUserCheck,
   IconX,
   type Icon,
 } from '@tabler/icons-react';
@@ -37,6 +38,8 @@ function stepLook(step: JourneyStep): { icon: Icon; tone: ResultTone } {
         : { icon: IconSend, tone: 'ok' };
     case 'delivered':
       return { icon: IconCheck, tone: 'ok' };
+    case 'delivered_by_hand':
+      return { icon: IconUserCheck, tone: 'ok' };
     case 'seen':
       return { icon: IconChecks, tone: 'ok' };
     case 'confirmed':
@@ -98,6 +101,11 @@ export function GuestJourneySteps({
         return {
           label: t('journey.delivered'),
           meta: t('journey.deliveredMeta'),
+        };
+      case 'delivered_by_hand':
+        return {
+          label: t('journey.deliveredByHand'),
+          meta: t('journey.deliveredByHandMeta'),
         };
       case 'seen':
         return { label: t('journey.seen'), meta: t('journey.seenMeta') };

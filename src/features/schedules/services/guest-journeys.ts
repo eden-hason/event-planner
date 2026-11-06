@@ -6,6 +6,7 @@ import {
   type DeliveryAttemptRow,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
+import { carriesReadReceipt } from '../utils/hand-delivery';
 import { awaitingSmsFallback, stuckWindow } from './send-sms-fallback';
 import { scheduleFreeze } from './sweep-sms-fallback';
 
@@ -136,8 +137,7 @@ export async function loadGuestJourneys(
     const read = row.delivery_method === 'whatsapp' && row.status === 'read';
     // A guest who answered opened the message, receipt or not - the same rule
     // the results tab applies to WhatsApp guests with read receipts turned off.
-    const seenCapable =
-      row.delivery_method === 'whatsapp' && row.status !== 'not_sent' && row.status !== 'failed';
+    const seenCapable = carriesReadReceipt({ delivery, steps });
 
     return {
       scheduleId,

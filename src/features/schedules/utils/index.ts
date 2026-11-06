@@ -70,6 +70,8 @@ export {
   type WhatsAppFailureSide,
 } from './whatsapp-failures';
 
+export { hasHandDelivery } from './hand-delivery';
+
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 
 export type RelativeTimeResult =

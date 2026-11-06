@@ -10,6 +10,7 @@ import {
   comparePlanOrder,
   inAudience,
   isFollowUpConfirmation,
+  hasHandDelivery,
   numberPlan,
   planEntryFromRow,
   validatePhoneNumber,
@@ -345,7 +346,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
     pageAll((from, to) =>
       supabase
         .from('message_deliveries')
-        .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel)')
+        .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel, triggered_by)')
         .in('schedule_id', scheduleIds)
         // Every state a delivery can settle in. Filtering to sent/failed dropped a
         // delivery from the timeline the moment the webhook marked it delivered.
@@ -415,6 +416,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
       notesCount: logs.filter((log) => !!log.notes?.trim()).length,
       deliveries: scheduleDeliveries.map((delivery) => {
         const guest = delivery.guests as unknown as { name: string; phone_number: string | null } | null;
+        const attempts = (delivery.message_delivery_attempts ?? []) as { channel: string; triggered_by: string | null }[];
         return {
           id: delivery.id,
           guestId: delivery.guest_id,
@@ -427,8 +429,8 @@ export const getEventTimeline = cache(async function getEventTimeline(
           sentAt: delivery.sent_at,
           triggeredBy: delivery.triggered_by,
           channel: delivery.delivery_method,
-          hasSmsAttempt: ((delivery.message_delivery_attempts ?? []) as { channel: string }[])
-            .some((attempt) => attempt.channel === 'sms'),
+          hasSmsAttempt: attempts.some((attempt) => attempt.channel === 'sms'),
+          handDelivered: hasHandDelivery(attempts),
         };
       }),
       dueTimeEditable: dueTimeRejection(controlState) === null,

@@ -211,6 +211,30 @@ test('a guest an SMS Fallback is coming for ends in an open SMS step', () => {
   );
 });
 
+test('a Hand Delivery follows the failures as one step, and is received but never read', () => {
+  const handed = row({
+    delivery: 'whatsapp',
+    steps: [
+      { channel: 'whatsapp', fallback: null, sentAt: '2026-11-01T10:00:00Z', failedAt: '2026-11-01T10:00:30Z' },
+      { channel: 'sms', fallback: 'failed', sentAt: '2026-11-01T12:00:00Z', failedAt: '2026-11-01T12:05:00Z' },
+      {
+        channel: 'whatsapp',
+        fallback: null,
+        byHand: true,
+        sentAt: '2026-11-02T09:00:00Z',
+        deliveredAt: '2026-11-02T09:00:00Z',
+      },
+    ],
+  });
+  assert.deepEqual(
+    buildJourney(handed).map((s: { kind: string; channel?: string }) => `${s.kind}${s.channel ? `:${s.channel}` : ''}`),
+    ['sent:whatsapp', 'not_delivered:whatsapp', 'sent:sms', 'not_delivered:sms', 'delivered_by_hand:whatsapp'],
+  );
+  assert.equal(messageState(handed), 'received');
+  // Never listed as unseen: no receipt can come for a message from a team phone
+  assert.deepEqual(filterGuests([handed], { filter: 'unseen', query: '' }), []);
+});
+
 test('an SMS on its way is not reached yet', () => {
   const rows = [
     row({ guestName: 'a', delivery: 'sms_on_its_way' }),

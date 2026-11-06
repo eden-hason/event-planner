@@ -20,6 +20,7 @@ import {
 import { QueueRowAction, type QueueActionRow } from './queue-row-action';
 import { ScheduleControls } from './schedule-controls';
 import { SmsFallbackDialog } from './sms-fallback-dialog';
+import { HandDeliveryDialog, WithdrawHandDeliveryButton } from './hand-delivery-dialog';
 import { sendSelectedDeliveriesAdmin } from '@/features/schedules';
 import { MAX_MANUAL_RECIPIENTS } from '../utils/manual-send';
 import type { EventGuestSummary, EventTimelineRow, EventWorkspaceSignal } from '../types';
@@ -240,7 +241,12 @@ function TimelineRow({ row, eventId, sendingEnabled }: { row: EventTimelineRow; 
               <ChevronDown />
             </CollapsibleTrigger>
             <CollapsibleContent className="flex flex-col gap-1 border-t px-3.5 py-2.5 text-[12px]">
-              {successful.map((delivery) => <p key={delivery.id}>{delivery.guestName} · {deliveryStatusLabel(delivery.status)}</p>)}
+              {successful.map((delivery) => (
+                <div key={delivery.id} className="flex items-center justify-between gap-3">
+                  <p>{delivery.guestName} · {deliveryStatusLabel(delivery.status)}{delivery.handDelivered ? ' ידנית' : ''}</p>
+                  <HandDeliveryActions delivery={delivery} />
+                </div>
+              ))}
             </CollapsibleContent>
           </Collapsible>
         )}
@@ -349,18 +355,33 @@ function DeliveryChoice({ delivery, selected, onToggle }: {
   selected: boolean;
   onToggle: (guestId: string, checked: boolean) => void;
 }) {
+  // The actions sit outside the label, so pressing one never ticks the box.
   return (
-    <label className="flex items-start gap-2 text-[12.5px]">
-      <Checkbox checked={selected} onCheckedChange={(value) => onToggle(delivery.guestId, value === true)} />
-      <span className="min-w-0 flex-1">
-        <span className="font-medium">{delivery.guestName}</span>
-        <span className="text-muted-foreground ms-2">
-          {delivery.guestPhone ?? 'אין טלפון'} · {deliveryStatusLabel(delivery.status)}
-          {delivery.channel === 'sms' ? ' ב-SMS' : ''}
-          {delivery.status === 'failed' && delivery.hasSmsAttempt ? ' · נוסה גם ב-SMS' : ''}
+    <div className="flex items-start gap-2 text-[12.5px]">
+      <label className="flex min-w-0 flex-1 items-start gap-2">
+        <Checkbox checked={selected} onCheckedChange={(value) => onToggle(delivery.guestId, value === true)} />
+        <span className="min-w-0 flex-1">
+          <span className="font-medium">{delivery.guestName}</span>
+          <span className="text-muted-foreground ms-2">
+            {delivery.guestPhone ?? 'אין טלפון'} · {deliveryStatusLabel(delivery.status)}
+            {delivery.handDelivered ? ' ידנית' : delivery.channel === 'sms' ? ' ב-SMS' : ''}
+            {delivery.status === 'failed' && delivery.hasSmsAttempt ? ' · נוסה גם ב-SMS' : ''}
+          </span>
+          {delivery.errorMessage && <span className="text-destructive block">{delivery.errorMessage}</span>}
         </span>
-        {delivery.errorMessage && <span className="text-destructive block">{delivery.errorMessage}</span>}
-      </span>
-    </label>
+      </label>
+      <HandDeliveryActions delivery={delivery} />
+    </div>
   );
+}
+
+/** A Failed Delivery offers a Hand Delivery; one recorded by hand offers its withdrawal (ADR 0052) */
+function HandDeliveryActions({ delivery }: { delivery: EventTimelineRow['deliveries'][number] }) {
+  if (delivery.handDelivered) {
+    return <WithdrawHandDeliveryButton deliveryId={delivery.id} guestName={delivery.guestName} />;
+  }
+  if (delivery.status === 'failed' && delivery.guestPhone) {
+    return <HandDeliveryDialog deliveryId={delivery.id} guestName={delivery.guestName} />;
+  }
+  return null;
 }

@@ -261,6 +261,8 @@ export type EventTimelineDelivery = {
   channel: string | null;
   /** Whether an SMS attempt exists - a failed delivery with one is no longer actionable */
   hasSmsAttempt: boolean;
+  /** Whether an Operator recorded a Hand Delivery on it (ADR 0052) */
+  handDelivered: boolean;
 };
 
 export type EventTimelineRow = {

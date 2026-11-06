@@ -1,6 +1,7 @@
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import type { SmsFallbackReason } from './send-helpers';
+import { carriesReadReceipt } from './hand-delivery';
 
 import type {
   GuestDeliveryOutcome,
@@ -150,7 +151,7 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
     case 'confirmed':
       return row.response === 'rsvp_confirm';
     case 'unseen':
-      return row.delivery === 'whatsapp' && !row.seen;
+      return row.delivery === 'whatsapp' && carriesReadReceipt(row) && !row.seen;
   }
 }
 
@@ -185,6 +186,7 @@ export function lastActivityAt(row: GuestInteractionRow): string | undefined {
 export type JourneyStepKind =
   | 'sent'
   | 'delivered'
+  | 'delivered_by_hand'
   | 'seen'
   | 'not_delivered'
   | 'on_its_way'
@@ -215,6 +217,12 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
 
   const steps: JourneyStep[] = [];
   for (const step of row.steps) {
+    // A Hand Delivery is one step: the Kululu team got it there (ADR 0052).
+    // It has no send of its own to tell, and no receipt can follow it.
+    if (step.byHand) {
+      steps.push({ kind: 'delivered_by_hand', at: step.deliveredAt, channel: 'whatsapp' });
+      continue;
+    }
     steps.push({
       kind: 'sent',
       at: step.sentAt,
