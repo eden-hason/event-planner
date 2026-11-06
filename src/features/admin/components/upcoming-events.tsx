@@ -40,7 +40,7 @@ export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
 
           {/* Null is not zero: an empty guest list has no rate, and "0%" would
               read as a failing campaign rather than as a list not yet built. */}
-          {event.confirmationRate === null ? (
+          {event.responseRate === null ? (
             <span className="text-muted-foreground/70 w-60 shrink-0 text-end">
               עדיין אין רשימת אורחים
             </span>
@@ -49,8 +49,9 @@ export function UpcomingEvents({ events }: { events: UpcomingEvent[] }) {
               <span className="text-muted-foreground w-26 shrink-0 text-end tabular-nums">
                 {event.guestRecords.toLocaleString('he-IL')} רשומות
               </span>
+              {/* Any answer counts, yes or no: (confirmed + declined) / total. */}
               <span className="text-secondary-foreground w-30 shrink-0 text-end tabular-nums">
-                {Math.round(event.confirmationRate * 100)}% אישרו
+                {Math.round(event.responseRate * 100)}% ענו
               </span>
             </>
           )}

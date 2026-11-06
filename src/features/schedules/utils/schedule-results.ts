@@ -1,6 +1,7 @@
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import type { SmsFallbackReason } from './send-helpers';
+import { carriesReadReceipt } from './hand-delivery';
 
 import type {
   GuestDeliveryOutcome,
@@ -8,45 +9,102 @@ import type {
 } from '../queries/guest-interactions';
 
 /**
- * Where one guest stands on the Delivery ladder, in the Owner's words.
+ * Where a guest's message stands, in the words of a messaging app's ticks
+ * rather than the Delivery's own states (CONTEXT.md, Delivery):
  *
- * The channel is not a rung: `sms` is here only because SMS stops at delivered
- * and has no read receipt to climb to, so "reached by SMS" is its final
- * delivery state. `none` is a guest with no Delivery at all - someone who
- * answered through a shared link.
+ * - `pending`  nothing accepted yet - a Delivery reserved but not attempted, or
+ *              an SMS Fallback still to go out
+ * - `sent`     accepted and not confirmed (Sent): one tick
+ * - `received` reached the phone on either channel (Delivered): two ticks
+ * - `read`     a WhatsApp read receipt, or an answer, which implies one (Read)
+ * - `failed`   every attempt failed and nothing further is pending
+ *
+ * plus the records nothing was sent to, which keep their own reason.
  */
-export type GuestStatus =
-  | 'seen'
-  | 'delivered'
-  | 'sms'
-  | 'on_its_way'
-  | 'sms_on_its_way'
-  | 'not_delivered'
+export type MessageState =
+  | 'pending'
+  | 'sent'
+  | 'received'
+  | 'read'
+  | 'failed'
   | 'no_phone'
   | 'outside_package'
   | 'none';
 
-export function guestStatus(row: GuestInteractionRow): GuestStatus {
+export function messageState(row: GuestInteractionRow): MessageState {
   switch (row.delivery) {
     case null:
       return 'none';
     case 'whatsapp':
-      return row.seen ? 'seen' : 'delivered';
+      return row.seen ? 'read' : 'received';
+    case 'sms':
+      return 'received';
+    case 'on_its_way':
+      // No attempt recorded yet: reserved just before sending
+      return row.steps.length > 0 ? 'sent' : 'pending';
+    case 'sms_on_its_way':
+      // An SMS accepted and awaiting its report is sent; a Fallback the
+      // sweeper has yet to send is still to go.
+      return row.steps.some((step) => step.channel === 'sms' && !step.failedAt)
+        ? 'sent'
+        : 'pending';
+    case 'not_delivered':
+      return 'failed';
     default:
       return row.delivery;
   }
 }
 
 /**
- * The read receipt, told apart from its absence. Only a WhatsApp message can
- * report one, so an SMS guest is `na` - not unseen, a different fact - and so
- * is a guest nothing reached.
+ * The guest's answer to this Schedule. `not_asked` for a guest it did not ask
+ * (a confirmed guest on an Advance Reminder), who has nothing to wait for.
  */
-export function seenState(row: GuestInteractionRow): 'seen' | 'unseen' | 'na' {
-  if (row.delivery === 'whatsapp' || row.delivery === 'on_its_way') {
-    return row.seen ? 'seen' : 'unseen';
-  }
-  return 'na';
+type RsvpState = 'confirmed' | 'declined' | 'pending' | 'not_asked';
+
+export function rsvpState(row: GuestInteractionRow): RsvpState {
+  if (row.response === 'rsvp_confirm') return 'confirmed';
+  if (row.response === 'rsvp_decline') return 'declined';
+  return row.notAsked ? 'not_asked' : 'pending';
+}
+
+/**
+ * How much of the guest table a desktop pane has room for. The table is the
+ * desktop view at any width - the phone's list is the phone's, switched at the
+ * app's own breakpoint - so a narrowing pane folds columns away in steps rather
+ * than swapping layouts:
+ *
+ * - `full`    every column
+ * - `medium`  the phone number moves under the name
+ * - `compact` no last update either; the activity turns from a strip to a list
+ * - `tight`   no message column either, where the answer is there to read
+ *
+ * Widths are the table's own, in px, at Tailwind's container sizes.
+ */
+export type GuestTableTier = 'full' | 'medium' | 'compact' | 'tight';
+
+const TABLE_TIERS: [GuestTableTier, number][] = [
+  ['full', 672],
+  ['medium', 512],
+  ['compact', 448],
+];
+
+export function guestTableTier(width: number): GuestTableTier {
+  return TABLE_TIERS.find(([, min]) => width >= min)?.[0] ?? 'tight';
+}
+
+/** The columns a tier folds away, as TanStack column visibility */
+export function guestTableHiddenColumns(
+  tier: GuestTableTier,
+  collectsRsvp: boolean,
+): Record<string, false> {
+  const hidden: Record<string, false> = {};
+  if (tier === 'full') return hidden;
+  hidden.phone = false;
+  if (tier === 'medium') return hidden;
+  hidden.lastUpdate = false;
+  // Without an answer column, the message is all the row says about the send
+  if (tier === 'tight' && collectsRsvp) hidden.message = false;
+  return hidden;
 }
 
 const NOT_REACHED: GuestDeliveryOutcome[] = [
@@ -93,7 +151,7 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
     case 'confirmed':
       return row.response === 'rsvp_confirm';
     case 'unseen':
-      return row.delivery === 'whatsapp' && !row.seen;
+      return row.delivery === 'whatsapp' && carriesReadReceipt(row) && !row.seen;
   }
 }
 
@@ -128,6 +186,7 @@ export function lastActivityAt(row: GuestInteractionRow): string | undefined {
 export type JourneyStepKind =
   | 'sent'
   | 'delivered'
+  | 'delivered_by_hand'
   | 'seen'
   | 'not_delivered'
   | 'on_its_way'
@@ -158,6 +217,12 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
 
   const steps: JourneyStep[] = [];
   for (const step of row.steps) {
+    // A Hand Delivery is one step: the Kululu team got it there (ADR 0052).
+    // It has no send of its own to tell, and no receipt can follow it.
+    if (step.byHand) {
+      steps.push({ kind: 'delivered_by_hand', at: step.deliveredAt, channel: 'whatsapp' });
+      continue;
+    }
     steps.push({
       kind: 'sent',
       at: step.sentAt,
@@ -248,14 +313,65 @@ export function percent(part: number, whole: number): number {
   return whole > 0 ? Math.round((part / whole) * 100) : 0;
 }
 
+// Intl formatters are costly to build and a results render formats every row
+// and step, so each locale-and-options pair is built once and kept.
+const formatters = new Map<string, Intl.DateTimeFormat | Intl.RelativeTimeFormat>();
+
+function dateFormat(locale: string, options: Intl.DateTimeFormatOptions) {
+  const key = `d|${locale}|${JSON.stringify(options)}`;
+  let format = formatters.get(key) as Intl.DateTimeFormat | undefined;
+  if (!format) formatters.set(key, (format = new Intl.DateTimeFormat(locale, options)));
+  return format;
+}
+
+function relativeFormat(locale: string, options: Intl.RelativeTimeFormatOptions) {
+  const key = `r|${locale}|${JSON.stringify(options)}`;
+  let format = formatters.get(key) as Intl.RelativeTimeFormat | undefined;
+  if (!format) formatters.set(key, (format = new Intl.RelativeTimeFormat(locale, options)));
+  return format;
+}
+
 function israelDayKey(date: Date): string {
-  return new Intl.DateTimeFormat('en-CA', {
+  return dateFormat('en-CA', {
     timeZone: ADMIN_TIME_ZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(date);
 }
+
+/**
+ * How long ago a moment was: "5 minutes ago", "3 hours ago", "2 days ago".
+ * Minutes under an hour, hours under two days, days after that. A moment after
+ * `now` (clock skew) reads as now, as does anything under a minute.
+ */
+export function formatAgo(
+  iso: string,
+  { now, locale }: { now: Date; locale: string },
+): string {
+  const minutes = Math.max(
+    Math.round((now.getTime() - new Date(iso).getTime()) / 60_000),
+    0,
+  );
+  const hours = Math.round(minutes / 60);
+  const [value, unit]: [number, Intl.RelativeTimeFormatUnit] =
+    minutes === 0
+      ? [0, 'second']
+      : minutes < 60
+        ? [-minutes, 'minute']
+        : hours < 48
+          ? [-hours, 'hour']
+          : [-Math.round(hours / 24), 'day'];
+
+  // ICU writes Hebrew's singular and dual with the count in brackets as well -
+  // "לפני שעתיים (2)" - though the word already says it.
+  return relativeFormat(locale, { numeric: 'auto' })
+    .format(value, unit)
+    .replace(BRACKETED_COUNT, '');
+}
+
+/** A count repeated in brackets after a word that already says it */
+const BRACKETED_COUNT = /\s*\(\d+\)/;
 
 /**
  * A moment on the results screen, the way a person says it: "18:08" today,
@@ -267,12 +383,7 @@ export function formatMoment(
   { now, locale }: { now: Date; locale: string },
 ): string {
   const at = new Date(iso);
-  const rtf = new Intl.RelativeTimeFormat(locale, {
-    numeric: 'auto',
-    style: 'short',
-  });
-
-  const time = new Intl.DateTimeFormat(locale, {
+  const time = dateFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
@@ -282,9 +393,10 @@ export function formatMoment(
   const day = israelDayKey(at);
   if (day === israelDayKey(now)) return time;
   if (day === israelDayKey(new Date(now.getTime() - 86_400_000))) {
-    return `${rtf.format(-1, 'day')} ${time}`;
+    const yesterday = relativeFormat(locale, { numeric: 'auto', style: 'short' });
+    return `${yesterday.format(-1, 'day')} ${time}`;
   }
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,
     day: 'numeric',
     month: 'numeric',

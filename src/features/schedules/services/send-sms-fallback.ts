@@ -121,7 +121,7 @@ type Resolution =
   | ({ ok: true } & Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>)
   | { ok: false; reason: string };
 
-async function loadSchedule(
+export async function loadFallbackSchedule(
   supabase: SupabaseClient,
   scheduleId: string,
 ): Promise<LoadedSchedule | null> {
@@ -153,19 +153,33 @@ async function resolveSmsTemplates(
   supabase: SupabaseClient,
   loaded: LoadedSchedule,
 ): Promise<Resolution> {
-  const { schedule, event } = loaded;
+  const { schedule } = loaded;
   // The Owner's choice, so it is checked before anything else and nothing
   // overrides it - not the button, not the retry (unlike a Freeze, which only
   // the sweeper respects).
   if (!loaded.smsFallbackEnabled) return { ok: false, reason: SMS_FALLBACK_OPTED_OUT_REASON };
+  if (schedule.template?.channel === 'sms') {
+    return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
+  }
+  return resolveSmsRendition(supabase, loaded);
+}
+
+/**
+ * The Schedule's SMS Rendition as text to render, whatever may be sent by SMS:
+ * a Hand Delivery (ADR 0052) types it into WhatsApp, so neither an SMS Fallback
+ * Opt-out nor a Schedule whose own channel is SMS stops it. On an SMS Schedule
+ * it resolves to the Templates the Schedule sent.
+ */
+export async function resolveSmsRendition(
+  supabase: SupabaseClient,
+  loaded: LoadedSchedule,
+): Promise<Resolution> {
+  const { schedule, event } = loaded;
   if (!isMessageSchedule(schedule)) {
     return { ok: false, reason: 'רק תזמוני הודעות יכולים לעבור ל-SMS' };
   }
   const anchor = schedule.template;
   if (!anchor) return { ok: false, reason: 'לתזמון הזה אין תבנית' };
-  if (anchor.channel === 'sms') {
-    return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
-  }
 
   // The same family the WhatsApp send used - the Personal Message's when the
   // Schedule carries one (ADR 0046) - on its SMS channel.
@@ -394,11 +408,50 @@ function smsTemplateFor(
   return templateForGuest(resolution, guest) as Extract<MessageTemplateApp, { channel: 'sms' }>;
 }
 
+/** What one Guest's SMS Rendition is rendered from */
+function smsContext(
+  loaded: LoadedSchedule,
+  guest: GuestApp,
+  tables: Map<string, { tableNumber: number; label: string | null }>,
+  confirmationToken: string,
+): ParameterResolutionContext {
+  return {
+    guest,
+    event: loaded.event,
+    group: null,
+    table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
+    schedule: loaded.schedule,
+    confirmationToken,
+  };
+}
+
+/**
+ * One Guest's SMS Rendition as text, exactly as the Fallback sends it - the
+ * plan's preview and a Hand Delivery (ADR 0052) both read it from here. Null
+ * when the Guest Record no longer exists.
+ */
+export async function renderSmsRenditionFor(
+  supabase: SupabaseClient,
+  loaded: LoadedSchedule,
+  resolution: Extract<Resolution, { ok: true }>,
+  guestId: string,
+  confirmationToken: string,
+): Promise<{ guest: GuestApp; text: string } | null> {
+  const { guests, tables } = await loadGuestsAndTables(supabase, [guestId], Boolean(resolution.withTable));
+  const guest = guests.get(guestId);
+  if (!guest) return null;
+  const text = buildSmsBody(
+    smsTemplateFor(resolution, guest).payload,
+    smsContext(loaded, guest, tables, confirmationToken),
+  );
+  return { guest, text };
+}
+
 export async function buildSmsFallbackPlan(
   supabase: SupabaseClient,
   scheduleId: string,
 ): Promise<SmsFallbackPlan> {
-  const loaded = await loadSchedule(supabase, scheduleId);
+  const loaded = await loadFallbackSchedule(supabase, scheduleId);
   if (!loaded) {
     return { scheduleId, unavailableReason: 'התזמון הזה כבר לא קיים', eligible: [], excluded: [], preview: null };
   }
@@ -420,19 +473,9 @@ export async function buildSmsFallbackPlan(
   let preview: string | null = null;
   if (resolution.ok && eligible.length > 0) {
     const first = eligible[0];
-    const { guests, tables } = await loadGuestsAndTables(supabase, [first.guestId], Boolean(resolution.withTable));
-    const guest = guests.get(first.guestId);
     const token = rows.find((r) => r.id === first.deliveryId)?.confirmation_token;
-    if (guest && token) {
-      const context: ParameterResolutionContext = {
-        guest,
-        event: loaded.event,
-        group: null,
-        table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-        schedule: loaded.schedule,
-        confirmationToken: token,
-      };
-      preview = buildSmsBody(smsTemplateFor(resolution, guest).payload, context);
+    if (token) {
+      preview = (await renderSmsRenditionFor(supabase, loaded, resolution, first.guestId, token))?.text ?? null;
     }
   }
 
@@ -463,7 +506,7 @@ export async function sendSmsFallback(
 ): Promise<SmsFallbackOutcome> {
   const empty = { sentCount: 0, failedCount: 0, skippedCount: 0 };
 
-  const loaded = await loadSchedule(supabase, scheduleId);
+  const loaded = await loadFallbackSchedule(supabase, scheduleId);
   if (!loaded) return { success: false, message: 'התזמון הזה כבר לא קיים', ...empty };
 
   const resolution = await resolveSmsTemplates(supabase, loaded);
@@ -519,14 +562,7 @@ export async function sendSmsFallback(
       return;
     }
 
-    const context: ParameterResolutionContext = {
-      guest,
-      event: loaded.event,
-      group: null,
-      table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
-      schedule: loaded.schedule,
-      confirmationToken: token,
-    };
+    const context = smsContext(loaded, guest, tables, token);
 
     const result = await sendSmsToGuest({
       guest,

@@ -9,6 +9,7 @@ export {
   buildDynamicHeaderParameters,
   buildDynamicButtonParameters,
   extractPlaceholders,
+  rsvpPageUrl,
   type MediaParameter,
   type ParameterResolutionContext,
   type ButtonComponent,
@@ -69,6 +70,8 @@ export {
   describeGuestLevelFailure,
   type WhatsAppFailureSide,
 } from './whatsapp-failures';
+
+export { hasHandDelivery } from './hand-delivery';
 
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 

@@ -5,6 +5,7 @@
  */
 
 import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from './send-helpers';
+import { isHandTrigger } from './hand-delivery';
 import type { FallbackDeliveryRow } from '../services/send-sms-fallback';
 
 /**
@@ -42,6 +43,11 @@ export type GuestDeliveryStep = {
   channel: 'whatsapp' | 'sms';
   /** Why this message is an SMS Fallback; null when it is not one */
   fallback: SmsFallbackReason | null;
+  /**
+   * A Hand Delivery: an Operator sent it from a Kululu team phone and said it
+   * arrived (ADR 0052). Delivered on their word, so never read.
+   */
+  byHand?: true;
   sentAt?: string;
   deliveredAt?: string;
   readAt?: string;
@@ -55,12 +61,10 @@ export type GuestDeliveryStep = {
 export type GuestInteractionRow = {
   guestId: string;
   guestName: string;
-  /** For calling a guest the message did not reach */
+  /** As stored (E.164); missing for a record with no phone number */
   phone?: string;
   /** The Delivery's messages, oldest first. Empty for a guest never sent to */
   steps: GuestDeliveryStep[];
-  /** Reached over SMS only because WhatsApp could not reach them */
-  viaFallback: boolean;
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**
@@ -130,6 +134,7 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
     .map((attempt) => ({
       channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
       fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
+      ...(isHandTrigger(attempt.triggered_by) ? { byHand: true as const } : {}),
       sentAt: attempt.sent_at ?? undefined,
       deliveredAt: attempt.delivered_at ?? undefined,
       readAt: attempt.read_at ?? undefined,

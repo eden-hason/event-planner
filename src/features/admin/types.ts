@@ -65,8 +65,12 @@ export type UpcomingEvent = {
   ownerName: string;
   guestRecords: number;
   confirmed: number;
-  /** 0-1, or null when there is no guest list yet. Never render null as 0%. */
-  confirmationRate: number | null;
+  declined: number;
+  /**
+   * Share of guest records that answered, yes or no: (confirmed + declined) /
+   * total. 0-1, or null when there is no guest list yet. Never render null as 0%.
+   */
+  responseRate: number | null;
 };
 
 /**
@@ -257,6 +261,8 @@ export type EventTimelineDelivery = {
   channel: string | null;
   /** Whether an SMS attempt exists - a failed delivery with one is no longer actionable */
   hasSmsAttempt: boolean;
+  /** Whether an Operator recorded a Hand Delivery on it (ADR 0052) */
+  handDelivered: boolean;
 };
 
 export type EventTimelineRow = {
