@@ -518,6 +518,7 @@ export function GuestsMobile({
         onImportFile={onImportFile}
         onImportDrive={onImportDrive}
         onExport={(scope) => writes.exportGuests(allGuests, scope)}
+        onExportChangedAnswers={writes.exportChangedAnswers}
       />
       <GuestRowSheet
         guest={sheet?.kind === 'row' ? sheet.guest : null}

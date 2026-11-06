@@ -47,6 +47,12 @@ gets the same silent wrong answer. `getRecordPackage` in
 `src/features/billing/queries/record-package.ts` does exactly that and is still exported,
 though nothing calls it today.
 
+The same gap exists for `guest_interactions`: its select policy admits only
+`events.user_id = auth.uid()`. The Guests page's changed-answers export
+(`getChangedAnswersInput`) works around it the same way - records through RLS, snapshots
+through the service client. `loadGuestJourneys` reads the table with the viewer's client
+and was not checked for co-owners.
+
 Already safe, because they run on the service client: the Catch-up Send action
 (`sendCatchUp`), `startCallRound`, the Dispatcher and the renderer.
 

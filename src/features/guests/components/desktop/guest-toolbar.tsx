@@ -9,6 +9,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconDots,
+  IconArrowsExchange,
   IconFileSpreadsheet,
   IconFilter2,
   IconPlus,
@@ -69,6 +70,7 @@ interface GuestToolbarProps {
   onImportDrive: () => void;
   onImportWhatsApp: () => void;
   onExport: (scope: IplanScope) => void;
+  onExportChangedAnswers: () => void;
 }
 
 export function GuestToolbar({
@@ -85,6 +87,7 @@ export function GuestToolbar({
   onImportDrive,
   onImportWhatsApp,
   onExport,
+  onExportChangedAnswers,
 }: GuestToolbarProps) {
   const t = useTranslations('guests');
   const dir = useLocale() === 'he' ? 'rtl' : 'ltr';
@@ -448,6 +451,14 @@ export function GuestToolbar({
               </DropdownMenuItem>
             ),
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-muted-foreground text-xs">
+            {t('list.reportsHeading')}
+          </DropdownMenuLabel>
+          <DropdownMenuItem onClick={onExportChangedAnswers} className="gap-2">
+            <IconArrowsExchange size={16} />
+            {t('directory.exportChangedAnswers')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
