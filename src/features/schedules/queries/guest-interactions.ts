@@ -25,15 +25,13 @@ export type ScheduleInteractionData = {
      * Guest records this schedule could actually be sent to. A record with no
      * usable phone number was never a recipient - the send engine files it as
      * `not_sent` before it ever reaches a channel - so it is left out here, out
-     * of `guests` too, and not mentioned: the Guests page is where a missing
-     * number gets fixed.
+     * of `guests` too (unless it answered anyway, through a shared link), and
+     * not mentioned: the Guests page is where a missing number gets fixed.
      */
     audience: number;
     reached: number;
     reachedWhatsapp: number;
     reachedSms: number;
-    /** Of `reachedSms`, those reached by an SMS Fallback after WhatsApp could not */
-    reachedByFallback: number;
     notReached: {
       onItsWay: number;
       smsOnItsWay: number;
@@ -108,7 +106,6 @@ export async function getScheduleInteractionData(
       reached: 0,
       reachedWhatsapp: 0,
       reachedSms: 0,
-      reachedByFallback: 0,
       notReached: {
         onItsWay: 0,
         smsOnItsWay: 0,
@@ -147,7 +144,6 @@ export async function getScheduleInteractionData(
         guestName: guest.name,
         phone: guest.phone_number ?? undefined,
         steps: [],
-        viaFallback: false,
         delivery: null,
         seen: false,
         amount: guest.amount ?? 1,
@@ -206,10 +202,6 @@ export async function getScheduleInteractionData(
     ) {
       entry.notAsked = true;
     }
-    entry.viaFallback =
-      entry.delivery === 'sms' &&
-      entry.steps.some((step) => step.fallback && !step.failedAt);
-
     // `read` is the only status carrying a receipt, and only WhatsApp reports it.
     if (row.delivery_method === 'whatsapp') {
       if (row.status !== 'not_sent' && row.status !== 'failed') {
@@ -281,7 +273,6 @@ export async function getScheduleInteractionData(
     reached: count('whatsapp') + count('sms'),
     reachedWhatsapp: count('whatsapp'),
     reachedSms: count('sms'),
-    reachedByFallback: guests.filter((g) => g.viaFallback).length,
     notReached: {
       onItsWay: count('on_its_way'),
       smsOnItsWay: count('sms_on_its_way'),

@@ -14,7 +14,7 @@ import { AutoRefresh } from '@/components/auto-refresh';
 import { GHOST_BAR, GhostEmpty } from '@/components/ghost-empty';
 import { RefreshButton } from '@/components/refresh-button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import type {
   GuestInteractionRow,
@@ -45,8 +45,8 @@ interface ScheduleResultsProps {
 /**
  * The Results tab: watch the message land.
  *
- * On top, the live state and the funnel of the whole schedule; below, each
- * guest's own journey. Everything is in guest records, and three rules from
+ * On top, the live state and the funnel of the whole schedule; below, every
+ * guest and their message's activity. Everything is in guest records, and three rules from
  * CONTEXT.md and ADR 0011/0012 shape it:
  *
  * - Seen is scored against the WhatsApp deliveries that could report it, never
@@ -71,7 +71,6 @@ export function ScheduleResults({
   renderedAt,
 }: ScheduleResultsProps) {
   const locale = useLocale();
-  const isRTL = locale === 'he';
   const now = useMemo(() => new Date(renderedAt), [renderedAt]);
   const { summary, guests } = data;
 
@@ -160,12 +159,11 @@ export function ScheduleResults({
             onSelect={toggleGuest}
             now={now}
             locale={locale}
-            isRTL={isRTL}
           />
         </div>
       </div>
 
-      {/* On a phone the open guest's journey takes a sheet; elsewhere it opens under its row */}
+      {/* On a phone the open guest takes a sheet; on desktop it opens under its table row */}
       <Sheet
         open={!!selected && isMobile}
         onOpenChange={(open) => !open && setSelectedId(null)}
@@ -175,15 +173,14 @@ export function ScheduleResults({
           showCloseButton={false}
           className="max-h-[85dvh] gap-0 overflow-y-auto rounded-t-[20px] border-0 px-5 pt-2.5 pb-[max(1.75rem,env(safe-area-inset-bottom))]"
         >
-          {sheetRow ? (
+          {/* The content mounts only while open, by when a guest was picked */}
+          {sheetRow && (
             <GuestDetailsSheetBody
               row={sheetRow}
               collectsRsvp={collectsRsvp}
               now={now}
               locale={locale}
             />
-          ) : (
-            <SheetTitle className="sr-only">{''}</SheetTitle>
           )}
         </SheetContent>
       </Sheet>

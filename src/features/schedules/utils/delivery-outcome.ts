@@ -59,8 +59,6 @@ export type GuestInteractionRow = {
   phone?: string;
   /** The Delivery's messages, oldest first. Empty for a guest never sent to */
   steps: GuestDeliveryStep[];
-  /** Reached over SMS only because WhatsApp could not reach them */
-  viaFallback: boolean;
   /** Null for a guest who interacted but has no delivery record (a shared link) */
   delivery: GuestDeliveryOutcome | null;
   /**

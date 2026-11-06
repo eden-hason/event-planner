@@ -4,22 +4,17 @@ import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   IconChevronDown,
-  IconChevronLeft,
   IconChevronRight,
   IconSearch,
 } from '@tabler/icons-react';
 import {
   flexRender,
   getCoreRowModel,
-  getExpandedRowModel,
   useReactTable,
   type ColumnDef,
-  type ExpandedState,
-  type VisibilityState,
 } from '@tanstack/react-table';
 
 import { cn } from '@/lib/utils';
-import { formatPhone } from '@/lib/phone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,8 +30,6 @@ import type { GuestInteractionRow } from '../queries/guest-interactions';
 import {
   availableFilters,
   filterGuests,
-  formatAgo,
-  formatMoment,
   guestTableHiddenColumns,
   guestTableTier,
   lastActivityAt,
@@ -45,10 +38,12 @@ import {
 } from '../utils/schedule-results';
 import {
   ConfirmedCount,
+  GuestPhone,
   GuestStatusAvatar,
   MessageActivityList,
   MessageActivityStrip,
   MessageStateLabel,
+  RelativeMoment,
   RsvpBadge,
 } from './guest-activity';
 
@@ -63,7 +58,10 @@ const STEP = 25;
  * holds its shape as rows open and close. With no RSVP the answer columns'
  * share goes to the others.
  */
-const COLUMN_WIDTH = {
+const COLUMN_WIDTH: Record<
+  'withRsvp' | 'withoutRsvp',
+  Record<string, string>
+> = {
   withRsvp: {
     phone: 'w-[16%]',
     message: 'w-[18%]',
@@ -78,7 +76,13 @@ const COLUMN_WIDTH = {
     lastUpdate: 'w-[20%]',
     expand: 'w-12',
   },
-} as const satisfies Record<string, Record<string, string>>;
+};
+
+/** Every cell's side padding, the row's first and last a little wider */
+const CELL_X = 'px-2 first:ps-4 last:pe-4';
+
+/** Points the way a row opens: right, and left in a RTL page */
+const FORWARD = 'rtl:rotate-180';
 
 interface ScheduleResultsGuestsProps {
   guests: GuestInteractionRow[];
@@ -92,7 +96,6 @@ interface ScheduleResultsGuestsProps {
   onSelect: (guestId: string) => void;
   now: Date;
   locale: string;
-  isRTL: boolean;
 }
 
 /**
@@ -122,7 +125,6 @@ export function ScheduleResultsGuests({
   onSelect,
   now,
   locale,
-  isRTL,
 }: ScheduleResultsGuestsProps) {
   const t = useTranslations('schedules.results.guests');
   const [tableRef, tier] = useTableTier();
@@ -136,13 +138,14 @@ export function ScheduleResultsGuests({
     [guests, filter, query],
   );
 
-  // The phone's list grows with "more"; the table pages. Both are kept stable
-  // between renders: TanStack re-derives its rows whenever `data` changes.
-  const visible = useMemo(() => rows.slice(0, shown), [rows, shown]);
+  // The phone's list grows with "more"; the table pages.
+  const visible = rows.slice(0, shown);
   const remaining = rows.length - visible.length;
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   // A refresh can shorten the list under an open page
   const safePage = Math.min(page, pageCount - 1);
+  // Kept stable between renders: the table re-derives its rows whenever
+  // `data` changes, and a new array every render is how the page once froze.
   const pageRows = useMemo(
     () => rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
     [rows, safePage],
@@ -154,29 +157,7 @@ export function ScheduleResultsGuests({
     setPage(0);
   };
 
-  // Relative ("5 minutes ago"), with the exact moment on hover
-  const when = (row: GuestInteractionRow) => {
-    const at = lastActivityAt(row);
-    return at
-      ? {
-          text: formatAgo(at, { now, locale }),
-          title: formatMoment(at, { now, locale }),
-        }
-      : { text: '–', title: undefined };
-  };
-
-  const phone = (row: GuestInteractionRow, className?: string) =>
-    row.phone && (
-      // LTR inside a RTL row, sized to its text so it keeps to the start edge
-      <bdi dir="ltr" className={cn('self-start tabular-nums', className)}>
-        {formatPhone(row.phone)}
-      </bdi>
-    );
-
-  const Forward = isRTL ? IconChevronLeft : IconChevronRight;
-  const widths = collectsRsvp
-    ? COLUMN_WIDTH.withRsvp
-    : COLUMN_WIDTH.withoutRsvp;
+  const widths = COLUMN_WIDTH[collectsRsvp ? 'withRsvp' : 'withoutRsvp'];
 
   const columns: ColumnDef<GuestInteractionRow>[] = [
     {
@@ -188,15 +169,21 @@ export function ScheduleResultsGuests({
             {row.original.guestName}
           </span>
           {/* The phone column folded away: the number moves under the name */}
-          {tier !== 'full' &&
-            phone(row.original, 'text-muted-foreground text-[13px]')}
+          {tier !== 'full' && (
+            <GuestPhone
+              phone={row.original.phone}
+              className="text-muted-foreground text-[13px]"
+            />
+          )}
         </span>
       ),
     },
     {
       id: 'phone',
       header: t('columns.phone'),
-      cell: ({ row }) => phone(row.original, 'text-foreground/70'),
+      cell: ({ row }) => (
+        <GuestPhone phone={row.original.phone} className="text-foreground/70" />
+      ),
     },
     {
       id: 'message',
@@ -220,21 +207,21 @@ export function ScheduleResultsGuests({
     {
       id: 'lastUpdate',
       header: t('columns.lastUpdate'),
-      cell: ({ row }) => {
-        const at = when(row.original);
-        return (
-          <span title={at.title} className="text-muted-foreground text-[13px]">
-            {at.text}
-          </span>
-        );
-      },
+      cell: ({ row }) => (
+        <RelativeMoment
+          at={lastActivityAt(row.original)}
+          now={now}
+          locale={locale}
+          fallback="–"
+          className="text-muted-foreground text-[13px]"
+        />
+      ),
     },
     {
       id: 'expand',
       header: () => <span className="sr-only">{t('columns.actions')}</span>,
       cell: ({ row }) => {
-        const open = row.getIsExpanded();
-        const RowChevron = open ? IconChevronDown : Forward;
+        const open = row.id === selectedId;
         return (
           // The row's one control, for the keyboard; a click anywhere on the
           // row bubbles to the row's own handler.
@@ -244,34 +231,29 @@ export function ScheduleResultsGuests({
             aria-label={t('openActivity', { name: row.original.guestName })}
             className="text-muted-foreground hover:bg-muted hover:text-foreground ms-auto flex size-8 items-center justify-center rounded-lg transition-colors"
           >
-            <RowChevron size={16} aria-hidden />
+            {open ? (
+              <IconChevronDown size={16} aria-hidden />
+            ) : (
+              <IconChevronRight size={16} aria-hidden className={FORWARD} />
+            )}
           </button>
         );
       },
     },
   ];
 
-  // One guest open at a time, owned by the caller (the phone's sheet reads it too)
-  const expanded: ExpandedState = selectedId ? { [selectedId]: true } : {};
-  const columnVisibility: VisibilityState = useMemo(
-    () => guestTableHiddenColumns(tier, collectsRsvp),
-    [tier, collectsRsvp],
-  );
-
+  // One guest open at a time, owned by the caller (the phone's sheet reads it
+  // too), so a row is open when it is the selected guest - no table state.
   const table = useReactTable({
     data: pageRows,
     columns,
     // Folded columns are hidden through the table, not CSS, so the expanded
     // row's colSpan counts only the columns on screen.
-    state: { expanded, columnVisibility },
-    // Paging is ours, not the table's. Left on, every new `data` queues a
-    // page-index reset as a microtask, the reset re-renders, and a new array
-    // re-queues it - an endless loop that froze the page on the first click.
-    autoResetPageIndex: false,
+    state: { columnVisibility: guestTableHiddenColumns(tier, collectsRsvp) },
+    // Paging is ours ("1-10 of 61"), so the table never pages or resets a page
+    manualPagination: true,
     getRowId: (row) => row.guestId,
-    getRowCanExpand: () => true,
     getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
   });
 
   const from = rows.length === 0 ? 0 : safePage * PAGE_SIZE + 1;
@@ -339,7 +321,6 @@ export function ScheduleResultsGuests({
       <div className="divide-y md:hidden">
         {visible.map((row) => {
           const open = selectedId === row.guestId;
-          const at = when(row);
           return (
             <button
               key={row.guestId}
@@ -356,17 +337,21 @@ export function ScheduleResultsGuests({
                 <span className="truncate text-[15px] font-semibold">
                   {row.guestName}
                 </span>
-                {phone(row, 'text-muted-foreground text-[13px]')}
+                <GuestPhone
+                  phone={row.phone}
+                  className="text-muted-foreground text-[13px]"
+                />
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <span
-                  title={at.title}
+                <RelativeMoment
+                  at={lastActivityAt(row)}
+                  now={now}
+                  locale={locale}
+                  fallback="–"
                   className="text-muted-foreground text-[12.5px] whitespace-nowrap"
-                >
-                  {at.text}
-                </span>
+                />
                 <span className="text-muted-foreground flex size-8 items-center justify-center">
-                  <Forward size={16} aria-hidden />
+                  <IconChevronRight size={16} aria-hidden className={FORWARD} />
                 </span>
               </div>
             </button>
@@ -396,7 +381,8 @@ export function ScheduleResultsGuests({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        'text-muted-foreground h-[42px] px-2 text-[13px] font-semibold first:ps-4 last:pe-4',
+                        'text-muted-foreground h-[42px] text-[13px] font-semibold',
+                        CELL_X,
                         widths[header.column.id as keyof typeof widths],
                       )}
                     >
@@ -411,7 +397,7 @@ export function ScheduleResultsGuests({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => {
-                const open = row.getIsExpanded();
+                const open = row.id === selectedId;
                 return (
                   <Fragment key={row.id}>
                     <TableRow
@@ -426,7 +412,7 @@ export function ScheduleResultsGuests({
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
-                          className="overflow-hidden px-2 py-0 first:ps-4 last:pe-4"
+                          className={cn('overflow-hidden py-0', CELL_X)}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,

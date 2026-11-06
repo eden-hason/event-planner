@@ -2091,22 +2091,13 @@
       },
       "activity": {
         "title": "פעילות ההודעה",
-        "sent": "נשלחה",
         "sentSms": "נשלחה ב-SMS",
-        "delivered": "התקבלה",
-        "read": "נקראה",
-        "failed": "המסירה נכשלה",
-        "onItsWay": "בדרך",
         "smsOnItsWay": "SMS בדרך",
-        "answered": "התקבלה תשובה",
-        "noPhone": "אין מספר טלפון",
-        "outsidePackage": "מחוץ לחבילה"
+        "answered": "התקבלה תשובה"
       },
       "details": {
         "rsvp": "אישור הגעה",
         "coming": "אישרו הגעה",
-        "notComing": "לא מגיעים",
-        "noResponse": "ללא תגובה",
         "confirmedCount": "כמות מאושרת",
         "close": "סגירה"
       }

@@ -2091,22 +2091,13 @@
       },
       "activity": {
         "title": "Message activity",
-        "sent": "Sent",
         "sentSms": "Sent by SMS",
-        "delivered": "Delivered",
-        "read": "Read",
-        "failed": "Delivery failed",
-        "onItsWay": "On its way",
         "smsOnItsWay": "SMS on the way",
-        "answered": "Answer received",
-        "noPhone": "No phone number",
-        "outsidePackage": "Outside the package"
+        "answered": "Answer received"
       },
       "details": {
         "rsvp": "RSVP",
         "coming": "Coming",
-        "notComing": "Not coming",
-        "noResponse": "No response",
         "confirmedCount": "Confirmed guests",
         "close": "Close"
       }

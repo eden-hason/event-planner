@@ -8,36 +8,6 @@ import type {
 } from '../queries/guest-interactions';
 
 /**
- * Where one guest stands on the Delivery ladder, in the Owner's words.
- *
- * The channel is not a rung: `sms` is here only because SMS stops at delivered
- * and has no read receipt to climb to, so "reached by SMS" is its final
- * delivery state. `none` is a guest with no Delivery at all - someone who
- * answered through a shared link.
- */
-export type GuestStatus =
-  | 'seen'
-  | 'delivered'
-  | 'sms'
-  | 'on_its_way'
-  | 'sms_on_its_way'
-  | 'not_delivered'
-  | 'no_phone'
-  | 'outside_package'
-  | 'none';
-
-export function guestStatus(row: GuestInteractionRow): GuestStatus {
-  switch (row.delivery) {
-    case null:
-      return 'none';
-    case 'whatsapp':
-      return row.seen ? 'seen' : 'delivered';
-    default:
-      return row.delivery;
-  }
-}
-
-/**
  * Where a guest's message stands, in the words of a messaging app's ticks
  * rather than the Delivery's own states (CONTEXT.md, Delivery):
  *
@@ -88,7 +58,7 @@ export function messageState(row: GuestInteractionRow): MessageState {
  * The guest's answer to this Schedule. `not_asked` for a guest it did not ask
  * (a confirmed guest on an Advance Reminder), who has nothing to wait for.
  */
-export type RsvpState = 'confirmed' | 'declined' | 'pending' | 'not_asked';
+type RsvpState = 'confirmed' | 'declined' | 'pending' | 'not_asked';
 
 export function rsvpState(row: GuestInteractionRow): RsvpState {
   if (row.response === 'rsvp_confirm') return 'confirmed';
@@ -134,18 +104,6 @@ export function guestTableHiddenColumns(
   // Without an answer column, the message is all the row says about the send
   if (tier === 'tight' && collectsRsvp) hidden.message = false;
   return hidden;
-}
-
-/**
- * The read receipt, told apart from its absence. Only a WhatsApp message can
- * report one, so an SMS guest is `na` - not unseen, a different fact - and so
- * is a guest nothing reached.
- */
-export function seenState(row: GuestInteractionRow): 'seen' | 'unseen' | 'na' {
-  if (row.delivery === 'whatsapp' || row.delivery === 'on_its_way') {
-    return row.seen ? 'seen' : 'unseen';
-  }
-  return 'na';
 }
 
 const NOT_REACHED: GuestDeliveryOutcome[] = [
@@ -347,8 +305,26 @@ export function percent(part: number, whole: number): number {
   return whole > 0 ? Math.round((part / whole) * 100) : 0;
 }
 
+// Intl formatters are costly to build and a results render formats every row
+// and step, so each locale-and-options pair is built once and kept.
+const formatters = new Map<string, Intl.DateTimeFormat | Intl.RelativeTimeFormat>();
+
+function dateFormat(locale: string, options: Intl.DateTimeFormatOptions) {
+  const key = `d|${locale}|${JSON.stringify(options)}`;
+  let format = formatters.get(key) as Intl.DateTimeFormat | undefined;
+  if (!format) formatters.set(key, (format = new Intl.DateTimeFormat(locale, options)));
+  return format;
+}
+
+function relativeFormat(locale: string, options: Intl.RelativeTimeFormatOptions) {
+  const key = `r|${locale}|${JSON.stringify(options)}`;
+  let format = formatters.get(key) as Intl.RelativeTimeFormat | undefined;
+  if (!format) formatters.set(key, (format = new Intl.RelativeTimeFormat(locale, options)));
+  return format;
+}
+
 function israelDayKey(date: Date): string {
-  return new Intl.DateTimeFormat('en-CA', {
+  return dateFormat('en-CA', {
     timeZone: ADMIN_TIME_ZONE,
     year: 'numeric',
     month: '2-digit',
@@ -358,13 +334,12 @@ function israelDayKey(date: Date): string {
 
 /**
  * How long ago a moment was: "5 minutes ago", "3 hours ago", "2 days ago".
- * Minutes under an hour, hours under two days, days after that. `short` is the
- * abbreviated form for a narrow column ("5 min. ago"). A moment after `now`
- * (clock skew) reads as now, as does anything under a minute.
+ * Minutes under an hour, hours under two days, days after that. A moment after
+ * `now` (clock skew) reads as now, as does anything under a minute.
  */
 export function formatAgo(
   iso: string,
-  { now, locale, short = false }: { now: Date; locale: string; short?: boolean },
+  { now, locale }: { now: Date; locale: string },
 ): string {
   const minutes = Math.max(
     Math.round((now.getTime() - new Date(iso).getTime()) / 60_000),
@@ -380,15 +355,11 @@ export function formatAgo(
           ? [-hours, 'hour']
           : [-Math.round(hours / 24), 'day'];
 
-  const format = (style: Intl.RelativeTimeFormatStyle) =>
-    new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style }).format(value, unit);
-  const text = format(short ? 'short' : 'long');
-  // Hebrew's singular and dual carry the number in brackets as well - "לפני
-  // שעתיים (2)" - though the word already says it. Those take the full word,
-  // since the abbreviation alone ("לפני שע׳") reads as a fragment.
-  return BRACKETED_COUNT.test(text)
-    ? format('long').replace(BRACKETED_COUNT, '')
-    : text;
+  // ICU writes Hebrew's singular and dual with the count in brackets as well -
+  // "לפני שעתיים (2)" - though the word already says it.
+  return relativeFormat(locale, { numeric: 'auto' })
+    .format(value, unit)
+    .replace(BRACKETED_COUNT, '');
 }
 
 /** A count repeated in brackets after a word that already says it */
@@ -404,12 +375,7 @@ export function formatMoment(
   { now, locale }: { now: Date; locale: string },
 ): string {
   const at = new Date(iso);
-  const rtf = new Intl.RelativeTimeFormat(locale, {
-    numeric: 'auto',
-    style: 'short',
-  });
-
-  const time = new Intl.DateTimeFormat(locale, {
+  const time = dateFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
@@ -419,9 +385,10 @@ export function formatMoment(
   const day = israelDayKey(at);
   if (day === israelDayKey(now)) return time;
   if (day === israelDayKey(new Date(now.getTime() - 86_400_000))) {
-    return `${rtf.format(-1, 'day')} ${time}`;
+    const yesterday = relativeFormat(locale, { numeric: 'auto', style: 'short' });
+    return `${yesterday.format(-1, 'day')} ${time}`;
   }
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     timeZone: ADMIN_TIME_ZONE,
     day: 'numeric',
     month: 'numeric',
