@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Surface } from './band';
 
-/** Mirrors the Payments index - header, search, filter bar, six-column table - so nothing shifts on load. */
+/** Mirrors the Payments index - header, search, filter bar, six-column table, summary - so nothing shifts on load. */
 export function PaymentsIndexSkeleton() {
   return (
     <div className="flex flex-col gap-4">
@@ -12,6 +12,7 @@ export function PaymentsIndexSkeleton() {
       <div className="flex flex-col gap-3">
         <Skeleton className="h-10 w-full max-w-[460px]" />
         <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-20" />
         </div>
@@ -36,6 +37,16 @@ export function PaymentsIndexSkeleton() {
               </div>
             ))}
           </div>
+        </div>
+      </Surface>
+      <Surface className="flex items-center justify-between gap-8 px-5 py-4">
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+        <div className="flex gap-10">
+          <Skeleton className="h-11 w-20" />
+          <Skeleton className="h-11 w-24" />
         </div>
       </Surface>
     </div>
