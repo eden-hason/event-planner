@@ -8,12 +8,20 @@ export const OWNER_MESSAGE_MAX_LATENESS_HOURS = 48;
 /** The Israel wall clock the Post-event note goes out at. */
 const POST_EVENT_TIME = '18:00';
 
-/** Saturday, as `Date.getUTCDay` numbers it. */
+/**
+ * The Israel wall clock it goes out at on a Friday. 18:00 is already Shabbat for
+ * much of the year (winter candle-lighting is around 16:15), so a Thursday
+ * Event's note goes out at midday instead.
+ */
+const FRIDAY_POST_EVENT_TIME = '12:00';
+
+/** Friday and Saturday, as `Date.getUTCDay` numbers them. */
+const FRIDAY = 5;
 const SATURDAY = 6;
 
 /**
- * When the Post-event note is due: 18:00 Israel on the day after the Event, or
- * on Sunday when that day is a Saturday.
+ * When the Post-event note is due: 18:00 Israel on the day after the Event,
+ * 12:00 when that day is a Friday, or Sunday 18:00 when it is a Saturday.
  *
  * `event_date` is a calendar date stored at 00:00 UTC, so its UTC date is the
  * day the Owner picked (see `daysUntil`). Null for an Event with no date.
@@ -26,8 +34,9 @@ export function postEventDueAt(eventDate: string | null): string | null {
   const start = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
   let next = new Date(start + DAY_MS);
   if (next.getUTCDay() === SATURDAY) next = new Date(next.getTime() + DAY_MS);
+  const time = next.getUTCDay() === FRIDAY ? FRIDAY_POST_EVENT_TIME : POST_EVENT_TIME;
 
-  return israelWallClockToIso(next.toISOString().slice(0, 10), POST_EVENT_TIME);
+  return israelWallClockToIso(next.toISOString().slice(0, 10), time);
 }
 
 /** True once the due time has come. */
