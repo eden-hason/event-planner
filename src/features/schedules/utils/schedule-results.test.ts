@@ -2,39 +2,78 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, buildJourney, filterGuests, formatMoment, guestStatus, lastActivityAt, percent, resultsLiveness, rsvpAskOf, seenState } from './schedule-results.ts';
+import { availableFilters, buildJourney, filterGuests, formatAgo, formatMoment, guestTableHiddenColumns, guestTableTier, lastActivityAt, messageState, percent, resultsLiveness, rsvpAskOf, rsvpState } from './schedule-results.ts';
 
-type Row = Parameters<typeof guestStatus>[0];
+type Row = Parameters<typeof messageState>[0];
 
 const row = (over: Partial<Row>): Row => ({
   guestId: over.guestName ?? 'g',
   guestName: 'נועה לוי',
   steps: [],
-  viaFallback: false,
   delivery: 'whatsapp',
   seen: false,
   amount: 1,
   ...over,
 });
 
-// ─── guestStatus / seenState ──────────────────────────────────────────────────
+// ─── messageState / rsvpState ─────────────────────────────────────────────────
 
-test('a WhatsApp guest reads as seen or delivered by the receipt', () => {
-  assert.equal(guestStatus(row({ seen: true })), 'seen');
-  assert.equal(guestStatus(row({})), 'delivered');
+const wa = { channel: 'whatsapp' as const, fallback: null, sentAt: '2026-09-21T10:00:00Z' };
+const sms = { channel: 'sms' as const, fallback: 'failed' as const, sentAt: '2026-09-21T10:10:00Z' };
+
+test('a message reads as its ticks: received, read', () => {
+  assert.equal(messageState(row({})), 'received');
+  assert.equal(messageState(row({ seen: true })), 'read');
+  assert.equal(messageState(row({ delivery: 'sms' })), 'received');
 });
 
-test('a guest with no delivery is none, the rest keep their outcome', () => {
-  assert.equal(guestStatus(row({ delivery: null })), 'none');
-  assert.equal(guestStatus(row({ delivery: 'sms' })), 'sms');
-  assert.equal(guestStatus(row({ delivery: 'no_phone' })), 'no_phone');
+test('on its way is sent once accepted, and pending before any attempt', () => {
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [wa] })), 'sent');
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [] })), 'pending');
 });
 
-test('an SMS guest is not applicable for seen, never unseen', () => {
-  assert.equal(seenState(row({ delivery: 'sms' })), 'na');
-  assert.equal(seenState(row({ delivery: 'not_delivered' })), 'na');
-  assert.equal(seenState(row({})), 'unseen');
-  assert.equal(seenState(row({ seen: true })), 'seen');
+test('an SMS on the way is sent once accepted, pending while the Fallback is still to go', () => {
+  const failedWa = { ...wa, failedAt: '2026-09-21T10:01:00Z' };
+  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa, sms] })), 'sent');
+  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa] })), 'pending');
+});
+
+test('a failure, and the records nothing was sent to, keep their reason', () => {
+  assert.equal(messageState(row({ delivery: 'not_delivered' })), 'failed');
+  assert.equal(messageState(row({ delivery: 'no_phone' })), 'no_phone');
+  assert.equal(messageState(row({ delivery: 'outside_package' })), 'outside_package');
+  assert.equal(messageState(row({ delivery: null })), 'none');
+});
+
+test('the answer, and no answer told apart from not being asked', () => {
+  assert.equal(rsvpState(row({ response: 'rsvp_confirm' })), 'confirmed');
+  assert.equal(rsvpState(row({ response: 'rsvp_decline' })), 'declined');
+  assert.equal(rsvpState(row({})), 'pending');
+  assert.equal(rsvpState(row({ notAsked: true })), 'not_asked');
+  // An answer counts even where the Schedule did not ask
+  assert.equal(rsvpState(row({ notAsked: true, response: 'rsvp_confirm' })), 'confirmed');
+});
+
+// ─── guestTableTier ───────────────────────────────────────────────────────────
+
+test('the table folds at fixed widths, never by layout', () => {
+  assert.equal(guestTableTier(1215), 'full');
+  assert.equal(guestTableTier(672), 'full');
+  assert.equal(guestTableTier(671), 'medium');
+  assert.equal(guestTableTier(512), 'medium');
+  assert.equal(guestTableTier(511), 'compact');
+  assert.equal(guestTableTier(448), 'compact');
+  assert.equal(guestTableTier(447), 'tight');
+  assert.equal(guestTableTier(0), 'tight');
+});
+
+test('each tier folds the columns of the one above it, and one more', () => {
+  assert.deepEqual(guestTableHiddenColumns('full', true), {});
+  assert.deepEqual(guestTableHiddenColumns('medium', true), { phone: false });
+  assert.deepEqual(guestTableHiddenColumns('compact', true), { phone: false, lastUpdate: false });
+  assert.deepEqual(guestTableHiddenColumns('tight', true), { phone: false, lastUpdate: false, message: false });
+  // With no answer column, the message stays: it is all the row has to say
+  assert.deepEqual(guestTableHiddenColumns('tight', false), { phone: false, lastUpdate: false });
 });
 
 // ─── filters ──────────────────────────────────────────────────────────────────
@@ -95,7 +134,6 @@ test('a journey across WhatsApp and an SMS Fallback reads in time order', () => 
   const journey = buildJourney(
     row({
       delivery: 'sms',
-      viaFallback: true,
       response: 'rsvp_confirm',
       respondedAt: '2026-09-21T08:53:00Z',
       guestCount: 2,
@@ -173,7 +211,7 @@ test('a guest an SMS Fallback is coming for ends in an open SMS step', () => {
   );
 });
 
-test('an SMS on its way is not reached yet, and has no read receipt to miss', () => {
+test('an SMS on its way is not reached yet', () => {
   const rows = [
     row({ guestName: 'a', delivery: 'sms_on_its_way' }),
     row({ guestName: 'b', delivery: 'not_delivered' }),
@@ -181,8 +219,8 @@ test('an SMS on its way is not reached yet, and has no read receipt to miss', ()
   const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
     filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
   assert.deepEqual(names('notReached'), ['a', 'b']);
-  assert.equal(guestStatus(rows[0]), 'sms_on_its_way');
-  assert.equal(seenState(rows[0]), 'na');
+  // A Fallback still to go out: nothing accepted yet
+  assert.equal(messageState(rows[0]), 'pending');
 });
 
 test('a confirmed SMS shows as delivered, and never as seen', () => {
@@ -302,12 +340,35 @@ test('moments read as time today, yesterday with time, then a date', () => {
   );
 });
 
+test('ago reads in minutes, then hours, then days, and never in the future', () => {
+  const now = new Date('2026-09-21T12:00:00Z');
+  const ago = (iso: string) => formatAgo(iso, { now, locale: 'en' });
+  assert.equal(ago('2026-09-21T11:55:00Z'), '5 minutes ago');
+  assert.equal(ago('2026-09-21T09:00:00Z'), '3 hours ago');
+  assert.equal(ago('2026-09-20T13:00:00Z'), '23 hours ago');
+  assert.equal(ago('2026-09-18T12:00:00Z'), '3 days ago');
+  assert.equal(ago('2026-09-21T11:59:50Z'), 'now');
+  assert.equal(ago('2026-09-21T12:03:00Z'), 'now');
+});
+
+test('ago in Hebrew never repeats the count in brackets', () => {
+  const now = new Date('2026-09-21T12:00:00Z');
+  const he = (iso: string) => formatAgo(iso, { now, locale: 'he' });
+  assert.equal(he('2026-09-21T11:59:00Z'), 'לפני דקה');
+  assert.equal(he('2026-09-21T11:00:00Z'), 'לפני שעה');
+  assert.equal(he('2026-09-21T10:00:00Z'), 'לפני שעתיים');
+  assert.equal(he('2026-09-21T09:00:00Z'), 'לפני 3 שעות');
+  assert.equal(he('2026-09-21T11:55:00Z'), 'לפני 5 דקות');
+  for (const iso of ['2026-09-21T11:59:00Z', '2026-09-21T11:00:00Z', '2026-09-21T10:00:00Z', '2026-09-19T12:00:00Z']) {
+    assert.doesNotMatch(he(iso), /\(\d+\)/);
+  }
+});
+
 // ─── outside the Record Package (ADR 0027) ────────────────────────────────────
 
 test('a record outside the package keeps its own status and journey', () => {
   const outside = row({ delivery: 'outside_package' });
-  assert.equal(guestStatus(outside), 'outside_package');
-  assert.equal(seenState(outside), 'na');
+  assert.equal(messageState(outside), 'outside_package');
   assert.deepEqual(
     buildJourney(outside).map((s: { kind: string }) => s.kind),
     ['outside_package'],

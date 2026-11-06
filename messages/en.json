@@ -1987,10 +1987,8 @@
         "title": "What happened to the message",
         "unit": "In guest records",
         "audience": "Audience",
-        "audienceHint": "Every record with a phone",
-        "audienceExcluded": "{count, plural, one {# record without a phone excluded} other {# records without a phone excluded}}",
+        "audienceHint": "Every record the message went to",
         "audienceExcludedPackage": "{count, plural, one {# record outside the package excluded} other {# records outside the package excluded}}",
-        "audienceExcludedBoth": "{noPhone} without a phone and {outside} outside the package excluded",
         "reached": "Reached",
         "ofAudience": "{percent}% of the audience",
         "seen": "Seen",
@@ -2038,38 +2036,34 @@
         },
         "columns": {
           "guest": "Guest",
-          "delivery": "Delivery",
-          "seen": "Seen",
-          "answer": "Answer",
-          "lastUpdate": "Last update"
+          "phone": "Phone",
+          "message": "Message",
+          "rsvp": "RSVP",
+          "count": "Guests",
+          "lastUpdate": "Last update",
+          "actions": "Actions"
         },
-        "status": {
-          "seen": "Seen",
-          "delivered": "Delivered",
-          "sms": "Reached by SMS",
-          "on_its_way": "On its way",
-          "sms_on_its_way": "SMS on the way",
-          "not_delivered": "Not delivered",
+        "message": {
+          "pending": "On its way",
+          "sent": "Sent",
+          "received": "Delivered",
+          "read": "Read",
+          "failed": "Delivery failed",
           "no_phone": "No phone number",
           "outside_package": "Outside the package",
           "none": "No message"
         },
-        "channel": {
-          "whatsapp": "WhatsApp",
-          "sms": "SMS",
-          "fallback": "SMS after WhatsApp",
-          "notSent": "Not sent"
-        },
-        "seenState": {
-          "seen": "Seen",
-          "unseen": "No read receipt",
-          "sms": "Not available on SMS"
-        },
-        "answer": {
+        "rsvp": {
           "confirmed": "Confirmed",
-          "declined": "Declined",
+          "declined": "Not coming",
           "pending": "No response"
-        }
+        },
+        "pagination": {
+          "range": "{from}–{to} of {total}",
+          "previous": "Previous",
+          "next": "Next"
+        },
+        "openActivity": "Message activity for {name}"
       },
       "people": "{count, plural, one {# guest} other {# guests}}",
       "journey": {
@@ -2093,8 +2087,18 @@
         "outsidePackage": "Outside the package",
         "outsidePackageMeta": "Nothing was sent. The guest list is bigger than the record package",
         "confirmed": "Confirmed",
-        "declined": "Declined",
-        "call": "Call guest",
+        "declined": "Declined"
+      },
+      "activity": {
+        "title": "Message activity",
+        "sentSms": "Sent by SMS",
+        "smsOnItsWay": "SMS on the way",
+        "answered": "Answer received"
+      },
+      "details": {
+        "rsvp": "RSVP",
+        "coming": "Coming",
+        "confirmedCount": "Confirmed guests",
         "close": "Close"
       }
     },

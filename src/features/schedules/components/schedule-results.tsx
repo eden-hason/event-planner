@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   IconMessage,
@@ -13,21 +13,23 @@ import { cn } from '@/lib/utils';
 import { AutoRefresh } from '@/components/auto-refresh';
 import { GHOST_BAR, GhostEmpty } from '@/components/ghost-empty';
 import { RefreshButton } from '@/components/refresh-button';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
-import type { ScheduleInteractionData } from '../queries/guest-interactions';
+import type {
+  GuestInteractionRow,
+  ScheduleInteractionData,
+} from '../queries/guest-interactions';
 import {
+  formatAgo,
   formatMoment,
   percent,
   resultsLiveness,
   type GuestFilter,
 } from '../utils/schedule-results';
-import { GuestJourney } from './guest-journey';
+import { GuestDetailsSheetBody } from './guest-activity';
 import { RESULT_TONE } from './results-presentation';
 import { ScheduleResultsGuests } from './schedule-results-guests';
-
-/** The results container width (px) at which the side rail appears - Tailwind's `@4xl`. */
-const RAIL_MIN_WIDTH = 896;
 
 interface ScheduleResultsProps {
   data: ScheduleInteractionData;
@@ -43,8 +45,8 @@ interface ScheduleResultsProps {
 /**
  * The Results tab: watch the message land.
  *
- * On top, the live state and the funnel of the whole schedule; below, each
- * guest's own journey. Everything is in guest records, and three rules from
+ * On top, the live state and the funnel of the whole schedule; below, every
+ * guest and their message's activity. Everything is in guest records, and three rules from
  * CONTEXT.md and ADR 0011/0012 shape it:
  *
  * - Seen is scored against the WhatsApp deliveries that could report it, never
@@ -69,13 +71,15 @@ export function ScheduleResults({
   renderedAt,
 }: ScheduleResultsProps) {
   const locale = useLocale();
-  const isRTL = locale === 'he';
   const now = useMemo(() => new Date(renderedAt), [renderedAt]);
   const { summary, guests } = data;
 
   const [filter, setFilter] = useState<GuestFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [rootRef, wide] = useIsWide();
+  const isMobile = useIsMobile();
+  // A second click on the open guest closes it
+  const toggleGuest = (guestId: string) =>
+    setSelectedId((current) => (current === guestId ? null : guestId));
 
   const isSms = channel === 'sms';
   // Scored against WhatsApp deliveries only, so shown only when there are some.
@@ -94,6 +98,10 @@ export function ScheduleResults({
   });
 
   const selected = guests.find((g) => g.guestId === selectedId) ?? null;
+  // The sheet keeps the last guest while it slides away, rather than emptying
+  // the moment the guest is let go (derived state, set during render).
+  const [sheetRow, setSheetRow] = useState<GuestInteractionRow | null>(null);
+  if (selected && selected !== sheetRow) setSheetRow(selected);
 
   const live = (
     <LiveStrip
@@ -107,120 +115,77 @@ export function ScheduleResults({
 
   if (guests.length === 0) {
     return (
-      <div ref={rootRef} className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-3.5">
         {live}
         <ScheduleResultsGhost collectsRsvp={collectsRsvp} channel={channel} smsFallback={smsFallback} />
       </div>
     );
   }
 
-  // The rail holds the open guest's journey, so it takes room only while one is open.
-  const railOpen = !!selected && wide;
-
   return (
-    <div ref={rootRef} className="@container">
+    <div className="@container">
       <div className="flex flex-col gap-3.5">
         {live}
 
-        <div
-          className={cn(
-            'grid gap-3.5 @4xl:items-start',
-            railOpen && '@4xl:grid-cols-[minmax(0,1fr)_250px]',
-          )}
-        >
-          <div className="flex min-w-0 flex-col gap-3.5">
-            {/* Masonry, not rows: a short card never leaves a gap beside a tall
-                one. Padding, not margin, spaces it - a column drops margin at
-                its foot - so one -mb cancels the trailing space either way. */}
-            <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
-              <div>
-                <Funnel
-                  summary={summary}
-                  showSeen={showSeen}
-                  collectsRsvp={collectsRsvp}
-                />
-              </div>
-              <div>
-                <ChannelsCard summary={summary} isSms={isSms} />
-              </div>
-              {collectsRsvp && (
-                <div>
-                  <RsvpCard summary={summary} />
-                </div>
-              )}
+        <div className="flex min-w-0 flex-col gap-3.5">
+          {/* Masonry, not rows: a short card never leaves a gap beside a tall
+              one. Padding, not margin, spaces it - a column drops margin at
+              its foot - so one -mb cancels the trailing space either way. */}
+          <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
+            <div>
+              <Funnel
+                summary={summary}
+                showSeen={showSeen}
+                collectsRsvp={collectsRsvp}
+              />
             </div>
-
-            <ScheduleResultsGuests
-              guests={guests}
-              collectsRsvp={collectsRsvp}
-              showSeen={showSeen}
-              filter={filter}
-              onFilterChange={setFilter}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              now={now}
-              locale={locale}
-              isRTL={isRTL}
-            />
+            <div>
+              <ChannelsCard summary={summary} isSms={isSms} />
+            </div>
+            {collectsRsvp && (
+              <div>
+                <RsvpCard summary={summary} />
+              </div>
+            )}
           </div>
 
-          {selected && railOpen && (
-            <section className="bg-card border-primary/30 hidden rounded-2xl border p-4 shadow-[0_10px_26px_rgba(42,12,58,0.1)] @4xl:block">
-              <GuestJourney
-                row={selected}
-                now={now}
-                locale={locale}
-                onClose={() => setSelectedId(null)}
-              />
-            </section>
-          )}
+          <ScheduleResultsGuests
+            guests={guests}
+            collectsRsvp={collectsRsvp}
+            showSeen={showSeen}
+            filter={filter}
+            onFilterChange={setFilter}
+            selectedId={selectedId}
+            onSelect={toggleGuest}
+            now={now}
+            locale={locale}
+          />
         </div>
       </div>
 
+      {/* On a phone the open guest takes a sheet; on desktop it opens under its table row */}
       <Sheet
-        open={!!selected && !wide}
+        open={!!selected && isMobile}
         onOpenChange={(open) => !open && setSelectedId(null)}
       >
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl px-4 pt-5 pb-6"
+          showCloseButton={false}
+          className="max-h-[85dvh] gap-0 overflow-y-auto rounded-t-[20px] border-0 px-5 pt-2.5 pb-[max(1.75rem,env(safe-area-inset-bottom))]"
         >
-          <SheetTitle className="sr-only">{selected?.guestName}</SheetTitle>
-          {selected && (
-            <GuestJourney row={selected} now={now} locale={locale} />
+          {/* The content mounts only while open, by when a guest was picked */}
+          {sheetRow && (
+            <GuestDetailsSheetBody
+              row={sheetRow}
+              collectsRsvp={collectsRsvp}
+              now={now}
+              locale={locale}
+            />
           )}
         </SheetContent>
       </Sheet>
     </div>
   );
-}
-
-/**
- * Whether the results container is wide enough for the side rail. A callback
- * ref, because the root node changes when the empty state gives way to results.
- */
-function useIsWide() {
-  const [wide, setWide] = useState(false);
-  const ref = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setWide(entry.contentRect.width >= RAIL_MIN_WIDTH);
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  return [ref, wide] as const;
-}
-
-function ago(iso: string, now: Date, locale: string) {
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  const minutes = Math.round(
-    (now.getTime() - new Date(iso).getTime()) / 60_000,
-  );
-  if (minutes < 60) return rtf.format(-Math.max(minutes, 0), 'minute');
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return rtf.format(-hours, 'hour');
-  return rtf.format(-Math.round(hours / 24), 'day');
 }
 
 function LiveStrip({
@@ -240,7 +205,7 @@ function LiveStrip({
   const isLive = liveness === 'live';
   const parts = [
     sentAt && t('sentAt', { time: formatMoment(sentAt, { now, locale }) }),
-    sentAt && ago(sentAt, now, locale),
+    sentAt && formatAgo(sentAt, { now, locale }),
     isLive && onItsWay > 0
       ? t('onItsWay', { count: onItsWay })
       : t('updatedAt', {
@@ -332,17 +297,13 @@ function Funnel({
   const t = useTranslations('schedules.results.funnel');
   const answered = summary.confirmed + summary.declined;
 
-  // Records the send skipped are not part of the audience, and the hint says which.
-  const noPhone = summary.excludedNoPhone;
+  // Records outside the package are not part of the audience, and the hint
+  // says so. Records with no phone number are left out without a word.
   const outside = summary.excludedOutsidePackage;
   const audienceHint =
-    noPhone > 0 && outside > 0
-      ? t('audienceExcludedBoth', { noPhone, outside })
-      : outside > 0
-        ? t('audienceExcludedPackage', { count: outside })
-        : noPhone > 0
-          ? t('audienceExcluded', { count: noPhone })
-          : t('audienceHint');
+    outside > 0
+      ? t('audienceExcludedPackage', { count: outside })
+      : t('audienceHint');
 
   const rows = [
     {
@@ -621,7 +582,13 @@ export function ScheduleResultsGhost({
       ? []
       : [{ key: 'wa', color: 'bg-channel-whatsapp/35', width: 'w-[62%]' }]),
     ...(isSms || smsFallback
-      ? [{ key: 'sms', color: 'bg-channel-sms/35', width: isSms ? 'w-[78%]' : 'w-[22%]' }]
+      ? [
+          {
+            key: 'sms',
+            color: 'bg-channel-sms/35',
+            width: isSms ? 'w-[78%]' : 'w-[22%]',
+          },
+        ]
       : []),
     { key: 'way', color: 'bg-warning-solid/35', width: 'flex-1' },
   ];
@@ -749,7 +716,9 @@ export function ScheduleResultsGhost({
                           )}
                         >
                           <span className={cn('h-4 w-6 rounded-md', bar)} />
-                          <span className={cn('h-[7px] w-12 rounded-full', bar)} />
+                          <span
+                            className={cn('h-[7px] w-12 rounded-full', bar)}
+                          />
                         </div>
                       ))}
                     </div>

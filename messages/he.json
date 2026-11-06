@@ -1987,10 +1987,8 @@
         "title": "מה קרה להודעה",
         "unit": "ברשומות אורח",
         "audience": "קהל היעד",
-        "audienceHint": "כל הרשומות עם טלפון",
-        "audienceExcluded": "{count, plural, one {רשומה אחת בלי טלפון לא נכללת} other {# רשומות בלי טלפון לא נכללות}}",
+        "audienceHint": "כל הרשומות שההודעה נשלחה אליהן",
         "audienceExcludedPackage": "{count, plural, one {רשומה אחת מחוץ לחבילה לא נכללת} other {# רשומות מחוץ לחבילה לא נכללות}}",
-        "audienceExcludedBoth": "{noPhone} בלי טלפון ו-{outside} מחוץ לחבילה לא נכללות",
         "reached": "הגיעו",
         "ofAudience": "{percent}% מקהל היעד",
         "seen": "נקרא",
@@ -2038,38 +2036,34 @@
         },
         "columns": {
           "guest": "אורח",
-          "delivery": "מסירה",
-          "seen": "נקרא",
-          "answer": "תשובה",
-          "lastUpdate": "עדכון אחרון"
+          "phone": "טלפון",
+          "message": "הודעה",
+          "rsvp": "אישור הגעה",
+          "count": "כמות",
+          "lastUpdate": "עדכון אחרון",
+          "actions": "פעולות"
         },
-        "status": {
-          "seen": "נקרא",
-          "delivered": "נמסר",
-          "sms": "הגיע ב-SMS",
-          "on_its_way": "בדרך",
-          "sms_on_its_way": "SMS בדרך",
-          "not_delivered": "לא נמסר",
+        "message": {
+          "pending": "בדרך",
+          "sent": "נשלחה",
+          "received": "התקבלה",
+          "read": "נקראה",
+          "failed": "המסירה נכשלה",
           "no_phone": "אין מספר טלפון",
           "outside_package": "מחוץ לחבילה",
           "none": "בלי הודעה"
         },
-        "channel": {
-          "whatsapp": "וואטסאפ",
-          "sms": "SMS",
-          "fallback": "SMS אחרי וואטסאפ",
-          "notSent": "לא נשלח"
+        "rsvp": {
+          "confirmed": "אישרו",
+          "declined": "לא מגיעים",
+          "pending": "ללא תגובה"
         },
-        "seenState": {
-          "seen": "נקרא",
-          "unseen": "אין אישור קריאה",
-          "sms": "לא זמין ב-SMS"
+        "pagination": {
+          "range": "{from}–{to} מתוך {total}",
+          "previous": "הקודם",
+          "next": "הבא"
         },
-        "answer": {
-          "confirmed": "אישר",
-          "declined": "סירב",
-          "pending": "לא הגיב"
-        }
+        "openActivity": "פעילות ההודעה של {name}"
       },
       "people": "{count, plural, one {אורח אחד} other {# אורחים}}",
       "journey": {
@@ -2093,8 +2087,18 @@
         "outsidePackage": "מחוץ לחבילה",
         "outsidePackageMeta": "ההודעה לא נשלחה. רשימת האורחים גדולה מחבילת הרשומות",
         "confirmed": "אישר הגעה",
-        "declined": "סירב",
-        "call": "התקשרות לאורח",
+        "declined": "סירב"
+      },
+      "activity": {
+        "title": "פעילות ההודעה",
+        "sentSms": "נשלחה ב-SMS",
+        "smsOnItsWay": "SMS בדרך",
+        "answered": "התקבלה תשובה"
+      },
+      "details": {
+        "rsvp": "אישור הגעה",
+        "coming": "אישרו הגעה",
+        "confirmedCount": "כמות מאושרת",
         "close": "סגירה"
       }
     },
