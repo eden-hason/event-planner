@@ -466,7 +466,7 @@ in the Back Office at the Owner's request, and may unset it.
 
 Unlike a **Fallback Freeze**, it is the Owner's choice, not a cost control, so nothing
 overrides it: neither the automatic batch nor an Operator's launch or retry sends while it
-holds. A WhatsApp that does not reach a Guest is left to an Operator to handle by hand. The
+holds. A WhatsApp that does not reach a Guest is left to an Operator's **Hand Delivery**. The
 Owner sees WhatsApp as the only channel; SMS is simply never mentioned.
 
 It covers the Fallback only. A Schedule whose own channel is SMS is a deliberate first
@@ -476,6 +476,25 @@ Once it is unset, the ordinary Fallback rules apply again, including to failures
 it held.
 
 _Avoid_: WhatsApp-only Event (it does not forbid every SMS), no-SMS mode
+
+## Hand Delivery
+
+A WhatsApp Delivery Attempt an Operator makes in person, from a Kululu team phone rather
+than Kululu's own sending, recorded once they confirm the message reached the Guest. It is
+the Operator's word, not a provider's report, so it is Delivered and never Read - like an
+SMS it is left out of the seen rate - and the Guest counts as **Reached** like any other.
+The Owner sees it as delivered by the Kululu team, after the failed attempts before it.
+
+It is offered in the Back Office for any Failed Delivery, whatever the failure. The message
+is the Schedule's **SMS Rendition**, links included, carrying the Delivery's own RSVP link.
+
+Only the Operator's confirmation is recorded. Opening WhatsApp to send it records nothing,
+because Kululu cannot see whether the message went. A Hand Delivery recorded by mistake is
+withdrawn by erasing it - the one Delivery Attempt that can be erased - and the Delivery
+falls back to Failed. An answer the Guest gave meanwhile stays theirs.
+
+_Avoid_: manual delivery, manual send (a "manual" attempt is an Operator's resend through
+Kululu's own WhatsApp)
 
 ## Guest-level Failure
 

@@ -10,6 +10,7 @@ import {
   comparePlanOrder,
   inAudience,
   isFollowUpConfirmation,
+  isHandTrigger,
   numberPlan,
   planEntryFromRow,
   validatePhoneNumber,
@@ -345,7 +346,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
     pageAll((from, to) =>
       supabase
         .from('message_deliveries')
-        .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel)')
+        .select('id, schedule_id, guest_id, status, delivery_method, error_message, error_code, created_at, sent_at, triggered_by, guests(name, phone_number), message_delivery_attempts(channel, triggered_by)')
         .in('schedule_id', scheduleIds)
         // Every state a delivery can settle in. Filtering to sent/failed dropped a
         // delivery from the timeline the moment the webhook marked it delivered.
@@ -429,6 +430,8 @@ export const getEventTimeline = cache(async function getEventTimeline(
           channel: delivery.delivery_method,
           hasSmsAttempt: ((delivery.message_delivery_attempts ?? []) as { channel: string }[])
             .some((attempt) => attempt.channel === 'sms'),
+          handDelivered: ((delivery.message_delivery_attempts ?? []) as { triggered_by: string | null }[])
+            .some((attempt) => isHandTrigger(attempt.triggered_by)),
         };
       }),
       dueTimeEditable: dueTimeRejection(controlState) === null,

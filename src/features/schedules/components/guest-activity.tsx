@@ -219,7 +219,7 @@ export function GuestStatusAvatar({ row }: { row: GuestInteractionRow }) {
  * an SMS on its way and the answers - have their own words.
  */
 const STEP_STATE: Record<
-  Exclude<JourneyStepKind, 'sms_on_its_way' | 'confirmed' | 'declined'>,
+  Exclude<JourneyStepKind, 'sms_on_its_way' | 'delivered_by_hand' | 'confirmed' | 'declined'>,
   MessageState
 > = {
   sent: 'sent',
@@ -249,6 +249,8 @@ function useActivitySteps(row: GuestInteractionRow): ActivityStep[] {
         return { ...RSVP_LOOK[step.kind], label: t('answered') };
       case 'sms_on_its_way':
         return { ...MESSAGE_LOOK.pending, label: t('smsOnItsWay') };
+      case 'delivered_by_hand':
+        return { ...MESSAGE_LOOK.received, label: t('deliveredByHand') };
       default: {
         const state = STEP_STATE[step.kind];
         const viaSms = step.kind === 'sent' && step.channel === 'sms';

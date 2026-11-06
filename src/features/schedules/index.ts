@@ -29,6 +29,7 @@ export {
   describeGuestLevelFailure,
   type WhatsAppFailureSide,
   isSmsFallbackTrigger,
+  isHandTrigger,
   smsFallbackReason,
   deliveryFallbackReason,
   type SmsFallbackReason,

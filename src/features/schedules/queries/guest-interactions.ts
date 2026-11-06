@@ -12,6 +12,7 @@ import {
 import type { RsvpAsk } from '../utils/schedule-results';
 import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
+import { reachedByHand } from '../utils/hand-delivery';
 
 export type {
   GuestDeliveryOutcome,
@@ -203,7 +204,12 @@ export async function getScheduleInteractionData(
       entry.notAsked = true;
     }
     // `read` is the only status carrying a receipt, and only WhatsApp reports it.
-    if (row.delivery_method === 'whatsapp') {
+    // A Hand Delivery went from a team phone, so no receipt can come for it: it
+    // is left out of the seen rate like an SMS, never counted as unseen.
+    if (
+      row.delivery_method === 'whatsapp' &&
+      !reachedByHand((row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [])
+    ) {
       if (row.status !== 'not_sent' && row.status !== 'failed') {
         seenCapable++;
         seenCapableIds.add(entry.guestId);

@@ -70,6 +70,16 @@ export {
   type WhatsAppFailureSide,
 } from './whatsapp-failures';
 
+// Re-export the Hand Delivery rules (ADR 0052)
+export {
+  HAND_TRIGGER,
+  isHandTrigger,
+  handDeliveryRefusal,
+  reachedByHand,
+  whatsappChatUrl,
+  type HandDeliveryRefusal,
+} from './hand-delivery';
+
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 
 export type RelativeTimeResult =

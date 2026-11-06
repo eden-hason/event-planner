@@ -2072,6 +2072,8 @@
         "sentFallbackUnconfirmedMeta": "כי וואטסאפ עדיין לא אישר מסירה",
         "delivered": "נמסר",
         "deliveredMeta": "הטלפון אישר קבלה",
+        "deliveredByHand": "נמסר על ידי צוות Kululu",
+        "deliveredByHandMeta": "הצוות שלנו שלח את ההודעה ידנית אחרי שהיא לא הגיעה",
         "seen": "נקרא",
         "seenMeta": "דיווח קריאה בוואטסאפ",
         "notDelivered": "לא נמסר",
@@ -2092,6 +2094,7 @@
         "title": "פעילות ההודעה",
         "sentSms": "נשלחה ב-SMS",
         "smsOnItsWay": "SMS בדרך",
+        "deliveredByHand": "נמסרה על ידי צוות Kululu",
         "answered": "התקבלה תשובה"
       },
       "details": {

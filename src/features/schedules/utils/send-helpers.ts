@@ -94,8 +94,10 @@ export async function sendSmsToGuest(params: {
 /**
  * Who started an attempt. The SMS Fallback has two: `fallback` is an Operator
  * pressing the Back Office button, `fallback_auto` is the sweeper (ADR 0016).
+ * `hand` is a Hand Delivery an Operator recorded (ADR 0052) - no send of
+ * Kululu's own, so it is never built from a send result here.
  */
-export type AttemptTrigger = 'scheduled' | 'manual' | 'fallback' | 'fallback_auto';
+export type AttemptTrigger = 'scheduled' | 'manual' | 'fallback' | 'fallback_auto' | 'hand';
 
 export type SmsFallbackTrigger = Extract<AttemptTrigger, 'fallback' | 'fallback_auto'>;
 

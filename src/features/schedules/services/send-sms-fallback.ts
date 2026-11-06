@@ -107,7 +107,7 @@ export type FallbackDeliveryRow = {
   message_delivery_attempts: AttemptRow[];
 };
 
-type LoadedSchedule = {
+export type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
   event: ReturnType<typeof mapEventRow>;
   /** False under an SMS Fallback Opt-out (CONTEXT.md). */
@@ -117,11 +117,11 @@ type LoadedSchedule = {
 /** Why an Event under an SMS Fallback Opt-out offers no fallback. */
 export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
-type Resolution =
+export type Resolution =
   | ({ ok: true } & Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>)
   | { ok: false; reason: string };
 
-async function loadSchedule(
+export async function loadFallbackSchedule(
   supabase: SupabaseClient,
   scheduleId: string,
 ): Promise<LoadedSchedule | null> {
@@ -153,19 +153,33 @@ async function resolveSmsTemplates(
   supabase: SupabaseClient,
   loaded: LoadedSchedule,
 ): Promise<Resolution> {
-  const { schedule, event } = loaded;
+  const { schedule } = loaded;
   // The Owner's choice, so it is checked before anything else and nothing
   // overrides it - not the button, not the retry (unlike a Freeze, which only
   // the sweeper respects).
   if (!loaded.smsFallbackEnabled) return { ok: false, reason: SMS_FALLBACK_OPTED_OUT_REASON };
+  if (schedule.template?.channel === 'sms') {
+    return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
+  }
+  return resolveSmsRendition(supabase, loaded);
+}
+
+/**
+ * The Schedule's SMS Rendition as text to render, whatever may be sent by SMS:
+ * a Hand Delivery (ADR 0052) types it into WhatsApp, so neither an SMS Fallback
+ * Opt-out nor a Schedule whose own channel is SMS stops it. On an SMS Schedule
+ * it resolves to the Templates the Schedule sent.
+ */
+export async function resolveSmsRendition(
+  supabase: SupabaseClient,
+  loaded: LoadedSchedule,
+): Promise<Resolution> {
+  const { schedule, event } = loaded;
   if (!isMessageSchedule(schedule)) {
     return { ok: false, reason: 'רק תזמוני הודעות יכולים לעבור ל-SMS' };
   }
   const anchor = schedule.template;
   if (!anchor) return { ok: false, reason: 'לתזמון הזה אין תבנית' };
-  if (anchor.channel === 'sms') {
-    return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
-  }
 
   // The same family the WhatsApp send used - the Personal Message's when the
   // Schedule carries one (ADR 0046) - on its SMS channel.
@@ -355,7 +369,7 @@ export function awaitingSmsFallback(
   return awaiting;
 }
 
-async function loadGuestsAndTables(
+export async function loadGuestsAndTables(
   supabase: SupabaseClient,
   guestIds: string[],
   withTable: boolean,
@@ -385,7 +399,7 @@ async function loadGuestsAndTables(
   return { guests, tables };
 }
 
-function smsTemplateFor(
+export function smsTemplateFor(
   resolution: Extract<Resolution, { ok: true }>,
   guest: GuestApp,
 ) {
@@ -398,7 +412,7 @@ export async function buildSmsFallbackPlan(
   supabase: SupabaseClient,
   scheduleId: string,
 ): Promise<SmsFallbackPlan> {
-  const loaded = await loadSchedule(supabase, scheduleId);
+  const loaded = await loadFallbackSchedule(supabase, scheduleId);
   if (!loaded) {
     return { scheduleId, unavailableReason: 'התזמון הזה כבר לא קיים', eligible: [], excluded: [], preview: null };
   }
@@ -463,7 +477,7 @@ export async function sendSmsFallback(
 ): Promise<SmsFallbackOutcome> {
   const empty = { sentCount: 0, failedCount: 0, skippedCount: 0 };
 
-  const loaded = await loadSchedule(supabase, scheduleId);
+  const loaded = await loadFallbackSchedule(supabase, scheduleId);
   if (!loaded) return { success: false, message: 'התזמון הזה כבר לא קיים', ...empty };
 
   const resolution = await resolveSmsTemplates(supabase, loaded);
