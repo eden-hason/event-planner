@@ -12,6 +12,7 @@ import { ASK_TYPE_KEYS } from '@/features/schedules/utils/ask-plan';
 import { planEntryFromRow } from '@/features/schedules/utils/timeline';
 import { isNoAskPlanned, NO_ASK_PLANNED_DAYS } from '../utils/no-ask-planned';
 import { israelMonthStart, tallyPayments } from '../utils/payments';
+import { responseRate } from '../utils/response-rate';
 
 /**
  * A Call Round is ended by a deliberate act of Round Completion, so an old open
@@ -404,9 +405,10 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
         .from('events')
         // Counted in the database: reading the guest rows to tally them here
         // ran into PostgREST's 1,000-row cap and undercounted.
-        .select('id, title, event_date, user_id, event_types(key, name), total:guests(count), confirmed:guests(count)')
+        .select('id, title, event_date, user_id, event_types(key, name), total:guests(count), confirmed:guests(count), declined:guests(count)')
         .eq('status', 'published')
         .eq('confirmed.rsvp_status', 'confirmed')
+        .eq('declined.rsvp_status', 'declined')
         .gte('event_date', todayUtc.toISOString())
         .lt('event_date', endUtc.toISOString())
         .order('event_date', { ascending: true }),
@@ -431,7 +433,11 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   const ownerById = new Map(owners.map((o) => [o.id, o]));
 
   return events.map((event) => {
-    const counts = { total: embeddedCount(event.total), confirmed: embeddedCount(event.confirmed) };
+    const counts = {
+      total: embeddedCount(event.total),
+      confirmed: embeddedCount(event.confirmed),
+      declined: embeddedCount(event.declined),
+    };
     const type = event.event_types as unknown as { key: string | null; name: string | null } | null;
     const owner = ownerById.get(event.user_id);
 
@@ -443,9 +449,8 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
       ownerName: owner?.full_name || owner?.email || UNKNOWN_OWNER,
       guestRecords: counts.total,
       confirmed: counts.confirmed,
-      // Null, not zero: an empty guest list has no rate, and rendering 0%
-      // would read as a failing campaign rather than as "no list yet".
-      confirmationRate: counts.total > 0 ? counts.confirmed / counts.total : null,
+      declined: counts.declined,
+      responseRate: responseRate(counts),
     };
   });
 }
