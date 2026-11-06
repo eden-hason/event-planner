@@ -58,7 +58,8 @@ would force a guess.
 
 ## `owner_post_event_1`
 
-Sent at 18:00 Israel the day after the Event, or Sunday if that day is Saturday.
+Sent at 18:00 Israel the day after the Event, at 12:00 if that day is Friday, or Sunday 18:00 if
+that day is Saturday.
 
 **Body**
 
