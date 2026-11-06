@@ -13,6 +13,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 const SORT_KEYS: readonly PaymentsIndexSortKey[] = ['date', 'amount'];
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+const YEAR = /^\d{4}$/;
 /** Far above any real payment, so a mistyped bound cannot make the URL absurd. */
 const MAX_AMOUNT = 10_000_000;
 
@@ -24,6 +25,7 @@ export const DEFAULT_PAYMENTS_SORT_DIRECTION: Record<PaymentsIndexSortKey, SortD
 
 export const DEFAULT_PAYMENTS_INDEX_FILTERS: PaymentsIndexFilters = {
   q: '',
+  year: null,
   month: null,
   minAmount: null,
   maxAmount: null,
@@ -52,7 +54,11 @@ export function parsePaymentsIndexParams(params: SearchParams): PaymentsIndexFil
     ? (sortValue as PaymentsIndexSortKey)
     : DEFAULT_PAYMENTS_INDEX_FILTERS.sort;
   const dirValue = one(params, 'dir');
-  const month = one(params, 'month');
+  const monthValue = one(params, 'month');
+  const month = monthValue && MONTH.test(monthValue) ? monthValue : null;
+  const yearValue = one(params, 'year');
+  // A month already names its year, so the two can never disagree.
+  const year = month ? month.slice(0, 4) : yearValue && YEAR.test(yearValue) ? yearValue : null;
   let minAmount = parseAmount(one(params, 'min'));
   let maxAmount = parseAmount(one(params, 'max'));
   // Bounds entered the wrong way round still mean the range between them.
@@ -61,7 +67,8 @@ export function parsePaymentsIndexParams(params: SearchParams): PaymentsIndexFil
   }
   return {
     q: (one(params, 'q') ?? '').slice(0, 100),
-    month: month && MONTH.test(month) ? month : null,
+    year,
+    month,
     minAmount,
     maxAmount,
     sort,
@@ -82,7 +89,9 @@ export function paymentsIndexHref(
   const next = { ...filters, ...patch, page: patch.page ?? 1 };
   const params = new URLSearchParams();
   if (next.q) params.set('q', next.q);
+  // The month carries its year; a year alone means the whole year.
   if (next.month) params.set('month', next.month);
+  else if (next.year) params.set('year', next.year);
   if (next.minAmount !== null) params.set('min', String(next.minAmount));
   if (next.maxAmount !== null) params.set('max', String(next.maxAmount));
   if (next.sort !== DEFAULT_PAYMENTS_INDEX_FILTERS.sort || next.dir !== DEFAULT_PAYMENTS_INDEX_FILTERS.dir) {
@@ -96,7 +105,7 @@ export function paymentsIndexHref(
 
 /** Search or any filter narrows the list; sorting and paging do not. */
 export function hasPaymentsIndexFilters(filters: PaymentsIndexFilters): boolean {
-  return !!filters.q.trim() || !!filters.month || filters.minAmount !== null || filters.maxAmount !== null;
+  return !!filters.q.trim() || !!filters.year || !!filters.month || filters.minAmount !== null || filters.maxAmount !== null;
 }
 
 /** The Israel calendar month a payment was made in, YYYY-MM. */
@@ -109,7 +118,44 @@ export function currentIsraelMonth(now: Date = new Date()): string {
   return israelToday(now).slice(0, 7);
 }
 
-const MONTH_LABEL = new Intl.DateTimeFormat('he-IL', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+/**
+ * The years the year filter offers, newest first: every year with a payment,
+ * and always the current one, so the list is never empty.
+ */
+export function paymentYears(rows: Pick<PaymentIndexRow, 'occurredAt'>[], now: Date = new Date()): string[] {
+  const years = new Set(rows.map((row) => paymentMonth(row.occurredAt).slice(0, 4)));
+  years.add(currentIsraelMonth(now).slice(0, 4));
+  return [...years].sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * The filter for picking `year`. A chosen month moves to the same month of the
+ * new year, so stepping between years keeps the comparison; a month that has
+ * not happened yet there falls back to the whole year.
+ */
+export function yearPatch(
+  filters: Pick<PaymentsIndexFilters, 'month'>,
+  year: string | null,
+  now: Date = new Date(),
+): Pick<PaymentsIndexFilters, 'year' | 'month'> {
+  if (!year) return { year: null, month: null };
+  const month = filters.month ? `${year}-${filters.month.slice(5, 7)}` : null;
+  return { year, month: month && month <= currentIsraelMonth(now) ? month : null };
+}
+
+/** The period the date filters are set to - "אוקטובר 2026", "שנת 2026" - or null for all time. */
+export function periodLabel(filters: Pick<PaymentsIndexFilters, 'year' | 'month'>): string | null {
+  if (filters.month) return monthLabel(filters.month);
+  if (filters.year) return `שנת ${filters.year}`;
+  return null;
+}
+
+/** The sum of `rows` in shekels, added up in whole agorot so floating point cannot leave a stray fraction. */
+export function sumPaymentAmounts(rows: Pick<PaymentIndexRow, 'amount'>[]): number {
+  return rows.reduce((sum, row) => sum + Math.round(row.amount * 100), 0) / 100;
+}
+
+const MONTH_LABEL =new Intl.DateTimeFormat('he-IL', { timeZone: 'UTC', month: 'long', year: 'numeric' });
 
 /** "אוקטובר 2026", from YYYY-MM. */
 export function monthLabel(month: string): string {
@@ -131,7 +177,9 @@ export function filterPaymentRows(rows: PaymentIndexRow[], filters: PaymentsInde
   // Whitespace is ignored, so "דנה כהן" also finds "דנה  כהן".
   const needle = filters.q.trim().toLocaleLowerCase('en').replace(/\s/g, '');
   return rows.filter((row) => {
-    if (filters.month && paymentMonth(row.occurredAt) !== filters.month) return false;
+    const month = paymentMonth(row.occurredAt);
+    if (filters.month && month !== filters.month) return false;
+    if (!filters.month && filters.year && month.slice(0, 4) !== filters.year) return false;
     if (filters.minAmount !== null && row.amount < filters.minAmount) return false;
     if (filters.maxAmount !== null && row.amount > filters.maxAmount) return false;
     if (!needle) return true;

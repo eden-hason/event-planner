@@ -9,7 +9,11 @@ import {
   parsePaymentsIndexParams,
   paymentMonth,
   paymentsIndexHref,
+  paymentYears,
+  periodLabel,
   sortPaymentRows,
+  sumPaymentAmounts,
+  yearPatch,
 } from './payments-index';
 
 function filters(patch: Partial<PaymentsIndexFilters> = {}): PaymentsIndexFilters {
@@ -45,7 +49,7 @@ test('reads the URL and drops what is malformed', () => {
   assert.deepEqual(parsePaymentsIndexParams({}), DEFAULT_PAYMENTS_INDEX_FILTERS);
   assert.deepEqual(
     parsePaymentsIndexParams({ q: 'דנה', month: '2026-10', min: '100', max: '1,500', sort: 'amount', dir: 'asc', page: '2' }),
-    { q: 'דנה', month: '2026-10', minAmount: 100, maxAmount: 1500, sort: 'amount', dir: 'asc', page: 2 },
+    { q: 'דנה', year: '2026', month: '2026-10', minAmount: 100, maxAmount: 1500, sort: 'amount', dir: 'asc', page: 2 },
   );
   const bad = parsePaymentsIndexParams({ month: '2026-13', min: '-5', max: 'abc', sort: 'owner', page: '0' });
   assert.equal(bad.month, null);
@@ -55,6 +59,70 @@ test('reads the URL and drops what is malformed', () => {
   assert.equal(bad.page, 1);
 });
 
+test('a year stands alone, and a month always brings its own year', () => {
+  assert.deepEqual(
+    [parsePaymentsIndexParams({ year: '2025' }).year, parsePaymentsIndexParams({ year: '2025' }).month],
+    ['2025', null],
+  );
+  // A month overrules a year that disagrees with it.
+  const both = parsePaymentsIndexParams({ year: '2025', month: '2026-10' });
+  assert.equal(both.year, '2026');
+  assert.equal(both.month, '2026-10');
+  assert.equal(parsePaymentsIndexParams({ year: '26' }).year, null);
+  assert.equal(parsePaymentsIndexParams({ year: 'abcd' }).year, null);
+});
+
+test('the URL carries the month, or the year when there is no month', () => {
+  assert.equal(paymentsIndexHref(filters({ year: '2025' })), '/admin/payments?year=2025');
+  assert.equal(paymentsIndexHref(filters({ year: '2026', month: '2026-10' })), '/admin/payments?month=2026-10');
+  const href = paymentsIndexHref(filters({ year: '2025', page: 2 }));
+  const params = Object.fromEntries(new URL(href, 'https://x').searchParams);
+  assert.deepEqual(parsePaymentsIndexParams(params), filters({ year: '2025' }));
+});
+
+test('the year filter keeps the whole Israel year', () => {
+  const rows = [
+    ...ROWS,
+    row({ id: 'e', amount: 200, occurredAt: '2025-06-01T10:00:00Z' }),
+    // 22:30 UTC on 31 Dec 2025 is already 2026 in Israel.
+    row({ id: 'f', amount: 350, occurredAt: '2025-12-31T22:30:00Z' }),
+  ];
+  assert.deepEqual(ids(filterPaymentRows(rows, filters({ year: '2026' }))), ['a', 'b', 'c', 'd', 'f']);
+  assert.deepEqual(ids(filterPaymentRows(rows, filters({ year: '2025' }))), ['e']);
+  assert.deepEqual(ids(filterPaymentRows(rows, filters({ year: '2024' }))), []);
+  assert.deepEqual(ids(filterPaymentRows(rows, filters({ year: '2026', month: '2026-09' }))), ['c']);
+  assert.equal(hasPaymentsIndexFilters(filters({ year: '2026' })), true);
+});
+
+test('the years on offer are those with payments, plus this year, newest first', () => {
+  const now = new Date('2026-11-06T10:00:00Z');
+  assert.deepEqual(paymentYears([], now), ['2026']);
+  assert.deepEqual(
+    paymentYears([{ occurredAt: '2024-03-01T10:00:00Z' }, { occurredAt: '2025-12-31T22:30:00Z' }, { occurredAt: '2024-05-01T10:00:00Z' }], now),
+    ['2026', '2024'],
+  );
+});
+
+test('picking another year keeps the month when it has already happened there', () => {
+  const now = new Date('2026-11-06T10:00:00Z');
+  assert.deepEqual(yearPatch({ month: '2026-10' }, '2025', now), { year: '2025', month: '2025-10' });
+  assert.deepEqual(yearPatch({ month: '2025-12' }, '2026', now), { year: '2026', month: null });
+  assert.deepEqual(yearPatch({ month: null }, '2025', now), { year: '2025', month: null });
+  assert.deepEqual(yearPatch({ month: '2026-10' }, null, now), { year: null, month: null });
+});
+
+test('the period label names the month or the year', () => {
+  assert.equal(periodLabel({ year: null, month: null }), null);
+  assert.equal(periodLabel({ year: '2026', month: null }), 'שנת 2026');
+  assert.match(periodLabel({ year: '2026', month: '2026-10' })!, /אוקטובר.*2026/);
+});
+
+test('the total adds up every amount without floating point drift', () => {
+  assert.equal(sumPaymentAmounts([]), 0);
+  assert.equal(sumPaymentAmounts([{ amount: 0.1 }, { amount: 0.2 }]), 0.3);
+  assert.equal(sumPaymentAmounts(ROWS), 2750);
+});
+
 test('amount bounds entered the wrong way round are swapped', () => {
   const parsed = parsePaymentsIndexParams({ min: '900', max: '100' });
   assert.equal(parsed.minAmount, 100);
@@ -62,7 +130,7 @@ test('amount bounds entered the wrong way round are swapped', () => {
 });
 
 test('the URL round-trips and any change but the page goes back to page 1', () => {
-  const state = filters({ q: 'דנה', month: '2026-10', minAmount: 100, maxAmount: null, page: 3 });
+  const state = filters({ q: 'דנה', year: '2026', month: '2026-10', minAmount: 100, maxAmount: null, page: 3 });
   const href = paymentsIndexHref(state, { maxAmount: 2000 });
   assert.equal(href, `/admin/payments?q=${encodeURIComponent('דנה')}&month=2026-10&min=100&max=2000`);
   const params = Object.fromEntries(new URL(href, 'https://x').searchParams);

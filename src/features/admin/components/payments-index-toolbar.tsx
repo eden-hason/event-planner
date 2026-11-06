@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Search, X } from '@/components/icons';
+import { Search, X } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,15 +18,16 @@ import type { PaymentsIndexFilters } from '../types';
 import {
   amountLabel,
   currentIsraelMonth,
-  monthLabel,
   parseAmount,
   paymentsIndexHref,
+  yearPatch,
 } from '../utils/payments-index';
 import { cn } from '@/lib/utils';
 import { FilterButton } from './filter-button';
 
 const SEARCH_DEBOUNCE_MS = 250;
 const SHORT_MONTH = new Intl.DateTimeFormat('he-IL', { timeZone: 'UTC', month: 'short' });
+const LONG_MONTH = new Intl.DateTimeFormat('he-IL', { timeZone: 'UTC', month: 'long' });
 const MONTHS = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'));
 
 /**
@@ -34,7 +35,7 @@ const MONTHS = Array.from({ length: 12 }, (_, index) => String(index + 1).padSta
  * index, so a filtered view can be shared or reloaded and the server does the
  * narrowing. The search box keeps focus while results update under it.
  */
-export function PaymentsIndexToolbar({ filters }: { filters: PaymentsIndexFilters }) {
+export function PaymentsIndexToolbar({ filters, years }: { filters: PaymentsIndexFilters; years: string[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState(filters.q);
@@ -91,62 +92,103 @@ export function PaymentsIndexToolbar({ filters }: { filters: PaymentsIndexFilter
       </InputGroup>
 
       <div className="flex flex-wrap items-center gap-2">
-        <MonthFilter value={filters.month} onChange={(month) => apply({ month })} />
+        <YearFilter filters={filters} years={years} apply={apply} />
+        <MonthFilter filters={filters} apply={apply} />
         <AmountFilter filters={filters} apply={apply} />
       </div>
     </div>
   );
 }
 
-/** A month at a time: a year to step through and its twelve months, nothing past this month. */
-function MonthFilter({ value, onChange }: { value: string | null; onChange: (month: string | null) => void }) {
-  const current = currentIsraelMonth();
-  const currentYear = Number(current.slice(0, 4));
+/** Every year with a payment, newest first. Picking one shows that whole year until a month narrows it. */
+function YearFilter({
+  filters,
+  years,
+  apply,
+}: {
+  filters: PaymentsIndexFilters;
+  years: string[];
+  apply: (patch: Partial<PaymentsIndexFilters>) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const [year, setYear] = useState(() => Number((value ?? current).slice(0, 4)));
+  // A year typed into the URL with no payments in it still shows as picked.
+  const options = filters.year && !years.includes(filters.year)
+    ? [...years, filters.year].sort((a, b) => b.localeCompare(a))
+    : years;
 
-  function pick(month: string | null) {
+  function pick(year: string | null) {
     setOpen(false);
-    onChange(month);
+    apply(yearPatch(filters, year));
   }
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) setYear(Number((value ?? current).slice(0, 4)));
-      }}
-    >
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <FilterButton label="חודש" selection={value ? monthLabel(value) : null} />
+        <FilterButton label="שנה" selection={filters.year} />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2">
+        <div className="grid grid-cols-3 gap-1">
+          {options.map((year) => {
+            const selected = year === filters.year;
+            return (
+              <Button
+                key={year}
+                variant={selected ? 'default' : 'ghost'}
+                size="sm"
+                aria-pressed={selected}
+                onClick={() => pick(year)}
+                className="text-[13px] font-normal tabular-nums"
+              >
+                {year}
+              </Button>
+            );
+          })}
+        </div>
+        {filters.year && (
+          <div className="mt-2 flex justify-end border-t pt-2">
+            <Button variant="ghost" size="sm" onClick={() => pick(null)} className="text-muted-foreground text-[12.5px]">
+              כל השנים
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * The twelve months of the chosen year - this year when none is chosen yet -
+ * with nothing past this month. Clearing the month keeps the year.
+ */
+function MonthFilter({
+  filters,
+  apply,
+}: {
+  filters: PaymentsIndexFilters;
+  apply: (patch: Partial<PaymentsIndexFilters>) => void;
+}) {
+  const current = currentIsraelMonth();
+  const year = filters.year ?? current.slice(0, 4);
+  const [open, setOpen] = useState(false);
+
+  function pick(month: string | null) {
+    setOpen(false);
+    apply(month ? { year: month.slice(0, 4), month } : { year, month: null });
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <FilterButton label="חודש" selection={filters.month ? monthName(filters.month) : null} />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-2">
-        <div className="flex items-center justify-between pb-2">
-          {/* Under RTL the earlier year sits on the right, so its arrow points right. */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="השנה הקודמת"
-            onClick={() => setYear((y) => y - 1)}
-          >
-            <ChevronRight />
-          </Button>
-          <span className="text-sm font-medium tabular-nums">{year}</span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="השנה הבאה"
-            disabled={year >= currentYear}
-            onClick={() => setYear((y) => y + 1)}
-          >
-            <ChevronLeft />
-          </Button>
+        <div className="text-muted-foreground px-1 pb-2 text-[12px]">
+          חודשי <span className="text-foreground font-medium tabular-nums">{year}</span>
         </div>
         <div className="grid grid-cols-3 gap-1">
           {MONTHS.map((mm) => {
             const month = `${year}-${mm}`;
-            const selected = month === value;
+            const selected = month === filters.month;
             return (
               <Button
                 key={mm}
@@ -166,15 +208,20 @@ function MonthFilter({ value, onChange }: { value: string | null; onChange: (mon
           <Button variant="ghost" size="sm" onClick={() => pick(current)} className="text-[12.5px]">
             החודש
           </Button>
-          {value && (
+          {filters.month && (
             <Button variant="ghost" size="sm" onClick={() => pick(null)} className="text-muted-foreground text-[12.5px]">
-              כל החודשים
+              כל {year}
             </Button>
           )}
         </div>
       </PopoverContent>
     </Popover>
   );
+}
+
+/** "אוקטובר", from YYYY-MM - the year is already on the year button. */
+function monthName(month: string) {
+  return LONG_MONTH.format(new Date(`${month}-01T00:00:00Z`));
 }
 
 /** A shekel range; either end may be left open. Applied on submit, not per keystroke. */
