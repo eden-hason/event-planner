@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { WhatsAppIcon } from '@/components/icons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -70,13 +71,22 @@ export function HandDeliveryDialog({ deliveryId, guestName }: { deliveryId: stri
         {message && (
           <div className="flex flex-col gap-2">
             <p className="text-muted-foreground text-[12.5px] tabular-nums">{formatPhone(message.phone)}</p>
-            <p dir="rtl" className="bg-muted max-h-64 overflow-y-auto rounded-md border px-3 py-2.5 text-[13px] whitespace-pre-wrap">
-              {message.text}
-            </p>
+            {message.text ? (
+              <p dir="rtl" className="bg-muted max-h-64 overflow-y-auto rounded-md border px-3 py-2.5 text-[13px] whitespace-pre-wrap">
+                {message.text}
+              </p>
+            ) : (
+              <Alert>
+                <AlertDescription>
+                  {message.noTextReason}. הצ׳אט ייפתח ריק, וכותבים בו את ההודעה בעצמכם
+                </AlertDescription>
+              </Alert>
+            )}
+            {!message.text && message.rsvpUrl && <RsvpLink url={message.rsvpUrl} />}
             <Button asChild variant="outline" className="gap-1.5 self-start">
               <a href={message.chatUrl} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon size={15} />
-                פתיחה בוואטסאפ
+                {message.text ? 'פתיחה בוואטסאפ' : 'פתיחת צ׳אט ריק בוואטסאפ'}
               </a>
             </Button>
           </div>
@@ -93,6 +103,21 @@ export function HandDeliveryDialog({ deliveryId, guestName }: { deliveryId: stri
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The Guest's own RSVP page, to paste into a message written by hand */
+function RsvpLink({ url }: { url: string }) {
+  async function copy() {
+    await navigator.clipboard.writeText(url);
+    toast.success('הקישור לאישור ההגעה הועתק');
+  }
+  return (
+    <div className="bg-muted flex min-w-0 items-center gap-2 rounded-md border px-2.5 py-[7px]">
+      <span className="text-muted-foreground shrink-0 text-[12px]">אישור הגעה:</span>
+      <code dir="ltr" className="text-foreground/80 min-w-0 flex-1 truncate text-[12.5px]">{url}</code>
+      <Button type="button" variant="link" size="xs" className="h-auto shrink-0 p-0" onClick={copy}>העתקה</Button>
+    </div>
   );
 }
 

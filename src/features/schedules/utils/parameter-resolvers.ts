@@ -100,6 +100,11 @@ function publicPageUrl(prefix: string): TransformerFunction {
   };
 }
 
+/** A Guest's own RSVP page, from their Delivery's confirmation token */
+export function rsvpPageUrl(confirmationToken: string): string {
+  return publicPageUrl('c')(confirmationToken);
+}
+
 const transformers: Record<TransformerType, TransformerFunction> = {
   none: (value: unknown) => String(value ?? ''),
 

@@ -14,12 +14,13 @@ export function isHandTrigger(triggeredBy: string | null | undefined): boolean {
 
 /**
  * A WhatsApp click-to-chat link that opens a chat with `phoneE164` on whatever
- * device the Operator is on, with `text` typed in and not yet sent. wa.me
- * wants the number as digits alone, with no `+`.
+ * device the Operator is on, with `text` typed in and not yet sent - or an
+ * empty chat when there is no text. wa.me wants the number as digits alone,
+ * with no `+`.
  */
-export function whatsappChatUrl(phoneE164: string, text: string): string {
-  const digits = phoneE164.replace(/\D/g, '');
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+export function whatsappChatUrl(phoneE164: string, text: string | null): string {
+  const chat = `https://wa.me/${phoneE164.replace(/\D/g, '')}`;
+  return text ? `${chat}?text=${encodeURIComponent(text)}` : chat;
 }
 
 /** Whether an Operator recorded a Hand Delivery among these attempts */

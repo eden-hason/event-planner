@@ -11,6 +11,10 @@ describe('whatsappChatUrl', () => {
     );
   });
 
+  it('opens an empty chat when there is no text', () => {
+    assert.equal(whatsappChatUrl('+972501234567', null), 'https://wa.me/972501234567');
+  });
+
   it('keeps a number from abroad', () => {
     assert.match(whatsappChatUrl('+12125550100', 'hi'), /^https:\/\/wa\.me\/12125550100\?/);
   });
