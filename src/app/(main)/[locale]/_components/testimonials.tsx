@@ -57,6 +57,14 @@ const REVIEWS: Review[] = [
       'ממליצה מאוד',
     ],
   },
+  {
+    name: 'גילנה דן',
+    rating: 5,
+    color: 'lavender',
+    paragraphs: [
+      'השירות מצויין זמין המחיר מצויין לעומת כל שאר החברות שבדקתי ממליצה בחום באמת זמינים כל הזמן מענה אנושי היה פשוט מדהים',
+    ],
+  },
 ];
 
 // The reviews are laid out twice per group so one group is wider than any screen,
