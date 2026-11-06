@@ -66,3 +66,4 @@ in the diff, not here.
 | [0033](0033-the-owner-cannot-stop-kululu-messaging-one-guest.md) | The Owner cannot stop Kululu messaging one guest | guests / outreach | open |
 | [0034](0034-a-co-owner-sees-less-than-the-creator.md) | A co-owner sees less than the Event's creator, and the gap breaks package reads | collaborate / billing | open |
 | [0035](0035-guest-phone-reachability.md) | The Owner cannot tell which guest numbers WhatsApp or SMS can reach | guests / outreach | open |
+| [0036](0036-an-rsvp-keeps-no-history.md) | An RSVP keeps no history, so a changed answer can only be guessed from snapshots | guests / confirmation | open |

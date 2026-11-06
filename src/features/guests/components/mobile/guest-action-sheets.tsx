@@ -6,6 +6,7 @@ import {
   IconBrandGoogleDrive,
   IconCircleCheck,
   IconEye,
+  IconArrowsExchange,
   IconFileSpreadsheet,
   IconFolder,
   IconFolderOff,
@@ -313,19 +314,21 @@ export function ExportSheet({
   );
 }
 
-/** The toolbar's ⋯: bring guests in, or take the whole list out to iPlan. */
+/** The toolbar's ⋯: bring guests in, take the whole list out to iPlan, or pull a report. */
 export function MoreSheet({
   open,
   onClose,
   onImportFile,
   onImportDrive,
   onExport,
+  onExportChangedAnswers,
 }: {
   open: boolean;
   onClose: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
   onExport: (scope: IplanScope) => void;
+  onExportChangedAnswers: () => void;
 }) {
   const t = useTranslations('guests');
   const run = (action: () => void) => () => {
@@ -362,6 +365,16 @@ export function MoreSheet({
             />
           ),
         )}
+      </div>
+      <div className="flex flex-col gap-1 border-t pt-3">
+        <span className="text-muted-foreground text-xs font-bold">
+          {t('list.reportsHeading')}
+        </span>
+        <SheetOption
+          label={t('directory.exportChangedAnswers')}
+          icon={<IconArrowsExchange size={ICON} />}
+          onClick={run(onExportChangedAnswers)}
+        />
       </div>
     </MobileSheet>
   );

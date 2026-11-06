@@ -326,6 +326,7 @@ export function GuestsDesktop({
         onImportDrive={onImportDrive}
         onImportWhatsApp={onImportWhatsApp}
         onExport={(scope) => writes.exportGuests(allGuests, scope)}
+        onExportChangedAnswers={writes.exportChangedAnswers}
       />
       <ActiveFilterChips
         params={params}
