@@ -67,3 +67,4 @@ in the diff, not here.
 | [0034](0034-a-co-owner-sees-less-than-the-creator.md) | A co-owner sees less than the Event's creator, and the gap breaks package reads | collaborate / billing | open |
 | [0035](0035-guest-phone-reachability.md) | The Owner cannot tell which guest numbers WhatsApp or SMS can reach | guests / outreach | open |
 | [0036](0036-an-rsvp-keeps-no-history.md) | An RSVP keeps no history, so a changed answer can only be guessed from snapshots | guests / confirmation | open |
+| [0037](0037-supabase-cli-v3.md) | The repo is pinned to Supabase CLI v2, and v3 needs more than a config rename | database / tooling | open |

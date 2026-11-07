@@ -101,6 +101,16 @@ insert into event_billing_events (event_id, to_status, provider, kind, amount, c
 values ('00000000-0000-4000-b000-000000000010', 'paid', 'manual', 'plan', 0, 'whatsapp_calls', 150, 'gift',
         'Local seed: showcase package');
 
+-- Everything from here to the guard is one `do` block, left unindented so it
+-- reads as the plain statements it is. It has to be: `db reset` sends a seed
+-- file as one pgx batch with the statement cache on, which prepares every
+-- statement before running any, so a top-level statement that reads a temp
+-- table or a pg_temp function made earlier in this file fails with "relation
+-- does not exist". A block body is only planned as it runs, statement by
+-- statement. Keep new temp-table work inside the block.
+do $seed$
+begin
+
 -- A stable pseudo-random fraction in [0, 1) per guest and purpose, so the
 -- showcase has texture without changing between runs.
 create or replace function pg_temp.h(n integer, salt integer)
@@ -541,7 +551,6 @@ where wa <> 'not_sent';
 -- Guard: every state the screens have to render actually landed
 -- ---------------------------------------------------------------------------
 
-do $$
 declare
   v_missing text;
 begin
@@ -587,6 +596,8 @@ begin
     raise exception 'schedule results showcase is missing: %', v_missing;
   end if;
 end;
-$$;
+
+end
+$seed$;
 
 commit;
