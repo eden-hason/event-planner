@@ -91,8 +91,9 @@ export function UnassignedPanel({
       <div className="flex items-center gap-3 border-b px-[18px] py-4">
         <span
           className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl',
-            pending.chip,
+            'flex size-11 shrink-0 items-center justify-center rounded-full border',
+            pending.activeSurface,
+            pending.text,
           )}
         >
           <IconFolder size={21} />

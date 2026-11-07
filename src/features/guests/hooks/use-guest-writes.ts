@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import type {
   GroupSide,
@@ -26,9 +26,6 @@ import {
   type RsvpImpact,
 } from '@/features/guests/utils/bulk-impact';
 import type { TableOption } from '@/features/seating';
-import { loadChangedAnswers } from '@/features/guests/actions/changed-answers';
-import { buildChangedAnswersSheetRows } from '@/features/guests/utils/export-changed-answers';
-import { downloadSheet, toFileName } from '@/lib/sheet';
 
 export type ConfirmRequest =
   | {
@@ -70,7 +67,6 @@ export function useGuestWrites({
   messagedGuestIds: string[];
 }) {
   const t = useTranslations('guests');
-  const locale = useLocale();
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
 
   const byId = useMemo(
@@ -158,35 +154,6 @@ export function useGuestWrites({
     });
   };
 
-  // Read fresh when asked for: the snapshots behind it are not on the page.
-  // "Nobody changed" is a toast, not an empty file.
-  const exportChangedAnswers = () => {
-    const c = (key: string, values?: Record<string, number>) =>
-      t(`directory.changedAnswers.${key}`, values);
-    const rtl = locale === 'he';
-    const run = async () => {
-      const rows = await loadChangedAnswers(eventId);
-      if (!rows) throw new Error(t('directory.exportFailed'));
-      if (rows.length === 0) return false;
-      await downloadSheet(buildChangedAnswersSheetRows(rows, { t: c, rtl }), {
-        fileName: toFileName(eventName, c('fileName')),
-        sheetName: c('sheetName'),
-        heading: c('note'),
-        rtl,
-      });
-      return true;
-    };
-    toast.promise(run(), {
-      loading: t('directory.exportingChangedAnswers'),
-      success: (downloaded) =>
-        downloaded
-          ? t('directory.exportChangedAnswersSuccess')
-          : t('directory.exportChangedAnswersNone'),
-      error: (err) =>
-        err instanceof Error ? err.message : t('directory.exportFailed'),
-    });
-  };
-
   return {
     confirm,
     closeConfirm: () => setConfirm(null),
@@ -195,6 +162,5 @@ export function useGuestWrites({
     setSide,
     requestDelete,
     exportGuests,
-    exportChangedAnswers,
   };
 }

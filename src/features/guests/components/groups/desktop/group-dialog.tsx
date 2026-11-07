@@ -13,7 +13,7 @@ import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
 import { GroupIcon } from '../group-icon';
 import { GroupFormFields, useGroupForm } from '../group-form';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 
 /**
  * Desktop's create/edit group dialog - the phone's bottom sheet as a centred
@@ -75,8 +75,8 @@ export function GroupDialog({
           <div className="flex items-center gap-3 border-b px-5 py-[18px]">
             <span
               className={cn(
-                'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors',
-                sideTintClass(form.side),
+                'flex size-11 shrink-0 items-center justify-center transition-colors',
+                sideIconClass(form.side),
               )}
             >
               <GroupIcon iconName={form.icon} size="md" />

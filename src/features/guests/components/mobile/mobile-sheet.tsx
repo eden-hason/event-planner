@@ -103,11 +103,17 @@ export function SheetOption({
   chevron,
   disabled,
   bold,
+  iconClassName,
+  aside,
   onClick,
 }: {
   label: string;
   sub?: string;
   icon?: ReactNode;
+  /** The icon tile's colours, in place of the neutral one. */
+  iconClassName?: string;
+  /** Sits at the option's end, e.g. a count. */
+  aside?: ReactNode;
   /** A status or side dot instead of an icon tile. */
   dotClass?: string;
   destructive?: boolean;
@@ -138,6 +144,7 @@ export function SheetOption({
           className={cn(
             'flex size-[34px] shrink-0 items-center justify-center rounded-[10px]',
             destructive ? 'bg-destructive/10' : 'bg-muted',
+            iconClassName,
           )}
         >
           {icon}
@@ -159,6 +166,7 @@ export function SheetOption({
           <span className="text-muted-foreground text-[12.5px]">{sub}</span>
         )}
       </span>
+      {aside}
       {checked && (
         <IconCheck size={19} stroke={2.6} className="text-primary shrink-0" />
       )}

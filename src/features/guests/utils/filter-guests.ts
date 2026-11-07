@@ -17,13 +17,15 @@ export interface GuestFilterParams {
   transport: TransportationAnswer | null;
   /** Only these records - the ones that missed the latest Invitation or Confirmation; null is off */
   missedIds?: ReadonlySet<string> | null;
+  /** Only these records - the ones that changed their own answer; null is off */
+  changedIds?: ReadonlySet<string> | null;
   sortKey: GuestSortKey;
 }
 
 /** The filter half of `filterAndSortGuests` - enough when only the count matters. */
 export function filterGuests(
   guests: GuestWithGroupApp[],
-  { searchTerm, groupIds, statuses, sides, noPhoneOnly, transport, missedIds }: Omit<GuestFilterParams, 'sortKey'>,
+  { searchTerm, groupIds, statuses, sides, noPhoneOnly, transport, missedIds, changedIds }: Omit<GuestFilterParams, 'sortKey'>,
 ): GuestWithGroupApp[] {
   const search = searchTerm.trim().toLowerCase();
 
@@ -38,6 +40,10 @@ export function filterGuests(
     }
     // Missed the latest Invitation or Confirmation that went out
     if (missedIds && !missedIds.has(guest.id)) {
+      return false;
+    }
+    // Changed their own answer
+    if (changedIds && !changedIds.has(guest.id)) {
       return false;
     }
     // Transportation filter - the same records the summary line counts

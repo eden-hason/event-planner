@@ -8,13 +8,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import {
+  IconArrowsSort,
   IconBrandGoogleDrive,
-  IconDots,
+  IconBus,
+  IconDownload,
   IconFilter2,
-  IconListCheck,
   IconSearch,
   IconUpload,
   IconUserPlus,
@@ -27,31 +28,40 @@ import type {
   GuestWithGroupApp,
 } from '@/features/guests/schemas';
 import type { TableOption } from '@/features/seating';
-import { rsvpPresentation, RSVP_STATUSES } from '@/features/guests/utils';
+import {
+  rsvpPresentation,
+  RSVP_STATUSES,
+  type RsvpStatus,
+} from '@/features/guests/utils';
 import {
   activeFilterCount,
   GUEST_STATUS_FILTERS,
-  type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
 import {
   headcountShare,
   rsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
-import { RsvpStatusLegend } from '../rsvp-status-legend';
-import { TransportationLine } from '../transportation-line';
+import { transportationSummary } from '@/features/guests/utils/transportation-summary';
 import {
+  headerState,
   hiddenCount,
   toggleAllVisible,
   toggleOne,
 } from '@/features/guests/utils/guest-selection';
 import { useGuestListView } from '@/features/guests/hooks/use-guest-list-view';
 import { useGuestWrites } from '@/features/guests/hooks/use-guest-writes';
+import { useIplanExportOptions } from '@/features/guests/hooks/use-iplan-export-options';
 import { useHideBottomNav } from '@/components/layout/bottom-nav-context';
 import { cn } from '@/lib/utils';
 import { ActiveFilterChips } from '../active-filter-chips';
 import { GuestDrawer, type GuestDrawerTab } from '../guest-drawer';
 import { UndoToast } from '../undo-toast';
-import { CARD_HEIGHT, GuestMobileCard } from './guest-mobile-card';
+import { SelectBox } from '../desktop/select-box';
+import {
+  CARD_HEIGHT,
+  checkboxSlotClass,
+  GuestMobileCard,
+} from './guest-mobile-card';
 import { OutsidePackageBanner, PackageLine } from '../package';
 import { GuestFiltersSheet } from './guest-filters-sheet';
 import { SelectionBar, type SelectionAction } from './selection-bar';
@@ -59,28 +69,18 @@ import {
   ExportSheet,
   GroupSheet,
   GuestConfirmSheet,
-  GuestRowSheet,
-  MoreSheet,
+  ImportSheet,
+  IplanExportSheet,
   RsvpSheet,
   SideSheet,
+  SortSheet,
 } from './guest-action-sheets';
-
-const CARD_GAP = 7;
-
-/** What the page header shows while selecting - it becomes the selection's. */
-export type SelectionHeader = {
-  count: number;
-  hidden: number;
-  onClear: () => void;
-  onSelectAll: () => void;
-  onShowHidden: () => void;
-};
 
 type OpenSheet =
   | { kind: 'filters' }
-  | { kind: 'more' }
-  | { kind: 'row'; guest: GuestWithGroupApp }
-  | { kind: 'rowGroup'; guest: GuestWithGroupApp }
+  | { kind: 'sort' }
+  | { kind: 'import' }
+  | { kind: 'iplan' }
   | { kind: SelectionAction }
   | null;
 
@@ -93,6 +93,8 @@ interface GuestsMobileProps {
   messagedGuestIds: string[];
   /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
   missedCatchUpIds: string[];
+  /** Records that changed their own answer, for the `?changed=1` filter */
+  changedAnswerIds: string[];
   showDietary: boolean;
   showTransportation: boolean;
   tables: TableOption[];
@@ -107,14 +109,15 @@ interface GuestsMobileProps {
   onAddGuest: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
-  onSelectionHeader: (header: SelectionHeader | null) => void;
+  onImportWhatsApp: () => void;
 }
 
 /**
- * The phone's Guests tab (Guests Mobile design): the same list, filters and
- * order as desktop, as 72px cards. A long press or "Select" starts a
- * selection - the page header turns into its count and an action bar takes
- * the bottom nav's place.
+ * The phone's Guests tab (Guests table controls design): the same list,
+ * filters and order as desktop. The RSVP overview doubles as the status
+ * filter; the list is one card of rows. "Select" in its header slides a
+ * checkbox into every row and brings up the action bar in the bottom nav's
+ * place; "Cancel" puts both away.
  */
 export function GuestsMobile({
   guests: allGuests,
@@ -123,6 +126,7 @@ export function GuestsMobile({
   eventName,
   messagedGuestIds,
   missedCatchUpIds,
+  changedAnswerIds,
   showDietary,
   showTransportation,
   tables,
@@ -131,12 +135,9 @@ export function GuestsMobile({
   onAddGuest,
   onImportFile,
   onImportDrive,
-  onSelectionHeader,
+  onImportWhatsApp,
 }: GuestsMobileProps) {
   const t = useTranslations('guests');
-  // The fade sits at the inline end, where the chips run off - the left edge in Hebrew.
-  // A gradient starts at the edge opposite its direction, so `to right` begins on the left.
-  const chipFade = `linear-gradient(to ${useLocale() === 'he' ? 'right' : 'left'}, transparent 0, #000 36px)`;
   const {
     params,
     changeFilters,
@@ -152,19 +153,30 @@ export function GuestsMobile({
     outsideCount,
     outsideOnly,
     missedCount,
+    changedCount,
     filtered,
     countFor,
     selected,
     setSelected,
     selectionOnly,
     setSelectionOnly,
-  } = useGuestListView(allGuests, eventId, missedCatchUpIds);
+  } = useGuestListView(allGuests, eventId, missedCatchUpIds, changedAnswerIds);
 
-  const [selecting, setSelecting] = useState(false);
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const closeSheet = () => setSheet(null);
 
+  // "Select" turns the rows into checkboxes; the action bar takes the bottom
+  // nav's place until "Cancel".
+  const [selecting, setSelecting] = useState(false);
+  const anySelected = selected.size > 0;
   useHideBottomNav(selecting);
+
+  const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
+  const exportOptions = useIplanExportOptions(counts, statusCounts);
+  const tableNumberById = useMemo(
+    () => new Map(tables.map((table) => [table.id, table.tableNumber])),
+    [tables],
+  );
 
   const writes = useGuestWrites({
     eventId,
@@ -184,35 +196,12 @@ export function GuestsMobile({
 
   const hidden = hiddenCount(selected, visibleIds);
 
-  // The page header turns into the selection's while it lasts. Its callbacks
-  // read the latest list through a ref, so the header only updates when what
-  // it shows changes - not on every keystroke or tap.
-  const latest = useRef({ visibleIds, exitSelection });
-  latest.current = { visibleIds, exitSelection };
-  useEffect(() => {
-    onSelectionHeader(
-      selecting
-        ? {
-            count: selected.size,
-            hidden,
-            onClear: () => latest.current.exitSelection(),
-            onSelectAll: () =>
-              setSelected((prev) =>
-                toggleAllVisible(prev, latest.current.visibleIds),
-              ),
-            onShowHidden: () => setSelectionOnly(true),
-          }
-        : null,
-    );
-  }, [selecting, selected.size, hidden, onSelectionHeader, setSelected, setSelectionOnly]);
-  useEffect(() => () => onSelectionHeader(null), [onSelectionHeader]);
-
   // --- the virtualized list -----------------------------------------------
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
-  // Where the cards start in the document; it moves when the meter or a chip
-  // row above it comes or goes. The threshold keeps it from re-triggering.
+  // Where the rows start in the document; it moves when a chip row or banner
+  // above it comes or goes. The threshold keeps it from re-triggering.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const top = bodyRef.current
@@ -222,7 +211,7 @@ export function GuestsMobile({
   });
   const virtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: () => CARD_HEIGHT + CARD_GAP,
+    estimateSize: () => CARD_HEIGHT,
     overscan: 8,
     scrollMargin,
   });
@@ -243,7 +232,6 @@ export function GuestsMobile({
     );
 
   const selectedIds = () => [...selected];
-  const rowGuest = sheet?.kind === 'rowGroup' ? sheet.guest : null;
 
   const drawerNode = (
     <GuestDrawer
@@ -263,7 +251,7 @@ export function GuestsMobile({
     />
   );
 
-  // First use: no toolbar, no meter, no selection - just the way in.
+  // First use: no overview, no list - just the way in.
   if (allGuests.length === 0) {
     return (
       <>
@@ -282,19 +270,13 @@ export function GuestsMobile({
               <IconUpload size={18} />
               {t('list.empty.upload')}
             </Button>
-            <Button
-              variant="outline"
-              onClick={onAddGuest}
-            >
+            <Button variant="outline" onClick={onAddGuest}>
               <IconUserPlus size={18} />
               {t('list.empty.add')}
             </Button>
-            <Button
-              variant="outline"
-              onClick={onImportDrive}
-            >
+            <Button variant="outline" onClick={onImportDrive}>
               <IconBrandGoogleDrive size={18} />
-              {t('list.importDrive')}
+              {t('list.empty.drive')}
             </Button>
           </div>
         </div>
@@ -304,143 +286,172 @@ export function GuestsMobile({
   }
 
   const filterCount = activeFilterCount(params);
-  const hasChipRow = filterCount > 0 || !!params.issue || selectionOnly;
+  const summary = anySelected
+    ? t('list.mobile.selectedSummary', {
+        count: selected.size,
+        guests: rsvpHeadcounts(
+          allGuests.filter((guest) => selected.has(guest.id)),
+        ).total,
+      })
+    : outsideOnly && rows.length === outsideCount
+      ? t('package.countOutside', { count: outsideCount })
+      : filtered
+        ? t('list.countFiltered', {
+            shown: rows.length.toLocaleString(),
+            total: guests.length.toLocaleString(),
+          })
+        : t('list.countSummary', {
+            records: guests.length,
+            guests: counts.total,
+          });
 
   return (
-    <div className={cn('flex flex-col', selecting && 'pb-24')}>
-      {!selecting && !hasChipRow && (
-        <Meter
-          guests={guests}
-          showTransportation={showTransportation}
-          footer={
-            <PackageLine
-              variant="mobile"
-              onShowOutside={() => changeFilters({ outside: true, status: null })}
-            />
-          }
-        />
-      )}
-
-      <Toolbar
-        params={params}
-        filterCount={filterCount}
-        selecting={selecting}
-        onSearch={(q) => changeFilters({ q }, 'replace')}
-        onFilters={() => setSheet({ kind: 'filters' })}
-        onMore={() => setSheet({ kind: 'more' })}
-        onSelect={() => setSelecting(true)}
+    <div className={cn('flex flex-col gap-3', selecting && 'pb-24')}>
+      <Overview
+        guests={guests}
+        statusCounts={statusCounts}
+        status={outsideOnly ? undefined : params.status}
+        showTransportation={showTransportation}
+        transportOn={params.transport === 'yes'}
+        onStatusChange={(status) => changeFilters({ status, outside: false })}
+        onTransportToggle={() =>
+          changeFilters({
+            transport: params.transport === 'yes' ? null : 'yes',
+          })
+        }
+        footer={
+          <PackageLine
+            onShowOutside={() => changeFilters({ outside: true, status: null })}
+          />
+        }
       />
 
-      {/* Four chips share the width rather than scrolling past the page's edge.
-          A fifth - outside the package - makes them scroll, fading at the far end. */}
-      <div
-        className={cn(
-          'flex gap-1.5 pt-2.5',
-          outsideCount > 0 && 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        )}
-        style={outsideCount > 0 ? { maskImage: chipFade, WebkitMaskImage: chipFade } : undefined}
-      >
-        {GUEST_STATUS_FILTERS.flatMap((status) => {
-          const on = params.status === status && !outsideOnly;
-          const chip = (
-            <button
-              key={status ?? 'all'}
-              type="button"
-              aria-pressed={on}
-              onClick={() => changeFilters({ status, outside: false })}
-              className={cn(
-                'flex h-8 items-center justify-center gap-1 rounded-full border px-2 text-[13px] whitespace-nowrap',
-                outsideCount > 0 ? 'flex-none px-[9px]' : 'min-w-0 flex-auto',
-                on
-                  ? 'border-primary bg-primary/10 text-primary font-bold'
-                  : 'bg-card text-muted-foreground font-medium',
-              )}
-            >
-              {status && (
-                <span
-                  className={cn(
-                    'size-1.5 rounded-full',
-                    rsvpPresentation(status).solid,
-                  )}
-                />
-              )}
-              {t(`list.status.${status ?? 'all'}`)}
-              <span className="font-bold tabular-nums">
-                {statusCounts[status ?? 'all'].toLocaleString()}
-              </span>
-            </button>
-          );
-          if (status !== null || outsideCount === 0) return [chip];
-          return [
-            chip,
-            <button
-              key="outside"
-              type="button"
-              aria-pressed={outsideOnly}
-              onClick={() => changeFilters({ outside: true, status: null })}
-              className={cn(
-                'border-warning-tint-border text-warning-strong flex h-8 flex-none items-center justify-center gap-1 rounded-full border px-[9px] text-[13px] whitespace-nowrap',
-                outsideOnly ? 'bg-warning-tint font-bold' : 'bg-card font-medium',
-              )}
-            >
-              {t('package.chip')}
-              <span className="font-bold tabular-nums">
-                {outsideCount.toLocaleString()}
-              </span>
-            </button>,
-          ];
-        })}
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setSheet({ kind: 'import' })}
+          className="h-10 rounded-[10px] font-semibold"
+        >
+          <IconDownload size={17} />
+          {t('list.importMenu.button')}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setSheet({ kind: 'iplan' })}
+          className="h-10 rounded-[10px] font-semibold"
+        >
+          <IconUpload size={17} />
+          {t('directory.exportIplan')}
+        </Button>
       </div>
+
+      <Toolbar
+        query={params.q}
+        filterCount={filterCount}
+        sortLabel={t('list.sortWith', { label: t(`sort.${params.sort}`) })}
+        onSearch={(q) => changeFilters({ q }, 'replace')}
+        onFilters={() => setSheet({ kind: 'filters' })}
+        onSort={() => setSheet({ kind: 'sort' })}
+      />
 
       <ActiveFilterChips
         params={params}
         groups={groups}
         issueCount={scoped.length}
         onChange={changeFilters}
-        className="gap-1.5 pt-2 pb-0"
+        className="gap-1.5 pb-0"
         leading={
-          selectionOnly && (
-            <button
-              type="button"
-              onClick={() => setSelectionOnly(false)}
-              className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
-            >
-              {t('list.bar.selected', { count: selected.size })}
-              <IconX size={13} stroke={2.4} />
-            </button>
+          (selectionOnly || outsideOnly) && (
+            <>
+              {selectionOnly && (
+                <LeadingChip onClick={() => setSelectionOnly(false)}>
+                  {t('list.bar.selected', { count: selected.size })}
+                </LeadingChip>
+              )}
+              {outsideOnly && (
+                <LeadingChip onClick={() => changeFilters({ outside: false })}>
+                  {t('package.chip')}
+                </LeadingChip>
+              )}
+            </>
           )
         }
       />
 
       {outsideOnly && <OutsidePackageBanner variant="mobile" />}
 
-      {rows.length === 0 ? (
-        <div className="flex min-h-[calc(100svh-22rem)] flex-col items-center justify-center gap-2.5 px-3 py-10 text-center">
-          <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
-            <IconSearch size={22} />
-          </span>
-          <span className="text-[17px] font-bold">
-            {t('list.noMatch.title')}
-          </span>
-          <span className="text-muted-foreground text-[13.5px] leading-normal">
-            {t('list.noMatch.body')}
-          </span>
-          <Button variant="outline" onClick={resetFilters} className="mt-1">
-            {t('list.noMatch.clear')}
+      <section
+        aria-label={t('title')}
+        className="bg-card overflow-clip rounded-[14px] border"
+      >
+        <div
+          className={cn(
+            'flex min-h-12 items-center justify-between gap-2 pe-2 transition-[padding,background-color] duration-200 motion-reduce:transition-none',
+            selecting ? 'ps-1' : 'ps-3.5',
+            anySelected ? 'bg-primary/8' : 'bg-muted/40',
+          )}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span inert={!selecting} className={checkboxSlotClass(selecting)}>
+              <SelectBox
+                state={headerState(selected, visibleIds)}
+                label={t('list.columns.selectAll')}
+                onClick={() =>
+                  setSelected((prev) => toggleAllVisible(prev, visibleIds))
+                }
+                className="[&>span]:size-5"
+              />
+            </span>
+            <span
+              className={cn(
+                'min-w-0 truncate text-[13.5px] tabular-nums',
+                anySelected
+                  ? 'text-primary font-semibold'
+                  : 'text-muted-foreground font-medium',
+              )}
+            >
+              {summary}
+              {anySelected && hidden > 0 && (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectionOnly(true)}
+                    className="underline underline-offset-[3px]"
+                  >
+                    {t('list.bar.hidden', { count: hidden })}
+                  </button>
+                </>
+              )}
+            </span>
+          </div>
+          <Button
+            variant="soft"
+            onClick={() => (selecting ? exitSelection() : setSelecting(true))}
+            className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-semibold"
+          >
+            {selecting
+              ? t('list.mobile.cancelSelection')
+              : t('list.mobile.select')}
           </Button>
         </div>
-      ) : (
-        <>
-          <p className="text-muted-foreground px-0.5 pt-2.5 pb-1.5 text-[12.5px]">
-            {outsideOnly && rows.length === outsideCount
-              ? t('package.countOutside', { count: outsideCount })
-              : filtered
-                ? t('list.countFiltered', {
-                    shown: rows.length.toLocaleString(),
-                    total: guests.length.toLocaleString(),
-                  })
-                : t('list.count', { total: guests.length })}
-          </p>
+
+        {rows.length === 0 ? (
+          <div className="flex min-h-[calc(100svh-30rem)] flex-col items-center justify-center gap-2.5 border-t px-3 py-10 text-center">
+            <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
+              <IconSearch size={22} />
+            </span>
+            <span className="text-[17px] font-bold">
+              {t('list.noMatch.title')}
+            </span>
+            <span className="text-muted-foreground text-[13.5px] leading-normal">
+              {t('list.noMatch.body')}
+            </span>
+            <Button variant="outline" onClick={resetFilters} className="mt-1">
+              {t('list.noMatch.clear')}
+            </Button>
+          </div>
+        ) : (
           <div
             ref={bodyRef}
             className="relative"
@@ -454,6 +465,11 @@ export function GuestsMobile({
                   guest={guest}
                   selecting={selecting}
                   checked={selected.has(guest.id)}
+                  tableNumber={
+                    guest.tableId
+                      ? tableNumberById.get(guest.tableId)
+                      : undefined
+                  }
                   outside={outsideIds.has(guest.id)}
                   style={{
                     position: 'absolute',
@@ -465,17 +481,12 @@ export function GuestsMobile({
                   onToggle={() =>
                     setSelected((prev) => toggleOne(prev, guest.id))
                   }
-                  onLongPress={() => {
-                    setSelecting(true);
-                    setSelected((prev) => new Set(prev).add(guest.id));
-                  }}
-                  onMenu={() => setSheet({ kind: 'row', guest })}
                 />
               );
             })}
           </div>
-        </>
-      )}
+        )}
+      </section>
 
       <UndoToast
         pending={deferred.pending}
@@ -488,7 +499,7 @@ export function GuestsMobile({
 
       {selecting && (
         <SelectionBar
-          disabled={selected.size === 0}
+          disabled={!anySelected}
           // Only the bar's own sheets share its action names.
           active={
             writes.confirm?.kind === 'delete'
@@ -509,50 +520,38 @@ export function GuestsMobile({
         params={params}
         groups={groups}
         missedCount={missedCount}
+        changedCount={changedCount}
         countFor={countFor}
         onApply={(patch) => changeFilters(patch)}
       />
-      <MoreSheet
-        open={sheet?.kind === 'more'}
+      <SortSheet
+        open={sheet?.kind === 'sort'}
+        onClose={closeSheet}
+        sort={params.sort}
+        onPick={(sort) => changeFilters({ sort })}
+      />
+      <ImportSheet
+        open={sheet?.kind === 'import'}
         onClose={closeSheet}
         onImportFile={onImportFile}
         onImportDrive={onImportDrive}
-        onExport={(scope) => writes.exportGuests(allGuests, scope)}
-        onExportChangedAnswers={writes.exportChangedAnswers}
+        onImportWhatsApp={onImportWhatsApp}
       />
-      <GuestRowSheet
-        guest={sheet?.kind === 'row' ? sheet.guest : null}
+      <IplanExportSheet
+        open={sheet?.kind === 'iplan'}
         onClose={closeSheet}
-        onRsvp={(guest, status) => {
-          closeSheet();
-          writes.setRsvp([guest.id], status);
-        }}
-        onPickGroup={(guest) => setSheet({ kind: 'rowGroup', guest })}
-        onOpen={(guest) => {
-          closeSheet();
-          onOpenGuest(guest);
-        }}
-        onDelete={(guest) => {
-          closeSheet();
-          deleteIds([guest.id], guest.name);
-        }}
+        options={exportOptions}
+        onExport={(scope) => writes.exportGuests(allGuests, scope)}
       />
-      {/* One record's group from its menu, or the selection's from the bar. */}
       <GroupSheet
-        open={sheet?.kind === 'rowGroup' || sheet?.kind === 'group'}
-        title={
-          rowGuest
-            ? t('list.rowMenu.moveToGroup')
-            : t('list.mobile.groupTitle', { count: selected.size })
-        }
-        subtitle={rowGuest?.name}
+        open={sheet?.kind === 'group'}
+        title={t('list.mobile.groupTitle', { count: selected.size })}
         eventId={eventId}
         groups={groups}
-        currentGroupId={rowGuest?.groupId}
-        canRemove={rowGuest ? !!rowGuest.groupId : true}
+        canRemove
         onClose={closeSheet}
         onPick={(groupId, name) =>
-          writes.setGroup(rowGuest ? [rowGuest.id] : selectedIds(), groupId, name)
+          writes.setGroup(selectedIds(), groupId, name)
         }
       />
       <RsvpSheet
@@ -595,92 +594,195 @@ export function GuestsMobile({
   );
 }
 
-
 /**
- * The RSVP meter at the top of the list. Counts are Guests (the sum of
- * amounts); the list below counts records. Information only - filtering is
- * the status chips' job.
+ * The RSVP overview at the top of the list: the share confirmed over the
+ * meter, then the status buttons, which double as the status filter. Counts
+ * are Guests (the sum of amounts); the list below counts records.
  */
-function Meter({
+function Overview({
   guests,
+  statusCounts,
+  status,
   showTransportation,
+  transportOn,
+  onStatusChange,
+  onTransportToggle,
   footer,
 }: {
   guests: GuestWithGroupApp[];
-  /** The Event asks the transportation question: its answers sit under the status legend. */
+  statusCounts: Record<RsvpStatus | 'all', number>;
+  /** The status the list is narrowed to; `undefined` while no status button is on. */
+  status: RsvpStatus | null | undefined;
+  /** The Event asks the transportation question, so its row shows. */
   showTransportation: boolean;
-  /** The Record Package line, inside the same card rather than a second meter. */
-  footer?: ReactNode;
+  transportOn: boolean;
+  onStatusChange: (status: RsvpStatus | null) => void;
+  onTransportToggle: () => void;
+  /** The Record Package strip, along the card's bottom. */
+  footer: ReactNode;
 }) {
   const t = useTranslations('guests.list');
   const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
 
   return (
     <div className="bg-card overflow-hidden rounded-[14px] border">
-    <div className="flex flex-col gap-2 px-3.5 py-3">
-      <span className="flex items-baseline gap-[5px]">
-        <b className="text-xl font-extrabold tabular-nums">
-          {Math.round(headcountShare(counts, 'confirmed'))}%
-        </b>
-        <span className="text-muted-foreground text-[12.5px]">
-          {t('meter.confirmed')}
-        </span>
-      </span>
-      {/* The status counts and the total they add up to, on one line. */}
-      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
-        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <RsvpStatusLegend counts={counts} />
-        </span>
-        <span className="whitespace-nowrap">
-          {t('meter.line', { guests: counts.total.toLocaleString() })}
-        </span>
-      </div>
-      <div className="bg-muted flex h-[7px] gap-0.5 overflow-hidden rounded-full">
-        {RSVP_STATUSES.map((status) => (
+      <div className="flex flex-col gap-3 p-3.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="flex items-baseline gap-2">
+            <b className="text-2xl leading-none font-extrabold tabular-nums">
+              {Math.round(headcountShare(counts, 'confirmed'))}%
+            </b>
+            <span className="text-muted-foreground text-[13px]">
+              {t('overview.confirmed')}
+            </span>
+          </span>
+          <span className="text-muted-foreground text-[12.5px] whitespace-nowrap tabular-nums">
+            {t('overview.totals', {
+              guests: counts.total,
+              records: statusCounts.all,
+            })}
+          </span>
+        </div>
+        <div
+          role="img"
+          aria-label={RSVP_STATUSES.map(
+            (key) => `${counts[key]} ${t(`status.${key}`)}`,
+          ).join(', ')}
+          className="bg-muted flex h-1.5 gap-0.5 overflow-hidden rounded-full"
+        >
+          {RSVP_STATUSES.map((key) => (
+            <div
+              key={key}
+              className={rsvpPresentation(key).solid}
+              style={{ width: `${headcountShare(counts, key)}%` }}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
           <div
-            key={status}
-            className={rsvpPresentation(status).solid}
-            style={{ width: `${headcountShare(counts, status)}%` }}
-          />
-        ))}
+            role="radiogroup"
+            aria-label={t('overview.label')}
+            className="col-span-2 grid grid-cols-2 gap-1.5"
+          >
+            {GUEST_STATUS_FILTERS.map((key) => (
+              <OverviewButton
+                key={key ?? 'all'}
+                role="radio"
+                on={status === key}
+                leading={
+                  <span
+                    className={cn(
+                      'size-2 rounded-full',
+                      key ? rsvpPresentation(key).solid : 'bg-foreground',
+                    )}
+                  />
+                }
+                label={t(`status.${key ?? 'all'}`)}
+                value={(key ? counts[key] : counts.total).toLocaleString()}
+                onClick={() => onStatusChange(key)}
+              />
+            ))}
+          </div>
+          {showTransportation && (
+            <OverviewButton
+              on={transportOn}
+              leading={<IconBus size={15} className="text-primary" />}
+              label={t('overview.transport')}
+              value={transportationSummary(guests).yes.toLocaleString()}
+              detail={t('overview.transportOf', { count: counts.confirmed })}
+              onClick={onTransportToggle}
+              className="col-span-2"
+            />
+          )}
+        </div>
       </div>
-      {showTransportation && (
-        <TransportationLine
-          guests={guests}
-          className="gap-x-3.5 text-xs"
-        />
-      )}
-    </div>
-    {footer}
+      {footer}
     </div>
   );
 }
 
+/**
+ * One button in the overview: a status, a radio of the status filter; or the
+ * transportation row, a toggle of its own.
+ */
+function OverviewButton({
+  role,
+  on,
+  leading,
+  label,
+  value,
+  detail,
+  onClick,
+  className,
+}: {
+  role?: 'radio';
+  on: boolean;
+  leading: ReactNode;
+  label: string;
+  value: string;
+  detail?: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role={role}
+      aria-checked={role ? on : undefined}
+      aria-pressed={role ? undefined : on}
+      onClick={onClick}
+      className={cn(
+        'flex h-10 items-center justify-between gap-1.5 rounded-[10px] border px-3 transition-colors',
+        on ? 'border-primary bg-primary/8' : 'bg-card active:bg-muted/60',
+        className,
+      )}
+    >
+      <span
+        className={cn(
+          'flex min-w-0 items-center gap-1.5 text-[13.5px] font-semibold',
+          on ? 'text-primary' : 'text-muted-foreground',
+        )}
+      >
+        <span aria-hidden className="flex shrink-0">
+          {leading}
+        </span>
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="flex shrink-0 items-baseline gap-1.5">
+        <span className="text-foreground text-[15px] font-bold tabular-nums">
+          {value}
+        </span>
+        {detail && (
+          <span className="text-muted-foreground text-xs">{detail}</span>
+        )}
+      </span>
+    </button>
+  );
+}
+
 function Toolbar({
-  params,
+  query: committed,
   filterCount,
-  selecting,
+  sortLabel,
   onSearch,
   onFilters,
-  onMore,
-  onSelect,
+  onSort,
 }: {
-  params: GuestListParams;
+  query: string;
   filterCount: number;
-  selecting: boolean;
+  sortLabel: string;
   onSearch: (q: string) => void;
   onFilters: () => void;
-  onMore: () => void;
-  onSelect: () => void;
+  onSort: () => void;
 }) {
   const t = useTranslations('guests.list');
   // The input keeps its own value so typing never waits on the URL.
-  const [query, setQuery] = useState(params.q);
-  useEffect(() => setQuery(params.q), [params.q]);
+  const [query, setQuery] = useState(committed);
+  useEffect(() => setQuery(committed), [committed]);
 
   return (
-    <div className="flex gap-[7px] pt-2.5">
-      <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-10 min-w-0 flex-1 items-center gap-[7px] rounded-[11px] border px-[11px] focus-within:ring-[3px]">
+    <div className="flex gap-[7px]">
+      <label className="border-input bg-card focus-within:border-ring focus-within:ring-ring/50 flex h-10 min-w-0 flex-1 items-center gap-[7px] rounded-[10px] border px-[11px] focus-within:ring-[3px]">
         <IconSearch size={16} className="text-muted-foreground shrink-0" />
         <input
           type="search"
@@ -690,6 +792,7 @@ function Toolbar({
             onSearch(event.target.value);
           }}
           placeholder={t('searchPlaceholder')}
+          aria-label={t('searchPlaceholder')}
           // 16px keeps iOS from zooming the page into the field.
           className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
         />
@@ -707,15 +810,14 @@ function Toolbar({
           </button>
         )}
       </label>
-      <button
-        type="button"
+      <Button
+        variant={filterCount > 0 ? 'soft' : 'outline'}
+        size="icon-lg"
         onClick={onFilters}
-        aria-label={t('mobile.filters.title')}
+        aria-label={t('filters.button')}
         className={cn(
-          'relative flex size-10 shrink-0 items-center justify-center rounded-[11px] border',
-          filterCount > 0
-            ? 'border-primary bg-primary/8 text-primary'
-            : 'border-input bg-card text-muted-foreground',
+          'relative rounded-[10px]',
+          filterCount === 0 && 'border-input bg-card text-muted-foreground',
         )}
       >
         <IconFilter2 size={18} />
@@ -724,25 +826,35 @@ function Toolbar({
             {filterCount}
           </span>
         )}
-      </button>
+      </Button>
       <button
         type="button"
-        onClick={onMore}
-        aria-label={t('more')}
-        className="border-input bg-card text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-[11px] border"
+        onClick={onSort}
+        aria-label={sortLabel}
+        className="border-input bg-card text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-[10px] border"
       >
-        <IconDots size={18} stroke={2.4} />
+        <IconArrowsSort size={18} />
       </button>
-      {!selecting && (
-        <button
-          type="button"
-          onClick={onSelect}
-          className="border-input bg-card flex h-10 shrink-0 items-center gap-[5px] rounded-[11px] border px-[11px] text-sm font-semibold"
-        >
-          <IconListCheck size={16} />
-          {t('mobile.select')}
-        </button>
-      )}
     </div>
+  );
+}
+
+/** A removable chip that leads the filter chips, in their style. */
+function LeadingChip({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
+    >
+      {children}
+      <IconX size={13} stroke={2.4} />
+    </button>
   );
 }

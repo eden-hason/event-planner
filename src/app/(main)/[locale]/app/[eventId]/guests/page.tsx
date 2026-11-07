@@ -4,6 +4,8 @@ import {
 } from '@/features/guests/queries';
 import { getEventGroupsWithGuests } from '@/features/guests/queries/groups';
 import { getEventMessagedGuestIds } from '@/features/guests/queries/activity';
+import { getChangedAnswersInput } from '@/features/guests/queries/changed-answers';
+import { findChangedAnswers } from '@/features/guests/utils/changed-answers';
 import { getMissedCatchUpInput } from '@/features/schedules/queries/missed-catch-up';
 import { missedCatchUpIds } from '@/features/schedules/utils/catch-up';
 import { GuestsPage as GuestsPageComponent } from '@/features/guests';
@@ -26,6 +28,7 @@ export default async function GuestsPage({
     messagedGuestIds,
     recordPackage,
     missedCatchUpInput,
+    changedAnswerIds,
   ] = await Promise.all([
     getEventGuestsWithGroups(eventId),
     getEventGroupsWithGuests(eventId),
@@ -35,6 +38,7 @@ export default async function GuestsPage({
     getEventMessagedGuestIds(eventId),
     getGuestPackageView(eventId),
     getMissedCatchUpInput(eventId),
+    getChangedAnswerIds(eventId),
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
@@ -54,7 +58,22 @@ export default async function GuestsPage({
       missedCatchUpIds={
         missedCatchUpInput ? missedCatchUpIds(guests, missedCatchUpInput) : []
       }
+      changedAnswerIds={changedAnswerIds}
       recordPackage={recordPackage}
     />
   );
+}
+
+/**
+ * The records the "changed their answer" filter keeps. A failed read leaves the
+ * filter with nothing to offer rather than failing the page.
+ */
+async function getChangedAnswerIds(eventId: string): Promise<string[]> {
+  try {
+    const { guests, snapshots } = await getChangedAnswersInput(eventId);
+    return findChangedAnswers(guests, snapshots).map((answer) => answer.guestId);
+  } catch (error) {
+    console.error('getChangedAnswerIds failed:', error);
+    return [];
+  }
 }

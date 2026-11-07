@@ -14,6 +14,20 @@ export function sideTintClass(side: GroupSide | null | undefined): string {
   return 'bg-muted text-muted-foreground';
 }
 
+/**
+ * A Group's icon as a circle: the Side's tint with a darker edge in its own
+ * colour - the same shape as a guest's status icon on the guest list.
+ */
+export function sideIconClass(side: GroupSide | null | undefined): string {
+  const edge =
+    side === 'bride'
+      ? 'border-primary/35'
+      : side === 'groom'
+        ? 'border-violet-strong/30'
+        : 'border-muted-foreground/25';
+  return cn('rounded-full border', sideTintClass(side), edge);
+}
+
 /** The solid colour of a Side, for dots and meter bars. */
 export function sideSolidClass(side: GroupSide): string {
   return side === 'bride' ? 'bg-primary' : 'bg-violet-strong';

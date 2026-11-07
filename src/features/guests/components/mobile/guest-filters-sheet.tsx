@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/toggle-switch';
 import type { GroupSide, GroupWithGuestsApp } from '@/features/guests/schemas';
 import {
   DEFAULT_GUEST_LIST_PARAMS,
-  GUEST_SORT_KEYS,
   type GuestListParams,
 } from '@/features/guests/utils/guest-list-params';
 import { TRANSPORTATION_ANSWERS } from '@/features/guests/utils/transportation-summary';
@@ -17,22 +16,23 @@ import { MobileSheet } from './mobile-sheet';
 
 type Draft = Pick<
   GuestListParams,
-  'sort' | 'groups' | 'side' | 'noPhone' | 'transport' | 'missed'
+  'groups' | 'side' | 'noPhone' | 'transport' | 'missed' | 'changed'
 >;
 
 const draftOf = (params: GuestListParams): Draft => ({
-  sort: params.sort,
   groups: params.groups,
   side: params.side,
   noPhone: params.noPhone,
   transport: params.transport,
   missed: params.missed,
+  changed: params.changed,
 });
 
 /**
- * "Filter and sort" on a phone. Unlike the desktop popover it is a draft: the
- * list underneath stays put while the Owner picks, and the button says how
- * many records the picks will show before they commit to them.
+ * Filtering on a phone - the order has its own button and sheet. Unlike the
+ * desktop popover it is a draft: the list underneath stays put while the Owner
+ * picks, and the button says how many records the picks will show before they
+ * commit to them.
  */
 export function GuestFiltersSheet({
   open,
@@ -41,6 +41,7 @@ export function GuestFiltersSheet({
   groups,
   showTransportation,
   missedCount,
+  changedCount,
   countFor,
   onApply,
 }: {
@@ -52,6 +53,8 @@ export function GuestFiltersSheet({
   showTransportation: boolean;
   /** Records that missed the latest Invitation or Confirmation; the switch shows only while there are some. */
   missedCount: number;
+  /** Records that changed their own answer; the switch shows only while there are some. */
+  changedCount: number;
   /** Records the list would show with these filters, for the apply button. */
   countFor: (params: GuestListParams) => number;
   onApply: (patch: Draft) => void;
@@ -81,23 +84,7 @@ export function GuestFiltersSheet({
   );
 
   return (
-    <MobileSheet
-      open={open}
-      onClose={onClose}
-      title={t('list.mobile.filters.title')}
-    >
-      <Section title={t('list.sort')}>
-        {GUEST_SORT_KEYS.map((key) => (
-          <Chip
-            key={key}
-            on={draft.sort === key}
-            onClick={() => patch({ sort: key })}
-          >
-            {t(`sort.${key}`)}
-          </Chip>
-        ))}
-      </Section>
-
+    <MobileSheet open={open} onClose={onClose} title={t('list.filters.button')}>
       <Section title={t('list.filters.group')}>
         {groups.length === 0 && (
           <span className="text-muted-foreground text-[13px]">
@@ -161,16 +148,20 @@ export function GuestFiltersSheet({
         </label>
       )}
 
+      {(changedCount > 0 || draft.changed) && (
+        <label className="flex min-h-[50px] items-center justify-between gap-3 text-[15px] font-medium">
+          {t('list.filters.changedAnswer', { count: changedCount })}
+          <Switch
+            checked={draft.changed}
+            onCheckedChange={(changed) => patch({ changed })}
+          />
+        </label>
+      )}
+
       <div className="mt-1 flex gap-2">
         <Button
           variant="outline"
-          onClick={() =>
-            setDraft({
-              ...draftOf(DEFAULT_GUEST_LIST_PARAMS),
-              // An issue scope from Home sorts by name; clearing keeps that.
-              sort: params.issue ? 'name_asc' : DEFAULT_GUEST_LIST_PARAMS.sort,
-            })
-          }
+          onClick={() => setDraft(draftOf(DEFAULT_GUEST_LIST_PARAMS))}
           className="flex-1"
         >
           {t('list.mobile.filters.clear')}

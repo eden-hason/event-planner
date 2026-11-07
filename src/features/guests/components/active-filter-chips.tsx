@@ -87,6 +87,15 @@ export function ActiveFilterChips({
           },
         ]
       : []),
+    ...(params.changed
+      ? [
+          {
+            key: 'changed',
+            label: t('list.chips.changedAnswer'),
+            remove: () => onChange({ changed: false }),
+          },
+        ]
+      : []),
     ...(params.transport
       ? [
           {

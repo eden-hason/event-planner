@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { usePublishedHeight } from '@/hooks/use-published-height';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
@@ -28,7 +27,7 @@ import {
   toggleOne,
 } from '@/features/guests/utils/guest-selection';
 import { ImportGuestsDialog } from '../groups';
-import { RsvpMeter } from './rsvp-meter';
+import { GuestsOverview } from './guests-overview';
 import { GuestToolbar } from './guest-toolbar';
 import { ActiveFilterChips } from '../active-filter-chips';
 import { GuestTable } from './guest-table';
@@ -38,7 +37,8 @@ import { UndoToast } from '../undo-toast';
 import { NewGroupDialog } from './new-group-dialog';
 import { GuestDrawer, type GuestDrawerTab } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
-import { OutsidePackageBanner, PackageLine } from '../package';
+import { OutsidePackageBanner } from '../package';
+import { rsvpHeadcounts } from '@/features/guests/utils/rsvp-headcounts';
 
 interface GuestsDesktopProps {
   guests: GuestWithGroupApp[];
@@ -50,6 +50,8 @@ interface GuestsDesktopProps {
   messagedGuestIds: string[];
   /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
   missedCatchUpIds: string[];
+  /** Records that changed their own answer - the "changed their answer" filter */
+  changedAnswerIds: string[];
   showDietary: boolean;
   showTransportation: boolean;
   tables: TableOption[];
@@ -79,6 +81,7 @@ export function GuestsDesktop({
   existingPhones,
   messagedGuestIds,
   missedCatchUpIds,
+  changedAnswerIds,
   showDietary,
   showTransportation,
   tables,
@@ -104,12 +107,13 @@ export function GuestsDesktop({
     outsideCount,
     outsideOnly,
     missedCount,
+    changedCount,
     filtered,
     selected,
     setSelected,
     selectionOnly,
     setSelectionOnly,
-  } = useGuestListView(allGuests, eventId, missedCatchUpIds);
+  } = useGuestListView(allGuests, eventId, missedCatchUpIds, changedAnswerIds);
   const anchorRef = useRef<string | null>(null);
   const [newGroupFor, setNewGroupFor] = useState<string[] | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -130,14 +134,6 @@ export function GuestsDesktop({
     tables,
     messagedGuestIds,
   });
-
-  const countRef = useRef<HTMLParagraphElement>(null);
-  // Only there while the list has rows; gone, it counts as zero.
-  usePublishedHeight(
-    countRef,
-    '--guest-count-h',
-    allGuests.length > 0 && rows.length > 0,
-  );
 
   // Escape clears the selection, unless a dialog or menu has claimed it.
   useEffect(() => {
@@ -300,33 +296,73 @@ export function GuestsDesktop({
 
   const hidden = hiddenCount(selected, visibleIds);
 
+  const summary =
+    outsideOnly && rows.length === outsideCount
+      ? t('package.countOutside', { count: outsideCount })
+      : filtered
+        ? t('list.countFiltered', {
+            shown: rows.length.toLocaleString(),
+            total: guests.length.toLocaleString(),
+          })
+        : t('list.countSummary', {
+            records: guests.length,
+            guests: rsvpHeadcounts(guests).total,
+          });
+
+  // Chips ahead of the filters': the "N selected" narrowing, and the records
+  // outside the package - reached from the package card's sheet.
+  const leadingChips =
+    selectionOnly || outsideOnly ? (
+      <>
+        {selectionOnly && (
+          <LeadingChip onClick={() => setSelectionOnly(false)}>
+            {t('list.bar.selected', { count: selected.size })}
+          </LeadingChip>
+        )}
+        {outsideOnly && (
+          <LeadingChip onClick={() => handleFilterChange({ outside: false })}>
+            {t('package.chip')}
+          </LeadingChip>
+        )}
+      </>
+    ) : undefined;
+
   return (
     <div className="@container/guests flex flex-col">
-      <RsvpMeter
+      <GuestsOverview
         guests={guests}
-        showTransportation={showTransportation}
-        aside={
-          <PackageLine
-            variant="desktop"
-            onShowOutside={() => handleFilterChange({ outside: true, status: null })}
-          />
-        }
-      />
-      <GuestToolbar
-        showTransportation={showTransportation}
-        params={params}
-        onChange={handleFilterChange}
         statusCounts={statusCounts}
-        outsideCount={outsideCount}
-        outsideOnly={outsideOnly}
-        missedCount={missedCount}
-        groups={groups}
+        status={outsideOnly ? undefined : params.status}
+        showTransportation={showTransportation}
+        transportOn={params.transport === 'yes'}
+        onStatusChange={(status) =>
+          handleFilterChange({ status, outside: false })
+        }
+        onTransportToggle={() =>
+          handleFilterChange({
+            transport: params.transport === 'yes' ? null : 'yes',
+          })
+        }
+        onShowOutside={() =>
+          handleFilterChange({ outside: true, status: null })
+        }
         onAddGuest={onAddGuest}
         onImportFile={() => setImportOpen(true)}
         onImportDrive={onImportDrive}
         onImportWhatsApp={onImportWhatsApp}
         onExport={(scope) => writes.exportGuests(allGuests, scope)}
-        onExportChangedAnswers={writes.exportChangedAnswers}
+      />
+
+      {outsideOnly && <OutsidePackageBanner variant="desktop" />}
+
+      <GuestToolbar
+        showTransportation={showTransportation}
+        params={params}
+        onChange={handleFilterChange}
+        missedCount={missedCount}
+        changedCount={changedCount}
+        groups={groups}
+        summary={summary}
       />
       <ActiveFilterChips
         params={params}
@@ -334,24 +370,12 @@ export function GuestsDesktop({
         issueCount={scoped.length}
         onChange={handleFilterChange}
         onClearAll={resetFilters}
+        leading={leadingChips}
+        className="bg-card border-x px-4 pt-2.5"
       />
-      {selectionOnly && (
-        <div className="pb-2.5">
-          <button
-            type="button"
-            onClick={() => setSelectionOnly(false)}
-            className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
-          >
-            {t('list.bar.selected', { count: selected.size })}
-            <IconX size={13} stroke={2.4} />
-          </button>
-        </div>
-      )}
-
-      {outsideOnly && <OutsidePackageBanner variant="desktop" />}
 
       {rows.length === 0 ? (
-        <div className="border-input my-1 flex min-h-[max(360px,calc(100svh-24rem))] items-center justify-center rounded-[14px] border border-dashed">
+        <div className="bg-card flex min-h-[max(360px,calc(100svh-30rem))] items-center justify-center rounded-b-[14px] border-x border-b">
           <div className="flex max-w-[380px] flex-col items-center gap-2.5 text-center">
             <span className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-[14px]">
               <IconSearch size={22} />
@@ -372,38 +396,22 @@ export function GuestsDesktop({
           </div>
         </div>
       ) : (
-        <>
-          {/* Pinned under the toolbar, which casts its shadow over it (D13). */}
-          <p
-            ref={countRef}
-            className="bg-app-shell text-muted-foreground sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-[15] -mx-6 px-6 pt-1.5 pb-2 text-[12.5px]"
-          >
-            {outsideOnly && rows.length === outsideCount
-              ? t('package.countOutside', { count: outsideCount })
-              : filtered
-                ? t('list.countFiltered', {
-                    shown: rows.length.toLocaleString(),
-                    total: guests.length.toLocaleString(),
-                  })
-                : t('list.count', { total: guests.length })}
-          </p>
-          <GuestTable
-            rows={rows}
-            groups={groups}
-            selected={selected}
-            headerState={headerState(selected, visibleIds)}
-            showMeals={showDietary}
-            tableNumberById={tableNumberById}
-            recentlyUpdatedId={recentlyUpdatedId}
-            outsideIds={outsideIds}
-            onToggleAll={() =>
-              setSelected((prev) => toggleAllVisible(prev, visibleIds))
-            }
-            onToggle={handleToggle}
-            onOpen={onOpenGuest}
-            onRowAction={handleRowAction}
-          />
-        </>
+        <GuestTable
+          rows={rows}
+          groups={groups}
+          selected={selected}
+          headerState={headerState(selected, visibleIds)}
+          showMeals={showDietary}
+          tableNumberById={tableNumberById}
+          recentlyUpdatedId={recentlyUpdatedId}
+          outsideIds={outsideIds}
+          onToggleAll={() =>
+            setSelected((prev) => toggleAllVisible(prev, visibleIds))
+          }
+          onToggle={handleToggle}
+          onOpen={onOpenGuest}
+          onRowAction={handleRowAction}
+        />
       )}
 
       {/* Fixed to the viewport, not the list: a short list must not carry the bar
@@ -445,5 +453,25 @@ export function GuestsDesktop({
       {drawerNode}
       {importDialog}
     </div>
+  );
+}
+
+/** A removable chip that leads the filter chips, in their style. */
+function LeadingChip({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
+    >
+      {children}
+      <IconX size={13} stroke={2.4} />
+    </button>
   );
 }
