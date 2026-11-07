@@ -111,6 +111,11 @@ between, so local is the only gate. Verify against a fresh local database
 reaches production. `.env.local` points at the local stack (`127.0.0.1:54321`); the linked
 remote project is `kululu-prod`.
 
+**The CLI is pinned to v2** (`supabase` devDependency, 2.119.0, same as the Migration Drift
+workflow), so run `npm install` before any `npx supabase`. CLI v3 rejects this
+`config.toml` and points target-less commands like `db push` at the local stack. The
+upgrade is `docs/backlog/0037-supabase-cli-v3.md`.
+
 **Apply migrations with `npm run db:push`, never raw `npx supabase db push` and never the
 Supabase MCP.**
 `mcp__supabase__apply_migration` mints its own version number instead of using the
@@ -158,6 +163,14 @@ user and passes every `authenticated` policy, so a new table is open to them by 
 Either list it in `public.visitor_open_tables()` (planning data) or close it with a
 restrictive `is_visitor()` policy (anything that reaches people or costs money). `db reset`
 fails until one is done - the check is `supabase/seeds/visitor-guard.sql`.
+
+**Seeds load as one batch per file, prepared up front.** `db reset` sends each file in
+`supabase/seeds/` through pgx with the statement cache on, which prepares every statement
+before running any. A top-level statement that reads a temp table or `pg_temp` function
+created earlier in the same file fails with "relation does not exist". When that happens
+the seeds after it (`visitor-guard.sql` loads last) never run. Put that kind of work
+inside one `do` block, as `schedule-results.sql` does. A file that loads fine through
+`psql` proves nothing here.
 
 ## Patterns
 

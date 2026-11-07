@@ -32,4 +32,6 @@ git fetch --quiet origin main
 node scripts/check-migration-drift.mjs --allow-pending ||
   fail "migration drift - fix it before pushing (see above)."
 
-npx supabase db push "$@"
+# --linked is v2's default, spelled out: CLI v3 pushes to the local stack when no
+# target is given, which would "succeed" without production getting anything.
+npx supabase db push --linked "$@"
