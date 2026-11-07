@@ -46,6 +46,11 @@ export type GuestListParams = {
    * for (ADR 0050).
    */
   missed: boolean;
+  /**
+   * Only the Guest Records that changed their own answer - read from the answer
+   * snapshots on the server (`findChangedAnswers`).
+   */
+  changed: boolean;
 };
 
 export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
@@ -59,6 +64,7 @@ export const DEFAULT_GUEST_LIST_PARAMS: GuestListParams = {
   outside: false,
   transport: null,
   missed: false,
+  changed: false,
 };
 
 const STATUSES: readonly RsvpStatus[] = ['confirmed', 'pending', 'declined'];
@@ -88,6 +94,7 @@ const KEYS = [
   'package',
   'transport',
   'missed',
+  'changed',
 ] as const;
 
 /** An issue scope sorts by name, so likely duplicates sit side by side. */
@@ -117,6 +124,7 @@ export function parseGuestListParams(search: URLSearchParams): GuestListParams {
     outside: search.get('package') === 'outside',
     transport: oneOf(TRANSPORTATION_ANSWERS, search.get('transport')),
     missed: search.get('missed') === '1',
+    changed: search.get('changed') === '1',
   };
 }
 
@@ -140,6 +148,7 @@ export function writeGuestListParams(
   if (params.outside) search.set('package', 'outside');
   if (params.transport) search.set('transport', params.transport);
   if (params.missed) search.set('missed', '1');
+  if (params.changed) search.set('changed', '1');
 }
 
 /** What the Filters button's badge counts: everything but status and search. */
@@ -149,6 +158,7 @@ export function activeFilterCount(params: GuestListParams): number {
     (params.side ? 1 : 0) +
     (params.noPhone ? 1 : 0) +
     (params.transport ? 1 : 0) +
-    (params.missed ? 1 : 0)
+    (params.missed ? 1 : 0) +
+    (params.changed ? 1 : 0)
   );
 }

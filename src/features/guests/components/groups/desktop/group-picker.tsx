@@ -11,7 +11,7 @@ import {
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
 import { GroupIcon } from '../group-icon';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 
 /**
  * "Assign to group" as a popover: every group, then "New group" at the foot.
@@ -60,8 +60,8 @@ export function GroupPicker({
             >
               <span
                 className={cn(
-                  'flex size-[26px] shrink-0 items-center justify-center rounded-[7px]',
-                  sideTintClass(group.side),
+                  'flex size-[26px] shrink-0 items-center justify-center',
+                  sideIconClass(group.side),
                 )}
               >
                 <GroupIcon iconName={group.icon} size="sm" />

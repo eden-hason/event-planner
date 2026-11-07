@@ -1,26 +1,19 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
-  IconCircleCheck,
-  IconEye,
-  IconArrowsExchange,
+  IconBrandWhatsapp,
   IconFileSpreadsheet,
   IconFolder,
   IconFolderOff,
   IconPlus,
+  IconTable,
   IconTrash,
-  IconUpload,
-  IconX,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
-import type {
-  GroupSide,
-  GroupWithGuestsApp,
-  GuestWithGroupApp,
-} from '@/features/guests/schemas';
+import type { GroupSide, GroupWithGuestsApp } from '@/features/guests/schemas';
 import {
   rsvpPresentation,
   RSVP_STATUSES,
@@ -28,6 +21,11 @@ import {
   type RsvpStatus,
 } from '@/features/guests/utils';
 import { useCreateGroup } from '@/features/guests/hooks/use-create-group';
+import type { IplanExportOption } from '@/features/guests/hooks/use-iplan-export-options';
+import {
+  GUEST_SORT_KEYS,
+  type GuestSortKey,
+} from '@/features/guests/utils/guest-list-params';
 import type { ConfirmRequest } from '@/features/guests/hooks/use-guest-writes';
 import { sideSolidClass } from '../side-badge';
 import {
@@ -37,74 +35,6 @@ import {
 import { MobileSheet, SheetOption } from './mobile-sheet';
 
 const ICON = 18;
-
-/** A card's ⋯ menu: the selection bar's actions, scaled to one record. */
-export function GuestRowSheet({
-  guest,
-  onClose,
-  onRsvp,
-  onPickGroup,
-  onOpen,
-  onDelete,
-}: {
-  guest: GuestWithGroupApp | null;
-  onClose: () => void;
-  onRsvp: (guest: GuestWithGroupApp, status: 'confirmed' | 'declined') => void;
-  onPickGroup: (guest: GuestWithGroupApp) => void;
-  onOpen: (guest: GuestWithGroupApp) => void;
-  onDelete: (guest: GuestWithGroupApp) => void;
-}) {
-  const t = useTranslations('guests.list');
-  /** Options only exist while the sheet shows a guest. */
-  const run = (action: (guest: GuestWithGroupApp) => void) => () => {
-    if (guest) action(guest);
-  };
-  const subtitle = guest
-    ? `${t(`status.${guest.rsvpStatus}`)} · ${guest.group?.name ?? t('noGroup')}`
-    : '';
-
-  return (
-    <MobileSheet
-      open={guest !== null}
-      onClose={onClose}
-      title={guest?.name ?? ''}
-      subtitle={subtitle}
-    >
-      <div className="flex flex-col">
-        <SheetOption
-          label={t('rowMenu.markConfirmed')}
-          icon={<IconCircleCheck size={ICON} />}
-          disabled={guest?.rsvpStatus === 'confirmed'}
-          onClick={run((g) => onRsvp(g, 'confirmed'))}
-        />
-        <SheetOption
-          label={t('rowMenu.markDeclined')}
-          icon={<IconX size={ICON} />}
-          disabled={guest?.rsvpStatus === 'declined'}
-          onClick={run((g) => onRsvp(g, 'declined'))}
-        />
-        <SheetOption
-          label={t('rowMenu.moveToGroup')}
-          icon={<IconFolder size={ICON} />}
-          chevron
-          onClick={run(onPickGroup)}
-        />
-        <SheetOption
-          label={t('rowMenu.open')}
-          icon={<IconEye size={ICON} />}
-          onClick={run(onOpen)}
-        />
-        <SheetOption
-          label={t('rowMenu.delete')}
-          icon={<IconTrash size={ICON} />}
-          destructive
-          separated
-          onClick={run(onDelete)}
-        />
-      </div>
-    </MobileSheet>
-  );
-}
 
 export function RsvpSheet({
   count,
@@ -314,67 +244,145 @@ export function ExportSheet({
   );
 }
 
-/** The toolbar's ⋯: bring guests in, take the whole list out to iPlan, or pull a report. */
-export function MoreSheet({
+/** The Import button's sheet (Guests table controls design): where the guests come from. */
+export function ImportSheet({
   open,
   onClose,
   onImportFile,
   onImportDrive,
-  onExport,
-  onExportChangedAnswers,
+  onImportWhatsApp,
 }: {
   open: boolean;
   onClose: () => void;
   onImportFile: () => void;
   onImportDrive: () => void;
-  onExport: (scope: IplanScope) => void;
-  onExportChangedAnswers: () => void;
+  onImportWhatsApp: () => void;
 }) {
-  const t = useTranslations('guests');
+  const t = useTranslations('guests.list.importMenu');
+  const locale = useLocale();
+  const templateHref =
+    locale === 'he'
+      ? '/templates/guest-import-template-he.csv'
+      : '/templates/guest-import-template-en.csv';
   const run = (action: () => void) => () => {
     onClose();
     action();
   };
+
   return (
-    <MobileSheet open={open} onClose={onClose} title={t('list.more')}>
+    <MobileSheet
+      open={open}
+      onClose={onClose}
+      title={t('button')}
+      subtitle={t('heading')}
+    >
       <div className="flex flex-col">
         <SheetOption
-          label={t('list.importFile')}
-          icon={<IconUpload size={ICON} />}
+          label={t('file')}
+          sub={t('fileHintMobile')}
+          icon={<IconFileSpreadsheet size={ICON} />}
+          iconClassName="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong"
           onClick={run(onImportFile)}
         />
         <SheetOption
-          label={t('list.importDrive')}
+          label={t('drive')}
+          sub={t('driveHint')}
           icon={<IconBrandGoogleDrive size={ICON} />}
+          iconClassName="bg-info-tint text-info-strong"
           onClick={run(onImportDrive)}
         />
-      </div>
-      <div className="flex flex-col gap-1 border-t pt-3">
-        <span className="text-muted-foreground text-xs font-bold">
-          {t('list.exportHeading')}
-        </span>
-        {(['confirmed', 'confirmedPending', 'all'] as IplanScope[]).map(
-          (scope) => (
-            <SheetOption
-              key={scope}
-              label={t(
-                `directory.export${scope.charAt(0).toUpperCase()}${scope.slice(1)}`,
-              )}
-              icon={<IconFileSpreadsheet size={ICON} />}
-              onClick={run(() => onExport(scope))}
-            />
-          ),
-        )}
-      </div>
-      <div className="flex flex-col gap-1 border-t pt-3">
-        <span className="text-muted-foreground text-xs font-bold">
-          {t('list.reportsHeading')}
-        </span>
         <SheetOption
-          label={t('directory.exportChangedAnswers')}
-          icon={<IconArrowsExchange size={ICON} />}
-          onClick={run(onExportChangedAnswers)}
+          label={t('whatsapp')}
+          sub={t('whatsappHint')}
+          icon={<IconBrandWhatsapp size={ICON} />}
+          iconClassName="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong"
+          onClick={run(onImportWhatsApp)}
         />
+      </div>
+      <a
+        href={templateHref}
+        download
+        className="text-primary flex min-h-11 items-center border-t pt-1 text-sm font-semibold"
+      >
+        {t('sample')}
+      </a>
+    </MobileSheet>
+  );
+}
+
+/** The Export button's sheet: the whole list to iPlan, in one of three cuts. */
+export function IplanExportSheet({
+  open,
+  onClose,
+  options,
+  onExport,
+}: {
+  open: boolean;
+  onClose: () => void;
+  options: IplanExportOption[];
+  onExport: (scope: IplanScope) => void;
+}) {
+  const t = useTranslations('guests');
+  return (
+    <MobileSheet
+      open={open}
+      onClose={onClose}
+      title={t('directory.exportIplan')}
+      subtitle={t('list.exportMenu.heading')}
+    >
+      <div className="flex flex-col">
+        {options.map((option) => (
+          <SheetOption
+            key={option.scope}
+            label={option.label}
+            sub={option.hint}
+            icon={<IconTable size={ICON} />}
+            iconClassName="text-primary"
+            disabled={option.records === 0}
+            aside={
+              <span className="bg-muted rounded-full px-2.5 py-0.5 text-[13px] font-semibold tabular-nums">
+                {option.people.toLocaleString()}
+              </span>
+            }
+            onClick={() => {
+              onClose();
+              onExport(option.scope);
+            }}
+          />
+        ))}
+      </div>
+    </MobileSheet>
+  );
+}
+
+/** The Sort button's sheet: one order at a time, applied on the tap. */
+export function SortSheet({
+  open,
+  onClose,
+  sort,
+  onPick,
+}: {
+  open: boolean;
+  onClose: () => void;
+  sort: GuestSortKey;
+  onPick: (sort: GuestSortKey) => void;
+}) {
+  const t = useTranslations('guests.sort');
+  return (
+    <MobileSheet open={open} onClose={onClose} title={t('label')}>
+      <div className="flex flex-col">
+        {GUEST_SORT_KEYS.map((key) => (
+          <SheetOption
+            key={key}
+            label={t(key)}
+            checked={sort === key}
+            bold={sort === key}
+            onClick={() => {
+              onClose();
+              onPick(key);
+            }}
+          />
+        ))}
       </div>
     </MobileSheet>
   );

@@ -683,28 +683,6 @@
       "exportingIplan": "מכין קובץ iPlan",
       "exportIplanSuccess": "קובץ iPlan הורד",
       "exportFailed": "הייצוא נכשל - נסה שנית",
-      "exportChangedAnswers": "אורחים ששינו תשובה",
-      "exportingChangedAnswers": "מכין את רשימת האורחים ששינו תשובה",
-      "exportChangedAnswersSuccess": "הקובץ הורד",
-      "exportChangedAnswersNone": "אף אורח לא שינה את התשובה שלו",
-      "changedAnswers": {
-        "fileName": "אורחים ששינו תשובה",
-        "sheetName": "שינו תשובה",
-        "note": "אורחים ששינו בעצמם את התשובה שלהם, מהשינוי האחרון. כולל רק תשובות שניתנו דרך ההודעות של Kululu - לא דרך הקישור האישי ולא בשיחה טלפונית",
-        "name": "שם",
-        "phone": "טלפון",
-        "previous": "תשובה קודמת",
-        "current": "תשובה נוכחית",
-        "kind": "סוג השינוי",
-        "changedAt": "תאריך השינוי",
-        "history": "כל התשובות",
-        "coming": "מגיע - {count}",
-        "comingNoCount": "מגיע",
-        "notComing": "לא מגיע",
-        "kindDeclined": "ביטל הגעה",
-        "kindConfirmed": "אישר הגעה",
-        "kindCount": "שינה את מספר המגיעים"
-      },
       "deletingGuest": "מוחק את {name}...",
       "guestDeleted": "האורח נמחק בהצלחה",
       "guestDeleteFailed": "מחיקת האורח נכשלה. נסה שנית"
@@ -1213,19 +1191,14 @@
       "clear": "הסרת הסינון"
     },
     "list": {
-      "count": "{total, plural, one {רשומת אורח אחת} other {# רשומות אורחים}}",
       "countFiltered": "מוצגות {shown} מתוך {total}",
-      "meter": {
-        "confirmed": "אישרו",
-        "line": "{guests} אורחים"
-      },
       "status": {
         "all": "הכל",
         "confirmed": "אישרו",
         "pending": "ממתינים",
         "declined": "לא מגיעים"
       },
-      "searchPlaceholder": "חיפוש שם, טלפון, קבוצה או הערה",
+      "searchPlaceholder": "חיפוש לפי שם, טלפון, קבוצה או הערה",
       "filters": {
         "button": "סינון",
         "group": "קבוצה",
@@ -1235,15 +1208,9 @@
         "transportAll": "הכל",
         "noPhoneOnly": "בלי מספר טלפון",
         "noGroups": "עוד אין קבוצות",
-        "missedLatest": "לא קיבלו את ההודעה האחרונה ({count})"
+        "missedLatest": "לא קיבלו את ההודעה האחרונה ({count})",
+        "changedAnswer": "שינו את התשובה ({count})"
       },
-      "sort": "מיון",
-      "more": "עוד פעולות",
-      "importFile": "ייבוא מקובץ",
-      "importDrive": "ייבוא מ-Google Drive",
-      "importWhatsapp": "ייבוא מוואטסאפ",
-      "exportHeading": "ייצוא ל-iPlan",
-      "reportsHeading": "דוחות",
       "addGuest": "הוספת אורח",
       "chips": {
         "group": "קבוצה: {name}",
@@ -1252,7 +1219,8 @@
         "transport": "הסעה: {answer}",
         "clearAll": "ניקוי הכל",
         "remove": "הסרת {label}",
-        "missedLatest": "לא קיבלו את ההודעה האחרונה"
+        "missedLatest": "לא קיבלו את ההודעה האחרונה",
+        "changedAnswer": "שינו את התשובה"
       },
       "sides": {
         "bride": "כלה",
@@ -1476,11 +1444,7 @@
       "amountChangedHint": "האורח שינה את הכמות באישור ההגעה: הוזמנו {invited}, מגיעים {coming}",
       "mobile": {
         "add": "הוספה",
-        "select": "בחירה",
-        "selectAll": "בחירת הכל",
-        "selecting": "בחירת רשומות",
         "filters": {
-          "title": "סינון ומיון",
           "clear": "ניקוי",
           "show": "{count, plural, =0 {אין רשומות להצגה} one {הצגת רשומה אחת} other {הצגת # רשומות}}"
         },
@@ -1497,27 +1461,65 @@
         "exportBodyHidden": "קובץ iPlan עם הרשומות שבחרתם, כולל {hidden, plural, one {אחת שלא מוצגת} other {# שלא מוצגות}} בסינון הנוכחי",
         "download": "הורדת הקובץ",
         "close": "סגירה",
-        "clearSearch": "ניקוי החיפוש"
+        "clearSearch": "ניקוי החיפוש",
+        "selectedSummary": "{count} נבחרו · {guests, plural, one {אורח אחד} other {# אורחים}}",
+        "cancelSelection": "ביטול",
+        "select": "בחירה"
       },
       "transport": {
-        "title": "הסעה",
         "yes": "כן",
         "no": "לא",
         "unanswered": "לא ענו"
-      }
+      },
+      "sortWith": "מיון: {label}",
+      "countSummary": "{records, plural, one {רשומה אחת} other {# רשומות}} · {guests, plural, one {אורח אחד} other {# אורחים}}",
+      "overview": {
+        "label": "מצב אישורי ההגעה",
+        "confirmed": "אישרו הגעה",
+        "records": "{count, plural, one {רשומה אחת} other {# רשומות}}",
+        "transport": "צריכים הסעה",
+        "transportOf": "מתוך {count} שאישרו",
+        "totals": "{guests, plural, one {אורח אחד} other {# אורחים}} · {records, plural, one {רשומה אחת} other {# רשומות}}"
+      },
+      "importMenu": {
+        "button": "ייבוא אורחים",
+        "heading": "מאיפה לייבא?",
+        "file": "קובץ Excel או CSV",
+        "fileHint": "בחירת קובץ מהמחשב",
+        "drive": "Google Drive",
+        "driveHint": "בחירת גיליון מהדרייב",
+        "whatsapp": "וואטסאפ",
+        "whatsappHint": "בחירת אנשי קשר",
+        "sample": "הורדת קובץ דוגמה",
+        "fileHintMobile": "בחירת קובץ מהטלפון"
+      },
+      "exportMenu": {
+        "heading": "אילו אורחים לייצא?",
+        "noneConfirmed": "אין עדיין אישורי הגעה",
+        "allHint": "כולל מי שלא מגיע"
+      },
+      "notSeated": "טרם שובץ"
     },
     "package": {
-      "usedLine": "{used} מתוך {size} רשומות בחבילה",
-      "left": "נשארו {count}",
-      "full": "החבילה מלאה",
-      "over": "{count} מחוץ לחבילה",
       "chip": "מחוץ לחבילה",
       "tag": "מחוץ לחבילה",
       "countOutside": "{count, plural, one {רשומה אחת מחוץ לחבילה} other {# רשומות מחוץ לחבילה}} · האחרונות שנוספו",
       "banner": "הרשומות האחרונות שנוספו לא יקבלו הודעות עד שיתווספו רשומות לחבילה",
       "addRecords": "הוספת רשומות",
       "drawerLine": "מחוץ לחבילה · לא תקבל הודעות",
-      "drawerLink": "לפרטי החבילה"
+      "drawerLink": "לפרטי החבילה",
+      "card": {
+        "title": "רשומות בחבילה",
+        "room": "נשארו {left}",
+        "roomWithBonus": "נשארו {left} · כולל {bonus} רשומות מתנה",
+        "near": "נשארו רק {left, plural, one {רשומה אחת} other {# רשומות}}",
+        "full": "החבילה מלאה",
+        "over": "חריגה של {over, plural, one {רשומה אחת} other {# רשומות}} - צריך להוסיף רשומות כדי לשלוח",
+        "count": "{used} מתוך {size}"
+      },
+      "left": "נשארו {count}",
+      "full": "החבילה מלאה",
+      "over": "{count} מחוץ לחבילה"
     }
   },
   "home": {

@@ -17,7 +17,7 @@ import {
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { cn } from '@/lib/utils';
 import { GroupIcon } from '../group-icon';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 
 /** One group in the side list: click to open it, ⋯ for its actions. */
 export function GroupListItem({
@@ -61,8 +61,8 @@ export function GroupListItem({
     >
       <span
         className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
-          sideTintClass(group.side),
+          'flex size-9 shrink-0 items-center justify-center',
+          sideIconClass(group.side),
         )}
       >
         <GroupIcon iconName={group.icon} size="md" />

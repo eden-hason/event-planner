@@ -14,7 +14,7 @@ import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { GroupFormFields, useGroupForm } from '../group-form';
 import { cn } from '@/lib/utils';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 
 interface CreateGroupSheetProps {
   open: boolean;
@@ -68,8 +68,8 @@ export function CreateGroupSheet({
         <SheetHeader className="flex-row items-center gap-3 border-b px-4 pt-5 pb-3.5">
           <span
             className={cn(
-              'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors',
-              sideTintClass(form.side),
+              'flex size-11 shrink-0 items-center justify-center transition-colors',
+              sideIconClass(form.side),
             )}
           >
             <GroupIcon iconName={form.icon} size="lg" />

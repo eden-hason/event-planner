@@ -11,7 +11,7 @@ import {
 import { GuestApp, GroupWithGuestsApp } from '@/features/guests/schemas';
 import { useGroupWrites } from '@/features/guests/hooks/use-group-writes';
 import { GroupIcon } from '../group-icon';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 import { cn } from '@/lib/utils';
 
 interface PickGroupSheetProps {
@@ -66,8 +66,8 @@ export function PickGroupSheet({
             >
               <span
                 className={cn(
-                  'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
-                  sideTintClass(group.side),
+                  'flex size-9 shrink-0 items-center justify-center',
+                  sideIconClass(group.side),
                 )}
               >
                 <GroupIcon iconName={group.icon} size="md" />

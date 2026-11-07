@@ -45,10 +45,10 @@ const MID_UP = '@max-2xl/guests:hidden';
 function gridColumns(showMeals: boolean): CSSProperties {
   return {
     '--cols': showMeals
-      ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 150px 76px 56px minmax(0,1fr) 44px'
-      : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 56px 44px',
-    '--cols-mid': '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 150px 76px 44px',
-    '--cols-narrow': '44px minmax(0,1fr) 150px 76px 44px',
+      ? '44px minmax(0,1.7fr) 124px minmax(0,1.1fr) 76px 150px 76px minmax(0,1fr) 44px'
+      : '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 76px 150px 76px 44px',
+    '--cols-mid': '44px minmax(0,1.9fr) 124px minmax(0,1.2fr) 76px 150px 44px',
+    '--cols-narrow': '44px minmax(0,1fr) 76px 150px 44px',
   } as CSSProperties;
 }
 
@@ -117,17 +117,21 @@ export function GuestTable({
   });
 
   return (
-    // The table's top edge - border and rounded corners - lives on the sticky
-    // header, not on this box, so it stays when the rows scroll under it. The
-    // header's square backing (`-mx-px` over the side borders) keeps rows from
-    // showing through its rounded corners. The column variables are set here
-    // once and inherited by the header and every row.
-    <div className="bg-card border-x" style={gridColumns(showMeals)}>
-      <div className="bg-card sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px)+var(--guest-count-h,0px))] z-10 -mx-px">
+    // The lower part of the table card: its toolbar (GuestToolbar) is the
+    // card's top edge, so this box carries the sides and the rounded bottom.
+    // `overflow-clip`, not `hidden`: it clips the last row to the corners
+    // without becoming a scroll container, so the header still sticks to the
+    // window. The column variables are set here once and inherited by the
+    // header and every row.
+    <div
+      className="bg-card overflow-clip rounded-b-[14px] border-x border-b"
+      style={gridColumns(showMeals)}
+    >
+      <div className="bg-card sticky top-[calc(var(--page-header-h,0px)+var(--guest-tabs-h,0px)+var(--guest-toolbar-h,60px))] z-10">
         <div
           role="row"
           className={cn(
-            'bg-card text-muted-foreground grid h-[38px] items-center rounded-t-xl border text-xs font-semibold',
+            'bg-muted/40 text-muted-foreground grid h-[38px] items-center text-xs font-semibold',
             GRID,
           )}
         >
@@ -141,8 +145,8 @@ export function GuestTable({
           <span>{t('list.columns.name')}</span>
           <span className={MID_UP}>{t('list.columns.phone')}</span>
           <span className={MID_UP}>{t('list.columns.group')}</span>
-          <span>{t('list.columns.rsvp')}</span>
           <span>{t('list.columns.amount')}</span>
+          <span>{t('list.columns.rsvp')}</span>
           <span className={WIDE_ONLY}>{t('list.columns.table')}</span>
           {showMeals && (
             <span className={WIDE_ONLY}>{t('list.columns.meals')}</span>
@@ -230,7 +234,7 @@ function GuestRow({
         height: ROW_HEIGHT,
       }}
       className={cn(
-        'group/row absolute inset-x-0 top-0 grid cursor-pointer items-center border-b text-[13.5px] transition-colors',
+        'group/row absolute inset-x-0 top-0 grid cursor-pointer items-center border-t text-[13.5px] transition-colors',
         GRID,
         checked ? 'bg-primary/6' : 'hover:bg-muted/60',
         flash && 'row-updated',
@@ -289,6 +293,16 @@ function GuestRow({
         {guest.group && <SideBadge side={side} />}
       </span>
 
+      <span className="flex items-center">
+        {count.changedByGuest ? (
+          <AmountBadge count={count} />
+        ) : (
+          <span className="text-muted-foreground text-[13px] tabular-nums">
+            {count.value}
+          </span>
+        )}
+      </span>
+
       <span className="flex items-center gap-[5px]">
         <span
           className={cn(
@@ -309,23 +323,19 @@ function GuestRow({
         )}
       </span>
 
-      <span className="flex items-center">
-        {count.changedByGuest ? (
-          <AmountBadge count={count} />
-        ) : (
-          <span className="text-muted-foreground text-[13px] tabular-nums">
-            {count.value}
-          </span>
-        )}
-      </span>
-
       <span
         className={cn(
           'text-muted-foreground text-[13px] font-semibold tabular-nums',
           WIDE_ONLY,
         )}
       >
-        {tableNumber ?? ''}
+        {tableNumber ??
+          // Only someone still coming waits for a seat.
+          (guest.rsvpStatus !== 'declined' && (
+            <span className="text-muted-foreground/80 font-normal">
+              {t('list.notSeated')}
+            </span>
+          ))}
       </span>
 
       {showMeals && (

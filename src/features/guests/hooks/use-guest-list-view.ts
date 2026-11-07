@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import {
   filterAndSortGuests,
@@ -10,11 +11,16 @@ import {
 } from '@/features/guests/utils';
 import type { GuestListParams } from '@/features/guests/utils/guest-list-params';
 import { pruneSelection } from '@/features/guests/utils/guest-selection';
+import { rsvpHeadcounts } from '@/features/guests/utils/rsvp-headcounts';
 import { useRecordPackage } from '@/features/billing';
 import { useGuestListParams } from './use-guest-list-params';
 import { useDeferredDelete } from './use-deferred-delete';
 
-const filterOf = (view: GuestListParams, missedIds: ReadonlySet<string>): GuestFilterParams => ({
+const filterOf = (
+  view: GuestListParams,
+  missedIds: ReadonlySet<string>,
+  changedIds: ReadonlySet<string>,
+): GuestFilterParams => ({
   searchTerm: view.q,
   groupIds: view.groups,
   statuses: view.status ? [view.status] : [],
@@ -23,6 +29,7 @@ const filterOf = (view: GuestListParams, missedIds: ReadonlySet<string>): GuestF
   transport: view.transport,
   // A stale `?missed=1` once nobody is missing shows everyone rather than nothing.
   missedIds: view.missed && missedIds.size > 0 ? missedIds : null,
+  changedIds: view.changed && changedIds.size > 0 ? changedIds : null,
   sortKey: view.sort,
 });
 
@@ -36,7 +43,10 @@ export function useGuestListView(
   eventId: string,
   /** Records that missed the latest Invitation or Confirmation that went out, from the server */
   missedCatchUpIds: readonly string[] = [],
+  /** Records that changed their own answer, from the server */
+  changedAnswerIds: readonly string[] = [],
 ) {
+  const t = useTranslations('guests');
   const { params, update, reset } = useGuestListParams();
   const deferred = useDeferredDelete(eventId);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -76,10 +86,22 @@ export function useGuestListView(
       : issueScoped;
   }, [guests, params.issue, outsideOnly, outsideIds]);
 
-  const missedIds = useMemo(() => {
-    const live = new Set(guests.map((guest) => guest.id));
-    return new Set(missedCatchUpIds.filter((id) => live.has(id)));
-  }, [guests, missedCatchUpIds]);
+  // The server's record sets, kept to the records still on the list.
+  const liveIds = useMemo(
+    () => new Set(guests.map((guest) => guest.id)),
+    [guests],
+  );
+  const missedIds = useMemo(
+    () => new Set(missedCatchUpIds.filter((id) => liveIds.has(id))),
+    [liveIds, missedCatchUpIds],
+  );
+  const changedIds = useMemo(
+    () => new Set(changedAnswerIds.filter((id) => liveIds.has(id))),
+    [liveIds, changedAnswerIds],
+  );
+
+  /** Guests (the sum of amounts) per status - the overview's counts. */
+  const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
 
   // Only a selection-only view reads `selected`; a tap must not re-sort the list.
   const selectionFilter = selectionOnly ? selected : null;
@@ -87,8 +109,8 @@ export function useGuestListView(
     () =>
       selectionFilter
         ? guests.filter((guest) => selectionFilter.has(guest.id))
-        : filterAndSortGuests(scoped, filterOf(params, missedIds)),
-    [selectionFilter, guests, scoped, params, missedIds],
+        : filterAndSortGuests(scoped, filterOf(params, missedIds, changedIds)),
+    [selectionFilter, guests, scoped, params, missedIds, changedIds],
   );
   const visibleIds = useMemo(() => rows.map((guest) => guest.id), [rows]);
 
@@ -100,8 +122,9 @@ export function useGuestListView(
 
   /** Records a view would show - for previewing filters before applying them. */
   const countFor = useCallback(
-    (view: GuestListParams) => filterGuests(scoped, filterOf(view, missedIds)).length,
-    [scoped, missedIds],
+    (view: GuestListParams) =>
+      filterGuests(scoped, filterOf(view, missedIds, changedIds)).length,
+    [scoped, missedIds, changedIds],
   );
 
   const changeFilters: typeof update = (patch, mode) => {
@@ -125,7 +148,22 @@ export function useGuestListView(
     !!params.transport ||
     !!params.issue ||
     (params.missed && missedIds.size > 0) ||
+    (params.changed && changedIds.size > 0) ||
     outsideOnly;
+
+  /** What the list shows, for its header: records and guests, or "N of M". */
+  const summary =
+    outsideOnly && rows.length === outsideCount
+      ? t('package.countOutside', { count: outsideCount })
+      : filtered
+        ? t('list.countFiltered', {
+            shown: rows.length.toLocaleString(),
+            total: guests.length.toLocaleString(),
+          })
+        : t('list.countSummary', {
+            records: guests.length,
+            guests: counts.total,
+          });
 
   /** Hides the records behind the Undo toast and drops them from the selection. */
   const startDelete = (ids: string[]) => {
@@ -149,10 +187,13 @@ export function useGuestListView(
     rows,
     visibleIds,
     statusCounts,
+    counts,
+    summary,
     outsideIds,
     outsideCount,
     outsideOnly,
     missedCount: missedIds.size,
+    changedCount: changedIds.size,
     filtered,
     countFor,
     selected,

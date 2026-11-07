@@ -11,11 +11,11 @@ export function FilterButton({
 }: { label: string; selection: string | null } & ComponentProps<typeof Button>) {
   return (
     <Button
-      variant="outline"
+      variant={selection ? 'soft' : 'outline'}
       size="sm"
       className={cn(
-        'bg-card text-[12.5px] font-medium shadow-none',
-        selection && 'border-primary/40 bg-primary/5 hover:bg-primary/10',
+        'text-[12.5px] font-medium shadow-none',
+        !selection && 'bg-card',
       )}
       {...props}
     >

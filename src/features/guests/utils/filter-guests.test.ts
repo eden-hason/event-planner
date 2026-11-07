@@ -69,3 +69,15 @@ describe('filterGuests by transportation answer', () => {
     assert.deepEqual(found, []);
   });
 });
+
+describe('filterGuests by changed answer', () => {
+  it('keeps only the records that changed their own answer', () => {
+    const changedIds = new Set(['no', 'pending']);
+    const shown = filterGuests(guests, { ...NO_FILTERS, changedIds }).map((g) => g.id);
+    assert.deepEqual(shown, ['no', 'pending']);
+  });
+
+  it('leaves the list alone while the filter is off', () => {
+    assert.equal(filterGuests(guests, { ...NO_FILTERS, changedIds: null }).length, guests.length);
+  });
+});

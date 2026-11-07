@@ -30,7 +30,7 @@ export function SelectionBar({
   active,
   onAction,
 }: {
-  /** Nothing selected yet - the bar is there, but has nothing to act on. */
+  /** Nothing checked yet - the bar is there, but has nothing to act on. */
   disabled: boolean;
   active: SelectionAction | null;
   onAction: (action: SelectionAction) => void;

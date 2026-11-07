@@ -1,6 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { IconAlertTriangle, IconX } from '@tabler/icons-react';
 import type { GroupWithGuestsApp } from '@/features/guests/schemas';
@@ -12,7 +11,8 @@ type Chip = { key: string; label: string; issue?: boolean; remove: () => void };
 /**
  * The thin row of removable chips under the toolbar. It exists only while a
  * non-status filter is on - including the `?issue=` scope from Home's Guest
- * List Health Check.
+ * List Health Check, the records outside the package, and the list narrowed to
+ * its selection.
  */
 export function ActiveFilterChips({
   params,
@@ -20,7 +20,8 @@ export function ActiveFilterChips({
   issueCount,
   onChange,
   onClearAll,
-  leading,
+  outsideOnly = false,
+  selection,
   className,
 }: {
   params: GuestListParams;
@@ -30,14 +31,34 @@ export function ActiveFilterChips({
   onChange: (patch: Partial<GuestListParams>) => void;
   /** Without it there is no "clear all" - the phone's design leaves it out. */
   onClearAll?: () => void;
-  /** A chip ahead of the filters', such as the phone's "N selected". */
-  leading?: ReactNode;
+  /** The list is narrowed to the records outside the package (the package sheet's way in). */
+  outsideOnly?: boolean;
+  /** The list is narrowed to its selection, from the "N not shown" link. */
+  selection?: { count: number; onClear: () => void } | null;
   className?: string;
 }) {
   const t = useTranslations('guests');
   const nameOf = new Map(groups.map((group) => [group.id, group.name]));
 
   const chips: Chip[] = [
+    ...(selection
+      ? [
+          {
+            key: 'selection',
+            label: t('list.bar.selected', { count: selection.count }),
+            remove: selection.onClear,
+          },
+        ]
+      : []),
+    ...(outsideOnly
+      ? [
+          {
+            key: 'outside',
+            label: t('package.chip'),
+            remove: () => onChange({ outside: false }),
+          },
+        ]
+      : []),
     ...(params.issue
       ? [
           {
@@ -87,6 +108,15 @@ export function ActiveFilterChips({
           },
         ]
       : []),
+    ...(params.changed
+      ? [
+          {
+            key: 'changed',
+            label: t('list.chips.changedAnswer'),
+            remove: () => onChange({ changed: false }),
+          },
+        ]
+      : []),
     ...(params.transport
       ? [
           {
@@ -100,13 +130,12 @@ export function ActiveFilterChips({
       : []),
   ];
 
-  if (chips.length === 0 && !leading) return null;
+  if (chips.length === 0) return null;
 
   return (
     <div
       className={cn('flex flex-wrap items-center gap-2 pb-2.5', className)}
     >
-      {leading}
       {chips.map((chip) => (
         <button
           key={chip.key}

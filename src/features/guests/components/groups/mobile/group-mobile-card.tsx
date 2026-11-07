@@ -5,7 +5,7 @@ import { IconDots } from '@tabler/icons-react';
 import { GroupWithGuestsApp } from '@/features/guests/schemas';
 import { GroupIcon } from '../group-icon';
 import { cn } from '@/lib/utils';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 
 interface GroupMobileCardProps {
   group: GroupWithGuestsApp;
@@ -42,8 +42,8 @@ export function GroupMobileCard({
     >
       <div
         className={cn(
-          'flex size-10 shrink-0 items-center justify-center rounded-[11px]',
-          sideTintClass(group.side),
+          'flex size-10 shrink-0 items-center justify-center',
+          sideIconClass(group.side),
         )}
       >
         <GroupIcon iconName={group.icon} size="md" />

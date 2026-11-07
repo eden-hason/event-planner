@@ -26,7 +26,7 @@ import {
   type AssignTarget,
 } from '@/features/guests/components/groups/mobile';
 import { useGroupWrites } from '../hooks/use-group-writes';
-import { GuestsMobile, AddGuestSourceSheet, type SelectionHeader } from './mobile';
+import { GuestsMobile, AddGuestSourceSheet } from './mobile';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePublishedHeight } from '@/hooks/use-published-height';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,18 +60,11 @@ interface GuestsPageProps {
   messagedGuestIds?: string[];
   /** Records that missed the latest Invitation or Confirmation that went out (ADR 0050) */
   missedCatchUpIds?: string[];
+  /** Records that changed their own answer - what the "changed their answer" filter keeps */
+  changedAnswerIds?: string[];
   /** The Record Package, counts only; null when the event has none. */
   recordPackage?: GuestPackageView | null;
 }
-
-// The base `TabsTrigger` ships a border on every side (for the desktop pill),
-// a `data-[state=active]:bg-background`, and a `shadow-sm` - all of which
-// have to be zeroed out explicitly, not just left unset, or they show through
-// as a boxed rectangle around the active tab instead of the design's plain
-// underline. `border-b-primary` (not `border-primary`) is what keeps the
-// active color off the top/left/right edges.
-const UNDERLINE_TAB_TRIGGER_CLASS =
-  'h-10 rounded-none border-0 border-b-2 border-transparent bg-transparent text-[15px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
 
 export function GuestsPage({
   guests,
@@ -84,6 +77,7 @@ export function GuestsPage({
   tables = [],
   messagedGuestIds = [],
   missedCatchUpIds = [],
+  changedAnswerIds = [],
   recordPackage = null,
 }: GuestsPageProps) {
   const t = useTranslations('guests');
@@ -258,11 +252,6 @@ export function GuestsPage({
     [],
   );
 
-  // While the phone list is selecting, the header is the selection's: its
-  // count, an X that ends it, and "select all" where the add button was.
-  const [selectionHeader, setSelectionHeader] =
-    useState<SelectionHeader | null>(null);
-
   const groupHeaderAction = useMemo(
     () => (
       <Button onClick={handleOpenGroupDialog}>
@@ -301,50 +290,17 @@ export function GuestsPage({
   const title = t('title');
   const headerAction =
     activeTab === 'guests' ? guestsHeaderAction : groupHeaderAction;
-  const selection =
-    isMobile && activeTab === 'guests' ? selectionHeader : null;
-  const headerConfig = selection
-    ? {
-        title:
-          selection.count > 0
-            ? t('list.bar.selected', { count: selection.count })
-            : t('list.mobile.selecting'),
-        back: {
-          label: t('list.bar.clear'),
-          onClick: selection.onClear,
-          icon: 'close' as const,
-        },
-        subtitle:
-          selection.hidden > 0 ? (
-            <button
-              type="button"
-              onClick={selection.onShowHidden}
-              className="underline underline-offset-[3px]"
-            >
-              {t('list.bar.hidden', { count: selection.hidden })}
-            </button>
-          ) : undefined,
-        action: (
-          <Button
-            variant="ghost"
-            onClick={selection.onSelectAll}
-            className="text-primary hover:text-primary px-2"
-          >
-            {t('list.mobile.selectAll')}
-          </Button>
-        ),
-      }
-    : {
-        title,
-        subtitle: t('headerSubtitle', {
-          total: guestHeadcount,
-          groupCount: groups.length,
-        }),
-        action: isMobile ? headerAction : undefined,
-        // Desktop keeps the title and tabs in view while the list scrolls, with
-        // the toolbar and the table header stacked under them (D13).
-        sticky: !isMobile,
-      };
+  const headerConfig = {
+    title,
+    subtitle: t('headerSubtitle', {
+      total: guestHeadcount,
+      groupCount: groups.length,
+    }),
+    action: isMobile ? headerAction : undefined,
+    // Desktop keeps the title and tabs in view while the list scrolls, with
+    // the toolbar and the table header stacked under them (D13).
+    sticky: !isMobile,
+  };
   const { setHeader } = useFeatureHeader(headerConfig);
   useEffect(() => {
     setHeader(headerConfig);
@@ -352,7 +308,7 @@ export function GuestsPage({
     // object every render: an identity-keyed effect would set state in a loop.
     // The counts feed the subtitle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, isMobile, activeTab, guestHeadcount, groups.length, setHeader, selection]);
+  }, [title, isMobile, activeTab, guestHeadcount, groups.length, setHeader]);
 
   usePublishedHeight(tabsRowRef, '--guest-tabs-h', hasMounted && !isMobile);
 
@@ -383,29 +339,19 @@ export function GuestsPage({
             // never shows past its edges while it scrolls beneath.
             !isMobile &&
               'bg-app-shell sticky top-[var(--page-header-h,0px)] z-20 -mx-6 px-6',
-            // On mobile the tabs sit on the page like the title above them,
-            // bleeding past `CardContent`'s own inset so their border runs
-            // edge to edge. No bottom padding of its own - the border sits
-            // flush against the tabs themselves.
-            isMobile && '-mx-4 border-b px-4',
           )}
         >
-          <TabsList
-            className={cn(
-              // Underline tabs at every width, per the Guests designs: no pill,
-              // no icons, the active tab reads through its border.
-              'h-10 gap-0 rounded-none bg-transparent p-0',
-              isMobile ? 'w-full' : 'w-fit gap-6',
-            )}
-          >
-            <TabsTrigger value="guests" className={cn(UNDERLINE_TAB_TRIGGER_CLASS, isMobile ? 'flex-1' : 'flex-none px-0.5 text-[14.5px]')}>
+          {/* The base shadcn pill tabs, per the Guests table controls design:
+              full width on a phone, sized to their labels on desktop. */}
+          <TabsList className={cn('h-10 p-1', isMobile && 'w-full')}>
+            <TabsTrigger value="guests" className={cn(!isMobile && 'px-4')}>
               {t('tabGuests')}
             </TabsTrigger>
-            <TabsTrigger value="groups" className={cn(UNDERLINE_TAB_TRIGGER_CLASS, isMobile ? 'flex-1' : 'flex-none px-0.5 text-[14.5px]')}>
+            <TabsTrigger value="groups" className={cn(!isMobile && 'px-4')}>
               {t('tabGroups')}
             </TabsTrigger>
           </TabsList>
-          {/* Desktop's add-guest button lives in the list's own toolbar. */}
+          {/* Desktop's add-guest button lives in the overview row above the list. */}
           {!isMobile && activeTab === 'groups' && (
             <div className="flex justify-end">{headerAction}</div>
           )}
@@ -419,6 +365,7 @@ export function GuestsPage({
               eventName={eventName}
               messagedGuestIds={messagedGuestIds}
               missedCatchUpIds={missedCatchUpIds}
+              changedAnswerIds={changedAnswerIds}
               showDietary={showDietary}
               showTransportation={showTransportation}
               tables={tables}
@@ -433,7 +380,7 @@ export function GuestsPage({
               onAddGuest={handleAddGuest}
               onImportFile={() => goToImportRoute()}
               onImportDrive={() => goToImportRoute('drive')}
-              onSelectionHeader={setSelectionHeader}
+              onImportWhatsApp={() => goToImportRoute('whatsapp')}
             />
           ) : (
             <GuestsDesktop
@@ -444,6 +391,7 @@ export function GuestsPage({
               existingPhones={existingPhones}
               messagedGuestIds={messagedGuestIds}
               missedCatchUpIds={missedCatchUpIds}
+              changedAnswerIds={changedAnswerIds}
               showDietary={showDietary}
               showTransportation={showTransportation}
               tables={tables}

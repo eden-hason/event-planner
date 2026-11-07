@@ -1,168 +1,189 @@
 'use client';
 
-import { useRef, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
-import { IconCheck, IconDots } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconChevronRight,
+  IconClock,
+  IconUserCheck,
+  IconUserX,
+  type Icon,
+} from '@tabler/icons-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
-import { rsvpPresentation } from '@/features/guests/utils';
+import { rsvpPresentation, type RsvpStatus } from '@/features/guests/utils';
 import { amountDisplay } from '@/features/guests/utils/guest-amount';
-import { avatarTintFor } from '@/lib/avatar-tint';
+import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
-import { AmountBadge } from '../amount-badge';
 import { OutsidePackageTag } from '../package';
 
 /**
- * Fixed card height: the list is virtualized, so cards must never grow. Set
+ * Fixed row height: the list is virtualized, so rows must never grow. Set
  * inline in px so it stays in step with the virtualizer when `--ui-scale`
  * shrinks everything else.
  */
-export const CARD_HEIGHT = 72;
-/** How long a press has to last to start a selection. */
-const LONG_PRESS_MS = 450;
+export const CARD_HEIGHT = 64;
 
 /**
- * One Guest Record on the phone list (Guests Mobile design): who and which
- * group, with the RSVP on the far side. A tap
- * opens the record; while selecting, it toggles it instead. A long press
- * starts a selection with this record in it.
+ * The checkbox column, sliding open while selecting and shut after. The
+ * negative end margin takes back the row's gap while it is shut, so nothing
+ * sits indented by an empty column.
+ */
+export const checkboxSlotClass = (shown: boolean) =>
+  cn(
+    'flex h-10 shrink-0 items-center justify-center overflow-hidden transition-[width,opacity,margin] duration-200 ease-out motion-reduce:transition-none',
+    shown ? 'w-10 opacity-100' : '-me-2.5 w-0 opacity-0',
+  );
+
+/** Each answer's mark, as a Schedule's Results draws it. */
+const STATUS_ICON: Record<RsvpStatus, Icon> = {
+  confirmed: IconUserCheck,
+  pending: IconClock,
+  declined: IconUserX,
+};
+
+/**
+ * One Guest Record in the phone's list card, on shadcn's Item, drawn like a
+ * guest on a Schedule's Results: the answer as the media - with how many are
+ * coming on it - then who and how to reach them, and the group with a chevron
+ * that says the row opens. While selecting, a checkbox slides in and the whole
+ * row toggles the record instead.
  */
 export function GuestMobileCard({
   guest,
   selecting,
   checked,
+  tableNumber,
   outside = false,
   style,
   onOpen,
   onToggle,
-  onLongPress,
-  onMenu,
 }: {
   guest: GuestWithGroupApp;
+  /** The list is selecting: the row is a checkbox, not a way into the record. */
   selecting: boolean;
   checked: boolean;
-  /** Outside the Record Package: tagged on the group line, so the card keeps its height. */
+  tableNumber: number | undefined;
+  /** Outside the Record Package: tagged beside the name, so the row keeps its height. */
   outside?: boolean;
   style?: CSSProperties;
   onOpen: () => void;
   onToggle: () => void;
-  onLongPress: () => void;
-  onMenu: () => void;
 }) {
-  const t = useTranslations('guests.list');
-  const count = amountDisplay(guest);
-  const presentation = rsvpPresentation(guest.rsvpStatus);
+  const t = useTranslations('guests');
+  const status = guest.rsvpStatus;
+  const presentation = rsvpPresentation(status);
+  const StatusIcon = STATUS_ICON[status];
+  // Only a confirmed record has a count of its own; elsewhere it is the invitation's.
+  const coming =
+    status === 'confirmed' ? amountDisplay(guest).value : undefined;
+  const statusLabel = [t(`list.status.${status}`), coming]
+    .filter(Boolean)
+    .join(' ');
+  // The table, once there is one; an unseated record says nothing about it.
+  const seat =
+    tableNumber !== undefined
+      ? t('form.table.tableNumber', { number: tableNumber })
+      : null;
 
-  // A press that turns long starts the selection, and swallows the click that
-  // follows it so the same touch does not also toggle the record back out.
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fired = useRef(false);
-  const cancelPress = () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-  };
+  const activate = selecting ? onToggle : onOpen;
 
   return (
-    <div
+    <Item
+      // While selecting the row itself is the checkbox; the box in it is drawn only.
       role={selecting ? 'checkbox' : 'button'}
       aria-checked={selecting ? checked : undefined}
       tabIndex={0}
+      size="xs"
       style={{ height: CARD_HEIGHT, ...style }}
-      onPointerDown={() => {
-        fired.current = false;
-        if (selecting) return;
-        timer.current = setTimeout(() => {
-          fired.current = true;
-          onLongPress();
-        }, LONG_PRESS_MS);
-      }}
-      onPointerUp={cancelPress}
-      onPointerLeave={cancelPress}
-      onPointerCancel={cancelPress}
-      // Scrolling the list is not a press.
-      onTouchMove={cancelPress}
-      onContextMenu={(event) => event.preventDefault()}
-      onClick={() => {
-        if (fired.current) return;
-        if (selecting) onToggle();
-        else onOpen();
-      }}
+      onClick={activate}
       onKeyDown={(event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        if (selecting) onToggle();
-        else onOpen();
+        activate();
       }}
       className={cn(
-        'focus-visible:ring-ring/50 flex cursor-pointer items-center gap-2.5 rounded-[14px] border ps-3 pe-1.5 outline-none transition-colors select-none focus-visible:ring-[3px] [-webkit-touch-callout:none]',
-        checked && selecting
-          ? 'bg-primary/6 border-primary/40 border-dashed'
-          : 'bg-card active:bg-muted/60',
+        // A hairline between rows: Item's own border is transparent on every side.
+        'border-border cursor-pointer flex-nowrap gap-2.5 rounded-none border-x-0 border-t border-b-0 py-0 pe-1.5 transition-[padding,background-color] duration-200 focus-visible:ring-inset motion-reduce:transition-none',
+        selecting ? 'ps-1' : 'ps-3.5',
+        checked && selecting ? 'bg-primary/6' : 'active:bg-muted/60',
       )}
     >
-      {selecting && (
+      <span aria-hidden className={checkboxSlotClass(selecting)}>
         <span
           className={cn(
-            'flex size-[22px] shrink-0 items-center justify-center rounded-md border-[1.5px]',
+            'flex size-5 items-center justify-center rounded-[5px] border-[1.5px] transition-colors',
             checked
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-input bg-card',
+              : 'border-muted-foreground/45 bg-card',
           )}
         >
-          {checked && <IconCheck size={15} stroke={3} />}
+          {checked && <IconCheck size={14} stroke={3} />}
         </span>
-      )}
-
-      <span
-        className={cn(
-          'flex size-10 shrink-0 items-center justify-center rounded-full text-base font-bold',
-          avatarTintFor(guest.name),
-        )}
-      >
-        {guest.name.charAt(0)}
       </span>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <span className="truncate text-[15px] font-bold">{guest.name}</span>
-        <span className="flex min-w-0 items-center gap-1.5">
-          {outside && <OutsidePackageTag />}
-          <span
-            className={cn(
-              'truncate text-[13px]',
-              guest.group ? 'text-muted-foreground' : 'text-muted-foreground/70',
-            )}
-          >
-            {guest.group?.name ?? t('noGroup')}
+      <ItemMedia
+        role="img"
+        aria-label={statusLabel}
+        className={cn(
+          // Centred in the fixed-height row, not raised to the description.
+          'relative size-9 rounded-full border group-has-[[data-slot=item-description]]/item:translate-y-0 group-has-[[data-slot=item-description]]/item:self-center',
+          presentation.activeSurface,
+          presentation.text,
+        )}
+      >
+        <StatusIcon size={18} aria-hidden />
+        {!!coming && (
+          <span className="border-card bg-rsvp-confirmed-strong absolute -end-[5px] -top-[5px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 px-1 text-[11px] leading-none font-bold text-white tabular-nums">
+            {coming}
           </span>
-        </span>
-      </div>
+        )}
+      </ItemMedia>
 
-      <div className="flex shrink-0 items-center gap-1.5">
-        <AmountBadge count={count} size="sm" />
+      <ItemContent className="min-w-0 gap-0.5">
+        <ItemTitle className="w-full min-w-0 text-[15px] font-semibold">
+          <span className="truncate">{guest.name}</span>
+          {outside && <OutsidePackageTag />}
+        </ItemTitle>
+        <ItemDescription className="truncate text-[13px] leading-[18px]">
+          {guest.phone ? (
+            <bdi dir="ltr">{formatPhone(guest.phone)}</bdi>
+          ) : (
+            <span className="text-destructive/75">{t('list.noPhone')}</span>
+          )}
+          {seat && ` · ${seat}`}
+        </ItemDescription>
+      </ItemContent>
+
+      <ItemActions className="gap-0.5">
+        {guest.group && (
+          <Badge
+            variant="secondary"
+            className="block max-w-[96px] truncate px-2 font-medium"
+          >
+            {guest.group.name}
+          </Badge>
+        )}
+        {/* Selecting, a tap no longer opens the record, so the chevron fades. */}
         <span
+          aria-hidden
           className={cn(
-            'inline-flex h-[22px] items-center gap-1 rounded-full px-2 text-[11.5px] font-bold',
-            presentation.chip,
+            'text-muted-foreground flex size-8 items-center justify-center transition-opacity duration-200 motion-reduce:transition-none',
+            selecting && 'opacity-0',
           )}
         >
-          <span className={cn('size-1.5 rounded-full', presentation.solid)} />
-          {t(`status.${guest.rsvpStatus}`)}
+          <IconChevronRight size={16} className="rtl:rotate-180" />
         </span>
-      </div>
-
-      {!selecting && (
-        <button
-          type="button"
-          aria-label={t('rowMenu.trigger', { name: guest.name })}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            onMenu();
-          }}
-          className="text-muted-foreground -ms-1 flex h-11 w-[30px] shrink-0 items-center justify-center"
-        >
-          <IconDots size={18} stroke={2.4} />
-        </button>
-      )}
-    </div>
+      </ItemActions>
+    </Item>
   );
 }

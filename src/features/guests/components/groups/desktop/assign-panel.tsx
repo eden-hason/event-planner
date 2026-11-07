@@ -15,7 +15,7 @@ import { formatPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 import { GroupIcon } from '../group-icon';
 import { EditGuestSheet } from '../edit-guest-sheet';
-import { SideBadge, sideTintClass } from '../../side-badge';
+import { SideBadge, sideIconClass } from '../../side-badge';
 import { AssignRow } from './assign-row';
 
 /**
@@ -122,8 +122,8 @@ export function AssignPanel({
       <div className="flex items-center gap-3 border-b px-[18px] py-4">
         <span
           className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl',
-            sideTintClass(group.side),
+            'flex size-11 shrink-0 items-center justify-center',
+            sideIconClass(group.side),
           )}
         >
           <GroupIcon iconName={group.icon} size="md" />

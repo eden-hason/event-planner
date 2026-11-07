@@ -4,6 +4,8 @@ import {
 } from '@/features/guests/queries';
 import { getEventGroupsWithGuests } from '@/features/guests/queries/groups';
 import { getEventMessagedGuestIds } from '@/features/guests/queries/activity';
+import { getChangedAnswerSnapshots } from '@/features/guests/queries/changed-answers';
+import { findChangedAnswers } from '@/features/guests/utils/changed-answers';
 import { getMissedCatchUpInput } from '@/features/schedules/queries/missed-catch-up';
 import { missedCatchUpIds } from '@/features/schedules/utils/catch-up';
 import { GuestsPage as GuestsPageComponent } from '@/features/guests';
@@ -26,6 +28,7 @@ export default async function GuestsPage({
     messagedGuestIds,
     recordPackage,
     missedCatchUpInput,
+    changedAnswerSnapshots,
   ] = await Promise.all([
     getEventGuestsWithGroups(eventId),
     getEventGroupsWithGuests(eventId),
@@ -35,6 +38,7 @@ export default async function GuestsPage({
     getEventMessagedGuestIds(eventId),
     getGuestPackageView(eventId),
     getMissedCatchUpInput(eventId),
+    getChangedAnswerSnapshots(eventId),
   ]);
 
   const showDietary = event?.guestExperience?.dietaryOptions ?? false;
@@ -53,6 +57,19 @@ export default async function GuestsPage({
       messagedGuestIds={messagedGuestIds}
       missedCatchUpIds={
         missedCatchUpInput ? missedCatchUpIds(guests, missedCatchUpInput) : []
+      }
+      changedAnswerIds={
+        changedAnswerSnapshots
+          ? findChangedAnswers(
+              guests.map((guest) => ({
+                ...guest,
+                phone: guest.phone ?? null,
+                rsvpChangeSource: guest.rsvpChangeSource ?? null,
+                rsvpChangedAt: guest.rsvpChangedAt ?? null,
+              })),
+              changedAnswerSnapshots,
+            ).map((answer) => answer.guestId)
+          : []
       }
       recordPackage={recordPackage}
     />
