@@ -8,7 +8,15 @@
 --
 -- Signing in: the Owner is couple@kululu.test (OTP, read the code in Mailpit on
 -- http://127.0.0.1:54324), or impersonate them as the Operator from
--- seeds/operator.sql.
+-- seeds/operator.sql. The event also has a co-owner, partner@kululu.test (Itai),
+-- who joined the way the Co-planner Link joins someone: an `owner` row in
+-- event_collaborators, not the event's creator. Sign in as them to see what a
+-- second Owner sees (backlog 0034). The sign-in page offers only phone and
+-- Google, so mint a one-time link with the local service key and open
+-- /auth/confirm?type=magiclink&token_hash=<hashed_token>&next=/app on :3000:
+--   curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/admin/generate_link" \
+--     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+--     -H "Content-Type: application/json" -d '{"type":"magiclink","email":"partner@kululu.test"}'
 --
 -- Re-run it whenever the "live" results have gone stale. Results stop being
 -- live 72 hours after sending, so a showcase seeded at the last reset quietly
@@ -56,6 +64,10 @@ values
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000004',
    'authenticated', 'authenticated', 'couple@kululu.test', crypt('kululu-local', gen_salt('bf')),
    now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Maya Shalev"}', false, false,
+   '', '', '', '', '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000', '00000000-0000-4000-a000-000000000007',
+   'authenticated', 'authenticated', 'partner@kululu.test', crypt('kululu-local', gen_salt('bf')),
+   now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Itai Shalev"}', false, false,
    '', '', '', '', '', '', '', '')
 on conflict (id) do nothing;
 
@@ -64,11 +76,12 @@ select u.id::text, u.id,
        jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
        'email', now(), now(), now()
 from auth.users u
-where u.id = '00000000-0000-4000-a000-000000000004'
+where u.id in ('00000000-0000-4000-a000-000000000004', '00000000-0000-4000-a000-000000000007')
 on conflict (provider, provider_id) do nothing;
 
 insert into profiles (id, full_name, email, is_admin)
-values ('00000000-0000-4000-a000-000000000004', 'Maya Shalev', 'couple@kululu.test', false)
+values ('00000000-0000-4000-a000-000000000004', 'Maya Shalev', 'couple@kululu.test', false),
+       ('00000000-0000-4000-a000-000000000007', 'Itai Shalev', 'partner@kululu.test', false)
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -100,6 +113,13 @@ where et.key = 'wedding';
 insert into event_billing_events (event_id, to_status, provider, kind, amount, channel, record_count, payment_method, note)
 values ('00000000-0000-4000-b000-000000000010', 'paid', 'manual', 'plan', 0, 'whatsapp_calls', 150, 'gift',
         'Local seed: showcase package');
+
+-- The co-owner, joined as the Co-planner Link joins someone (ADR 0041). The
+-- creator's own row comes from trg_auto_add_event_creator; deleting the event
+-- above takes this one with it, so a re-run re-adds it.
+insert into event_collaborators (event_id, user_id, role, is_creator)
+values ('00000000-0000-4000-b000-000000000010', '00000000-0000-4000-a000-000000000007', 'owner', false)
+on conflict do nothing;
 
 -- A stable pseudo-random fraction in [0, 1) per guest and purpose, so the
 -- showcase has texture without changing between runs.

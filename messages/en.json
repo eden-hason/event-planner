@@ -688,7 +688,7 @@
       "exportChangedAnswersSuccess": "File downloaded",
       "exportChangedAnswersNone": "No guest has changed their answer",
       "changedAnswers": {
-        "fileName": "guests-who-changed-their-answer",
+        "fileName": "Guests who changed their answer",
         "sheetName": "Changed answers",
         "note": "Guests who changed their own answer, latest change first. Covers only answers given through Kululu's messages - not through the personal link or on a phone call",
         "name": "Name",

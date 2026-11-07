@@ -23,14 +23,24 @@ export type LatestAnswer = {
   at: string;
 };
 
+/**
+ * Whether two RSVP writes came in the same conversation: the same channel,
+ * the later one within the answer-run gap of the earlier one.
+ */
+export function sameConversation(
+  earlier: { channel: string | null; at: string | Date },
+  later: { channel: string | null; at: string | Date },
+): boolean {
+  return (
+    earlier.channel === later.channel &&
+    new Date(later.at).getTime() - new Date(earlier.at).getTime() <= ANSWER_RUN_GAP_MS
+  );
+}
+
 export function continuesAnswer(
   latest: LatestAnswer | null,
   next: { interactionType: RsvpInteractionType; channel: string; at: Date },
 ): boolean {
   if (!latest) return false;
-  return (
-    latest.interactionType === next.interactionType &&
-    latest.channel === next.channel &&
-    next.at.getTime() - Date.parse(latest.at) <= ANSWER_RUN_GAP_MS
-  );
+  return latest.interactionType === next.interactionType && sameConversation(latest, next);
 }

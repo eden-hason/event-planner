@@ -27,7 +27,8 @@ import {
 } from '@/features/guests/utils/bulk-impact';
 import type { TableOption } from '@/features/seating';
 import { loadChangedAnswers } from '@/features/guests/actions/changed-answers';
-import { exportChangedAnswers } from '@/features/guests/utils/export-changed-answers';
+import { buildChangedAnswersSheetRows } from '@/features/guests/utils/export-changed-answers';
+import { downloadSheet, toFileName } from '@/lib/sheet';
 
 export type ConfirmRequest =
   | {
@@ -159,38 +160,19 @@ export function useGuestWrites({
 
   // Read fresh when asked for: the snapshots behind it are not on the page.
   // "Nobody changed" is a toast, not an empty file.
-  const exportChangedAnswersList = () => {
+  const exportChangedAnswers = () => {
     const c = (key: string, values?: Record<string, number>) =>
       t(`directory.changedAnswers.${key}`, values);
+    const rtl = locale === 'he';
     const run = async () => {
       const rows = await loadChangedAnswers(eventId);
       if (!rows) throw new Error(t('directory.exportFailed'));
       if (rows.length === 0) return false;
-      await exportChangedAnswers(rows, {
-        fileName: `${eventName ? `${eventName}-` : ''}${c('fileName')}.xlsx`,
-        labels: {
-          sheetName: c('sheetName'),
-          note: c('note'),
-          headers: [
-            c('name'),
-            c('phone'),
-            c('previous'),
-            c('current'),
-            c('kind'),
-            c('changedAt'),
-            c('history'),
-          ],
-          coming: (count) =>
-            count === null ? c('comingNoCount') : c('coming', { count }),
-          notComing: c('notComing'),
-          kinds: {
-            declined: c('kindDeclined'),
-            confirmed: c('kindConfirmed'),
-            count: c('kindCount'),
-          },
-          arrow: locale === 'he' ? '←' : '→',
-          rtl: locale === 'he',
-        },
+      await downloadSheet(buildChangedAnswersSheetRows(rows, { t: c, rtl }), {
+        fileName: toFileName(eventName, c('fileName')),
+        sheetName: c('sheetName'),
+        heading: c('note'),
+        rtl,
       });
       return true;
     };
@@ -213,6 +195,6 @@ export function useGuestWrites({
     setSide,
     requestDelete,
     exportGuests,
-    exportChangedAnswers: exportChangedAnswersList,
+    exportChangedAnswers,
   };
 }

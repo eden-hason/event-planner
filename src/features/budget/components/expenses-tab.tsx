@@ -28,7 +28,8 @@ import { setEventBudget, removeEventBudget, type SetEventBudgetState } from '../
 import { ExpenseRow } from './expense-row';
 import { ExpenseSheet } from './expense-sheet';
 import { ExpensesHero } from './expenses-hero';
-import { buildExpensesSheetRows, toFileName } from '../utils/export-budget';
+import { toFileName } from '@/lib/sheet';
+import { buildExpensesSheetRows } from '../utils/export-budget';
 import {
   EXPENSE_FILTERS,
   EXPENSE_STATUSES,

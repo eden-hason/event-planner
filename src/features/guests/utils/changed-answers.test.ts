@@ -46,7 +46,7 @@ describe('findChangedAnswers', () => {
     assert.equal(row.kind, 'count');
     assert.deepEqual(row.previous, { status: 'confirmed', amount: 2, at: '2026-10-08T20:55:00Z' });
     assert.deepEqual(row.current, { status: 'confirmed', amount: 1, at: '2026-11-05T17:21:00Z' });
-    assert.equal(row.changedAt, '2026-11-05T17:21:00Z');
+    assert.equal(row.current.at, '2026-11-05T17:21:00Z');
     assert.equal(row.history.length, 2);
   });
 
@@ -78,7 +78,7 @@ describe('findChangedAnswers', () => {
     );
     assert.equal(row.previous.amount, 2);
     assert.deepEqual(row.history.map((step) => step.amount), [1, 2, 1]);
-    assert.equal(row.changedAt, '2026-11-04T07:50:00Z');
+    assert.equal(row.current.at, '2026-11-04T07:50:00Z');
   });
 
   it('times the change from when the answer first became what it is now', () => {
@@ -90,7 +90,7 @@ describe('findChangedAnswers', () => {
         confirm(1, '2026-10-20T10:00:00Z'),
       ],
     );
-    assert.equal(row.changedAt, '2026-10-10T10:00:00Z');
+    assert.equal(row.current.at, '2026-10-10T10:00:00Z');
     assert.deepEqual(row.history.map((step) => step.amount), [2, 1]);
   });
 
