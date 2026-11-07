@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { IconDownload } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { downloadSheet, type SheetRow } from '../utils/export-budget';
+import { downloadSheet, type SheetRow } from '@/lib/sheet';
 
 interface DownloadSheetButtonProps {
   /** Built on click, so the file reflects any edits made since the page loaded. */

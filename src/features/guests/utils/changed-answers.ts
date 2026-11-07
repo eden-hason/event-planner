@@ -1,4 +1,4 @@
-import { ANSWER_RUN_GAP_MS } from '@/features/confirmation/utils/answer-run';
+import { sameConversation } from '@/features/confirmation/utils/answer-run';
 
 /**
  * Which Guests changed their own RSVP, read from the answer snapshots the
@@ -51,10 +51,9 @@ export type ChangedAnswer = {
   name: string;
   phone: string | null;
   previous: AnswerStep;
+  /** Timed by when the answer became what it is now. */
   current: AnswerStep;
   kind: AnswerChangeKind;
-  /** When the answer became what it is now. */
-  changedAt: string | null;
   /** Every answer that stood, oldest first, ending with the current one. */
   history: AnswerStep[];
 };
@@ -78,11 +77,7 @@ export function settledAnswers(snapshots: RsvpSnapshot[]): AnswerStep[] {
   return ordered
     .filter((snapshot, i) => {
       const next = ordered[i + 1];
-      if (!next) return true;
-      return !(
-        next.channel === snapshot.channel &&
-        Date.parse(next.at) - Date.parse(snapshot.at) <= ANSWER_RUN_GAP_MS
-      );
+      return !next || !sameConversation(snapshot, next);
     })
     .map(({ status, amount, at }) => ({ status, amount, at }));
 }
@@ -133,7 +128,6 @@ export function findChangedAnswers(
           : previous.status === 'declined'
             ? 'confirmed'
             : 'count',
-      changedAt: current.at,
       history: [
         ...steps
           .slice(0, previousIndex + 1)
@@ -143,5 +137,5 @@ export function findChangedAnswers(
     });
   }
 
-  return changed.sort((a, b) => timeOf(b.changedAt) - timeOf(a.changedAt));
+  return changed.sort((a, b) => timeOf(b.current.at) - timeOf(a.current.at));
 }
