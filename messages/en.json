@@ -1462,13 +1462,11 @@
         "download": "Download the file",
         "close": "Close",
         "clearSearch": "Clear search",
-        "guestsCount": "{count, plural, one {# guest} other {# guests}}",
         "selectedSummary": "{count} selected · {guests, plural, one {# guest} other {# guests}}",
         "cancelSelection": "Cancel",
         "select": "Select"
       },
       "transport": {
-        "title": "Transportation",
         "yes": "Yes",
         "no": "No",
         "unanswered": "Not answered"
@@ -1518,7 +1516,10 @@
         "full": "Package is full",
         "over": "{over, plural, one {# record} other {# records}} over - add records to send",
         "count": "{used} of {size}"
-      }
+      },
+      "left": "{count} left",
+      "full": "Package is full",
+      "over": "{count} outside the package"
     }
   },
   "home": {

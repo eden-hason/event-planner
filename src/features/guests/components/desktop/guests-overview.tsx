@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
@@ -25,20 +25,19 @@ import {
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import {
   rsvpPresentation,
-  RSVP_STATUSES,
   type IplanScope,
   type RsvpStatus,
 } from '@/features/guests/utils';
 import { GUEST_STATUS_FILTERS } from '@/features/guests/utils/guest-list-params';
 import {
   headcountShare,
-  rsvpHeadcounts,
   type RsvpHeadcounts,
 } from '@/features/guests/utils/rsvp-headcounts';
 import { transportationSummary } from '@/features/guests/utils/transportation-summary';
 import { cn } from '@/lib/utils';
 import { useIplanExportOptions } from '@/features/guests/hooks/use-iplan-export-options';
 import { PackageLine } from '../package';
+import { RsvpMeterBar } from '../rsvp-meter-bar';
 
 /**
  * What sits above the list (Guests table controls design): the data actions -
@@ -50,6 +49,7 @@ import { PackageLine } from '../package';
  */
 export function GuestsOverview({
   guests,
+  counts,
   statusCounts,
   status,
   showTransportation,
@@ -64,6 +64,8 @@ export function GuestsOverview({
   onExport,
 }: {
   guests: GuestWithGroupApp[];
+  /** Guests (the sum of amounts) per status. */
+  counts: RsvpHeadcounts;
   /** Guest Records per status, over the whole list. */
   statusCounts: Record<RsvpStatus | 'all', number>;
   /** The status the list is narrowed to; `undefined` while no status card is on. */
@@ -83,7 +85,10 @@ export function GuestsOverview({
   onExport: (scope: IplanScope) => void;
 }) {
   const t = useTranslations('guests');
-  const counts = rsvpHeadcounts(guests);
+  const needTransport = useMemo(
+    () => (showTransportation ? transportationSummary(guests).yes : 0),
+    [showTransportation, guests],
+  );
 
   return (
     <div className="mb-4 flex flex-col gap-3">
@@ -118,21 +123,7 @@ export function GuestsOverview({
                 {t('list.overview.confirmed')}
               </span>
             </div>
-            <div
-              role="img"
-              aria-label={RSVP_STATUSES.map(
-                (key) => `${counts[key]} ${t(`list.status.${key}`)}`,
-              ).join(', ')}
-              className="bg-muted flex h-1.5 gap-0.5 overflow-hidden rounded-full"
-            >
-              {RSVP_STATUSES.map((key) => (
-                <div
-                  key={key}
-                  className={rsvpPresentation(key).solid}
-                  style={{ width: `${headcountShare(counts, key)}%` }}
-                />
-              ))}
-            </div>
+            <RsvpMeterBar counts={counts} />
           </div>
 
           <Divider />
@@ -172,7 +163,7 @@ export function GuestsOverview({
                 on={transportOn}
                 leading={<IconBus size={15} className="text-primary" />}
                 label={t('list.overview.transport')}
-                people={transportationSummary(guests).yes}
+                people={needTransport}
                 detail={t('list.overview.transportOf', {
                   count: counts.confirmed,
                 })}

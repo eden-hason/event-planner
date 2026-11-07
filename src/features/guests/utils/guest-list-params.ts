@@ -48,7 +48,7 @@ export type GuestListParams = {
   missed: boolean;
   /**
    * Only the Guest Records that changed their own answer - read from the answer
-   * snapshots on the server, the same set the changed-answers report listed.
+   * snapshots on the server (`findChangedAnswers`).
    */
   changed: boolean;
 };

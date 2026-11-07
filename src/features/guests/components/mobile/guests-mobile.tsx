@@ -360,21 +360,11 @@ export function GuestsMobile({
         issueCount={scoped.length}
         onChange={changeFilters}
         className="gap-1.5 pb-0"
-        leading={
-          (selectionOnly || outsideOnly) && (
-            <>
-              {selectionOnly && (
-                <LeadingChip onClick={() => setSelectionOnly(false)}>
-                  {t('list.bar.selected', { count: selected.size })}
-                </LeadingChip>
-              )}
-              {outsideOnly && (
-                <LeadingChip onClick={() => changeFilters({ outside: false })}>
-                  {t('package.chip')}
-                </LeadingChip>
-              )}
-            </>
-          )
+        outsideOnly={outsideOnly}
+        selection={
+          selectionOnly
+            ? { count: selected.size, onClear: () => setSelectionOnly(false) }
+            : null
         }
       />
 
@@ -839,22 +829,3 @@ function Toolbar({
   );
 }
 
-/** A removable chip that leads the filter chips, in their style. */
-function LeadingChip({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
-    >
-      {children}
-      <IconX size={13} stroke={2.4} />
-    </button>
-  );
-}

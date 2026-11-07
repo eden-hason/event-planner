@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
@@ -9,7 +9,6 @@ import {
   IconUpload,
   IconUserPlus,
   IconUsers,
-  IconX,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import type {
@@ -38,7 +37,6 @@ import { NewGroupDialog } from './new-group-dialog';
 import { GuestDrawer, type GuestDrawerTab } from '../guest-drawer';
 import type { RowAction } from './guest-row-menu';
 import { OutsidePackageBanner } from '../package';
-import { rsvpHeadcounts } from '@/features/guests/utils/rsvp-headcounts';
 
 interface GuestsDesktopProps {
   guests: GuestWithGroupApp[];
@@ -103,12 +101,12 @@ export function GuestsDesktop({
     rows,
     visibleIds,
     statusCounts,
+    counts,
+    summary,
     outsideIds,
-    outsideCount,
     outsideOnly,
     missedCount,
     changedCount,
-    filtered,
     selected,
     setSelected,
     selectionOnly,
@@ -296,41 +294,11 @@ export function GuestsDesktop({
 
   const hidden = hiddenCount(selected, visibleIds);
 
-  const summary =
-    outsideOnly && rows.length === outsideCount
-      ? t('package.countOutside', { count: outsideCount })
-      : filtered
-        ? t('list.countFiltered', {
-            shown: rows.length.toLocaleString(),
-            total: guests.length.toLocaleString(),
-          })
-        : t('list.countSummary', {
-            records: guests.length,
-            guests: rsvpHeadcounts(guests).total,
-          });
-
-  // Chips ahead of the filters': the "N selected" narrowing, and the records
-  // outside the package - reached from the package card's sheet.
-  const leadingChips =
-    selectionOnly || outsideOnly ? (
-      <>
-        {selectionOnly && (
-          <LeadingChip onClick={() => setSelectionOnly(false)}>
-            {t('list.bar.selected', { count: selected.size })}
-          </LeadingChip>
-        )}
-        {outsideOnly && (
-          <LeadingChip onClick={() => handleFilterChange({ outside: false })}>
-            {t('package.chip')}
-          </LeadingChip>
-        )}
-      </>
-    ) : undefined;
-
   return (
     <div className="@container/guests flex flex-col">
       <GuestsOverview
         guests={guests}
+        counts={counts}
         statusCounts={statusCounts}
         status={outsideOnly ? undefined : params.status}
         showTransportation={showTransportation}
@@ -370,7 +338,12 @@ export function GuestsDesktop({
         issueCount={scoped.length}
         onChange={handleFilterChange}
         onClearAll={resetFilters}
-        leading={leadingChips}
+        outsideOnly={outsideOnly}
+        selection={
+          selectionOnly
+            ? { count: selected.size, onClear: () => setSelectionOnly(false) }
+            : null
+        }
         className="bg-card border-x px-4 pt-2.5"
       />
 
@@ -456,22 +429,3 @@ export function GuestsDesktop({
   );
 }
 
-/** A removable chip that leads the filter chips, in their style. */
-function LeadingChip({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="bg-primary/8 text-primary border-primary/40 flex h-7 items-center gap-1.5 rounded-full border border-dashed ps-2.5 pe-2 text-[12.5px] font-semibold"
-    >
-      {children}
-      <IconX size={13} stroke={2.4} />
-    </button>
-  );
-}

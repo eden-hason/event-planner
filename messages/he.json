@@ -1462,13 +1462,11 @@
         "download": "הורדת הקובץ",
         "close": "סגירה",
         "clearSearch": "ניקוי החיפוש",
-        "guestsCount": "{count, plural, one {אורח אחד} other {# אורחים}}",
         "selectedSummary": "{count} נבחרו · {guests, plural, one {אורח אחד} other {# אורחים}}",
         "cancelSelection": "ביטול",
         "select": "בחירה"
       },
       "transport": {
-        "title": "הסעה",
         "yes": "כן",
         "no": "לא",
         "unanswered": "לא ענו"
@@ -1518,7 +1516,10 @@
         "full": "החבילה מלאה",
         "over": "חריגה של {over, plural, one {רשומה אחת} other {# רשומות}} - צריך להוסיף רשומות כדי לשלוח",
         "count": "{used} מתוך {size}"
-      }
+      },
+      "left": "נשארו {count}",
+      "full": "החבילה מלאה",
+      "over": "{count} מחוץ לחבילה"
     }
   },
   "home": {

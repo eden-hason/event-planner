@@ -416,8 +416,9 @@ export function GroupsDesktop({
           >
             <span
               className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-[10px]',
-                pending.chip,
+                'flex size-9 shrink-0 items-center justify-center rounded-full border',
+                pending.activeSurface,
+                pending.text,
               )}
             >
               <IconFolder size={18} />

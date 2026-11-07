@@ -6,8 +6,8 @@ import { sameConversation } from '@/features/confirmation/utils/answer-run';
  *
  * Those snapshots are not a full history (CONTEXT.md, RSVP Source): only an
  * answer given through a Schedule leaves one, so an answer through the direct
- * invitation link or on a Call Round is invisible here. That is accepted for
- * the export, which says so in the file (backlog 0036).
+ * invitation link or on a Call Round is invisible here, so the "changed their
+ * answer" filter can miss someone (backlog 0036).
  *
  * A Guest is in the list when their RSVP is still their own - the source is
  * `guest`, so an Owner override or an Operator's call answer leaves them out -

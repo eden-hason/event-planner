@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { GuestWithGroupApp } from '@/features/guests/schemas';
 import {
   filterAndSortGuests,
@@ -10,6 +11,7 @@ import {
 } from '@/features/guests/utils';
 import type { GuestListParams } from '@/features/guests/utils/guest-list-params';
 import { pruneSelection } from '@/features/guests/utils/guest-selection';
+import { rsvpHeadcounts } from '@/features/guests/utils/rsvp-headcounts';
 import { useRecordPackage } from '@/features/billing';
 import { useGuestListParams } from './use-guest-list-params';
 import { useDeferredDelete } from './use-deferred-delete';
@@ -44,6 +46,7 @@ export function useGuestListView(
   /** Records that changed their own answer, from the server */
   changedAnswerIds: readonly string[] = [],
 ) {
+  const t = useTranslations('guests');
   const { params, update, reset } = useGuestListParams();
   const deferred = useDeferredDelete(eventId);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -83,15 +86,22 @@ export function useGuestListView(
       : issueScoped;
   }, [guests, params.issue, outsideOnly, outsideIds]);
 
-  const missedIds = useMemo(() => {
-    const live = new Set(guests.map((guest) => guest.id));
-    return new Set(missedCatchUpIds.filter((id) => live.has(id)));
-  }, [guests, missedCatchUpIds]);
+  // The server's record sets, kept to the records still on the list.
+  const liveIds = useMemo(
+    () => new Set(guests.map((guest) => guest.id)),
+    [guests],
+  );
+  const missedIds = useMemo(
+    () => new Set(missedCatchUpIds.filter((id) => liveIds.has(id))),
+    [liveIds, missedCatchUpIds],
+  );
+  const changedIds = useMemo(
+    () => new Set(changedAnswerIds.filter((id) => liveIds.has(id))),
+    [liveIds, changedAnswerIds],
+  );
 
-  const changedIds = useMemo(() => {
-    const live = new Set(guests.map((guest) => guest.id));
-    return new Set(changedAnswerIds.filter((id) => live.has(id)));
-  }, [guests, changedAnswerIds]);
+  /** Guests (the sum of amounts) per status - the overview's counts. */
+  const counts = useMemo(() => rsvpHeadcounts(guests), [guests]);
 
   // Only a selection-only view reads `selected`; a tap must not re-sort the list.
   const selectionFilter = selectionOnly ? selected : null;
@@ -141,6 +151,20 @@ export function useGuestListView(
     (params.changed && changedIds.size > 0) ||
     outsideOnly;
 
+  /** What the list shows, for its header: records and guests, or "N of M". */
+  const summary =
+    outsideOnly && rows.length === outsideCount
+      ? t('package.countOutside', { count: outsideCount })
+      : filtered
+        ? t('list.countFiltered', {
+            shown: rows.length.toLocaleString(),
+            total: guests.length.toLocaleString(),
+          })
+        : t('list.countSummary', {
+            records: guests.length,
+            guests: counts.total,
+          });
+
   /** Hides the records behind the Undo toast and drops them from the selection. */
   const startDelete = (ids: string[]) => {
     setSelected((prev) => {
@@ -163,6 +187,8 @@ export function useGuestListView(
     rows,
     visibleIds,
     statusCounts,
+    counts,
+    summary,
     outsideIds,
     outsideCount,
     outsideOnly,
