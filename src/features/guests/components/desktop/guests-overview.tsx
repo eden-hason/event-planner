@@ -310,7 +310,7 @@ function ImportMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align="end"
+        align="start"
         sideOffset={8}
         className={MENU_CONTENT_CLASS}
       >
@@ -381,7 +381,7 @@ function ExportMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align="end"
+        align="start"
         sideOffset={8}
         className={MENU_CONTENT_CLASS}
       >
