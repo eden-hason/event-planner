@@ -154,6 +154,8 @@ export type PaymentsIndexSortKey = 'date' | 'amount';
 export type PaymentsIndexFilters = {
   /** Matches the paying Owner's name or email. */
   q: string;
+  /** An Israel calendar year, YYYY. Always the month's year when a month is set. */
+  year: string | null;
   /** An Israel calendar month, YYYY-MM, by when the payment was made. */
   month: string | null;
   /** Inclusive shekel bounds. */
@@ -188,6 +190,8 @@ export type PaymentsIndexPage = {
   totalAmount: number;
   /** Every payment in scope, before search and filters. */
   totalPayments: number;
+  /** The years the year filter offers, newest first. */
+  years: string[];
   page: number;
   pageSize: number;
   pageCount: number;

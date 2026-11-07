@@ -7,7 +7,7 @@ import type { BillingPaymentKind, BillingPaymentMethod } from '@/features/billin
 import type { PaymentIndexRow, PaymentsIndexFilters, PaymentsIndexPage } from '../types';
 import { excludeIds, getTestScope } from './test-accounts';
 import { eventTitle, UNKNOWN_OWNER } from '../utils/labels';
-import { filterPaymentRows, sortPaymentRows } from '../utils/payments-index';
+import { filterPaymentRows, paymentYears, sortPaymentRows, sumPaymentAmounts } from '../utils/payments-index';
 
 const PAGE_SIZE = 50;
 
@@ -78,8 +78,9 @@ export async function getPaymentsIndex(filters: PaymentsIndexFilters): Promise<P
   return {
     rows: visible.slice(start, start + PAGE_SIZE),
     totalRows: visible.length,
-    totalAmount: visible.reduce((sum, row) => sum + row.amount, 0),
+    totalAmount: sumPaymentAmounts(visible),
     totalPayments: allRows.length,
+    years: paymentYears(allRows),
     page,
     pageSize: PAGE_SIZE,
     pageCount,

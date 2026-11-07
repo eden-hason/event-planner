@@ -29,8 +29,8 @@ import {
   DEFAULT_PAYMENTS_INDEX_FILTERS,
   DEFAULT_PAYMENTS_SORT_DIRECTION,
   hasPaymentsIndexFilters,
-  monthLabel,
   paymentsIndexHref,
+  periodLabel,
 } from '../utils/payments-index';
 import { cn } from '@/lib/utils';
 
@@ -62,7 +62,7 @@ export function PaymentsIndex({ data, filters }: { data: PaymentsIndexPage; filt
         </Empty>
       ) : (
         <>
-          <PaymentsIndexToolbar filters={filters} />
+          <PaymentsIndexToolbar filters={filters} years={data.years} />
 
           {filtered && <ActiveFilters data={data} filters={filters} />}
 
@@ -71,7 +71,7 @@ export function PaymentsIndex({ data, filters }: { data: PaymentsIndexPage; filt
               <EmptyHeader>
                 <EmptyMedia variant="icon"><Search /></EmptyMedia>
                 <EmptyTitle>לא נמצאו תשלומים</EmptyTitle>
-                <EmptyDescription>אין תשלומים שמתאימים לחיפוש ולסינון. אפשר לשנות אותם או לנקות הכול</EmptyDescription>
+                <EmptyDescription>{noMatchesText(filters)}</EmptyDescription>
               </EmptyHeader>
               <Button asChild variant="outline" size="sm">
                 <Link href={clearAllHref(filters)}><X data-icon="inline-start" />ניקוי הכול</Link>
@@ -99,9 +99,53 @@ export function PaymentsIndex({ data, filters }: { data: PaymentsIndexPage; filt
               <Pagination data={data} filters={filters} />
             </Surface>
           )}
+
+          <PaymentsSummary data={data} filters={filters} />
         </>
       )}
     </div>
+  );
+}
+
+/** Says which period came up empty, when the date is the only thing narrowing the list. */
+function noMatchesText(filters: PaymentsIndexFilters) {
+  const period = periodLabel(filters);
+  const onlyPeriod = !filters.q.trim() && filters.minAmount === null && filters.maxAmount === null;
+  if (period && onlyPeriod) return `לא נרשמו תשלומים ב${period}. אפשר לבחור תקופה אחרת`;
+  return 'אין תשלומים שמתאימים לחיפוש ולסינון. אפשר לשנות אותם או לנקות הכול';
+}
+
+/**
+ * The count and the total of every payment the search and filters match, on
+ * every page - not just the 50 rows above it. Zero when nothing matches.
+ */
+function PaymentsSummary({ data, filters }: { data: PaymentsIndexPage; filters: PaymentsIndexFilters }) {
+  const narrowed = !!filters.q.trim() || filters.minAmount !== null || filters.maxAmount !== null;
+  const scope = [
+    periodLabel(filters) ?? 'כל התקופות',
+    narrowed && 'לפי החיפוש והסינון',
+    data.pageCount > 1 && 'כולל כל העמודים',
+  ].filter(Boolean).join(', ');
+  return (
+    <Surface
+      as="section"
+      className="border-primary/25 bg-primary/5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-4"
+    >
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-[13px] font-semibold">סיכום</h2>
+        <p className="text-muted-foreground text-[12.5px]">{scope}</p>
+      </div>
+      <dl className="flex flex-wrap items-center gap-x-10 gap-y-3">
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-muted-foreground text-[12px]">סה״כ עסקאות</dt>
+          <dd className="text-xl font-semibold tabular-nums">{data.totalRows.toLocaleString('he-IL')}</dd>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-muted-foreground text-[12px]">סה״כ לתשלום</dt>
+          <dd className="text-xl font-semibold tabular-nums">{shekels(data.totalAmount)}</dd>
+        </div>
+      </dl>
+    </Surface>
   );
 }
 
@@ -117,7 +161,9 @@ function ActiveFilters({ data, filters }: { data: PaymentsIndexPage; filters: Pa
     chips.push({ key, label, href: paymentsIndexHref(filters, patch) });
 
   if (filters.q.trim()) chip('q', `"${filters.q.trim()}"`, { q: '' });
-  if (filters.month) chip('month', monthLabel(filters.month), { month: null });
+  // One chip for the period: removing "אוקטובר 2026" clears the date entirely.
+  const period = periodLabel(filters);
+  if (period) chip('period', period, { year: null, month: null });
   const amount = amountLabel(filters);
   if (amount) chip('amount', `סכום ${amount}`, { minAmount: null, maxAmount: null });
 
