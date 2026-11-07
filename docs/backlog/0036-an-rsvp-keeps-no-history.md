@@ -54,8 +54,8 @@ remember.
 
 - Backfill from `guest_interactions` snapshots, marked as backfilled, since the oldest
   changes are only there.
-- RLS: readable by every Owner of the Event (`user_has_event_access`), unlike
-  `guest_interactions` today (creator-only, backlog 0034).
+- RLS: readable by every Owner of the Event (`user_has_event_access`), as
+  `guest_interactions` is since `20261107000000_owners_read_outreach.sql`.
 - Visitor decision (ADR 0028): planning data, so `visitor_open_tables()`.
 - Then the export, and the guest drawer's Activity timeline, read the log instead of the
   snapshots, and the note on the file's first row goes.

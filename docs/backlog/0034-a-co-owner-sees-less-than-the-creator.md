@@ -47,11 +47,28 @@ gets the same silent wrong answer. `getRecordPackage` in
 `src/features/billing/queries/record-package.ts` does exactly that and is still exported,
 though nothing calls it today.
 
-The same gap exists for `guest_interactions`: its select policy admits only
-`events.user_id = auth.uid()`. The Guests page's changed-answers export
-(`getChangedAnswersInput`) works around it the same way - records through RLS, snapshots
-through the service client. `loadGuestJourneys` reads the table with the viewer's client
-and was not checked for co-owners.
+The same gap existed for outreach, and is closed: `guest_interactions`,
+`message_deliveries` and `message_delivery_attempts` had creator-only select policies, so a
+co-owner's Schedule Results and the guest drawer's Communication tab showed nothing sent and
+nothing answered (on Event `caaa26b4`, 536 Guest Records visible and 0 of 393
+interactions, 2026-11-07). `20261107000000_owners_read_outreach.sql` admits every Owner
+through `user_has_event_access`, and the changed-answers export dropped its service-client
+workaround. Their insert/update policies are still creator-only, but every writer uses the
+service client, so nothing depends on them.
+
+### Other differences found in the same audit (2026-11-07)
+
+A sweep of every permissive policy, every `security definer` function and every
+`isCreator` / `user_id` check in `src/` found, besides payments:
+
+- **Back Office impersonation filters Events by creator.** `src/features/events/queries/events.ts`
+  narrows to `events.user_id = impersonation.userId` (three places), so an Operator
+  impersonating a co-owner sees none of the Events shared with them.
+- **Per-person by design, not gaps:** `whatsapp_import_sessions`, `owner_messages` (ADR 0039),
+  the Test Message account cap (ADR 0047), the `guests` storage bucket (one folder per
+  uploader), avatars, and `is_default` (each person's own default Event).
+- **Intended:** no Owner can remove the creator from the Event (`collaborate/actions/manage.ts`
+  refuses an `is_creator` row).
 
 Already safe, because they run on the service client: the Catch-up Send action
 (`sendCatchUp`), `startCallRound`, the Dispatcher and the renderer.
