@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { packageAside } from '../utils';
 import type { GuestPackageView } from '../types';
 import { PackageBar } from './package-bar';
-import { PackageUncountedNote } from './package-hero';
+import { PackageCountNotes } from './package-hero';
 
 /**
  * The Record Package on the mobile More page (Record Package Plan design, 1l-1m). Counts
@@ -81,7 +81,7 @@ export function RecordPackageCard({
             {tGuests(aside.key, { count: fmt(aside.count) })}
           </span>
         </div>
-        <PackageUncountedNote view={view} className="-mt-1.5" />
+        <PackageCountNotes view={view} className="-mt-1.5" />
       </div>
     </section>
   );

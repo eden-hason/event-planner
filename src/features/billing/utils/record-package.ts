@@ -109,6 +109,8 @@ export function packageAside(view: {
  *
  * A record with no phone is neither counted nor outside - nothing can be sent to it - and
  * is reported as `uncounted`, so the Owner can see why the count is lower than the list.
+ * A deleted Reached record is the opposite - counted, but gone from the list - and is
+ * reported as `reachedDeleted`, so the Owner can see why the count is higher.
  */
 export function splitByPackage(input: {
   packageSize: number;
@@ -144,6 +146,7 @@ export function splitByPackage(input: {
     outside,
     used,
     uncounted: input.records.length - reachedLive - waiting.length,
+    reachedDeleted: input.reachedDeletedCount,
     left: Math.max(0, input.packageSize - used),
     over: Math.max(0, used - input.packageSize),
   };

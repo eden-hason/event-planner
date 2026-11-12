@@ -17,9 +17,12 @@ import { cn } from '@/lib/utils';
  * information only.
  *
  * Records with no phone are not counted (ADR 0033); the package sheet says how many.
+ * Records deleted after they were Reached still are (ADR 0027), so the count can be higher
+ * than the list - the strip says how many, right beside the count.
  */
 export function PackageLine({ onShowOutside }: { onShowOutside: () => void }) {
   const t = useTranslations('guests.package');
+  const tSheet = useTranslations('billing.packageSheet');
   const locale = useLocale();
   const { view, openSheet } = useRecordPackage();
 
@@ -51,6 +54,11 @@ export function PackageLine({ onShowOutside }: { onShowOutside: () => void }) {
           {t('card.count', { used: fmt(view.used), size: fmt(view.size) })}
         </b>
       </span>
+      {view.reachedDeleted > 0 && (
+        <span className="text-muted-foreground tabular-nums">
+          · {tSheet('reachedDeleted', { count: view.reachedDeleted })}
+        </span>
+      )}
       <span className="flex-1" />
       <span className={cn('font-medium whitespace-nowrap tabular-nums', tone)}>{hint}</span>
       <IconChevronRight size={15} stroke={2.2} className="text-muted-foreground shrink-0 rtl:rotate-180" />

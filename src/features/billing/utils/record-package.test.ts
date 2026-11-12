@@ -165,6 +165,7 @@ describe('splitByPackage', () => {
     assert.deepEqual(split.outside, ['b']);
     assert.equal(split.used, 4);
     assert.equal(split.over, 1);
+    assert.equal(split.reachedDeleted, 2);
   });
 
   it('never pushes a Reached record outside, even past the package', () => {

@@ -54,6 +54,8 @@ export type PackageSplit = {
   used: number;
   /** Live records with no phone that were never Reached: in the list, not in the count. */
   uncounted: number;
+  /** Reached records since deleted: in the count, no longer in the list (ADR 0027). */
+  reachedDeleted: number;
   left: number;
   over: number;
 };
@@ -100,6 +102,8 @@ export type GuestPackageView = {
   used: number;
   /** Guest Records with no phone, which the package does not count. */
   uncounted: number;
+  /** Guest Records deleted after they were Reached, which the package still counts. */
+  reachedDeleted: number;
   left: number;
   over: number;
   state: PackageState;

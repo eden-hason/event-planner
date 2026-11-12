@@ -62,7 +62,7 @@ export { EventBillingStatusControl } from './components/event-billing-status-con
 // inventing a second billing story.
 export { usePlansHref } from './components/use-plans-href';
 export { PackageBar } from './components/package-bar';
-export { PackageUncountedNote } from './components/package-hero';
+export { PackageCountNotes } from './components/package-hero';
 export { RecordPackagePage } from './components/record-package-page';
 export { RecordPackageCard } from './components/record-package-card';
 export {

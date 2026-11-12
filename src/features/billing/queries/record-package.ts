@@ -41,13 +41,14 @@ function toGuestPackageView(
   loaded: LoadedRecordPackage,
   pkg: NonNullable<LoadedRecordPackage['package']>,
 ): GuestPackageView {
-  const { used, uncounted, left, over, outside } = loaded.split;
+  const { used, uncounted, reachedDeleted, left, over, outside } = loaded.split;
   return {
     paid: pkg.paid,
     bonus: pkg.bonus,
     size: pkg.size,
     used,
     uncounted,
+    reachedDeleted,
     left,
     over,
     state: packageState(pkg.size, used),

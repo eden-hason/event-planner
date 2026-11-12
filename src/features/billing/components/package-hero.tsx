@@ -44,23 +44,34 @@ export function PackageHeroCount({
 }
 
 /**
- * The quiet line under a package count when some Guest Records have no phone (ADR 0033):
- * they are in the list but not in the count, so the count reads lower than the list.
- * Nothing when every record has a phone.
+ * The quiet lines under a package count that explain why it differs from the guest list:
+ * records deleted after they were Reached still count (ADR 0027), so the count reads higher
+ * than the list; records with no phone do not (ADR 0033), so it reads lower. Nothing when
+ * neither applies.
  */
-export function PackageUncountedNote({
+export function PackageCountNotes({
   view,
   className,
 }: {
-  view: Pick<PackageCounts, 'uncounted'>;
+  view: Pick<PackageCounts, 'uncounted' | 'reachedDeleted'>;
   className?: string;
 }) {
   const t = useTranslations('billing.packageSheet');
-  if (view.uncounted === 0) return null;
+  if (view.uncounted === 0 && view.reachedDeleted === 0) return null;
 
   return (
-    <span className={cn('text-muted-foreground text-[12.5px] tabular-nums', className)}>
-      {t('uncounted', { count: view.uncounted })}
+    <span
+      className={cn(
+        'text-muted-foreground flex flex-col text-[12.5px] tabular-nums',
+        className,
+      )}
+    >
+      {view.reachedDeleted > 0 && (
+        <span>{t('reachedDeleted', { count: view.reachedDeleted })}</span>
+      )}
+      {view.uncounted > 0 && (
+        <span>{t('uncounted', { count: view.uncounted })}</span>
+      )}
     </span>
   );
 }
