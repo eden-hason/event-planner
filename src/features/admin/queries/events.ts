@@ -190,7 +190,8 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
       : Promise.resolve({ data: false, error: null }),
   ]);
   if (ownerResult.error) throw new Error(ownerResult.error.message);
-  if (sentResult.error) throw new Error(sentResult.error.message);
+  // Only the move depends on it, so a failure disables the move, not the page.
+  if (sentResult.error) console.error('event_message_schedules_sent failed:', sentResult.error);
   const collaborators = unwrap(collaboratorsResult);
   const owner = ownerResult.data;
   const location = event.location as { name?: string } | null;
@@ -220,7 +221,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
     smsFallbackEnabled: event.sms_fallback_enabled !== false,
     messagePlan,
-    messagesSent: sentResult.data === true,
+    messagesSent: sentResult.error ? null : sentResult.data === true,
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,

@@ -12,6 +12,8 @@ import { nudgeWorker } from '@/features/schedules/services/nudge-worker';
 import type { Location } from '@/features/events/schemas';
 import { VENUE_NAME_MAX } from '../utils/venue';
 import { extraFollowUpRejection, extraFollowUpRow } from '../utils/extra-follow-up';
+import { FOLLOW_UP_MESSAGE } from '../utils/labels';
+import { advanceReminderPlanRejection } from '../utils/message-plan';
 import {
   conversionRejection,
   deletionRejection,
@@ -317,11 +319,8 @@ export async function createAdvanceReminderAdmin(
     // A Draft Event cannot have schedules - it is interest, not an event.
     if (event.status !== 'published') return { success: false, message: 'האירוע הזה לא פורסם' };
     if (!event.event_date) return { success: false, message: 'לאירוע הזה אין תאריך' };
-    // The current plan has no Advance Reminder: its Reminder may be dated
-    // before the Event day instead (ADR 0053).
-    if (parseMessagePlan(event.message_plan) === 'current') {
-      return { success: false, message: 'באירוע על תוכנית ההודעות החדשה אין תזכורת מוקדמת - את התזכורת אפשר לתזמן לפני יום האירוע' };
-    }
+    const planRejection = advanceReminderPlanRejection(parseMessagePlan(event.message_plan));
+    if (planRejection) return { success: false, message: planRejection };
     if ((existingResult.count ?? 0) > 0) {
       return { success: false, message: 'כבר יש לאירוע הזה תזכורת מוקדמת' };
     }
@@ -388,7 +387,7 @@ export async function addFollowUpAdmin(eventId: string): Promise<EventControlRes
     if (!row) return { success: false, message: 'האירוע לא נמצא' };
     if (!typeResult.data) {
       console.error('addFollowUpAdmin: follow_up is missing from schedule_types');
-      return { success: false, message: 'אין בקטלוג הודעת עדיין מחכים לתשובה' };
+      return { success: false, message: `אין בקטלוג ${FOLLOW_UP_MESSAGE}` };
     }
 
     const event = {
@@ -412,7 +411,7 @@ export async function addFollowUpAdmin(eventId: string): Promise<EventControlRes
     }
 
     revalidateOutreach(eventId);
-    return { success: true, message: 'נוספה הודעת עדיין מחכים לתשובה - בעלי האירוע יקבעו לה מועד' };
+    return { success: true, message: `נוספה ${FOLLOW_UP_MESSAGE} - בעלי האירוע יקבעו לה מועד` };
   } catch (error) {
     console.error('addFollowUpAdmin failed:', error);
     return { success: false, message: 'לא הצלחנו להוסיף את ההודעה' };

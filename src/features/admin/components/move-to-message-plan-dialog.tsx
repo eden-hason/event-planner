@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { moveEventToMessagePlanAdmin } from '../actions/message-plan';
-import { MOVE_LOSSES, moveRefusalLabel, type MoveRefusal } from '../utils/message-plan';
+import { MOVE_LOSSES, MOVE_SEEDS, moveBlockLabel, type MoveBlock } from '../utils/message-plan';
 import { useControlAction } from './use-control-action';
 
 /**
@@ -27,21 +27,21 @@ import { useControlAction } from './use-control-action';
  */
 export function MoveToMessagePlanDialog({
   eventId,
-  refusal,
+  block,
 }: {
   eventId: string;
-  refusal: MoveRefusal | null;
+  block: MoveBlock | null;
 }) {
   const [open, setOpen] = useState(false);
   const { pending, run } = useControlAction(() => setOpen(false));
 
-  if (refusal) {
+  if (block) {
     return (
       <span className="flex min-w-0 items-baseline gap-2">
         <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[12px]" disabled>
           מעבר לתוכנית החדשה
         </Button>
-        <span className="text-muted-foreground truncate text-[12px]">{moveRefusalLabel(refusal)}</span>
+        <span className="text-muted-foreground truncate text-[12px]">{moveBlockLabel(block)}</span>
       </span>
     );
   }
@@ -58,7 +58,7 @@ export function MoveToMessagePlanDialog({
         <DialogHeader>
           <DialogTitle>מעבר לתוכנית ההודעות החדשה</DialogTitle>
           <DialogDescription>
-            כל התזמונים של ההודעות שעוד לא נשלחו נמחקים, ובמקומם נוצרים חמשת התזמונים של התוכנית החדשה: הזמנה, שתי הודעות עדיין מחכים לתשובה, תזכורת והודעת תודה
+            כל התזמונים של ההודעות שעוד לא נשלחו נמחקים, ובמקומם נוצרים התזמונים של התוכנית החדשה: {MOVE_SEEDS}. לאירוע בלי תאריך או סוג הם ייווצרו כשיהיו לו
           </DialogDescription>
         </DialogHeader>
 

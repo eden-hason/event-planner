@@ -221,9 +221,10 @@ export type EventIdentity = {
   /**
    * Whether any message Schedule has gone out or is under way
    * (`event_message_schedules_sent`): what keeps a Classic Event from moving
-   * to the current plan. Read only for a Classic Event; false on current.
+   * to the current plan. Only asked of a Classic Event, so false on current;
+   * null when the check failed, which disables the move rather than the page.
    */
-  messagesSent: boolean;
+  messagesSent: boolean | null;
   onboardingStep: string | null;
   createdAt: string;
   /** The account the event belongs to - the identity an Operator impersonates. */

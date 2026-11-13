@@ -42,7 +42,7 @@ import {
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
 import { countLabel, rsvpLabel } from '../utils/labels';
-import { MESSAGE_PLAN_NAMES, moveRefusal } from '../utils/message-plan';
+import { MESSAGE_PLAN_NAMES, moveBlock } from '../utils/message-plan';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -153,11 +153,13 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
  * move to the current one - disabled, with the reason, once anything was sent.
  */
 function MessagePlanMeta({ event }: { event: EventIdentity }) {
-  const onCurrent = event.messagePlan === 'current';
+  const block = moveBlock(event);
+  const onCurrent = block === 'already_current';
   return (
     <EventMeta icon={<MessageSquare />}>
       <span className={cn('shrink-0', onCurrent && 'text-primary font-medium')}>{MESSAGE_PLAN_NAMES[event.messagePlan]}</span>
-      {!onCurrent && <MoveToMessagePlanDialog eventId={event.id} refusal={moveRefusal(event)} />}
+      {/* Already there: nothing to offer, not even a disabled link. */}
+      {!onCurrent && <MoveToMessagePlanDialog eventId={event.id} block={block} />}
     </EventMeta>
   );
 }

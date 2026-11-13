@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import { setNewEventMessagePlanAdmin } from '../actions/message-plan';
-import { MESSAGE_PLAN_NAMES } from '../utils/message-plan';
+import { MESSAGE_PLAN_NAMES, NEW_EVENT_PLAN_COPY } from '../utils/message-plan';
 import { useControlAction } from './use-control-action';
 
 /**
@@ -32,7 +32,7 @@ export function NewEventMessagePlanControl({ plan }: { plan: MessagePlan }) {
     <Dialog open={open} onOpenChange={(value) => !pending && setOpen(value)}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="shrink-0 text-[13px]">
-          {next === 'current' ? 'הפעלת התוכנית החדשה לאירועים חדשים' : 'חזרה לתוכנית הקלאסית לאירועים חדשים'}
+          {NEW_EVENT_PLAN_COPY[next].offer}
         </Button>
       </DialogTrigger>
 

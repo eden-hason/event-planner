@@ -4,9 +4,11 @@
 -- the rule admin_move_event_to_message_plan refuses on, so it moves into one
 -- function both call, rather than being written again in the app and drifting.
 --
--- admin_move_event_to_message_plan keeps its behaviour word for word: the same
--- locks in the same order, the same refusals with the same DETAIL codes, the
--- same reseed. Only its "anything sent?" count is now the function below.
+-- admin_move_event_to_message_plan keeps its behaviour: the same locks in the
+-- same order, the same refusals with the same errcodes and DETAIL codes, the
+-- same reseed. Its "anything sent?" count is now the function below, so the
+-- `sent` refusal's message no longer says how many Schedules; callers read
+-- DETAIL, not the message.
 
 create or replace function public.event_message_schedules_sent(p_event_id uuid)
 returns boolean

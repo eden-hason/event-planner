@@ -1,32 +1,39 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  moveRefusal,
-  moveRefusalLabel,
+  advanceReminderPlanRejection,
+  isMessagePlan,
+  MOVE_LOSSES,
+  moveBlock,
+  moveBlockLabel,
   movedMessage,
-  newEventPlanSavedMessage,
+  NEW_EVENT_PLAN_COPY,
   parseMoveRefusal,
-  parseNewEventMessagePlan,
-  type MoveRefusal,
+  type MoveBlock,
 } from './message-plan';
+import { ADD_FOLLOW_UP_LABEL } from './labels';
 
 test('a Classic Event with nothing sent may move', () => {
-  assert.equal(moveRefusal({ messagePlan: 'classic', messagesSent: false }), null);
+  assert.equal(moveBlock({ messagePlan: 'classic', messagesSent: false }), null);
 });
 
 test('an Event that sent anything stays Classic', () => {
-  assert.equal(moveRefusal({ messagePlan: 'classic', messagesSent: true }), 'sent');
+  assert.equal(moveBlock({ messagePlan: 'classic', messagesSent: true }), 'sent');
+});
+
+test('a sent check that failed blocks the move rather than guessing', () => {
+  assert.equal(moveBlock({ messagePlan: 'classic', messagesSent: null }), 'unchecked');
 });
 
 test('an Event already on the current plan has nowhere to move', () => {
-  assert.equal(moveRefusal({ messagePlan: 'current', messagesSent: false }), 'already_current');
-  assert.equal(moveRefusal({ messagePlan: 'current', messagesSent: true }), 'already_current');
+  assert.equal(moveBlock({ messagePlan: 'current', messagesSent: false }), 'already_current');
+  assert.equal(moveBlock({ messagePlan: 'current', messagesSent: null }), 'already_current');
 });
 
-test('every refusal the function raises reads as Hebrew', () => {
-  const codes: MoveRefusal[] = ['not_found', 'already_current', 'sent'];
-  for (const code of codes) {
-    const label = moveRefusalLabel(code);
+test('every refusal and block reads as Hebrew', () => {
+  const blocks: MoveBlock[] = ['not_found', 'already_current', 'sent', 'unchecked'];
+  for (const block of blocks) {
+    const label = moveBlockLabel(block);
     assert.match(label, /[֐-׿]/);
     assert.ok(!label.endsWith('.'));
   }
@@ -36,7 +43,10 @@ test('the refusal is read from the error DETAIL, and nothing else counts', () =>
   assert.equal(parseMoveRefusal({ details: 'sent' }), 'sent');
   assert.equal(parseMoveRefusal({ details: 'not_found' }), 'not_found');
   assert.equal(parseMoveRefusal({ details: ' already_current ' }), 'already_current');
+  // Only the function's codes: the page's own block is not one.
+  assert.equal(parseMoveRefusal({ details: 'unchecked' }), null);
   assert.equal(parseMoveRefusal({ details: 'Key (id) is not present' }), null);
+  assert.equal(parseMoveRefusal({ details: 'toString' }), null);
   assert.equal(parseMoveRefusal({ details: null }), null);
   assert.equal(parseMoveRefusal(null), null);
 });
@@ -46,14 +56,24 @@ test('a move that seeded nothing says the plan comes with a date and type', () =
   assert.match(movedMessage(0), /תאריך/);
 });
 
-test('the setting reads Classic unless it is current', () => {
-  assert.equal(parseNewEventMessagePlan('current'), 'current');
-  assert.equal(parseNewEventMessagePlan('classic'), 'classic');
-  assert.equal(parseNewEventMessagePlan(null), 'classic');
-  assert.equal(parseNewEventMessagePlan('v2'), 'classic');
+test('the dialog names the Add button the Operator re-grants an Extra Schedule with', () => {
+  assert.ok(MOVE_LOSSES.some((loss) => loss.includes(ADD_FOLLOW_UP_LABEL)));
+});
+
+test('only the two plans are accepted from a client', () => {
+  assert.equal(isMessagePlan('current'), true);
+  assert.equal(isMessagePlan('classic'), true);
+  assert.equal(isMessagePlan('v2'), false);
+  assert.equal(isMessagePlan('toString'), false);
+  assert.equal(isMessagePlan(null), false);
 });
 
 test('the saved message names the plan new Events get', () => {
-  assert.match(newEventPlanSavedMessage('current'), /החדשה/);
-  assert.match(newEventPlanSavedMessage('classic'), /הקלאסית/);
+  assert.match(NEW_EVENT_PLAN_COPY.current.saved, /החדשה/);
+  assert.match(NEW_EVENT_PLAN_COPY.classic.saved, /הקלאסית/);
+});
+
+test('an Advance Reminder is refused on the current plan only', () => {
+  assert.ok(advanceReminderPlanRejection('current'));
+  assert.equal(advanceReminderPlanRejection('classic'), null);
 });

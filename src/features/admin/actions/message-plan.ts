@@ -6,10 +6,13 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import {
+  isMessagePlan,
+  MOVE_FAILED,
   movedMessage,
-  moveRefusalLabel,
-  newEventPlanSavedMessage,
+  moveBlockLabel,
+  NEW_EVENT_PLAN_COPY,
   parseMoveRefusal,
+  SETTING_SAVE_FAILED,
 } from '../utils/message-plan';
 import type { EventControlResult } from './event-controls';
 
@@ -29,16 +32,16 @@ export async function moveEventToMessagePlanAdmin(eventId: string): Promise<Even
     });
     if (error) {
       const refusal = parseMoveRefusal(error);
-      if (refusal) return { success: false, message: moveRefusalLabel(refusal) };
+      if (refusal) return { success: false, message: moveBlockLabel(refusal) };
       console.error('moveEventToMessagePlanAdmin failed:', error);
-      return { success: false, message: 'לא הצלחנו להעביר את האירוע לתוכנית החדשה' };
+      return { success: false, message: MOVE_FAILED };
     }
 
     revalidateOutreach(eventId);
     return { success: true, message: movedMessage(typeof data === 'number' ? data : 0) };
   } catch (error) {
     console.error('moveEventToMessagePlanAdmin failed:', error);
-    return { success: false, message: 'לא הצלחנו להעביר את האירוע לתוכנית החדשה' };
+    return { success: false, message: MOVE_FAILED };
   }
 }
 
@@ -49,7 +52,7 @@ export async function moveEventToMessagePlanAdmin(eventId: string): Promise<Even
  */
 export async function setNewEventMessagePlanAdmin(plan: MessagePlan): Promise<EventControlResult> {
   await assertAdmin();
-  if (plan !== 'classic' && plan !== 'current') {
+  if (!isMessagePlan(plan)) {
     return { success: false, message: 'תוכנית לא מוכרת' };
   }
   try {
@@ -61,7 +64,7 @@ export async function setNewEventMessagePlanAdmin(plan: MessagePlan): Promise<Ev
       .select('id');
     if (error) {
       console.error('setNewEventMessagePlanAdmin failed:', error);
-      return { success: false, message: 'לא הצלחנו לשמור את ההגדרה' };
+      return { success: false, message: SETTING_SAVE_FAILED };
     }
     if (!data?.length) {
       console.error('setNewEventMessagePlanAdmin: the app_settings row is missing');
@@ -69,9 +72,9 @@ export async function setNewEventMessagePlanAdmin(plan: MessagePlan): Promise<Ev
     }
 
     revalidatePath('/admin/configuration');
-    return { success: true, message: newEventPlanSavedMessage(plan) };
+    return { success: true, message: NEW_EVENT_PLAN_COPY[plan].saved };
   } catch (error) {
     console.error('setNewEventMessagePlanAdmin failed:', error);
-    return { success: false, message: 'לא הצלחנו לשמור את ההגדרה' };
+    return { success: false, message: SETTING_SAVE_FAILED };
   }
 }

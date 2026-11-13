@@ -5,7 +5,9 @@ import type {
   CatchUpRejection,
 } from '@/features/schedules/utils/catch-up';
 import type { SignalKind } from '../types';
-import { audienceLabelKey } from '@/features/schedules';
+// Deep import: pure, and the schedules barrel carries the send path, which
+// pure tests that read these labels must not load.
+import { audienceLabelKey } from '@/features/schedules/utils/audience';
 
 /**
  * The Back Office's Hebrew words (ADR 0037), in one place so each concept reads
@@ -35,6 +37,14 @@ const SCHEDULE_TYPE_NAMES: Record<string, string> = {
   invitation: 'הזמנה',
   follow_up: 'עדיין מחכים לתשובה',
 };
+
+/**
+ * The current plan's Follow-up as a noun ("הודעת עדיין מחכים לתשובה") and the
+ * action that grants one. Built from the type's name, so a rename lands in one
+ * place.
+ */
+export const FOLLOW_UP_MESSAGE = `הודעת ${SCHEDULE_TYPE_NAMES.follow_up}`;
+export const ADD_FOLLOW_UP_LABEL = `הוספת ${FOLLOW_UP_MESSAGE}`;
 
 export function eventTypeName(key: string | null | undefined, fallback?: string | null): string {
   return (key && EVENT_TYPE_NAMES[key]) || fallback || 'אירוע';

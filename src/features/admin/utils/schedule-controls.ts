@@ -1,4 +1,5 @@
 import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
+import { FOLLOW_UP_MESSAGE } from './labels';
 
 /**
  * What an Operator may still change on a Schedule from the Back Office, and why
@@ -101,7 +102,7 @@ export function deletionRejection(schedule: ScheduleControlState): string | null
     // The current plan's shape is fixed (ADR 0053): one Invitation, one
     // Reminder, one Thank You. Only a Follow-up may go - an Extra Schedule
     // granted by mistake, or one the Event does not need.
-    if (schedule.scheduleTypeKey !== 'follow_up') return 'אפשר למחוק רק הודעת עדיין מחכים לתשובה';
+    if (schedule.scheduleTypeKey !== 'follow_up') return `אפשר למחוק רק ${FOLLOW_UP_MESSAGE}`;
   } else if (!DELETABLE_TYPE_KEYS.has(schedule.scheduleTypeKey)) {
     return 'אפשר למחוק רק הזמנה ראשונית או תזכורת';
   }

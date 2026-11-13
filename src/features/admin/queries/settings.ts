@@ -2,8 +2,7 @@
 
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
-import { parseNewEventMessagePlan } from '../utils/message-plan';
+import { parseMessagePlan, type MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 
 export type MessagePlanSetting = {
   /** The plan every Event created from now on starts on. */
@@ -25,7 +24,7 @@ export async function getMessagePlanSetting(): Promise<MessagePlanSetting> {
     .maybeSingle();
   if (error) throw new Error(error.message);
   return {
-    newEventMessagePlan: parseNewEventMessagePlan(data?.new_event_message_plan),
+    newEventMessagePlan: parseMessagePlan(data?.new_event_message_plan),
     updatedAt: data?.updated_at ?? null,
   };
 }
