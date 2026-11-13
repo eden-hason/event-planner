@@ -29,8 +29,6 @@ export const STAGE_SCHEDULE_TYPE = {
   thank_you: 'post_event',
 } as const satisfies Record<Stage, string>;
 
-export type MessagePlanScheduleTypeKey = (typeof STAGE_SCHEDULE_TYPE)[Stage];
-
 /** The stage a Schedule Type key belongs to, or null for any other type. */
 export function stageOfScheduleType(
   key: string | null | undefined,
@@ -115,22 +113,16 @@ export type MessageShape =
   | EventReminderShape
   | ThankYouShape;
 
-export type KululuShape = Extract<MessageShape, { wording: 'kululu' }>;
-export type PersonalShape = Extract<MessageShape, { wording: 'personal' }>;
-
 /** The header a shape carries: the Asks' attachment, nothing on the others. */
 export function shapeHeader(shape: MessageShape): 'image' | 'video' | null {
-  if (shape.stage === 'invitation' || shape.stage === 'follow_up') {
-    return shape.attachment === 'none' ? null : shape.attachment;
-  }
-  return null;
+  return 'attachment' in shape && shape.attachment !== 'none'
+    ? shape.attachment
+    : null;
 }
 
 /** Whether a shape carries the gift button. */
 export function shapeHasGift(shape: MessageShape): boolean {
-  return shape.stage === 'event_reminder' || shape.stage === 'thank_you'
-    ? shape.gift
-    : false;
+  return 'gift' in shape && shape.gift;
 }
 
 /**
@@ -155,6 +147,15 @@ export function templateNameFor(shape: MessageShape): string {
   return parts.join('_');
 }
 
+/** A base's three Personal Message shapes, one per paragraph count. */
+function personalShapes<B extends { stage: Stage }>(base: B) {
+  return PARAGRAPH_COUNTS.map((paragraphs) => ({
+    ...base,
+    wording: 'personal' as const,
+    paragraphs,
+  }));
+}
+
 /** Every shape the plan can send, in a stable order. One per Meta template. */
 export function allShapes(): MessageShape[] {
   const shapes: MessageShape[] = [];
@@ -162,25 +163,11 @@ export function allShapes(): MessageShape[] {
 
   for (const attachment of INVITATION_ATTACHMENTS) {
     shapes.push({ stage: 'invitation', wording: 'kululu', attachment });
-    for (const paragraphs of PARAGRAPH_COUNTS) {
-      shapes.push({
-        stage: 'invitation',
-        wording: 'personal',
-        attachment,
-        paragraphs,
-      });
-    }
+    shapes.push(...personalShapes({ stage: 'invitation', attachment }));
   }
   for (const attachment of FOLLOW_UP_ATTACHMENTS) {
     shapes.push({ stage: 'follow_up', wording: 'kululu', attachment });
-    for (const paragraphs of PARAGRAPH_COUNTS) {
-      shapes.push({
-        stage: 'follow_up',
-        wording: 'personal',
-        attachment,
-        paragraphs,
-      });
-    }
+    shapes.push(...personalShapes({ stage: 'follow_up', attachment }));
   }
   for (const day of ['today', 'dated'] as const) {
     for (const table of bools) {
@@ -196,25 +183,11 @@ export function allShapes(): MessageShape[] {
     }
   }
   for (const gift of bools) {
-    for (const paragraphs of PARAGRAPH_COUNTS) {
-      shapes.push({
-        stage: 'event_reminder',
-        wording: 'personal',
-        gift,
-        paragraphs,
-      });
-    }
+    shapes.push(...personalShapes({ stage: 'event_reminder', gift }));
   }
   for (const gift of bools) {
     shapes.push({ stage: 'thank_you', wording: 'kululu', gift });
-    for (const paragraphs of PARAGRAPH_COUNTS) {
-      shapes.push({
-        stage: 'thank_you',
-        wording: 'personal',
-        gift,
-        paragraphs,
-      });
-    }
+    shapes.push(...personalShapes({ stage: 'thank_you', gift }));
   }
   return shapes;
 }

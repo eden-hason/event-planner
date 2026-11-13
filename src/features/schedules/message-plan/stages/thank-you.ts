@@ -26,8 +26,7 @@ export const THANK_YOU_CLOSING = {
 } as const;
 
 export const thankYouStage: StageDefinition<ThankYouShape> = {
-  stage: 'thank_you',
-  kululuBody: () => [...THANK_YOU_KULULU_BODY],
+  kululuBody: () => THANK_YOU_KULULU_BODY,
   wrapper: ({ gift }) => ({
     opening: THANK_YOU_OPENING,
     closing: gift ? THANK_YOU_CLOSING.withGift : THANK_YOU_CLOSING.withoutGift,

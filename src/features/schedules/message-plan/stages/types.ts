@@ -9,9 +9,8 @@ export type TemplateCategory = 'MARKETING' | 'UTILITY';
  * module exports one of these; `stages/index.ts` dispatches a shape to it.
  */
 export interface StageDefinition<S extends MessageShape> {
-  stage: S['stage'];
   /** The Kululu Wording for a shape, exactly as submitted to Meta. */
-  kululuBody(shape: Extract<S, { wording: 'kululu' }>): BodyPart[];
+  kululuBody(shape: Extract<S, { wording: 'kululu' }>): readonly BodyPart[];
   /** The Wrapper's lines. Only the Thank You's closing line depends on the gift. */
   wrapper(options: { gift: boolean }): Wrapper;
   /** The buttons, in the order Meta indexes them. The same for both wordings. */

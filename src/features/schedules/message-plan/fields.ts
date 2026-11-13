@@ -114,20 +114,17 @@ export function fillValue(key: ValueKey, context: FillContext): string | null {
 }
 
 /**
- * The Event detail an Owner fills in to give a value, in the vocabulary of
- * `missingDetails` (utils/missing-details.ts). Null for a per-Guest value and
- * for the ceremony time, which that vocabulary does not name.
+ * The Event detail an Owner fills in to give a Kululu Wording value, in the
+ * vocabulary of `missingDetails` (utils/missing-details.ts). Null for the
+ * table, which is per Guest.
  */
-export const VALUE_DETAIL: Record<ValueKey, MissingDetail | null> = {
-  hosts: 'hosts',
+export const VALUE_DETAIL: Record<KululuValueKey, MissingDetail | null> = {
   occasionPhrase: 'hosts',
   approachingLine: 'hosts',
   todayLine: 'hosts',
   eventDate: 'eventDate',
   venueName: 'venue',
   receptionTime: 'receptionTime',
-  ceremonyTime: null,
-  guestName: null,
   tableNumber: null,
 };
 
@@ -165,85 +162,49 @@ export type MessageFieldDefinition = {
  * brief is not here: an Event's location holds only its name and coordinates,
  * so there is nothing to fill it from.
  */
+const field = (
+  key: MessageFieldKey,
+  label: string,
+  sample: string,
+  overrides: Partial<Omit<MessageFieldDefinition, 'key' | 'label' | 'sample'>> = {},
+): MessageFieldDefinition => ({
+  key,
+  label,
+  sample,
+  stages: STAGES,
+  perGuest: false,
+  onlyWhenEventHasValue: false,
+  tableSentenceOnly: false,
+  ...overrides,
+});
+
 export const MESSAGE_FIELDS: readonly MessageFieldDefinition[] = [
-  {
-    key: 'hosts',
-    label: 'שמות המארחים',
-    sample: 'נועה ודורון',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'occasionPhrase',
-    label: 'שם האירוע',
-    sample: 'חתונה של נועה ודורון',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'eventDate',
-    label: 'תאריך',
-    sample: 'יום חמישי, 12 בנובמבר 2026',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'venueName',
-    label: 'מקום',
-    sample: 'אולמי הגן',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'receptionTime',
-    label: 'קבלת פנים',
-    sample: '19:30',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'ceremonyTime',
-    label: 'חופה / טקס',
-    sample: '20:30',
-    stages: STAGES,
-    perGuest: false,
-    onlyWhenEventHasValue: true,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'guestName',
-    label: 'שם האורח',
-    sample: 'דנה לוי',
-    stages: STAGES,
-    perGuest: true,
-    onlyWhenEventHasValue: false,
-    tableSentenceOnly: false,
-  },
-  {
-    key: 'tableNumber',
-    label: 'שולחן',
-    sample: '12',
+  field('hosts', 'שמות המארחים', 'נועה ודורון'),
+  field('occasionPhrase', 'שם האירוע', 'חתונה של נועה ודורון'),
+  field('eventDate', 'תאריך', 'יום חמישי, 12 בנובמבר 2026'),
+  field('venueName', 'מקום', 'אולמי הגן'),
+  field('receptionTime', 'קבלת פנים', '19:30'),
+  field('ceremonyTime', 'חופה / טקס', '20:30', { onlyWhenEventHasValue: true }),
+  field('guestName', 'שם האורח', 'דנה לוי', { perGuest: true }),
+  field('tableNumber', 'שולחן', '12', {
     stages: ['event_reminder'],
     perGuest: true,
-    onlyWhenEventHasValue: false,
     tableSentenceOnly: true,
-  },
+  }),
 ];
 
 export function messageField(key: MessageFieldKey): MessageFieldDefinition {
   const field = MESSAGE_FIELDS.find((candidate) => candidate.key === key);
   if (!field) throw new Error(`Unknown Message Field ${key}`);
   return field;
+}
+
+/**
+ * Whether a stage sends a Guest their table: the stages the table field is
+ * offered on. The one place that says the table belongs to the Reminder.
+ */
+export function stageOffersTable(stage: Stage): boolean {
+  return messageField('tableNumber').stages.includes(stage);
 }
 
 export function isMessageFieldKey(value: unknown): value is MessageFieldKey {

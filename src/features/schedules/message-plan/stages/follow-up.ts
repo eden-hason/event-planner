@@ -27,8 +27,7 @@ export const FOLLOW_UP_WRAPPER = {
 } as const;
 
 export const followUpStage: StageDefinition<FollowUpShape> = {
-  stage: 'follow_up',
-  kululuBody: () => [...FOLLOW_UP_KULULU_BODY],
+  kululuBody: () => FOLLOW_UP_KULULU_BODY,
   wrapper: () => FOLLOW_UP_WRAPPER,
   buttons: () => RSVP_BUTTONS,
   submittedCategory: { kululu: 'MARKETING', personal: 'MARKETING' },

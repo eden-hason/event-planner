@@ -14,7 +14,12 @@
  * saving.
  */
 
-import { addCalendarDays, israelWallClockToIso } from '@/lib/date-time';
+import {
+  addCalendarDays,
+  israelWallClockParts,
+  israelWallClockToIso,
+} from '@/lib/date-time';
+import type { ReminderDay } from '../message-plan/shape';
 
 /** The hour Kululu proposes for the Reminder and the Thank You. */
 export const MESSAGE_PLAN_DEFAULT_TIME = '10:00';
@@ -67,6 +72,20 @@ export function reminderProposalDay(
   if (startsInTheMorning(startTime)) day = addCalendarDays(day, -1);
   if (weekday(day) === SATURDAY) day = addCalendarDays(day, -1);
   return day;
+}
+
+/**
+ * Which Kululu Reminder wording a Due Time gets: "today" on the Event day (in
+ * Israel), the date on any day before. Null after the Event day.
+ */
+export function reminderDayFor(
+  scheduledFor: string,
+  eventDate: string,
+): ReminderDay | null {
+  const dueDay = israelWallClockParts(scheduledFor).date;
+  const day = eventDay(eventDate);
+  if (dueDay === day) return 'today';
+  return dueDay < day ? 'dated' : null;
 }
 
 /** The Event Reminder's proposed Due Time, at 10:00 Israel time, as an ISO instant. */

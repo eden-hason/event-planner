@@ -27,8 +27,7 @@ export const INVITATION_WRAPPER = {
 } as const;
 
 export const invitationStage: StageDefinition<InvitationShape> = {
-  stage: 'invitation',
-  kululuBody: () => [...INVITATION_KULULU_BODY],
+  kululuBody: () => INVITATION_KULULU_BODY,
   wrapper: () => INVITATION_WRAPPER,
   buttons: () => RSVP_BUTTONS,
   submittedCategory: { kululu: 'MARKETING', personal: 'MARKETING' },

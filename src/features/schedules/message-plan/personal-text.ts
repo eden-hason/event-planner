@@ -32,6 +32,7 @@ import {
   fillValue,
   isMessageFieldKey,
   messageField,
+  stageOffersTable,
   type FillContext,
   type MessageFieldKey,
 } from './fields';
@@ -289,12 +290,17 @@ export function characterCount(value: string): number {
 
 /** The longest of the Event's Guest names, by the same count. */
 export function longestGuestName(names: readonly string[]): string {
-  return names.reduce((longest, name) => {
+  let longest = '';
+  let longestCount = 0;
+  for (const name of names) {
     const trimmed = name.trim();
-    return characterCount(trimmed) > characterCount(longest)
-      ? trimmed
-      : longest;
-  }, '');
+    const count = characterCount(trimmed);
+    if (count > longestCount) {
+      longest = trimmed;
+      longestCount = count;
+    }
+  }
+  return longest;
 }
 
 /** The table that reads longest in a table sentence, or null when no Guest has one. */
@@ -384,27 +390,27 @@ export function validatePersonalText(
     });
   }
 
-  const tableSentences = text.paragraphs
-    .flat()
-    .filter((b) => b.kind === 'table_sentence');
-  if (tableSentences.length > 0 && options.stage !== 'event_reminder') {
-    errors.push({ code: 'table_sentence_outside_reminder' });
-  }
-  if (tableSentences.length > 1)
-    errors.push({ code: 'more_than_one_table_sentence' });
-
+  let tableSentences = 0;
   const placed: { field: MessageFieldKey; inSentence: boolean }[] = [];
   for (const block of text.paragraphs.flat()) {
     if (block.kind === 'field')
       placed.push({ field: block.field, inSentence: false });
     if (block.kind !== 'table_sentence') continue;
+    tableSentences++;
     for (const segment of block.segments) {
       if (segment.kind === 'field')
         placed.push({ field: segment.field, inSentence: true });
     }
   }
 
-  if (placed.some((p) => p.field === 'tableNumber' && !p.inSentence)) {
+  if (tableSentences > 0 && !stageOffersTable(options.stage)) {
+    errors.push({ code: 'table_sentence_outside_reminder' });
+  }
+  if (tableSentences > 1) errors.push({ code: 'more_than_one_table_sentence' });
+
+  if (
+    placed.some((p) => messageField(p.field).tableSentenceOnly && !p.inSentence)
+  ) {
     errors.push({ code: 'table_field_outside_sentence' });
   }
 

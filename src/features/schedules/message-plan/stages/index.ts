@@ -51,7 +51,7 @@ export function wrapperFor(
 }
 
 /** The body of a shape: its Kululu Wording, or its Wrapper around n paragraph variables. */
-export function bodyFor(shape: MessageShape): BodyPart[] {
+export function bodyFor(shape: MessageShape): readonly BodyPart[] {
   if (shape.wording === 'personal') {
     return personalBody(
       wrapperFor(shape.stage, { gift: shapeHasGift(shape) }),

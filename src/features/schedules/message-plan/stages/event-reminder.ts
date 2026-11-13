@@ -1,4 +1,4 @@
-import type { EventReminderShape } from '../shape';
+import type { EventReminderShape, ReminderDay } from '../shape';
 import {
   GIFT_BUTTON,
   NAVIGATION_BUTTON,
@@ -21,29 +21,21 @@ const TABLE_LINE_LEAD = '\n🪑 מספר השולחן שלכם: ';
  * is always there, the gift button when switched on and set up.
  */
 export function eventReminderKululuBody(shape: {
-  day: 'today' | 'dated';
+  day: ReminderDay;
   table: boolean;
 }): BodyPart[] {
-  const parts: BodyPart[] =
-    shape.day === 'today'
-      ? [
-          'תזכורת 🎉\n',
-          valueVariable('todayLine'),
-          '\n\n📍 ',
-          valueVariable('venueName'),
-          '\n🕐 ',
-          valueVariable('receptionTime'),
-        ]
-      : [
-          'תזכורת 🎉\n',
-          valueVariable('approachingLine'),
-          '\n\n📅 ',
-          valueVariable('eventDate'),
-          '\n📍 ',
-          valueVariable('venueName'),
-          '\n🕐 ',
-          valueVariable('receptionTime'),
-        ];
+  const parts: BodyPart[] = ['תזכורת 🎉\n'];
+  if (shape.day === 'today') {
+    parts.push(valueVariable('todayLine'), '\n\n📍 ');
+  } else {
+    parts.push(
+      valueVariable('approachingLine'),
+      '\n\n📅 ',
+      valueVariable('eventDate'),
+      '\n📍 ',
+    );
+  }
+  parts.push(valueVariable('venueName'), '\n🕐 ', valueVariable('receptionTime'));
   if (shape.table) parts.push(TABLE_LINE_LEAD, valueVariable('tableNumber'));
   parts.push('\n\nמחכים לחגוג איתכם ❤️');
   return parts;
@@ -56,8 +48,7 @@ export const EVENT_REMINDER_WRAPPER = {
 } as const;
 
 export const eventReminderStage: StageDefinition<EventReminderShape> = {
-  stage: 'event_reminder',
-  kululuBody: (shape) => eventReminderKululuBody(shape),
+  kululuBody: eventReminderKululuBody,
   wrapper: () => EVENT_REMINDER_WRAPPER,
   buttons: (shape) =>
     shape.gift ? [NAVIGATION_BUTTON, GIFT_BUTTON] : [NAVIGATION_BUTTON],

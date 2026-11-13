@@ -28,11 +28,10 @@ import {
   rsvpYesPayload,
 } from '@/features/confirmation/utils/conversation-ids';
 import {
-  hasInvitationImage,
   isGiftingEnabled,
   shouldSendTableNumbers,
 } from '../utils/event-config';
-import { eventDay } from '../utils/message-plan-dates';
+import { reminderDayFor } from '../utils/message-plan-dates';
 import type { MissingDetail } from '../utils/missing-details';
 import type {
   SmsSendPayload,
@@ -41,8 +40,8 @@ import type {
 import {
   VALUE_DETAIL,
   fillValue,
+  stageOffersTable,
   type FillContext,
-  type KululuValueKey,
 } from './fields';
 import {
   MESSAGE_PLAN_LANGUAGE,
@@ -58,7 +57,8 @@ import {
   parsePersonalText,
 } from './personal-text';
 import {
-  isAskStage,
+  FOLLOW_UP_ATTACHMENTS,
+  INVITATION_ATTACHMENTS,
   shapeHeader,
   stageOfScheduleType,
   templateNameFor,
@@ -67,7 +67,6 @@ import {
   type InvitationAttachment,
   type MessageShape,
   type ParagraphCount,
-  type ReminderDay,
   type Stage,
 } from './shape';
 import { bodyFor, buttonsFor } from './stages';
@@ -77,7 +76,6 @@ import type {
   MessagePlanGuest,
   MessagePlanSchedule,
 } from './types';
-import { israelWallClockParts } from '@/lib/date-time';
 
 export type RenderRefusal =
   /** The Schedule Type is not one of the current plan's four. */
@@ -146,10 +144,20 @@ function validUrl(value: string | null | undefined): string | null {
   }
 }
 
+/** The Event's link for a header medium, or null when it has none that parses. */
+function attachmentLink(
+  event: MessagePlanEvent,
+  medium: 'image' | 'video',
+): string | null {
+  return validUrl(
+    medium === 'image' ? event.invitations?.imageUrl : event.invitationVideoUrl,
+  );
+}
+
 /**
- * The header an Ask actually carries: what the Schedule chose, when the Event
- * has it. A Follow-up never carries the video. Anything missing falls back to
- * no header, never to the other medium.
+ * The header an Ask actually carries: what the Schedule chose, when the stage
+ * offers it (a Follow-up never carries the video) and the Event has it.
+ * Anything missing falls back to no header, never to the other medium.
  */
 export function effectiveAttachment(
   stage: 'invitation',
@@ -166,13 +174,11 @@ export function effectiveAttachment(
   requested: MessagePlanSchedule['attachment'],
   event: MessagePlanEvent,
 ): Attachment {
-  if (requested === 'image') {
-    return hasInvitationImage(event.invitations) ? 'image' : 'none';
-  }
-  if (requested === 'video' && stage === 'invitation') {
-    return validUrl(event.invitationVideoUrl) ? 'video' : 'none';
-  }
-  return 'none';
+  const offered: readonly Attachment[] =
+    stage === 'invitation' ? INVITATION_ATTACHMENTS : FOLLOW_UP_ATTACHMENTS;
+  if (!requested || requested === 'none' || !offered.includes(requested))
+    return 'none';
+  return attachmentLink(event, requested) ? requested : 'none';
 }
 
 /** The gift button is on only when switched on and the Gifting page is set up. */
@@ -191,20 +197,6 @@ export function effectiveTable(
   return shouldSendTableNumbers(event.guestExperience ?? undefined)
     ? guest.table
     : null;
-}
-
-/**
- * Which Kululu Reminder wording a Due Time gets: "today" on the Event day (in
- * Israel), the date on any day before. Null after the Event day.
- */
-export function reminderDayFor(
-  scheduledFor: string,
-  eventDate: string,
-): ReminderDay | null {
-  const dueDay = israelWallClockParts(scheduledFor).date;
-  const day = eventDay(eventDate);
-  if (dueDay === day) return 'today';
-  return dueDay < day ? 'dated' : null;
 }
 
 function pickShape(params: {
@@ -278,18 +270,18 @@ function pickShape(params: {
 
 // ─── Compose ─────────────────────────────────────────────────────────────────
 
-/** The link each button becomes on SMS. The Asks' two quick replies share the RSVP link. */
+/** The link a button becomes on SMS, which has no quick replies: they go to the RSVP page. */
+function smsLinkTarget(button: MessageButton): keyof MessageLinks {
+  return button.kind === 'quick_reply' ? 'rsvp' : button.target;
+}
+
+/** One line per link the buttons become on SMS. The Asks' two quick replies share the RSVP link. */
 function smsLinkLines(
-  stage: Stage,
   buttons: readonly MessageButton[],
   links: MessageLinks,
 ): string[] {
-  if (isAskStage(stage)) return [`${SMS_LINK_LABEL.rsvp}: ${links.rsvp}`];
-  return buttons.flatMap((button) =>
-    button.kind === 'url'
-      ? [`${SMS_LINK_LABEL[button.target]}: ${links[button.target]}`]
-      : [],
-  );
+  const targets = new Set(buttons.map(smsLinkTarget));
+  return [...targets].map((target) => `${SMS_LINK_LABEL[target]}: ${links[target]}`);
 }
 
 /**
@@ -309,8 +301,9 @@ export function composeMessage(input: ComposeInput): ComposeResult {
     };
   }
 
-  const table =
-    stage === 'event_reminder' ? effectiveTable(input.guest, event) : null;
+  const table = stageOffersTable(stage)
+    ? effectiveTable(input.guest, event)
+    : null;
   const context: FillContext = {
     event,
     guest: { name: input.guest.name, table },
@@ -349,7 +342,7 @@ export function composeMessage(input: ComposeInput): ComposeResult {
     }
     const value = fillValue(variable.key, context);
     if (value === null) {
-      const detail = VALUE_DETAIL[variable.key as KululuValueKey];
+      const detail = VALUE_DETAIL[variable.key];
       if (detail && !missing.includes(detail)) missing.push(detail);
     }
     bodyParameters.push(cleanText(value ?? '').trim());
@@ -365,6 +358,9 @@ export function composeMessage(input: ComposeInput): ComposeResult {
   const buttons: RenderedButton[] = [];
   for (const button of buttonDefinitions) {
     if (button.kind === 'quick_reply') {
+      // The SMS sends the RSVP link in place of the quick replies.
+      if (!links.rsvp)
+        return { ok: false, refusal: { reason: 'missing_link', link: 'rsvp' } };
       const token = input.confirmationToken;
       buttons.push({
         button,
@@ -386,21 +382,12 @@ export function composeMessage(input: ComposeInput): ComposeResult {
       };
     buttons.push({ button, link, parameter: shortCode });
   }
-  if (isAskStage(stage) && !links.rsvp)
-    return { ok: false, refusal: { reason: 'missing_link', link: 'rsvp' } };
 
   const headerType = shapeHeader(shape);
-  const headerLink =
-    headerType === 'image'
-      ? (event.invitations?.imageUrl?.trim() ?? null)
-      : headerType === 'video'
-        ? validUrl(event.invitationVideoUrl)
-        : null;
+  const headerLink = headerType ? attachmentLink(event, headerType) : null;
 
   const body = fillBody(parts, bodyParameters);
-  const smsBody = [body, ...smsLinkLines(stage, buttonDefinitions, links)].join(
-    '\n',
-  );
+  const smsBody = [body, ...smsLinkLines(buttonDefinitions, links)].join('\n');
   const plainText = buttonDefinitions.length
     ? `${body}\n\n${buttonDefinitions.map((b) => `[${b.text}]`).join(' ')}`
     : body;

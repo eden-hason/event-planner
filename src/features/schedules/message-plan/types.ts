@@ -45,8 +45,11 @@ export type MessagePlanGuest = {
 
 /**
  * What a Schedule on the current plan chose, as stored on `schedules`
- * (migration 20261113000000_message_plan.sql). Read as stored: any of it may
- * be stale, and the renderer falls back rather than trusting it.
+ * (migration 20261113000000_message_plan.sql). The database's
+ * enforce_schedule_message_plan trigger already refuses a choice the stage does
+ * not offer and fills the defaults, so the nulls here are only the column
+ * types'. What may still be stale is the Event: an image, video or Gifting page
+ * that is gone, which the renderer falls back from rather than trusting.
  */
 export type MessagePlanSchedule = {
   /** The Schedule Type key: invitation, follow_up, event_reminder or post_event. */
