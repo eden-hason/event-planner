@@ -1908,7 +1908,9 @@
           "messageType": "Message type",
           "personalMessage": "Personal message",
           "dueTime": "Send time",
-          "note": "Personal note"
+          "note": "Personal note",
+          "attachment": "Attachment",
+          "giftButton": "Gift button"
         }
       },
       "leave": {
@@ -2162,6 +2164,154 @@
       "removed": "Video removed",
       "saveFailed": "Could not save the video",
       "missing": "No video uploaded yet. The invitation will not go out without it"
+    },
+    "messagePlan": {
+      "list": {
+        "kululu": "Kululu's text",
+        "personal": "Your own message"
+      },
+      "wording": {
+        "cardTitle": "Message",
+        "kululu": {
+          "label": "Kululu's text",
+          "description": "A ready message we wrote for this stage, with your event's details"
+        },
+        "personal": {
+          "label": "Personal message",
+          "description": "Write the message in your own words, and we fill in the event's details"
+        },
+        "sameEitherWay": "The attachment and the buttons are the same either way",
+        "emptySendsKululu": "Your personal message is empty, so Kululu's text will be sent"
+      },
+      "editor": {
+        "title": "Your personal message",
+        "palette": {
+          "title": "Event details - tap to add to the message",
+          "emptyHint": "This detail has no value on the event yet"
+        },
+        "wrapper": {
+          "label": "A fixed Kululu line"
+        },
+        "placeholder": {
+          "invitation": "After years of dreaming, it is time to celebrate with you",
+          "follow_up": "We have not heard from you yet, and would love to know if you are coming",
+          "event_reminder": "Today is the day! Can't wait to see you",
+          "thank_you": "Thank you for celebrating with us, it was a night to remember"
+        },
+        "paragraphHelp": "Enter starts a new paragraph, up to {limit}",
+        "paragraphLimit": "You have reached {limit} paragraphs, the most a message can have",
+        "countHelp": "Characters are counted with the event's details and the longest name on your guest list",
+        "tableSentence": {
+          "title": "Table sentence",
+          "defaultText": "Your table: ",
+          "before": "Text before the table number",
+          "after": "Text after the table number",
+          "remove": "Remove the table sentence",
+          "help": "Sent at the end of the message, only to guests who have a table",
+          "switchOff": "Sending table numbers is off for this event, so no guest gets the table sentence",
+          "switchOffLink": "Turn it on in the event details"
+        },
+        "fix": {
+          "details": "Complete the event details",
+          "remove": "Remove from the message"
+        }
+      },
+      "fields": {
+        "hosts": "Hosts' names",
+        "occasionPhrase": "Event name",
+        "eventDate": "Date",
+        "venueName": "Venue",
+        "receptionTime": "Reception",
+        "ceremonyTime": "Ceremony",
+        "guestName": "Guest's name",
+        "tableNumber": "Table"
+      },
+      "errors": {
+        "tooLong": "The message is {over} characters over the limit ({limit})",
+        "tooManyParagraphs": "A message can have up to {limit} paragraphs",
+        "emptyField": "\"{field}\" has no value on the event yet, so the message cannot be saved",
+        "fieldNotOffered": "\"{field}\" is not available in this message",
+        "tableSentenceOutsideReminder": "The table sentence is only for the event reminder",
+        "moreThanOneTableSentence": "A message can have only one table sentence",
+        "tableFieldOutsideSentence": "The table number can only go inside the table sentence"
+      },
+      "attachment": {
+        "cardTitle": "Attachment",
+        "options": {
+          "image": "Invitation image",
+          "video": "Invitation video",
+          "none": "No attachment"
+        },
+        "addImage": "Upload an invitation image in the event details",
+        "addVideo": "You can upload a video in the invitation video card"
+      },
+      "gift": {
+        "cardTitle": "Gift button",
+        "label": "Add a send-a-gift button",
+        "description": "Guests can send a gift straight from the message",
+        "notSetUp": "Set up the gifting page first to add a gift button",
+        "setUp": "Set up the gifting page"
+      },
+      "buttons": {
+        "cardTitle": "Buttons in the message",
+        "none": "This message has no buttons",
+        "help": {
+          "ask": "The buttons are fixed and added to every message, your own included",
+          "event_reminder": "The navigation button is always sent with the reminder. The gift button is sent when it is on",
+          "thank_you": "The gift button is sent when it is on"
+        }
+      },
+      "timing": {
+        "reminderToday": "On the event day the message says \"today\"",
+        "reminderDated": "On an earlier day the message names the event's day and date",
+        "reminderPickDay": "Pick any day up to the event day. On the event day the message says \"today\", on an earlier day it names the date",
+        "thankYouSunday": "The day after the event is Saturday, so the message goes out on Sunday"
+      },
+      "preview": {
+        "guest": "Show for",
+        "allGuests": "All guests",
+        "channel": "Channel",
+        "channels": {
+          "whatsapp": "WhatsApp",
+          "sms": "SMS"
+        },
+        "tags": {
+          "typical": "example",
+          "noTable": "no table",
+          "longestName": "longest name",
+          "sample": "sample guest"
+        },
+        "seatedAt": "This guest sits at table {table}",
+        "noTable": "This guest has no table",
+        "tableSentenceDropped": "This guest has no table, so the table sentence is not sent to them",
+        "smsHelp": "The SMS is sent only when WhatsApp did not reach the guest",
+        "refusal": {
+          "missingDetails": "The message cannot be shown because details are missing: {details}",
+          "detailsLink": "Complete the event details",
+          "noDueTime": "Pick a day and time for the reminder to see its text",
+          "reminderAfterEvent": "The reminder is set after the event day, so it will not be sent. Pick a day up to the event day",
+          "noLinks": "The event link is missing, so the message cannot be shown. Contact us and we will fix it",
+          "other": "The message cannot be shown right now"
+        }
+      },
+      "save": {
+        "saving": "Saving",
+        "updated": "Changes saved",
+        "error": "Something went wrong",
+        "errors": {
+          "invalid_input": "Something in the changes is not valid, try again",
+          "not_a_stage": "This message cannot be saved",
+          "personal_text": "The personal message cannot be saved as it is",
+          "attachment_not_offered": "This attachment is not available for this message",
+          "attachment_unavailable": "This file is no longer on the event",
+          "gift_not_offered": "This message has no gift button",
+          "gift_unavailable": "Set up the gifting page first to add a gift button",
+          "not_found": "The message was not found",
+          "not_editable": "This message can no longer be changed",
+          "not_current_plan": "This message cannot be saved",
+          "due_time": "This send time cannot be saved"
+        }
+      }
     }
   },
   "newEventDialog": {

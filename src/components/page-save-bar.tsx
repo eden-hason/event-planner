@@ -37,6 +37,7 @@ export function PageSaveBar({
   onCancel,
   onSave,
   saveDisabled = false,
+  error,
   className,
 }: {
   open: boolean;
@@ -47,6 +48,11 @@ export function PageSaveBar({
   onCancel: () => void;
   onSave?: () => void;
   saveDisabled?: boolean;
+  /**
+   * Why Save is disabled, said in place of what is unsaved - with the way to
+   * fix it when there is one. Pass `saveDisabled` with it.
+   */
+  error?: React.ReactNode;
   /** For the row inside the bar, e.g. to cap it at the page's content width. */
   className?: string;
 }) {
@@ -83,9 +89,15 @@ export function PageSaveBar({
         )}
       >
         <div className={cn('flex items-center gap-3', className)}>
-          <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs font-medium">
-            {shown}
-          </p>
+          {error ? (
+            <div role="alert" className="text-destructive min-w-0 flex-1 text-xs font-medium">
+              {error}
+            </div>
+          ) : (
+            <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs font-medium">
+              {shown}
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"

@@ -25,7 +25,7 @@ import {
 } from '../utils/timeline';
 import { firstSendableDay, lastDueDay, pinnedDueDay } from '../utils/due-time-guards';
 import { SettingsCard } from './settings-card';
-import { useScheduleSettings } from './schedule-settings-context';
+import { useDueTime } from './due-time-context';
 
 /**
  * An Israel calendar day, "YYYY-MM-DD", as a local Date the picker can show.
@@ -56,6 +56,8 @@ interface ScheduleDetailsCardProps {
   sendWindow: { start: string; end: string };
   /** Rendered server-side and passed in - see ScheduleLockBadge. */
   lockBadge?: React.ReactNode;
+  /** Anything a plan adds under the helper line (the current plan's timing line). */
+  footer?: React.ReactNode;
 }
 
 /** When the message goes out: a date and a whole hour inside the Send Window. */
@@ -65,6 +67,7 @@ export function ScheduleDetailsCard({
   maxLatenessHours,
   sendWindow,
   lockBadge,
+  footer,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
   const locale = useLocale();
@@ -79,7 +82,7 @@ export function ScheduleDetailsCard({
     now,
     dueTimeIssue,
     messagePlan,
-  } = useScheduleSettings();
+  } = useDueTime();
   const disabled = !editable || isSaving;
   // A Schedule whose copy is written for the Event day (the reminder says
   // "today") keeps that day: the date shows read-only and only the hour moves.
@@ -240,6 +243,7 @@ export function ScheduleDetailsCard({
       )}
 
       {helperNote && <p className="text-muted-foreground text-xs">{helperNote}</p>}
+      {footer}
     </SettingsCard>
   );
 }

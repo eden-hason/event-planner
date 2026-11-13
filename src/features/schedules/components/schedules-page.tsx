@@ -33,6 +33,17 @@ import {
   resolveTemplatesForPreview,
 } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
+import { getMessagePlanPageData, type MessagePlanPageData } from '../queries/message-plan';
+import {
+  messageField,
+  stageOfScheduleType,
+  stageOffersTable,
+  type Stage,
+} from '../message-plan';
+import { publicSiteUrl } from '../utils/parameter-resolvers';
+import { scheduleChannel } from '../utils/message-plan-kind';
+import { sentWording, stageGuests } from '../utils/message-plan-editor';
+import { MessagePlanDetailPane, type MessagePlanGuests } from './message-plan-detail-pane';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoButton } from './delivery-info-button';
 import { ScheduleDetailPane } from './schedule-detail-pane';
@@ -92,7 +103,11 @@ export async function SchedulesPage({
     );
   }
 
-  const [guests, roundsBySchedule, sentCounts, personalMessageCatalog] = await Promise.all([
+  // The page picks its tree from the Event's Message Plan (ADR 0053): the
+  // current plan's Schedules carry no template and open in their own pane.
+  const currentPlan = event?.messagePlan === 'current';
+
+  const [guests, roundsBySchedule, sentCounts, personalMessageCatalog, messagePlanData] = await Promise.all([
     getEventGuests(eventId),
     // RLS-bound: a viewer without Owner access gets an empty map, so a call
     // plan renders as planned rather than exposing its results.
@@ -101,8 +116,18 @@ export async function SchedulesPage({
     // round trip rather than seven.
     getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
     // Every Personal Message frame in one read, rather than one per card.
-    getPersonalMessageCatalog(),
+    // Classic only: the current plan's messages are written in code.
+    currentPlan ? Promise.resolve([]) : getPersonalMessageCatalog(),
+    // The Event as the send maps it and its tables, for the current plan's
+    // editor and preview. Not read for a Classic Event.
+    currentPlan ? getMessagePlanPageData(eventId) : Promise.resolve(null),
   ]);
+
+  // The Guests as the current plan's stages read them, worked out once for a
+  // stage that sends tables and once for one that does not, and shared by
+  // every pane of that kind.
+  const planGuests = messagePlanData ? messagePlanGuests(guests, messagePlanData) : null;
+  const siteUrl = publicSiteUrl();
 
   // schedule.template is only the family anchor. Resolve what would actually be
   // sent, using the same resolver the send engine runs, so the preview the
@@ -261,6 +286,8 @@ export async function SchedulesPage({
         number && number.total > 1 ? `${baseLabel} ${number.index}` : baseLabel;
 
       const isMessage = isMessageSchedule(schedule);
+      // A Schedule on the current Message Plan opens its own pane (ADR 0053).
+      const stage = messagePlanData ? stageOfScheduleType(schedule.scheduleTypeKey) : null;
       const round = isMessage ? undefined : roundsBySchedule.get(schedule.id);
 
       // A call round is planned like a message but executed by a person, so it
@@ -311,7 +338,21 @@ export async function SchedulesPage({
               noAnswer: round.noAnswer,
             }
           : null,
-        details: isMessage ? (
+        // The current plan's list says whose words each message is (brief 5).
+        listDetail: stage ? t(`messagePlan.list.${sentWording(schedule)}`) : null,
+        details: stage && messagePlanData && planGuests ? (
+          <MessagePlanDetailPane
+            schedule={schedule}
+            stage={stage}
+            event={messagePlanData.event}
+            status={status}
+            audienceCount={audienceCount}
+            guests={planGuests(stage)}
+            siteUrl={siteUrl}
+            previewToken={messagePlanData.previewToken}
+            smsFallback={event?.smsFallbackEnabled ?? true}
+          />
+        ) : isMessage ? (
           <ScheduleDetailPane
             schedule={schedule}
             messages={messages}
@@ -401,7 +442,7 @@ export async function SchedulesPage({
   const whatsappPending = resolved.some(
     ({ schedule }, index) =>
       isMessageSchedule(schedule) &&
-      schedule.deliveryMethod === 'whatsapp' &&
+      scheduleChannel(schedule.deliveryMethod, event?.messagePlan ?? 'classic') === 'whatsapp' &&
       planItems[index].status === 'pending',
   );
 
@@ -415,4 +456,35 @@ export async function SchedulesPage({
       deliveryInfo={whatsappPending ? <DeliveryInfoButton smsFallback={event?.smsFallbackEnabled ?? true} /> : null}
     />
   );
+}
+
+/**
+ * The Guests each current-plan stage reads, built at most twice whatever the
+ * number of Schedules: with tables for a stage that sends them (the Reminder,
+ * with the Event's switch on) and without for every other.
+ */
+function messagePlanGuests(
+  guests: { id: string; name: string; tableId?: string | null }[],
+  data: MessagePlanPageData,
+): (stage: Stage) => MessagePlanGuests {
+  const sources = guests.map((guest) => ({
+    id: guest.id,
+    name: guest.name,
+    table: guest.tableId ? (data.tables.get(guest.tableId) ?? null) : null,
+  }));
+  const tablesOn = shouldSendTableNumbers(data.event.guestExperience);
+  const built = new Map<boolean, MessagePlanGuests>();
+  return (stage) => {
+    const offersTable = tablesOn && stageOffersTable(stage);
+    let entry = built.get(offersTable);
+    if (!entry) {
+      entry = stageGuests(sources, {
+        offersTable,
+        sampleName: messageField('guestName').sample,
+        sampleTable: Number(messageField('tableNumber').sample),
+      });
+      built.set(offersTable, entry);
+    }
+    return entry;
+  };
 }

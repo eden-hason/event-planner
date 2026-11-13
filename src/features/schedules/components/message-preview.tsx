@@ -124,43 +124,18 @@ export function MessagePreview({
       aside={<span className="text-muted-foreground/80 text-[11.5px]">{t('hint')}</span>}
     >
 
-      {/* Phone mockup - the WhatsApp header bar and chat wallpaper only where the
-          message actually arrives in WhatsApp; an SMS sits on a plain thread */}
-      <div className="overflow-hidden rounded-2xl border">
-        {channel !== 'sms' && (
-          <div className="flex items-center gap-2.5 bg-[#075E54] px-3 py-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/kululu-logo-mark.svg"
-              alt=""
-              aria-hidden
-              className="size-[30px] shrink-0 rounded-full"
-            />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[13.5px] font-semibold text-white">{SENDER_NAME}</span>
-              <span className="text-[11px] text-white/70">{t('business')}</span>
-            </div>
-          </div>
-        )}
-        {/* Chat area */}
-        <div
-          className={cn('flex flex-col gap-1 px-3 py-4', channel === 'sms' && 'bg-zinc-50')}
-          style={channel === 'sms' ? undefined : chatBgStyle}
-        >
+      {/* The WhatsApp header bar and chat wallpaper only where the message
+          actually arrives in WhatsApp; an SMS sits on a plain thread */}
+      <PhoneFrame
+        channel={channel === 'sms' ? 'sms' : 'whatsapp'}
+        footer={
+          missingSources.length > 0 && event ? (
+            <MissingDetailsNotice sources={missingSources} eventId={event.id} />
+          ) : null
+        }
+      >
           {template === null && smsBody ? (
-            <div className="flex justify-end px-1 py-2 rtl:justify-start">
-              <div className="relative max-w-[85%]">
-                <div className="absolute top-0 -right-[7px] h-0 w-0 border-b-[8px] border-l-[8px] border-b-transparent border-l-zinc-200 rtl:right-auto rtl:-left-[7px] rtl:border-r-[8px] rtl:border-l-0 rtl:border-r-zinc-200" />
-                <div className="rounded-l-xl rounded-br-xl bg-zinc-200 px-3 py-2 shadow-sm rtl:rounded-l-none rtl:rounded-r-xl rtl:rounded-br-none rtl:rounded-bl-xl">
-                  <p
-                    className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
-                    dir="rtl"
-                  >
-                    <MessageBody body={smsBody} />
-                  </p>
-                </div>
-              </div>
-            </div>
+            <SmsBubble body={smsBody} />
           ) : template === null ? (
             <div className="flex items-center justify-center py-6">
               <p className="rounded-lg bg-white/80 px-3 py-1.5 text-xs text-zinc-500">
@@ -169,77 +144,55 @@ export function MessagePreview({
             </div>
           ) : (
             <>
-              {/* Message bubble */}
-              <div className="relative max-w-[85%] self-end rtl:self-start">
-                {/* Bubble tail */}
-                <div className="absolute top-0 -right-[7px] h-0 w-0 border-b-[8px] border-l-[8px] border-b-transparent border-l-[#DCF8C6] rtl:right-auto rtl:-left-[7px] rtl:border-r-[8px] rtl:border-l-0 rtl:border-r-[#DCF8C6]" />
-                <div
-                  className="overflow-hidden rounded-l-xl rounded-br-xl shadow-sm rtl:rounded-l-none rtl:rounded-r-xl rtl:rounded-br-none rtl:rounded-bl-xl"
-                  style={{ backgroundColor: '#DCF8C6' }}
-                >
-                  {/* Image header */}
-                  {template.headerType?.toUpperCase() === 'IMAGE' &&
-                    (headerMediaUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={headerMediaUrl}
-                        alt="Header"
-                        className="h-auto w-full rounded-t-xl p-1.5 pb-0"
-                      />
-                    ) : (
-                      <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
-                        <IconPhoto size={28} className="text-zinc-400" />
-                        <span className="text-[10px] text-zinc-400">{t('imagePlaceholder')}</span>
-                      </div>
-                    ))}
-                  {/* Video header - a Bespoke Template's uploaded video. Full
-                      bubble width at the video's own aspect ratio, as WhatsApp
-                      shows it: no height cap, so a portrait video is never
-                      letterboxed. */}
-                  {template.headerType?.toUpperCase() === 'VIDEO' &&
-                    (headerMediaUrl ? (
-                      <PreviewVideo src={headerMediaUrl} playLabel={t('playVideo')} />
-                    ) : (
-                      <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
-                        <IconVideo size={28} className="text-zinc-400" />
-                        <span className="text-[10px] text-zinc-400">{t('videoPlaceholder')}</span>
-                      </div>
-                    ))}
-                  {/* Text content */}
-                  <div className="px-3 py-2">
-                    {template.headerText && (
-                      <p className="mb-1 text-sm leading-tight font-semibold text-zinc-800">
-                        {template.headerText}
-                      </p>
-                    )}
-                    <p
-                      className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
-                      dir="rtl"
-                    >
-                      <MessageBody body={resolvedBody} />
-                    </p>
-                  </div>
-                  {/* Buttons */}
-                  {buttons.length > 0 && (
-                    <div>
-                      {buttons.map((btn, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-center gap-1.5 border-t border-zinc-300/70 py-2 text-sm font-medium"
-                          style={{ color: '#53B8C5' }}
-                        >
-                          {btn.subType === 'url' ? (
-                            <IconExternalLink size={14} />
-                          ) : (
-                            <IconArrowBack size={14} />
-                          )}
-                          <span>{btn.text ?? t('button', { index: btn.index + 1 })}</span>
-                        </div>
-                      ))}
+              <WhatsAppBubble
+                buttons={buttons.map((btn) => ({
+                  text: btn.text ?? t('button', { index: btn.index + 1 }),
+                  url: btn.subType === 'url',
+                }))}
+              >
+                {/* Image header */}
+                {template.headerType?.toUpperCase() === 'IMAGE' &&
+                  (headerMediaUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={headerMediaUrl}
+                      alt="Header"
+                      className="h-auto w-full rounded-t-xl p-1.5 pb-0"
+                    />
+                  ) : (
+                    <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
+                      <IconPhoto size={28} className="text-zinc-400" />
+                      <span className="text-[10px] text-zinc-400">{t('imagePlaceholder')}</span>
                     </div>
+                  ))}
+                {/* Video header - a Bespoke Template's uploaded video. Full
+                    bubble width at the video's own aspect ratio, as WhatsApp
+                    shows it: no height cap, so a portrait video is never
+                    letterboxed. */}
+                {template.headerType?.toUpperCase() === 'VIDEO' &&
+                  (headerMediaUrl ? (
+                    <PreviewVideo src={headerMediaUrl} playLabel={t('playVideo')} />
+                  ) : (
+                    <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-zinc-300/60">
+                      <IconVideo size={28} className="text-zinc-400" />
+                      <span className="text-[10px] text-zinc-400">{t('videoPlaceholder')}</span>
+                    </div>
+                  ))}
+                {/* Text content */}
+                <div className="px-3 py-2">
+                  {template.headerText && (
+                    <p className="mb-1 text-sm leading-tight font-semibold text-zinc-800">
+                      {template.headerText}
+                    </p>
                   )}
+                  <p
+                    className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800"
+                    dir="rtl"
+                  >
+                    <MessageBody body={resolvedBody} />
+                  </p>
                 </div>
-              </div>
+              </WhatsAppBubble>
 
               {/* Footer text */}
               {template.footerText && (
@@ -249,11 +202,7 @@ export function MessagePreview({
               )}
             </>
           )}
-        </div>
-        {missingSources.length > 0 && event && (
-          <MissingDetailsNotice sources={missingSources} eventId={event.id} />
-        )}
-      </div>
+      </PhoneFrame>
       {seatingGap && event && (
         <Alert className="mt-3">
           <IconInfoCircle />
@@ -279,11 +228,108 @@ export function MessagePreview({
 }
 
 /**
+ * The phone the preview is drawn in, on either Message Plan: the WhatsApp
+ * header bar and chat wallpaper, or a plain SMS thread. `footer` sits under
+ * the chat, inside the frame.
+ */
+export function PhoneFrame({
+  channel,
+  footer,
+  children,
+}: {
+  channel: 'whatsapp' | 'sms';
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const t = useTranslations('schedules.messagePreview');
+  return (
+    <div className="overflow-hidden rounded-2xl border">
+      {channel === 'whatsapp' && (
+        <div className="flex items-center gap-2.5 bg-[#075E54] px-3 py-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/kululu-logo-mark.svg"
+            alt=""
+            aria-hidden
+            className="size-[30px] shrink-0 rounded-full"
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-[13.5px] font-semibold text-white">{SENDER_NAME}</span>
+            <span className="text-[11px] text-white/70">{t('business')}</span>
+          </div>
+        </div>
+      )}
+      <div
+        className={cn('flex flex-col gap-1 px-3 py-4', channel === 'sms' && 'bg-zinc-50')}
+        style={channel === 'sms' ? undefined : chatBgStyle}
+      >
+        {children}
+      </div>
+      {footer}
+    </div>
+  );
+}
+
+/** A received SMS: grey bubble with its tail, real line breaks. */
+export function SmsBubble({ body }: { body: string }) {
+  return (
+    <div className="flex justify-end px-1 py-2 rtl:justify-start">
+      <div className="relative max-w-[85%]">
+        <div className="absolute top-0 -right-[7px] h-0 w-0 border-b-[8px] border-l-[8px] border-b-transparent border-l-zinc-200 rtl:right-auto rtl:-left-[7px] rtl:border-r-[8px] rtl:border-l-0 rtl:border-r-zinc-200" />
+        <div className="rounded-l-xl rounded-br-xl bg-zinc-200 px-3 py-2 shadow-sm rtl:rounded-l-none rtl:rounded-r-xl rtl:rounded-br-none rtl:rounded-bl-xl">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800" dir="rtl">
+            <MessageBody body={body} />
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A WhatsApp template message: the green bubble with its tail, its content
+ * (header and text), and its buttons as rows under it.
+ */
+export function WhatsAppBubble({
+  buttons,
+  children,
+}: {
+  buttons: { text: string; url: boolean }[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative max-w-[85%] self-end rtl:self-start">
+      <div className="absolute top-0 -right-[7px] h-0 w-0 border-b-[8px] border-l-[8px] border-b-transparent border-l-[#DCF8C6] rtl:right-auto rtl:-left-[7px] rtl:border-r-[8px] rtl:border-l-0 rtl:border-r-[#DCF8C6]" />
+      <div
+        className="overflow-hidden rounded-l-xl rounded-br-xl shadow-sm rtl:rounded-l-none rtl:rounded-r-xl rtl:rounded-br-none rtl:rounded-bl-xl"
+        style={{ backgroundColor: '#DCF8C6' }}
+      >
+        {children}
+        {buttons.length > 0 && (
+          <div>
+            {buttons.map((button, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-center gap-1.5 border-t border-zinc-300/70 py-2 text-sm font-medium"
+                style={{ color: '#53B8C5' }}
+              >
+                {button.url ? <IconExternalLink size={14} /> : <IconArrowBack size={14} />}
+                <span>{button.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * The video header as WhatsApp shows it: the first frame with one round play
  * button in the middle and no player controls. Playing hides the button;
  * tapping the video pauses it and the button comes back, as it does at the end.
  */
-function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
+export function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -322,7 +368,7 @@ function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
  * organiser's note included. Opens in a new tab so the organiser can check
  * where a link goes without leaving the page.
  */
-function MessageBody({ body }: { body: string }) {
+export function MessageBody({ body }: { body: string }) {
   return splitMessageLinks(body).map((segment, i) =>
     segment.kind === 'link' ? (
       <a

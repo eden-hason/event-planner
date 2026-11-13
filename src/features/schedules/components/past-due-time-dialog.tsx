@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import type { ScheduleApp } from '../schemas';
-import { useScheduleSettings } from './schedule-settings-context';
+import { useDueTime } from './due-time-context';
 import { audienceLabelKey } from '../utils/audience';
 
 interface PastDueTimeDialogProps {
@@ -44,7 +44,7 @@ export function PastDueTimeDialog({
   const t = useTranslations('schedules');
   const locale = useLocale();
   const { pendingPastDueTime, scheduledTime, confirmPastDueTime, cancelPastDueTime } =
-    useScheduleSettings();
+    useDueTime();
 
   const audienceLabel = t(`audience.${audienceLabelKey(targetStatus)}`);
 
