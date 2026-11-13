@@ -1,4 +1,4 @@
-import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
+import { CalendarDays, Clock3, Info, MapPin, MessageSquare, Users } from '@/components/icons';
 import { formatPhone } from '@/lib/phone';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -32,19 +32,29 @@ import {
 import { RetryButton } from './retry-button';
 import { SmsFallbackToggle } from './sms-fallback-toggle';
 import { VenueNameDialog } from './venue-name-dialog';
+import { MoveToMessagePlanDialog } from './move-to-message-plan-dialog';
 import {
   getEventGuestSummary,
   getEventIdentity,
+  getEventMessagesSent,
   getEventSignals,
   getEventTimeline,
 } from '../queries/events';
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
 import { countLabel, rsvpLabel } from '../utils/labels';
+import { advanceReminderPlanRejection, MESSAGE_PLAN_NAMES, moveBlock } from '../utils/message-plan';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
-export function EventIdentityBand({ event }: { event: EventIdentity }) {
+export function EventIdentityBand({
+  event,
+  messagesSent = false,
+}: {
+  event: EventIdentity;
+  /** See getEventMessagesSent; only read on a Classic Event. */
+  messagesSent?: boolean | null;
+}) {
   const hosts = event.hostNames.length ? event.hostNames.join(' ו') : null;
   const eventDate = formatEventDate(event.eventDate, { weekday: true });
   const relativeDate = relativeEventDate(event.daysFromToday);
@@ -67,6 +77,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
               <span className="truncate">{event.locationName ?? 'עדיין אין מקום'}</span>
               <VenueNameDialog eventId={event.id} locationName={event.locationName} />
             </EventMeta>
+            <MessagePlanMeta event={event} messagesSent={messagesSent} />
           </div>
           <Separator />
           <div className="flex min-w-0 flex-col gap-1">
@@ -114,6 +125,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
               חופה {event.ceremonyTime?.slice(0, 5) ?? 'לא נקבע'} · קבלת פנים {event.receptionTime?.slice(0, 5) ?? 'לא נקבע'}
             </span>
           </EventMeta>
+          <MessagePlanMeta event={event} messagesSent={messagesSent} />
         </div>
 
         {event.shortCode && <PublicEventActions shortCode={event.shortCode} />}
@@ -144,6 +156,22 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
   );
 }
 
+/**
+ * Which Message Plan the Event is on (ADR 0053), and on a Classic Event the
+ * move to the current one - disabled, with the reason, once anything was sent.
+ */
+function MessagePlanMeta({ event, messagesSent }: { event: EventIdentity; messagesSent: boolean | null }) {
+  const block = moveBlock({ messagePlan: event.messagePlan, messagesSent });
+  const onCurrent = block === 'already_current';
+  return (
+    <EventMeta icon={<MessageSquare />}>
+      <span className={cn('shrink-0', onCurrent && 'text-primary font-medium')}>{MESSAGE_PLAN_NAMES[event.messagePlan]}</span>
+      {/* Already there: nothing to offer, not even a disabled link. */}
+      {!onCurrent && <MoveToMessagePlanDialog eventId={event.id} block={block} />}
+    </EventMeta>
+  );
+}
+
 function EventMeta({
   icon,
   children,
@@ -164,7 +192,10 @@ function EventMeta({
 export async function EventIdentityQueryBand({ eventId }: { eventId: string }) {
   try {
     const event = await getEventIdentity(eventId);
-    return event ? <EventIdentityBand event={event} /> : <BandFailure title="אירוע" />;
+    if (!event) return <BandFailure title="אירוע" />;
+    // Asked only when there is a move to offer: a current Event has none.
+    const messagesSent = event.messagePlan === 'classic' ? await getEventMessagesSent(eventId) : false;
+    return <EventIdentityBand event={event} messagesSent={messagesSent} />;
   } catch (error) {
     console.error('Event identity failed:', error);
     return <BandFailure title="אירוע" />;
@@ -340,7 +371,7 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     const onMessagePlan = event.messagePlan === 'current';
     // Classic only: the current plan has no Advance Reminder (ADR 0053).
     const advanceReminderEventDate =
-      !onMessagePlan &&
+      advanceReminderPlanRejection(event.messagePlan) === null &&
       event.status === 'published' &&
       !rows.some((row) => row.scheduleTypeKey === 'advance_reminder')
         ? event.eventDate

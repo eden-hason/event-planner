@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { addFollowUpAdmin } from '../actions/event-controls';
 import { useControlAction } from './use-control-action';
+import { ADD_FOLLOW_UP_LABEL } from '../utils/labels';
 
 /**
  * Grants one more Follow-up on an Event on the current Message Plan - what an
@@ -29,15 +30,15 @@ export function AddFollowUpDialog({ eventId }: { eventId: string }) {
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="shrink-0 text-[13px]">
           <Plus className="size-[15px]" />
-          הוספת תזכורת לאישור הגעה
+          {ADD_FOLLOW_UP_LABEL}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle>הוספת תזכורת לאישור הגעה</DialogTitle>
+          <DialogTitle>{ADD_FOLLOW_UP_LABEL}</DialogTitle>
           <DialogDescription>
-            עוד תזכורת למי שעוד לא ענה, בלי מועד. בעלי האירוע יקבעו מתי היא יוצאת, כמו את האחרות
+            עוד הודעה למי שעוד לא ענה, בלי מועד. בעלי האירוע יקבעו מתי היא יוצאת, כמו את האחרות
           </DialogDescription>
         </DialogHeader>
 

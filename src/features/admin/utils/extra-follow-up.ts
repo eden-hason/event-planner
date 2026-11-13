@@ -2,6 +2,7 @@ import { eventDaysFromToday } from '@/lib/date-time';
 // Deep import: pure, and the schedules barrel carries the send path.
 import { hasInvitationImage } from '@/features/schedules/utils/event-config';
 import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
+import { FOLLOW_UP_MESSAGE } from './labels';
 
 /**
  * An Extra Schedule on the current Message Plan grants one more Follow-up
@@ -21,7 +22,7 @@ export type ExtraFollowUpEvent = {
 /** Why an Operator cannot add a Follow-up to this Event, or null when they can. */
 export function extraFollowUpRejection(event: ExtraFollowUpEvent, now = new Date()): string | null {
   if (event.messagePlan !== 'current') {
-    return 'אפשר להוסיף תזכורת לאישור הגעה רק לאירוע על תוכנית ההודעות החדשה';
+    return `אפשר להוסיף ${FOLLOW_UP_MESSAGE} רק לאירוע על תוכנית ההודעות החדשה`;
   }
   // A Draft Event cannot have schedules - it is interest, not an event.
   if (event.status !== 'published') return 'האירוע הזה לא פורסם';

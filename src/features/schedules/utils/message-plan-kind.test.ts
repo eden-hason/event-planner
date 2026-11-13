@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isAsk, isCurrentPlanOnlyType, parseMessagePlan, scheduleChannel } from './message-plan-kind';
+import { isAsk, isCurrentPlanOnlyType, isMessagePlan, parseMessagePlan, scheduleChannel } from './message-plan-kind';
 
 test('an Ask is a Classic Confirmation or a current Invitation or Follow-up', () => {
   for (const key of ['confirmation', 'invitation', 'follow_up']) assert.equal(isAsk(key), true, key);
@@ -27,4 +27,12 @@ test('the current plan always sends WhatsApp; Classic keeps its catalog channel'
   assert.equal(scheduleChannel(null, 'current'), 'whatsapp');
   assert.equal(scheduleChannel('sms', 'classic'), 'sms');
   assert.equal(scheduleChannel(null, 'classic'), null);
+});
+
+test('isMessagePlan accepts only the two plans, with no Classic default', () => {
+  assert.equal(isMessagePlan('current'), true);
+  assert.equal(isMessagePlan('classic'), true);
+  for (const value of ['v2', 'toString', '', null, undefined, 1]) {
+    assert.equal(isMessagePlan(value), false);
+  }
 });

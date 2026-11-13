@@ -11,3 +11,4 @@ export {
 export { getUsersIndex, getUserDetail } from './users';
 export { getPaymentsIndex } from './payments';
 export { getEventOwnerMessages } from './owner-messages';
+export { getMessagePlanSetting, type MessagePlanSetting } from './settings';

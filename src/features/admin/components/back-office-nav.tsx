@@ -23,24 +23,13 @@ import {
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 
-/**
- * Stubs are reachable and clearly unfinished rather than disabled or silently
- * broken. The badge describes the index a click would land on, so it is hidden
- * while the item is active: an Operator on the event workspace reached a real
- * page, and badging Events there would call a built surface unbuilt.
- */
 const NAV_ITEMS = [
-  { label: 'סקירה', href: '/admin', icon: LayoutDashboard, stub: false },
-  { label: 'משתמשים', href: '/admin/users', icon: Users, stub: false },
-  { label: 'אירועים', href: '/admin/events', icon: CalendarDays, stub: false },
-  { label: 'תשלומים', href: '/admin/payments', icon: Banknote, stub: false },
-  { label: 'תפעול', href: '/admin/operations', icon: Wrench, stub: false },
-  {
-    label: 'הגדרות',
-    href: '/admin/configuration',
-    icon: SlidersHorizontal,
-    stub: true,
-  },
+  { label: 'סקירה', href: '/admin', icon: LayoutDashboard },
+  { label: 'משתמשים', href: '/admin/users', icon: Users },
+  { label: 'אירועים', href: '/admin/events', icon: CalendarDays },
+  { label: 'תשלומים', href: '/admin/payments', icon: Banknote },
+  { label: 'תפעול', href: '/admin/operations', icon: Wrench },
+  { label: 'הגדרות', href: '/admin/configuration', icon: SlidersHorizontal },
 ] as const;
 
 export function BackOfficeNav({
@@ -75,7 +64,7 @@ export function BackOfficeNav({
 
         <SidebarContent className="px-2 pt-2">
           <SidebarMenu className="gap-0.5">
-            {NAV_ITEMS.map(({ label, href, icon: Icon, stub }) => {
+            {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const isActive =
                 href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
@@ -96,11 +85,6 @@ export function BackOfficeNav({
                     <Link href={href} onClick={() => setOpenMobile(false)}>
                       <Icon />
                       <span className="flex-1">{label}</span>
-                      {stub && !isActive && (
-                        <span className="text-muted-foreground rounded-full border px-1.5 py-px text-[10px] font-semibold tracking-[0.05em]">
-                          בבנייה
-                        </span>
-                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

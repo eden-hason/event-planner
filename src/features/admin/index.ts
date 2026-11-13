@@ -9,6 +9,7 @@ export { PaymentsIndex } from './components/payments-index';
 export { PaymentsIndexSkeleton } from './components/payments-index-skeleton';
 export { parsePaymentsIndexParams } from './utils/payments-index';
 export {
+  BandFailure,
   DraftEventBand,
   DraftEventQueryBand,
   EventBandSkeleton,
@@ -22,6 +23,8 @@ export {
   EventSignalsBand,
 } from './components/event-workspace';
 export { EventOwnerMessagesBand } from './components/owner-messages-band';
+export { NewEventMessagePlanControl } from './components/new-event-message-plan-control';
+export { MESSAGE_PLAN_NAMES } from './utils/message-plan';
 export { Band, BandRow } from './components/band';
 export { RetryButton } from './components/retry-button';
 export { BackOfficeNav } from './components/back-office-nav';

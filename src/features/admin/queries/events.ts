@@ -235,6 +235,27 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
   };
 });
 
+/**
+ * Whether any message Schedule of the Event has gone out or is under way -
+ * `event_message_schedules_sent`, the same check the move refuses on, so the
+ * button and the function agree. Only the identity band's move link reads it,
+ * so it is its own query rather than part of every getEventIdentity caller's.
+ * Null when the check fails: that disables the move, not the page.
+ */
+export const getEventMessagesSent = cache(async function getEventMessagesSent(
+  eventId: string,
+): Promise<boolean | null> {
+  await assertAdmin();
+  const { data, error } = await createServiceClient().rpc('event_message_schedules_sent', {
+    p_event_id: eventId,
+  });
+  if (error) {
+    console.error('event_message_schedules_sent failed:', error);
+    return null;
+  }
+  return data === true;
+});
+
 // Cached per render: the guest list band and the outreach band both read it.
 export const getEventGuestSummary = cache(async function getEventGuestSummary(
   eventId: string,
