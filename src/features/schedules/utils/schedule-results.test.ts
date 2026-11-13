@@ -417,6 +417,10 @@ test('a Confirmation asks everyone, an Advance Reminder only the pending, the re
   assert.equal(rsvpAskOf('confirmation', false), 'everyone');
   assert.equal(rsvpAskOf('advance_reminder', true), 'pending');
   assert.equal(rsvpAskOf('event_reminder', false), 'none');
+  // The current Message Plan: both Asks show answers, the Reminder and Thank You do not.
+  assert.equal(rsvpAskOf('invitation', false), 'everyone');
+  assert.equal(rsvpAskOf('follow_up', false), 'everyone');
+  assert.equal(rsvpAskOf('post_event', false), 'none');
 });
 
 test('a Guest the Schedule did not ask is never waiting on an answer', () => {

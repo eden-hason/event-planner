@@ -149,6 +149,10 @@ export function planEntryFromRow(row: {
 const STAGE_ORDER = [
   'initial_invitation',
   'confirmation',
+  // The current Message Plan's Asks (ADR 0053): never on the same Event as
+  // the two above, so their place between them does not matter.
+  'invitation',
+  'follow_up',
   'phone_call',
   'advance_reminder',
   'event_reminder',

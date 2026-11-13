@@ -5,6 +5,8 @@ import { getCurrentUser } from '@/features/auth/queries';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { GiftingSettingsUpdateSchema } from '../schemas';
+// Deep import: pure, and the schedules barrel carries the send path.
+import { GIFT_BUTTON_SCHEDULE_TYPES } from '@/features/schedules/utils/event-config';
 
 export type GiftingActionState = {
   success: boolean;
@@ -61,7 +63,7 @@ export async function updateGiftingSettings(
 
     const { data: row, error: fetchError } = await supabase
       .from('events')
-      .select('event_settings')
+      .select('event_settings, message_plan')
       .eq('id', eventId)
       .single();
 
@@ -85,7 +87,14 @@ export async function updateGiftingSettings(
         link: bitConfig.link,
       };
     }
-    if (giftButtons) {
+    // On the current Message Plan the gift button is the Reminder's and the
+    // Thank You's own switch (schedules.gift_button, ADR 0053), so the toggle
+    // writes it there. The send reads only that, never event_settings.
+    const onMessagePlan = row.message_plan === 'current';
+    if (giftButtons && onMessagePlan) {
+      const saved = await saveScheduleGiftButtons(supabase, eventId, giftButtons);
+      if (!saved) return { success: false, message: 'Could not save. Please try again' };
+    } else if (giftButtons) {
       next.gift_buttons = {
         ...((current.gift_buttons as Record<string, boolean> | undefined) ??
           {}),
@@ -111,6 +120,42 @@ export async function updateGiftingSettings(
     console.error('updateGiftingSettings error:', error);
     return { success: false, message: 'Something went wrong' };
   }
+}
+
+/**
+ * Writes the gift switch on the Event's unsent Schedules of each type. A
+ * Schedule already dispatched is history and keeps what it sent with.
+ */
+async function saveScheduleGiftButtons(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventId: string,
+  giftButtons: Partial<Record<string, boolean>>,
+): Promise<boolean> {
+  for (const [scheduleTypeKey, on] of Object.entries(giftButtons)) {
+    if (typeof on !== 'boolean') continue;
+    if (!(GIFT_BUTTON_SCHEDULE_TYPES as readonly string[]).includes(scheduleTypeKey)) continue;
+    const { data, error } = await supabase
+      .from('schedules')
+      .select('id, schedule_types!inner (key)')
+      .eq('event_id', eventId)
+      .eq('schedule_types.key', scheduleTypeKey)
+      .is('dispatched_at', null);
+    if (error) {
+      console.error('updateGiftingSettings: could not read the schedules', error);
+      return false;
+    }
+    const ids = (data ?? []).map((row) => row.id as string);
+    if (!ids.length) continue;
+    const { error: updateError } = await supabase
+      .from('schedules')
+      .update({ gift_button: on })
+      .in('id', ids);
+    if (updateError) {
+      console.error('updateGiftingSettings: could not save the gift button', updateError);
+      return false;
+    }
+  }
+  return true;
 }
 
 function safeJson(value: string): unknown {

@@ -48,7 +48,9 @@ export type CatchUpRejection =
   | 'expired'
   | 'disabled'
   | 'not_sent_yet'
-  | 'event_over';
+  | 'event_over'
+  /** The Event is on the current Message Plan, which offers no Catch-up Send yet (backlog 0039). */
+  | 'message_plan';
 
 export type CatchUpCandidate = {
   id: string;
@@ -275,8 +277,14 @@ export function catchUpRejection(params: {
   scheduleTypeKey: string;
   eventDate: string | null;
   now: Date;
+  /** Omitted reads as Classic. */
+  messagePlan?: 'classic' | 'current';
 }): CatchUpRejection | null {
   const { status, dispatchedAt, scheduleTypeKey, eventDate, now } = params;
+
+  // Not offered at first on the current plan (ADR 0053, backlog 0039): a late
+  // Guest waits for the next Follow-up. Hidden by the offer, refused here.
+  if (params.messagePlan === 'current') return 'message_plan';
 
   if (status === 'cancelled') return 'cancelled';
   if (status === 'expired') return 'expired';

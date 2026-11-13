@@ -12,6 +12,9 @@ export const SCHEDULE_TYPE_KEYS = [
   'initial_invitation',
   'confirmation',
   'advance_reminder',
+  // The current Message Plan's own types (ADR 0053, 0055).
+  'invitation',
+  'follow_up',
   'event_reminder',
   'post_event',
   'phone_call',
@@ -23,6 +26,8 @@ export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   initial_invitation: 'Initial Invitation',
   confirmation: 'Confirmation',
   advance_reminder: 'Advance Reminder',
+  invitation: 'Invitation',
+  follow_up: 'Follow-up',
   event_reminder: 'Event Reminder',
   post_event: 'Thank You',
   phone_call: 'Call Round',

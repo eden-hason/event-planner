@@ -30,6 +30,10 @@ const SCHEDULE_TYPE_NAMES: Record<string, string> = {
   event_reminder: 'תזכורת אירוע',
   post_event: 'הודעת תודה',
   phone_call: 'סבב שיחות',
+  // The current Message Plan's own types (ADR 0053). The Follow-up label is
+  // the design brief's placeholder until Design settles it.
+  invitation: 'הזמנה',
+  follow_up: 'תזכורת לאישור הגעה',
 };
 
 export function eventTypeName(key: string | null | undefined, fallback?: string | null): string {
@@ -127,6 +131,7 @@ const CATCH_UP_REJECTIONS: Record<CatchUpRejection, string> = {
   not_sent_yet:
     'התזמון עוד לא נשלח - כשיישלח הוא יכלול את כל האורחים שברשימה באותו רגע',
   event_over: 'האירוע כבר עבר',
+  message_plan: 'באירוע על תוכנית ההודעות החדשה אין עדיין השלמת שליחה',
 };
 
 export function catchUpRejectionLabel(reason: CatchUpRejection): string {

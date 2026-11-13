@@ -56,4 +56,9 @@ export type ConfirmationPageData = {
     invitationImageUrl: string | null;
   };
   scheduleId: string | null;
+  /**
+   * The image or video the Delivery's Schedule attached, shown above the
+   * answer buttons (current Message Plan only); null otherwise.
+   */
+  attachment: { type: 'image' | 'video'; url: string } | null;
 };

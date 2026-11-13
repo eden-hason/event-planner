@@ -2,6 +2,7 @@ import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import type { SmsFallbackReason } from './send-helpers';
 import { carriesReadReceipt } from './hand-delivery';
+import { isAsk } from './message-plan-kind';
 
 import type {
   GuestDeliveryOutcome,
@@ -411,6 +412,9 @@ export function formatMoment(
 export type RsvpAsk = 'everyone' | 'pending' | 'none';
 
 export function rsvpAskOf(scheduleTypeKey: string, asksPendingGuests: boolean): RsvpAsk {
-  if (scheduleTypeKey === 'confirmation') return 'everyone';
+  // Every Ask: the Classic Confirmation, and the current Invitation and
+  // Follow-up (ADR 0053). A Follow-up goes to pending Guests only, as a later
+  // Confirmation round does, and is read the same way.
+  if (isAsk(scheduleTypeKey)) return 'everyone';
   return asksPendingGuests ? 'pending' : 'none';
 }

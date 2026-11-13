@@ -47,6 +47,8 @@ export async function duplicateEvent(
       .insert({
         ...eventFields,
         title: `Copy of ${originalEvent.title}`,
+        // The source's message_plan rides along in eventFields; the database
+        // ignores it and puts the copy on the plan new Events start on.
         // A copy of a finished event is itself finished - it inherits every
         // answer. 'draft' would strip the copy of its workspace and hide it
         // from the event switcher.
@@ -123,38 +125,11 @@ export async function duplicateEvent(
       }
     }
 
-    // Copy schedules and reset each one to outstanding
-    const { data: originalSchedules } = await supabase
-      .from('schedules')
-      .select('*')
-      .eq('event_id', eventId);
-
-    if (originalSchedules && originalSchedules.length > 0) {
-      const schedulesToInsert = originalSchedules.map((schedule) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, created_at, updated_at, sent_at, ...scheduleFields } =
-          schedule;
-
-        return {
-          ...scheduleFields,
-          event_id: newEvent.id,
-          // Null, not 'draft': schedule_completion_status only allows
-          // 'sent'/'cancelled', and null is how this schema spells "not done
-          // yet". 'draft' failed the check constraint on every row, so no
-          // schedule was ever copied - the error was only logged.
-          status: null,
-          sent_at: null,
-        };
-      });
-
-      const { error: schedulesError } = await supabase
-        .from('schedules')
-        .insert(schedulesToInsert);
-
-      if (schedulesError) {
-        console.error('Error copying schedules:', schedulesError);
-      }
-    }
+    // Schedules are not copied. The copy is seeded by the database the moment
+    // it has a type and a date, on the Message Plan new Events start on
+    // (ADR 0053) - which may not be the source's, and a Schedule Type of the
+    // other plan is refused there. Copying on top of that seed also gave every
+    // copy its plan twice.
 
     revalidatePath('/app');
     revalidatePath('/app/home');

@@ -113,6 +113,9 @@ tested.
 
 ## Phase 3 - sending and everything that reads a Schedule Type
 
+Built 2026-11-13. Decisions it settled are in ADR 0053 ("Settled while building the send
+path") and ADR 0055; it also fixed the seed's JSON keys (migration `20261113000001`).
+
 - `renderScheduleDeliveries` (`services/render-deliveries.ts`): branch on the Event's
   Message Plan to a new `renderMessagePlanDeliveries`. Audience, Record Package filter,
   Delivery reservation and RSVP tokens are reused as they are.

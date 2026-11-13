@@ -18,6 +18,7 @@ import { updateCustomText, updatePersonalMessage, updateScheduledDate } from '..
 import { DEFAULT_SEND_TIME } from '../utils/timeline';
 import { useReportUnsavedChanges } from './unsaved-changes-guard';
 import type { ScheduleApp } from '../schemas';
+import type { MessagePlan } from '../utils/message-plan-kind';
 import {
   dueTimeIssue as findDueTimeIssue,
   pastDueTime,
@@ -60,6 +61,8 @@ interface ScheduleSettings {
   now: Date;
   /** Why the edited Due Time cannot be saved, or null. Never set while unedited. */
   dueTimeIssue: DueTimeIssue | null;
+  /** The Event's Message Plan, whose Due Time day rules differ (ADR 0053). */
+  messagePlan: MessagePlan;
   /** What is unsaved, one entry per thing the save bar can name. */
   changes: ScheduleChange[];
   /** Puts every field back to what is saved. */
@@ -114,12 +117,14 @@ export function ScheduleSettingsProvider({
   schedule,
   editable,
   eventDate,
+  messagePlan = 'classic',
   dueTimeRules,
   children,
 }: {
   schedule: ScheduleApp;
   editable: boolean;
   eventDate: string | null;
+  messagePlan?: MessagePlan;
   /** The Dispatcher's own Send Window and lateness limit, read server-side. */
   dueTimeRules: DueTimeRules;
   children: React.ReactNode;
@@ -208,9 +213,10 @@ export function ScheduleSettingsProvider({
             scheduledDate,
             now,
             rules: dueTimeRules,
+            messagePlan,
           })
         : null,
-    [dateDirty, eventDate, schedule.scheduleTypeKey, scheduledDate, now, dueTimeRules],
+    [dateDirty, eventDate, schedule.scheduleTypeKey, scheduledDate, now, dueTimeRules, messagePlan],
   );
 
   const commit = useCallback(() => {
@@ -311,6 +317,7 @@ export function ScheduleSettingsProvider({
       setScheduledTime,
       now,
       dueTimeIssue,
+      messagePlan,
       changes,
       revert,
       isSaving,
@@ -330,6 +337,7 @@ export function ScheduleSettingsProvider({
       scheduledTime,
       now,
       dueTimeIssue,
+      messagePlan,
       changes,
       revert,
       isSaving,

@@ -12,7 +12,18 @@
  * the caller's to add: this answers only for the plan.
  */
 
-export const ASK_TYPE_KEYS: readonly string[] = ['initial_invitation', 'confirmation'];
+/**
+ * The Schedules whose dating counts as having planned to ask: the Classic
+ * Initial Invitation and Confirmation, and the current plan's Invitation and
+ * Follow-up (ADR 0053). Wider than `isAsk` on purpose: on Classic, dating the
+ * non-asking Initial Invitation already clears the Signal, as it always has.
+ */
+export const ASK_TYPE_KEYS: readonly string[] = [
+  'initial_invitation',
+  'confirmation',
+  'invitation',
+  'follow_up',
+];
 
 export type AskPlanRow = {
   scheduleTypeKey: string;

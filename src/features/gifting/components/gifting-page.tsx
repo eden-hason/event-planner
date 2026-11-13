@@ -20,7 +20,14 @@ function readConfig(raw: { enabled?: boolean; link?: string } | undefined): Gift
   return { enabled: raw?.enabled ?? false, link: raw?.link ?? '' };
 }
 
-export function GiftingPage({ event }: { event: EventApp }) {
+export function GiftingPage({
+  event,
+  scheduleGiftButtons,
+}: {
+  event: EventApp;
+  /** The current Message Plan's switches, read off its Schedules; Classic reads event_settings. */
+  scheduleGiftButtons?: Partial<Record<string, boolean>>;
+}) {
   const t = useTranslations('gifting');
   const tToast = useTranslations('gifting.toast');
   const locale = useLocale();
@@ -33,7 +40,7 @@ export function GiftingPage({ event }: { event: EventApp }) {
   const [bit, setBit] = useState(() => readConfig(event.eventSettings?.bitConfig));
   const [pending, setPending] = useState<Provider | null>(null);
   const [giftButtons, setGiftButtons] = useState<Partial<Record<string, boolean>>>(
-    () => event.eventSettings?.giftButtons ?? {},
+    () => scheduleGiftButtons ?? event.eventSettings?.giftButtons ?? {},
   );
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 

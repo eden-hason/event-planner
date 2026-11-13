@@ -78,11 +78,12 @@ export function ScheduleDetailsCard({
     isSaving,
     now,
     dueTimeIssue,
+    messagePlan,
   } = useScheduleSettings();
   const disabled = !editable || isSaving;
   // A Schedule whose copy is written for the Event day (the reminder says
   // "today") keeps that day: the date shows read-only and only the hour moves.
-  const pinnedDay = pinnedDueDay(eventDate, scheduleTypeKey);
+  const pinnedDay = pinnedDueDay(eventDate, scheduleTypeKey, messagePlan);
 
   // Days that could never hold a valid Due Time are not offered at all: after
   // the Event day (the Thank You aside; from it, for the Advance Reminder), and so far back that the Dispatcher
@@ -92,10 +93,10 @@ export function ScheduleDetailsCard({
     const matchers: Matcher[] = [
       { before: pickerDay(firstSendableDay(now, maxLatenessHours)) },
     ];
-    const lastDay = lastDueDay(eventDate, scheduleTypeKey);
+    const lastDay = lastDueDay(eventDate, scheduleTypeKey, messagePlan);
     if (lastDay) matchers.push({ after: pickerDay(lastDay) });
     return matchers;
-  }, [now, maxLatenessHours, eventDate, scheduleTypeKey]);
+  }, [now, maxLatenessHours, eventDate, scheduleTypeKey, messagePlan]);
 
   const relative = useMemo(
     () => offsetPhrase(scheduledDate ? offsetDaysFrom(eventDate, scheduledDate) : null),
@@ -171,7 +172,9 @@ export function ScheduleDetailsCard({
             className={cn(
               '[&_svg]:text-primary [&_button:disabled_svg]:text-muted-foreground [&_button:disabled]:opacity-100',
               (!editable || pinnedDay) && '[&_button]:bg-muted/60',
-              (dueTimeIssue === 'afterEvent' || dueTimeIssue === 'notBeforeEvent') &&
+              (dueTimeIssue === 'afterEvent' ||
+                dueTimeIssue === 'notBeforeEvent' ||
+                dueTimeIssue === 'notOnPinnedDay') &&
                 '[&_button]:border-destructive',
             )}
           >

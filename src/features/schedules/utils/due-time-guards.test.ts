@@ -151,3 +151,48 @@ test('dueTimeIssue blocks after the Event and past the lateness limit, nothing e
   assert.equal(dueTimeIssue({ ...base, scheduledDate: due('2026-09-20T10:00') }), null);
   assert.equal(dueTimeIssue({ ...base, scheduledDate: due('2026-09-22T10:00') }), null);
 });
+
+// ─── The current Message Plan (ADR 0053) ────────────────────────────────────────
+
+const THURSDAY = '2026-09-24T00:00:00Z';
+const FRIDAY = '2026-09-25T00:00:00Z';
+const current = (scheduleTypeKey: string, eventDate: string, wallClock: string) =>
+  dueTimeIssue({
+    eventDate,
+    scheduleTypeKey,
+    scheduledDate: due(wallClock),
+    now: israel('2026-09-01T10:00'),
+    rules: RULES,
+    messagePlan: 'current',
+  });
+
+test('current plan: the Event Reminder may go out on any day up to and including the Event day', () => {
+  assert.equal(pinnedDueDay(THURSDAY, 'event_reminder', 'current'), null);
+  assert.equal(lastDueDay(THURSDAY, 'event_reminder', 'current'), '2026-09-24');
+  assert.equal(current('event_reminder', THURSDAY, '2026-09-20T10:00'), null);
+  assert.equal(current('event_reminder', THURSDAY, '2026-09-24T18:00'), null);
+  assert.equal(current('event_reminder', THURSDAY, '2026-09-25T10:00'), 'afterEvent');
+  // Classic is untouched: there it is pinned to the Event day.
+  assert.equal(pinnedDueDay(THURSDAY, 'event_reminder'), '2026-09-24');
+});
+
+test('current plan: the Thank You is pinned to the day after, or Sunday over a Saturday; only the hour moves', () => {
+  assert.equal(pinnedDueDay(THURSDAY, 'post_event', 'current'), '2026-09-25');
+  assert.equal(pinnedDueDay(FRIDAY, 'post_event', 'current'), '2026-09-27');
+  assert.equal(lastDueDay(FRIDAY, 'post_event', 'current'), '2026-09-27');
+  assert.equal(current('post_event', THURSDAY, '2026-09-25T20:00'), null);
+  assert.equal(current('post_event', THURSDAY, '2026-09-24T20:00'), 'notOnPinnedDay');
+  assert.equal(current('post_event', THURSDAY, '2026-09-26T10:00'), 'notOnPinnedDay');
+  assert.equal(current('post_event', FRIDAY, '2026-09-26T10:00'), 'notOnPinnedDay');
+  assert.equal(current('post_event', FRIDAY, '2026-09-27T10:00'), null);
+  // Classic's Thank You still has no limit.
+  assert.equal(lastDueDay(THURSDAY, 'post_event'), null);
+});
+
+test('current plan: the Asks keep the default - any day up to the Event day', () => {
+  for (const key of ['invitation', 'follow_up']) {
+    assert.equal(current(key, THURSDAY, '2026-09-10T10:00'), null);
+    assert.equal(current(key, THURSDAY, '2026-09-24T10:00'), null);
+    assert.equal(current(key, THURSDAY, '2026-09-25T10:00'), 'afterEvent');
+  }
+});

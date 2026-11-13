@@ -174,6 +174,9 @@ export const EventAppSchema = z.object({
   // False under an SMS Fallback Opt-out (CONTEXT.md): set in the Back Office at the
   // Owner's request, after which the Owner's screens speak of WhatsApp only.
   smsFallbackEnabled: z.boolean().default(true),
+  // Which Message Plan the Event sends on (ADR 0053): set by the database at
+  // creation, moved only by an Operator, read-only here.
+  messagePlan: z.enum(['classic', 'current']).default('classic'),
   shortCode: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -223,6 +226,7 @@ export const EventDbSchema = z.object({
   billing_status: z.enum(EVENT_BILLING_STATUSES).default('free'),
   can_create_schedules: z.boolean().default(false),
   sms_fallback_enabled: z.boolean().default(true),
+  message_plan: z.enum(['classic', 'current']).optional().nullable(),
   short_code: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -259,6 +263,7 @@ export function dbToAppTransformer(dbData: {
   billing_status?: string | null;
   can_create_schedules?: boolean | null;
   sms_fallback_enabled?: boolean | null;
+  message_plan?: string | null;
   short_code: string;
   created_at: string;
   updated_at: string;
@@ -318,6 +323,7 @@ export function dbToAppTransformer(dbData: {
     billingStatus,
     canCreateSchedules: dbData.can_create_schedules ?? false,
     smsFallbackEnabled: dbData.sms_fallback_enabled !== false,
+    messagePlan: dbData.message_plan === 'current' ? 'current' : 'classic',
     shortCode: dbData.short_code,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,

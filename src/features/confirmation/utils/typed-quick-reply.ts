@@ -9,6 +9,9 @@
  * free text means (ADR 0017 still holds for that).
  */
 
+// Deep import: pure, and the schedules barrel carries Server Actions.
+import { RSVP_BUTTONS } from '@/features/schedules/message-plan/message-parts';
+
 export type TypedQuickReply = 'yes' | 'no';
 
 const TRANSFORMER_ANSWERS: Record<string, TypedQuickReply> = {
@@ -40,6 +43,20 @@ export function matchTypedQuickReply(
     if (button?.subType !== 'quick_reply' || typeof button.text !== 'string') continue;
     const answer = TRANSFORMER_ANSWERS[button.placeholders?.[0]?.transformer];
     if (answer && normalizeLabel(button.text) === typed) return answer;
+  }
+  return null;
+}
+
+/**
+ * The same reading for an Ask on the current Message Plan, which has no
+ * catalog row to read the labels from: its quick replies are written in code
+ * (ADR 0055), the same two on the Invitation and every Follow-up.
+ */
+export function matchMessagePlanQuickReply(text: string): TypedQuickReply | null {
+  const typed = normalizeLabel(text);
+  if (!typed) return null;
+  for (const button of RSVP_BUTTONS) {
+    if (button.kind === 'quick_reply' && normalizeLabel(button.text) === typed) return button.answer;
   }
   return null;
 }

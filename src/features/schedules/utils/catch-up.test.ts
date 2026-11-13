@@ -173,6 +173,24 @@ describe('catchUpRejection', () => {
     now: new Date('2026-10-10T09:00:00Z'),
   };
 
+  it('refuses every Schedule of an Event on the current Message Plan (backlog 0039)', () => {
+    assert.equal(
+      catchUpRejection({ ...sent, scheduleTypeKey: 'invitation', messagePlan: 'current' }),
+      'message_plan',
+    );
+    assert.equal(catchUpRejection({ ...sent, messagePlan: 'classic' }), null);
+  });
+
+  it('never picks a current-plan Ask as the Schedule to catch up on', () => {
+    assert.equal(
+      pickCatchUpSchedule([
+        { id: 'i', typeKey: 'invitation', status: 'sent', sentAt: SENT_AT, dispatchedAt: SENT_AT },
+        { id: 'f', typeKey: 'follow_up', status: 'sent', sentAt: SENT_AT, dispatchedAt: SENT_AT },
+      ]),
+      null,
+    );
+  });
+
   it('allows a schedule that went out, by status or by claim', () => {
     assert.equal(catchUpRejection(sent), null);
     assert.equal(catchUpRejection({ ...sent, status: null }), null);

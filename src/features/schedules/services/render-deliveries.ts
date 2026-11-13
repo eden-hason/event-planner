@@ -15,7 +15,7 @@ import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
 import { loadOutsidePackageIds } from '@/features/billing/services';
-import { canReceiveSms } from '@/lib/phone';
+import { canReceiveSms, toE164 } from '@/lib/phone';
 import {
   includesGiftButton,
   hasInvitationImage,
@@ -27,6 +27,9 @@ import {
   type ParameterResolutionContext,
 } from '../utils';
 import { renderSendPayload, type SendPayload } from '../utils/send-payload';
+import { publicSiteUrl } from '../utils/parameter-resolvers';
+import { renderMessagePlanForGuest } from '../utils/message-plan-send';
+import { describeRefusal } from '../message-plan/render';
 
 /**
  * Turning a Schedule into one fully rendered message per Guest.
@@ -52,7 +55,8 @@ import { renderSendPayload, type SendPayload } from '../utils/send-payload';
 
 export type RenderedDelivery = {
   deliveryId: string;
-  templateId: string;
+  /** The catalog row sent. Null on the current Message Plan, which has none (ADR 0055). */
+  templateId: string | null;
   payload: SendPayload;
 };
 
@@ -97,6 +101,101 @@ async function loadAudienceContext(
   }
 
   return { groups, tables };
+}
+
+type AudienceOptions = {
+  guestIds?: string[];
+  outsidePackage?: ReadonlySet<string>;
+};
+
+type PreparedAudience =
+  | {
+      ok: true;
+      reachable: GuestApp[];
+      reserved: Awaited<ReturnType<typeof reserveDeliveries>>;
+      groups: Map<string, GroupApp>;
+      tables: Map<string, { tableNumber: number; label: string | null }>;
+      outsideCount: number;
+    }
+  | { ok: false; reason: string };
+
+/**
+ * The audience half of rendering, shared by both Message Plans: who is
+ * targeted, the Record Package gate, who has a usable phone, the not-sent
+ * bookkeeping, and the Delivery reservation that gives each Guest their RSVP
+ * token. Only the message itself differs between the plans.
+ */
+async function prepareAudience(
+  supabase: SupabaseClient,
+  scheduleId: string,
+  schedule: ScheduleApp,
+  options: AudienceOptions,
+  rules: { usablePhone: (phone: string | null | undefined) => boolean; needTables: boolean },
+): Promise<PreparedAudience> {
+  const { usablePhone } = rules;
+  let guestsQuery = supabase.from('guests').select('*').eq('event_id', schedule.eventId);
+  if (options.guestIds?.length) {
+    guestsQuery = guestsQuery.in('id', options.guestIds);
+  }
+  const { data: rawGuests, error: guestsError } = await guestsQuery;
+  if (guestsError) return { ok: false, reason: `Could not load guests: ${guestsError.message}` };
+  if (!rawGuests?.length) return { ok: false, reason: 'No guests found for event' };
+
+  const all = rawGuests.map((g: Record<string, unknown>) => DbToAppTransformerSchema.parse(g));
+  const targeted = options.guestIds?.length
+    ? all
+    : filterGuestsByTarget(all, schedule.targetStatus);
+  if (targeted.length === 0) {
+    return { ok: false, reason: 'No eligible guests after applying filters' };
+  }
+
+  // The sending gate (ADR 0027): only Guest Records inside the Record Package are
+  // sent to. It applies to a hand-picked send too - the package caps sending, not
+  // just the Dispatcher. A record outside it is skipped even if it has no phone
+  // either, because adding a number would not make it send.
+  const outsideIds =
+    options.outsidePackage ?? (await loadOutsidePackageIds(supabase, schedule.eventId));
+  if (!outsideIds) return { ok: false, reason: 'Could not check the record package' };
+  const outside = targeted.filter((guest) => outsideIds.has(guest.id));
+  const inside = targeted.filter((guest) => !outsideIds.has(guest.id));
+
+  const reachable = inside.filter((guest) => usablePhone(guest.phone));
+
+  // Skipped guests are a fact the Owner needs to see ("never got it - no phone
+  // number", "outside the package"), not just a number in a summary. Only
+  // meaningful for a whole audience: a hand-picked subset says nothing about who
+  // was left out.
+  if (!options.guestIds?.length) {
+    const unreachable = inside.filter((guest) => !usablePhone(guest.phone));
+    try {
+      if (outside.length > 0) {
+        await recordNotSent(supabase, scheduleId, outside.map((g) => g.id), 'scheduled', 'outside_package');
+      }
+      if (unreachable.length > 0) {
+        await recordNotSent(supabase, scheduleId, unreachable.map((g) => g.id), 'scheduled', 'no_phone');
+      }
+    } catch (error) {
+      console.error('[render] Could not record not-sent deliveries:', error);
+    }
+  }
+
+  if (inside.length === 0) {
+    return { ok: false, reason: 'Every targeted guest record is outside the record package' };
+  }
+  if (reachable.length === 0) return { ok: false, reason: 'No guests with valid phone numbers' };
+
+  // Reserve before rendering: the RSVP token is part of the message, and a
+  // guest who already has a Delivery for this Schedule keeps theirs (ADR 0011).
+  const reserved = await reserveDeliveries(
+    supabase,
+    scheduleId,
+    reachable.map((guest) => guest.id),
+    options.guestIds?.length ? 'manual' : 'scheduled',
+  );
+
+  const { groups, tables } = await loadAudienceContext(supabase, reachable, rules.needTables);
+
+  return { ok: true, reachable, reserved, groups, tables, outsideCount: outside.length };
 }
 
 export async function renderScheduleDeliveries(
@@ -154,6 +253,12 @@ export async function renderScheduleDeliveries(
     };
   }
 
+  // The current Message Plan has no template: its messages are written in code
+  // (ADR 0055). Everything around the message is shared.
+  if (event.messagePlan === 'current') {
+    return renderMessagePlanDeliveries(supabase, scheduleId, schedule, event, options);
+  }
+
   // The Schedule's own template is the family anchor bound weeks ago, before
   // seating was done or a gift provider was added, so the body is resolved from
   // the Event's current configuration instead.
@@ -177,71 +282,15 @@ export async function renderScheduleDeliveries(
   // blank where the number should be.
   const { withTable, withoutTable } = resolution.templates;
 
-  let guestsQuery = supabase.from('guests').select('*').eq('event_id', schedule.eventId);
-  if (options.guestIds?.length) {
-    guestsQuery = guestsQuery.in('id', options.guestIds);
-  }
-  const { data: rawGuests, error: guestsError } = await guestsQuery;
-  if (guestsError) return { ok: false, reason: `Could not load guests: ${guestsError.message}` };
-  if (!rawGuests?.length) return { ok: false, reason: 'No guests found for event' };
-
-  const all = rawGuests.map((g: Record<string, unknown>) => DbToAppTransformerSchema.parse(g));
-  const targeted = options.guestIds?.length
-    ? all
-    : filterGuestsByTarget(all, schedule.targetStatus);
-  if (targeted.length === 0) {
-    return { ok: false, reason: 'No eligible guests after applying filters' };
-  }
-
-  // The sending gate (ADR 0027): only Guest Records inside the Record Package are
-  // sent to. It applies to a hand-picked send too - the package caps sending, not
-  // just the Dispatcher. A record outside it is skipped even if it has no phone
-  // either, because adding a number would not make it send.
-  const outsideIds =
-    options.outsidePackage ?? (await loadOutsidePackageIds(supabase, schedule.eventId));
-  if (!outsideIds) return { ok: false, reason: 'Could not check the record package' };
-  const outside = targeted.filter((guest) => outsideIds.has(guest.id));
-  const inside = targeted.filter((guest) => !outsideIds.has(guest.id));
-
-  // A Schedule sent by SMS cannot reach a number from abroad (SMS is
-  // Israeli-only), so such a guest is skipped as having no usable phone - for
-  // this channel, they have none.
-  const usablePhone = withoutTable.channel === 'sms' ? canReceiveSms : validatePhoneNumber;
-  const reachable = inside.filter((guest) => usablePhone(guest.phone));
-
-  // Skipped guests are a fact the Owner needs to see ("never got it - no phone
-  // number", "outside the package"), not just a number in a summary. Only
-  // meaningful for a whole audience: a hand-picked subset says nothing about who
-  // was left out.
-  if (!options.guestIds?.length) {
-    const unreachable = inside.filter((guest) => !usablePhone(guest.phone));
-    try {
-      if (outside.length > 0) {
-        await recordNotSent(supabase, scheduleId, outside.map((g) => g.id), 'scheduled', 'outside_package');
-      }
-      if (unreachable.length > 0) {
-        await recordNotSent(supabase, scheduleId, unreachable.map((g) => g.id), 'scheduled', 'no_phone');
-      }
-    } catch (error) {
-      console.error('[render] Could not record not-sent deliveries:', error);
-    }
-  }
-
-  if (inside.length === 0) {
-    return { ok: false, reason: 'Every targeted guest record is outside the record package' };
-  }
-  if (reachable.length === 0) return { ok: false, reason: 'No guests with valid phone numbers' };
-
-  // Reserve before rendering: the RSVP token is part of the message, and a
-  // guest who already has a Delivery for this Schedule keeps theirs (ADR 0011).
-  const reserved = await reserveDeliveries(
-    supabase,
-    scheduleId,
-    reachable.map((guest) => guest.id),
-    options.guestIds?.length ? 'manual' : 'scheduled',
-  );
-
-  const { groups, tables } = await loadAudienceContext(supabase, reachable, Boolean(withTable));
+  const audience = await prepareAudience(supabase, scheduleId, schedule, options, {
+    // A Schedule sent by SMS cannot reach a number from abroad (SMS is
+    // Israeli-only), so such a guest is skipped as having no usable phone - for
+    // this channel, they have none.
+    usablePhone: withoutTable.channel === 'sms' ? canReceiveSms : validatePhoneNumber,
+    needTables: Boolean(withTable),
+  });
+  if (!audience.ok) return audience;
+  const { reachable, reserved, groups, tables, outsideCount } = audience;
 
   // Render every message in full before the caller queues any of them. A
   // content error is the whole Schedule's problem, so it fails here as one
@@ -276,5 +325,56 @@ export async function renderScheduleDeliveries(
   }
 
   if (rendered.length === 0) return { ok: false, reason: 'No deliveries could be prepared' };
-  return { ok: true, rendered, schedule, outsidePackage: outside.length };
+  return { ok: true, rendered, schedule, outsidePackage: outsideCount };
+}
+
+/**
+ * The current Message Plan's half of `renderScheduleDeliveries`: the same
+ * audience, Record Package gate, reservation and tokens, with each message
+ * rendered by the plan's own code. Every Guest is sent on WhatsApp first; the
+ * SMS Fallback renders the SMS from the same call (send-sms-fallback.ts).
+ *
+ * A refusal (a missing venue, a Reminder due after the Event, ...) fails the
+ * whole Schedule with the renderer's reason, so it lands on the dispatch log
+ * as one line rather than as a failed attempt per Guest.
+ */
+async function renderMessagePlanDeliveries(
+  supabase: SupabaseClient,
+  scheduleId: string,
+  schedule: ScheduleApp,
+  event: ReturnType<typeof mapEventRow>,
+  options: AudienceOptions,
+): Promise<RenderDeliveriesResult> {
+  const audience = await prepareAudience(supabase, scheduleId, schedule, options, {
+    usablePhone: validatePhoneNumber,
+    needTables: shouldSendTableNumbers(event.guestExperience),
+  });
+  if (!audience.ok) return audience;
+  const { reachable, reserved, tables, outsideCount } = audience;
+
+  const siteUrl = publicSiteUrl();
+  const rendered: RenderedDelivery[] = [];
+  for (const guest of reachable) {
+    const delivery = reserved.get(guest.id);
+    if (!delivery) continue; // no token reserved - nothing to link back to
+
+    const result = renderMessagePlanForGuest({
+      schedule,
+      event,
+      guest: { name: guest.name, phone: toE164(guest.phone) },
+      table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
+      confirmationToken: delivery.confirmationToken,
+      siteUrl,
+    });
+    if (!result.ok) {
+      return {
+        ok: false,
+        reason: `Could not render the message for ${guest.name}: ${describeRefusal(result.refusal)}`,
+      };
+    }
+    rendered.push({ deliveryId: delivery.id, templateId: null, payload: result.whatsapp });
+  }
+
+  if (rendered.length === 0) return { ok: false, reason: 'No deliveries could be prepared' };
+  return { ok: true, rendered, schedule, outsidePackage: outsideCount };
 }

@@ -36,3 +36,16 @@ test('a plan with no asks at all has nothing to date', () => {
   assert.equal(hasNoAskPlanned([row('event_reminder', DUE)]), false);
   assert.equal(hasNoAskPlanned([]), false);
 });
+
+test('the current plan: a seeded plan has no ask planned until an Invitation or Follow-up is dated', () => {
+  const seeded = [
+    row('invitation'),
+    row('follow_up'),
+    row('follow_up'),
+    row('event_reminder', DUE),
+    row('post_event', DUE),
+  ];
+  assert.equal(hasNoAskPlanned(seeded), true);
+  assert.equal(hasNoAskPlanned([...seeded.slice(0, 2), row('follow_up', DUE)]), false);
+  assert.equal(hasNoAskPlanned([row('invitation', DUE), row('follow_up')]), false);
+});

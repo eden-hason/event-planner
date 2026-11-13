@@ -142,8 +142,15 @@ async function renderHandText(
     return { text: null, reason: 'לתזמון הזה אין נוסח טקסט שאפשר להכין מראש' };
   }
 
+  // On the current Message Plan this is the message's SMS body (ADR 0055):
+  // the WhatsApp words with one real link line per button, never the
+  // preview's bracketed button labels.
   const rendered = await renderSmsRenditionFor(supabase, loaded, resolution, guestId, token);
   if (!rendered) return { text: null, reason: 'רשומת האורח כבר לא קיימת' };
+  if (rendered.text === null) {
+    console.warn('[hand-delivery] Could not render the message for schedule', scheduleId, rendered.reason);
+    return { text: null, reason: 'לתזמון הזה אין נוסח טקסט שאפשר להכין מראש' };
+  }
   return { text: rendered.text, reason: null };
 }
 

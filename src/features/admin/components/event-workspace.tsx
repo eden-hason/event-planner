@@ -8,6 +8,7 @@ import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/i
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AddFollowUpDialog } from './add-follow-up-dialog';
 import { AddAdvanceReminderDialog } from './add-advance-reminder-dialog';
 import { AddCallRoundDialog } from './add-call-round-dialog';
 import { LateGuestsDialog } from './late-guests-dialog';
@@ -336,8 +337,12 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
     const messageSchedules = rows.filter((row) => row.kind === 'message');
     // One per Event: a second would be a second reminder before the day, which
     // nothing asked for. Offered before payment too, like dating the plan.
+    const onMessagePlan = event.messagePlan === 'current';
+    // Classic only: the current plan has no Advance Reminder (ADR 0053).
     const advanceReminderEventDate =
-      event.status === 'published' && !rows.some((row) => row.scheduleTypeKey === 'advance_reminder')
+      !onMessagePlan &&
+      event.status === 'published' &&
+      !rows.some((row) => row.scheduleTypeKey === 'advance_reminder')
         ? event.eventDate
         : null;
     return (
@@ -351,13 +356,18 @@ export async function EventOutreachBand({ eventId }: { eventId: string }) {
         action={(
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <SmsFallbackToggle eventId={event.id} smsFallbackEnabled={event.smsFallbackEnabled} />
-            {guestSummary && messageSchedules.some((row) => row.status === 'sent') && (
+            {/* The late-guest send is a Catch-up Send, which the current plan does not offer yet (backlog 0039). */}
+            {!onMessagePlan && guestSummary && messageSchedules.some((row) => row.status === 'sent') && (
               <LateGuestsDialog
                 schedules={messageSchedules.map(({ id, title, status, channel }) => ({ id, title, status, channel }))}
               />
             )}
             {advanceReminderEventDate && (
               <AddAdvanceReminderDialog eventId={event.id} eventDate={advanceReminderEventDate} />
+            )}
+            {/* An Extra Schedule on the current plan is one more Follow-up. */}
+            {onMessagePlan && event.status === 'published' && event.eventDate && (
+              <AddFollowUpDialog eventId={event.id} />
             )}
             {guestSummary && event.planIncludesCalls && (
               <AddCallRoundDialog events={[{ id: event.id, title: event.title, pending: guestSummary.pending, confirmed: guestSummary.confirmed }]} eventId={event.id} />

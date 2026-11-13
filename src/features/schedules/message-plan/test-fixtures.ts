@@ -1,6 +1,6 @@
 /**
- * Shared test inputs: one wedding as `mapEventRow` maps it, plus the two facts
- * the Message Plan reads that it does not map yet. Imported by tests only.
+ * Shared test inputs: one wedding as `mapEventRow` maps it. Imported by tests
+ * only.
  */
 
 import { mapEventRow } from '../services/map-event-row';
@@ -24,19 +24,16 @@ export function weddingEvent(
     invitations: { image_url: 'https://cdn.example.com/invitation.jpg' },
     invitation_video_url: 'https://cdn.example.com/invitation.mp4',
     reception_time: '19:30',
+    ceremony_time: '20:30',
     short_code: 'aB3xY9',
     event_settings: {
       bit_config: { enabled: true, link: 'https://bit.example/pay' },
     },
     guests_experience: { send_table_numbers: true },
     event_types: { key: 'wedding' },
+    message_plan: 'current',
   });
-  return {
-    ...mapped,
-    eventTypeKey: 'wedding',
-    ceremonyTime: '20:30',
-    ...overrides,
-  };
+  return { ...mapped, ...overrides };
 }
 
 export const SEATED: MessagePlanGuest = {
