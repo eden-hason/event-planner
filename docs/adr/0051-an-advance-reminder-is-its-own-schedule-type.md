@@ -4,7 +4,8 @@ Date: 2026-10-31
 
 ## Status
 
-Accepted. Not built yet.
+Accepted. Superseded by ADR 0053 for Events created under it, where the one Event
+Reminder may be sent on any day up to the Event and its wording follows that day.
 
 ## Context
 

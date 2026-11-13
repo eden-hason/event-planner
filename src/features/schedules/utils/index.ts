@@ -72,6 +72,14 @@ export {
 } from './whatsapp-failures';
 
 export { hasHandDelivery } from './hand-delivery';
+export {
+  MESSAGE_PLAN_DEFAULT_TIME,
+  messagePlanStartTime,
+  reminderProposal,
+  reminderProposalDay,
+  thankYouDay,
+  thankYouDueTime,
+} from './message-plan-dates';
 
 export type TimeUnit = 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
 

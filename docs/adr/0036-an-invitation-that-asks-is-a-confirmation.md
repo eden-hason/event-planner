@@ -4,7 +4,8 @@ Date: 2026-10-11
 
 ## Status
 
-Accepted
+Accepted. Superseded by ADR 0053 for Events created under it, where the Invitation
+always asks; still governs older Events
 
 ## Context
 
