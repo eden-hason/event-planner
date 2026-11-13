@@ -33,17 +33,17 @@ import {
   resolveTemplatesForPreview,
 } from '../queries/resolve-templates';
 import { getSentCountByScheduleId } from '../queries/sent-counts';
-import { getMessagePlanPageData } from '../queries/message-plan';
-import { messageField, stageOfScheduleType, stageOffersTable } from '../message-plan';
+import { getMessagePlanPageData, type MessagePlanPageData } from '../queries/message-plan';
+import {
+  messageField,
+  stageOfScheduleType,
+  stageOffersTable,
+  type Stage,
+} from '../message-plan';
 import { publicSiteUrl } from '../utils/parameter-resolvers';
 import { scheduleChannel } from '../utils/message-plan-kind';
-import {
-  previewGuests,
-  sentTables,
-  sentWording,
-  type PreviewGuestSource,
-} from '../utils/message-plan-editor';
-import { MessagePlanDetailPane } from './message-plan-detail-pane';
+import { sentWording, stageGuests } from '../utils/message-plan-editor';
+import { MessagePlanDetailPane, type MessagePlanGuests } from './message-plan-detail-pane';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoButton } from './delivery-info-button';
 import { ScheduleDetailPane } from './schedule-detail-pane';
@@ -116,20 +116,17 @@ export async function SchedulesPage({
     // round trip rather than seven.
     getSentCountByScheduleId(schedules.map((schedule) => schedule.id)),
     // Every Personal Message frame in one read, rather than one per card.
-    getPersonalMessageCatalog(),
+    // Classic only: the current plan's messages are written in code.
+    currentPlan ? Promise.resolve([]) : getPersonalMessageCatalog(),
     // The Event as the send maps it and its tables, for the current plan's
     // editor and preview. Not read for a Classic Event.
     currentPlan ? getMessagePlanPageData(eventId) : Promise.resolve(null),
   ]);
 
-  // Every Guest's name and table, as the current plan's count and preview read them.
-  const planGuests: PreviewGuestSource[] = messagePlanData
-    ? guests.map((guest) => ({
-        id: guest.id,
-        name: guest.name,
-        table: guest.tableId ? (messagePlanData.tables.get(guest.tableId) ?? null) : null,
-      }))
-    : [];
+  // The Guests as the current plan's stages read them, worked out once for a
+  // stage that sends tables and once for one that does not, and shared by
+  // every pane of that kind.
+  const planGuests = messagePlanData ? messagePlanGuests(guests, messagePlanData) : null;
   const siteUrl = publicSiteUrl();
 
   // schedule.template is only the family anchor. Resolve what would actually be
@@ -289,6 +286,8 @@ export async function SchedulesPage({
         number && number.total > 1 ? `${baseLabel} ${number.index}` : baseLabel;
 
       const isMessage = isMessageSchedule(schedule);
+      // A Schedule on the current Message Plan opens its own pane (ADR 0053).
+      const stage = messagePlanData ? stageOfScheduleType(schedule.scheduleTypeKey) : null;
       const round = isMessage ? undefined : roundsBySchedule.get(schedule.id);
 
       // A call round is planned like a message but executed by a person, so it
@@ -340,18 +339,17 @@ export async function SchedulesPage({
             }
           : null,
         // The current plan's list says whose words each message is (brief 5).
-        wordingLabel:
-          messagePlanData && stageOfScheduleType(schedule.scheduleTypeKey)
-            ? t(`messagePlan.list.${sentWording(schedule)}`)
-            : null,
-        details: isMessage && messagePlanData && stageOfScheduleType(schedule.scheduleTypeKey) ? (
-          <MessagePlanPane
+        listDetail: stage ? t(`messagePlan.list.${sentWording(schedule)}`) : null,
+        details: stage && messagePlanData && planGuests ? (
+          <MessagePlanDetailPane
             schedule={schedule}
-            data={messagePlanData}
-            guests={planGuests}
+            stage={stage}
+            event={messagePlanData.event}
             status={status}
             audienceCount={audienceCount}
+            guests={planGuests(stage)}
             siteUrl={siteUrl}
+            previewToken={messagePlanData.previewToken}
             smsFallback={event?.smsFallbackEnabled ?? true}
           />
         ) : isMessage ? (
@@ -461,47 +459,32 @@ export async function SchedulesPage({
 }
 
 /**
- * One current-plan Schedule's pane, with the Guests its preview and count
- * read: the tables only where the stage sends them and the Event's switch is
- * on, as the send does.
+ * The Guests each current-plan stage reads, built at most twice whatever the
+ * number of Schedules: with tables for a stage that sends them (the Reminder,
+ * with the Event's switch on) and without for every other.
  */
-function MessagePlanPane({
-  schedule,
-  data,
-  guests,
-  status,
-  audienceCount,
-  siteUrl,
-  smsFallback,
-}: {
-  schedule: ScheduleApp;
-  data: NonNullable<Awaited<ReturnType<typeof getMessagePlanPageData>>>;
-  guests: PreviewGuestSource[];
-  status: OutreachItem['status'];
-  audienceCount: number | null;
-  siteUrl: string;
-  smsFallback: boolean;
-}) {
-  const stage = stageOfScheduleType(schedule.scheduleTypeKey);
-  if (!stage) return null;
-  const sent = sentTables(stage, guests, data.event);
-  const sample = messageField('guestName').sample;
-  return (
-    <MessagePlanDetailPane
-      schedule={schedule}
-      stage={stage}
-      event={data.event}
-      status={status}
-      audienceCount={audienceCount}
-      guests={sent.map(({ name, table }) => ({ name, table }))}
-      preview={previewGuests(sent, {
-        offersTable: stageOffersTable(stage) && shouldSendTableNumbers(data.event.guestExperience),
-        sampleName: sample,
+function messagePlanGuests(
+  guests: { id: string; name: string; tableId?: string | null }[],
+  data: MessagePlanPageData,
+): (stage: Stage) => MessagePlanGuests {
+  const sources = guests.map((guest) => ({
+    id: guest.id,
+    name: guest.name,
+    table: guest.tableId ? (data.tables.get(guest.tableId) ?? null) : null,
+  }));
+  const tablesOn = shouldSendTableNumbers(data.event.guestExperience);
+  const built = new Map<boolean, MessagePlanGuests>();
+  return (stage) => {
+    const offersTable = tablesOn && stageOffersTable(stage);
+    let entry = built.get(offersTable);
+    if (!entry) {
+      entry = stageGuests(sources, {
+        offersTable,
+        sampleName: messageField('guestName').sample,
         sampleTable: Number(messageField('tableNumber').sample),
-      })}
-      siteUrl={siteUrl}
-      previewToken={data.previewToken}
-      smsFallback={smsFallback}
-    />
-  );
+      });
+      built.set(offersTable, entry);
+    }
+    return entry;
+  };
 }

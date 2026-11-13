@@ -17,6 +17,7 @@ import {
   fillValue,
   isBlankPersonalText,
   longestGuestName,
+  longestTable,
   messageField,
   messageFieldsFor,
   parsePersonalText,
@@ -33,7 +34,6 @@ import {
   type Stage,
   type Wording,
 } from '../message-plan';
-import { isGiftingEnabled } from './event-config';
 import { eventDay, reminderDayFor, thankYouDay } from './message-plan-dates';
 
 // ─── Which message ───────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export function sentWording(schedule: {
 
 // ─── Attachment and gift ─────────────────────────────────────────────────────
 
-export type AttachmentOption = {
+type AttachmentOption = {
   value: Attachment;
   /** The Event has it now. "none" always is. */
   available: boolean;
@@ -77,11 +77,6 @@ export function attachmentOptions(
     value,
     available: value === 'none' || effectiveAttachment(stage, value, event) === value,
   }));
-}
-
-/** Whether the gift switch can be on: the Event's Gifting page is set up. */
-export function giftAvailable(event: Pick<MessagePlanEvent, 'eventSettings'>): boolean {
-  return isGiftingEnabled(event.eventSettings);
 }
 
 // ─── Message Fields ──────────────────────────────────────────────────────────
@@ -128,7 +123,7 @@ export function tokenValue(
 // ─── Validation messages ─────────────────────────────────────────────────────
 
 /** An i18n key under `schedules.messagePlan.errors`, and its values. */
-export type PersonalTextErrorMessage = {
+type PersonalTextErrorMessage = {
   key:
     | 'tooLong'
     | 'tooManyParagraphs'
@@ -250,17 +245,20 @@ export function previewGuests(
   const others = named
     .filter((guest) => !presets.has(guest.id))
     .map((guest) => ({ ...guest, tags: [] }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    .sort((a, b) => HEBREW_ORDER.compare(a.name, b.name));
 
   return { presets: [...presets.values()], others };
 }
 
+/** One collator for every sort: a locale passed per call skips V8's collator cache. */
+const HEBREW_ORDER = new Intl.Collator('he');
+
 /** The Guest whose name is the median length: a name that reads like most. */
 function middleByLength<T extends { name: string }>(guests: readonly T[]): T {
-  const sorted = [...guests].sort(
-    (a, b) => characterCount(a.name.trim()) - characterCount(b.name.trim()),
-  );
-  return sorted[Math.floor((sorted.length - 1) / 2)];
+  const sorted = guests
+    .map((guest) => ({ guest, length: characterCount(guest.name.trim()) }))
+    .sort((a, b) => a.length - b.length);
+  return sorted[Math.floor((sorted.length - 1) / 2)].guest;
 }
 
 /**
@@ -332,8 +330,6 @@ export type EditorDocument = {
   tableSentence: { before: string; after: string } | null;
 };
 
-export const EMPTY_EDITOR_DOCUMENT: EditorDocument = { paragraphs: [], tableSentence: null };
-
 /** The stored text as the editor shows it. Only the first table sentence is kept. */
 export function toEditorDocument(text: PersonalText): EditorDocument {
   let tableSentence: EditorDocument['tableSentence'] = null;
@@ -393,12 +389,28 @@ export function fromEditorDocument(document: EditorDocument): PersonalText {
   return { paragraphs };
 }
 
-/** The fields placed in a document, each once, in order. */
-export function placedFields(document: EditorDocument): MessageFieldKey[] {
-  const fields: MessageFieldKey[] = [];
-  for (const segment of document.paragraphs.flat()) {
-    if (segment.kind === 'field' && !fields.includes(segment.field)) fields.push(segment.field);
-  }
-  if (document.tableSentence && !fields.includes('tableNumber')) fields.push('tableNumber');
-  return fields;
+// ─── What every pane of a kind is handed ─────────────────────────────────────
+
+/**
+ * The Guests as a stage reads them, worked out once per kind of stage: with
+ * their tables when the stage sends tables (the Reminder, with the Event's
+ * switch on), without otherwise. The longest name and table are all the
+ * 400-character count needs (ADR 0054), so only they go to the editor; the
+ * preview gets its picker's list.
+ */
+export function stageGuests(
+  guests: readonly PreviewGuestSource[],
+  options: { offersTable: boolean; sampleName: string; sampleTable: number },
+): {
+  longest: { name: string; table: MessagePlanGuestTable | null };
+  preview: { presets: PreviewGuest[]; others: PreviewGuest[] };
+} {
+  const sent = options.offersTable ? guests : guests.map((guest) => ({ ...guest, table: null }));
+  return {
+    longest: {
+      name: longestGuestName(sent.map((guest) => guest.name)),
+      table: longestTable(sent.map((guest) => guest.table)),
+    },
+    preview: previewGuests(sent, options),
+  };
 }

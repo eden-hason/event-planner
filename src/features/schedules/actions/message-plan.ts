@@ -4,15 +4,19 @@ import { revalidatePath } from 'next/cache';
 
 import { sendingConfig } from '@/lib/config/sending';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
+import { embeddedOne, pageAll } from '@/lib/supabase/row-cap';
 import { createClient } from '@/lib/supabase/server';
 
+import type { MessagePlanSaveInput } from '../schemas/message-plan';
 import { MAPPED_EVENT_COLUMNS, mapEventRow } from '../services/map-event-row';
+import { loadTableNumbers } from '../services/table-numbers';
 import { dueTimeIssue } from '../utils/due-time-guards';
 import {
   checkMessagePlanSave,
+  savesPersonalText,
   type MessagePlanSaveError,
-  type MessagePlanSaveInput,
 } from '../utils/message-plan-save';
+import { isScheduleEditable } from '../utils/schedule-editable';
 
 export type UpdateMessagePlanScheduleState = {
   success: boolean;
@@ -29,11 +33,6 @@ export type UpdateMessagePlanScheduleState = {
     | 'due_time'
     | 'failed';
 };
-
-/** A to-one embed, which the generated types also allow as an array. */
-function one<T>(value: unknown): T | null {
-  return ((Array.isArray(value) ? value[0] : value) as T | undefined) ?? null;
-}
 
 /**
  * Saves an open Schedule on the current Message Plan (ADR 0053, 0054): its
@@ -66,19 +65,16 @@ export async function updateMessagePlanSchedule(
       return { success: false, code: 'not_found', message: 'Schedule not found' };
     }
 
-    const type = one<{ key: string; execution_kind: string }>(existing.schedule_types);
-    const rawEvent = one<Record<string, unknown>>(existing.events);
+    const type = embeddedOne(existing.schedule_types);
+    const rawEvent = embeddedOne<Record<string, unknown>>(
+      existing.events as unknown as Record<string, unknown> | null,
+    );
     if (!type || !rawEvent) {
       return { success: false, code: 'not_found', message: 'Schedule not found' };
     }
 
-    // A claimed Schedule is as good as sent: its messages are already queued.
     if (
-      existing.dispatched_at ||
-      existing.status === 'sent' ||
-      existing.status === 'disabled' ||
-      existing.status === 'cancelled' ||
-      existing.status === 'expired' ||
+      !isScheduleEditable({ status: existing.status, dispatchedAt: existing.dispatched_at }) ||
       type.execution_kind !== 'message'
     ) {
       return { success: false, code: 'not_editable', message: 'This message can no longer be changed' };
@@ -89,24 +85,27 @@ export async function updateMessagePlanSchedule(
       return { success: false, code: 'not_current_plan', message: 'This event is on the Classic Message Plan' };
     }
 
-    // The guests are read only when there is a Personal Message to count.
+    const stored = {
+      wording: (existing.wording as 'kululu' | 'personal' | null) ?? null,
+      personalText: existing.personal_text ?? null,
+    };
+
+    // The Guests are read only when a Personal Message is to be counted.
     let guests: { name: string; table: { tableNumber: number; label: string | null } | null }[] = [];
-    if (input.wording !== undefined || input.personalText !== undefined) {
-      const [guestRows, tableRows] = await Promise.all([
-        supabase.from('guests').select('name, table_id').eq('event_id', event.id),
-        supabase.from('tables').select('id, table_number, label').eq('event_id', event.id),
+    if (savesPersonalText(input, stored)) {
+      const eventId = event.id;
+      const [guestRows, tables] = await Promise.all([
+        pageAll<{ name: string | null; table_id: string | null }>((from, to) =>
+          supabase
+            .from('guests')
+            .select('name, table_id')
+            .eq('event_id', eventId)
+            .order('id')
+            .range(from, to),
+        ),
+        loadTableNumbers(supabase, eventId),
       ]);
-      if (guestRows.error || tableRows.error) {
-        console.error('Error reading guests for the Personal Message:', guestRows.error ?? tableRows.error);
-        return { success: false, code: 'failed', message: 'Failed to save the message' };
-      }
-      const tables = new Map(
-        (tableRows.data ?? []).map((row) => [
-          row.id,
-          { tableNumber: row.table_number, label: row.label },
-        ]),
-      );
-      guests = (guestRows.data ?? []).map((guest) => ({
+      guests = guestRows.map((guest) => ({
         name: guest.name ?? '',
         table: guest.table_id ? (tables.get(guest.table_id) ?? null) : null,
       }));
@@ -115,10 +114,7 @@ export async function updateMessagePlanSchedule(
     const checked = checkMessagePlanSave({
       scheduleTypeKey: type.key,
       input,
-      stored: {
-        wording: (existing.wording as 'kululu' | 'personal' | null) ?? null,
-        personalText: existing.personal_text ?? null,
-      },
+      stored,
       event,
       guests,
     });

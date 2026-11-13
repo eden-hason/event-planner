@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { serialisePersonalText, type PersonalText } from '../message-plan';
 import { weddingEvent } from '../message-plan/test-fixtures';
-import { checkMessagePlanSave } from './message-plan-save';
+import { checkMessagePlanSave, savesPersonalText } from './message-plan-save';
 
 const text = (...paragraphs: PersonalText['paragraphs']) => serialisePersonalText({ paragraphs });
 const t = (value: string) => ({ kind: 'text' as const, text: value });
@@ -151,4 +151,17 @@ test('anything else is refused', () => {
   });
   assert.deepEqual(check('invitation', { extra: 1 }), { ok: false, error: { code: 'invalid_input' } });
   assert.deepEqual(check('confirmation', {}), { ok: false, error: { code: 'not_a_stage' } });
+});
+
+test('the Guest list is needed only to count a Personal Message being saved', () => {
+  const stored = { wording: 'kululu' as const, personalText: null };
+  const words = text([t('שלום')]);
+  assert.equal(savesPersonalText({ wording: 'personal', personalText: words }, stored), true);
+  assert.equal(savesPersonalText({ wording: 'kululu', personalText: words }, stored), false);
+  assert.equal(savesPersonalText({ wording: 'personal', personalText: null }, stored), false);
+  assert.equal(savesPersonalText({ attachment: 'none' } as never, stored), false);
+  assert.equal(
+    savesPersonalText({ personalText: words }, { wording: 'personal', personalText: null }),
+    true,
+  );
 });

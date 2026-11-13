@@ -5,29 +5,27 @@ import { useTranslations } from 'next-intl';
 import { IconArrowBack, IconExternalLink } from '@tabler/icons-react';
 
 import { Link } from '@/i18n/navigation';
-import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/toggle-switch';
 
 import {
   GIFT_BUTTON,
   NAVIGATION_BUTTON,
   RSVP_BUTTONS,
+  effectiveGift,
   isAskStage,
   type MessageButton,
 } from '../message-plan';
-import {
-  attachmentOptions,
-  giftAvailable,
-  timingNote,
-} from '../utils/message-plan-editor';
+import { isGiftingEnabled } from '../utils/event-config';
+import { attachmentOptions, timingNote } from '../utils/message-plan-editor';
+import { useDueTime } from './due-time-context';
 import { useMessagePlanSettings } from './message-plan-settings-context';
-import { useScheduleSettings } from './schedule-settings-context';
+import { RadioCardGroup } from './radio-card-group';
 import { SettingsCard } from './settings-card';
 
 /**
  * What an Ask attaches (brief 6.2): the Event's invitation image, its video
  * (the Invitation only) or nothing. What the Event does not have is shown but
- * not offered, with the way to add it.
+ * not offered, with the way to add it. Rendered on the Asks only.
  */
 export function MessagePlanAttachmentCard({ lockBadge }: { lockBadge?: ReactNode }) {
   const t = useTranslations('schedules.messagePlan.attachment');
@@ -35,50 +33,29 @@ export function MessagePlanAttachmentCard({ lockBadge }: { lockBadge?: ReactNode
     useMessagePlanSettings();
   if (!isAskStage(stage)) return null;
 
-  const options = attachmentOptions(stage, event);
-  const selectable = editable && !isSaving;
-
   return (
     <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
-      <div role="radiogroup" aria-label={t('cardTitle')} className="flex flex-col gap-2">
-        {options.map((option) => {
-          const checked = option.value === attachment;
-          const enabled = selectable && option.available;
-          return (
-            <div
-              key={option.value}
-              className={cn(
-                'flex flex-col gap-0.5 rounded-xl border-[1.5px] p-3',
-                checked ? 'border-primary bg-primary/5' : 'border-border',
-                !option.available && 'opacity-70',
-              )}
+      <RadioCardGroup
+        label={t('cardTitle')}
+        value={attachment}
+        onChange={setAttachment}
+        disabled={!editable || isSaving}
+        options={attachmentOptions(stage, event).map((option) => ({
+          value: option.value,
+          label: t(`options.${option.value}`),
+          disabled: !option.available,
+          extra: option.available ? null : option.value === 'image' ? (
+            <Link
+              href={`/app/${event.id}/details`}
+              className="text-primary text-xs font-semibold underline underline-offset-2"
             >
-              <button
-                type="button"
-                role="radio"
-                aria-checked={checked}
-                aria-disabled={!enabled}
-                disabled={!enabled}
-                onClick={() => setAttachment(option.value)}
-                className={cn('text-start', enabled ? 'cursor-pointer' : 'cursor-default')}
-              >
-                <span className="text-sm font-semibold">{t(`options.${option.value}`)}</span>
-              </button>
-              {!option.available && option.value === 'image' && (
-                <Link
-                  href={`/app/${event.id}/details`}
-                  className="text-primary text-xs font-semibold underline underline-offset-2"
-                >
-                  {t('addImage')}
-                </Link>
-              )}
-              {!option.available && option.value === 'video' && (
-                <span className="text-muted-foreground text-xs">{t('addVideo')}</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              {t('addImage')}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground text-xs">{t('addVideo')}</span>
+          ),
+        }))}
+      />
     </SettingsCard>
   );
 }
@@ -86,14 +63,12 @@ export function MessagePlanAttachmentCard({ lockBadge }: { lockBadge?: ReactNode
 /**
  * The gift switch on the Reminder and the Thank You (brief 6.4). Offered only
  * once the Gifting page is set up; until then, the way to set it up.
+ * Rendered on those two stages only.
  */
 export function MessagePlanGiftCard({ lockBadge }: { lockBadge?: ReactNode }) {
   const t = useTranslations('schedules.messagePlan.gift');
-  const { stage, event, giftButton, setGiftButton, editable, isSaving } =
-    useMessagePlanSettings();
-  if (isAskStage(stage)) return null;
-
-  const available = giftAvailable(event);
+  const { event, giftButton, setGiftButton, editable, isSaving } = useMessagePlanSettings();
+  const available = isGiftingEnabled(event.eventSettings);
 
   return (
     <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
@@ -105,7 +80,7 @@ export function MessagePlanGiftCard({ lockBadge }: { lockBadge?: ReactNode }) {
           </span>
         </span>
         <Switch
-          checked={available && giftButton === true}
+          checked={effectiveGift(giftButton, event)}
           onCheckedChange={setGiftButton}
           disabled={!editable || isSaving || !available}
         />
@@ -129,17 +104,14 @@ export function MessagePlanGiftCard({ lockBadge }: { lockBadge?: ReactNode }) {
 export function MessagePlanButtonsCard() {
   const t = useTranslations('schedules.messagePlan.buttons');
   const { stage, event, giftButton } = useMessagePlanSettings();
-  const gift = giftButton === true && giftAvailable(event);
+  const ask = isAskStage(stage);
 
-  const buttons: readonly MessageButton[] = isAskStage(stage)
+  const buttons: readonly MessageButton[] = ask
     ? RSVP_BUTTONS
-    : stage === 'event_reminder'
-      ? gift
-        ? [NAVIGATION_BUTTON, GIFT_BUTTON]
-        : [NAVIGATION_BUTTON]
-      : gift
-        ? [GIFT_BUTTON]
-        : [];
+    : [
+        ...(stage === 'event_reminder' ? [NAVIGATION_BUTTON] : []),
+        ...(effectiveGift(giftButton, event) ? [GIFT_BUTTON] : []),
+      ];
 
   return (
     <SettingsCard title={t('cardTitle')}>
@@ -158,7 +130,7 @@ export function MessagePlanButtonsCard() {
       ) : (
         <p className="text-muted-foreground text-xs">{t('none')}</p>
       )}
-      <p className="text-muted-foreground text-xs">{t(`help.${isAskStage(stage) ? 'ask' : stage}`)}</p>
+      <p className="text-muted-foreground text-xs">{t(`help.${ask ? 'ask' : stage}`)}</p>
     </SettingsCard>
   );
 }
@@ -170,7 +142,7 @@ export function MessagePlanButtonsCard() {
 export function MessagePlanTimingNote({ eventDate }: { eventDate: string | null }) {
   const t = useTranslations('schedules.messagePlan.timing');
   const { stage, wording } = useMessagePlanSettings();
-  const { scheduledDate } = useScheduleSettings();
+  const { scheduledDate } = useDueTime();
   const note = timingNote({ stage, eventDate, scheduledDate: scheduledDate || null, wording });
   if (!note) return null;
   return <p className="text-muted-foreground text-xs">{t(note)}</p>;

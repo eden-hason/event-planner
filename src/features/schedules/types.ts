@@ -84,10 +84,10 @@ export type OutreachItem = {
     noAnswer: number;
   } | null;
   /**
-   * On the current Message Plan, whose words the message is: Kululu's text or
-   * the Owner's own (brief 5). Null on Classic, and for a call.
+   * One more fact for the list card's line, already localized: on the current
+   * Message Plan, whose words the message is (brief 5). Null when there is none.
    */
-  wordingLabel?: string | null;
+  listDetail?: string | null;
   details: ReactNode;
 };
 

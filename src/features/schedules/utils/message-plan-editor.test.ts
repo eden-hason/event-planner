@@ -9,9 +9,7 @@ import {
   attachmentOptions,
   emptyMessageFields,
   fromEditorDocument,
-  placedFields,
   toEditorDocument,
-  giftAvailable,
   paletteFields,
   personalTextErrorMessage,
   previewGuests,
@@ -65,11 +63,6 @@ test('a Follow-up never offers the video', () => {
 test('an attachment link that does not parse is not offered', () => {
   const [image] = attachmentOptions('invitation', weddingEvent({ invitations: { imageUrl: 'not a url' } }));
   assert.equal(image.available, false);
-});
-
-test('the gift switch follows the Gifting page', () => {
-  assert.equal(giftAvailable(weddingEvent()), true);
-  assert.equal(giftAvailable(weddingEvent({ eventSettings: undefined })), false);
 });
 
 test('a field with no value on the Event is reported empty; per-Guest fields never are', () => {
@@ -232,17 +225,4 @@ test('a table sentence alone is its own paragraph', () => {
       },
     ],
   ]);
-});
-
-test('the fields placed are listed once, the table among them', () => {
-  assert.deepEqual(
-    placedFields({
-      paragraphs: [
-        [{ kind: 'field', field: 'venueName' }, { kind: 'field', field: 'venueName' }],
-        [{ kind: 'field', field: 'guestName' }],
-      ],
-      tableSentence: { before: '', after: '' },
-    }),
-    ['venueName', 'guestName', 'tableNumber'],
-  );
 });

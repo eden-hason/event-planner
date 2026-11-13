@@ -44,9 +44,6 @@ export async function ScheduleDetailPane({
   status,
   audienceCount,
 }: ScheduleDetailPaneProps) {
-  const t = await getTranslations('schedules');
-  const locale = await getLocale();
-
   const settings = (
     <ScheduleTabContent
       schedule={schedule}
@@ -68,21 +65,10 @@ export async function ScheduleDetailPane({
   const collectsRsvp = rsvpAsk !== 'none';
 
   return (
-    <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      <TabsList className="border-border mb-4 h-[42px] w-full rounded-none border-b bg-transparent p-0 md:justify-start md:gap-6">
-        {(['overview', 'results'] as const).map((tab) => (
-          <TabsTrigger
-            key={tab}
-            value={tab}
-            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 md:flex-none text-[14.5px] font-semibold shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
-            {t(`tabs.${tab}`)}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      <TabsContent value="overview">{settings}</TabsContent>
-      <TabsContent value="results">
-        {status === 'sent' ? (
+    <ScheduleDetailTabs
+      settings={settings}
+      results={
+        status === 'sent' ? (
           <ScheduleInteractionsCard
             scheduleId={schedule.id}
             rsvpAsk={rsvpAsk}
@@ -96,8 +82,41 @@ export async function ScheduleDetailPane({
             channel={schedule.deliveryMethod}
             smsFallback={event?.smsFallbackEnabled ?? true}
           />
-        )}
-      </TabsContent>
+        )
+      }
+    />
+  );
+}
+
+/**
+ * The two tabs of an open message Schedule, on either Message Plan: its
+ * settings, and its results. Until the Schedule has gone out the results tab
+ * shows what it will hold, faded, rather than a funnel of zeroes.
+ */
+export async function ScheduleDetailTabs({
+  settings,
+  results,
+}: {
+  settings: React.ReactNode;
+  results: React.ReactNode;
+}) {
+  const t = await getTranslations('schedules');
+  const locale = await getLocale();
+  return (
+    <Tabs defaultValue="overview" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+      <TabsList className="border-border mb-4 h-[42px] w-full rounded-none border-b bg-transparent p-0 md:justify-start md:gap-6">
+        {(['overview', 'results'] as const).map((tab) => (
+          <TabsTrigger
+            key={tab}
+            value={tab}
+            className="data-[state=active]:text-primary data-[state=active]:after:bg-primary relative h-full flex-1 rounded-none border-none bg-transparent px-1 md:flex-none text-[14.5px] font-semibold shadow-none after:absolute after:right-0 after:bottom-0 after:left-0 after:h-0.5 after:bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            {t(`tabs.${tab}`)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      <TabsContent value="overview">{settings}</TabsContent>
+      <TabsContent value="results">{results}</TabsContent>
     </Tabs>
   );
 }

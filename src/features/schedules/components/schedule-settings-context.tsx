@@ -12,22 +12,14 @@ import {
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
-import { israelWallClockParts } from '@/lib/date-time';
-
 import { updateCustomText, updatePersonalMessage, updateScheduledDate } from '../actions';
-import { DEFAULT_SEND_TIME } from '../utils/timeline';
 import { useReportUnsavedChanges } from './unsaved-changes-guard';
 import type { ScheduleApp } from '../schemas';
 import type { MessagePlan } from '../utils/message-plan-kind';
-import {
-  dueTimeIssue as findDueTimeIssue,
-  pastDueTime,
-  type DueTimeIssue,
-  type DueTimeRules,
-  type PastDueTime,
-} from '../utils/due-time-guards';
+import type { DueTimeIssue, DueTimeRules } from '../utils/due-time-guards';
+import { DueTimeProvider, useDueTimeField } from './due-time-context';
 
-export interface ScheduleSettings {
+interface ScheduleSettings {
   /** False once nothing about this Schedule can be changed any more. */
   editable: boolean;
   note: string;
@@ -47,22 +39,8 @@ export interface ScheduleSettings {
    * text, or nothing while Kululu's message is chosen. The preview reads this.
    */
   effectivePersonalMessage: string;
-  /** The Due Time, as an instant. Empty while an Undated Schedule has no date picked. */
-  scheduledDate: string;
-  setScheduledDate: (iso: string) => void;
-  /** The Israel wall clock of the Due Time, `HH:mm`. */
-  scheduledTime: string;
-  setScheduledTime: (time: string) => void;
-  /**
-   * The moment the Due Time was last edited. The guards compare against it
-   * rather than reading the clock during render, and it moves with every edit
-   * so a page left open for an hour is not judged against when it loaded.
-   */
-  now: Date;
   /** Why the edited Due Time cannot be saved, or null. Never set while unedited. */
   dueTimeIssue: DueTimeIssue | null;
-  /** The Event's Message Plan, whose Due Time day rules differ (ADR 0053). */
-  messagePlan: MessagePlan;
   /** What is unsaved, one entry per thing the save bar can name. */
   changes: ScheduleChange[];
   /** Puts every field back to what is saved. */
@@ -70,10 +48,6 @@ export interface ScheduleSettings {
   isSaving: boolean;
   /** Saves, first asking to confirm when the edited Due Time has already passed. */
   save: () => void;
-  /** The past Due Time waiting on the organiser's confirmation, or null. */
-  pendingPastDueTime: PastDueTime | null;
-  confirmPastDueTime: () => void;
-  cancelPastDueTime: () => void;
 }
 
 export type MessageMode = 'variant' | 'personal';
@@ -81,14 +55,6 @@ export type MessageMode = 'variant' | 'personal';
 /** The message a Schedule is on, read from its Personal Message text. */
 function modeOf(personalMessage: string | null): MessageMode {
   return personalMessage ? 'personal' : 'variant';
-}
-
-// Read back out of the Due Time rather than stored beside it: there is one
-// instant, and the clock face is a view of it (ADR 0015).
-// An Undated Schedule starts on the default hour: a time alone sends nothing,
-// so only the date is left for the Owner to choose (ADR 0029).
-function timeOf(dueTime: string | null): string {
-  return dueTime ? israelWallClockParts(dueTime).time : DEFAULT_SEND_TIME;
 }
 
 /**
@@ -99,13 +65,6 @@ function timeOf(dueTime: string | null): string {
 export type ScheduleChange = 'messageType' | 'personalMessage' | 'dueTime' | 'note';
 
 const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
-
-/**
- * The context itself, for the current Message Plan's provider
- * (message-plan-settings-context.tsx), which fills it so the shared timing
- * card and past-time dialog work unchanged on both plans.
- */
-export const ScheduleSettingsContextProvider = ScheduleSettingsContext.Provider;
 
 /**
  * The fields of an open Schedule that can be edited, and the one Save that
@@ -148,19 +107,15 @@ export function ScheduleSettingsProvider({
   const [messageMode, setMessageMode] = useState<MessageMode>(
     modeOf(schedule.personalMessage),
   );
-  const [savedDate, setSavedDate] = useState(schedule.scheduledDate ?? '');
-  const [scheduledDate, setScheduledDateState] = useState(schedule.scheduledDate ?? '');
-  const [now, setNow] = useState(() => new Date());
-  const [pendingPastDueTime, setPendingPastDueTime] = useState<PastDueTime | null>(null);
-
-  const setScheduledDate = useCallback((iso: string) => {
-    setScheduledDateState(iso);
-    setNow(new Date());
-  }, []);
-
-  const [scheduledTime, setScheduledTime] = useState(() =>
-    timeOf(schedule.scheduledDate),
-  );
+  const dueTime = useDueTimeField({
+    initial: schedule.scheduledDate,
+    editable,
+    eventDate,
+    scheduleTypeKey: schedule.scheduleTypeKey,
+    messagePlan,
+    rules: dueTimeRules,
+  });
+  const { dateDirty, scheduledDate, dueTimeIssue, guardSave } = dueTime;
 
   // `useState` only seeds on mount, and this provider outlives a server
   // round-trip (the router refresh a Server Action triggers). Without this a
@@ -183,7 +138,6 @@ export function ScheduleSettingsProvider({
   const noteDirty = editable && note !== savedNote;
   const personalMessageDirty =
     editable && effectivePersonalMessage.trim() !== savedPersonalMessage;
-  const dateDirty = editable && scheduledDate !== savedDate;
   const dirty = noteDirty || personalMessageDirty || dateDirty;
 
   const savedMode = modeOf(savedPersonalMessage);
@@ -197,35 +151,17 @@ export function ScheduleSettingsProvider({
     return list;
   }, [personalMessageDirty, messageMode, savedMode, dateDirty, noteDirty]);
 
+  const revertDueTime = dueTime.revert;
   const revert = useCallback(() => {
     setNote(savedNote);
     setPersonalMessage(savedPersonalMessage);
     setMessageMode(savedMode);
-    setScheduledDateState(savedDate);
-    setScheduledTime(timeOf(savedDate));
-    setPendingPastDueTime(null);
-  }, [savedNote, savedPersonalMessage, savedMode, savedDate]);
+    revertDueTime();
+  }, [savedNote, savedPersonalMessage, savedMode, revertDueTime]);
 
   useReportUnsavedChanges(dirty, revert);
 
-  // Only an edited Due Time is judged: one the organiser did not touch is not
-  // theirs to fix here (a moved Event date is backlog 0008), and the note must
-  // stay saveable beside it.
-  const dueTimeIssue = useMemo(
-    () =>
-      dateDirty
-        ? findDueTimeIssue({
-            eventDate,
-            scheduleTypeKey: schedule.scheduleTypeKey,
-            scheduledDate,
-            now,
-            rules: dueTimeRules,
-            messagePlan,
-          })
-        : null,
-    [dateDirty, eventDate, schedule.scheduleTypeKey, scheduledDate, now, dueTimeRules, messagePlan],
-  );
-
+  const markDueTimeSaved = dueTime.markSaved;
   const commit = useCallback(() => {
     if (!dirty) return;
 
@@ -250,7 +186,7 @@ export function ScheduleSettingsProvider({
     }
     if (dateDirty) {
       tasks.push(
-        write(updateScheduledDate(schedule.id, scheduledDate), () => setSavedDate(scheduledDate)),
+        write(updateScheduledDate(schedule.id, scheduledDate), markDueTimeSaved),
       );
     }
 
@@ -276,37 +212,15 @@ export function ScheduleSettingsProvider({
     note,
     effectivePersonalMessage,
     scheduledDate,
+    markDueTimeSaved,
     schedule.id,
     t,
   ]);
 
-  // The past-time check belongs here, at Save, and not on each field: date and
-  // time are picked separately, so the Due Time is only final when saved. The
-  // clock is read afresh, because "past" is about the moment it is saved.
   const save = useCallback(() => {
     if (!dirty || dueTimeIssue) return;
-    if (dateDirty) {
-      const past = pastDueTime(scheduledDate, new Date(), dueTimeRules);
-      if (past) {
-        // 'expires' is a block, not a question; it only reaches here if the
-        // clock moved on since the last edit. The server refuses it as well.
-        if (past.kind === 'expires') {
-          setNow(new Date());
-          return;
-        }
-        setPendingPastDueTime(past);
-        return;
-      }
-    }
-    commit();
-  }, [dirty, dueTimeIssue, dateDirty, scheduledDate, dueTimeRules, commit]);
-
-  const confirmPastDueTime = useCallback(() => {
-    setPendingPastDueTime(null);
-    commit();
-  }, [commit]);
-
-  const cancelPastDueTime = useCallback(() => setPendingPastDueTime(null), []);
+    guardSave(commit);
+  }, [dirty, dueTimeIssue, guardSave, commit]);
 
   const value = useMemo(
     () => ({
@@ -318,20 +232,11 @@ export function ScheduleSettingsProvider({
       personalMessage,
       setPersonalMessage,
       effectivePersonalMessage,
-      scheduledDate,
-      setScheduledDate,
-      scheduledTime,
-      setScheduledTime,
-      now,
       dueTimeIssue,
-      messagePlan,
       changes,
       revert,
       isSaving,
       save,
-      pendingPastDueTime,
-      confirmPastDueTime,
-      cancelPastDueTime,
     }),
     [
       editable,
@@ -339,24 +244,23 @@ export function ScheduleSettingsProvider({
       messageMode,
       personalMessage,
       effectivePersonalMessage,
-      scheduledDate,
-      setScheduledDate,
-      scheduledTime,
-      now,
       dueTimeIssue,
-      messagePlan,
       changes,
       revert,
       isSaving,
       save,
-      pendingPastDueTime,
-      confirmPastDueTime,
-      cancelPastDueTime,
     ],
   );
 
+  const dueTimeValue = useMemo(
+    () => ({ ...dueTime, editable, isSaving, messagePlan }),
+    [dueTime, editable, isSaving, messagePlan],
+  );
+
   return (
-    <ScheduleSettingsContext.Provider value={value}>{children}</ScheduleSettingsContext.Provider>
+    <ScheduleSettingsContext.Provider value={value}>
+      <DueTimeProvider value={dueTimeValue}>{children}</DueTimeProvider>
+    </ScheduleSettingsContext.Provider>
   );
 }
 

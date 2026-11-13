@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { sendingConfig } from '@/lib/config/sending';
 import { type EventApp } from '@/features/events/schemas';
 import { type ScheduleApp } from '../schemas';
+import { isScheduleEditable } from '../utils/schedule-editable';
 import type { OutreachItemStatus, PreviewMessages } from '../types';
 import { MessagePreview } from './message-preview';
 import { InvitationVideoCard } from './invitation-video-card';
@@ -56,13 +57,7 @@ export async function ScheduleTabContent({
   // dispatched Schedule counts: its messages are already rendered and queued,
   // so moving the Due Time would change nothing except what the page claims,
   // and a Schedule is no longer marked 'sent' as a unit (ADR 0013).
-  const editable =
-    !locked &&
-    schedule.status !== 'sent' &&
-    schedule.status !== 'cancelled' &&
-    schedule.status !== 'expired' &&
-    schedule.status !== 'disabled' &&
-    schedule.dispatchedAt == null;
+  const editable = !locked && isScheduleEditable(schedule);
   // The one Send Window, read where the Dispatcher's own config is readable and
   // handed to the client card rather than duplicated inside it.
   const { sendWindow, scheduleMaxLatenessHours } = sendingConfig();

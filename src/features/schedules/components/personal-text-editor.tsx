@@ -27,12 +27,11 @@ import { shouldSendTableNumbers } from '../utils/event-config';
 import {
   emptyMessageFields,
   paletteFields,
-  personalTextErrorMessage,
-  placedFields,
   tokenValue,
   type EditorDocument,
 } from '../utils/message-plan-editor';
 import { useMessagePlanSettings } from './message-plan-settings-context';
+import { PersonalTextErrorText } from './personal-text-error';
 import { SettingsCard } from './settings-card';
 
 /** The count turns amber this close to the limit (brief 7.2: no nagging before). */
@@ -141,7 +140,6 @@ function drawParagraphs(
 export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode }) {
   const t = useTranslations('schedules.messagePlan.editor');
   const tFields = useTranslations('schedules.messagePlan.fields');
-  const tErrors = useTranslations('schedules.messagePlan.errors');
   const {
     stage,
     event,
@@ -266,15 +264,8 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
   );
   const offersTable = stageOffersTable(stage);
   const tablesOff = offersTable && !shouldSendTableNumbers(event.guestExperience ?? undefined);
-  const placed = placedFields(doc);
-  // Said only while the message is being edited (see textErrors).
-  const placedEmpty = textErrors.length
-    ? placed.filter((field) => empties.includes(field))
-    : [];
   const near = length > PERSONAL_TEXT_MAX_LENGTH - NEAR_LIMIT;
   const over = length > PERSONAL_TEXT_MAX_LENGTH;
-  // Empty fields are listed with their fix below; every other error is said once here.
-  const otherErrors = textErrors.filter((error) => error.code !== 'empty_field');
 
   return (
     <SettingsCard
@@ -378,11 +369,11 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
 
       {writable && (
         <div className="text-muted-foreground flex flex-col gap-1 text-xs">
-          {atParagraphLimit ? (
-            <p>{t('paragraphLimit', { limit: PERSONAL_TEXT_MAX_PARAGRAPHS })}</p>
-          ) : (
-            <p>{t('paragraphHelp', { limit: PERSONAL_TEXT_MAX_PARAGRAPHS })}</p>
-          )}
+          <p>
+            {t(atParagraphLimit ? 'paragraphLimit' : 'paragraphHelp', {
+              limit: PERSONAL_TEXT_MAX_PARAGRAPHS,
+            })}
+          </p>
           <p>{t('countHelp')}</p>
         </div>
       )}
@@ -396,38 +387,17 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
         </Notice>
       )}
 
-      {placedEmpty.map((field) => (
-        <Notice key={field} icon={IconAlertCircle} tone="error">
-          {tErrors('emptyField', { field: tFields(field) })}{' '}
-          <Link href={`/app/${event.id}/details`} className="font-semibold underline underline-offset-2">
-            {t('fix.details')}
-          </Link>
-          {writable && (
-            <>
-              {' · '}
-              <button
-                type="button"
-                onClick={() => removeField(field)}
-                className="font-semibold underline underline-offset-2"
-              >
-                {t('fix.remove')}
-              </button>
-            </>
-          )}
+      {textErrors.map((error) => (
+        <Notice key={'field' in error ? `${error.code}-${error.field}` : error.code} icon={IconAlertCircle} tone="error">
+          <PersonalTextErrorText
+            error={error}
+            eventId={event.id}
+            onRemove={
+              writable && error.code === 'empty_field' ? () => removeField(error.field) : undefined
+            }
+          />
         </Notice>
       ))}
-
-      {otherErrors.map((error) => {
-        const message = personalTextErrorMessage(error);
-        return (
-          <Notice key={error.code} icon={IconAlertCircle} tone="error">
-            {tErrors(message.key, {
-              ...message.values,
-              field: message.field ? tFields(message.field) : '',
-            })}
-          </Notice>
-        );
-      })}
     </SettingsCard>
   );
 }

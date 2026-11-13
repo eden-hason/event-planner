@@ -10,11 +10,7 @@
  * those (render.ts).
  */
 
-import { z } from 'zod';
-
 import {
-  FOLLOW_UP_ATTACHMENTS,
-  INVITATION_ATTACHMENTS,
   isAskStage,
   isBlankPersonalText,
   parsePersonalText,
@@ -27,25 +23,12 @@ import {
   type PersonalTextError,
   type Wording,
 } from '../message-plan';
-import { attachmentOptions, giftAvailable, sentTables } from './message-plan-editor';
-
-/** The column's own check (migration 20261113000000_message_plan.sql). */
-export const PERSONAL_TEXT_COLUMN_MAX = 4000;
-
-export const MessagePlanSaveInputSchema = z
-  .object({
-    wording: z.enum(['kululu', 'personal']),
-    /** `serialisePersonalText` output; null or blank for none. */
-    personalText: z.string().max(PERSONAL_TEXT_COLUMN_MAX).nullable(),
-    attachment: z.enum(['image', 'video', 'none']),
-    giftButton: z.boolean(),
-    /** The Due Time, an ISO instant. Checked by the action with `dueTimeIssue`. */
-    scheduledDate: z.string(),
-  })
-  .partial()
-  .strict();
-
-export type MessagePlanSaveInput = z.infer<typeof MessagePlanSaveInputSchema>;
+import {
+  MessagePlanSaveInputSchema,
+  PERSONAL_TEXT_COLUMN_MAX,
+} from '../schemas/message-plan';
+import { isGiftingEnabled } from './event-config';
+import { attachmentOptions, sentTables } from './message-plan-editor';
 
 /** The `schedules` columns a save writes, only the ones it changes. */
 export type MessagePlanScheduleUpdate = {
@@ -67,6 +50,21 @@ export type MessagePlanSaveError =
 export type MessagePlanSaveCheck =
   | { ok: true; update: MessagePlanScheduleUpdate }
   | { ok: false; error: MessagePlanSaveError };
+
+/**
+ * Whether a save leaves the Schedule on a Personal Message with something in
+ * it: the only case that is counted against the Guest list, so the only one
+ * that needs it read.
+ */
+export function savesPersonalText(
+  input: { wording?: Wording; personalText?: string | null },
+  stored: { wording: Wording | null; personalText: string | null },
+): boolean {
+  if (input.wording === undefined && input.personalText === undefined) return false;
+  const wording = input.wording ?? stored.wording;
+  const raw = input.personalText !== undefined ? input.personalText : stored.personalText;
+  return wording === 'personal' && !isBlankPersonalText(parsePersonalText(raw));
+}
 
 /**
  * Checks a save and turns it into the columns to write.
@@ -126,22 +124,19 @@ export function checkMessagePlanSave(params: {
 
   if (input.attachment !== undefined) {
     if (!isAskStage(stage)) return { ok: false, error: { code: 'attachment_not_offered' } };
-    const offered: readonly Attachment[] =
-      stage === 'invitation' ? INVITATION_ATTACHMENTS : FOLLOW_UP_ATTACHMENTS;
-    if (!offered.includes(input.attachment)) {
-      return { ok: false, error: { code: 'attachment_not_offered' } };
-    }
+    // A stage lists only what it offers, so an attachment it does not offer is not found.
     const option = attachmentOptions(stage, params.event).find(
       (candidate) => candidate.value === input.attachment,
     );
-    if (!option?.available) return { ok: false, error: { code: 'attachment_unavailable' } };
+    if (!option) return { ok: false, error: { code: 'attachment_not_offered' } };
+    if (!option.available) return { ok: false, error: { code: 'attachment_unavailable' } };
     update.attachment = input.attachment;
   }
 
   if (input.giftButton !== undefined) {
     if (isAskStage(stage)) return { ok: false, error: { code: 'gift_not_offered' } };
     // Switching it off is always allowed, even once the Gifting page is gone.
-    if (input.giftButton && !giftAvailable(params.event)) {
+    if (input.giftButton && !isGiftingEnabled(params.event.eventSettings)) {
       return { ok: false, error: { code: 'gift_unavailable' } };
     }
     update.gift_button = input.giftButton;
