@@ -4,9 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
-import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
+import { isMessagePlan, type MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import {
-  isMessagePlan,
   MOVE_FAILED,
   movedMessage,
   moveBlockLabel,

@@ -18,6 +18,11 @@ export function parseMessagePlan(value: unknown): MessagePlan {
   return value === 'current' ? 'current' : 'classic';
 }
 
+/** Whether a value is one of the two plans exactly - for input that must not default. */
+export function isMessagePlan(value: unknown): value is MessagePlan {
+  return value === 'classic' || value === 'current';
+}
+
 /** The current plan's own Schedule Types, both Asks; it shares event_reminder and post_event. */
 const CURRENT_PLAN_ONLY_TYPE_KEYS: readonly string[] = ['invitation', 'follow_up'];
 

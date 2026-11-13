@@ -15,11 +15,6 @@ export const MESSAGE_PLAN_NAMES: Record<MessagePlan, string> = {
   current: 'תוכנית ההודעות החדשה',
 };
 
-/** Whether a value from a client is one of the two plans, exactly. */
-export function isMessagePlan(value: unknown): value is MessagePlan {
-  return typeof value === 'string' && Object.hasOwn(MESSAGE_PLAN_NAMES, value);
-}
-
 /**
  * Why `admin_move_event_to_message_plan` refuses, as its DETAIL carries it.
  * `sent` is the function `event_message_schedules_sent`, which the Event page
@@ -31,7 +26,7 @@ const MOVE_REFUSALS = {
   sent: 'כבר נשלחה הודעה מהאירוע הזה, אז הוא נשאר על התוכנית הקלאסית',
 } as const;
 
-export type MoveRefusal = keyof typeof MOVE_REFUSALS;
+type MoveRefusal = keyof typeof MOVE_REFUSALS;
 
 /**
  * Why the Event page shows the move disabled: a refusal the function would
@@ -81,7 +76,7 @@ export function movedMessage(seeded: number): string {
 }
 
 /** What the move puts in place of the unsent Schedules, for the dialog. */
-export const MOVE_SEEDS = `הזמנה, שתי הודעות ${scheduleTypeName('follow_up')}, תזכורת והודעת תודה`;
+export const MOVE_SEEDS = `${scheduleTypeName('invitation')}, שתי הודעות ${scheduleTypeName('follow_up')}, ${scheduleTypeName('event_reminder')} ו${scheduleTypeName('post_event')}`;
 
 /** What a move gives up, listed in the dialog (ADR 0053, Consequences). */
 export const MOVE_LOSSES: readonly string[] = [

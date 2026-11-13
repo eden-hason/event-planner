@@ -35,24 +35,14 @@ export function MoveToMessagePlanDialog({
   const [open, setOpen] = useState(false);
   const { pending, run } = useControlAction(() => setOpen(false));
 
-  if (block) {
-    return (
-      <span className="flex min-w-0 items-baseline gap-2">
-        <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[12px]" disabled>
-          מעבר לתוכנית החדשה
-        </Button>
-        <span className="text-muted-foreground truncate text-[12px]">{moveBlockLabel(block)}</span>
-      </span>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
+    <Dialog open={open} onOpenChange={(next) => !pending && !block && setOpen(next)}>
       <DialogTrigger asChild>
-        <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[12px]">
+        <Button type="button" variant="link" size="xs" className="h-auto p-0 text-[12px]" disabled={!!block}>
           מעבר לתוכנית החדשה
         </Button>
       </DialogTrigger>
+      {block && <span className="text-muted-foreground truncate text-[12px]">{moveBlockLabel(block)}</span>}
 
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

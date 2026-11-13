@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   advanceReminderPlanRejection,
-  isMessagePlan,
   MOVE_LOSSES,
+  MOVE_SEEDS,
   moveBlock,
   moveBlockLabel,
   movedMessage,
@@ -60,12 +60,9 @@ test('the dialog names the Add button the Operator re-grants an Extra Schedule w
   assert.ok(MOVE_LOSSES.some((loss) => loss.includes(ADD_FOLLOW_UP_LABEL)));
 });
 
-test('only the two plans are accepted from a client', () => {
-  assert.equal(isMessagePlan('current'), true);
-  assert.equal(isMessagePlan('classic'), true);
-  assert.equal(isMessagePlan('v2'), false);
-  assert.equal(isMessagePlan('toString'), false);
-  assert.equal(isMessagePlan(null), false);
+test('the dialog names what the move seeds by the Back Office type names', () => {
+  assert.match(MOVE_SEEDS, /עדיין מחכים לתשובה/);
+  assert.match(MOVE_SEEDS, /תזכורת אירוע/);
 });
 
 test('the saved message names the plan new Events get', () => {

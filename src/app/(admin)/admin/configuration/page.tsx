@@ -7,7 +7,7 @@ import {
   MESSAGE_PLAN_NAMES,
   NewEventMessagePlanControl,
 } from '@/features/admin';
-import { getMessagePlanSetting } from '@/features/admin/queries/settings';
+import { getMessagePlanSetting } from '@/features/admin/queries';
 import { formatShortDate } from '@/features/admin/utils/format';
 
 // A setting an Operator is about to change is read fresh, never cached.

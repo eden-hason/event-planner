@@ -176,22 +176,15 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
   if (error) throw new Error(error.message);
   if (!event) return null;
 
-  const messagePlan = parseMessagePlan(event.message_plan);
-  const [ownerResult, collaboratorsResult, sentResult] = await Promise.all([
+  const [ownerResult, collaboratorsResult] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email, phone_number').eq('id', event.user_id).maybeSingle(),
     supabase
       .from('event_collaborators')
       .select('id, user_id, is_creator, profiles!event_collaborators_user_id_profiles_fk(full_name, email)')
       .eq('event_id', eventId)
       .eq('is_creator', false),
-    // The same check the move refuses on, so the button and the function agree.
-    messagePlan === 'classic'
-      ? supabase.rpc('event_message_schedules_sent', { p_event_id: eventId })
-      : Promise.resolve({ data: false, error: null }),
   ]);
   if (ownerResult.error) throw new Error(ownerResult.error.message);
-  // Only the move depends on it, so a failure disables the move, not the page.
-  if (sentResult.error) console.error('event_message_schedules_sent failed:', sentResult.error);
   const collaborators = unwrap(collaboratorsResult);
   const owner = ownerResult.data;
   const location = event.location as { name?: string } | null;
@@ -220,8 +213,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     planIncludesCalls: event.plan_includes_calls ?? false,
     billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
     smsFallbackEnabled: event.sms_fallback_enabled !== false,
-    messagePlan,
-    messagesSent: sentResult.error ? null : sentResult.data === true,
+    messagePlan: parseMessagePlan(event.message_plan),
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,
@@ -241,6 +233,27 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     hostNames,
     parentNames,
   };
+});
+
+/**
+ * Whether any message Schedule of the Event has gone out or is under way -
+ * `event_message_schedules_sent`, the same check the move refuses on, so the
+ * button and the function agree. Only the identity band's move link reads it,
+ * so it is its own query rather than part of every getEventIdentity caller's.
+ * Null when the check fails: that disables the move, not the page.
+ */
+export const getEventMessagesSent = cache(async function getEventMessagesSent(
+  eventId: string,
+): Promise<boolean | null> {
+  await assertAdmin();
+  const { data, error } = await createServiceClient().rpc('event_message_schedules_sent', {
+    p_event_id: eventId,
+  });
+  if (error) {
+    console.error('event_message_schedules_sent failed:', error);
+    return null;
+  }
+  return data === true;
 });
 
 // Cached per render: the guest list band and the outreach band both read it.
