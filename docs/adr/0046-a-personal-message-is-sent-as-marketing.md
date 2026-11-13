@@ -4,7 +4,8 @@ Date: 2026-10-27
 
 ## Status
 
-Accepted. Not built.
+Accepted. Amended by ADR 0054: on Events created under ADR 0053 a Personal Message is the
+Owner's whole message. The Marketing category stands.
 
 ## Context
 

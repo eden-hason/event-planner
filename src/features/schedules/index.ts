@@ -50,6 +50,43 @@ export {
 
 export type { GuestInteractionRow } from './utils/delivery-outcome';
 
+// The current Message Plan's messages (ADR 0055): pure, so the editor and the
+// preview can use them in the browser. The send path imports
+// './message-plan' directly; Meta's create payloads stay out of the barrel.
+export {
+  STAGES,
+  STAGE_SCHEDULE_TYPE,
+  stageOfScheduleType,
+  isAskStage,
+  templateNameFor,
+  type Stage,
+  type MessageShape,
+  MESSAGE_FIELDS,
+  messageFieldsFor,
+  type MessageFieldKey,
+  type MessageFieldDefinition,
+  wrapperFor,
+  PARAGRAPH_SEPARATOR,
+  PERSONAL_TEXT_MAX_LENGTH,
+  PERSONAL_TEXT_MAX_PARAGRAPHS,
+  parsePersonalText,
+  serialisePersonalText,
+  normalisePersonalText,
+  isBlankPersonalText,
+  validatePersonalText,
+  personalTextLength,
+  type PersonalText,
+  type PersonalTextError,
+  composeMessage,
+  buildMessageLinks,
+  type ComposedMessage,
+  type RenderRefusal,
+  type MessagePlanEvent,
+  type MessagePlanGuest,
+  type MessagePlanSchedule,
+  type MessageLinks,
+} from './message-plan';
+
 // Schemas/Types
 export {
   type ScheduleApp,

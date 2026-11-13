@@ -101,7 +101,7 @@ when that Guest Record declines or its Table is deleted, and is not restored aut
 ## RSVP
 
 A Guest's answer to the invitation: yes, no, or maybe. The RSVP is the state; the act of
-collecting it is a **Confirmation** round (see Schedule Type).
+collecting it is an **Ask** - an Invitation or a Follow-up (see Schedule Type).
 
 A confirmed RSVP carries how many Guests are coming and their **Special Meals**. How many
 are coming may differ from how many the Guest Record was invited for, fewer or more; the Owner sees a
@@ -124,7 +124,7 @@ RSVP page. After it, only the Owner or an Operator can.
 ## Confirmation Conversation
 
 The guided exchange in WhatsApp that collects an RSVP without leaving the chat. It starts
-when a Guest taps "Coming" or "Not coming" on a Confirmation message, and continues
+when a Guest taps "Coming" or "Not coming" on an **Ask**, and continues
 with Kululu asking how many are coming (typed, never showing the invited amount), about
 Special Meals and, when the Owner asks it, the **Transportation Question**, then closes with a
 summary the Guest can reopen to change their answer.
@@ -136,7 +136,7 @@ A Confirmation Conversation is not a Schedule and its messages are not Deliverie
 Guest started it, it is never billed, and the **Send Window** does not apply to it.
 
 "Maybe" is never given in a Confirmation Conversation. A Guest who does not know yet simply
-does not answer, and stays in the audience for the next Confirmation round.
+does not answer, and stays in the audience for the next Follow-up.
 
 ## Special Meal
 
@@ -181,30 +181,54 @@ when. Schedules are the mechanism behind every message a Guest receives.
 A Schedule always carries a Template; a Call Round carries none. Where
 the two must be spoken of together, the word is **Outreach Item**.
 
+## Message Plan
+
+The set of message Schedules an Event is seeded with, and the rules its messages follow.
+An Event is on exactly one:
+
+- the **Message Plan** (the current one) - an Invitation that asks, two Follow-ups, one
+  Event Reminder and a Thank You, each sent in its **Kululu Wording** or as a **Personal
+  Message**
+- the **Classic Message Plan** - an Initial Invitation that does not ask, Confirmation
+  rounds, an Event Reminder and a Thank You, with Variants, the older Personal Message,
+  Bespoke Templates and Advance Reminders
+
+Which one an Event is on is a fact about the Event, not about when it was created. An
+Operator may move an Event from the Classic Message Plan to the current one while none of
+its Schedules has been sent. The move is one way and starts the plan over: every unsent
+Schedule is replaced by the current plan's own, undated where the Owner dates them, and
+whatever the Owner had chosen on the old ones is not carried. An Event that has sent
+anything finishes on the plan it started on.
+
+The bare word **Plan** is the billing term (what the Guest Records were bought for), never
+this.
+
+_Avoid_: V1, V2, old system, new system, schedules version
+
 ## Schedule Type
 
-The stage of the message lifecycle a Schedule belongs to. There are exactly five, in
-order:
+The stage of the message lifecycle a Schedule belongs to. On the current **Message Plan**
+there are exactly four, in order:
 
-1. **Initial Invitation** - the invitation itself
-2. **Confirmation** - the RSVP round(s), asking for an answer
-3. **Advance Reminder** - sent on a day before the Event, telling Guests which day it is
-4. **Event Reminder** - sent on the Event day itself, carrying table number, navigation
-   link and gift link
-5. **Thank You** (`post_event`) - sent after the Event
+1. **Invitation** - the invitation itself, and the first **Ask**: it carries the RSVP
+   buttons
+2. **Follow-up** - a repeat Ask, to the Guests who have not answered yet
+3. **Event Reminder** - the Event's details for the Guests who are coming
+4. **Thank You** (`post_event`) - sent the day after the Event, or on Sunday when the day
+   after is Shabbat; only its hour moves
 
-"Reminder" without qualification means Event Reminder (stage 4), never a chase-up during
-the Confirmation stage and never the Advance Reminder. A repeat ask during stage 2 is a
-*second Confirmation round*.
+An **Ask** is an Invitation or a Follow-up: a message a Guest answers from. The Invitation
+is always the first Ask; there is no Invitation that does not ask. A Guest who has answered
+is never sent a Follow-up - changing an answer is done from the RSVP link.
 
-An Event Reminder speaks of "today" and so is always sent on the Event day; only its hour
-moves. An Advance Reminder names the Event's day instead, so it reads right on any earlier
-day. An Event may have either or both. An Advance Reminder is added to an Event by an
-Operator, never by default. It reaches every Guest who has not declined, and a Guest who
-has not answered yet may answer from it, the same way they would from a Confirmation.
+"Reminder" without qualification means the Event Reminder, never a Follow-up. An Event has
+exactly one. It may be sent on the Event day or on any day before it, and its wording
+follows the day it is sent: sent on the Event day it speaks of "today", sent earlier it
+names the Event's weekday and date. Which wording a Guest gets is never chosen, only the
+day is.
 
-_Avoid_: day-before reminder (it need not be the day before), pre-event reminder (every
-message before the Event is pre-event)
+_Avoid_: Confirmation (for either stage - the Invitation asks too), Initial Invitation,
+Advance Reminder, day-before reminder, chase-up
 
 ## Due Time
 
@@ -223,9 +247,9 @@ A Schedule that has no **Due Time** because the Owner has not chosen one. It is 
 an Undated Schedule is not late, not held and not expired, it simply has not been asked
 for.
 
-Initial Invitations and Confirmations begin undated - when to invite and when to ask for an
-answer is the Owner's call, and Kululu does not guess it. Advance Reminders, Event
-Reminders and Thank Yous begin with a Due Time Kululu proposes, relative to the Event date, which the Owner may
+Asks - the Invitation and the Follow-ups - begin undated: when to invite and when to ask
+again is the Owner's call, and Kululu does not guess it. The Event Reminder and the Thank
+You begin with a Due Time Kululu proposes, relative to the Event date, which the Owner may
 change. Call plans are proposed a date too: a person starts them, so a proposed date can
 never reach a Guest by itself.
 
@@ -236,11 +260,8 @@ thing from not having decided yet.
 An Owner dates a Schedule only once their Event can send. Until then the Schedule is
 locked, dated or not.
 
-While an Event that can send has none of its Initial Invitations or Confirmations dated or
-sent, the Owner is offered a **Featured Action** to date one, and within 21 days of the
-Event an Operator sees a **No Ask Planned** Signal. Dating any one of them clears both - an
-Owner who invites on paper and only wants a Confirmation is not chased about the
-Invitation.
+While an Event that can send has none of its Asks dated or sent, the Owner is offered a **Featured Action** to date one, and within 21 days of the
+Event an Operator sees a **No Ask Planned** Signal. Dating any one of them clears both.
 
 ## Send Window
 
@@ -284,10 +305,9 @@ unchanged, and its results count the Guest like any other. Nothing new is billed
 Schedule's **Entitlement** was spent when it sent, though the Guest Record must still fit
 the **Record Package**.
 
-Only one Schedule is offered: the latest Initial Invitation or Confirmation that went out.
-While only the Invitation has gone, that is the Invitation; once a Confirmation has, it is
-the latest Confirmation. An Advance Reminder, Event Reminder or Thank You is never caught up on, so once one
-has gone out the offer stays on the last Invitation or Confirmation. Whatever is still
+Only one Schedule is offered: the latest **Ask** that went out - the Invitation, or once a
+Follow-up has gone, the latest Follow-up. An Event Reminder or Thank You is never caught
+up on, so once one has gone out the offer stays on the last Ask. Whatever is still
 planned reaches the Guest by itself, since a Schedule's audience is decided when it sends.
 
 It is offered only to a Guest still in that Schedule's audience whose Delivery for it is
@@ -301,42 +321,61 @@ An Operator makes the same send from the Back Office, for up to ten Guest Record
 
 _Avoid_: Top-up (a billing term), late-guest send, resend
 
+## Kululu Wording
+
+The one fixed text Kululu writes for a Schedule Type, shared by every kind of Event - the
+**Occasion Phrase** is what makes it read right for a wedding or a bar mitzva. A Schedule
+sends its Kululu Wording unless the Owner writes a **Personal Message**. There is no other
+choice: one stage has one Kululu Wording.
+
+_Avoid_: Variant, tone, default template, hard-coded template
+
 ## Variant
 
-The **editorial tone** a Schedule's message is written in - the same message, said
-differently (warm, formal, playful, wartime). A Variant is always written by Kululu.
-Besides the Variants, the only other message choice the Owner sees is a **Personal
-Message**.
-
-A Variant is *not* an event type: a bar mitzva confirmation reading differently from a
-wedding one is the two Event Types having different content, not a "bar mitzva" tone. Nor
-is it a version: a rewrite of the same tone supersedes it, and is not a new Variant.
-
-A Variant is chosen per Schedule; a new Schedule starts on its Event Type's default. Not
-every Schedule Type offers a choice - where only one Variant is authored, the Owner is
-shown no picker at all rather than a picker with one option.
+Retired. A tone of Kululu's wording (warm, formal, playful) that an Owner picked from.
+Events on the **Classic Message Plan** still send theirs; no Event on the current one
+has one.
 
 ## Personal Message
 
-A Schedule's message in the Owner's own words: one paragraph the Owner writes, set inside
-a fixed frame Kululu writes. The frame carries the facts the Schedule Type needs a Guest
-to have - the Event's date and place, a table number on a reminder, and the stage's
-buttons - so the Owner never retypes them. Who is inviting and to what is the Owner's to
-say: the frame opens on a greeting and the Owner's words follow it.
+A Schedule's message written entirely by the Owner, from a blank page, set inside the
+stage's **Wrapper**. The Owner may write in **Message Fields** - the hosts, the date, the
+venue, the Guest's own name - which Kululu fills in when the message is sent. What the
+message says, and whether it gives the date or the place at all, is the Owner's call alone.
 
-A Personal Message is an alternative to a **Variant**, not one of them: a Variant is
-Kululu's wording, a Personal Message is the Owner's. Its text belongs to the one Schedule
-it is written on. A Personal Message left blank is no Personal Message: the Schedule sends
-its Variant.
+It is the alternative to the **Kululu Wording**, and it changes only the words: the stage's
+attachment and buttons are the same whichever is sent. Its text belongs to the one Schedule
+it is written on - two Follow-ups have two texts. A Personal Message left blank is no
+Personal Message: the Schedule sends its Kululu Wording.
 
-It replaces the personal note, a line the Owner added under Kululu's wording. An Owner
-who wants to say something of their own writes a Personal Message.
-_Avoid_: free form, custom message, note (for the whole message), Owner Message (that is
-Kululu writing to the Owner)
+On the **Classic Message Plan**, a Personal Message is the older form: one
+paragraph inside a frame that carries the date and place.
+
+_Avoid_: free text, free form, custom message, note, Owner Message (that is Kululu writing
+to the Owner)
+
+## Wrapper
+
+The fixed text Kululu puts around a **Personal Message**: one line before it that names the
+stage ("הזמנה לאירוע") and one line after it that leads to the buttons ("נשמח לדעת אם
+תגיעו"). It is the least Kululu may add and still have WhatsApp accept the message, and it
+never speaks for the Owner. The Event Reminder's Wrapper reads the same on any day.
+
+## Message Field
+
+A fact a **Personal Message** names by reference rather than by value - the hosts, the
+Occasion Phrase, the Event's date, venue and times, the Guest's name, the Guest's table.
+It is filled in when the message is sent, so a corrected venue or name is never sent stale.
+
+The Guest's name is the Guest Record's name as written in the guest list. A table can be
+named only in a sentence the Owner marks as the table sentence; a Guest with no table is
+sent the message without that sentence.
+
+_Avoid_: variable, placeholder, chip (those are the editor's, not the domain's)
 
 ## Bespoke Template
 
-A Template written for one Event only, and set on that Event's Schedule by Kululu rather
+Not offered on the current **Message Plan**; Events on the Classic one keep theirs. A Template written for one Event only, and set on that Event's Schedule by Kululu rather
 than chosen by the Owner. Its wording is fixed; the Owner neither picks it nor edits it,
 and no other Event ever sees it.
 
@@ -349,7 +388,8 @@ _Avoid_: custom template, private template, special template
 ## Template
 
 The message a Schedule sends, as the Owner chooses and previews it: one Schedule Type, in
-one Variant, as a Personal Message or as a Bespoke Template, in one language. A Template carries no channel - it
+its **Kululu Wording** or as a **Personal Message**, in one language (on the Classic Message Plan, a
+Variant or a Bespoke Template instead of the Kululu Wording). A Template carries no channel - it
 is the editorial thing, not the sendable artifact.
 
 The bare word "template" always means this. The visual skin of the guest-facing page is an
@@ -365,6 +405,12 @@ destinations on WhatsApp, plain links on SMS.
 Every Template has both a WhatsApp Rendition and an SMS Rendition. A Template missing
 either is invalid and cannot be authored, because a Schedule that cannot fall back to SMS
 is a Schedule some Guests can never be reached by.
+
+The SMS Rendition says exactly what the WhatsApp one says, word for word, Wrapper
+included; each button becomes a link line instead (the RSVP link on an Ask, navigation and
+gift on the Event Reminder, gift on the Thank You). It is never written separately. What
+an Ask attaches, the image or the video, an SMS Guest sees on the page its RSVP link
+opens. Events on the **Classic Message Plan** keep their separately written SMS text.
 
 Which Rendition a Guest actually receives is a delivery matter, not an authoring one:
 WhatsApp is always attempted first, and the SMS Rendition is what an **SMS Fallback**
@@ -630,8 +676,8 @@ never merge - impersonation is a lens, not a change of identity.
 
 A condition, derived at read time, that an Operator should look at. There are exactly four:
 an **Overdue Schedule**, a **Failed Delivery**, a **Stale Call Round**, and **No Ask
-Planned** (an Event that can send, 21 days or less away, with no Initial Invitation or
-Confirmation dated or sent - see **Undated Schedule**).
+Planned** (an Event that can send, 21 days or less away, with no **Ask** dated or
+sent - see **Undated Schedule**).
 
 A Signal is never stored. There is no signals table and no row to mark as read: a Signal
 exists exactly as long as the condition producing it is true, and vanishes when the
@@ -704,8 +750,8 @@ dismissal.
 
 A copy of the Event's confirmation, sent by WhatsApp to the Owner's own phone instead of
 any Guest's, so the Owner can see and try exactly what a Guest will receive before it goes
-out. It is the Event's earliest Confirmation Schedule that has not gone out yet, in its own
-wording (its Variant or **Personal Message**). It is always a WhatsApp message, even when
+out. It is the Event's earliest **Ask** that has not gone out yet, in its own wording (its
+**Kululu Wording** or **Personal Message**). It is always a WhatsApp message, even when
 that Schedule would reach Guests by SMS. It goes to the viewer's own profile phone or, when
 the profile has none, to a number they type for that one send, which is not saved.
 
@@ -717,7 +763,7 @@ link opens the **Live Invite Preview Link** rather than any Guest's page.
 
 Every Owner is offered one, paid or not. A **Visitor** is offered one too, but taking it
 means saving the Event first. It is offered only while one can actually go out: the Event
-has a Confirmation left to send and the names it is sent in.
+has an Ask left to send and the names it is sent in.
 
 An Event gets three accepted Test Messages for its whole life, across all its Owners, and
 an account gets three across all its Events. Each viewer is offered one per Event until
@@ -784,12 +830,12 @@ capacity, quota, balance
 What an Owner's Guest Records are bought for, which sets the rate per record. There are
 two:
 
-- **WhatsApp** - an Initial Invitation (or a Confirmation round in its place), two
-  Confirmation rounds, an Event Reminder and a Thank You
+- **WhatsApp** - an Invitation, two Follow-ups, an Event Reminder and a Thank You (on the
+  Classic Message Plan: an Initial Invitation, two Confirmation rounds, an Event Reminder and a Thank You)
 - **WhatsApp + calls** - all of that, plus two **Call Rounds**
 
-An **Advance Reminder** is included on either Plan whenever an Operator adds one, whether
-in place of the Event Reminder or beside it. It is never an **Extra Schedule**.
+On the Classic Message Plan, an Advance Reminder an Operator added is included on either Plan and is
+never an **Extra Schedule**.
 
 A Plan has no size; the Record Package says how many. It is stored as the payment's channel
 (`record_package_channel`). SMS is no longer sold as a Plan - SMS reaches a Guest only as an
