@@ -1,4 +1,6 @@
 import { z } from 'zod';
+// Deep import: a pure leaf module, and the schedules barrel carries the send path.
+import { parseMessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import { EVENT_BILLING_STATUSES } from '@/features/billing/schemas';
 
 // --- Location Schema ---
@@ -323,7 +325,7 @@ export function dbToAppTransformer(dbData: {
     billingStatus,
     canCreateSchedules: dbData.can_create_schedules ?? false,
     smsFallbackEnabled: dbData.sms_fallback_enabled !== false,
-    messagePlan: dbData.message_plan === 'current' ? 'current' : 'classic',
+    messagePlan: parseMessagePlan(dbData.message_plan),
     shortCode: dbData.short_code,
     createdAt: dbData.created_at,
     updatedAt: dbData.updated_at,

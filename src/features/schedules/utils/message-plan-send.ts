@@ -10,6 +10,7 @@ import {
   buildMessageLinks,
   composeMessage,
   renderMessagePlanPayloads,
+  type ComposeInput,
   type ComposeResult,
   type MessagePlanEvent,
   type MessagePlanGuest,
@@ -63,9 +64,11 @@ export type MessagePlanRenderInput = {
   siteUrl: string;
 };
 
-/** One Guest's WhatsApp and SMS payloads, saying the same words. */
-export function renderMessagePlanForGuest(input: MessagePlanRenderInput): RenderPayloadsResult {
-  return renderMessagePlanPayloads({
+/** What composeMessage reads, built the same way for a send and a phoneless render. */
+function toComposeInput(
+  input: Omit<MessagePlanRenderInput, 'guest'> & { guest: { name: string } },
+): ComposeInput {
+  return {
     schedule: toMessagePlanSchedule(input.schedule),
     event: input.event,
     guest: toMessagePlanGuest(input.guest, input.table),
@@ -75,8 +78,12 @@ export function renderMessagePlanForGuest(input: MessagePlanRenderInput): Render
       confirmationToken: input.confirmationToken,
     }),
     confirmationToken: input.confirmationToken,
-    phone: input.guest.phone,
-  });
+  };
+}
+
+/** One Guest's WhatsApp and SMS payloads, saying the same words. */
+export function renderMessagePlanForGuest(input: MessagePlanRenderInput): RenderPayloadsResult {
+  return renderMessagePlanPayloads({ ...toComposeInput(input), phone: input.guest.phone });
 }
 
 /**
@@ -86,15 +93,5 @@ export function renderMessagePlanForGuest(input: MessagePlanRenderInput): Render
 export function composeMessagePlanForGuest(
   input: Omit<MessagePlanRenderInput, 'guest'> & { guest: { name: string } },
 ): ComposeResult {
-  return composeMessage({
-    schedule: toMessagePlanSchedule(input.schedule),
-    event: input.event,
-    guest: toMessagePlanGuest(input.guest, input.table),
-    links: buildMessageLinks({
-      siteUrl: input.siteUrl,
-      shortCode: input.event.shortCode,
-      confirmationToken: input.confirmationToken,
-    }),
-    confirmationToken: input.confirmationToken,
-  });
+  return composeMessage(toComposeInput(input));
 }

@@ -8,8 +8,7 @@
  * asks the Event's plan, never the key alone.
  */
 
-export const MESSAGE_PLANS = ['classic', 'current'] as const;
-export type MessagePlan = (typeof MESSAGE_PLANS)[number];
+export type MessagePlan = 'classic' | 'current';
 
 /**
  * `events.message_plan` as read off a row. Anything but 'current' is Classic,
@@ -19,8 +18,8 @@ export function parseMessagePlan(value: unknown): MessagePlan {
   return value === 'current' ? 'current' : 'classic';
 }
 
-/** The current plan's own Schedule Types; it shares event_reminder and post_event. */
-export const CURRENT_PLAN_ASK_TYPE_KEYS = ['invitation', 'follow_up'] as const;
+/** The current plan's own Schedule Types, both Asks; it shares event_reminder and post_event. */
+const CURRENT_PLAN_ONLY_TYPE_KEYS: readonly string[] = ['invitation', 'follow_up'];
 
 /**
  * Whether a Schedule Type is an **Ask**: a message a Guest answers from, with
@@ -36,7 +35,7 @@ export function isAsk(scheduleTypeKey: string | null | undefined): boolean {
 
 /** Whether a Schedule Type exists only on the current Message Plan. */
 export function isCurrentPlanOnlyType(scheduleTypeKey: string | null | undefined): boolean {
-  return scheduleTypeKey === 'invitation' || scheduleTypeKey === 'follow_up';
+  return !!scheduleTypeKey && CURRENT_PLAN_ONLY_TYPE_KEYS.includes(scheduleTypeKey);
 }
 
 /**

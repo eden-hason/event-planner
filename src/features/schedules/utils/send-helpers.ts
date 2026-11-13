@@ -1,9 +1,7 @@
 import { randomBytes } from 'crypto';
-import { toE164 } from '@/lib/phone';
 import type { GuestApp } from '@/features/guests/schemas';
 import type { DeliveryMethod } from '../schemas';
 import type { SmsPayload } from '../schemas/message-templates';
-import { sendSmsMessage } from '../actions/sms';
 import {
   buildDynamicTemplateParameters,
   type ParameterResolutionContext,
@@ -52,41 +50,6 @@ export function buildSmsBody(
     body = body.replace(`{{${i + 1}}}`, param.text);
   });
   return body;
-}
-
-export async function sendSmsToGuest(params: {
-  guest: GuestApp;
-  context: ParameterResolutionContext;
-  smsPayload: SmsPayload;
-  templateId: string;
-  confirmationToken: string;
-}): Promise<GuestSendResult> {
-  const { guest, context, smsPayload, templateId, confirmationToken } = params;
-
-  const phoneE164 = toE164(guest.phone);
-  if (!phoneE164) {
-    return {
-      guest,
-      success: false,
-      message: 'No usable phone number',
-      channel: 'sms',
-      confirmationToken,
-      templateId,
-    };
-  }
-
-  const body = buildSmsBody(smsPayload, context);
-  const result = await sendSmsMessage({ to: phoneE164, body });
-
-  return {
-    guest,
-    success: result.success,
-    messageId: result.messageId,
-    message: result.message,
-    channel: 'sms',
-    confirmationToken,
-    templateId,
-  };
 }
 
 // ─── Attempt record builder ───────────────────────────────────────────────────

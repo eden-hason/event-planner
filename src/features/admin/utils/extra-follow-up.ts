@@ -1,4 +1,7 @@
 import { eventDaysFromToday } from '@/lib/date-time';
+// Deep import: pure, and the schedules barrel carries the send path.
+import { hasInvitationImage } from '@/features/schedules/utils/event-config';
+import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 
 /**
  * An Extra Schedule on the current Message Plan grants one more Follow-up
@@ -10,7 +13,7 @@ import { eventDaysFromToday } from '@/lib/date-time';
 export type ExtraFollowUpEvent = {
   status: string | null;
   eventDate: string | null;
-  messagePlan: 'classic' | 'current';
+  messagePlan: MessagePlan;
   canCreateSchedules: boolean;
   imageUrl: string | null | undefined;
 };
@@ -34,8 +37,10 @@ export function extraFollowUpRow(event: ExtraFollowUpEvent) {
     scheduled_date: null,
     target_status: 'pending' as const,
     wording: 'kululu' as const,
-    // The seed's rule: the image when the Event has a usable link, else nothing.
-    attachment: /^https?:\/\/\S+$/i.test(event.imageUrl?.trim() ?? '') ? ('image' as const) : ('none' as const),
+    // The image when the Event has one the header could carry, judged as the send judges it.
+    attachment: hasInvitationImage({ imageUrl: event.imageUrl ?? undefined })
+      ? ('image' as const)
+      : ('none' as const),
     // Locked like the rest of the plan while the Event cannot send.
     status: event.canCreateSchedules ? null : ('disabled' as const),
   };

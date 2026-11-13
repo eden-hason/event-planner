@@ -40,7 +40,6 @@ export {
 
 // Re-export send helpers
 export {
-  sendSmsToGuest,
   buildSmsBody,
   buildAttemptRecord,
   generateConfirmationToken,
@@ -55,9 +54,7 @@ export {
 
 export { hasNoAskPlanned, ASK_TYPE_KEYS } from './ask-plan';
 export {
-  MESSAGE_PLANS,
   ASK_SCHEDULE_TYPE_KEYS,
-  CURRENT_PLAN_ASK_TYPE_KEYS,
   isAsk,
   isCurrentPlanOnlyType,
   parseMessagePlan,

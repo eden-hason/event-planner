@@ -1,4 +1,5 @@
 import { canReceiveSms, isValidPhone } from '@/lib/phone';
+import type { MessagePlan } from './message-plan-kind';
 import { inAudience } from './audience';
 
 /**
@@ -278,7 +279,7 @@ export function catchUpRejection(params: {
   eventDate: string | null;
   now: Date;
   /** Omitted reads as Classic. */
-  messagePlan?: 'classic' | 'current';
+  messagePlan?: MessagePlan;
 }): CatchUpRejection | null {
   const { status, dispatchedAt, scheduleTypeKey, eventDate, now } = params;
 

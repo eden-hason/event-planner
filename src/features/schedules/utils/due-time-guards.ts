@@ -2,7 +2,7 @@ import { addCalendarDays, ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import { nextOpenSlot, type SendWindow } from './send-window';
 import { offsetDays } from './timeline';
-import { eventDay, thankYouDay } from './message-plan-dates';
+import { thankYouDueTime } from './message-plan-dates';
 import type { MessagePlan } from './message-plan-kind';
 
 /**
@@ -28,49 +28,61 @@ const HOUR_MS = 3_600_000;
  *   day before it, but not on it: there the Event Reminder is the message
  *   (ADR 0051).
  */
-const DUE_DAY_RULES: Partial<Record<string, { lastDay: number | null; pinnedDay?: number }>> = {
+/** A day offset from the Event day, fixed or worked out from the Event's date. */
+type DayOffset = number | ((eventDate: string) => number);
+
+type DueDayRule = {
+  lastDay: DayOffset | null;
+  pinnedDay?: DayOffset;
+  /**
+   * Whether a save off the pinned day is refused, not only kept out of the
+   * date picker. The Classic Event Reminder's pin was always the picker's
+   * alone, and Classic is left as it was.
+   */
+  enforcePin?: boolean;
+};
+
+const DUE_DAY_RULES: Partial<Record<string, DueDayRule>> = {
   post_event: { lastDay: null },
   event_reminder: { lastDay: 0, pinnedDay: 0 },
   advance_reminder: { lastDay: -1 },
 };
 
+/** Days from the Event day to the Thank You's pinned day: 1, or 2 over a Saturday. */
+const thankYouOffset = (eventDate: string) =>
+  offsetDays(eventDate, thankYouDueTime(eventDate)) ?? 1;
+
 /**
- * The current Message Plan's rules where they differ (ADR 0053). The Event
- * Reminder may go out on any day up to and including the Event day, its
- * wording following the day. The Thank You is pinned to the day after the
- * Event, or Sunday when that is Saturday, so its pinned day is worked out from
- * the Event (`thankYouDay`) rather than being a fixed offset. The Asks keep
- * the default: any day up to the Event day.
+ * The current Message Plan's rules (ADR 0053). The Event Reminder may go out
+ * on any day up to and including the Event day, its wording following the
+ * day. The Thank You is pinned to the day after the Event, or Sunday when that
+ * is Saturday, and only its hour moves. The Asks keep the default: any day up
+ * to the Event day.
  */
-const CURRENT_DUE_DAY_RULES: Partial<Record<string, { lastDay: number | null }>> = {
+const CURRENT_DUE_DAY_RULES: Partial<Record<string, DueDayRule>> = {
   event_reminder: { lastDay: 0 },
+  post_event: { lastDay: thankYouOffset, pinnedDay: thankYouOffset, enforcePin: true },
 };
 
-const DAY_MS = 86_400_000;
+const RULES_BY_PLAN: Record<MessagePlan, Partial<Record<string, DueDayRule>>> = {
+  classic: DUE_DAY_RULES,
+  current: CURRENT_DUE_DAY_RULES,
+};
 
-/** Whole days from the Event day to the Thank You's pinned day: 1, or 2 over a Saturday. */
-function thankYouOffset(eventDate: string): number {
-  return Math.round(
-    (Date.parse(`${thankYouDay(eventDate)}T00:00:00Z`) -
-      Date.parse(`${eventDay(eventDate)}T00:00:00Z`)) /
-      DAY_MS,
-  );
-}
-
+/** The rule with its offsets worked out; an offset that needs the Event's date has none without one. */
 function dueDayRule(
   scheduleTypeKey: string,
   messagePlan: MessagePlan = 'classic',
   eventDate: string | null = null,
-): { lastDay: number | null; pinnedDay?: number } {
-  if (messagePlan === 'current') {
-    if (scheduleTypeKey === 'post_event') {
-      if (!eventDate) return { lastDay: null };
-      const offset = thankYouOffset(eventDate);
-      return { lastDay: offset, pinnedDay: offset };
-    }
-    return CURRENT_DUE_DAY_RULES[scheduleTypeKey] ?? { lastDay: 0 };
-  }
-  return DUE_DAY_RULES[scheduleTypeKey] ?? { lastDay: 0 };
+): { lastDay: number | null; pinnedDay?: number; enforcePin: boolean } {
+  const rule = RULES_BY_PLAN[messagePlan][scheduleTypeKey] ?? { lastDay: 0 };
+  const resolve = (offset: DayOffset | null | undefined) =>
+    typeof offset === 'function' ? (eventDate ? offset(eventDate) : undefined) : offset;
+  return {
+    lastDay: resolve(rule.lastDay) ?? null,
+    pinnedDay: resolve(rule.pinnedDay) ?? undefined,
+    enforcePin: rule.enforcePin === true,
+  };
 }
 
 export type DueTimeRules = {
@@ -196,9 +208,7 @@ export function dueTimeIssue(params: {
   messagePlan?: MessagePlan;
 }): DueTimeIssue | null {
   const rule = dueDayRule(params.scheduleTypeKey, params.messagePlan, params.eventDate);
-  // Enforced on the current plan only: the Classic Event Reminder's pin has
-  // always been the date picker's alone, and Classic is left as it was.
-  if (params.messagePlan === 'current' && rule.pinnedDay !== undefined) {
+  if (rule.enforcePin && rule.pinnedDay !== undefined) {
     const offset = offsetDays(params.eventDate, params.scheduledDate);
     if (offset !== null && offset !== rule.pinnedDay) return 'notOnPinnedDay';
   }

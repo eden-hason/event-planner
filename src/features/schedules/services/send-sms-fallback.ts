@@ -12,7 +12,7 @@ import { publicSiteUrl } from '../utils/parameter-resolvers';
 import { composeMessagePlanForGuest } from '../utils/message-plan-send';
 import { describeRefusal } from '../message-plan/render';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
-import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow, type MappedEvent } from './map-event-row';
 import {
   buildSmsBody,
   classifyWhatsAppFailure,
@@ -112,7 +112,7 @@ export type FallbackDeliveryRow = {
 
 type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
-  event: ReturnType<typeof mapEventRow>;
+  event: MappedEvent;
   /** False under an SMS Fallback Opt-out (CONTEXT.md). */
   smsFallbackEnabled: boolean;
 };

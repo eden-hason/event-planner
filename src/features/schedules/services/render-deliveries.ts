@@ -11,7 +11,7 @@ import {
   type GuestApp,
 } from '@/features/guests/schemas';
 import { resolveTemplatesForSchedule, templateForGuest } from './resolve-reminder-templates';
-import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow, type MappedEvent } from './map-event-row';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
 import { recordNotSent, reserveDeliveries } from './deliveries';
 import { loadOutsidePackageIds } from '@/features/billing/services';
@@ -74,13 +74,13 @@ export type RenderDeliveriesResult =
 async function loadAudienceContext(
   supabase: SupabaseClient,
   guests: GuestApp[],
-  needTables: boolean,
+  need: { tables: boolean; groups: boolean },
 ) {
   const groups = new Map<string, GroupApp>();
   const tables = new Map<string, { tableNumber: number; label: string | null }>();
 
   const groupIds = [...new Set(guests.map((g) => g.groupId).filter((id): id is string => !!id))];
-  if (groupIds.length > 0) {
+  if (need.groups && groupIds.length > 0) {
     const { data } = await supabase.from('groups').select('*').in('id', groupIds);
     for (const raw of data ?? []) {
       const group = GroupDbToAppTransformerSchema.parse(raw);
@@ -89,7 +89,7 @@ async function loadAudienceContext(
   }
 
   const tableIds = [...new Set(guests.map((g) => g.tableId).filter((id): id is string => !!id))];
-  if (needTables && tableIds.length > 0) {
+  if (need.tables && tableIds.length > 0) {
     const { data, error } = await supabase
       .from('tables')
       .select('id, table_number, label')
@@ -130,7 +130,12 @@ async function prepareAudience(
   scheduleId: string,
   schedule: ScheduleApp,
   options: AudienceOptions,
-  rules: { usablePhone: (phone: string | null | undefined) => boolean; needTables: boolean },
+  rules: {
+    usablePhone: (phone: string | null | undefined) => boolean;
+    needTables: boolean;
+    /** Only the Classic catalog's placeholders read a Guest's group. */
+    needGroups: boolean;
+  },
 ): Promise<PreparedAudience> {
   const { usablePhone } = rules;
   let guestsQuery = supabase.from('guests').select('*').eq('event_id', schedule.eventId);
@@ -193,7 +198,10 @@ async function prepareAudience(
     options.guestIds?.length ? 'manual' : 'scheduled',
   );
 
-  const { groups, tables } = await loadAudienceContext(supabase, reachable, rules.needTables);
+  const { groups, tables } = await loadAudienceContext(supabase, reachable, {
+    tables: rules.needTables,
+    groups: rules.needGroups,
+  });
 
   return { ok: true, reachable, reserved, groups, tables, outsideCount: outside.length };
 }
@@ -209,7 +217,7 @@ export async function renderScheduleDeliveries(
      */
     guestIds?: string[];
     /** A row already fetched with SCHEDULE_SELECT and its event, to save a query. */
-    prefetched?: { schedule: ScheduleApp; event: ReturnType<typeof mapEventRow> };
+    prefetched?: { schedule: ScheduleApp; event: MappedEvent };
     /**
      * Guest Records outside the Record Package, already loaded by the caller. The
      * Dispatcher loads it before claiming the Schedule, so a failure to work it out
@@ -219,7 +227,7 @@ export async function renderScheduleDeliveries(
   } = {},
 ): Promise<RenderDeliveriesResult> {
   let schedule: ScheduleApp;
-  let event: ReturnType<typeof mapEventRow>;
+  let event: MappedEvent;
 
   if (options.prefetched) {
     ({ schedule, event } = options.prefetched);
@@ -288,6 +296,7 @@ export async function renderScheduleDeliveries(
     // this channel, they have none.
     usablePhone: withoutTable.channel === 'sms' ? canReceiveSms : validatePhoneNumber,
     needTables: Boolean(withTable),
+    needGroups: true,
   });
   if (!audience.ok) return audience;
   const { reachable, reserved, groups, tables, outsideCount } = audience;
@@ -342,12 +351,13 @@ async function renderMessagePlanDeliveries(
   supabase: SupabaseClient,
   scheduleId: string,
   schedule: ScheduleApp,
-  event: ReturnType<typeof mapEventRow>,
+  event: MappedEvent,
   options: AudienceOptions,
 ): Promise<RenderDeliveriesResult> {
   const audience = await prepareAudience(supabase, scheduleId, schedule, options, {
     usablePhone: validatePhoneNumber,
     needTables: shouldSendTableNumbers(event.guestExperience),
+    needGroups: false,
   });
   if (!audience.ok) return audience;
   const { reachable, reserved, tables, outsideCount } = audience;

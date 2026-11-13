@@ -29,18 +29,10 @@ export function rsvpAttachment(params: {
 
   const requested =
     params.attachment === 'image' || params.attachment === 'video' ? params.attachment : null;
-  const event = {
-    occasionPhrase: null,
-    approachingLine: null,
-    todayLine: null,
-    eventDate: null,
+  const chosen = effectiveAttachment(stage, requested, {
     invitations: params.imageUrl ? { imageUrl: params.imageUrl } : null,
     invitationVideoUrl: params.videoUrl ?? null,
-  };
-  const chosen =
-    stage === 'invitation'
-      ? effectiveAttachment(stage, requested, event)
-      : effectiveAttachment(stage, requested, event);
+  });
   if (chosen === 'image' && params.imageUrl) return { type: 'image', url: params.imageUrl.trim() };
   if (chosen === 'video' && params.videoUrl) return { type: 'video', url: params.videoUrl.trim() };
   return null;

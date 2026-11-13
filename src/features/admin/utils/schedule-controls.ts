@@ -1,3 +1,5 @@
+import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
+
 /**
  * What an Operator may still change on a Schedule from the Back Office, and why
  * not when they may not. Pure so the timeline (which hides the controls) and the
@@ -14,7 +16,7 @@ export type ScheduleControlState = {
   /** Whether a Call Round was started from this call plan. */
   hasRound: boolean;
   /** The Event's Message Plan. Omitted reads as Classic. */
-  messagePlan?: 'classic' | 'current';
+  messagePlan?: MessagePlan;
 };
 
 /** Sent by status, or claimed by the Dispatcher - either way it is frozen. */

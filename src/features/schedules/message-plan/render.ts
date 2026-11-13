@@ -144,9 +144,12 @@ function validUrl(value: string | null | undefined): string | null {
   }
 }
 
+/** What an attachment is read from: the Event's image and video. */
+type AttachmentSource = Pick<MessagePlanEvent, 'invitations' | 'invitationVideoUrl'>;
+
 /** The Event's link for a header medium, or null when it has none that parses. */
 function attachmentLink(
-  event: MessagePlanEvent,
+  event: AttachmentSource,
   medium: 'image' | 'video',
 ): string | null {
   return validUrl(
@@ -162,17 +165,22 @@ function attachmentLink(
 export function effectiveAttachment(
   stage: 'invitation',
   requested: MessagePlanSchedule['attachment'],
-  event: MessagePlanEvent,
+  event: AttachmentSource,
 ): InvitationAttachment;
 export function effectiveAttachment(
   stage: 'follow_up',
   requested: MessagePlanSchedule['attachment'],
-  event: MessagePlanEvent,
+  event: AttachmentSource,
 ): FollowUpAttachment;
 export function effectiveAttachment(
   stage: 'invitation' | 'follow_up',
   requested: MessagePlanSchedule['attachment'],
-  event: MessagePlanEvent,
+  event: AttachmentSource,
+): Attachment;
+export function effectiveAttachment(
+  stage: 'invitation' | 'follow_up',
+  requested: MessagePlanSchedule['attachment'],
+  event: AttachmentSource,
 ): Attachment {
   const offered: readonly Attachment[] =
     stage === 'invitation' ? INVITATION_ATTACHMENTS : FOLLOW_UP_ATTACHMENTS;

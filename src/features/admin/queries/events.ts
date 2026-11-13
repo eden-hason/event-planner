@@ -3,7 +3,7 @@
 import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { pageAll } from '@/lib/supabase/row-cap';
+import { embeddedOne, pageAll } from '@/lib/supabase/row-cap';
 import { canReceiveSms } from '@/lib/phone';
 import {
   classifyWhatsAppFailure,
@@ -383,7 +383,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
     const scheduleDeliveries = deliveries.filter((delivery) => delivery.schedule_id === schedule.id);
     const template = schedule.message_templates as unknown as { channel: string | null } | null;
     const messagePlan = parseMessagePlan(
-      (eventType(schedule.events) as unknown as { message_plan?: string | null } | null)?.message_plan,
+      embeddedOne(schedule.events as { message_plan: string | null } | null)?.message_plan,
     );
     // The Dispatcher claims a Schedule by setting dispatched_at and never writes
     // status = 'sent', so a claimed one reads as sent - same as timelineStatus.

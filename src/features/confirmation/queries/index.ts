@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { embeddedOne } from '@/lib/supabase/row-cap';
 import { getVisitorId } from '@/features/auth/queries';
 import {
   buildEventTitleParts,
@@ -175,9 +176,7 @@ export async function getConfirmationDataByToken(
     schedule_types: { key: string } | { key: string }[] | null;
     events: EventRow & { invitation_video_url: string | null; message_plan: string | null };
   };
-  const scheduleType = Array.isArray(schedule.schedule_types)
-    ? schedule.schedule_types[0]
-    : schedule.schedule_types;
+  const scheduleType = embeddedOne(schedule.schedule_types);
 
   // Fetch latest RSVP interaction from guest_interactions
   const { data: interaction } = await supabase

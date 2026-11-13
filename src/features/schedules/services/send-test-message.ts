@@ -18,7 +18,7 @@ import {
 } from '../utils/parameter-resolvers';
 import { buildWhatsAppComponents } from '../utils/send-payload';
 import { TEST_MESSAGE_TAG } from '../utils/whatsapp-callback-tag';
-import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow, type MappedEvent } from './map-event-row';
 import { postWhatsAppTemplate, type WhatsAppSendResult } from './post-whatsapp';
 import { resolveTemplatesForSchedule } from './resolve-reminder-templates';
 import { missingOccasionPhrase } from '../utils/send-payload';
@@ -125,28 +125,17 @@ export async function sendTestMessage(params: {
     return { success: false, reason: 'send-failed', message: missing };
   }
 
-  const { data: reservationId, error: reserveError } = await supabase.rpc(
-    'reserve_test_message',
-    {
-      p_event_id: schedule.eventId,
-      p_user_id: recipient.userId,
-      p_schedule_id: scheduleId,
-      p_phone_number: recipient.phone,
-      p_cap: TEST_MESSAGE_CAP,
-      p_account_cap: TEST_MESSAGE_ACCOUNT_CAP,
-    },
-  );
-  if (reserveError) {
-    console.error('[send-test-message] Could not reserve a test send:', reserveError);
-    return { success: false, reason: 'send-failed', message: 'Could not send the test message' };
-  }
-  if (!reservationId) {
-    return { success: false, reason: 'cap-reached', message: 'Test message limit reached' };
-  }
+  const reserved = await reserveTestMessage(supabase, {
+    eventId: schedule.eventId,
+    scheduleId,
+    recipient,
+  });
+  if (!reserved.ok) return reserved.outcome;
+  const reservationId = reserved.id;
 
   const now = new Date().toISOString();
   const guest: GuestApp = {
-    id: reservationId as string,
+    id: reservationId,
     eventId: schedule.eventId,
     name: recipient.name,
     phone: recipient.phone,
@@ -169,35 +158,12 @@ export async function sendTestMessage(params: {
     confirmationToken: previewToken,
   };
 
-  let result: WhatsAppSendResult;
-  try {
-    result = await postTestTemplate(recipient.phone, template, context);
-  } catch (error) {
-    result = {
-      outcome: 'unknown',
-      message: error instanceof Error ? error.message : 'Send failed',
-    };
-  }
-  const accepted = result.outcome === 'accepted';
-
-  const { error: updateError } = await supabase
-    .from('test_messages')
-    .update({
-      status: accepted ? 'accepted' : 'failed',
-      external_message_id: result.outcome === 'accepted' ? result.messageId : null,
-      error_message: result.outcome === 'accepted' ? null : result.message,
-    })
-    .eq('id', reservationId);
-  if (updateError) {
-    console.error('[send-test-message] Could not record the outcome:', updateError);
-  }
-
-  if (result.outcome !== 'accepted') {
-    console.error('[send-test-message] Provider did not accept the send:', result.message);
-    return { success: false, reason: 'send-failed', message: 'Could not send the test message' };
-  }
-
-  return { success: true, phone: recipient.phone };
+  return finishTestSend(
+    supabase,
+    reservationId,
+    () => postTestTemplate(recipient.phone, template, context),
+    recipient.phone,
+  );
 }
 
 /**
@@ -232,8 +198,8 @@ function postTestTemplate(
 }
 
 /**
- * reserve_test_message, then the outcome on its row: the one bookkeeping both
- * Message Plans share. Returns the reservation id, or the refusal.
+ * reserve_test_message: the caps both Message Plans share. Returns the
+ * reservation id, or the refusal.
  */
 async function reserveTestMessage(
   supabase: SupabaseClient,
@@ -273,7 +239,7 @@ async function sendMessagePlanTestMessage(params: {
   supabase: SupabaseClient;
   scheduleId: string;
   schedule: ScheduleApp;
-  event: ReturnType<typeof mapEventRow>;
+  event: MappedEvent;
   previewToken: string;
   recipient: { userId: string; name: string; phone: string };
 }): Promise<SendTestMessageOutcome> {
@@ -301,11 +267,33 @@ async function sendMessagePlanTestMessage(params: {
   });
   if (!reserved.ok) return reserved.outcome;
 
+  return finishTestSend(
+    supabase,
+    reserved.id,
+    () => postWhatsAppTemplate(rendered.whatsapp satisfies WhatsAppSendPayload, TEST_MESSAGE_TAG),
+    recipient.phone,
+  );
+}
+
+/**
+ * Posts a reserved Test Message and records its outcome on the reservation:
+ * the rest of the bookkeeping both Message Plans share. There is no Delivery
+ * and no retry, so a rejection and an unknown outcome end the same way.
+ */
+async function finishTestSend(
+  supabase: SupabaseClient,
+  reservationId: string,
+  send: () => Promise<WhatsAppSendResult>,
+  phone: string,
+): Promise<SendTestMessageOutcome> {
   let result: WhatsAppSendResult;
   try {
-    result = await postWhatsAppTemplate(rendered.whatsapp satisfies WhatsAppSendPayload, TEST_MESSAGE_TAG);
+    result = await send();
   } catch (error) {
-    result = { outcome: 'unknown', message: error instanceof Error ? error.message : 'Send failed' };
+    result = {
+      outcome: 'unknown',
+      message: error instanceof Error ? error.message : 'Send failed',
+    };
   }
   const accepted = result.outcome === 'accepted';
 
@@ -316,7 +304,7 @@ async function sendMessagePlanTestMessage(params: {
       external_message_id: result.outcome === 'accepted' ? result.messageId : null,
       error_message: result.outcome === 'accepted' ? null : result.message,
     })
-    .eq('id', reserved.id);
+    .eq('id', reservationId);
   if (updateError) {
     console.error('[send-test-message] Could not record the outcome:', updateError);
   }
@@ -325,5 +313,6 @@ async function sendMessagePlanTestMessage(params: {
     console.error('[send-test-message] Provider did not accept the send:', result.message);
     return { success: false, reason: 'send-failed', message: 'Could not send the test message' };
   }
-  return { success: true, phone: recipient.phone };
+
+  return { success: true, phone };
 }
