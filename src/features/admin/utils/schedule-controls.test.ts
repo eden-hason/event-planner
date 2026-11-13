@@ -79,6 +79,18 @@ describe('conversionRejection', () => {
 });
 
 describe('deletionRejection', () => {
+  it('on the current Message Plan deletes only an unsent Follow-up', () => {
+    const current = { ...invitation, messagePlan: 'current' as const };
+    assert.equal(deletionRejection({ ...current, scheduleTypeKey: 'follow_up' }), null);
+    for (const key of ['invitation', 'event_reminder', 'post_event']) {
+      assert.notEqual(deletionRejection({ ...current, scheduleTypeKey: key }), null, key);
+    }
+    assert.notEqual(
+      deletionRejection({ ...current, scheduleTypeKey: 'follow_up', status: 'sent' }),
+      null,
+    );
+  });
+
   it('deletes an Initial Invitation that has not gone out, in any unsent state', () => {
     assert.equal(deletionRejection(invitation), null);
     assert.equal(deletionRejection({ ...invitation, status: 'disabled' }), null);

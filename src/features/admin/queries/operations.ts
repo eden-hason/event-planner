@@ -1,5 +1,6 @@
 'use server';
 
+import { parseMessagePlan, scheduleChannel } from '@/features/schedules/utils/message-plan-kind';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
 import { embeddedCount, pageAll } from '@/lib/supabase/row-cap';
@@ -152,7 +153,7 @@ type ScheduleRow = {
   scheduled_date: string;
   target_status: string | null;
   schedule_type_id: string;
-  events: { title: string | null } | null;
+  events: { title: string | null; message_plan?: string | null } | null;
   schedule_types: { key: string | null; name: string | null; execution_kind: string | null } | null;
   message_templates: { channel: string | null } | null;
 };
@@ -180,7 +181,7 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
       supabase
         .from('schedules')
         .select(
-          'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules), schedule_types(key, name, execution_kind), message_templates(channel)',
+          'id, event_id, scheduled_date, target_status, schedule_type_id, events!inner(title, status, can_create_schedules, message_plan), schedule_types(key, name, execution_kind), message_templates(channel)',
         )
         .is('status', null)
         // Not yet handed to the queue. A dispatched Schedule is done as far as
@@ -221,7 +222,11 @@ export async function getPlannedWork(): Promise<PlannedWorkQueue> {
 
     const time = israelWallClockParts(row.scheduled_date).time;
     const audience_label = audienceCountLabel(row.target_status, audienceCount);
-    const channel = isCall ? null : channelLabel(row.message_templates?.channel ?? null);
+    const channel = isCall
+      ? null
+      : channelLabel(
+          scheduleChannel(row.message_templates?.channel, parseMessagePlan(row.events?.message_plan)),
+        );
 
     let detail: string;
     if (isCall) {

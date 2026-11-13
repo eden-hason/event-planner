@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { embeddedOne } from '@/lib/supabase/row-cap';
 import { getVisitorId } from '@/features/auth/queries';
 import {
   buildEventTitleParts,
@@ -9,6 +10,7 @@ import {
 import type { ConfirmationPageData } from '../schemas';
 import { parseMealCounts } from '../utils/meal-counts';
 import { isRsvpOpen } from '../utils/rsvp-cutoff';
+import { rsvpAttachment } from '../utils/rsvp-attachment';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -153,8 +155,9 @@ export async function getConfirmationDataByToken(
         id, name, amount, rsvp_status, meal_counts, needs_transportation
       ),
       schedules!inner (
-        id,
-        events!inner (${EVENT_COLUMNS})
+        id, attachment,
+        schedule_types (key),
+        events!inner (${EVENT_COLUMNS}, invitation_video_url, message_plan)
       )
     `,
     )
@@ -167,7 +170,13 @@ export async function getConfirmationDataByToken(
 
   // Extract nested data — Supabase returns !inner joins as objects
   const guest = data.guests as unknown as GuestRow;
-  const schedule = data.schedules as unknown as { id: string; events: EventRow };
+  const schedule = data.schedules as unknown as {
+    id: string;
+    attachment: string | null;
+    schedule_types: { key: string } | { key: string }[] | null;
+    events: EventRow & { invitation_video_url: string | null; message_plan: string | null };
+  };
+  const scheduleType = embeddedOne(schedule.schedule_types);
 
   // Fetch latest RSVP interaction from guest_interactions
   const { data: interaction } = await supabase
@@ -195,6 +204,13 @@ export async function getConfirmationDataByToken(
     guest: toGuestView(guest),
     event: toEventView(schedule.events),
     scheduleId: schedule.id,
+    attachment: rsvpAttachment({
+      messagePlan: schedule.events.message_plan,
+      scheduleTypeKey: scheduleType?.key,
+      attachment: schedule.attachment,
+      imageUrl: schedule.events.invitations?.image_url,
+      videoUrl: schedule.events.invitation_video_url,
+    }),
   };
 }
 
@@ -231,6 +247,7 @@ export async function getConfirmationDataByGuestToken(
     guest: toGuestView(data as unknown as GuestRow),
     event: toEventView(event),
     scheduleId: null,
+    attachment: null,
   };
 }
 
@@ -272,5 +289,6 @@ export async function getConfirmationPreviewData(
     },
     event: toEventView(data as unknown as EventRow),
     scheduleId: null,
+    attachment: null,
   };
 }

@@ -7,8 +7,12 @@ import {
   templateForGuest,
   type ResolvedTemplates,
 } from './resolve-reminder-templates';
+import { sendSmsMessage } from '../actions/sms';
+import { publicSiteUrl } from '../utils/parameter-resolvers';
+import { composeMessagePlanForGuest } from '../utils/message-plan-send';
+import { describeRefusal } from '../message-plan/render';
 import { loadIsFollowUpConfirmation } from './confirmation-round';
-import { MAPPED_EVENT_COLUMNS, mapEventRow } from './map-event-row';
+import { MAPPED_EVENT_COLUMNS, mapEventRow, type MappedEvent } from './map-event-row';
 import {
   buildSmsBody,
   classifyWhatsAppFailure,
@@ -17,14 +21,13 @@ import {
   hasInvitationImage,
   hasNote,
   isMessageSchedule,
-  sendSmsToGuest,
   shouldSendTableNumbers,
   validatePhoneNumber,
   type ParameterResolutionContext,
   type SmsFallbackTrigger,
 } from '../utils';
 import { sendingConfig } from '@/lib/config/sending';
-import { canReceiveSms } from '@/lib/phone';
+import { canReceiveSms, toE164 } from '@/lib/phone';
 
 /**
  * The SMS Fallback engine (CONTEXT.md, ADR 0012): a further SMS attempt for a
@@ -109,7 +112,7 @@ export type FallbackDeliveryRow = {
 
 type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
-  event: ReturnType<typeof mapEventRow>;
+  event: MappedEvent;
   /** False under an SMS Fallback Opt-out (CONTEXT.md). */
   smsFallbackEnabled: boolean;
 };
@@ -117,9 +120,66 @@ type LoadedSchedule = {
 /** Why an Event under an SMS Fallback Opt-out offers no fallback. */
 export const SMS_FALLBACK_OPTED_OUT_REASON = 'האירוע הזה בוואטסאפ בלבד - בלי SMS';
 
-type Resolution =
-  | ({ ok: true } & Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>)
+type GuestTables = Map<string, { tableNumber: number; label: string | null }>;
+
+/** One Guest's SMS Rendition, and the catalog row it came from (none on the current plan). */
+type RenderedSms =
+  | { ok: true; text: string; templateId: string | null }
   | { ok: false; reason: string };
+
+/**
+ * How a Schedule's SMS is rendered per Guest, decided once per Schedule. On
+ * the Classic Message Plan it is the SMS sibling in the catalog; on the
+ * current one it is the same text the WhatsApp send rendered, from the plan's
+ * own code (ADR 0055), so the two never say different things.
+ */
+type Resolution =
+  | {
+      ok: true;
+      /** Whether a Guest's table is read for the rendering. */
+      needTables: boolean;
+      render: (guest: GuestApp, tables: GuestTables, confirmationToken: string) => RenderedSms;
+    }
+  | { ok: false; reason: string };
+
+function classicResolution(
+  loaded: LoadedSchedule,
+  templates: Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>,
+): Resolution {
+  return {
+    ok: true,
+    needTables: Boolean(templates.withTable),
+    render: (guest, tables, confirmationToken) => {
+      const template = smsTemplateFor(templates, guest);
+      return {
+        ok: true,
+        text: buildSmsBody(template.payload, smsContext(loaded, guest, tables, confirmationToken)),
+        templateId: template.id,
+      };
+    },
+  };
+}
+
+function messagePlanResolution(loaded: LoadedSchedule): Resolution {
+  const siteUrl = publicSiteUrl();
+  return {
+    ok: true,
+    needTables: shouldSendTableNumbers(loaded.event.guestExperience),
+    render: (guest, tables, confirmationToken) => {
+      const composed = composeMessagePlanForGuest({
+        schedule: loaded.schedule,
+        event: loaded.event,
+        guest: { name: guest.name },
+        table: (guest.tableId ? tables.get(guest.tableId) : null) ?? null,
+        confirmationToken,
+        siteUrl,
+      });
+      return composed.ok
+        ? { ok: true, text: composed.message.smsBody, templateId: null }
+        : { ok: false, reason: describeRefusal(composed.refusal) };
+    },
+  };
+}
 
 export async function loadFallbackSchedule(
   supabase: SupabaseClient,
@@ -158,7 +218,8 @@ async function resolveSmsTemplates(
   // overrides it - not the button, not the retry (unlike a Freeze, which only
   // the sweeper respects).
   if (!loaded.smsFallbackEnabled) return { ok: false, reason: SMS_FALLBACK_OPTED_OUT_REASON };
-  if (schedule.template?.channel === 'sms') {
+  // The current plan sends every Guest WhatsApp first, so it always has an SMS to fall back to.
+  if (loaded.event.messagePlan !== 'current' && schedule.template?.channel === 'sms') {
     return { ok: false, reason: 'התזמון הזה כבר נשלח ב-SMS' };
   }
   return resolveSmsRendition(supabase, loaded);
@@ -178,6 +239,7 @@ export async function resolveSmsRendition(
   if (!isMessageSchedule(schedule)) {
     return { ok: false, reason: 'רק תזמוני הודעות יכולים לעבור ל-SMS' };
   }
+  if (event.messagePlan === 'current') return messagePlanResolution(loaded);
   const anchor = schedule.template;
   if (!anchor) return { ok: false, reason: 'לתזמון הזה אין תבנית' };
 
@@ -195,7 +257,7 @@ export async function resolveSmsRendition(
     invitationImage: hasInvitationImage(event.invitations),
   });
   if (!resolution.success) return { ok: false, reason: resolution.message };
-  return { ok: true, ...resolution.templates };
+  return classicResolution(loaded, resolution.templates);
 }
 
 async function loadFallbackDeliveries(
@@ -400,7 +462,7 @@ async function loadGuestsAndTables(
 }
 
 function smsTemplateFor(
-  resolution: Extract<Resolution, { ok: true }>,
+  resolution: Pick<ResolvedTemplates, 'withTable' | 'withoutTable' | 'withRsvpAsk'>,
   guest: GuestApp,
 ) {
   // Picked from the Guest as they are now: one who answered since the WhatsApp
@@ -436,15 +498,12 @@ export async function renderSmsRenditionFor(
   resolution: Extract<Resolution, { ok: true }>,
   guestId: string,
   confirmationToken: string,
-): Promise<{ guest: GuestApp; text: string } | null> {
-  const { guests, tables } = await loadGuestsAndTables(supabase, [guestId], Boolean(resolution.withTable));
+): Promise<{ guest: GuestApp; text: string } | { guest: GuestApp; text: null; reason: string } | null> {
+  const { guests, tables } = await loadGuestsAndTables(supabase, [guestId], resolution.needTables);
   const guest = guests.get(guestId);
   if (!guest) return null;
-  const text = buildSmsBody(
-    smsTemplateFor(resolution, guest).payload,
-    smsContext(loaded, guest, tables, confirmationToken),
-  );
-  return { guest, text };
+  const rendered = resolution.render(guest, tables, confirmationToken);
+  return rendered.ok ? { guest, text: rendered.text } : { guest, text: null, reason: rendered.reason };
 }
 
 export async function buildSmsFallbackPlan(
@@ -524,7 +583,7 @@ export async function sendSmsFallback(
   const { guests, tables } = await loadGuestsAndTables(
     supabase,
     batch.map((r) => r.guestId),
-    Boolean(resolution.withTable),
+    resolution.needTables,
   );
 
   let sentCount = 0;
@@ -538,7 +597,14 @@ export async function sendSmsFallback(
       skippedCount++;
       return;
     }
-    const template = smsTemplateFor(resolution, guest);
+    // Rendered before the claim, so a message that cannot be rendered claims
+    // nothing and stays eligible once its cause is fixed.
+    const rendered = resolution.render(guest, tables, token);
+    if (!rendered.ok) {
+      console.error('[sms-fallback] Could not render the SMS for delivery', recipient.deliveryId, rendered.reason);
+      failedCount++;
+      return;
+    }
 
     const { data: claim, error: claimError } = await supabase
       .from('message_delivery_attempts')
@@ -546,7 +612,7 @@ export async function sendSmsFallback(
         delivery_id: recipient.deliveryId,
         channel: 'sms',
         status: 'pending',
-        template_id: template.id,
+        template_id: rendered.templateId,
         triggered_by: options.triggeredBy,
       })
       .select('id')
@@ -562,15 +628,10 @@ export async function sendSmsFallback(
       return;
     }
 
-    const context = smsContext(loaded, guest, tables, token);
-
-    const result = await sendSmsToGuest({
-      guest,
-      context,
-      smsPayload: template.payload,
-      templateId: template.id,
-      confirmationToken: token,
-    });
+    const phone = toE164(guest.phone);
+    const result = phone
+      ? await sendSmsMessage({ to: phone, body: rendered.text })
+      : { success: false, message: 'No usable phone number', messageId: undefined };
 
     const { error: updateError } = await supabase
       .from('message_delivery_attempts')

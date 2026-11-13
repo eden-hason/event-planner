@@ -5,6 +5,9 @@ import { getCurrentUser } from '@/features/auth/queries';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { GiftingSettingsUpdateSchema } from '../schemas';
+// Deep import: pure, and the schedules barrel carries the send path.
+import { GIFT_BUTTON_SCHEDULE_TYPES } from '@/features/schedules/utils/event-config';
+import { parseMessagePlan } from '@/features/schedules/utils/message-plan-kind';
 
 export type GiftingActionState = {
   success: boolean;
@@ -61,7 +64,7 @@ export async function updateGiftingSettings(
 
     const { data: row, error: fetchError } = await supabase
       .from('events')
-      .select('event_settings')
+      .select('event_settings, message_plan')
       .eq('id', eventId)
       .single();
 
@@ -85,7 +88,14 @@ export async function updateGiftingSettings(
         link: bitConfig.link,
       };
     }
-    if (giftButtons) {
+    // On the current Message Plan the gift button is the Reminder's and the
+    // Thank You's own switch (schedules.gift_button, ADR 0053), so the toggle
+    // writes it there. The send reads only that, never event_settings.
+    const onMessagePlan = parseMessagePlan(row.message_plan) === 'current';
+    if (giftButtons && onMessagePlan) {
+      const saved = await saveScheduleGiftButtons(supabase, eventId, giftButtons);
+      if (!saved) return { success: false, message: 'Could not save. Please try again' };
+    } else if (giftButtons) {
       next.gift_buttons = {
         ...((current.gift_buttons as Record<string, boolean> | undefined) ??
           {}),
@@ -111,6 +121,55 @@ export async function updateGiftingSettings(
     console.error('updateGiftingSettings error:', error);
     return { success: false, message: 'Something went wrong' };
   }
+}
+
+/**
+ * Writes the gift switch on the Event's unsent Schedules of each type. A
+ * Schedule already dispatched is history and keeps what it sent with. One
+ * lookup of the type ids, then one update per type, in parallel.
+ */
+async function saveScheduleGiftButtons(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventId: string,
+  giftButtons: Partial<Record<string, boolean>>,
+): Promise<boolean> {
+  const wanted = Object.entries(giftButtons).filter(
+    (entry): entry is [string, boolean] =>
+      typeof entry[1] === 'boolean' && GIFT_BUTTON_SCHEDULE_TYPES.includes(entry[0]),
+  );
+  if (!wanted.length) return true;
+
+  const { data: types, error } = await supabase
+    .from('schedule_types')
+    .select('id, key')
+    .in('key', wanted.map(([key]) => key));
+  if (error) {
+    console.error('updateGiftingSettings: could not read the schedule types', error);
+    return false;
+  }
+  const typeId = new Map((types ?? []).map((row) => [row.key as string, row.id as string]));
+
+  const results = await Promise.all(
+    wanted.flatMap(([key, on]) => {
+      const id = typeId.get(key);
+      return id
+        ? [
+            supabase
+              .from('schedules')
+              .update({ gift_button: on })
+              .eq('event_id', eventId)
+              .eq('schedule_type_id', id)
+              .is('dispatched_at', null),
+          ]
+        : [];
+    }),
+  );
+  const failed = results.find((result) => result.error);
+  if (failed) {
+    console.error('updateGiftingSettings: could not save the gift button', failed.error);
+    return false;
+  }
+  return true;
 }
 
 function safeJson(value: string): unknown {

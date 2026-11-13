@@ -5,11 +5,13 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { sendingConfig } from '@/lib/config/sending';
 import { israelWallClockToIso } from '@/lib/date-time';
 import { dueTimeIssue, type DueTimeIssue } from '@/features/schedules';
+import { parseMessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import { revalidateOutreach } from '@/features/schedules/services/revalidate-outreach';
 import { dispatchScheduleById } from '@/features/schedules/services/dispatch-schedules';
 import { nudgeWorker } from '@/features/schedules/services/nudge-worker';
 import type { Location } from '@/features/events/schemas';
 import { VENUE_NAME_MAX } from '../utils/venue';
+import { extraFollowUpRejection, extraFollowUpRow } from '../utils/extra-follow-up';
 import {
   conversionRejection,
   deletionRejection,
@@ -24,6 +26,7 @@ export type EventControlResult = { success: boolean; message: string };
 const DUE_TIME_ISSUE_MESSAGES: Record<DueTimeIssue, string> = {
   afterEvent: 'צריך לבחור תאריך עד יום האירוע',
   notBeforeEvent: 'צריך לבחור תאריך עד יום לפני האירוע',
+  notOnPinnedDay: 'התאריך של הודעת התודה קבוע - אפשר לשנות רק את השעה',
   expires: 'המועד הזה רחוק מדי בעבר כדי לשלוח - צריך לבחור מועד מאוחר יותר',
 };
 
@@ -36,13 +39,15 @@ async function readScheduleControlState(scheduleId: string) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('schedules')
-    .select('id, event_id, status, sent_at, dispatched_at, schedule_types(key, execution_kind), events(event_date), call_rounds(id)')
+    .select('id, event_id, status, sent_at, dispatched_at, schedule_types(key, execution_kind), events(event_date, message_plan), call_rounds(id)')
     .eq('id', scheduleId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
   const type = one(data.schedule_types as unknown as { key: string; execution_kind: string } | null);
-  const event = one(data.events as unknown as { event_date: string | null } | null);
+  const event = one(
+    data.events as unknown as { event_date: string | null; message_plan: string | null } | null,
+  );
   const state: ScheduleControlState = {
     scheduleTypeKey: type?.key ?? '',
     kind: type?.execution_kind === 'phone_call' ? 'call' : 'message',
@@ -50,6 +55,7 @@ async function readScheduleControlState(scheduleId: string) {
     dispatchedAt: data.dispatched_at,
     sentAt: data.sent_at,
     hasRound: ((data.call_rounds as { id: string }[] | null) ?? []).length > 0,
+    messagePlan: parseMessagePlan(event?.message_plan),
   };
   return { eventId: data.event_id, eventDate: event?.event_date ?? null, state };
 }
@@ -80,6 +86,7 @@ export async function setScheduleDueTimeAdmin(
       eventDate: schedule.eventDate,
       scheduleTypeKey: schedule.state.scheduleTypeKey,
       scheduledDate,
+      messagePlan: schedule.state.messagePlan,
       now: new Date(),
       rules: { sendWindow: config.sendWindow, maxLatenessHours: config.scheduleMaxLatenessHours },
     });
@@ -347,6 +354,62 @@ export async function createAdvanceReminderAdmin(
     return { success: true, message: 'התזכורת המוקדמת נוספה' };
   } catch (error) {
     console.error('createAdvanceReminderAdmin failed:', error);
+    return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
+  }
+}
+
+/**
+ * Grants one more Follow-up on an Event on the current Message Plan - what an
+ * Extra Schedule buys there (ADR 0053). The Follow-up is added undated, to
+ * pending Guests, as the seed writes the first two, for the Owner to date. The
+ * Extra Schedule payment is recorded on its own (CONTEXT.md, Extra Schedule);
+ * this never charges anything.
+ */
+export async function addFollowUpAdmin(eventId: string): Promise<EventControlResult> {
+  await assertAdmin();
+  try {
+    const supabase = createServiceClient();
+    const [eventResult, typeResult] = await Promise.all([
+      supabase
+        .from('events')
+        .select('status, event_date, can_create_schedules, message_plan, invitations')
+        .eq('id', eventId)
+        .maybeSingle(),
+      supabase.from('schedule_types').select('id').eq('key', 'follow_up').maybeSingle(),
+    ]);
+    if (eventResult.error) throw new Error(eventResult.error.message);
+    if (typeResult.error) throw new Error(typeResult.error.message);
+    const row = eventResult.data;
+    if (!row) return { success: false, message: 'האירוע לא נמצא' };
+    if (!typeResult.data) {
+      console.error('addFollowUpAdmin: follow_up is missing from schedule_types');
+      return { success: false, message: 'אין בקטלוג תזכורת לאישור הגעה' };
+    }
+
+    const event = {
+      status: row.status,
+      eventDate: row.event_date,
+      messagePlan: parseMessagePlan(row.message_plan),
+      canCreateSchedules: row.can_create_schedules ?? false,
+      imageUrl: (row.invitations as { image_url?: string } | null)?.image_url,
+    };
+    const rejection = extraFollowUpRejection(event);
+    if (rejection) return { success: false, message: rejection };
+
+    const { error } = await supabase.from('schedules').insert({
+      event_id: eventId,
+      schedule_type_id: typeResult.data.id,
+      ...extraFollowUpRow(event),
+    });
+    if (error) {
+      console.error('addFollowUpAdmin failed:', error);
+      return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
+    }
+
+    revalidateOutreach(eventId);
+    return { success: true, message: 'נוספה תזכורת לאישור הגעה - בעלי האירוע יקבעו לה מועד' };
+  } catch (error) {
+    console.error('addFollowUpAdmin failed:', error);
     return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
   }
 }

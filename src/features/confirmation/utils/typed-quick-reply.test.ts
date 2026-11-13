@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { matchTypedQuickReply } from './typed-quick-reply';
+import { matchMessagePlanQuickReply, matchTypedQuickReply } from './typed-quick-reply';
 
 // As stored on the confirmation_1 templates.
 const BUTTONS = [
@@ -49,4 +49,11 @@ describe('matchTypedQuickReply', () => {
       assert.equal(matchTypedQuickReply(buttons, 'נגיע בשמחה'), null);
     }
   });
+});
+
+it('an Ask on the current Message Plan reads its own two labels, typed', () => {
+  assert.equal(matchMessagePlanQuickReply('נגיע בשמחה'), 'yes');
+  assert.equal(matchMessagePlanQuickReply('  לא נוכל   להגיע‏ '), 'no');
+  assert.equal(matchMessagePlanQuickReply('נגיע'), null);
+  assert.equal(matchMessagePlanQuickReply(''), null);
 });

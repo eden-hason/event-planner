@@ -19,6 +19,7 @@ import {
   buildTodayLine,
   readEventTypeKey,
 } from '@/features/events/utils/event-title';
+import { parseMessagePlan } from '../utils/message-plan-kind';
 
 /**
  * The `events` columns mapEventRow reads, for every send-path query that embeds
@@ -27,7 +28,9 @@ import {
  * empty parameter with no type error to say so.
  */
 export const MAPPED_EVENT_COLUMNS =
-  'id, user_id, title, event_date, location, host_details, invitations, invitation_video_url, reception_time, short_code, event_settings, guests_experience, event_types (key)';
+  'id, user_id, title, event_date, location, host_details, invitations, invitation_video_url, reception_time, ceremony_time, short_code, event_settings, guests_experience, message_plan, event_types (key)';
+
+export type MappedEvent = ReturnType<typeof mapEventRow>;
 
 export function mapEventRow(rawEvent: Record<string, unknown>) {
   const invitations = rawEvent.invitations as Record<string, string> | null;
@@ -44,8 +47,15 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
   } | null;
   const hostDetails =
     (rawEvent.host_details as Record<string, unknown> | null) ?? undefined;
+  const eventTypeKey = readEventTypeKey(rawEvent.event_types) ?? null;
   return {
     id: rawEvent.id as string,
+    // Which Message Plan the Event sends on (ADR 0053). Anything but
+    // 'current' reads as Classic, so a query that forgot the column sends
+    // exactly as before.
+    messagePlan: parseMessagePlan(rawEvent.message_plan),
+    // The hosts Message Field reads whose names to use from the type.
+    eventTypeKey,
     userId: rawEvent.user_id as string,
     title: rawEvent.title as string,
     // "חתונה של נועה ודורון" - the one placeholder that makes a Template fit
@@ -81,6 +91,7 @@ export function mapEventRow(rawEvent: Record<string, unknown>) {
     // A Bespoke Template's video header (event.invitationVideoUrl).
     invitationVideoUrl: (rawEvent.invitation_video_url as string | null) ?? undefined,
     receptionTime: (rawEvent.reception_time as string | null) ?? undefined,
+    ceremonyTime: (rawEvent.ceremony_time as string | null) ?? undefined,
     shortCode: (rawEvent.short_code as string | null) ?? undefined,
     // Read by the template resolver, not by any placeholder.
     eventSettings: settings

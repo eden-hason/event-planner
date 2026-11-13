@@ -3,7 +3,7 @@
 import { cache } from 'react';
 import { assertAdmin } from '@/lib/supabase/admin';
 import { createServiceClient } from '@/lib/supabase/service';
-import { pageAll } from '@/lib/supabase/row-cap';
+import { embeddedOne, pageAll } from '@/lib/supabase/row-cap';
 import { canReceiveSms } from '@/lib/phone';
 import {
   classifyWhatsAppFailure,
@@ -28,6 +28,7 @@ import type {
 } from '../types';
 import { eventDaysFromToday, israelWallClockParts } from '@/lib/date-time';
 import { getTestScope } from './test-accounts';
+import { parseMessagePlan, scheduleChannel } from '@/features/schedules/utils/message-plan-kind';
 import { isNoAskPlanned } from '../utils/no-ask-planned';
 import { filterEventRows, sortEventRows } from '../utils/events-index';
 import { eventTitle, eventTypeName, scheduleTypeName, UNKNOWN_OWNER } from '../utils/labels';
@@ -169,7 +170,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
 
   const { data: event, error } = await supabase
     .from('events')
-    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, plan_includes_calls, billing_status, sms_fallback_enabled, onboarding_step, created_at, host_details')
+    .select('id, user_id, title, status, event_date, event_types(name, key), location, ceremony_time, reception_time, short_code, can_create_schedules, plan_includes_calls, billing_status, sms_fallback_enabled, message_plan, onboarding_step, created_at, host_details')
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -212,6 +213,7 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     planIncludesCalls: event.plan_includes_calls ?? false,
     billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
     smsFallbackEnabled: event.sms_fallback_enabled !== false,
+    messagePlan: parseMessagePlan(event.message_plan),
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,
@@ -309,6 +311,7 @@ type ScheduleJoinRow = {
   target_status: string | null;
   schedule_types: unknown;
   message_templates: unknown;
+  events: unknown;
 };
 
 // Cached per render: the signals band and the outreach band both read it.
@@ -320,7 +323,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
   const schedules = unwrap(
     await supabase
       .from('schedules')
-      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(key, name, execution_kind), message_templates(channel)')
+      .select('id, event_id, schedule_type_id, scheduled_date, sent_at, dispatched_at, status, target_status, schedule_types(key, name, execution_kind), message_templates(channel), events(message_plan)')
       .eq('event_id', eventId),
   ) as unknown as ScheduleJoinRow[];
   if (!schedules.length) return [];
@@ -379,6 +382,9 @@ export const getEventTimeline = cache(async function getEventTimeline(
     const target = guests.filter((guest) => inAudience(schedule.target_status, guest.rsvp_status));
     const scheduleDeliveries = deliveries.filter((delivery) => delivery.schedule_id === schedule.id);
     const template = schedule.message_templates as unknown as { channel: string | null } | null;
+    const messagePlan = parseMessagePlan(
+      embeddedOne(schedule.events as { message_plan: string | null } | null)?.message_plan,
+    );
     // The Dispatcher claims a Schedule by setting dispatched_at and never writes
     // status = 'sent', so a claimed one reads as sent - same as timelineStatus.
     const status: EventTimelineRow['status'] = isCall && round
@@ -392,6 +398,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
       dispatchedAt: schedule.dispatched_at,
       sentAt: schedule.sent_at,
       hasRound: !!round,
+      messagePlan,
     };
     const convertible = conversionRejection(controlState) === null;
     return {
@@ -406,7 +413,7 @@ export const getEventTimeline = cache(async function getEventTimeline(
         : null,
       sentAt: schedule.sent_at,
       targetStatus: schedule.target_status,
-      channel: template?.channel ?? null,
+      channel: isCall ? null : scheduleChannel(template?.channel, messagePlan),
       audienceCount: target.length,
       roundId: round?.id ?? null,
       roundStartedAt: round?.created_at ?? null,

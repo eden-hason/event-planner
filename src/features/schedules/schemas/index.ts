@@ -149,6 +149,14 @@ export const ScheduleDbSchema = z.object({
   // Personal Message family is sent instead of template_id's - see
   // services/resolve-reminder-templates.ts.
   personal_message: z.string().nullable().optional(),
+  // The current Message Plan's choices (ADR 0054, 0055), null on Classic:
+  // Kululu Wording or the Owner's own, the Owner's text, the Asks' attachment
+  // and the Reminder's and Thank You's gift switch. Optional so a select that
+  // names its columns still parses.
+  wording: z.enum(['kululu', 'personal']).nullable().optional(),
+  personal_text: z.string().nullable().optional(),
+  attachment: z.enum(['image', 'video', 'none']).nullable().optional(),
+  gift_button: z.boolean().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   schedule_types: z.object({
@@ -181,6 +189,10 @@ export const ScheduleDbToAppSchema = ScheduleDbSchema.transform((db) => ({
   deliveryMethod: db.message_templates?.channel ?? null,
   customText: db.custom_text ?? null,
   personalMessage: db.personal_message ?? null,
+  wording: db.wording ?? null,
+  personalText: db.personal_text ?? null,
+  attachment: db.attachment ?? null,
+  giftButton: db.gift_button ?? null,
   createdAt: db.created_at,
   updatedAt: db.updated_at,
 }));

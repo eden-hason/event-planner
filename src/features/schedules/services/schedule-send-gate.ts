@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TargetStatus } from '../utils/audience';
+import { parseMessagePlan, scheduleChannel, type MessagePlan } from '../utils/message-plan-kind';
 
 export type ScheduleSendGate = {
   eventId: string;
@@ -16,6 +17,8 @@ export type ScheduleSendGate = {
   /** The template's channel, which decides whose phone it can reach */
   channel: string | null;
   eventDate: string | null;
+  /** The Event's Message Plan: the current plan offers no Catch-up Send yet (backlog 0039). */
+  messagePlan: MessagePlan;
 };
 
 /** Why a Schedule cannot be sent from a manual entry point */
@@ -44,7 +47,7 @@ export async function gateScheduleForSend(
   const { data, error } = await supabase
     .from('schedules')
     .select(
-      'id, event_id, status, target_status, dispatched_at, sent_at, schedule_types!inner(key, name, execution_kind), message_templates(channel), events!inner(can_create_schedules, event_date)',
+      'id, event_id, status, target_status, dispatched_at, sent_at, schedule_types!inner(key, name, execution_kind), message_templates(channel), events!inner(can_create_schedules, event_date, message_plan)',
     )
     .eq('id', scheduleId)
     .maybeSingle();
@@ -59,7 +62,7 @@ export async function gateScheduleForSend(
   }
 
   const event = (Array.isArray(data.events) ? data.events[0] : data.events) as
-    | { can_create_schedules: boolean; event_date: string | null }
+    | { can_create_schedules: boolean; event_date: string | null; message_plan?: string | null }
     | null;
   if (!event?.can_create_schedules) {
     return { ok: false, reason: 'sending_off' };
@@ -79,8 +82,9 @@ export async function gateScheduleForSend(
       targetStatus: data.target_status,
       dispatchedAt: data.dispatched_at,
       sentAt: data.sent_at,
-      channel: template?.channel ?? null,
+      channel: scheduleChannel(template?.channel, parseMessagePlan(event.message_plan)),
       eventDate: event.event_date,
+      messagePlan: parseMessagePlan(event.message_plan),
     },
   };
 }

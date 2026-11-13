@@ -47,6 +47,8 @@ const TYPE_ICONS: Record<ScheduleTypeKey, ScheduleTypeIcon> = {
   initial_invitation: IconMail,
   confirmation: IconUserCheck,
   advance_reminder: IconCalendarClock,
+  invitation: IconMail,
+  follow_up: IconUserCheck,
   event_reminder: IconBell,
   post_event: IconHeart,
   phone_call: IconPhone,

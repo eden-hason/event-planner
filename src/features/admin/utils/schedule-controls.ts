@@ -1,3 +1,5 @@
+import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
+
 /**
  * What an Operator may still change on a Schedule from the Back Office, and why
  * not when they may not. Pure so the timeline (which hides the controls) and the
@@ -13,6 +15,8 @@ export type ScheduleControlState = {
   sentAt: string | null;
   /** Whether a Call Round was started from this call plan. */
   hasRound: boolean;
+  /** The Event's Message Plan. Omitted reads as Classic. */
+  messagePlan?: MessagePlan;
 };
 
 /** Sent by status, or claimed by the Dispatcher - either way it is frozen. */
@@ -88,7 +92,12 @@ const DELETABLE_TYPE_KEYS = new Set(['initial_invitation', 'advance_reminder', '
  * Delivery or reply on record, which a manual send can leave without a claim.
  */
 export function deletionRejection(schedule: ScheduleControlState): string | null {
-  if (!DELETABLE_TYPE_KEYS.has(schedule.scheduleTypeKey)) {
+  if (schedule.messagePlan === 'current') {
+    // The current plan's shape is fixed (ADR 0053): one Invitation, one
+    // Reminder, one Thank You. Only a Follow-up may go - an Extra Schedule
+    // granted by mistake, or one the Event does not need.
+    if (schedule.scheduleTypeKey !== 'follow_up') return 'אפשר למחוק רק תזכורת לאישור הגעה';
+  } else if (!DELETABLE_TYPE_KEYS.has(schedule.scheduleTypeKey)) {
     return 'אפשר למחוק רק הזמנה ראשונית או תזכורת';
   }
   if (wentOut(schedule)) {

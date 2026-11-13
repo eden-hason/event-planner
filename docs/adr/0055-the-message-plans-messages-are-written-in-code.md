@@ -48,3 +48,10 @@ both plans and do not change shape.
   plans apart first. That branch is the price of running both, and it goes when the Classic
   plan does.
 - `message_templates` is frozen: no new families are added to it.
+- Amended 2026-11-13, from building the send path: a current-plan message Schedule's
+  channel is WhatsApp (with the SMS Fallback behind it), since there is no catalog row to
+  read it from; a quick reply a Guest's WhatsApp sends as typed text is read against the
+  plan's own two labels; and the Gifting page's per-message switches write the Reminder's
+  and Thank You's `gift_button` on the current plan instead of `event_settings`, because
+  the send reads only the Schedule.
+

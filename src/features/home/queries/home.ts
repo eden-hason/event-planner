@@ -6,6 +6,7 @@ import { getEffectiveUser, getUserProfile } from '@/features/auth/queries';
 import { getGlobalProgressCounts } from '@/features/seating/queries';
 import { findGuestIssues } from '@/features/guests';
 import {
+  ASK_SCHEDULE_TYPE_KEYS,
   ASK_TYPE_KEYS,
   comparePlanOrder,
   hasNoAskPlanned,
@@ -63,8 +64,10 @@ export const getHomeViewer = cache(async function getHomeViewer(): Promise<HomeV
 });
 
 /**
- * The earliest confirmation Schedule that has not gone out yet - the one a Test
- * Message previews. Reads through the viewer's own client, so RLS also confirms
+ * The earliest Ask that has not gone out yet - the one a Test Message
+ * previews: a Confirmation on the Classic Message Plan, the Invitation or a
+ * Follow-up on the current one (ADR 0053). An Event holds only its own plan's
+ * types, so one query covers both. Reads through the viewer's own client, so RLS also confirms
  * the event is theirs.
  *
  * A dated one wins; with none dated it is the first Undated one in plan order,
@@ -82,13 +85,13 @@ export const getTestMessageSchedule = cache(async function getTestMessageSchedul
     .from('schedules')
     .select('id, scheduled_date, target_status, schedule_types!inner (key)')
     .eq('event_id', eventId)
-    .eq('schedule_types.key', 'confirmation')
+    .in('schedule_types.key', [...ASK_SCHEDULE_TYPE_KEYS])
     .or('status.is.null,status.eq.disabled');
   if (error) {
     console.error('Error fetching the test message schedule:', error);
     return null;
   }
-  // An Event has a couple of Confirmations at most, so the plan order is
+  // An Event has a few Asks at most, so the plan order is
   // applied here rather than restated as SQL that could drift from it.
   const [first] = (data ?? []).map(planEntryFromRow).sort(comparePlanOrder);
   return first ? { id: first.id } : null;

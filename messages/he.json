@@ -1670,6 +1670,8 @@
           "initial_invitation": "הזמנה ראשונית",
           "confirmation": "אישור הגעה",
           "advance_reminder": "תזכורת מוקדמת",
+          "invitation": "הזמנה",
+          "follow_up": "תזכורת לאישור הגעה",
           "event_reminder": "תזכורת אירוע",
           "post_event": "תודה",
           "phone_call": "סבב שיחות"
@@ -1770,6 +1772,7 @@
       "invalid": {
         "afterEvent": "יש לבחור תאריך עד יום האירוע",
         "notBeforeEvent": "יש לבחור תאריך עד יום לפני האירוע",
+        "notOnPinnedDay": "התאריך נקבע לפי יום האירוע - אפשר לשנות רק את השעה",
         "expires": "השעה הזו עברה לפני יותר מ-{hours} שעות, ולכן ההודעה תפוג במקום להישלח - יש לבחור שעה מאוחרת יותר"
       },
       "eventDayHelper": "התאריך נקבע לפי יום האירוע - אפשר לשנות רק את השעה",
@@ -1842,6 +1845,8 @@
       "initial_invitation": "הזמנה ראשונית",
       "confirmation": "אישור הגעה",
       "advance_reminder": "תזכורת מוקדמת",
+      "invitation": "הזמנה",
+      "follow_up": "תזכורת לאישור הגעה",
       "event_reminder": "תזכורת אירוע",
       "post_event": "תודה",
       "phone_call": "סבב שיחות"

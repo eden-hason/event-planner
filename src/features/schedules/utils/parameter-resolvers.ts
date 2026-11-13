@@ -83,6 +83,15 @@ type TransformerFunction = (
   options?: Record<string, unknown>,
 ) => string;
 
+/** The site Guests' links point at: the same base on both Message Plans. */
+export function publicSiteUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL ||
+    'http://localhost:3000'
+  );
+}
+
 /**
  * A transformer that turns a short code or token into the public link Guests
  * open - `${site}/r/<code>` and the like. Blank in, blank out, so a missing code
@@ -92,11 +101,7 @@ function publicPageUrl(prefix: string): TransformerFunction {
   return (value: unknown) => {
     const code = String(value ?? '').trim();
     if (!code) return '';
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXT_PUBLIC_VERCEL_URL ||
-      'http://localhost:3000';
-    return `${siteUrl}/${prefix}/${code}`;
+    return `${publicSiteUrl()}/${prefix}/${code}`;
   };
 }
 

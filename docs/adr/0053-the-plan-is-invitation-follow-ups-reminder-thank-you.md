@@ -5,7 +5,8 @@ Date: 2026-11-07
 ## Status
 
 Accepted. Not built. Supersedes ADR 0036 and ADR 0051 for Events on the current Message
-Plan. Amended 2026-11-12: which Events get it, and how it is rolled out.
+Plan. Amended 2026-11-12: which Events get it, and how it is rolled out. Amended
+2026-11-13: what the send path decided (see "Settled while building the send path").
 
 ## Context
 
@@ -98,3 +99,22 @@ Events. The rules for how many Follow-ups an Event may have are unchanged.
 - Everything that keyed off `confirmation` (the Results tab, the Confirmation
   Conversation, the Catch-up Send, `isFollowUpConfirmation`) now keys off "is an Ask",
   and the follow-up copy comes from the Follow-up type instead of from plan order.
+
+## Settled while building the send path (2026-11-13)
+
+- **The Thank You's day is enforced, not only shown.** Saving a current-plan Thank You on
+  any day but its pinned one is refused (`notOnPinnedDay`), by the Owner's save and the
+  Back Office alike. The Classic Event Reminder's pin stays the date picker's alone, as it
+  always was.
+- **An Extra Schedule is one more Follow-up,** added by an Operator from the Back Office
+  ("הוספת תזכורת לאישור הגעה"): undated, to pending Guests, with the image when the Event
+  has one, exactly as the seed writes a Follow-up. Recording the payment stays separate.
+- **An Operator deletes only a Follow-up** on the current plan (one granted by mistake).
+  The Invitation, the Reminder and the Thank You are the plan's fixed shape.
+- **Duplicating an Event copies no Schedules.** The copy is seeded by the database on the
+  plan new Events start on, which may differ from the source's. Copying the source's
+  Schedules on top had also doubled every Classic copy's plan; that is gone with it.
+- **Catch-up Send** is hidden on the current plan by never being picked, and refused
+  (`message_plan`) if reached anyway, for the Owner and for the Back Office's late-guest
+  send.
+

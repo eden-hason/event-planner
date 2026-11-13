@@ -1,3 +1,4 @@
+import { parseMessagePlan, scheduleChannel } from '@/features/schedules/utils/message-plan-kind';
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import { embeddedOne } from '@/lib/supabase/row-cap';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -44,7 +45,7 @@ export async function getGuestCommunicationInput(
   const { data: guest, error: guestError } = await supabase
     .from('guests')
     .select(
-      'id, name, phone_number, rsvp_status, amount, created_at, event_id, rsvp_change_source, rsvp_changed_at, rsvp_changed_by, rsvp_changed_by_name, events!inner(event_date, can_create_schedules)',
+      'id, name, phone_number, rsvp_status, amount, created_at, event_id, rsvp_change_source, rsvp_changed_at, rsvp_changed_by, rsvp_changed_by_name, events!inner(event_date, can_create_schedules, message_plan)',
     )
     .eq('id', guestId)
     .maybeSingle();
@@ -57,8 +58,10 @@ export async function getGuestCommunicationInput(
     guest.events as unknown as {
       event_date: string | null;
       can_create_schedules: boolean;
+      message_plan?: string | null;
     } | null,
   );
+  const messagePlan = parseMessagePlan(event?.message_plan);
 
   const [schedules, journeys, calls, outsideIds] = await Promise.all([
     supabase
@@ -104,7 +107,10 @@ export async function getGuestCommunicationInput(
         scheduledDate: row.scheduled_date,
         sentAt: row.sent_at,
         dispatchedAt: row.dispatched_at,
-        channel: embeddedOne(row.message_templates)?.channel ?? null,
+        channel:
+          type?.execution_kind === 'message'
+            ? scheduleChannel(embeddedOne(row.message_templates)?.channel, messagePlan)
+            : (embeddedOne(row.message_templates)?.channel ?? null),
       };
     });
   const catchUp = pickCatchUpSchedule(plan);

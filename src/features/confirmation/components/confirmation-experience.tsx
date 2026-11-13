@@ -430,6 +430,28 @@ export function ConfirmationExperience({
             className="rsvp-rise mt-10 w-full"
             style={{ animationDelay: '0.44s' }}
           >
+            {data.attachment ? (
+              // What the message carried, for a Guest who came from an SMS,
+              // which cannot (current Message Plan, ADR 0053).
+              <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-muted">
+                {data.attachment.type === 'image' ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- a remote upload of unknown size
+                  <img
+                    src={data.attachment.url}
+                    alt="ההזמנה"
+                    className="block h-auto w-full"
+                  />
+                ) : (
+                  <video
+                    src={data.attachment.url}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="block h-auto w-full"
+                  />
+                )}
+              </div>
+            ) : null}
             <p className="text-center text-[18px] leading-[1.6] font-medium text-[oklch(0.37_0.012_285.9)]">
               נשמח לדעת אם תגיעו
             </p>

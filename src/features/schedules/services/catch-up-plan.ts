@@ -144,6 +144,7 @@ export async function buildCatchUpPlan(
     scheduleTypeKey: gate.scheduleTypeKey,
     eventDate: gate.eventDate,
     now,
+    messagePlan: gate.messagePlan,
   });
   if (rejection) return { ok: false, reason: rejection };
 

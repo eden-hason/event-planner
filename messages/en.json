@@ -1670,6 +1670,8 @@
           "initial_invitation": "Initial Invitation",
           "confirmation": "RSVP Confirmation",
           "advance_reminder": "Advance Reminder",
+          "invitation": "Invitation",
+          "follow_up": "Follow-up",
           "event_reminder": "Event Reminder",
           "post_event": "Thank You",
           "phone_call": "Call Round"
@@ -1770,6 +1772,7 @@
       "invalid": {
         "afterEvent": "Pick a date on or before the event day",
         "notBeforeEvent": "Pick a date before the event day",
+        "notOnPinnedDay": "The date follows the event - only the time can change",
         "expires": "This time is more than {hours} hours ago, so the message would expire instead of sending - pick a later time"
       },
       "eventDayHelper": "The date follows the event - only the time can change",
@@ -1842,6 +1845,8 @@
       "initial_invitation": "Initial Invitation",
       "confirmation": "RSVP Confirmation",
       "advance_reminder": "Advance Reminder",
+      "invitation": "Invitation",
+      "follow_up": "Follow-up",
       "event_reminder": "Event Reminder",
       "post_event": "Thank You",
       "phone_call": "Call Round"

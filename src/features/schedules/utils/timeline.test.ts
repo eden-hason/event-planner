@@ -282,3 +282,17 @@ test('daysUntil is null once the Due Time has passed', () => {
   assert.equal(daysUntil(due('2026-09-11T10:00'), now), null);
   assert.equal(daysUntil(due('2026-09-01T10:00'), now), null);
 });
+
+test('the current plan: an undated Invitation comes before its undated Follow-ups, numbered 1 and 2', () => {
+  const plan = [
+    entry('f2', 'follow_up', null, 'pending'),
+    entry('reminder', 'event_reminder', due('2026-09-25T10:00'), 'confirmed'),
+    entry('invite', 'invitation', null),
+    entry('f1', 'follow_up', null, 'pending'),
+  ];
+  assert.deepEqual(order(plan), ['reminder', 'invite', 'f1', 'f2']);
+  const numbers = numberPlan(plan);
+  assert.equal(numbers.get('f1')?.index, 1);
+  assert.equal(numbers.get('f2')?.index, 2);
+  assert.equal(numbers.get('f2')?.total, 2);
+});

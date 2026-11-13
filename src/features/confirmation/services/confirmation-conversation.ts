@@ -24,7 +24,8 @@ import { parseConversationId, type ParsedConversationId } from '../utils/convers
 import { buildMealOptions } from '../utils/meal-options';
 import { parseMealCounts } from '../utils/meal-counts';
 import { isRsvpOpen } from '../utils/rsvp-cutoff';
-import { matchTypedQuickReply } from '../utils/typed-quick-reply';
+import { matchMessagePlanQuickReply, matchTypedQuickReply } from '../utils/typed-quick-reply';
+import { isCurrentPlanOnlyType } from '@/features/schedules/utils/message-plan-kind';
 import { recordGuestRsvp } from './record-rsvp';
 
 /**
@@ -114,18 +115,29 @@ async function readTypedQuickReply(
 
   const { data } = await supabase
     .from('message_delivery_attempts')
-    .select('message_deliveries!inner (confirmation_token), message_templates (payload)')
+    .select(
+      'message_deliveries!inner (confirmation_token, schedules (schedule_types (key))), message_templates (payload)',
+    )
     .eq('channel', 'whatsapp')
     .eq('external_message_id', quotedId)
     .maybeSingle();
   if (!data) return null;
 
-  const token = (data.message_deliveries as unknown as { confirmation_token: string | null })
-    .confirmation_token;
+  const delivery = data.message_deliveries as unknown as {
+    confirmation_token: string | null;
+    schedules: { schedule_types: { key: string } | null } | null;
+  };
+  const token = delivery.confirmation_token;
   const template = data.message_templates as unknown as {
     payload: { parameters?: { buttonPlaceholders?: unknown } } | null;
   } | null;
-  const answer = matchTypedQuickReply(template?.payload?.parameters?.buttonPlaceholders, text);
+  // A current Message Plan attempt has no template (ADR 0055); its Asks carry
+  // the plan's own two quick replies.
+  const answer = template
+    ? matchTypedQuickReply(template.payload?.parameters?.buttonPlaceholders, text)
+    : isCurrentPlanOnlyType(delivery.schedules?.schedule_types?.key)
+      ? matchMessagePlanQuickReply(text)
+      : null;
   if (!token || !answer) return null;
 
   return { token, action: { type: answer }, amount: null };

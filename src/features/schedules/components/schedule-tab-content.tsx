@@ -79,6 +79,7 @@ export async function ScheduleTabContent({
       schedule={schedule}
       editable={editable}
       eventDate={eventDate}
+      messagePlan={event?.messagePlan ?? 'classic'}
       dueTimeRules={{ sendWindow, maxLatenessHours: scheduleMaxLatenessHours }}
     >
       <div className="flex flex-col gap-4">

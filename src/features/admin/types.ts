@@ -6,6 +6,7 @@ import type {
   RecordPackage,
   RecordPackageChannel,
 } from '@/features/billing';
+import type { MessagePlan } from '@/features/schedules/utils/message-plan-kind';
 
 /**
  * Back Office view models. Vocabulary is defined in CONTEXT.md - in particular
@@ -215,6 +216,8 @@ export type EventIdentity = {
   billingStatus: EventBillingStatus;
   /** False under an SMS Fallback Opt-out (CONTEXT.md): the Owner asked for WhatsApp only. */
   smsFallbackEnabled: boolean;
+  /** Which Message Plan the Event sends on (ADR 0053). */
+  messagePlan: MessagePlan;
   onboardingStep: string | null;
   createdAt: string;
   /** The account the event belongs to - the identity an Operator impersonates. */

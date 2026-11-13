@@ -7,6 +7,7 @@ import { assertNotImpersonating } from '@/lib/supabase/admin';
 import { sendingConfig } from '@/lib/config/sending';
 import { CustomTextSchema, PersonalMessageSchema } from '../schemas';
 import { dueTimeIssue } from '../utils/due-time-guards';
+import { parseMessagePlan } from '../utils/message-plan-kind';
 
 /**
  * A Schedule the organiser is not allowed to change, and why.
@@ -81,7 +82,7 @@ export async function updateScheduledDate(
 
     const { data: existing, error: fetchError } = await supabase
       .from('schedules')
-      .select('status, schedule_types (execution_kind, key), events (event_date)')
+      .select('status, schedule_types (execution_kind, key), events (event_date, message_plan)')
       .eq('id', scheduleId)
       .single();
 
@@ -111,6 +112,8 @@ export async function updateScheduledDate(
       eventDate: event?.event_date ?? null,
       scheduleTypeKey: types?.key ?? '',
       scheduledDate,
+      // event_reminder and post_event follow different day rules on each plan.
+      messagePlan: parseMessagePlan(event?.message_plan),
       now: new Date(),
       rules: {
         sendWindow: config.sendWindow,
@@ -122,6 +125,9 @@ export async function updateScheduledDate(
     }
     if (issue === 'notBeforeEvent') {
       return { success: false, message: 'Pick a date before the event day' };
+    }
+    if (issue === 'notOnPinnedDay') {
+      return { success: false, message: 'The date follows the event - only the time can change' };
     }
     if (issue === 'expires') {
       return {
