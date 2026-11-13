@@ -29,15 +29,15 @@ export function AddFollowUpDialog({ eventId }: { eventId: string }) {
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm" className="shrink-0 text-[13px]">
           <Plus className="size-[15px]" />
-          הוספת תזכורת לאישור הגעה
+          הוספת הודעת עדיין מחכים לתשובה
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle>הוספת תזכורת לאישור הגעה</DialogTitle>
+          <DialogTitle>הוספת הודעת עדיין מחכים לתשובה</DialogTitle>
           <DialogDescription>
-            עוד תזכורת למי שעוד לא ענה, בלי מועד. בעלי האירוע יקבעו מתי היא יוצאת, כמו את האחרות
+            עוד הודעה למי שעוד לא ענה, בלי מועד. בעלי האירוע יקבעו מתי היא יוצאת, כמו את האחרות
           </DialogDescription>
         </DialogHeader>
 

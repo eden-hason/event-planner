@@ -218,6 +218,12 @@ export type EventIdentity = {
   smsFallbackEnabled: boolean;
   /** Which Message Plan the Event sends on (ADR 0053). */
   messagePlan: MessagePlan;
+  /**
+   * Whether any message Schedule has gone out or is under way
+   * (`event_message_schedules_sent`): what keeps a Classic Event from moving
+   * to the current plan. Read only for a Classic Event; false on current.
+   */
+  messagesSent: boolean;
   onboardingStep: string | null;
   createdAt: string;
   /** The account the event belongs to - the identity an Operator impersonates. */

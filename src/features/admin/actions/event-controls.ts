@@ -288,7 +288,7 @@ export async function createAdvanceReminderAdmin(
     const [eventResult, typeResult, anchorResult, existingResult] = await Promise.all([
       supabase
         .from('events')
-        .select('status, event_date, can_create_schedules')
+        .select('status, event_date, can_create_schedules, message_plan')
         .eq('id', input.eventId)
         .maybeSingle(),
       supabase.from('schedule_types').select('id').eq('key', ADVANCE_REMINDER_TYPE_KEY).maybeSingle(),
@@ -317,6 +317,11 @@ export async function createAdvanceReminderAdmin(
     // A Draft Event cannot have schedules - it is interest, not an event.
     if (event.status !== 'published') return { success: false, message: 'האירוע הזה לא פורסם' };
     if (!event.event_date) return { success: false, message: 'לאירוע הזה אין תאריך' };
+    // The current plan has no Advance Reminder: its Reminder may be dated
+    // before the Event day instead (ADR 0053).
+    if (parseMessagePlan(event.message_plan) === 'current') {
+      return { success: false, message: 'באירוע על תוכנית ההודעות החדשה אין תזכורת מוקדמת - את התזכורת אפשר לתזמן לפני יום האירוע' };
+    }
     if ((existingResult.count ?? 0) > 0) {
       return { success: false, message: 'כבר יש לאירוע הזה תזכורת מוקדמת' };
     }
@@ -383,7 +388,7 @@ export async function addFollowUpAdmin(eventId: string): Promise<EventControlRes
     if (!row) return { success: false, message: 'האירוע לא נמצא' };
     if (!typeResult.data) {
       console.error('addFollowUpAdmin: follow_up is missing from schedule_types');
-      return { success: false, message: 'אין בקטלוג תזכורת לאישור הגעה' };
+      return { success: false, message: 'אין בקטלוג הודעת עדיין מחכים לתשובה' };
     }
 
     const event = {
@@ -403,14 +408,14 @@ export async function addFollowUpAdmin(eventId: string): Promise<EventControlRes
     });
     if (error) {
       console.error('addFollowUpAdmin failed:', error);
-      return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
+      return { success: false, message: 'לא הצלחנו להוסיף את ההודעה' };
     }
 
     revalidateOutreach(eventId);
-    return { success: true, message: 'נוספה תזכורת לאישור הגעה - בעלי האירוע יקבעו לה מועד' };
+    return { success: true, message: 'נוספה הודעת עדיין מחכים לתשובה - בעלי האירוע יקבעו לה מועד' };
   } catch (error) {
     console.error('addFollowUpAdmin failed:', error);
-    return { success: false, message: 'לא הצלחנו להוסיף את התזכורת' };
+    return { success: false, message: 'לא הצלחנו להוסיף את ההודעה' };
   }
 }
 

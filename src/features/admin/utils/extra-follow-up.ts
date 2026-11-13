@@ -21,7 +21,7 @@ export type ExtraFollowUpEvent = {
 /** Why an Operator cannot add a Follow-up to this Event, or null when they can. */
 export function extraFollowUpRejection(event: ExtraFollowUpEvent, now = new Date()): string | null {
   if (event.messagePlan !== 'current') {
-    return 'אפשר להוסיף תזכורת לאישור הגעה רק לאירוע על תוכנית ההודעות החדשה';
+    return 'אפשר להוסיף הודעת עדיין מחכים לתשובה רק לאירוע על תוכנית ההודעות החדשה';
   }
   // A Draft Event cannot have schedules - it is interest, not an event.
   if (event.status !== 'published') return 'האירוע הזה לא פורסם';

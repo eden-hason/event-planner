@@ -76,6 +76,12 @@ describe('conversionRejection', () => {
     assert.ok(conversionRejection({ ...invitation, sentAt: '2026-10-01T07:00:00Z' }));
     assert.ok(conversionRejection({ ...invitation, status: 'expired' }));
   });
+
+  it('never converts on the current Message Plan, whose Invitation already asks', () => {
+    assert.ok(conversionRejection({ ...invitation, messagePlan: 'current' }));
+    assert.ok(conversionRejection({ ...invitation, scheduleTypeKey: 'invitation', messagePlan: 'current' }));
+    assert.equal(conversionRejection({ ...invitation, messagePlan: 'classic' }), null);
+  });
 });
 
 describe('deletionRejection', () => {

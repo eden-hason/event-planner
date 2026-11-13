@@ -67,6 +67,11 @@ export function sendNowRejection(schedule: ScheduleControlState): string | null 
  * null when it can. Only an Initial Invitation that has not gone out converts.
  */
 export function conversionRejection(schedule: ScheduleControlState): string | null {
+  // The current plan's Invitation always asks (ADR 0053), so there is nothing
+  // to convert; it has no Initial Invitation either, so this only says so.
+  if (schedule.messagePlan === 'current') {
+    return 'באירוע על תוכנית ההודעות החדשה ההזמנה כבר מבקשת אישור הגעה';
+  }
   if (schedule.scheduleTypeKey !== 'initial_invitation') {
     return 'אפשר להמיר רק הזמנה ראשונית';
   }
@@ -96,7 +101,7 @@ export function deletionRejection(schedule: ScheduleControlState): string | null
     // The current plan's shape is fixed (ADR 0053): one Invitation, one
     // Reminder, one Thank You. Only a Follow-up may go - an Extra Schedule
     // granted by mistake, or one the Event does not need.
-    if (schedule.scheduleTypeKey !== 'follow_up') return 'אפשר למחוק רק תזכורת לאישור הגעה';
+    if (schedule.scheduleTypeKey !== 'follow_up') return 'אפשר למחוק רק הודעת עדיין מחכים לתשובה';
   } else if (!DELETABLE_TYPE_KEYS.has(schedule.scheduleTypeKey)) {
     return 'אפשר למחוק רק הזמנה ראשונית או תזכורת';
   }

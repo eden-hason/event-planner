@@ -1,4 +1,4 @@
-import { CalendarDays, Clock3, Info, MapPin, Users } from '@/components/icons';
+import { CalendarDays, Clock3, Info, MapPin, MessageSquare, Users } from '@/components/icons';
 import { formatPhone } from '@/lib/phone';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ import {
 import { RetryButton } from './retry-button';
 import { SmsFallbackToggle } from './sms-fallback-toggle';
 import { VenueNameDialog } from './venue-name-dialog';
+import { MoveToMessagePlanDialog } from './move-to-message-plan-dialog';
 import {
   getEventGuestSummary,
   getEventIdentity,
@@ -41,6 +42,7 @@ import {
 import type { EventGuestSummary, EventIdentity } from '../types';
 import { formatEventDate, formatShortDate, relativeEventDate } from '../utils/format';
 import { countLabel, rsvpLabel } from '../utils/labels';
+import { MESSAGE_PLAN_NAMES, moveRefusal } from '../utils/message-plan';
 import { cn } from '@/lib/utils';
 import { rsvpPresentation, type RsvpStatus } from '@/features/guests';
 
@@ -67,6 +69,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
               <span className="truncate">{event.locationName ?? 'עדיין אין מקום'}</span>
               <VenueNameDialog eventId={event.id} locationName={event.locationName} />
             </EventMeta>
+            <MessagePlanMeta event={event} />
           </div>
           <Separator />
           <div className="flex min-w-0 flex-col gap-1">
@@ -114,6 +117,7 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
               חופה {event.ceremonyTime?.slice(0, 5) ?? 'לא נקבע'} · קבלת פנים {event.receptionTime?.slice(0, 5) ?? 'לא נקבע'}
             </span>
           </EventMeta>
+          <MessagePlanMeta event={event} />
         </div>
 
         {event.shortCode && <PublicEventActions shortCode={event.shortCode} />}
@@ -141,6 +145,20 @@ export function EventIdentityBand({ event }: { event: EventIdentity }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Which Message Plan the Event is on (ADR 0053), and on a Classic Event the
+ * move to the current one - disabled, with the reason, once anything was sent.
+ */
+function MessagePlanMeta({ event }: { event: EventIdentity }) {
+  const onCurrent = event.messagePlan === 'current';
+  return (
+    <EventMeta icon={<MessageSquare />}>
+      <span className={cn('shrink-0', onCurrent && 'text-primary font-medium')}>{MESSAGE_PLAN_NAMES[event.messagePlan]}</span>
+      {!onCurrent && <MoveToMessagePlanDialog eventId={event.id} refusal={moveRefusal(event)} />}
+    </EventMeta>
   );
 }
 

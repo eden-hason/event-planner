@@ -14,3 +14,4 @@ export {
   type EventControlResult,
 } from './event-controls';
 export { sendOwnerMessageNowAdmin } from './owner-messages';
+export { moveEventToMessagePlanAdmin, setNewEventMessagePlanAdmin } from './message-plan';

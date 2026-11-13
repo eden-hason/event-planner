@@ -30,10 +30,10 @@ const SCHEDULE_TYPE_NAMES: Record<string, string> = {
   event_reminder: 'תזכורת אירוע',
   post_event: 'הודעת תודה',
   phone_call: 'סבב שיחות',
-  // The current Message Plan's own types (ADR 0053). The Follow-up label is
-  // the design brief's placeholder until Design settles it.
+  // The current Message Plan's own types (ADR 0053). The Follow-up reads as
+  // the Owner's screens name it, so Operator and Owner say the same thing.
   invitation: 'הזמנה',
-  follow_up: 'תזכורת לאישור הגעה',
+  follow_up: 'עדיין מחכים לתשובה',
 };
 
 export function eventTypeName(key: string | null | undefined, fallback?: string | null): string {

@@ -176,15 +176,21 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
   if (error) throw new Error(error.message);
   if (!event) return null;
 
-  const [ownerResult, collaboratorsResult] = await Promise.all([
+  const messagePlan = parseMessagePlan(event.message_plan);
+  const [ownerResult, collaboratorsResult, sentResult] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email, phone_number').eq('id', event.user_id).maybeSingle(),
     supabase
       .from('event_collaborators')
       .select('id, user_id, is_creator, profiles!event_collaborators_user_id_profiles_fk(full_name, email)')
       .eq('event_id', eventId)
       .eq('is_creator', false),
+    // The same check the move refuses on, so the button and the function agree.
+    messagePlan === 'classic'
+      ? supabase.rpc('event_message_schedules_sent', { p_event_id: eventId })
+      : Promise.resolve({ data: false, error: null }),
   ]);
   if (ownerResult.error) throw new Error(ownerResult.error.message);
+  if (sentResult.error) throw new Error(sentResult.error.message);
   const collaborators = unwrap(collaboratorsResult);
   const owner = ownerResult.data;
   const location = event.location as { name?: string } | null;
@@ -213,7 +219,8 @@ export const getEventIdentity = cache(async function getEventIdentity(eventId: s
     planIncludesCalls: event.plan_includes_calls ?? false,
     billingStatus: (event.billing_status as EventIdentity['billingStatus']) ?? 'free',
     smsFallbackEnabled: event.sms_fallback_enabled !== false,
-    messagePlan: parseMessagePlan(event.message_plan),
+    messagePlan,
+    messagesSent: sentResult.data === true,
     onboardingStep: event.onboarding_step,
     createdAt: event.created_at,
     ownerId: event.user_id,

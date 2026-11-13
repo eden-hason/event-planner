@@ -39,7 +39,7 @@ const NAV_ITEMS = [
     label: 'הגדרות',
     href: '/admin/configuration',
     icon: SlidersHorizontal,
-    stub: true,
+    stub: false,
   },
 ] as const;
 
