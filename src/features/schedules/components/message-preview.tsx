@@ -48,9 +48,9 @@ function resolveSourcePath(source: string, event: EventApp | null): string | nul
  * whichever Event the message is about, so the preview shows it as-is rather
  * than deriving a name from the Event.
  */
-const SENDER_NAME = 'Kululu אישורי הגעה';
+export const SENDER_NAME = 'Kululu אישורי הגעה';
 
-const chatBgStyle: React.CSSProperties = {
+export const chatBgStyle: React.CSSProperties = {
   backgroundImage: `linear-gradient(rgba(229, 221, 213, 0.55), rgba(229, 221, 213, 0.55)), url('/whatsapp-background.png')`,
   backgroundSize: '300px',
   backgroundRepeat: 'repeat',
@@ -283,7 +283,7 @@ export function MessagePreview({
  * button in the middle and no player controls. Playing hides the button;
  * tapping the video pauses it and the button comes back, as it does at the end.
  */
-function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
+export function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
 
@@ -322,7 +322,7 @@ function PreviewVideo({ src, playLabel }: { src: string; playLabel: string }) {
  * organiser's note included. Opens in a new tab so the organiser can check
  * where a link goes without leaving the page.
  */
-function MessageBody({ body }: { body: string }) {
+export function MessageBody({ body }: { body: string }) {
   return splitMessageLinks(body).map((segment, i) =>
     segment.kind === 'link' ? (
       <a

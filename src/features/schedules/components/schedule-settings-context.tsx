@@ -27,7 +27,7 @@ import {
   type PastDueTime,
 } from '../utils/due-time-guards';
 
-interface ScheduleSettings {
+export interface ScheduleSettings {
   /** False once nothing about this Schedule can be changed any more. */
   editable: boolean;
   note: string;
@@ -99,6 +99,13 @@ function timeOf(dueTime: string | null): string {
 export type ScheduleChange = 'messageType' | 'personalMessage' | 'dueTime' | 'note';
 
 const ScheduleSettingsContext = createContext<ScheduleSettings | null>(null);
+
+/**
+ * The context itself, for the current Message Plan's provider
+ * (message-plan-settings-context.tsx), which fills it so the shared timing
+ * card and past-time dialog work unchanged on both plans.
+ */
+export const ScheduleSettingsContextProvider = ScheduleSettingsContext.Provider;
 
 /**
  * The fields of an open Schedule that can be edited, and the one Save that

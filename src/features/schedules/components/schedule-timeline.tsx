@@ -339,6 +339,7 @@ function description(
 
   // An undated card's chip already says there is no date.
   const parts = item.status === 'undated' ? [] : [item.listWhen];
+  if (item.wordingLabel) parts.push(item.wordingLabel);
   if (item.audienceCount !== null) {
     parts.push(
       t(item.kind === 'call' ? 'timeline.callCount' : 'timeline.recipientCount', {

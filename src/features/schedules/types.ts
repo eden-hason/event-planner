@@ -83,6 +83,11 @@ export type OutreachItem = {
     declined: number;
     noAnswer: number;
   } | null;
+  /**
+   * On the current Message Plan, whose words the message is: Kululu's text or
+   * the Owner's own (brief 5). Null on Classic, and for a call.
+   */
+  wordingLabel?: string | null;
   details: ReactNode;
 };
 

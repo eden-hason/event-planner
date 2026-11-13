@@ -16,6 +16,8 @@ export {
   type ManualSendResult,
   sendCatchUp,
   type CatchUpSendState,
+  updateMessagePlanSchedule,
+  type UpdateMessagePlanScheduleState,
 } from './actions';
 
 // Utils
@@ -49,6 +51,28 @@ export {
 } from './utils';
 
 export type { GuestInteractionRow } from './utils/delivery-outcome';
+
+// The Owner's screens on the current Message Plan: their view model and the
+// save's own check, pure (utils/message-plan-editor.ts, message-plan-save.ts).
+export {
+  sentWording,
+  attachmentOptions,
+  giftAvailable,
+  emptyMessageFields,
+  personalTextErrorMessage,
+  previewGuests,
+  timingNote,
+  toEditorDocument,
+  fromEditorDocument,
+  type EditorDocument,
+  type PreviewGuest,
+  type TimingNote,
+} from './utils/message-plan-editor';
+export {
+  checkMessagePlanSave,
+  type MessagePlanSaveInput,
+  type MessagePlanSaveError,
+} from './utils/message-plan-save';
 
 // The current Message Plan's messages (ADR 0055): pure, so the editor and the
 // preview can use them in the browser. The send path imports

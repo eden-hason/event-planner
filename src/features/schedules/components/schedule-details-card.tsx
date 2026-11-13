@@ -56,6 +56,8 @@ interface ScheduleDetailsCardProps {
   sendWindow: { start: string; end: string };
   /** Rendered server-side and passed in - see ScheduleLockBadge. */
   lockBadge?: React.ReactNode;
+  /** A line of the plan's own under the helper (the current plan's timing note). */
+  note?: React.ReactNode;
 }
 
 /** When the message goes out: a date and a whole hour inside the Send Window. */
@@ -65,6 +67,7 @@ export function ScheduleDetailsCard({
   maxLatenessHours,
   sendWindow,
   lockBadge,
+  note,
 }: ScheduleDetailsCardProps) {
   const t = useTranslations('schedules.timing');
   const locale = useLocale();
@@ -240,6 +243,7 @@ export function ScheduleDetailsCard({
       )}
 
       {helperNote && <p className="text-muted-foreground text-xs">{helperNote}</p>}
+      {note}
     </SettingsCard>
   );
 }

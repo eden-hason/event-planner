@@ -8,3 +8,5 @@ export {
 } from './message-deliveries';
 
 export { getSentCountByScheduleId } from './sent-counts';
+
+export { getMessagePlanPageData, type MessagePlanPageData } from './message-plan';
