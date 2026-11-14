@@ -295,3 +295,41 @@ test('the newest failure comes first, each schedule once', () => {
   ];
   assert.deepEqual(failedCandidateScheduleIds(rows, WINDOW), ['newest', 'middle', 'older']);
 });
+
+// ─── The Marketing Cap Retry hold (ADR 0056) ──────────────────────────────────
+
+function onAsk(row: ReturnType<typeof failed>, rsvpStatus = 'pending') {
+  return {
+    ...row,
+    guests: { ...row.guests, rsvp_status: rsvpStatus },
+    schedules: { schedule_types: { key: 'confirmation' } },
+  };
+}
+
+test('an Ask awaiting a Marketing Cap Retry takes no slot', () => {
+  // Failed an hour ago with 131049: its 6-hour retry is still to come.
+  assert.deepEqual(failedCandidateScheduleIds([onAsk(failed('waiting', [guestLevel]))], WINDOW), []);
+});
+
+test('an Ask whose Guest answered during the wait never takes a slot', () => {
+  assert.deepEqual(
+    failedCandidateScheduleIds([onAsk(failed('answered', [guestLevel]), 'confirmed')], WINDOW),
+    [],
+  );
+});
+
+test('a marketing-cap failure on a non-Ask still falls back straight away', () => {
+  const row = { ...failed('thank-you', [guestLevel]), schedules: { schedule_types: { key: 'post_event' } } };
+  assert.deepEqual(failedCandidateScheduleIds([row], WINDOW), ['thank-you']);
+});
+
+test('once both retries failed too, the Ask takes a slot for its SMS', () => {
+  const row = onAsk(
+    failed('spent', [
+      { ...guestLevel, created_at: hoursAgo(30) },
+      { ...guestLevel, created_at: hoursAgo(24) },
+      { ...guestLevel, created_at: hoursAgo(6) },
+    ] as never),
+  );
+  assert.deepEqual(failedCandidateScheduleIds([row], WINDOW), ['spent']);
+});

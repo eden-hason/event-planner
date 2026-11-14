@@ -27,6 +27,7 @@ import {
   type SmsFallbackTrigger,
 } from '../utils';
 import { sendingConfig } from '@/lib/config/sending';
+import { endedByAnswer, marketingCapRetry } from '../utils/marketing-cap-retry';
 import { canReceiveSms, toE164 } from '@/lib/phone';
 
 /**
@@ -48,6 +49,10 @@ import { canReceiveSms, toE164 } from '@/lib/phone';
  *      enough that an SMS is still worth having
  *   3. either way, it has no SMS attempt yet
  * RSVP is deliberately not considered.
+ *
+ * The automatic batch also leaves out a Delivery still awaiting a Marketing
+ * Cap Retry (ADR 0056) - see `marketingCapHold`. The Operator's button
+ * does not: pressing it is the Operator choosing the SMS over the wait.
  *
  * An Operator may also retry a Delivery whose every SMS attempt failed (ADR
  * 0038) - the SMS poll can now find that out after the fact. The automatic
@@ -106,9 +111,34 @@ export type FallbackDeliveryRow = {
   status: 'failed' | 'sent';
   guest_id: string;
   confirmation_token: string | null;
-  guests: { name: string; phone_number: string | null } | null;
+  /** `rsvp_status` is only read for the Marketing Cap Retry; absent counts as unanswered. */
+  guests: { name: string; phone_number: string | null; rsvp_status?: string | null } | null;
   message_delivery_attempts: AttemptRow[];
 };
+
+/**
+ * Whether the automatic SMS Fallback must hold a Delivery back for the
+ * Marketing Cap Retry (ADR 0056): it is still awaiting a retry, or its Guest
+ * answered while it waited and nothing more is sent. Asks the same rule the
+ * queueing pass and the Owner's results read.
+ */
+export function marketingCapHold(
+  row: Pick<FallbackDeliveryRow, 'status' | 'guests' | 'message_delivery_attempts'>,
+  scheduleTypeKey: string | null | undefined,
+  now = new Date(),
+): 'awaiting_retry' | 'answered' | null {
+  if (row.status !== 'failed') return null;
+  const input = {
+    scheduleTypeKey,
+    rsvpStatus: row.guests?.rsvp_status,
+    attempts: row.message_delivery_attempts,
+    sendWindow: sendingConfig().sendWindow,
+    now,
+  };
+  if (marketingCapRetry(input)) return 'awaiting_retry';
+  if (endedByAnswer(input)) return 'answered';
+  return null;
+}
 
 type LoadedSchedule = {
   schedule: ReturnType<typeof ScheduleDbToAppSchema.parse>;
@@ -267,7 +297,7 @@ async function loadFallbackDeliveries(
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
-      'id, status, guest_id, confirmation_token, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
+      'id, status, guest_id, confirmation_token, guests(name, phone_number, rsvp_status), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
     )
     .eq('schedule_id', scheduleId)
     .in('status', ['failed', 'sent']);
@@ -571,7 +601,14 @@ export async function sendSmsFallback(
   const resolution = await resolveSmsTemplates(supabase, loaded);
   if (!resolution.ok) return { success: false, message: resolution.reason, ...empty };
 
-  const rows = await loadFallbackDeliveries(supabase, scheduleId);
+  const loadedRows = await loadFallbackDeliveries(supabase, scheduleId);
+  const now = new Date();
+  const rows =
+    options.triggeredBy === 'fallback_auto'
+      ? loadedRows.filter(
+          (row) => marketingCapHold(row, loaded.schedule.scheduleTypeKey, now) === null,
+        )
+      : loadedRows;
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));
   const batch = classifySmsFallbackCandidates(rows, stuckWindow(), {
     retryFailedSms: options.triggeredBy === 'fallback',

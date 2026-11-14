@@ -4,6 +4,7 @@ import {
   sendSmsFallback,
   stuckSentAtRange,
   stuckWindow,
+  marketingCapHold,
   type FallbackDeliveryRow,
   type SmsFallbackExclusionReason,
   type StuckWindow,
@@ -24,7 +25,8 @@ import { sendingConfig } from '@/lib/config/sending';
  * "Finished failing" is judged on queue state rather than the clock: no
  * Delivery still queued, no attempt still pending, and no attempt made or
  * failed for the settle window (receipts do not count, see
- * `lastFailureActivityAt`). The first two conditions make the window
+ * `lastFailureActivityAt`). A Delivery awaiting a Marketing Cap Retry does not
+ * hold its Schedule: the engine leaves only that one out (ADR 0056). The first two conditions make the window
  * self-adjusting - a Schedule midway through the retry ladder simply is not
  * ready - and the settle minutes only cover webhook lag, which has been at
  * most 122 seconds across every failure observed.
@@ -190,6 +192,7 @@ type StuckCandidateRow = {
 export type FailedCandidateRow = FallbackDeliveryRow & {
   schedule_id: string;
   updated_at: string;
+  schedules?: { schedule_types?: { key: string } | null } | null;
 };
 
 /**
@@ -220,6 +223,9 @@ const SETTLED_EXCLUSIONS: SmsFallbackExclusionReason[] = [
  * anything the classifier cannot rule out (no SMS version of the template, a
  * Freeze) from crowding out fresh work. A Delivery's `updated_at` is when it
  * last changed, which for a failed one is when it failed.
+ *
+ * A Delivery the Marketing Cap Retry holds back (ADR 0056) takes no slot
+ * either: it may wait a day, or its Guest answered and it never falls back.
  */
 export function failedCandidateScheduleIds(
   rows: FailedCandidateRow[],
@@ -232,6 +238,7 @@ export function failedCandidateScheduleIds(
     .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
   for (const row of newestFirst) {
     if (ids.includes(row.schedule_id)) continue;
+    if (marketingCapHold(row, row.schedules?.schedule_types?.key, window.now)) continue;
     const { eligible, excluded } = classifySmsFallbackCandidates([row], window);
     const open =
       eligible.length > 0 || excluded.some((e) => !SETTLED_EXCLUSIONS.includes(e.exclusion));
@@ -270,7 +277,7 @@ async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promis
     supabase
       .from('message_deliveries')
       .select(
-        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at), schedules!inner(events!inner(sms_fallback_enabled))',
+        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number, rsvp_status), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at), schedules!inner(schedule_types(key), events!inner(sms_fallback_enabled))',
       )
       .eq('schedules.events.sms_fallback_enabled', true)
       .eq('status', 'failed')

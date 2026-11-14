@@ -504,6 +504,21 @@ WhatsApp may be the cheaper remedy.
 A Freeze withholds only the automatic batch. An Operator who has read the failures and
 decided to send anyway is the intended way past it.
 
+## Marketing Cap Retry
+
+A further WhatsApp attempt at an **Ask** that WhatsApp withheld under its marketing limits
+- the per-user marketing cap or a marketing experiment holdout. Those decisions are about
+the moment, not the number, so the Ask is tried again on WhatsApp twice, about 6 hours and
+about 24 hours after it was withheld, before any **SMS Fallback**. A Guest who answers in
+the meantime is sent nothing further.
+
+The Owner sees the message as on its way while a retry is pending. Only an Ask is retried:
+an Event Reminder or Thank You a day late is no use, so those fall back to SMS straight
+away.
+
+_Avoid_: resend (an Operator's action), retry ladder (the minutes-apart retry of a
+throughput rejection)
+
 ## SMS Fallback Opt-out
 
 An Event whose Owner asked that its Guests never be sent an **SMS Fallback** - typically

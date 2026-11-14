@@ -7,7 +7,7 @@ import {
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
 import { carriesReadReceipt } from '../utils/hand-delivery';
-import { awaitingSmsFallback, stuckWindow } from './send-sms-fallback';
+import { awaitingSmsFallback, marketingCapHold, stuckWindow } from './send-sms-fallback';
 import { scheduleFreeze } from './sweep-sms-fallback';
 
 /** One guest's Delivery for one Schedule: its Journey, and the queue facts a catch-up reads */
@@ -45,7 +45,7 @@ export async function loadGuestJourneys(
     supabase
       .from('message_deliveries')
       .select(
-        `id, schedule_id, status, not_sent_reason, sent_at, read_at, delivery_method, next_attempt_at, message_delivery_attempts(${ATTEMPTS})`,
+        `id, schedule_id, status, not_sent_reason, sent_at, read_at, delivery_method, next_attempt_at, schedules(schedule_types(key)), message_delivery_attempts(${ATTEMPTS})`,
       )
       .eq('guest_id', guest.id),
     supabase
@@ -56,7 +56,7 @@ export async function loadGuestJourneys(
       .order('created_at', { ascending: false }),
     supabase
       .from('guests')
-      .select('events!inner(sms_fallback_enabled)')
+      .select('rsvp_status, events!inner(sms_fallback_enabled)')
       .eq('id', guest.id)
       .maybeSingle(),
   ]);
@@ -115,21 +115,37 @@ export async function loadGuestJourneys(
     ),
   );
 
-  const owner = { name: guest.name, phone_number: guest.phone };
+  const owner = {
+    name: guest.name,
+    phone_number: guest.phone,
+    rsvp_status: (eventResult.data?.rsvp_status as string | null | undefined) ?? null,
+  };
+  const now = new Date();
   const deliveries = rows.map((row): GuestJourneyDelivery => {
     const attempts = (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [];
     const scheduleId = row.schedule_id as string;
     const id = row.id as string;
 
+    const fallbackRow = toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts);
+    // A Marketing Cap Retry on its way reads as on its way; one ended by the
+    // Guest's answer has nothing coming at all (ADR 0056).
+    const capHold = marketingCapHold(
+      fallbackRow,
+      (row.schedules as { schedule_types?: { key?: string } | null } | null)?.schedule_types?.key,
+      now,
+    );
     const smsOnItsWay =
       row.status === 'failed' &&
-      awaitingSmsFallback([toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts)], {
+      capHold === null &&
+      awaitingSmsFallback([fallbackRow], {
         frozen: frozen.get(scheduleId) ?? false,
         optedOut,
         window: stuckWindow(),
       }).has(id);
 
-    const delivery = smsOnItsWay
+    const delivery = capHold === 'awaiting_retry'
+      ? 'on_its_way'
+      : smsOnItsWay
       ? 'sms_on_its_way'
       : toDeliveryOutcome(row.status, row.delivery_method, row.not_sent_reason ?? null);
     const steps = toDeliverySteps(attempts);

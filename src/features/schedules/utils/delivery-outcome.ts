@@ -13,7 +13,9 @@ import type { FallbackDeliveryRow } from '../services/send-sms-fallback';
  *
  * - `whatsapp` / `sms`: Reached, over that channel - the provider confirmed
  *   delivery. For SMS that is the ActiveTrail report the SMS poll reads.
- * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
+ * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet - or
+ *   WhatsApp withheld an Ask for its marketing limits and a Marketing Cap
+ *   Retry is coming (ADR 0056).
  * - `sms_on_its_way`: an SMS is on its way and not confirmed yet - either
  *   accepted by ActiveTrail with no report back, or, after WhatsApp failed, an
  *   automatic SMS Fallback being sent or due once the Schedule settles. Never
@@ -148,7 +150,7 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
  */
 export function toFallbackRow(
   row: { id: string; status: string; guest_id: string },
-  guest: { name: string; phone_number: string | null },
+  guest: { name: string; phone_number: string | null; rsvp_status?: string | null },
   attempts: readonly DeliveryAttemptRow[],
 ): FallbackDeliveryRow {
   return {
@@ -156,7 +158,7 @@ export function toFallbackRow(
     status: row.status,
     guest_id: row.guest_id,
     confirmation_token: null,
-    guests: { name: guest.name, phone_number: guest.phone_number },
+    guests: { name: guest.name, phone_number: guest.phone_number, rsvp_status: guest.rsvp_status },
     message_delivery_attempts: attempts.map((attempt) => ({
       channel: attempt.channel,
       status: attempt.status,

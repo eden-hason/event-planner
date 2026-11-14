@@ -77,3 +77,7 @@ and not for a system-level failure. Failures are taken newest first and only wit
 Stuck window's 72-hour ceiling, so whatever the classifier cannot rule out - a template
 with no SMS version, a Freeze - cannot hold the slots for long. A failure older than that
 is left to an Operator, as a Stuck WhatsApp already was.
+
+**Amended 2026-11-14:** a `131049` or `130472` on an Ask is no longer a fallback candidate
+straight away. It is first retried on WhatsApp at about 6 and 24 hours (Marketing Cap
+Retry, ADR 0056), and only the Delivery awaiting a retry is held back from the batch.
