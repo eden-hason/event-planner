@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
  * about the upload, which is the only control here that can be busy or broken
  * on its own.
  */
-export type SectionStatusTone = 'ready' | 'missing' | 'pending' | 'error';
+export type SectionStatusTone = 'ready' | 'missing' | 'pending' | 'error' | 'muted';
 
 // Tint + strong pairs, so the chip text clears 4.5:1 on its own surface.
 const TONE_CLASSES: Record<SectionStatusTone, string> = {
@@ -17,6 +17,7 @@ const TONE_CLASSES: Record<SectionStatusTone, string> = {
   missing: 'bg-warning-tint text-warning-ink',
   pending: 'bg-info-tint text-info-strong',
   error: 'bg-destructive/15 text-destructive',
+  muted: 'bg-muted text-muted-foreground',
 };
 
 export function SectionStatus({

@@ -521,33 +521,33 @@ The Owner approved the Follow-up, Event Reminder and Thank You Wrappers on 2026-
 |---|---|---|---|
 | `event_reminder_personal_gift_p1` | `1040688482369094` | MARKETING | APPROVED |
 | `event_reminder_personal_gift_p2` | `1657883159342499` | MARKETING | APPROVED |
-| `event_reminder_personal_gift_p3` | `3344927989042420` | MARKETING | PENDING |
-| `event_reminder_personal_p1` | `1510587894465250` | MARKETING | PENDING |
-| `event_reminder_personal_p2` | `1150671940836910` | MARKETING | PENDING |
-| `event_reminder_personal_p3` | `1664934258375933` | MARKETING | PENDING |
-| `follow_up_personal_image_p1` | `1164340149871168` | MARKETING | PENDING |
-| `follow_up_personal_image_p2` | `1149715150944577` | MARKETING | PENDING |
-| `follow_up_personal_image_p3` | `1881127416380571` | MARKETING | PENDING |
-| `follow_up_personal_p1` | `2125640318055166` | MARKETING | PENDING |
-| `follow_up_personal_p2` | `1174198461839052` | MARKETING | PENDING |
-| `follow_up_personal_p3` | `2214045882789892` | MARKETING | PENDING |
-| `invitation_personal_image_p1` | `1112456678257604` | MARKETING | PENDING |
-| `invitation_personal_image_p2` | `1123648897051289` | MARKETING | PENDING |
-| `invitation_personal_image_p3` | `29138044522518139` | MARKETING | PENDING |
+| `event_reminder_personal_gift_p3` | `3344927989042420` | MARKETING | APPROVED |
+| `event_reminder_personal_p1` | `1510587894465250` | MARKETING | APPROVED |
+| `event_reminder_personal_p2` | `1150671940836910` | MARKETING | APPROVED |
+| `event_reminder_personal_p3` | `1664934258375933` | MARKETING | APPROVED |
+| `follow_up_personal_image_p1` | `1164340149871168` | MARKETING | APPROVED |
+| `follow_up_personal_image_p2` | `1149715150944577` | MARKETING | APPROVED |
+| `follow_up_personal_image_p3` | `1881127416380571` | MARKETING | APPROVED |
+| `follow_up_personal_p1` | `2125640318055166` | MARKETING | APPROVED |
+| `follow_up_personal_p2` | `1174198461839052` | MARKETING | APPROVED |
+| `follow_up_personal_p3` | `2214045882789892` | MARKETING | APPROVED |
+| `invitation_personal_image_p1` | `1112456678257604` | MARKETING | APPROVED |
+| `invitation_personal_image_p2` | `1123648897051289` | MARKETING | APPROVED |
+| `invitation_personal_image_p3` | `29138044522518139` | MARKETING | APPROVED |
 | `invitation_personal_p1` | `1639159083779029` | MARKETING | APPROVED |
 | `invitation_personal_p2` | `2147214855922535` | MARKETING | APPROVED |
 | `invitation_personal_p3` | `2583589052116072` | MARKETING | APPROVED |
-| `invitation_personal_video_p1` | `1317785273778593` | MARKETING | PENDING |
-| `invitation_personal_video_p2` | `1130871346462188` | MARKETING | PENDING |
-| `invitation_personal_video_p3` | `1913213633379138` | MARKETING | PENDING |
-| `thank_you_personal_gift_p1` | `30295324733403829` | MARKETING | PENDING |
-| `thank_you_personal_gift_p2` | `1423611284171782` | MARKETING | PENDING |
-| `thank_you_personal_gift_p3` | `1143106324972784` | MARKETING | PENDING |
-| `thank_you_personal_p1` | `1414386670681149` | MARKETING | PENDING |
-| `thank_you_personal_p2` | `2245087083023991` | MARKETING | PENDING |
-| `thank_you_personal_p3` | `29373795682304649` | MARKETING | PENDING |
+| `invitation_personal_video_p1` | `1317785273778593` | MARKETING | APPROVED |
+| `invitation_personal_video_p2` | `1130871346462188` | MARKETING | APPROVED |
+| `invitation_personal_video_p3` | `1913213633379138` | MARKETING | APPROVED |
+| `thank_you_personal_gift_p1` | `30295324733403829` | MARKETING | APPROVED |
+| `thank_you_personal_gift_p2` | `1423611284171782` | MARKETING | APPROVED |
+| `thank_you_personal_gift_p3` | `1143106324972784` | MARKETING | APPROVED |
+| `thank_you_personal_p1` | `1414386670681149` | MARKETING | APPROVED |
+| `thank_you_personal_p2` | `2245087083023991` | MARKETING | APPROVED |
+| `thank_you_personal_p3` | `29373795682304649` | MARKETING | APPROVED |
 
-Status read from Meta on 2026-11-13.
+Status read from Meta on 2026-11-13 (phase 6 read, evening): all 42 APPROVED, none rejected, ids and categories unchanged.
 
 ### 3.3 Totals
 
@@ -681,7 +681,8 @@ Checked on 2026-11-12 against:
 - **Samples.** One sample per variable is required, in variable order, as
   `example.body_text` (an array holding one array). Confirmed.
 - **Length.** Body at most 1024 characters, confirmed. The longest Personal Message body
-  is 400 characters of paragraphs plus about 60 of Wrapper, well inside.
+  is 400 typed characters plus the field values (which the 400 does not count, ADR 0054)
+  plus at most 52 of Wrapper: around 680 with every field placed at its longest.
 - **Video header.** Supported, sample supplied by `header_handle` from the Resumable
   Upload API. The docs read gave no video size or format limit; the app's own rule is MP4
   up to 16MB (brief 6.2). Check the Resumable Upload and media pages before the video

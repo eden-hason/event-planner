@@ -17,7 +17,7 @@ import {
   FileUploadTrigger,
 } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
-import { uploadInvitationVideo } from '@/lib/storage';
+import { uploadInvitationVideo, VIDEO_MAX_BYTES } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 
 import { updateInvitationVideo } from '../actions';
@@ -25,7 +25,7 @@ import { SettingsCard } from './settings-card';
 
 // WhatsApp's own limits for a video header: MP4, up to 16 MB. The codec is not
 // checked - a phone's MP4 export is H.264/AAC, and anything else fails at Meta.
-const MAX_BYTES = 16 * 1024 * 1024;
+const MAX_BYTES = VIDEO_MAX_BYTES;
 const ACCEPT = 'video/mp4';
 
 /**

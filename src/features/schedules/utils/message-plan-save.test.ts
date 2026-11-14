@@ -3,15 +3,10 @@ import assert from 'node:assert/strict';
 
 import { serialisePersonalText, type PersonalText } from '../message-plan';
 import { weddingEvent } from '../message-plan/test-fixtures';
-import { checkMessagePlanSave, savesPersonalText } from './message-plan-save';
+import { checkMessagePlanSave } from './message-plan-save';
 
 const text = (...paragraphs: PersonalText['paragraphs']) => serialisePersonalText({ paragraphs });
 const t = (value: string) => ({ kind: 'text' as const, text: value });
-
-const GUESTS = [
-  { name: 'דנה לוי', table: { tableNumber: 12 } },
-  { name: 'יוסי', table: null },
-];
 
 const check = (
   scheduleTypeKey: string,
@@ -23,7 +18,6 @@ const check = (
     input,
     stored: { wording: 'kululu', personalText: null },
     event: weddingEvent(),
-    guests: GUESTS,
     ...overrides,
   });
 
@@ -78,14 +72,14 @@ test('changing only the text is checked against the stored wording', () => {
   assert.equal(!result.ok && result.error.code, 'personal_text');
 });
 
-test('the length is counted with the longest name, over 400 is refused', () => {
-  const long = 'א'.repeat(395);
-  const ok = check('invitation', { wording: 'personal', personalText: text([t(long)]) });
-  assert.equal(ok.ok, true);
-  const over = check('invitation', {
+test('fields do not count toward the 400, over 400 typed is refused', () => {
+  const full = 'א'.repeat(400);
+  const ok = check('invitation', {
     wording: 'personal',
-    personalText: text([t(long), { kind: 'field', field: 'guestName' }]),
+    personalText: text([t(full), { kind: 'field', field: 'guestName' }, { kind: 'field', field: 'venueName' }]),
   });
+  assert.equal(ok.ok, true);
+  const over = check('invitation', { wording: 'personal', personalText: text([t(full + 'ב')]) });
   assert.equal(over.ok, false);
 });
 
@@ -151,17 +145,4 @@ test('anything else is refused', () => {
   });
   assert.deepEqual(check('invitation', { extra: 1 }), { ok: false, error: { code: 'invalid_input' } });
   assert.deepEqual(check('confirmation', {}), { ok: false, error: { code: 'not_a_stage' } });
-});
-
-test('the Guest list is needed only to count a Personal Message being saved', () => {
-  const stored = { wording: 'kululu' as const, personalText: null };
-  const words = text([t('שלום')]);
-  assert.equal(savesPersonalText({ wording: 'personal', personalText: words }, stored), true);
-  assert.equal(savesPersonalText({ wording: 'kululu', personalText: words }, stored), false);
-  assert.equal(savesPersonalText({ wording: 'personal', personalText: null }, stored), false);
-  assert.equal(savesPersonalText({ attachment: 'none' } as never, stored), false);
-  assert.equal(
-    savesPersonalText({ personalText: words }, { wording: 'personal', personalText: null }),
-    true,
-  );
 });

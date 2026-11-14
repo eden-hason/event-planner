@@ -411,7 +411,7 @@ export async function addFollowUpAdmin(eventId: string): Promise<EventControlRes
     }
 
     revalidateOutreach(eventId);
-    return { success: true, message: `נוספה ${FOLLOW_UP_MESSAGE} - בעלי האירוע יקבעו לה מועד` };
+    return { success: true, message: `נוסף ${FOLLOW_UP_MESSAGE} - בעלי האירוע יקבעו לו מועד` };
   } catch (error) {
     console.error('addFollowUpAdmin failed:', error);
     return { success: false, message: 'לא הצלחנו להוסיף את ההודעה' };

@@ -35,15 +35,15 @@ const SCHEDULE_TYPE_NAMES: Record<string, string> = {
   // The current Message Plan's own types (ADR 0053). The Follow-up reads as
   // the Owner's screens name it, so Operator and Owner say the same thing.
   invitation: 'הזמנה',
-  follow_up: 'עדיין מחכים לתשובה',
+  follow_up: 'אישור הגעה חוזר',
 };
 
 /**
- * The current plan's Follow-up as a noun ("הודעת עדיין מחכים לתשובה") and the
- * action that grants one. Built from the type's name, so a rename lands in one
- * place.
+ * The current plan's Follow-up as a noun ("אישור הגעה חוזר", masculine: the
+ * sentences around it agree) and the action that grants one. Built from the
+ * type's name, so a rename lands in one place.
  */
-export const FOLLOW_UP_MESSAGE = `הודעת ${SCHEDULE_TYPE_NAMES.follow_up}`;
+export const FOLLOW_UP_MESSAGE = SCHEDULE_TYPE_NAMES.follow_up;
 export const ADD_FOLLOW_UP_LABEL = `הוספת ${FOLLOW_UP_MESSAGE}`;
 
 export function eventTypeName(key: string | null | undefined, fallback?: string | null): string {

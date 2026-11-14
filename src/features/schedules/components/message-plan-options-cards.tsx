@@ -2,60 +2,63 @@
 
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { IconArrowBack, IconExternalLink } from '@tabler/icons-react';
 
 import { Link } from '@/i18n/navigation';
 import { Switch } from '@/components/ui/toggle-switch';
+import { cn } from '@/lib/utils';
 
-import {
-  GIFT_BUTTON,
-  NAVIGATION_BUTTON,
-  RSVP_BUTTONS,
-  effectiveGift,
-  isAskStage,
-  type MessageButton,
-} from '../message-plan';
+import { effectiveAttachment, effectiveGift, isAskStage } from '../message-plan';
 import { isGiftingEnabled } from '../utils/event-config';
-import { attachmentOptions, timingNote } from '../utils/message-plan-editor';
+import { timingNote } from '../utils/message-plan-editor';
 import { useDueTime } from './due-time-context';
 import { useMessagePlanSettings } from './message-plan-settings-context';
-import { RadioCardGroup } from './radio-card-group';
+import { ATTACHMENT_ICONS } from './attachment-icons';
 import { SettingsCard } from './settings-card';
 
 /**
- * What an Ask attaches (brief 6.2): the Event's invitation image, its video
- * (the Invitation only) or nothing. What the Event does not have is shown but
- * not offered, with the way to add it. Rendered on the Asks only.
+ * What an Ask attaches: the invitation image, the video (the Invitation only)
+ * or nothing. Chosen on the Event details page, beside the files themselves,
+ * so it is shown here with the way there. What would actually go out is the
+ * renderer's own rule (`effectiveAttachment`): a choice whose file is gone
+ * reads as missing. Rendered on the Asks only.
  */
 export function MessagePlanAttachmentCard({ lockBadge }: { lockBadge?: ReactNode }) {
   const t = useTranslations('schedules.messagePlan.attachment');
-  const { stage, event, attachment, setAttachment, editable, isSaving } =
-    useMessagePlanSettings();
+  const { stage, event, attachment, editable } = useMessagePlanSettings();
   if (!isAskStage(stage)) return null;
+
+  const chosen = attachment ?? 'none';
+  const missing = chosen !== 'none' && effectiveAttachment(stage, chosen, event) !== chosen;
+  const Icon = ATTACHMENT_ICONS[chosen];
 
   return (
     <SettingsCard title={t('cardTitle')} aside={!editable ? lockBadge : undefined}>
-      <RadioCardGroup
-        label={t('cardTitle')}
-        value={attachment}
-        onChange={setAttachment}
-        disabled={!editable || isSaving}
-        options={attachmentOptions(stage, event).map((option) => ({
-          value: option.value,
-          label: t(`options.${option.value}`),
-          disabled: !option.available,
-          extra: option.available ? null : option.value === 'image' ? (
-            <Link
-              href={`/app/${event.id}/details`}
-              className="text-primary text-xs font-semibold underline underline-offset-2"
-            >
-              {t('addImage')}
-            </Link>
-          ) : (
-            <span className="text-muted-foreground text-xs">{t('addVideo')}</span>
-          ),
-        }))}
-      />
+      <div className="bg-muted/50 flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3">
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className={cn(
+              'flex size-9 shrink-0 items-center justify-center rounded-lg',
+              chosen === 'none' ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary',
+            )}
+          >
+            <Icon size={18} />
+          </span>
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold">{t(`options.${chosen}`)}</span>
+            {missing && <span className="text-warning-ink text-xs">{t('missing')}</span>}
+          </span>
+        </span>
+        {editable && (
+          <Link
+            href={`/app/${event.id}/details`}
+            className="text-primary shrink-0 text-xs font-semibold underline underline-offset-2"
+          >
+            {t('change')}
+          </Link>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs">{t('help')}</p>
     </SettingsCard>
   );
 }
@@ -93,44 +96,6 @@ export function MessagePlanGiftCard({ lockBadge }: { lockBadge?: ReactNode }) {
           {t('setUp')}
         </Link>
       )}
-    </SettingsCard>
-  );
-}
-
-/**
- * The buttons the message carries (brief 6.3): shown, never edited. They are
- * the same for Kululu's text and the Owner's own.
- */
-export function MessagePlanButtonsCard() {
-  const t = useTranslations('schedules.messagePlan.buttons');
-  const { stage, event, giftButton } = useMessagePlanSettings();
-  const ask = isAskStage(stage);
-
-  const buttons: readonly MessageButton[] = ask
-    ? RSVP_BUTTONS
-    : [
-        ...(stage === 'event_reminder' ? [NAVIGATION_BUTTON] : []),
-        ...(effectiveGift(giftButton, event) ? [GIFT_BUTTON] : []),
-      ];
-
-  return (
-    <SettingsCard title={t('cardTitle')}>
-      {buttons.length ? (
-        <ul className="flex flex-wrap gap-1.5">
-          {buttons.map((button) => (
-            <li
-              key={button.text}
-              className="bg-muted/60 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
-            >
-              {button.kind === 'url' ? <IconExternalLink size={13} /> : <IconArrowBack size={13} />}
-              {button.text}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground text-xs">{t('none')}</p>
-      )}
-      <p className="text-muted-foreground text-xs">{t(`help.${ask ? 'ask' : stage}`)}</p>
     </SettingsCard>
   );
 }

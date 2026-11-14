@@ -219,3 +219,34 @@ test('the transportation question is its own change and keeps the rest', () => {
 test('an event that never set the transportation question starts with it off', () => {
   assert.equal(buildDefaultValues(makeEvent()).guestExperience.askTransportation, false);
 });
+
+test('the video and the media choice start from the event and its schedules', () => {
+  const values = buildDefaultValues(
+    makeEvent({ invitationVideoUrl: 'https://example.test/v.mp4' }),
+    {
+      invitation: { scheduleId: 'inv', attachment: 'image', editable: true },
+      followUps: { count: 2, editableIds: ['a', 'b'], image: true },
+    },
+  );
+  assert.equal(values.invitationVideoUrl, 'https://example.test/v.mp4');
+  assert.deepEqual(values.messageMedia, { invitation: 'image', followUps: true });
+});
+
+test('a classic event starts with no media choice and no video', () => {
+  const values = buildDefaultValues(makeEvent());
+  assert.equal(values.invitationVideoUrl, '');
+  assert.deepEqual(values.messageMedia, { invitation: 'none', followUps: false });
+});
+
+test('the media choice is named in page order and never goes into the event FormData', () => {
+  const keys = changedKeys(
+    { messageMedia: { invitation: true, followUps: true }, invitationVideoUrl: true },
+    { couple: true, hasCeremony: true },
+  );
+  assert.deepEqual(keys, ['invitationMedia', 'invitationVideo', 'followUpMedia']);
+
+  const values = buildDefaultValues(makeEvent());
+  values.invitationVideoUrl = '';
+  const fields = buildUpdateFields(values, keys, { couple: true });
+  assert.deepEqual(fields, { id: EVENT_ID, invitationVideoUrl: '' });
+});

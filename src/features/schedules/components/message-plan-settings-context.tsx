@@ -21,7 +21,6 @@ import {
   validatePersonalText,
   type Attachment,
   type MessagePlanEvent,
-  type MessagePlanGuestTable,
   type PersonalTextError,
   type Stage,
   type Wording,
@@ -43,12 +42,8 @@ import { useReportUnsavedChanges } from './unsaved-changes-guard';
 export type MessagePlanChange =
   | 'messageType'
   | 'personalMessage'
-  | 'attachment'
   | 'giftButton'
   | 'dueTime';
-
-/** The Guest a Personal Message is counted against: the longest name and table (ADR 0054). */
-export type LongestGuest = { name: string; table: MessagePlanGuestTable | null };
 
 type MessagePlanSettings = {
   stage: Stage;
@@ -70,12 +65,15 @@ type MessagePlanSettings = {
   replaceDocument: (document: EditorDocument) => void;
   /** Whether the Personal Message is chosen but empty, so Kululu's text goes. */
   personalBlank: boolean;
-  /** The count against the Event's longest Guest name (ADR 0054). */
+  /** The characters the Owner typed, fields not counted (ADR 0054). */
   length: number;
   /** Why the Personal Message cannot be saved, while it is being edited. */
   textErrors: PersonalTextError[];
+  /**
+   * What an Ask attaches. Chosen on the Event details page (with the files
+   * themselves), so it is shown here, never edited.
+   */
   attachment: Attachment | null;
-  setAttachment: (attachment: Attachment) => void;
   giftButton: boolean | null;
   setGiftButton: (on: boolean) => void;
   /** The Schedule as it will be saved, which the preview renders. */
@@ -109,7 +107,6 @@ export function MessagePlanSettingsProvider({
   editable,
   eventDate,
   event,
-  longestGuest,
   dueTimeRules,
   children,
 }: {
@@ -118,8 +115,6 @@ export function MessagePlanSettingsProvider({
   editable: boolean;
   eventDate: string | null;
   event: MessagePlanEvent & { id: string };
-  /** The longest name and the longest table the stage sends, for the count. */
-  longestGuest: LongestGuest;
   dueTimeRules: DueTimeRules;
   children: React.ReactNode;
 }) {
@@ -137,8 +132,7 @@ export function MessagePlanSettingsProvider({
   const [savedDocument, setSavedDocument] = useState(storedDocument);
   const [document, setDocument] = useState(storedDocument);
   const [documentVersion, setDocumentVersion] = useState(0);
-  const [savedAttachment, setSavedAttachment] = useState(schedule.attachment ?? null);
-  const [attachment, setAttachment] = useState(schedule.attachment ?? null);
+  const attachment = schedule.attachment ?? null;
   const [savedGift, setSavedGift] = useState(schedule.giftButton ?? null);
   const [giftButton, setGiftButton] = useState(schedule.giftButton ?? null);
 
@@ -154,17 +148,15 @@ export function MessagePlanSettingsProvider({
     setWording(storedWording);
     setSavedDocument(storedDocument);
     replaceDocument(storedDocument);
-    setSavedAttachment(schedule.attachment ?? null);
-    setAttachment(schedule.attachment ?? null);
     setSavedGift(schedule.giftButton ?? null);
     setGiftButton(schedule.giftButton ?? null);
-  }, [storedWording, storedDocument, replaceDocument, schedule.attachment, schedule.giftButton]);
+  }, [storedWording, storedDocument, replaceDocument, schedule.giftButton]);
 
   const personalText = useMemo(() => fromEditorDocument(document), [document]);
   const personalBlank = isBlankPersonalText(personalText);
   const validation = useMemo(
-    () => validatePersonalText(personalText, { stage, event, guests: [longestGuest] }),
-    [personalText, stage, event, longestGuest],
+    () => validatePersonalText(personalText, { stage, event }),
+    [personalText, stage, event],
   );
 
   const dueTime = useDueTimeField({
@@ -194,28 +186,25 @@ export function MessagePlanSettingsProvider({
         : [],
     [messageDirty, wording, personalBlank, validation],
   );
-  const attachmentDirty = editable && attachment !== savedAttachment;
   const giftDirty = editable && giftButton !== savedGift;
-  const dirty = messageDirty || attachmentDirty || giftDirty || dateDirty;
+  const dirty = messageDirty || giftDirty || dateDirty;
 
   const changes = useMemo(() => {
     const list: MessagePlanChange[] = [];
     if (wordingDirty) list.push('messageType');
     else if (textDirty) list.push('personalMessage');
-    if (attachmentDirty) list.push('attachment');
     if (giftDirty) list.push('giftButton');
     if (dateDirty) list.push('dueTime');
     return list;
-  }, [wordingDirty, textDirty, attachmentDirty, giftDirty, dateDirty]);
+  }, [wordingDirty, textDirty, giftDirty, dateDirty]);
 
   const revertDueTime = dueTime.revert;
   const revert = useCallback(() => {
     setWording(savedWording);
     replaceDocument(savedDocument);
-    setAttachment(savedAttachment);
     setGiftButton(savedGift);
     revertDueTime();
-  }, [savedWording, savedDocument, replaceDocument, savedAttachment, savedGift, revertDueTime]);
+  }, [savedWording, savedDocument, replaceDocument, savedGift, revertDueTime]);
 
   useReportUnsavedChanges(dirty, revert);
 
@@ -228,7 +217,6 @@ export function MessagePlanSettingsProvider({
       input.wording = wording;
       input.personalText = personalBlank ? null : serialisePersonalText(personalText);
     }
-    if (attachmentDirty && attachment) input.attachment = attachment;
     if (giftDirty && giftButton !== null) input.giftButton = giftButton;
     if (dateDirty) input.scheduledDate = scheduledDate;
 
@@ -251,7 +239,6 @@ export function MessagePlanSettingsProvider({
           setSavedWording(saved);
           setWording(saved);
           setSavedDocument(document);
-          setSavedAttachment(attachment);
           setSavedGift(giftButton);
           markDueTimeSaved();
           return t('updated');
@@ -267,14 +254,12 @@ export function MessagePlanSettingsProvider({
   }, [
     dirty,
     messageDirty,
-    attachmentDirty,
     giftDirty,
     dateDirty,
     wording,
     personalBlank,
     personalText,
     document,
-    attachment,
     giftButton,
     scheduledDate,
     markDueTimeSaved,
@@ -316,7 +301,6 @@ export function MessagePlanSettingsProvider({
       length: validation.length,
       textErrors,
       attachment,
-      setAttachment,
       giftButton,
       setGiftButton,
       previewSchedule,

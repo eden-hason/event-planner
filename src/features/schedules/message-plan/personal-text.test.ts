@@ -5,7 +5,6 @@ import {
   cleanText,
   fillPersonalText,
   isBlankPersonalText,
-  longestGuestName,
   normalisePersonalText,
   parsePersonalText,
   personalTextLength,
@@ -141,68 +140,40 @@ test('a stored text with more than three paragraphs folds the extras into the th
   );
 });
 
-test('the length counts filled fields against the longest name, without Wrapper or separators', () => {
-  const event = weddingEvent();
+test('the length counts only what the Owner typed, without fields, Wrapper or separators', () => {
   const text: PersonalText = {
-    paragraphs: [[t('שלום '), f('guestName')], [t('🎉🎉')]],
+    paragraphs: [
+      [t('שלום '), f('guestName')],
+      [tableSentence(t('שולחן '), f('tableNumber'))],
+      [t('🎉🎉')],
+    ],
   };
-  const longest = longestGuestName(['דנה', '  משפחת כהן הגדולה  ', 'רון']);
-  assert.equal(longest, 'משפחת כהן הגדולה');
-  assert.equal(
-    personalTextLength(text, {
-      event,
-      longestGuestName: longest,
-      longestTable: null,
-    }),
-    5 + 16 + 2,
-  );
+  assert.equal(personalTextLength(text), 5 + 6 + 2);
 });
 
-const guests = [SEATED, { name: 'רון', table: null }];
-
 function textOfLength(length: number): PersonalText {
-  // guestName "דנה לוי" is 7 characters.
-  return { paragraphs: [[f('guestName'), t('א'.repeat(length - 7))]] };
+  return {
+    paragraphs: [[f('guestName'), t('א'.repeat(length)), f('venueName')]],
+  };
 }
 
-test('400 characters is the limit, counted with fields filled', () => {
+test('400 typed characters is the limit, whatever the fields fill in to', () => {
   const event = weddingEvent();
   const at = validatePersonalText(textOfLength(PERSONAL_TEXT_MAX_LENGTH), {
     stage: 'invitation',
     event,
-    guests,
   });
   assert.equal(at.ok, true);
   assert.equal(at.length, 400);
   const over = validatePersonalText(textOfLength(401), {
     stage: 'invitation',
     event,
-    guests,
   });
   assert.deepEqual(over, {
     ok: false,
     errors: [{ code: 'too_long', length: 401, limit: 400 }],
     length: 401,
   });
-});
-
-test('the table counts toward the length only when some Guest has one', () => {
-  const event = weddingEvent();
-  const text: PersonalText = {
-    paragraphs: [[tableSentence(t('שולחן '), f('tableNumber'))]],
-  };
-  const seated = validatePersonalText(text, {
-    stage: 'event_reminder',
-    event,
-    guests: [SEATED],
-  });
-  const unseated = validatePersonalText(text, {
-    stage: 'event_reminder',
-    event,
-    guests: [UNSEATED],
-  });
-  assert.equal(seated.length, 8);
-  assert.equal(unseated.length, 0);
 });
 
 test('each validation error', () => {
@@ -213,7 +184,7 @@ test('each validation error', () => {
       typeof validatePersonalText
     >[1]['stage'] = 'event_reminder',
   ) => {
-    const result = validatePersonalText(text, { stage, event, guests });
+    const result = validatePersonalText(text, { stage, event });
     return result.ok ? [] : result.errors;
   };
   assert.deepEqual(
@@ -252,7 +223,7 @@ test('each validation error', () => {
 test('a blank text is valid and means the Kululu Wording', () => {
   const result = validatePersonalText(
     { paragraphs: [[t('   ')]] },
-    { stage: 'invitation', event: weddingEvent(), guests },
+    { stage: 'invitation', event: weddingEvent() },
   );
   assert.deepEqual(result, {
     ok: true,

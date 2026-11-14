@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { serialisePersonalText } from '../message-plan';
 import { weddingEvent } from '../message-plan/test-fixtures';
 import {
-  NO_TABLE_PREVIEW_ID,
   SAMPLE_PREVIEW_ID,
   attachmentOptions,
   emptyMessageFields,
@@ -12,8 +11,7 @@ import {
   toEditorDocument,
   paletteFields,
   personalTextErrorMessage,
-  previewGuests,
-  sentTables,
+  previewGuest,
   sentWording,
   timingNote,
   tokenValue,
@@ -111,11 +109,12 @@ test('every validation error maps to a message key', () => {
 const SAMPLE = { sampleName: 'דנה לוי', sampleTable: 12 };
 
 test('with no Guests the preview shows the sample Guest', () => {
-  const { presets, others } = previewGuests([], { offersTable: true, ...SAMPLE });
-  assert.deepEqual(presets, [
-    { id: SAMPLE_PREVIEW_ID, name: 'דנה לוי', table: { tableNumber: 12 }, tags: ['sample'] },
-  ]);
-  assert.deepEqual(others, []);
+  assert.deepEqual(previewGuest([], { offersTable: true, ...SAMPLE }), {
+    id: SAMPLE_PREVIEW_ID,
+    name: 'דנה לוי',
+    table: { tableNumber: 12 },
+    sample: true,
+  });
 });
 
 const guests = [
@@ -125,44 +124,22 @@ const guests = [
   { id: 'd', name: 'יוסי', table: null },
 ];
 
-test('on the Reminder the presets are a seated Guest, an unseated one and the longest name', () => {
-  const { presets, others } = previewGuests(guests, { offersTable: true, ...SAMPLE });
-  assert.deepEqual(
-    presets.map((guest) => [guest.id, guest.tags]),
-    [
-      ['a', ['typical']],
-      ['b', ['noTable', 'longestName']],
-    ],
-  );
-  assert.deepEqual(
-    others.map((guest) => guest.id),
-    ['d', 'c'],
-  );
+test('on a stage that sends tables the preview Guest is a seated one', () => {
+  const guest = previewGuest(guests, { offersTable: true, ...SAMPLE });
+  assert.equal(guest.sample, false);
+  assert.notEqual(guest.table, null);
 });
 
-test('when every Guest is seated, the no-table case is a made-up unseated copy', () => {
-  const seated = guests.filter((guest) => guest.table);
-  const { presets } = previewGuests(seated, { offersTable: true, ...SAMPLE });
-  const noTable = presets.find((guest) => guest.tags.includes('noTable'));
-  assert.equal(noTable?.id, NO_TABLE_PREVIEW_ID);
-  assert.equal(noTable?.table, null);
+test('with nobody seated the preview Guest is any typical Guest', () => {
+  const unseated = guests.filter((guest) => !guest.table);
+  const guest = previewGuest(unseated, { offersTable: true, ...SAMPLE });
+  assert.equal(guest.table, null);
+  assert.equal(guest.sample, false);
 });
 
-test('a stage without tables offers no no-table preset', () => {
-  const { presets } = previewGuests(guests, { offersTable: false, ...SAMPLE });
-  assert.ok(presets.every((guest) => !guest.tags.includes('noTable')));
-  assert.ok(presets.some((guest) => guest.tags.includes('longestName')));
-});
-
-test('tables are sent only on the Reminder, and only with the switch on', () => {
-  const event = weddingEvent();
-  assert.deepEqual(
-    sentTables('event_reminder', guests, event).map((guest) => guest.table),
-    guests.map((guest) => guest.table),
-  );
-  assert.ok(sentTables('invitation', guests, event).every((guest) => guest.table === null));
-  const off = weddingEvent({ guestExperience: { sendTableNumbers: false } });
-  assert.ok(sentTables('event_reminder', guests, off).every((guest) => guest.table === null));
+test('a Guest with no name is never the preview Guest', () => {
+  const guest = previewGuest([{ id: 'x', name: '  ', table: null }], { offersTable: false, ...SAMPLE });
+  assert.equal(guest.id, SAMPLE_PREVIEW_ID);
 });
 
 test("the Reminder's timing line says which wording its day gives", () => {

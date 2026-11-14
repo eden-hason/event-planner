@@ -37,11 +37,7 @@ import {
   type MessageFieldKey,
 } from './fields';
 import type { Stage } from './shape';
-import type {
-  MessagePlanEvent,
-  MessagePlanGuest,
-  MessagePlanGuestTable,
-} from './types';
+import type { MessagePlanEvent } from './types';
 
 export const PERSONAL_TEXT_MAX_LENGTH = 400;
 export const PERSONAL_TEXT_MAX_PARAGRAPHS = 3;
@@ -288,60 +284,24 @@ export function characterCount(value: string): number {
   return [...value].length;
 }
 
-/** The longest of the Event's Guest names, by the same count. */
-export function longestGuestName(names: readonly string[]): string {
-  let longest = '';
-  let longestCount = 0;
-  for (const name of names) {
-    const trimmed = name.trim();
-    const count = characterCount(trimmed);
-    if (count > longestCount) {
-      longest = trimmed;
-      longestCount = count;
-    }
-  }
-  return longest;
-}
-
-/** The table that reads longest in a table sentence, or null when no Guest has one. */
-export function longestTable(
-  tables: readonly (MessagePlanGuestTable | null | undefined)[],
-): MessagePlanGuestTable | null {
-  let longest: MessagePlanGuestTable | null = null;
-  for (const table of tables) {
-    if (!table) continue;
-    if (
-      !longest ||
-      String(table.tableNumber).length > String(longest.tableNumber).length
-    ) {
-      longest = table;
-    }
-  }
-  return longest;
-}
-
 /**
- * The length the 400-character limit is checked against: the paragraphs with
- * every field filled, the Wrapper and the separators left out, for the
- * Event's longest Guest name and, when any Guest has a table, the longest
- * table, so no Guest's message is over (ADR 0054).
+ * The length the 400-character limit is checked against: only what the Owner
+ * typed, the table sentence's words included. Message Fields count nothing,
+ * whatever they fill in to, and the Wrapper and separators are left out
+ * (ADR 0054). The fields on offer are short enough that a full 400 with every
+ * field placed stays far under Meta's 1,024-character body.
  */
-export function personalTextLength(
-  text: PersonalText,
-  options: {
-    event: MessagePlanEvent;
-    longestGuestName: string;
-    longestTable: MessagePlanGuestTable | null;
-  },
-): number {
-  const paragraphs = fillPersonalText(text, {
-    event: options.event,
-    guest: { name: options.longestGuestName, table: options.longestTable },
-  });
-  return paragraphs.reduce(
-    (sum, paragraph) => sum + characterCount(paragraph),
-    0,
-  );
+export function personalTextLength(text: PersonalText): number {
+  let length = 0;
+  for (const paragraph of normalisePersonalText(text).paragraphs) {
+    for (const block of paragraph) {
+      const segments = block.kind === 'table_sentence' ? block.segments : [block];
+      for (const segment of segments) {
+        if (segment.kind === 'text') length += characterCount(segment.text);
+      }
+    }
+  }
+  return length;
 }
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -368,15 +328,12 @@ export type PersonalTextValidation =
  * and the Save bar can say why. A blank text is valid: it means the Kululu
  * Wording.
  *
- * `guests` is the Event's guest list: the longest name and table are what the
- * length is counted against.
  */
 export function validatePersonalText(
   input: PersonalText,
   options: {
     stage: Stage;
     event: MessagePlanEvent;
-    guests: readonly Pick<MessagePlanGuest, 'name' | 'table'>[];
   },
 ): PersonalTextValidation {
   const text = normalisePersonalText(input);
@@ -431,11 +388,7 @@ export function validatePersonalText(
     }
   }
 
-  const length = personalTextLength(text, {
-    event: options.event,
-    longestGuestName: longestGuestName(options.guests.map((g) => g.name)),
-    longestTable: longestTable(options.guests.map((g) => g.table)),
-  });
+  const length = personalTextLength(text);
   if (length > PERSONAL_TEXT_MAX_LENGTH) {
     errors.push({ code: 'too_long', length, limit: PERSONAL_TEXT_MAX_LENGTH });
   }

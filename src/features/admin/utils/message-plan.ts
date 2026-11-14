@@ -76,7 +76,7 @@ export function movedMessage(seeded: number): string {
 }
 
 /** What the move puts in place of the unsent Schedules, for the dialog. */
-export const MOVE_SEEDS = `${scheduleTypeName('invitation')}, שתי הודעות ${scheduleTypeName('follow_up')}, ${scheduleTypeName('event_reminder')} ו${scheduleTypeName('post_event')}`;
+export const MOVE_SEEDS = `${scheduleTypeName('invitation')}, ${scheduleTypeName('follow_up')} פעמיים, ${scheduleTypeName('event_reminder')} ו${scheduleTypeName('post_event')}`;
 
 /** What a move gives up, listed in the dialog (ADR 0053, Consequences). */
 export const MOVE_LOSSES: readonly string[] = [

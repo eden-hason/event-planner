@@ -1671,7 +1671,7 @@
           "confirmation": "אישור הגעה",
           "advance_reminder": "תזכורת מוקדמת",
           "invitation": "הזמנה",
-          "follow_up": "עדיין מחכים לתשובה",
+          "follow_up": "אישור הגעה חוזר",
           "event_reminder": "תזכורת אירוע",
           "post_event": "תודה",
           "phone_call": "סבב שיחות"
@@ -1846,7 +1846,7 @@
       "confirmation": "אישור הגעה",
       "advance_reminder": "תזכורת מוקדמת",
       "invitation": "הזמנה",
-      "follow_up": "עדיין מחכים לתשובה",
+      "follow_up": "אישור הגעה חוזר",
       "event_reminder": "תזכורת אירוע",
       "post_event": "תודה",
       "phone_call": "סבב שיחות"
@@ -1909,7 +1909,6 @@
           "personalMessage": "ההודעה האישית",
           "dueTime": "מועד השליחה",
           "note": "הערה אישית",
-          "attachment": "הקובץ המצורף",
           "giftButton": "כפתור המתנה"
         }
       },
@@ -2200,7 +2199,6 @@
         },
         "paragraphHelp": "Enter פותח פסקה חדשה, עד {limit} פסקאות",
         "paragraphLimit": "הגעתם ל-{limit} פסקאות, המספר המרבי בהודעה",
-        "countHelp": "התווים נספרים עם פרטי האירוע ועם השם הארוך ביותר ברשימת האורחים",
         "tableSentence": {
           "title": "משפט השולחן",
           "defaultText": "השולחן שלכם: ",
@@ -2218,7 +2216,6 @@
       },
       "fields": {
         "hosts": "שמות המארחים",
-        "occasionPhrase": "שם האירוע",
         "eventDate": "תאריך",
         "venueName": "מקום",
         "receptionTime": "קבלת פנים",
@@ -2242,8 +2239,9 @@
           "video": "סרטון ההזמנה",
           "none": "בלי קובץ מצורף"
         },
-        "addImage": "העלאת תמונת הזמנה בפרטי האירוע",
-        "addVideo": "אפשר להעלות סרטון בכרטיס סרטון ההזמנה"
+        "missing": "הקובץ לא נמצא באירוע, אז ההודעה תישלח בלי קובץ",
+        "change": "שינוי בפרטי האירוע",
+        "help": "התמונה, הסרטון ומה מצורף לכל הודעה נבחרים בפרטי האירוע"
       },
       "gift": {
         "cardTitle": "כפתור מתנה",
@@ -2252,15 +2250,6 @@
         "notSetUp": "כדי להוסיף כפתור מתנה צריך קודם להגדיר את דף המתנות",
         "setUp": "הגדרת דף המתנות"
       },
-      "buttons": {
-        "cardTitle": "כפתורים בהודעה",
-        "none": "להודעה הזו אין כפתורים",
-        "help": {
-          "ask": "הכפתורים קבועים ומתווספים לכל הודעה, גם להודעה אישית",
-          "event_reminder": "כפתור הניווט תמיד נשלח בתזכורת. כפתור המתנה נשלח כשהוא מופעל",
-          "thank_you": "כפתור המתנה נשלח כשהוא מופעל"
-        }
-      },
       "timing": {
         "reminderToday": "ביום האירוע ההודעה אומרת \"היום\"",
         "reminderDated": "ביום מוקדם יותר ההודעה מציינת את יום האירוע ואת התאריך",
@@ -2268,18 +2257,10 @@
         "thankYouSunday": "היום שאחרי האירוע הוא שבת, ולכן ההודעה נשלחת ביום ראשון"
       },
       "preview": {
-        "guest": "הצגה עבור",
-        "allGuests": "כל האורחים",
         "channel": "ערוץ",
         "channels": {
           "whatsapp": "וואטסאפ",
           "sms": "SMS"
-        },
-        "tags": {
-          "typical": "לדוגמה",
-          "noTable": "בלי שולחן",
-          "longestName": "השם הארוך ביותר",
-          "sample": "אורח לדוגמה"
         },
         "seatedAt": "האורח הזה יושב בשולחן {table}",
         "noTable": "לאורח הזה אין שולחן",
@@ -2411,7 +2392,13 @@
     "notFound": "האירוע לא נמצא",
     "toast": {
       "saved": "השינויים נשמרו",
-      "error": "משהו השתבש"
+      "error": "משהו השתבש",
+      "mediaMissingImage": "בחרתם לצרף תמונה להזמנה, צריך להעלות אותה קודם",
+      "mediaMissingFollowUpImage": "בחרתם לצרף תמונה לאישור ההגעה החוזר, צריך להעלות אותה קודם",
+      "mediaMissingVideo": "בחרתם לצרף סרטון להזמנה, צריך להעלות אותו קודם",
+      "mediaMissingFile": "הקובץ שבחרתם לצרף לא נמצא באירוע",
+      "mediaSent": "ההודעה כבר נשלחה, אז אי אפשר לשנות אותה",
+      "mediaFailed": "שמירת המדיה להודעות נכשלה"
     },
     "header": {
       "title": "פרטי האירוע",
@@ -2507,6 +2494,59 @@
       "wrongType": "{name} אינו קובץ תמונה",
       "pickAnother": "בחירת תמונה אחרת"
     },
+    "media": {
+      "title": "מדיה להודעות",
+      "description": "מה מצורף לכל הודעת וואטסאפ שהאורחים מקבלים",
+      "invitationTitle": "הזמנה ראשונה",
+      "messageOne": "הודעה",
+      "messageMany": "הודעות",
+      "play": "הפעלת הסרטון",
+      "typeGroup": "סוג מדיה להזמנה",
+      "types": {
+        "none": "ללא",
+        "image": "תמונה",
+        "video": "סרטון"
+      },
+      "noneNote": "ההזמנה תישלח כהודעת טקסט בלבד",
+      "invitationSent": "ההזמנה כבר נשלחה, אז אי אפשר לשנות את מה שמצורף אליה",
+      "uploadImage": "העלאת תמונה להזמנה",
+      "uploadVideo": "העלאת סרטון להזמנה",
+      "dropHint": "גררו לכאן או לחצו לבחירה · {formats}",
+      "imageFormats": "JPG, PNG · עד {max}",
+      "videoFormats": "MP4 · עד {max}",
+      "imageName": "תמונת ההזמנה",
+      "imageMeta": "תמונה",
+      "videoName": "סרטון ההזמנה",
+      "videoMeta": "סרטון",
+      "replace": "החלפה",
+      "uploading": "מעלה את הקובץ",
+      "fileMeta": "{name} · {size}",
+      "failed": "ההעלאה נכשלה",
+      "tooLargeTitle": "הקובץ גדול מדי",
+      "tooLarge": "{name} במשקל {size}, הגודל המרבי הוא {max}",
+      "wrongTypeTitle": "סוג הקובץ לא נתמך",
+      "wrongTypeImage": "{name} אינו קובץ תמונה",
+      "wrongTypeVideo": "{name} אינו קובץ MP4",
+      "pickAnother": "בחירת קובץ אחר",
+      "followUpsFor": "{count, plural, one {להודעה} =2 {לשתי ההודעות} other {לכל # ההודעות}}",
+      "reuse": "להשתמש באותה תמונה מההזמנה",
+      "reuseReady": "{count, plural, one {ההודעה תישלח} other {# ההודעות יישלחו}} עם תמונת ההזמנה",
+      "reuseWaiting": "יישלחו עם תמונת ההזמנה, אחרי שתעלו אותה",
+      "followUpTypeGroup": "סוג מדיה לאישור ההגעה החוזר",
+      "uploadFollowUpImage": "העלאת תמונה לאישור ההגעה החוזר",
+      "followUpsVideoNote": "אישור הגעה חוזר לא נשלח עם סרטון, רק עם תמונה",
+      "followUpsNoneNote": "ההודעות יישלחו כטקסט בלבד",
+      "followUpsSent": "ההודעות האלה כבר נשלחו",
+      "chips": {
+        "ready": "מוכן",
+        "missing": "חסר",
+        "textOnly": "טקסט בלבד",
+        "waiting": "ממתין לתמונה",
+        "sent": "נשלחה",
+        "uploading": "מעלה",
+        "failed": "ההעלאה נכשלה"
+      }
+    },
     "guestExperience": {
       "title": "פרטים נוספים",
       "specialMeal": "מנה מיוחדת",
@@ -2533,6 +2573,9 @@
         "ceremonyTime": "שעת חופה",
         "location": "מקום האירוע",
         "invitation": "תמונת ההזמנה",
+        "invitationVideo": "סרטון ההזמנה",
+        "invitationMedia": "מה מצורף להזמנה",
+        "followUpMedia": "מה מצורף לאישור ההגעה החוזר",
         "brideName": "שם הכלה",
         "brideParents": "שמות הורי הכלה",
         "groomName": "שם החתן",

@@ -4,16 +4,15 @@ import { revalidatePath } from 'next/cache';
 
 import { sendingConfig } from '@/lib/config/sending';
 import { assertNotImpersonating } from '@/lib/supabase/admin';
-import { embeddedOne, pageAll } from '@/lib/supabase/row-cap';
+import { embeddedOne } from '@/lib/supabase/row-cap';
 import { createClient } from '@/lib/supabase/server';
 
+import type { Attachment } from '../message-plan';
 import type { MessagePlanSaveInput } from '../schemas/message-plan';
 import { MAPPED_EVENT_COLUMNS, mapEventRow } from '../services/map-event-row';
-import { loadTableNumbers } from '../services/table-numbers';
 import { dueTimeIssue } from '../utils/due-time-guards';
 import {
   checkMessagePlanSave,
-  savesPersonalText,
   type MessagePlanSaveError,
 } from '../utils/message-plan-save';
 import { isScheduleEditable } from '../utils/schedule-editable';
@@ -90,33 +89,11 @@ export async function updateMessagePlanSchedule(
       personalText: existing.personal_text ?? null,
     };
 
-    // The Guests are read only when a Personal Message is to be counted.
-    let guests: { name: string; table: { tableNumber: number; label: string | null } | null }[] = [];
-    if (savesPersonalText(input, stored)) {
-      const eventId = event.id;
-      const [guestRows, tables] = await Promise.all([
-        pageAll<{ name: string | null; table_id: string | null }>((from, to) =>
-          supabase
-            .from('guests')
-            .select('name, table_id')
-            .eq('event_id', eventId)
-            .order('id')
-            .range(from, to),
-        ),
-        loadTableNumbers(supabase, eventId),
-      ]);
-      guests = guestRows.map((guest) => ({
-        name: guest.name ?? '',
-        table: guest.table_id ? (tables.get(guest.table_id) ?? null) : null,
-      }));
-    }
-
     const checked = checkMessagePlanSave({
       scheduleTypeKey: type.key,
       input,
       stored,
       event,
-      guests,
     });
     if (!checked.ok) {
       return { success: false, code: checked.error.code, message: 'This message cannot be saved' };
@@ -159,4 +136,32 @@ export async function updateMessagePlanSchedule(
     console.error('Error in updateMessagePlanSchedule:', error);
     return { success: false, code: 'failed', message: 'An unexpected error occurred' };
   }
+}
+
+/**
+ * Saves what the Asks attach, from the Event details page (current Message
+ * Plan only): the Invitation's choice and the open Follow-ups' (the
+ * Event's image or nothing, see `followUpAttachment`). Each Schedule goes
+ * through `updateMessagePlanSchedule`, so the same checks apply: a sent
+ * Schedule is refused and an attachment the Event does not have is refused.
+ * The ids come from the page, and RLS keeps the Owner to their own Schedules.
+ *
+ * Writes the Invitation first and stops at the first refusal.
+ */
+export async function updateMessageMedia(input: {
+  invitation?: { scheduleId: string; attachment: Attachment };
+  followUps?: { scheduleIds: readonly string[]; attachment: Attachment };
+}): Promise<UpdateMessagePlanScheduleState> {
+  const writes: { scheduleId: string; attachment: Attachment }[] = [
+    ...(input.invitation ? [input.invitation] : []),
+    ...(input.followUps?.scheduleIds ?? []).map((scheduleId) => ({
+      scheduleId,
+      attachment: input.followUps!.attachment,
+    })),
+  ];
+  for (const write of writes) {
+    const result = await updateMessagePlanSchedule(write.scheduleId, { attachment: write.attachment });
+    if (!result.success) return result;
+  }
+  return { success: true };
 }

@@ -68,7 +68,7 @@ Whatever they write, the attachment and the buttons stay the same.
 | Initial Invitation (no buttons) + Confirmation rounds | **Invitation** (asks, with RSVP buttons) + **Follow-ups** |
 | Variants (tones) picker, shown as "ברירת מחדל" | One **Kululu Wording** per stage, no picker |
 | Personal Message = one paragraph inside a frame with date and venue; Enter shown as `\|` | Personal Message = **the whole message**, with **real paragraphs** (up to 3) and **Message Fields** |
-| 300 characters | **400 characters**, counted with the fields filled in |
+| 300 characters | **400 characters** of typed text, fields not counted |
 | Advance Reminder as a separate row an Operator adds | One **Event Reminder** that can move to any day; its wording follows the day |
 | Gift button decided on the Gifting page for the whole Event | A **gift switch on each** Reminder and Thank You |
 | Separate "personal note" card under Kululu's text | Gone on new Events |
@@ -192,11 +192,8 @@ The Reminder's lines read the same on any day.
   once the third paragraph exists. A single line break inside a paragraph isn't possible
   either: Enter always means "new paragraph". Make that feel natural, not like a bug.
 - **Empty paragraphs** (two Enters in a row) collapse. The guest never sees a gap.
-- **400 characters**, counted with the Message Fields filled in for the guest shown in the
-  preview, not counting the Wrapper. Show the count where it doesn't nag until it is close.
-  A guest with a long name can make one guest's message longer than another's, so the limit
-  is checked against the longest guest name. Say so if the count changes as the preview
-  guest changes.
+- **400 characters** of what the Owner typed. Message Fields and the Wrapper don't count
+  (ADR 0054, amended). Show the count where it doesn't nag until it is close.
 - **No content rules.** Links, phone numbers and emoji are all allowed. Kululu does not
   check that the date or venue is mentioned, and the UI must not hint that it should.
 
@@ -211,7 +208,6 @@ reachable while typing.
 | Field | Sample value | Offered on |
 |---|---|---|
 | שמות המארחים (hosts) | נועה ודורון | every stage |
-| שם האירוע (Occasion Phrase) | החתונה של נועה ודורון | every stage |
 | תאריך (date, weekday + date) | יום חמישי, 12 בנובמבר | every stage |
 | מקום (venue name) | אולמי הגן | every stage |
 | קבלת פנים (reception time) | 19:30 | every stage |

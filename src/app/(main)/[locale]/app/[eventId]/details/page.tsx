@@ -3,6 +3,7 @@ import { getEventById } from '@/features/events/queries';
 import { EventDetailsWrapper } from '@/features/events/components';
 import { getSchedulesByEventId } from '@/features/schedules/queries';
 import { summariseOutstandingPlan } from '@/features/schedules/utils/outstanding-plan';
+import { messageMediaState } from '@/features/schedules';
 
 export default async function EventDetailsServerPage({
   params,
@@ -31,6 +32,7 @@ export default async function EventDetailsServerPage({
     <EventDetailsWrapper
       event={event}
       plan={summariseOutstandingPlan(schedules)}
+      media={event.messagePlan === 'current' ? messageMediaState(schedules) : null}
     />
   );
 }

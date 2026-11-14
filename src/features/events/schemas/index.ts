@@ -365,6 +365,9 @@ export const EventDetailsUpdateSchema = z.object({
     })
     .optional(),
   invitations: InvitationsSchema.optional(),
+  // The video the Invitation can attach (events.invitation_video_url), already
+  // uploaded from the client. '' clears it.
+  invitationVideoUrl: z.union([z.literal(''), z.url()]).optional(),
   guestExperience: GuestExperienceSchema.optional(),
 });
 
@@ -395,6 +398,13 @@ export const EventDetailsFormSchema = z.object({
   ceremonyTime: z.string(),
   location: LocationSchema.nullable(),
   invitations: z.object({ imageUrl: z.string() }),
+  invitationVideoUrl: z.string(),
+  // What the Asks attach, on the current Message Plan only. Stored on the
+  // Schedules, not the Event, and saved through the schedules feature.
+  messageMedia: z.object({
+    invitation: z.enum(['none', 'image', 'video']),
+    followUps: z.boolean(),
+  }),
   hostDetails: z.object({
     bride: EventDetailsFormPersonSchema,
     groom: EventDetailsFormPersonSchema,

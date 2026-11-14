@@ -19,4 +19,5 @@ export { sendCatchUp, type CatchUpSendState } from './catch-up';
 export {
   updateMessagePlanSchedule,
   type UpdateMessagePlanScheduleState,
+  updateMessageMedia,
 } from './message-plan';

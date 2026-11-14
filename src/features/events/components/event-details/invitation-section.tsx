@@ -22,13 +22,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { uploadInvitationImage } from '@/lib/storage';
+import { uploadInvitationImage, IMAGE_MAX_BYTES } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import type { EventDetailsFormValues } from '../../schemas';
 import { SECTION_IDS } from './event-details-context';
 import { SectionCard, SectionStatus, type SectionStatusTone } from './section-card';
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = IMAGE_MAX_BYTES;
 
 /** "2.1MB" - the unit the limit is stated in, so the two read as one sentence. */
 function formatMegabytes(bytes: number): string {

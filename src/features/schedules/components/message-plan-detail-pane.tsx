@@ -9,19 +9,14 @@ import type { OutreachItemStatus } from '../types';
 import type { PreviewGuest } from '../utils/message-plan-editor';
 import { rsvpAskOf } from '../utils/schedule-results';
 import { isScheduleEditable } from '../utils/schedule-editable';
-import { InvitationVideoCard } from './invitation-video-card';
 import {
   MessagePlanAttachmentCard,
-  MessagePlanButtonsCard,
   MessagePlanGiftCard,
   MessagePlanTimingNote,
 } from './message-plan-options-cards';
 import { MessagePlanPreview } from './message-plan-preview';
 import { MessagePlanSaveBar } from './message-plan-save-bar';
-import {
-  MessagePlanSettingsProvider,
-  type LongestGuest,
-} from './message-plan-settings-context';
+import { MessagePlanSettingsProvider } from './message-plan-settings-context';
 import { MessagePlanWordingCard } from './message-plan-wording-card';
 import { PastDueTimeDialog } from './past-due-time-dialog';
 import { PersonalTextEditor } from './personal-text-editor';
@@ -34,24 +29,14 @@ import { ScheduleLockedNotice } from './schedule-locked-notice';
 import { ScheduleResultsGhost } from './schedule-results';
 import { TargetAudienceCard } from './target-audience-card';
 
-/**
- * What the page works out once per kind of stage (sends tables or not) and
- * hands every pane of that kind: the same objects, so they are not computed
- * five times.
- */
-export type MessagePlanGuests = {
-  /** The longest name and table the stage sends, for the 400-character count. */
-  longest: LongestGuest;
-  preview: { presets: PreviewGuest[]; others: PreviewGuest[] };
-};
-
 export interface MessagePlanDetailPaneProps {
   schedule: ScheduleApp;
   stage: Stage;
   event: MappedEvent;
   status: OutreachItemStatus;
   audienceCount: number | null;
-  guests: MessagePlanGuests;
+  /** The Guest the preview shows, worked out once per kind of stage by the page. */
+  previewGuest: PreviewGuest;
   siteUrl: string;
   previewToken: string | null;
   /** The Event's SMS Fallback switch, which the results tab describes. */
@@ -101,7 +86,7 @@ async function MessagePlanTabContent({
   event,
   status,
   audienceCount,
-  guests,
+  previewGuest,
   siteUrl,
   previewToken,
 }: MessagePlanDetailPaneProps) {
@@ -122,7 +107,6 @@ async function MessagePlanTabContent({
       editable={editable}
       eventDate={eventDate}
       event={event}
-      longestGuest={guests.longest}
       dueTimeRules={{ sendWindow, maxLatenessHours: scheduleMaxLatenessHours }}
     >
       <div className="flex flex-col gap-4">
@@ -137,18 +121,6 @@ async function MessagePlanTabContent({
             ) : (
               <MessagePlanGiftCard lockBadge={lockBadge} />
             )}
-            {/* The video is the Event's, uploaded once for every Ask; it is
-                offered here, on the Invitation, which alone may send it. */}
-            {stage === 'invitation' && (
-              <InvitationVideoCard
-                scheduleId={schedule.id}
-                eventId={event.id}
-                videoUrl={event.invitationVideoUrl ?? null}
-                editable={editable}
-                lockBadge={lockBadge}
-              />
-            )}
-            <MessagePlanButtonsCard />
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}
@@ -167,8 +139,7 @@ async function MessagePlanTabContent({
 
           <div className="flex flex-col gap-4">
             <MessagePlanPreview
-              presets={guests.preview.presets}
-              others={guests.preview.others}
+              guest={previewGuest}
               siteUrl={siteUrl}
               previewToken={previewToken}
             />

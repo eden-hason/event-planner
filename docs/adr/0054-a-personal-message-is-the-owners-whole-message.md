@@ -35,8 +35,13 @@ variable may not contain a line break (132018): today each Enter is sent as ` | 
   shape (1, 2 and 3 paragraph variables), separated by a single near-invisible fixed
   character on its own line ("·", or a small emoji if Meta's review refuses it). The
   number of paragraphs the Owner wrote picks the template, so the WhatsApp reads as typed.
-- **400 characters**, counted with the fields filled in and the Wrapper left out, against
-  the Event's longest Guest name, so that no Guest's message goes over.
+- **400 characters of what the Owner typed.** Message Fields count nothing, and the Wrapper
+  is left out. (Amended 2026-11-14: first counted with the fields filled in against the
+  Event's longest Guest name.) The count is simpler to explain, and the ceiling still
+  holds without a guard: the longest Wrapper is 52 characters, which leaves about 570 of
+  Meta's 1,024 for field values. Every field placed once at the longest value in
+  production (venue and Guest name 48 each) adds about 230, so only a field repeated a
+  dozen times could reach the cap.
 - **A draft survives switching.** An Owner who goes back to the Kululu Wording keeps their
   text. Only the chosen message is sent.
 - **Same attachment and buttons as the Kululu Wording.** Choosing a Personal Message changes

@@ -13,15 +13,11 @@ import {
   INVITATION_ATTACHMENTS,
   characterCount,
   effectiveAttachment,
-  effectiveTable,
   fillValue,
   isBlankPersonalText,
-  longestGuestName,
-  longestTable,
   messageField,
   messageFieldsFor,
   parsePersonalText,
-  stageOffersTable,
   type Attachment,
   type MessageFieldKey,
   type MessagePlanEvent,
@@ -164,14 +160,13 @@ export function personalTextErrorMessage(
 
 // ─── Guests the preview shows ────────────────────────────────────────────────
 
-export type PreviewGuestTag = 'typical' | 'noTable' | 'longestName' | 'sample';
-
 export type PreviewGuest = {
-  /** The Guest Record's id, or a made-up one for a Guest that is not on the list. */
+  /** The Guest Record's id, or a made-up one for the sample Guest. */
   id: string;
   name: string;
   table: MessagePlanGuestTable | null;
-  tags: PreviewGuestTag[];
+  /** True for the made-up Guest shown when the Event has no Guests yet. */
+  sample: boolean;
 };
 
 export type PreviewGuestSource = {
@@ -180,78 +175,32 @@ export type PreviewGuestSource = {
   table: MessagePlanGuestTable | null;
 };
 
-/** The id of the made-up unseated Guest, shown when every real Guest has a table. */
-export const NO_TABLE_PREVIEW_ID = 'preview-no-table';
 export const SAMPLE_PREVIEW_ID = 'preview-sample';
 
 /**
- * The Guests the preview offers (brief 8). The presets lead: a typical Guest
- * (seated, when the stage sends tables, with a name of middling length), one
- * with no table on a stage that sends tables, and the longest name, where a
- * messy name shows. The rest of the list follows, by name. With no Guests at
- * all the preview shows the sample Guest. With every Guest seated, the
- * no-table case is the typical Guest without a table, so the Owner still
- * sees what that Guest gets.
+ * The one Guest the preview shows (brief 8): a typical Guest, seated when the
+ * stage sends tables, with a name of middling length. With no Guests at all,
+ * the sample Guest.
  *
  * `offersTable`: the stage sends tables and the Event's switch is on.
  */
-export function previewGuests(
+export function previewGuest(
   guests: readonly PreviewGuestSource[],
   options: { offersTable: boolean; sampleName: string; sampleTable: number },
-): { presets: PreviewGuest[]; others: PreviewGuest[] } {
+): PreviewGuest {
   const named = guests.filter((guest) => guest.name.trim() !== '');
   if (named.length === 0) {
     return {
-      presets: [
-        {
-          id: SAMPLE_PREVIEW_ID,
-          name: options.sampleName,
-          table: options.offersTable ? { tableNumber: options.sampleTable } : null,
-          tags: ['sample'],
-        },
-      ],
-      others: [],
+      id: SAMPLE_PREVIEW_ID,
+      name: options.sampleName,
+      table: options.offersTable ? { tableNumber: options.sampleTable } : null,
+      sample: true,
     };
   }
-
-  const presets = new Map<string, PreviewGuest>();
-  const add = (guest: PreviewGuestSource, tag: PreviewGuestTag) => {
-    const existing = presets.get(guest.id);
-    if (existing) existing.tags.push(tag);
-    else presets.set(guest.id, { ...guest, tags: [tag] });
-  };
-
   const seated = named.filter((guest) => guest.table !== null);
   const pool = options.offersTable && seated.length ? seated : named;
-  const typical = middleByLength(pool);
-  add(typical, 'typical');
-
-  if (options.offersTable) {
-    const unseated = named.find((guest) => guest.table === null);
-    if (unseated) add(unseated, 'noTable');
-    else
-      presets.set(NO_TABLE_PREVIEW_ID, {
-        id: NO_TABLE_PREVIEW_ID,
-        name: typical.name,
-        table: null,
-        tags: ['noTable'],
-      });
-  }
-
-  const longest = longestGuestName(named.map((guest) => guest.name));
-  const longestGuest = named.find((guest) => guest.name.trim() === longest);
-  if (longestGuest) add(longestGuest, 'longestName');
-
-  const others = named
-    .filter((guest) => !presets.has(guest.id))
-    .map((guest) => ({ ...guest, tags: [] }))
-    .sort((a, b) => HEBREW_ORDER.compare(a.name, b.name));
-
-  return { presets: [...presets.values()], others };
+  return { ...middleByLength(pool), sample: false };
 }
-
-/** One collator for every sort: a locale passed per call skips V8's collator cache. */
-const HEBREW_ORDER = new Intl.Collator('he');
 
 /** The Guest whose name is the median length: a name that reads like most. */
 function middleByLength<T extends { name: string }>(guests: readonly T[]): T {
@@ -259,22 +208,6 @@ function middleByLength<T extends { name: string }>(guests: readonly T[]): T {
     .map((guest) => ({ guest, length: characterCount(guest.name.trim()) }))
     .sort((a, b) => a.length - b.length);
   return sorted[Math.floor((sorted.length - 1) / 2)].guest;
-}
-
-/**
- * The tables the Event's Guests are sent, for the character count and the
- * save: none at all when the Event's "send table numbers" switch is off, or
- * on a stage that sends no table.
- */
-export function sentTables<G extends { table: MessagePlanGuestTable | null }>(
-  stage: Stage,
-  guests: readonly G[],
-  event: MessagePlanEvent,
-): G[] {
-  return guests.map((guest) => ({
-    ...guest,
-    table: stageOffersTable(stage) ? effectiveTable(guest, event) : null,
-  }));
 }
 
 // ─── Timing ──────────────────────────────────────────────────────────────────
@@ -392,25 +325,14 @@ export function fromEditorDocument(document: EditorDocument): PersonalText {
 // ─── What every pane of a kind is handed ─────────────────────────────────────
 
 /**
- * The Guests as a stage reads them, worked out once per kind of stage: with
- * their tables when the stage sends tables (the Reminder, with the Event's
- * switch on), without otherwise. The longest name and table are all the
- * 400-character count needs (ADR 0054), so only they go to the editor; the
- * preview gets its picker's list.
+ * The Guest a stage's preview shows, worked out once per kind of stage: from
+ * the Guests with their tables when the stage sends tables (the Reminder, with
+ * the Event's switch on), without otherwise.
  */
-export function stageGuests(
+export function stagePreviewGuest(
   guests: readonly PreviewGuestSource[],
   options: { offersTable: boolean; sampleName: string; sampleTable: number },
-): {
-  longest: { name: string; table: MessagePlanGuestTable | null };
-  preview: { presets: PreviewGuest[]; others: PreviewGuest[] };
-} {
+): PreviewGuest {
   const sent = options.offersTable ? guests : guests.map((guest) => ({ ...guest, table: null }));
-  return {
-    longest: {
-      name: longestGuestName(sent.map((guest) => guest.name)),
-      table: longestTable(sent.map((guest) => guest.table)),
-    },
-    preview: previewGuests(sent, options),
-  };
+  return previewGuest(sent, options);
 }
