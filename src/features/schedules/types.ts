@@ -83,11 +83,6 @@ export type OutreachItem = {
     declined: number;
     noAnswer: number;
   } | null;
-  /**
-   * One more fact for the list card's line, already localized: on the current
-   * Message Plan, whose words the message is (brief 5). Null when there is none.
-   */
-  listDetail?: string | null;
   details: ReactNode;
 };
 

@@ -2165,10 +2165,6 @@
       "missing": "No video uploaded yet. The invitation will not go out without it"
     },
     "messagePlan": {
-      "list": {
-        "kululu": "Kululu's text",
-        "personal": "Your own message"
-      },
       "wording": {
         "cardTitle": "Message",
         "kululu": {
@@ -2197,7 +2193,7 @@
           "event_reminder": "Today is the day! Can't wait to see you",
           "thank_you": "Thank you for celebrating with us, it was a night to remember"
         },
-        "paragraphHelp": "Enter starts a new paragraph, up to {limit}",
+        "paragraphHelp": "Enter starts a new paragraph, up to {limit}. WhatsApp does not allow line breaks here, so paragraphs are separated by a \"·\"",
         "paragraphLimit": "You have reached {limit} paragraphs, the most a message can have",
         "tableSentence": {
           "title": "Table sentence",
