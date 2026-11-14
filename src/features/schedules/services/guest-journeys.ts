@@ -1,13 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  toDeliveryOutcome,
+  ownerDeliveryOutcome,
   toDeliverySteps,
   toFallbackRow,
   type DeliveryAttemptRow,
   type GuestInteractionRow,
 } from '../utils/delivery-outcome';
 import { carriesReadReceipt } from '../utils/hand-delivery';
-import { awaitingSmsFallback, marketingCapHold, stuckWindow } from './send-sms-fallback';
+import { awaitingSmsFallback, stuckWindow } from './send-sms-fallback';
+import { deliveryMarketingCapHold, scheduleFactsFrom } from '../utils/marketing-cap-retry';
+import { sendingConfig } from '@/lib/config/sending';
 import { scheduleFreeze } from './sweep-sms-fallback';
 
 /** One guest's Delivery for one Schedule: its Journey, and the queue facts a catch-up reads */
@@ -123,6 +125,7 @@ export async function loadGuestJourneys(
   };
   const eventDate = (eventResult.data?.events as { event_date?: string | null } | null | undefined)
     ?.event_date;
+  const { sendWindow } = sendingConfig();
   const now = new Date();
   const deliveries = rows.map((row): GuestJourneyDelivery => {
     const attempts = (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [];
@@ -130,15 +133,10 @@ export async function loadGuestJourneys(
     const id = row.id as string;
 
     const fallbackRow = toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts);
-    // A Marketing Cap Retry on its way reads as on its way; one ended by the
-    // Guest's answer has nothing coming at all (ADR 0056).
-    const capHold = marketingCapHold(
+    const capHold = deliveryMarketingCapHold(
       fallbackRow,
-      {
-        scheduleTypeKey: (row.schedules as { schedule_types?: { key?: string } | null } | null)
-          ?.schedule_types?.key,
-        eventDate,
-      },
+      { scheduleTypeKey: scheduleFactsFrom(row.schedules).scheduleTypeKey, eventDate },
+      sendWindow,
       now,
     );
     const smsOnItsWay =
@@ -150,11 +148,11 @@ export async function loadGuestJourneys(
         window: stuckWindow(),
       }).has(id);
 
-    const delivery = capHold === 'awaiting_retry'
-      ? 'on_its_way'
-      : smsOnItsWay
-      ? 'sms_on_its_way'
-      : toDeliveryOutcome(row.status, row.delivery_method, row.not_sent_reason ?? null);
+    const delivery = ownerDeliveryOutcome(
+      { status: row.status, delivery_method: row.delivery_method, not_sent_reason: row.not_sent_reason ?? null },
+      capHold,
+      smsOnItsWay,
+    );
     const steps = toDeliverySteps(attempts);
     const answer = answerBySchedule.get(scheduleId);
     const read = row.delivery_method === 'whatsapp' && row.status === 'read';

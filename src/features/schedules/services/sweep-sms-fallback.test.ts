@@ -298,6 +298,8 @@ test('the newest failure comes first, each schedule once', () => {
 
 // ─── The Marketing Cap Retry hold (ADR 0056) ──────────────────────────────────
 
+const SEND_WINDOW = { start: '09:00', end: '21:00' };
+
 function onAsk(
   row: ReturnType<typeof failed>,
   rsvpStatus = 'pending',
@@ -356,7 +358,7 @@ test('a Delivery held for a Marketing Cap Retry does not keep its Schedule unset
     { delivery_id: 'held', channel: 'whatsapp', status: 'pending', error_code: null, created_at: minutesAgo(0), updated_at: minutesAgo(0) },
     { delivery_id: 'other', channel: 'whatsapp', status: 'failed', error_code: 131026, created_at: minutesAgo(30), updated_at: minutesAgo(30) },
   ];
-  const inputs = settleInputs(deliveries, attempts, facts, now);
+  const inputs = settleInputs(deliveries, attempts, facts, SEND_WINDOW, now);
   assert.equal(inputs.queuedDeliveries, 0);
   assert.equal(inputs.pendingAttempts, 0);
   assert.equal(inputs.lastActivityAt, minutesAgo(30));
@@ -370,6 +372,7 @@ test('without the hold, the same Delivery still holds the Schedule', () => {
     [{ id: 'd', status: 'failed' as const, next_attempt_at: now.toISOString(), guests }],
     [{ delivery_id: 'd', channel: 'whatsapp', status: 'failed', error_code: 131049, created_at: minutesAgo(1), updated_at: minutesAgo(1) }],
     facts,
+    SEND_WINDOW,
     now,
   );
   assert.equal(inputs.queuedDeliveries, 1);

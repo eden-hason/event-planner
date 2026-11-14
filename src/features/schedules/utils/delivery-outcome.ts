@@ -7,6 +7,7 @@
 import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from './send-helpers';
 import { isHandTrigger } from './hand-delivery';
 import type { FallbackDeliveryRow } from '../services/send-sms-fallback';
+import type { MarketingCapHold } from './marketing-cap-retry';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
@@ -93,6 +94,25 @@ export type GuestInteractionRow = {
   /** Special Meals per type as answered at the time, e.g. { vegan: 1 } */
   mealCounts?: Record<string, number>;
 };
+
+/**
+ * The outcome the Owner reads, once the two things only a whole Schedule can
+ * know are settled: whether a Marketing Cap Retry holds the Delivery (ADR 0056)
+ * and whether an SMS Fallback is on its way. Shared by the Results tab and the
+ * guest drawer so they never tell the Owner two stories.
+ *
+ * A retry still to come reads as on its way - a message genuinely is. One
+ * ended by the Guest's answer has nothing coming, so it reads as its status.
+ */
+export function ownerDeliveryOutcome(
+  row: { status: string | null; delivery_method: string | null; not_sent_reason: string | null },
+  hold: MarketingCapHold,
+  smsComing: boolean,
+): GuestDeliveryOutcome {
+  if (hold?.kind === 'awaiting_retry') return 'on_its_way';
+  if (smsComing && hold === null) return 'sms_on_its_way';
+  return toDeliveryOutcome(row.status, row.delivery_method, row.not_sent_reason);
+}
 
 export function toDeliveryOutcome(
   status: string | null,

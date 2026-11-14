@@ -2,7 +2,7 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
-  toDeliveryOutcome,
+  ownerDeliveryOutcome,
   toDeliverySteps,
   toFallbackRow,
   type DeliveryAttemptRow,
@@ -11,7 +11,9 @@ import {
 } from '../utils/delivery-outcome';
 import { carriesReadReceipt } from '../utils/hand-delivery';
 import type { RsvpAsk } from '../utils/schedule-results';
-import { awaitingSmsFallback, marketingCapHold, stuckWindow } from '../services/send-sms-fallback';
+import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
+import { deliveryMarketingCapHold, scheduleFactsFrom } from '../utils/marketing-cap-retry';
+import { sendingConfig } from '@/lib/config/sending';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
 export type {
@@ -170,16 +172,13 @@ export async function getScheduleInteractionData(
       (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
     ),
   );
-  // A Marketing Cap Retry on its way reads as on its way; one ended by the
-  // Guest's answer has nothing coming at all (ADR 0056).
-  const scheduleFacts = {
-    scheduleTypeKey: (eventResult.data?.schedule_types as { key?: string } | null | undefined)?.key,
-    eventDate: (eventResult.data?.events as { event_date?: string | null } | null | undefined)
-      ?.event_date,
-  };
+  const scheduleFacts = scheduleFactsFrom(eventResult.data);
+  const { sendWindow } = sendingConfig();
   const now = new Date();
   const capHold = new Map(
-    fallbackRows.map((row) => [row.id, marketingCapHold(row, scheduleFacts, now)] as const),
+    fallbackRows.map(
+      (row) => [row.id, deliveryMarketingCapHold(row, scheduleFacts, sendWindow, now)] as const,
+    ),
   );
   const smsComing = awaitingSmsFallback(
     fallbackRows.filter((row) => capHold.get(row.id) === null),
@@ -201,15 +200,15 @@ export async function getScheduleInteractionData(
       phone_number: string | null;
     };
     const entry = rowFor(row.guest_id as string, guest);
-    entry.delivery = capHold.get(row.id as string) === 'awaiting_retry'
-      ? 'on_its_way'
-      : smsComing.has(row.id as string)
-      ? 'sms_on_its_way'
-      : toDeliveryOutcome(
-          row.status,
-          row.delivery_method,
-          (row.not_sent_reason as string | null) ?? null,
-        );
+    entry.delivery = ownerDeliveryOutcome(
+      {
+        status: row.status,
+        delivery_method: row.delivery_method,
+        not_sent_reason: (row.not_sent_reason as string | null) ?? null,
+      },
+      capHold.get(row.id as string) ?? null,
+      smsComing.has(row.id as string),
+    );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     const attempts = row.message_delivery_attempts as unknown as
       | (DeliveryAttemptRow & AskedAttempt)[]

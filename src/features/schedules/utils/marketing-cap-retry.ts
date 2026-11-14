@@ -11,19 +11,14 @@
  * So the queueing pass, the SMS sweeper's hold and the Owner's "on its way" all
  * answer the same question from the same rows, and nothing can drift.
  *
- * Pure and dependency-free apart from the Send Window.
+ * Pure: the Send Window comes in as a parameter.
  */
 
 import { isAsk } from './message-plan-kind';
-import { nextOpenSlot, type SendWindow } from './send-window';
+import { closingEarlier, nextOpenSlot, type SendWindow } from './send-window';
+import { isMarketingCapCode } from './whatsapp-failures';
 
-/** The two codes, as the queueing pass filters on them. */
-export const MARKETING_CAP_CODES = [
-  // Per-user marketing cap: Meta withheld it "to maintain healthy ecosystem engagement".
-  131049,
-  // The number is in a Meta marketing-message experiment holdout.
-  130472,
-] as const;
+export { MARKETING_CAP_CODES, isMarketingCapCode } from './whatsapp-failures';
 
 /** Hours after the first marketing-cap failure that each retry is due. */
 export const MARKETING_CAP_RETRY_HOURS = [6, 24] as const;
@@ -53,19 +48,12 @@ export const MARKETING_CAP_RETRY_LOOKBACK_HOURS = 48;
  */
 export const MARKETING_CAP_RETRY_CLOSING_MARGIN_MINUTES = 30;
 
+export const HOUR_MS = 3_600_000;
 const MINUTE_MS = 60_000;
-const HOUR_MS = 60 * MINUTE_MS;
-
-export function isMarketingCapCode(errorCode: number | null | undefined): boolean {
-  return errorCode != null && (MARKETING_CAP_CODES as readonly number[]).includes(errorCode);
-}
 
 /** The Send Window a retry is held to: the same, closing a margin earlier. */
 export function marketingCapRetryWindow(sendWindow: SendWindow): SendWindow {
-  const [hours, minutes] = sendWindow.end.split(':').map(Number);
-  const end = hours * 60 + minutes - MARKETING_CAP_RETRY_CLOSING_MARGIN_MINUTES;
-  const clock = `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`;
-  return { start: sendWindow.start, end: clock };
+  return closingEarlier(sendWindow, MARKETING_CAP_RETRY_CLOSING_MARGIN_MINUTES);
 }
 
 export type MarketingCapAttempt = {
@@ -75,8 +63,23 @@ export type MarketingCapAttempt = {
   created_at: string;
 };
 
-export type MarketingCapRetryInput = {
+/** What a hold needs to know about the Delivery's Schedule. */
+export type MarketingCapScheduleFacts = {
   scheduleTypeKey: string | null | undefined;
+  /** The Event's date. No retry is due on or after it. */
+  eventDate: string | null | undefined;
+};
+
+/** The facts off a `schedules(schedule_types(key), events(event_date))` join. */
+export function scheduleFactsFrom(join: unknown): MarketingCapScheduleFacts {
+  const row = join as
+    | { schedule_types?: { key?: string } | null; events?: { event_date?: string | null } | null }
+    | null
+    | undefined;
+  return { scheduleTypeKey: row?.schedule_types?.key, eventDate: row?.events?.event_date };
+}
+
+export type MarketingCapRetryInput = MarketingCapScheduleFacts & {
   /** The Guest's answer now. Anything but pending is an answer. */
   rsvpStatus: string | null | undefined;
   /**
@@ -85,8 +88,6 @@ export type MarketingCapRetryInput = {
    * (the current plan's Invitation goes to everyone) is still owed the message.
    */
   rsvpChangedAt: string | null | undefined;
-  /** The Event's date. No retry is due on or after it. */
-  eventDate: string | null | undefined;
   attempts: readonly MarketingCapAttempt[];
   sendWindow: SendWindow;
   now: Date;
@@ -102,11 +103,19 @@ export type MarketingCapRetryState = {
 };
 
 /**
- * The retries as the attempts alone describe them, whatever the Guest
- * answered: the last settled attempt is a marketing-cap failure on WhatsApp,
- * no SMS has been tried, and the Schedule is an Ask.
+ * What the automatic SMS Fallback must do with a failed Delivery: hold it for
+ * a retry still to come, hold it for good because the Guest answered since, or
+ * nothing (null) - the ordinary Fallback rules apply.
  */
-function retryProgress(input: MarketingCapRetryInput) {
+export type MarketingCapHold =
+  | ({ kind: 'awaiting_retry' } & MarketingCapRetryState)
+  | { kind: 'answered' }
+  | null;
+
+/**
+ * The one reading of a Delivery's attempts, sorted and scanned once.
+ */
+export function marketingCapHold(input: MarketingCapRetryInput): MarketingCapHold {
   if (!isAsk(input.scheduleTypeKey)) return null;
 
   const attempts = [...input.attempts].sort((a, b) => a.created_at.localeCompare(b.created_at));
@@ -126,37 +135,29 @@ function retryProgress(input: MarketingCapRetryInput) {
       attempt.status === 'failed' &&
       isMarketingCapCode(attempt.error_code),
   );
-  return { inFlight, rung: capFailures.length, firstFailedAt: Date.parse(capFailures[0].created_at) };
-}
+  const firstFailedAt = Date.parse(capFailures[0].created_at);
 
-/** Whether the Guest answered after WhatsApp first withheld this Ask. */
-function answeredSince(input: MarketingCapRetryInput, firstFailedAt: number): boolean {
-  if (input.rsvpStatus == null || input.rsvpStatus === 'pending') return false;
-  if (!input.rsvpChangedAt) return false;
-  return Date.parse(input.rsvpChangedAt) > firstFailedAt;
-}
+  // Asking someone who just answered reads as a bug, and the answer is what
+  // the Ask was for: nothing further, not a retry and not an SMS.
+  const answeredSince =
+    input.rsvpStatus != null &&
+    input.rsvpStatus !== 'pending' &&
+    !!input.rsvpChangedAt &&
+    Date.parse(input.rsvpChangedAt) > firstFailedAt;
+  if (answeredSince) return { kind: 'answered' };
 
-/**
- * Whether this Delivery is awaiting a Marketing Cap Retry, and when it is due.
- * Null means it is not: the SMS Fallback rules apply exactly as before - unless
- * `endedByAnswer` says the Guest answered instead.
- */
-export function marketingCapRetry(input: MarketingCapRetryInput): MarketingCapRetryState | null {
-  const progress = retryProgress(input);
-  if (!progress) return null;
-  if (answeredSince(input, progress.firstFailedAt)) return null;
-
-  const hours = MARKETING_CAP_RETRY_HOURS[progress.rung - 1];
+  const rung = capFailures.length;
+  const hours = MARKETING_CAP_RETRY_HOURS[rung - 1];
   if (hours === undefined) return null;
 
   const window = marketingCapRetryWindow(input.sendWindow);
-  const dueAt = nextOpenSlot(new Date(progress.firstFailedAt + hours * HOUR_MS), window);
+  const dueAt = nextOpenSlot(new Date(firstFailedAt + hours * HOUR_MS), window);
 
   // An Ask after the Event has nothing to ask.
   if (input.eventDate && dueAt.getTime() >= Date.parse(input.eventDate)) return null;
 
   // Due, never sent, and past the grace: given up, so the SMS can go.
-  if (!progress.inFlight) {
+  if (!inFlight) {
     const graceEnds = nextOpenSlot(
       new Date(dueAt.getTime() + MARKETING_CAP_RETRY_GRACE_MINUTES * MINUTE_MS),
       window,
@@ -164,15 +165,41 @@ export function marketingCapRetry(input: MarketingCapRetryInput): MarketingCapRe
     if (input.now.getTime() > graceEnds.getTime()) return null;
   }
 
-  return { rung: progress.rung, dueAt, inFlight: progress.inFlight };
+  return { kind: 'awaiting_retry', rung, dueAt, inFlight };
 }
 
-/**
- * An Ask WhatsApp withheld for its marketing limits, whose Guest has answered
- * since: nothing further is sent, not a retry and not an SMS. Asking someone
- * who just answered reads as a bug, and the answer is what the Ask was for.
- */
+/** Whether this Delivery is awaiting a Marketing Cap Retry, and when it is due. */
+export function marketingCapRetry(input: MarketingCapRetryInput): MarketingCapRetryState | null {
+  const hold = marketingCapHold(input);
+  return hold?.kind === 'awaiting_retry' ? hold : null;
+}
+
+/** An Ask withheld for its marketing limits whose Guest has answered since. */
 export function endedByAnswer(input: MarketingCapRetryInput): boolean {
-  const progress = retryProgress(input);
-  return progress !== null && answeredSince(input, progress.firstFailedAt);
+  return marketingCapHold(input)?.kind === 'answered';
+}
+
+/** A Delivery row as every reader of the hold has it. */
+export type MarketingCapDeliveryRow = {
+  status: string;
+  guests: { rsvp_status?: string | null; rsvp_changed_at?: string | null } | null;
+  message_delivery_attempts: readonly MarketingCapAttempt[];
+};
+
+/** The hold for one Delivery row. Only a failed Delivery can be held. */
+export function deliveryMarketingCapHold(
+  row: MarketingCapDeliveryRow,
+  facts: MarketingCapScheduleFacts,
+  sendWindow: SendWindow,
+  now: Date,
+): MarketingCapHold {
+  if (row.status !== 'failed') return null;
+  return marketingCapHold({
+    ...facts,
+    rsvpStatus: row.guests?.rsvp_status,
+    rsvpChangedAt: row.guests?.rsvp_changed_at,
+    attempts: row.message_delivery_attempts,
+    sendWindow,
+    now,
+  });
 }

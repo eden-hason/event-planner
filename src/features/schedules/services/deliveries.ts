@@ -13,7 +13,8 @@ export type ReservedDelivery = { id: string; confirmationToken: string };
 
 const IN_CHUNK = 200;
 
-function chunks<T>(items: T[], size = IN_CHUNK): T[][] {
+/** Splits ids for an `in` filter, keeping each request well inside URL limits. */
+export function chunks<T>(items: T[], size = IN_CHUNK): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;

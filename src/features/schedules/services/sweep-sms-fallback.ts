@@ -4,13 +4,17 @@ import {
   sendSmsFallback,
   stuckSentAtRange,
   stuckWindow,
-  marketingCapHold,
   type FallbackDeliveryRow,
-  type MarketingCapScheduleFacts,
   type SmsFallbackExclusionReason,
   type StuckWindow,
 } from './send-sms-fallback';
 import { classifyWhatsAppFailure } from '../utils/whatsapp-failures';
+import {
+  deliveryMarketingCapHold,
+  scheduleFactsFrom,
+  type MarketingCapScheduleFacts,
+} from '../utils/marketing-cap-retry';
+import type { SendWindow } from '../utils/send-window';
 import { sendingConfig } from '@/lib/config/sending';
 
 /**
@@ -203,6 +207,7 @@ export function settleInputs(
   deliveries: SettleDeliveryRow[],
   attempts: AttemptRow[],
   facts: MarketingCapScheduleFacts,
+  sendWindow: SendWindow,
   now: Date,
 ): { queuedDeliveries: number; pendingAttempts: number; lastActivityAt: string | null } {
   const byDelivery = new Map<string, AttemptRow[]>();
@@ -216,20 +221,10 @@ export function settleInputs(
     deliveries
       .filter(
         (row) =>
-          marketingCapHold(
-            {
-              status: row.status,
-              guests: row.guests ? { name: '', phone_number: null, ...row.guests } : null,
-              message_delivery_attempts: (byDelivery.get(row.id) ?? []).map((a) => ({
-                channel: a.channel as 'whatsapp' | 'sms',
-                status: a.status,
-                error_code: a.error_code,
-                error_message: null,
-                sent_at: null,
-                created_at: a.created_at,
-              })),
-            },
+          deliveryMarketingCapHold(
+            { ...row, message_delivery_attempts: byDelivery.get(row.id) ?? [] },
             facts,
+            sendWindow,
             now,
           ) !== null,
       )
@@ -296,6 +291,7 @@ const SETTLED_EXCLUSIONS: SmsFallbackExclusionReason[] = [
 export function failedCandidateScheduleIds(
   rows: FailedCandidateRow[],
   window: StuckWindow,
+  sendWindow: SendWindow = sendingConfig().sendWindow,
 ): string[] {
   const since = stuckSentAtRange(window).from.getTime();
   const ids: string[] = [];
@@ -304,11 +300,9 @@ export function failedCandidateScheduleIds(
     .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
   for (const row of newestFirst) {
     if (ids.includes(row.schedule_id)) continue;
-    const facts = {
-      scheduleTypeKey: row.schedules?.schedule_types?.key,
-      eventDate: row.schedules?.events?.event_date,
-    };
-    if (marketingCapHold(row, facts, window.now)) continue;
+    if (deliveryMarketingCapHold(row, scheduleFactsFrom(row.schedules), sendWindow, window.now)) {
+      continue;
+    }
     const { eligible, excluded } = classifySmsFallbackCandidates([row], window);
     const open =
       eligible.length > 0 || excluded.some((e) => !SETTLED_EXCLUSIONS.includes(e.exclusion));
@@ -411,14 +405,11 @@ async function evaluateSchedule(
   if (attemptError) throw attemptError;
   const attempts = (attemptRows ?? []) as AttemptRow[];
 
-  const facts = {
-    scheduleTypeKey: (scheduleRow?.schedule_types as { key?: string } | null | undefined)?.key,
-    eventDate: (scheduleRow?.events as { event_date?: string | null } | null | undefined)?.event_date,
-  };
   const { queuedDeliveries, pendingAttempts, lastActivityAt } = settleInputs(
     deliveries,
     attempts,
-    facts,
+    scheduleFactsFrom(scheduleRow),
+    config.sendWindow,
     now,
   );
 

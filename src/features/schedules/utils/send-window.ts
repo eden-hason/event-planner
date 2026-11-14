@@ -74,10 +74,23 @@ function parseClock(value: string): number {
 function israelInstant(date: string, dayOffset: number, minutes: number): Date {
   const shifted = new Date(Date.parse(`${date}T00:00:00Z`) + dayOffset * DAY_MS);
   const ymd = shifted.toISOString().slice(0, 10);
-  const clock = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  const clock = formatClock(minutes);
   const iso = israelWallClockToIso(ymd, clock);
   if (!iso) throw new Error(`Could not resolve ${ymd} ${clock} in ${ADMIN_TIME_ZONE}`);
   return new Date(iso);
+}
+
+function formatClock(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+/** The same window, closing `minutes` earlier. */
+export function closingEarlier(window: SendWindow, minutes: number): SendWindow {
+  const end = parseClock(window.end) - minutes;
+  if (end <= parseClock(window.start)) {
+    throw new Error(`Send window ${window.start}-${window.end} cannot close ${minutes} minutes early`);
+  }
+  return { start: window.start, end: formatClock(end) };
 }
 
 export function isWithinSendWindow(instant: Date, window: SendWindow): boolean {
