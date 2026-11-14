@@ -88,7 +88,8 @@ export function AiAssistant({ eventId }: AiAssistantProps) {
         {/*
           Lifts clear of any bar pinned to the bottom edge (e.g. the details
           page's save bar) while one is on screen. Pure CSS, so the page that
-          owns the bar does not have to know this button exists.
+          owns the bar does not have to know this button exists. `PageCard`'s
+          bottom padding keeps page content scrollable out from under it.
         */}
         <button className="fixed bottom-6 left-6 z-40 hidden cursor-pointer rounded-full bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 p-[2px] shadow-[0_0_24px_4px_rgba(139,92,246,0.45)] transition-[bottom,box-shadow] duration-300 hover:shadow-[0_0_32px_8px_rgba(139,92,246,0.6)] md:block [body:has([data-bottom-bar])_&]:bottom-20">
           <span className="flex size-12 items-center justify-center rounded-full bg-zinc-950 transition-colors duration-200 hover:bg-zinc-900">

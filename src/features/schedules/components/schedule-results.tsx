@@ -1,13 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  IconMessage,
-  IconSend,
-  IconUserCheck,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconMessage, IconUserCheck, IconUsers } from '@tabler/icons-react';
 
 import { cn } from '@/lib/utils';
 import { AutoRefresh } from '@/components/auto-refresh';
@@ -25,6 +20,7 @@ import {
   formatMoment,
   percent,
   resultsLiveness,
+  filterCounts,
   type GuestFilter,
 } from '../utils/schedule-results';
 import { GuestDetailsSheetBody } from './guest-activity';
@@ -45,7 +41,7 @@ interface ScheduleResultsProps {
 /**
  * The Results tab: watch the message land.
  *
- * On top, the live state and the funnel of the whole schedule; below, every
+ * On top, the live state, how the message arrived and who is coming; below, every
  * guest and their message's activity. Everything is in guest records, and three rules from
  * CONTEXT.md and ADR 0011/0012 shape it:
  *
@@ -75,6 +71,16 @@ export function ScheduleResults({
   const { summary, guests } = data;
 
   const [filter, setFilter] = useState<GuestFilter>('all');
+  const guestsRef = useRef<HTMLDivElement>(null);
+  const counts = useMemo(() => filterCounts(guests), [guests]);
+  // A row or tile of the cards filters the guests and brings them into view;
+  // the applied one again clears it.
+  const showFilter = (next: GuestFilter) => {
+    const applied = filter === next ? 'all' : next;
+    setFilter(applied);
+    if (applied !== 'all')
+      guestsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   // A second click on the open guest closes it
@@ -82,13 +88,10 @@ export function ScheduleResults({
     setSelectedId((current) => (current === guestId ? null : guestId));
 
   const isSms = channel === 'sms';
-  // Scored against WhatsApp deliveries only, so shown only when there are some.
-  const showSeen = !isSms && summary.seenCapable > 0;
 
   // An SMS Fallback still to go out is a state about to change, like any other
   // message on its way.
-  const onItsWay =
-    summary.notReached.onItsWay + summary.notReached.smsOnItsWay;
+  const onItsWay = summary.notReached.onItsWay + summary.notReached.smsOnItsWay;
 
   const liveness = resultsLiveness({
     sentAt,
@@ -117,7 +120,11 @@ export function ScheduleResults({
     return (
       <div className="flex flex-col gap-3.5">
         {live}
-        <ScheduleResultsGhost collectsRsvp={collectsRsvp} channel={channel} smsFallback={smsFallback} />
+        <ScheduleResultsGhost
+          collectsRsvp={collectsRsvp}
+          channel={channel}
+          smsFallback={smsFallback}
+        />
       </div>
     );
   }
@@ -128,38 +135,40 @@ export function ScheduleResults({
         {live}
 
         <div className="flex min-w-0 flex-col gap-3.5">
-          {/* Masonry, not rows: a short card never leaves a gap beside a tall
-              one. Padding, not margin, spaces it - a column drops margin at
-              its foot - so one -mb cancels the trailing space either way. */}
-          <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
-            <div>
-              <Funnel
-                summary={summary}
-                showSeen={showSeen}
-                collectsRsvp={collectsRsvp}
-              />
-            </div>
-            <div>
-              <ChannelsCard summary={summary} isSms={isSms} />
-            </div>
+          {/* Side by side, half each, from `@2xl`; a schedule that asks for
+              no RSVP has the one card, full width. */}
+          <div
+            className={cn('grid gap-3.5', collectsRsvp && '@2xl:grid-cols-2')}
+          >
+            <ChannelsCard
+              summary={summary}
+              isSms={isSms}
+              filter={filter}
+              onSelect={showFilter}
+            />
             {collectsRsvp && (
-              <div>
-                <RsvpCard summary={summary} />
-              </div>
+              <RsvpCard
+                summary={summary}
+                noResponse={counts.noResponse}
+                filter={filter}
+                onSelect={showFilter}
+              />
             )}
           </div>
 
-          <ScheduleResultsGuests
-            guests={guests}
-            collectsRsvp={collectsRsvp}
-            showSeen={showSeen}
-            filter={filter}
-            onFilterChange={setFilter}
-            selectedId={selectedId}
-            onSelect={toggleGuest}
-            now={now}
-            locale={locale}
-          />
+          <div ref={guestsRef} className="scroll-mt-4">
+            <ScheduleResultsGuests
+              guests={guests}
+              collectsRsvp={collectsRsvp}
+              counts={counts}
+              filter={filter}
+              onFilterChange={setFilter}
+              selectedId={selectedId}
+              onSelect={toggleGuest}
+              now={now}
+              locale={locale}
+            />
+          </div>
         </div>
       </div>
 
@@ -262,161 +271,42 @@ function CardTitle({ title, note }: { title: string; note?: string }) {
   );
 }
 
-function Bar({ value, className }: { value: number; className: string }) {
-  return (
-    <span className="bg-muted block h-2.5 overflow-hidden rounded-full @2xl:h-3">
-      <span
-        className={cn(
-          'animate-fill-in block h-full rounded-full transition-[width] duration-700 ease-out motion-reduce:animate-none motion-reduce:transition-none',
-          className,
-        )}
-        style={{ width: `${Math.min(value, 100)}%` }}
-      />
-    </span>
-  );
-}
-
 type Summary = ScheduleInteractionData['summary'];
-
-/**
- * Audience, reached, seen, answered. Seen is drawn as a share of the
- * WhatsApp deliveries rather than of the audience, so its bar is a ratio that
- * can move either way as late failures leave that denominator. It is also a
- * floor, not a count: a guest who turned off read receipts never reports one,
- * and the row says so.
- */
-function Funnel({
-  summary,
-  showSeen,
-  collectsRsvp,
-}: {
-  summary: Summary;
-  showSeen: boolean;
-  collectsRsvp: boolean;
-}) {
-  const t = useTranslations('schedules.results.funnel');
-  const answered = summary.confirmed + summary.declined;
-
-  // Records outside the package are not part of the audience, and the hint
-  // says so. Records with no phone number are left out without a word.
-  const outside = summary.excludedOutsidePackage;
-  const audienceHint =
-    outside > 0
-      ? t('audienceExcludedPackage', { count: outside })
-      : t('audienceHint');
-
-  const rows = [
-    {
-      key: 'audience',
-      label: t('audience'),
-      hint: audienceHint,
-      n: summary.audience,
-      value: 100,
-      bar: 'bg-muted-foreground/25',
-      num: 'text-foreground',
-      muted: true,
-    },
-    {
-      key: 'reached',
-      label: t('reached'),
-      hint: t('ofAudience', {
-        percent: percent(summary.reached, summary.audience),
-      }),
-      n: summary.reached,
-      value: percent(summary.reached, summary.audience),
-      bar: 'bg-primary',
-      num: 'text-primary',
-    },
-    ...(showSeen
-      ? [
-          {
-            key: 'seen',
-            label: t('seen'),
-            hint: t('seenHint', { count: summary.seenCapable }),
-            n: summary.seen,
-            value: percent(summary.seen, summary.seenCapable),
-            bar: 'bg-primary/60',
-            num: 'text-primary',
-            note: t('seenNote'),
-          },
-        ]
-      : []),
-    ...(collectsRsvp
-      ? [
-          {
-            key: 'answered',
-            label: t('answered'),
-            hint: t('answeredHint', {
-              confirmed: summary.confirmed,
-              declined: summary.declined,
-            }),
-            n: answered,
-            // Against the Guests who were asked, not everyone it went to.
-            value: percent(answered, summary.askedAudience),
-            bar: 'bg-rsvp-confirmed',
-            num: 'text-rsvp-confirmed-strong',
-          },
-        ]
-      : []),
-  ];
-
-  return (
-    <section className="bg-card flex min-w-0 flex-col gap-3.5 rounded-2xl border p-4 @2xl:p-[18px]">
-      <CardTitle title={t('title')} note={t('unit')} />
-      {rows.map((row) => (
-        <div key={row.key} className="flex flex-col gap-1.5">
-          <div className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                'text-[13px] font-semibold @2xl:text-[13.5px]',
-                row.muted && 'text-muted-foreground',
-              )}
-            >
-              {row.label}
-            </span>
-            <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11.5px] @2xl:text-xs">
-              {row.hint}
-            </span>
-            <span
-              className={cn(
-                'text-[17px] font-extrabold tabular-nums @2xl:text-xl',
-                row.num,
-              )}
-            >
-              {row.n}
-            </span>
-          </div>
-          <Bar value={row.value} className={row.bar} />
-          {row.note && (
-            <p className="text-muted-foreground text-[11.5px] leading-snug @2xl:text-xs">
-              {row.note}
-            </p>
-          )}
-        </div>
-      ))}
-    </section>
-  );
-}
 
 /**
  * How the schedule arrived: WhatsApp, SMS, and what has not arrived yet. On a
  * WhatsApp schedule the SMS row is SMS Fallback - Kululu taking care of the
- * guests WhatsApp could not reach. Before it has happened, those guests are an
- * SMS on its way rather than not delivered.
+ * guests WhatsApp could not reach. Everything still pending - a WhatsApp the
+ * phone has not confirmed, or an SMS on its way - is one On its way row: the
+ * Owner has nothing to do about either, so the split would only be noise.
+ *
+ * Each row filters the guest table below to its guests.
  */
 function ChannelsCard({
   summary,
   isSms,
+  filter,
+  onSelect,
 }: {
   summary: Summary;
   isSms: boolean;
+  filter: GuestFilter;
+  onSelect: (filter: GuestFilter) => void;
 }) {
   const t = useTranslations('schedules.results.channels');
   const whole = summary.audience;
 
-  const rows = [
+  const rows: {
+    key: string;
+    filter: GuestFilter;
+    label: string;
+    sub: string;
+    n: number;
+    color: string;
+  }[] = [
     {
       key: 'wa',
+      filter: 'whatsapp' as const,
       label: t('whatsapp'),
       sub: t('whatsappSub'),
       n: summary.reachedWhatsapp,
@@ -424,27 +314,23 @@ function ChannelsCard({
     },
     {
       key: 'sms',
+      filter: 'sms' as const,
       label: t('sms'),
       sub: isSms ? t('smsScheduleSub') : t('smsFallbackSub'),
       n: summary.reachedSms,
       color: 'bg-channel-sms',
     },
     {
-      key: 'smsWay',
-      label: t('smsOnItsWay'),
-      sub: isSms ? t('smsOnItsWayScheduleSub') : t('smsOnItsWaySub'),
-      n: summary.notReached.smsOnItsWay,
-      color: 'bg-channel-sms/45',
-    },
-    {
       key: 'way',
+      filter: 'pending' as const,
       label: t('onItsWay'),
       sub: t('onItsWaySub'),
-      n: summary.notReached.onItsWay,
+      n: summary.notReached.onItsWay + summary.notReached.smsOnItsWay,
       color: 'bg-warning-solid',
     },
     {
       key: 'failed',
+      filter: 'notDelivered' as const,
       label: t('notDelivered'),
       sub: t('notDeliveredSub'),
       n: summary.notReached.notDelivered,
@@ -467,22 +353,35 @@ function ChannelsCard({
           />
         ))}
       </span>
-      <div className="flex flex-col gap-2">
+      {/* Negative margin so a row's hover wash reaches past its text */}
+      <div className="-mx-2 flex flex-col gap-0.5">
         {rows.map((row) => (
-          <div key={row.key} className="flex items-center gap-2.5">
+          <button
+            key={row.key}
+            type="button"
+            aria-pressed={filter === row.filter}
+            onClick={() => onSelect(row.filter)}
+            className={cn(
+              'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1 text-start transition-colors',
+              // The guest table's applied-filter purple
+              filter === row.filter
+                ? 'bg-primary/8 ring-primary/40 ring-1'
+                : 'hover:bg-muted',
+            )}
+          >
             <span
               className={cn('size-[9px] shrink-0 rounded-[3px]', row.color)}
             />
-            <div className="flex min-w-0 flex-1 flex-col">
+            <span className="flex min-w-0 flex-1 flex-col">
               <span className="text-[13px] font-semibold">{row.label}</span>
               <span className="text-muted-foreground text-[11.5px]">
                 {row.sub}
               </span>
-            </div>
+            </span>
             <span className="text-base font-extrabold tabular-nums @2xl:text-[17px]">
               {row.n}
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </section>
@@ -493,19 +392,26 @@ function ChannelsCard({
  * Who is coming, headcount first. One record can be a whole family, so the
  * people figure is the headline and the records the supporting line.
  */
-function RsvpCard({ summary }: { summary: Summary }) {
+function RsvpCard({
+  summary,
+  noResponse,
+  filter,
+  onSelect,
+}: {
+  summary: Summary;
+  /** The table's own No response count, so the tile and its chip agree */
+  noResponse: number;
+  filter: GuestFilter;
+  onSelect: (filter: GuestFilter) => void;
+}) {
   const t = useTranslations('schedules.results.rsvp');
   const answered = summary.confirmed + summary.declined;
+  // Each tile filters the guest table below to its guests.
   const tiles = [
     { key: 'confirmed', n: summary.confirmed, tone: RESULT_TONE.ok },
     { key: 'declined', n: summary.declined, tone: RESULT_TONE.bad },
-    // A shared link can answer without being reached, so this never goes negative.
-    {
-      key: 'noResponse',
-      n: Math.max(summary.askedReached - answered, 0),
-      tone: RESULT_TONE.neutral,
-    },
-  ];
+    { key: 'noResponse', n: noResponse, tone: RESULT_TONE.neutral },
+  ] as const;
 
   return (
     <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4 @2xl:p-[18px]">
@@ -529,11 +435,16 @@ function RsvpCard({ summary }: { summary: Summary }) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {tiles.map((tile) => (
-          <div
+          <button
             key={tile.key}
+            type="button"
+            aria-pressed={filter === tile.key}
+            onClick={() => onSelect(tile.key)}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-1.5 py-[11px]',
+              'flex cursor-pointer flex-col items-center gap-0.5 rounded-xl px-1.5 py-[11px] transition-[filter,box-shadow] hover:brightness-95 dark:hover:brightness-110',
               tile.tone,
+              // The same applied ring as the Sending status rows
+              filter === tile.key && 'ring-primary/60 ring-2',
             )}
           >
             <span className="text-xl font-extrabold tabular-nums">
@@ -542,7 +453,7 @@ function RsvpCard({ summary }: { summary: Summary }) {
             <span className="text-center text-[11.5px] font-semibold">
               {t(tile.key)}
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </section>
@@ -568,15 +479,6 @@ export function ScheduleResultsGhost({
   const t = useTranslations('schedules.results');
   const isSms = channel === 'sms';
 
-  const funnelRows = [
-    { key: 'audience', bar: 'bg-muted-foreground/20', width: 'w-full' },
-    { key: 'reached', bar: 'bg-primary/30', width: 'w-[82%]' },
-    ...(isSms ? [] : [{ key: 'seen', bar: 'bg-primary/20', width: 'w-[60%]' }]),
-    ...(collectsRsvp
-      ? [{ key: 'answered', bar: 'bg-rsvp-confirmed/35', width: 'w-[38%]' }]
-      : []),
-  ];
-
   const channelRows = [
     ...(isSms
       ? []
@@ -601,43 +503,7 @@ export function ScheduleResultsGhost({
   return (
     <div className="@container">
       <div className="flex flex-col gap-3.5">
-        <div className="-mb-3.5 gap-3.5 *:break-inside-avoid *:pb-3.5 @2xl:columns-2">
-          <div>
-            <section className="bg-card flex flex-col gap-3.5 rounded-2xl border p-4 @2xl:p-[18px]">
-              <CardTitle title={t('funnel.title')} />
-              <GhostEmpty
-                icon={<IconSend className="size-[18px]" strokeWidth={1.9} />}
-                message={t('ghost.funnel')}
-                overlayOffset={offset(44 * funnelRows.length + 10)}
-                className="pb-6"
-              >
-                <div className="flex flex-col gap-3.5">
-                  {funnelRows.map((row, i) => (
-                    <div
-                      key={row.key}
-                      className={cn('flex flex-col gap-1.5', fade[i])}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={cn(GHOST_BAR, 'h-[9px] w-14')} />
-                        <span className={cn(GHOST_BAR, 'h-[7px] w-20')} />
-                        <span className={cn(GHOST_BAR, 'ms-auto h-3.5 w-7')} />
-                      </div>
-                      <span className="bg-muted block h-2.5 overflow-hidden rounded-full @2xl:h-3">
-                        <span
-                          className={cn(
-                            'block h-full rounded-full',
-                            row.bar,
-                            row.width,
-                          )}
-                        />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </GhostEmpty>
-            </section>
-          </div>
-
+        <div className={cn('grid gap-3.5', collectsRsvp && '@2xl:grid-cols-2')}>
           <div>
             <section className="bg-card flex flex-col gap-3 rounded-2xl border p-4 @2xl:p-[18px]">
               <CardTitle title={t('channels.title')} />

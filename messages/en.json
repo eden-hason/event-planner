@@ -2000,7 +2000,6 @@
     },
     "results": {
       "ghost": {
-        "funnel": "Who the message reached will show up here as it lands",
         "channels": "How the message arrived will show up here",
         "rsvp": "Guests' answers will show up here as they come in",
         "guests": "Each guest's delivery and answer will show up here"
@@ -2013,37 +2012,20 @@
         "updatedAt": "Updated {time}",
         "refresh": "Refresh"
       },
-      "funnel": {
-        "title": "What happened to the message",
-        "unit": "In guest records",
-        "audience": "Audience",
-        "audienceHint": "Every record the message went to",
-        "audienceExcludedPackage": "{count, plural, one {# record outside the package excluded} other {# records outside the package excluded}}",
-        "reached": "Reached",
-        "ofAudience": "{percent}% of the audience",
-        "seen": "Seen",
-        "seenHint": "of {count} WhatsApp deliveries",
-        "seenNote": "Guests who turned off read receipts can't be counted, so the real number may be higher",
-        "answered": "Responded",
-        "answeredHint": "{confirmed} confirmed · {declined} declined"
-      },
       "channels": {
-        "title": "How it arrived",
+        "title": "Sending status",
         "whatsapp": "WhatsApp",
         "whatsappSub": "Reached on WhatsApp",
         "sms": "SMS",
         "smsScheduleSub": "This schedule goes out by SMS",
         "smsFallbackSub": "For guests WhatsApp couldn't reach",
         "onItsWay": "On its way",
-        "onItsWaySub": "WhatsApp accepted it, the phone hasn't confirmed yet",
-        "smsOnItsWay": "SMS on the way",
-        "smsOnItsWaySub": "WhatsApp couldn't reach them, so an SMS is going out",
-        "smsOnItsWayScheduleSub": "Sent, the phone hasn't confirmed yet",
+        "onItsWaySub": "Sent, the phone hasn't confirmed yet",
         "notDelivered": "Not delivered",
         "notDeliveredSub": "Couldn't reach them"
       },
       "rsvp": {
-        "title": "Who's coming",
+        "title": "Attendance status",
         "note": "{answered} of {reached} reached",
         "heads": "guests coming",
         "records": "{confirmed, plural, one {# record confirmed} other {# records confirmed}} · {declined} declined",
@@ -2059,10 +2041,13 @@
         "more": "{count} more guests",
         "filters": {
           "all": "All",
-          "notReached": "Not reached",
-          "noResponse": "No response",
+          "pending": "On its way",
+          "noResponse": "No response yet",
           "confirmed": "Confirmed",
-          "unseen": "No read receipt"
+          "declined": "Declined",
+          "whatsapp": "WhatsApp",
+          "sms": "SMS",
+          "notDelivered": "Not delivered"
         },
         "columns": {
           "guest": "Guest",
