@@ -1,13 +1,9 @@
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 
 import type { SmsFallbackReason } from './send-helpers';
-import { carriesReadReceipt } from './hand-delivery';
 import { isAsk } from './message-plan-kind';
 
-import type {
-  GuestDeliveryOutcome,
-  GuestInteractionRow,
-} from '../queries/guest-interactions';
+import type { GuestInteractionRow } from '../queries/guest-interactions';
 
 /**
  * Where a guest's message stands, in the words of a messaging app's ticks
@@ -108,41 +104,82 @@ export function guestTableHiddenColumns(
   return hidden;
 }
 
-const NOT_REACHED: GuestDeliveryOutcome[] = [
-  'on_its_way',
-  'sms_on_its_way',
-  'not_delivered',
-  'no_phone',
-  'outside_package',
-];
-
+/**
+ * The guest table's filters, one for each figure on the two cards above it:
+ * the Sending status rows, then the Attendance status tiles. A filter and its
+ * card figure always count the same guests (see `filterCounts`).
+ */
 export type GuestFilter =
   | 'all'
-  | 'notReached'
-  | 'noResponse'
+  | 'whatsapp'
+  | 'sms'
+  | 'pending'
+  | 'notDelivered'
   | 'confirmed'
-  | 'unseen';
+  | 'declined'
+  | 'noResponse';
+
+export const SENDING_FILTERS = [
+  'whatsapp',
+  'sms',
+  'pending',
+  'notDelivered',
+] as const satisfies GuestFilter[];
+
+export const ATTENDANCE_FILTERS = [
+  'confirmed',
+  'declined',
+  'noResponse',
+] as const satisfies GuestFilter[];
 
 /**
- * The filter chips a schedule offers. Answer filters only where the schedule
- * collects RSVPs, and "no read receipt" only where a read receipt can exist.
+ * The filter chips a schedule offers, as groups in the order of the cards.
+ * Attendance only where the schedule collects RSVPs, as its card. A chip with
+ * no guests is left out, as the card leaves out an empty row - unless it is
+ * the applied one, which stays so it can be seen and cleared.
  */
 export function availableFilters(options: {
   collectsRsvp: boolean;
-  showSeen: boolean;
-}): GuestFilter[] {
-  if (options.collectsRsvp)
-    return ['all', 'notReached', 'noResponse', 'confirmed'];
-  if (options.showSeen) return ['all', 'notReached', 'unseen'];
-  return ['all', 'notReached'];
+  counts: Record<GuestFilter, number>;
+  applied: GuestFilter;
+}): GuestFilter[][] {
+  const { collectsRsvp, counts, applied } = options;
+  const keep = (key: GuestFilter) => counts[key] > 0 || key === applied;
+  return [
+    SENDING_FILTERS.filter(keep),
+    collectsRsvp ? ATTENDANCE_FILTERS.filter(keep) : [],
+  ].filter((group) => group.length > 0);
+}
+
+/** How many guests each filter would show, for the chips and the cards. */
+export function filterCounts(
+  rows: GuestInteractionRow[],
+): Record<GuestFilter, number> {
+  const keys: GuestFilter[] = [
+    'all',
+    ...SENDING_FILTERS,
+    ...ATTENDANCE_FILTERS,
+  ];
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      rows.filter((row) => matchesFilter(row, key)).length,
+    ]),
+  ) as Record<GuestFilter, number>;
 }
 
 function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
   switch (filter) {
     case 'all':
       return true;
-    case 'notReached':
-      return row.delivery !== null && NOT_REACHED.includes(row.delivery);
+    case 'pending':
+      return row.delivery === 'on_its_way' || row.delivery === 'sms_on_its_way';
+    case 'whatsapp':
+      return row.delivery === 'whatsapp';
+    case 'sms':
+      return row.delivery === 'sms';
+    case 'notDelivered':
+      return row.delivery === 'not_delivered';
     case 'noResponse':
       return (
         (row.delivery === 'whatsapp' || row.delivery === 'sms') &&
@@ -151,8 +188,8 @@ function matchesFilter(row: GuestInteractionRow, filter: GuestFilter): boolean {
       );
     case 'confirmed':
       return row.response === 'rsvp_confirm';
-    case 'unseen':
-      return row.delivery === 'whatsapp' && carriesReadReceipt(row) && !row.seen;
+    case 'declined':
+      return row.response === 'rsvp_decline';
   }
 }
 
@@ -221,7 +258,11 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
     // A Hand Delivery is one step: the Kululu team got it there (ADR 0052).
     // It has no send of its own to tell, and no receipt can follow it.
     if (step.byHand) {
-      steps.push({ kind: 'delivered_by_hand', at: step.deliveredAt, channel: 'whatsapp' });
+      steps.push({
+        kind: 'delivered_by_hand',
+        at: step.deliveredAt,
+        channel: 'whatsapp',
+      });
       continue;
     }
     steps.push({
@@ -316,19 +357,30 @@ export function percent(part: number, whole: number): number {
 
 // Intl formatters are costly to build and a results render formats every row
 // and step, so each locale-and-options pair is built once and kept.
-const formatters = new Map<string, Intl.DateTimeFormat | Intl.RelativeTimeFormat>();
+const formatters = new Map<
+  string,
+  Intl.DateTimeFormat | Intl.RelativeTimeFormat
+>();
 
 function dateFormat(locale: string, options: Intl.DateTimeFormatOptions) {
   const key = `d|${locale}|${JSON.stringify(options)}`;
   let format = formatters.get(key) as Intl.DateTimeFormat | undefined;
-  if (!format) formatters.set(key, (format = new Intl.DateTimeFormat(locale, options)));
+  if (!format)
+    formatters.set(key, (format = new Intl.DateTimeFormat(locale, options)));
   return format;
 }
 
-function relativeFormat(locale: string, options: Intl.RelativeTimeFormatOptions) {
+function relativeFormat(
+  locale: string,
+  options: Intl.RelativeTimeFormatOptions,
+) {
   const key = `r|${locale}|${JSON.stringify(options)}`;
   let format = formatters.get(key) as Intl.RelativeTimeFormat | undefined;
-  if (!format) formatters.set(key, (format = new Intl.RelativeTimeFormat(locale, options)));
+  if (!format)
+    formatters.set(
+      key,
+      (format = new Intl.RelativeTimeFormat(locale, options)),
+    );
   return format;
 }
 
@@ -394,7 +446,10 @@ export function formatMoment(
   const day = israelDayKey(at);
   if (day === israelDayKey(now)) return time;
   if (day === israelDayKey(new Date(now.getTime() - 86_400_000))) {
-    const yesterday = relativeFormat(locale, { numeric: 'auto', style: 'short' });
+    const yesterday = relativeFormat(locale, {
+      numeric: 'auto',
+      style: 'short',
+    });
     return `${yesterday.format(-1, 'day')} ${time}`;
   }
   return dateFormat(locale, {
@@ -405,13 +460,52 @@ export function formatMoment(
 }
 
 /**
+ * An exact moment, for a message's activity steps: the clock time always, and
+ * the day before it once it is not today - "18:08", "Yesterday, 18:08",
+ * "23/9, 18:08", "23/9/25, 18:08" in an earlier year. Day first with slashes in
+ * every locale, in Israel time, on a 24-hour clock.
+ */
+export function formatExactMoment(
+  iso: string,
+  { now, locale }: { now: Date; locale: string },
+): string {
+  const at = new Date(iso);
+  const time = dateFormat(locale, {
+    timeZone: ADMIN_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(at);
+
+  const day = israelDayKey(at);
+  if (day === israelDayKey(now)) return time;
+  if (day === israelDayKey(new Date(now.getTime() - 86_400_000))) {
+    const yesterday = relativeFormat(locale, { numeric: 'auto' }).format(
+      -1,
+      'day',
+    );
+    return `${yesterday.charAt(0).toLocaleUpperCase(locale)}${yesterday.slice(1)}, ${time}`;
+  }
+  // "YYYY-MM-DD", from the same Israel-time key the comparisons use
+  const [year, month, date] = day.split('-').map(Number);
+  const sameYear = year === Number(israelDayKey(now).slice(0, 4));
+  const parts = sameYear
+    ? [date, month]
+    : [date, month, String(year).slice(-2)];
+  return `${parts.join('/')}, ${time}`;
+}
+
+/**
  * Whom a Schedule asks for an RSVP: every Guest (a Confirmation), only those who
  * had not answered (an Advance Reminder, whose family has an RSVP-ask row), or
  * no one. Decides whether the Results tab shows answers, and against whom.
  */
 export type RsvpAsk = 'everyone' | 'pending' | 'none';
 
-export function rsvpAskOf(scheduleTypeKey: string, asksPendingGuests: boolean): RsvpAsk {
+export function rsvpAskOf(
+  scheduleTypeKey: string,
+  asksPendingGuests: boolean,
+): RsvpAsk {
   // Every Ask: the Classic Confirmation, and the current Invitation and
   // Follow-up (ADR 0053). A Follow-up goes to pending Guests only, as a later
   // Confirmation round does, and is read the same way.

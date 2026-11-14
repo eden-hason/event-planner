@@ -27,6 +27,7 @@ import type { GuestInteractionRow } from '../queries/guest-interactions';
 import {
   buildJourney,
   formatAgo,
+  formatExactMoment,
   formatMoment,
   messageState,
   rsvpState,
@@ -177,6 +178,32 @@ export function RelativeMoment({
 }
 
 /**
+ * "Yesterday, 18:08", with how long ago on hover - for activity steps and the
+ * table's last update. `fallback` when there is no moment.
+ */
+export function ExactMoment({
+  at,
+  now,
+  locale,
+  fallback,
+  className,
+}: {
+  at?: string;
+  now: Date;
+  locale: string;
+  fallback?: string;
+  className?: string;
+}) {
+  if (!at)
+    return fallback ? <span className={className}>{fallback}</span> : null;
+  return (
+    <span title={formatAgo(at, { now, locale })} className={className}>
+      {formatExactMoment(at, { now, locale })}
+    </span>
+  );
+}
+
+/**
  * One circle that says where the guest stands, for a phone's list row: the
  * answer when there is one, with the people it confirmed on a badge, and the
  * message's tick otherwise.
@@ -320,7 +347,7 @@ export function MessageActivityStrip({
             </div>
             <div className="flex flex-col gap-0.5 pe-3">
               <span className="text-sm font-semibold">{step.label}</span>
-              <RelativeMoment
+              <ExactMoment
                 at={step.at}
                 now={now}
                 locale={locale}
@@ -371,7 +398,7 @@ export function MessageActivityList({
               </div>
               <div className="flex h-8 flex-1 items-center justify-between gap-3">
                 <span className="text-[15px] font-semibold">{step.label}</span>
-                <RelativeMoment
+                <ExactMoment
                   at={step.at}
                   now={now}
                   locale={locale}

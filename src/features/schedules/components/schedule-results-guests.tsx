@@ -38,6 +38,7 @@ import {
 } from '../utils/schedule-results';
 import {
   ConfirmedCount,
+  ExactMoment,
   GuestPhone,
   GuestStatusAvatar,
   MessageActivityList,
@@ -87,7 +88,8 @@ const FORWARD = 'rtl:rotate-180';
 interface ScheduleResultsGuestsProps {
   guests: GuestInteractionRow[];
   collectsRsvp: boolean;
-  showSeen: boolean;
+  /** Guests per filter, the same figures as the cards above (`filterCounts`) */
+  counts: Record<GuestFilter, number>;
   filter: GuestFilter;
   onFilterChange: (filter: GuestFilter) => void;
   /** The open guest: expanded under its table row, or in the phone's sheet */
@@ -118,7 +120,7 @@ interface ScheduleResultsGuestsProps {
 export function ScheduleResultsGuests({
   guests,
   collectsRsvp,
-  showSeen,
+  counts,
   filter,
   onFilterChange,
   selectedId,
@@ -132,7 +134,8 @@ export function ScheduleResultsGuests({
   const [shown, setShown] = useState(FIRST);
   const [page, setPage] = useState(0);
 
-  const chips = availableFilters({ collectsRsvp, showSeen });
+  // All, then a group per card above, split by a rule
+  const groups = availableFilters({ collectsRsvp, counts, applied: filter });
   const rows = useMemo(
     () => filterGuests(guests, { filter, query }),
     [guests, filter, query],
@@ -150,6 +153,14 @@ export function ScheduleResultsGuests({
     () => rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
     [rows, safePage],
   );
+
+  // The card above can change the filter too; start its guests from the top.
+  const [seenFilter, setSeenFilter] = useState(filter);
+  if (filter !== seenFilter) {
+    setSeenFilter(filter);
+    setShown(FIRST);
+    setPage(0);
+  }
 
   const narrow = (next: () => void) => {
     next();
@@ -208,7 +219,7 @@ export function ScheduleResultsGuests({
       id: 'lastUpdate',
       header: t('columns.lastUpdate'),
       cell: ({ row }) => (
-        <RelativeMoment
+        <ExactMoment
           at={lastActivityAt(row.original)}
           now={now}
           locale={locale}
@@ -290,22 +301,37 @@ export function ScheduleResultsGuests({
 
           {/* One row that scrolls rather than wraps, at every width */}
           <div className="-mx-3.5 flex gap-1.5 overflow-x-auto px-3.5 md:-mx-4 md:px-4 @2xl:mx-0 @2xl:px-0">
-            {chips.map((key) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={filter === key}
-                onClick={() => narrow(() => onFilterChange(key))}
-                className={cn(
-                  'h-[26px] shrink-0 rounded-full border px-[11px] text-[12.5px] whitespace-nowrap transition-colors md:h-8 md:px-[13px] md:text-[13px]',
-                  // The Guests page's purple for an applied filter (active-filter-chips)
-                  filter === key
-                    ? 'bg-primary/8 text-primary border-primary/40 font-semibold'
-                    : 'bg-muted text-foreground/70 hover:bg-accent border-transparent',
+            {[['all'] as GuestFilter[], ...groups].map((group, i) => (
+              <Fragment key={group[0]}>
+                {i > 0 && (
+                  <span
+                    aria-hidden
+                    className="bg-border mx-0.5 my-1 w-px shrink-0 md:my-1.5"
+                  />
                 )}
-              >
-                {t(`filters.${key}`)}
-              </button>
+                {group.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={filter === key}
+                    onClick={() => narrow(() => onFilterChange(key))}
+                    className={cn(
+                      'flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-[11px] text-[12.5px] whitespace-nowrap transition-colors md:h-8 md:px-[13px] md:text-[13px]',
+                      // The Guests page's purple for an applied filter (active-filter-chips)
+                      filter === key
+                        ? 'bg-primary/8 text-primary border-primary/40 font-semibold'
+                        : 'bg-muted text-foreground/70 hover:bg-accent border-transparent',
+                    )}
+                  >
+                    {t(`filters.${key}`)}
+                    {key !== 'all' && (
+                      <span className="tabular-nums opacity-70">
+                        {counts[key]}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </Fragment>
             ))}
           </div>
         </div>

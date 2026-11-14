@@ -2000,7 +2000,6 @@
     },
     "results": {
       "ghost": {
-        "funnel": "כאן יופיע למי ההודעה הגיעה, ממש כשהיא נוחתת",
         "channels": "כאן יופיע איך ההודעה הגיעה",
         "rsvp": "תשובות האורחים יופיעו כאן כשיתחילו להגיע",
         "guests": "כאן יופיעו המסירה והתשובה של כל אורח"
@@ -2013,37 +2012,20 @@
         "updatedAt": "עודכן ב-{time}",
         "refresh": "רענון"
       },
-      "funnel": {
-        "title": "מה קרה להודעה",
-        "unit": "ברשומות אורח",
-        "audience": "קהל היעד",
-        "audienceHint": "כל הרשומות שההודעה נשלחה אליהן",
-        "audienceExcludedPackage": "{count, plural, one {רשומה אחת מחוץ לחבילה לא נכללת} other {# רשומות מחוץ לחבילה לא נכללות}}",
-        "reached": "הגיעו",
-        "ofAudience": "{percent}% מקהל היעד",
-        "seen": "נקרא",
-        "seenHint": "מתוך {count} מסירות בוואטסאפ",
-        "seenNote": "אורחים שכיבו את אישורי הקריאה לא נספרים, כך שהמספר האמיתי עשוי להיות גבוה יותר",
-        "answered": "הגיבו",
-        "answeredHint": "{confirmed} אישרו · {declined} סירבו"
-      },
       "channels": {
-        "title": "איך זה הגיע",
+        "title": "סטטוס שליחה",
         "whatsapp": "וואטסאפ",
         "whatsappSub": "ההודעה הגיעה בוואטסאפ",
         "sms": "SMS",
         "smsScheduleSub": "התזמון נשלח ב-SMS",
         "smsFallbackSub": "השלמה למי שוואטסאפ לא הגיע אליו",
         "onItsWay": "בדרך",
-        "onItsWaySub": "וואטסאפ קיבל, הטלפון עוד לא אישר",
-        "smsOnItsWay": "SMS בדרך",
-        "smsOnItsWaySub": "וואטסאפ לא הגיע, אז נשלח SMS",
-        "smsOnItsWayScheduleSub": "נשלח, הטלפון עוד לא אישר קבלה",
+        "onItsWaySub": "נשלח, הטלפון עוד לא אישר קבלה",
         "notDelivered": "לא נמסר",
         "notDeliveredSub": "לא הצליח להגיע"
       },
       "rsvp": {
-        "title": "מי מגיע",
+        "title": "סטטוס הגעה",
         "note": "{answered} מתוך {reached} שהגיעו",
         "heads": "אורחים מגיעים",
         "records": "{confirmed, plural, one {רשומה אחת אישרה} other {# רשומות אישרו}} · {declined} סירבו",
@@ -2059,10 +2041,13 @@
         "more": "עוד {count} אורחים",
         "filters": {
           "all": "הכל",
-          "notReached": "לא קיבלו",
-          "noResponse": "לא הגיבו",
+          "pending": "בדרך",
+          "noResponse": "טרם הגיבו",
           "confirmed": "אישרו",
-          "unseen": "אין אישור קריאה"
+          "declined": "סירבו",
+          "whatsapp": "וואטסאפ",
+          "sms": "SMS",
+          "notDelivered": "לא נמסר"
         },
         "columns": {
           "guest": "אורח",
@@ -2085,7 +2070,7 @@
         },
         "rsvp": {
           "confirmed": "אישרו",
-          "declined": "לא מגיעים",
+          "declined": "סירבו",
           "pending": "ללא תגובה"
         },
         "pagination": {

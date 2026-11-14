@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 // prettier-ignore
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { availableFilters, buildJourney, filterGuests, formatAgo, formatMoment, guestTableHiddenColumns, guestTableTier, lastActivityAt, messageState, percent, resultsLiveness, rsvpAskOf, rsvpState } from './schedule-results.ts';
+import { availableFilters, buildJourney, filterCounts, filterGuests, formatAgo, formatExactMoment, formatMoment, guestTableHiddenColumns, guestTableTier, lastActivityAt, messageState, percent, resultsLiveness, rsvpAskOf, rsvpState } from './schedule-results.ts';
 
 type Row = Parameters<typeof messageState>[0];
 
@@ -78,22 +78,47 @@ test('each tier folds the columns of the one above it, and one more', () => {
 
 // ─── filters ──────────────────────────────────────────────────────────────────
 
-test('filters offered follow what the schedule can report', () => {
-  assert.deepEqual(availableFilters({ collectsRsvp: true, showSeen: true }), [
-    'all',
-    'notReached',
-    'noResponse',
-    'confirmed',
+test('chips mirror the cards: sending, then attendance, empty ones left out', () => {
+  const rows = [
+    row({ guestName: 'a', response: 'rsvp_confirm' }),
+    row({ guestName: 'b', delivery: 'sms' }),
+    row({ guestName: 'c', delivery: 'on_its_way' }),
+  ];
+  const counts = filterCounts(rows);
+  assert.deepEqual(
+    { ...counts },
+    { all: 3, whatsapp: 1, sms: 1, pending: 1, notDelivered: 0, confirmed: 1, declined: 0, noResponse: 1 },
+  );
+  assert.deepEqual(availableFilters({ collectsRsvp: true, counts, applied: 'all' }), [
+    ['whatsapp', 'sms', 'pending'],
+    ['confirmed', 'noResponse'],
   ]);
-  assert.deepEqual(availableFilters({ collectsRsvp: false, showSeen: true }), [
-    'all',
-    'notReached',
-    'unseen',
+  // No attendance group without RSVPs, as there is no attendance card
+  assert.deepEqual(availableFilters({ collectsRsvp: false, counts, applied: 'all' }), [
+    ['whatsapp', 'sms', 'pending'],
   ]);
-  assert.deepEqual(availableFilters({ collectsRsvp: false, showSeen: false }), [
-    'all',
-    'notReached',
+  // The applied chip stays even once it empties, so it can be cleared
+  assert.deepEqual(availableFilters({ collectsRsvp: false, counts, applied: 'notDelivered' }), [
+    ['whatsapp', 'sms', 'pending', 'notDelivered'],
   ]);
+});
+
+test('the How it arrived rows each filter to their own guests', () => {
+  const rows = [
+    row({ guestName: 'wa' }),
+    row({ guestName: 'sms', delivery: 'sms' }),
+    row({ guestName: 'way', delivery: 'on_its_way' }),
+    row({ guestName: 'smsWay', delivery: 'sms_on_its_way' }),
+    row({ guestName: 'failed', delivery: 'not_delivered' }),
+    row({ guestName: 'outside', delivery: 'outside_package' }),
+  ];
+  const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
+    filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
+
+  assert.deepEqual(names('whatsapp'), ['wa']);
+  assert.deepEqual(names('sms'), ['sms']);
+  assert.deepEqual(names('pending'), ['way', 'smsWay']);
+  assert.deepEqual(names('notDelivered'), ['failed']);
 });
 
 test('filtering narrows by state and by a name search together', () => {
@@ -108,24 +133,11 @@ test('filtering narrows by state and by a name search together', () => {
     query = '',
   ) => filterGuests(rows, { filter, query }).map((r: Row) => r.guestName);
 
-  assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
+  assert.deepEqual(names('pending'), ['דוד פרץ']);
+  assert.deepEqual(names('notDelivered'), ['רון גבאי']);
   assert.deepEqual(names('noResponse'), ['יעל ביטון']);
   assert.deepEqual(names('confirmed'), ['נועה לוי']);
   assert.deepEqual(names('all', ' גבאי '), ['רון גבאי']);
-});
-
-test('not seen yet is only reached WhatsApp guests without a receipt', () => {
-  const rows = [
-    row({ guestName: 'a' }),
-    row({ guestName: 'b', seen: true }),
-    row({ guestName: 'c', delivery: 'sms' }),
-  ];
-  assert.deepEqual(
-    filterGuests(rows, { filter: 'unseen', query: '' }).map(
-      (r: Row) => r.guestName,
-    ),
-    ['a'],
-  );
 });
 
 // ─── journey ──────────────────────────────────────────────────────────────────
@@ -231,18 +243,16 @@ test('a Hand Delivery follows the failures as one step, and is received but neve
     ['sent:whatsapp', 'not_delivered:whatsapp', 'sent:sms', 'not_delivered:sms', 'delivered_by_hand:whatsapp'],
   );
   assert.equal(messageState(handed), 'received');
-  // Never listed as unseen: no receipt can come for a message from a team phone
-  assert.deepEqual(filterGuests([handed], { filter: 'unseen', query: '' }), []);
 });
 
-test('an SMS on its way is not reached yet', () => {
+test('an SMS on its way is pending', () => {
   const rows = [
     row({ guestName: 'a', delivery: 'sms_on_its_way' }),
     row({ guestName: 'b', delivery: 'not_delivered' }),
   ];
   const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
     filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
-  assert.deepEqual(names('notReached'), ['a', 'b']);
+  assert.deepEqual(names('pending'), ['a']);
   // A Fallback still to go out: nothing accepted yet
   assert.equal(messageState(rows[0]), 'pending');
 });
@@ -364,6 +374,21 @@ test('moments read as time today, yesterday with time, then a date', () => {
   );
 });
 
+test('an exact moment keeps the time, with the day once it is not today', () => {
+  // 15:00 in Israel (UTC+3)
+  const now = new Date('2026-09-21T12:00:00Z');
+  const at = (iso: string, locale = 'en') =>
+    formatExactMoment(iso, { now, locale });
+  assert.equal(at('2026-09-21T06:05:00Z'), '09:05');
+  assert.equal(at('2026-09-20T18:14:00Z'), 'Yesterday, 21:14');
+  assert.equal(at('2026-09-20T18:14:00Z', 'he'), 'אתמול, 21:14');
+  assert.equal(at('2026-09-18T18:14:00Z'), '18/9, 21:14');
+  assert.equal(at('2026-09-18T18:14:00Z', 'he'), '18/9, 21:14');
+  // Late at night UTC is already the next day in Israel
+  assert.equal(at('2026-09-01T22:30:00Z'), '2/9, 01:30');
+  assert.equal(at('2025-12-23T10:00:00Z'), '23/12/25, 12:00');
+});
+
 test('ago reads in minutes, then hours, then days, and never in the future', () => {
   const now = new Date('2026-09-21T12:00:00Z');
   const ago = (iso: string) => formatAgo(iso, { now, locale: 'en' });
@@ -397,18 +422,6 @@ test('a record outside the package keeps its own status and journey', () => {
     buildJourney(outside).map((s: { kind: string }) => s.kind),
     ['outside_package'],
   );
-});
-
-test('records outside the package count as not reached', () => {
-  const rows = [
-    row({ guestName: 'נועה לוי' }),
-    row({ guestName: 'דוד פרץ', delivery: 'outside_package' }),
-    row({ guestName: 'רון גבאי', delivery: 'no_phone' }),
-  ];
-  const names = (filter: Parameters<typeof filterGuests>[1]['filter']) =>
-    filterGuests(rows, { filter, query: '' }).map((r: Row) => r.guestName);
-
-  assert.deepEqual(names('notReached'), ['דוד פרץ', 'רון גבאי']);
 });
 
 // ─── The RSVP ask (ADR 0051) ──────────────────────────────────────────────────

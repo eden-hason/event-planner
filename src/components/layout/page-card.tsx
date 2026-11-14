@@ -100,7 +100,11 @@ export function PageCard({ children }: { children: React.ReactNode }) {
               // below `md` there's no bottom padding at all.
               // No top padding below `md` either - the chrome row owns its own
               // there.
-              'pt-0 pb-0 md:pt-3 md:pb-6',
+              // From `md` up the bottom padding also clears the floating AI
+              // Assistant button (`bottom-6` + its 52px), so the last thing on
+              // a page - a table's paging buttons, say - can scroll out from
+              // under it.
+              'pt-0 pb-0 md:pt-3 md:pb-24',
               // Clearance above the fixed `MobileBottomNav`, at every width
               // below `md` - the card frame is gone there, but the nav still
               // sits over the bottom of the viewport. The nav publishes its own
