@@ -91,12 +91,12 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number, rsvp_status), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
+        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
       )
       .eq('schedule_id', scheduleId),
     supabase
       .from('schedules')
-      .select('schedule_types(key), events!inner(sms_fallback_enabled)')
+      .select('schedule_types(key), events!inner(sms_fallback_enabled, event_date)')
       .eq('id', scheduleId)
       .maybeSingle(),
   ]);
@@ -165,18 +165,21 @@ export async function getScheduleInteractionData(
         name: string;
         phone_number: string | null;
         rsvp_status: string | null;
+        rsvp_changed_at: string | null;
       },
       (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
     ),
   );
   // A Marketing Cap Retry on its way reads as on its way; one ended by the
   // Guest's answer has nothing coming at all (ADR 0056).
-  const scheduleTypeKey = (
-    eventResult.data?.schedule_types as { key?: string } | null | undefined
-  )?.key;
+  const scheduleFacts = {
+    scheduleTypeKey: (eventResult.data?.schedule_types as { key?: string } | null | undefined)?.key,
+    eventDate: (eventResult.data?.events as { event_date?: string | null } | null | undefined)
+      ?.event_date,
+  };
   const now = new Date();
   const capHold = new Map(
-    fallbackRows.map((row) => [row.id, marketingCapHold(row, scheduleTypeKey, now)] as const),
+    fallbackRows.map((row) => [row.id, marketingCapHold(row, scheduleFacts, now)] as const),
   );
   const smsComing = awaitingSmsFallback(
     fallbackRows.filter((row) => capHold.get(row.id) === null),

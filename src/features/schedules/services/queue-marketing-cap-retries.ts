@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { renderScheduleDeliveries } from './render-deliveries';
 import {
-  MARKETING_CAP_RETRY_MAX_HOURS,
+  MARKETING_CAP_CODES,
+  MARKETING_CAP_RETRY_LOOKBACK_HOURS,
   marketingCapRetry,
+  marketingCapRetryWindow,
   type MarketingCapAttempt,
 } from '../utils/marketing-cap-retry';
 import { isWithinSendWindow } from '../utils/send-window';
@@ -32,7 +34,12 @@ export type MarketingCapRetrySweep = {
   /** Deliveries awaiting a retry, due or not */
   awaiting: number;
   queued: number;
-  /** Due, but the render or the queue write did not go through; tried again next sweep */
+  /**
+   * Due, but nothing was queued: the render or the write failed, or the Guest
+   * Record rendered nothing (gone, or outside the Record Package). Tried again
+   * by the next sweeps until the retry's grace runs out and the SMS Fallback
+   * takes it.
+   */
   failed: number;
 };
 
@@ -42,8 +49,11 @@ type CandidateRow = {
   guest_id: string;
   status: string;
   next_attempt_at: string | null;
-  guests: { rsvp_status: string | null } | null;
-  schedules: { schedule_types: { key: string } | null } | null;
+  guests: { rsvp_status: string | null; rsvp_changed_at: string | null } | null;
+  schedules: {
+    schedule_types: { key: string } | null;
+    events: { event_date: string | null } | null;
+  } | null;
   message_delivery_attempts: MarketingCapAttempt[];
 };
 
@@ -55,17 +65,18 @@ export async function queueMarketingCapRetries(
   const result: MarketingCapRetrySweep = { awaiting: 0, queued: 0, failed: 0 };
   const { sendWindow } = sendingConfig();
 
-  // A retry is never queued while the Send Window is shut. One due overnight
-  // simply waits for the first sweep after it opens.
-  const windowOpen = isWithinSendWindow(now, sendWindow);
+  // A retry is queued only while the retry window - the Send Window closing a
+  // margin early - is open, so one queued now cannot reach a phone after it
+  // shuts. One due overnight simply waits for the first sweep after it opens.
+  const windowOpen = isWithinSendWindow(now, marketingCapRetryWindow(sendWindow));
 
-  const since = new Date(now.getTime() - MARKETING_CAP_RETRY_MAX_HOURS * 3_600_000);
+  const since = new Date(now.getTime() - MARKETING_CAP_RETRY_LOOKBACK_HOURS * 3_600_000);
   const { data: failures, error: failuresError } = await supabase
     .from('message_delivery_attempts')
     .select('delivery_id')
     .eq('channel', 'whatsapp')
     .eq('status', 'failed')
-    .in('error_code', [131049, 130472])
+    .in('error_code', [...MARKETING_CAP_CODES])
     .gte('created_at', since.toISOString())
     .limit(2_000);
   if (failuresError) {
@@ -81,7 +92,7 @@ export async function queueMarketingCapRetries(
     const { data, error } = await supabase
       .from('message_deliveries')
       .select(
-        'id, schedule_id, guest_id, status, next_attempt_at, guests(rsvp_status), schedules(schedule_types(key)), message_delivery_attempts(channel, status, error_code, created_at)',
+        'id, schedule_id, guest_id, status, next_attempt_at, guests(rsvp_status, rsvp_changed_at), schedules(schedule_types(key), events(event_date)), message_delivery_attempts(channel, status, error_code, created_at)',
       )
       .in('id', deliveryIds.slice(i, i + LOOKUP_CHUNK));
     if (error) {
@@ -93,6 +104,8 @@ export async function queueMarketingCapRetries(
       const retry = marketingCapRetry({
         scheduleTypeKey: row.schedules?.schedule_types?.key,
         rsvpStatus: row.guests?.rsvp_status,
+        rsvpChangedAt: row.guests?.rsvp_changed_at,
+        eventDate: row.schedules?.events?.event_date,
         attempts: row.message_delivery_attempts,
         sendWindow,
         now,
@@ -149,7 +162,8 @@ export async function queueMarketingCapRetries(
 
     result.queued += queuedHere.size;
     // Rendered nothing for a Delivery: its Guest Record is gone or outside the
-    // Record Package. The 48-hour ceiling hands such a one to the SMS Fallback.
+    // Record Package. The retry's grace hands such a one to the SMS Fallback
+    // within the hour, and the Owner is no longer told a WhatsApp is coming.
     result.failed += [...wanted].filter((id) => !queuedHere.has(id)).length;
   }
 

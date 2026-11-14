@@ -21,7 +21,9 @@ rejections only) never sees them.
 An **Ask** (the Classic Confirmation, or the current plan's Invitation or Follow-up) whose
 WhatsApp fails with `131049` or `130472` gets a **Marketing Cap Retry**: up to two more
 WhatsApp attempts, 6 hours and 24 hours after the first failure, each moved to the next
-Send Window slot. Only if both fail does the SMS Fallback run, by the ordinary rules. The
+slot of the Send Window closing half an hour early (the window is checked when a retry is
+queued, not when the Worker sends it, so the margin keeps a retry queued at 20:55 off a
+phone after 21:00). No retry is due on or after the Event's date. Only if both fail does the SMS Fallback run, by the ordinary rules. The
 24-hour slot is the same time of day as the failure, which was inside the window, so it
 always falls after the 6-hour one.
 
@@ -32,16 +34,20 @@ five minutes, before the SMS Fallback pass) re-renders each due retry through th
 renderer an Operator's resend uses and queues it; the Worker sends it like any other queued
 Delivery. It has to be re-rendered because the Worker drops `send_payload` - the Guest's
 number and name - once a send is accepted, and the failure arrives through the webhook
-after that. A ladder nobody manages to run is given up 48 hours after the first failure,
-so a render that keeps failing still ends in an SMS.
+after that. A retry still unsent an hour of open window after it was due - the Guest
+Record gone or outside the Record Package, a render that keeps failing, the pipeline down
+- is given up, so the SMS Fallback takes it and the Owner is no longer told a WhatsApp is
+on its way.
 
-- **Only the waiting Delivery is held.** The sweeper today treats any queued Delivery as
-  "Schedule not settled". A Delivery awaiting a Marketing Cap Retry holds back only its own
-  SMS; the rest of the Schedule falls back on today's timing.
-- **An answer ends it.** If the Guest has answered by the time a retry is due, the retry is
-  dropped and no SMS follows, ever. Asking someone who already answered reads as a bug.
-  This also covers a Guest who answers inside the ten-minute settle window, who today
-  would still get the SMS.
+- **Only the waiting Delivery is held.** The sweeper today treats any queued Delivery, any
+  attempt in flight and any recent failure as "Schedule not settled". A Delivery held for a
+  Marketing Cap Retry is left out of all three, waiting, queued or in flight alike, and
+  holds back only its own SMS; the rest of the Schedule falls back on today's timing.
+- **An answer ends it.** If the Guest answers after the first failure (`rsvp_changed_at`),
+  the retry is dropped and no SMS follows, ever. Asking someone who just answered reads as
+  a bug. This also covers a Guest who answers inside the ten-minute settle window, who
+  today would still get the SMS. A Guest who had answered before the failure - the
+  current plan's Invitation goes to everyone - is still retried and still owed the SMS.
 - **An Operator's action replaces it.** The hold applies to the automatic batch only, so
   the Back Office SMS button still sends at once. A Resend or a Hand Delivery adds a later
   attempt that ends or advances the ladder, and the queue write is guarded on the Delivery

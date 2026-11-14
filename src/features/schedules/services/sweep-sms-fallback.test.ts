@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error Node's type-stripping test runner requires the source extension
-import { failedCandidateScheduleIds, freezeDecision, lastFailureActivityAt, scheduleFreeze, settleDecision } from './sweep-sms-fallback.ts';
+import { failedCandidateScheduleIds, freezeDecision, lastFailureActivityAt, scheduleFreeze, settleDecision, settleInputs } from './sweep-sms-fallback.ts';
 
 const THRESHOLDS = { freezePct: 30, freezeMin: 10 };
 
@@ -298,10 +298,14 @@ test('the newest failure comes first, each schedule once', () => {
 
 // ─── The Marketing Cap Retry hold (ADR 0056) ──────────────────────────────────
 
-function onAsk(row: ReturnType<typeof failed>, rsvpStatus = 'pending') {
+function onAsk(
+  row: ReturnType<typeof failed>,
+  rsvpStatus = 'pending',
+  rsvpChangedAt: string | null = null,
+) {
   return {
     ...row,
-    guests: { ...row.guests, rsvp_status: rsvpStatus },
+    guests: { ...row.guests, rsvp_status: rsvpStatus, rsvp_changed_at: rsvpChangedAt },
     schedules: { schedule_types: { key: 'confirmation' } },
   };
 }
@@ -313,7 +317,11 @@ test('an Ask awaiting a Marketing Cap Retry takes no slot', () => {
 
 test('an Ask whose Guest answered during the wait never takes a slot', () => {
   assert.deepEqual(
-    failedCandidateScheduleIds([onAsk(failed('answered', [guestLevel]), 'confirmed')], WINDOW),
+    // Failed an hour ago, answered half an hour ago.
+    failedCandidateScheduleIds(
+      [onAsk(failed('answered', [guestLevel]), 'confirmed', hoursAgo(0.5))],
+      WINDOW,
+    ),
     [],
   );
 });
@@ -332,4 +340,38 @@ test('once both retries failed too, the Ask takes a slot for its SMS', () => {
     ] as never),
   );
   assert.deepEqual(failedCandidateScheduleIds([row], WINDOW), ['spent']);
+});
+
+test('a Delivery held for a Marketing Cap Retry does not keep its Schedule unsettled', () => {
+  const facts = { scheduleTypeKey: 'confirmation', eventDate: null };
+  const guests = { rsvp_status: 'pending', rsvp_changed_at: null };
+  const deliveries = [
+    // Its 6-hour retry queued and in flight, its first failure a minute ago.
+    { id: 'held', status: 'failed' as const, next_attempt_at: now.toISOString(), guests },
+    // Not on WhatsApp: falls back on today's timing.
+    { id: 'other', status: 'failed' as const, next_attempt_at: null, guests },
+  ];
+  const attempts = [
+    { delivery_id: 'held', channel: 'whatsapp', status: 'failed', error_code: 131049, created_at: minutesAgo(1), updated_at: minutesAgo(1) },
+    { delivery_id: 'held', channel: 'whatsapp', status: 'pending', error_code: null, created_at: minutesAgo(0), updated_at: minutesAgo(0) },
+    { delivery_id: 'other', channel: 'whatsapp', status: 'failed', error_code: 131026, created_at: minutesAgo(30), updated_at: minutesAgo(30) },
+  ];
+  const inputs = settleInputs(deliveries, attempts, facts, now);
+  assert.equal(inputs.queuedDeliveries, 0);
+  assert.equal(inputs.pendingAttempts, 0);
+  assert.equal(inputs.lastActivityAt, minutesAgo(30));
+});
+
+test('without the hold, the same Delivery still holds the Schedule', () => {
+  // On a Thank You the marketing cap falls back straight away, so its activity counts.
+  const facts = { scheduleTypeKey: 'post_event', eventDate: null };
+  const guests = { rsvp_status: 'pending', rsvp_changed_at: null };
+  const inputs = settleInputs(
+    [{ id: 'd', status: 'failed' as const, next_attempt_at: now.toISOString(), guests }],
+    [{ delivery_id: 'd', channel: 'whatsapp', status: 'failed', error_code: 131049, created_at: minutesAgo(1), updated_at: minutesAgo(1) }],
+    facts,
+    now,
+  );
+  assert.equal(inputs.queuedDeliveries, 1);
+  assert.equal(inputs.lastActivityAt, minutesAgo(1));
 });

@@ -6,6 +6,7 @@ import {
   stuckWindow,
   marketingCapHold,
   type FallbackDeliveryRow,
+  type MarketingCapScheduleFacts,
   type SmsFallbackExclusionReason,
   type StuckWindow,
 } from './send-sms-fallback';
@@ -25,8 +26,9 @@ import { sendingConfig } from '@/lib/config/sending';
  * "Finished failing" is judged on queue state rather than the clock: no
  * Delivery still queued, no attempt still pending, and no attempt made or
  * failed for the settle window (receipts do not count, see
- * `lastFailureActivityAt`). A Delivery awaiting a Marketing Cap Retry does not
- * hold its Schedule: the engine leaves only that one out (ADR 0056). The first two conditions make the window
+ * `lastFailureActivityAt`). A Delivery the Marketing Cap Retry holds back is
+ * left out of all three, queued or in flight included, so it never holds its
+ * Schedule; the engine then leaves only that one out of the batch (ADR 0056). The first two conditions make the window
  * self-adjusting - a Schedule midway through the retry ladder simply is not
  * ready - and the settle minutes only cover webhook lag, which has been at
  * most 122 seconds across every failure observed.
@@ -182,6 +184,67 @@ export function lastFailureActivityAt(
   return latest;
 }
 
+type SettleDeliveryRow = {
+  id: string;
+  status: 'failed' | 'sent';
+  next_attempt_at: string | null;
+  guests: { rsvp_status: string | null; rsvp_changed_at: string | null } | null;
+};
+
+/**
+ * What `settleDecision` reads, with every Delivery the Marketing Cap Retry
+ * holds back left out (ADR 0056). Such a Delivery is queued, in flight or
+ * failing on its own clock - for up to a day - and its SMS is held anyway, so
+ * it must not keep the rest of the Schedule from settling. Once its retries
+ * are spent the hold lifts and its attempts count again, so its own last
+ * failure still gets the settle window.
+ */
+export function settleInputs(
+  deliveries: SettleDeliveryRow[],
+  attempts: AttemptRow[],
+  facts: MarketingCapScheduleFacts,
+  now: Date,
+): { queuedDeliveries: number; pendingAttempts: number; lastActivityAt: string | null } {
+  const byDelivery = new Map<string, AttemptRow[]>();
+  for (const attempt of attempts) {
+    const list = byDelivery.get(attempt.delivery_id) ?? [];
+    list.push(attempt);
+    byDelivery.set(attempt.delivery_id, list);
+  }
+
+  const held = new Set(
+    deliveries
+      .filter(
+        (row) =>
+          marketingCapHold(
+            {
+              status: row.status,
+              guests: row.guests ? { name: '', phone_number: null, ...row.guests } : null,
+              message_delivery_attempts: (byDelivery.get(row.id) ?? []).map((a) => ({
+                channel: a.channel as 'whatsapp' | 'sms',
+                status: a.status,
+                error_code: a.error_code,
+                error_message: null,
+                sent_at: null,
+                created_at: a.created_at,
+              })),
+            },
+            facts,
+            now,
+          ) !== null,
+      )
+      .map((row) => row.id),
+  );
+
+  const counted = attempts.filter((a) => !held.has(a.delivery_id));
+  return {
+    queuedDeliveries: deliveries.filter((row) => row.next_attempt_at !== null && !held.has(row.id))
+      .length,
+    pendingAttempts: counted.filter((a) => a.status === 'pending').length,
+    lastActivityAt: lastFailureActivityAt(counted),
+  };
+}
+
 type StuckCandidateRow = {
   message_deliveries: {
     schedule_id: string;
@@ -192,7 +255,10 @@ type StuckCandidateRow = {
 export type FailedCandidateRow = FallbackDeliveryRow & {
   schedule_id: string;
   updated_at: string;
-  schedules?: { schedule_types?: { key: string } | null } | null;
+  schedules?: {
+    schedule_types?: { key: string } | null;
+    events?: { event_date?: string | null } | null;
+  } | null;
 };
 
 /**
@@ -238,7 +304,11 @@ export function failedCandidateScheduleIds(
     .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
   for (const row of newestFirst) {
     if (ids.includes(row.schedule_id)) continue;
-    if (marketingCapHold(row, row.schedules?.schedule_types?.key, window.now)) continue;
+    const facts = {
+      scheduleTypeKey: row.schedules?.schedule_types?.key,
+      eventDate: row.schedules?.events?.event_date,
+    };
+    if (marketingCapHold(row, facts, window.now)) continue;
     const { eligible, excluded } = classifySmsFallbackCandidates([row], window);
     const open =
       eligible.length > 0 || excluded.some((e) => !SETTLED_EXCLUSIONS.includes(e.exclusion));
@@ -277,7 +347,7 @@ async function candidateScheduleIds(supabase: SupabaseClient, now: Date): Promis
     supabase
       .from('message_deliveries')
       .select(
-        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number, rsvp_status), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at), schedules!inner(schedule_types(key), events!inner(sms_fallback_enabled))',
+        'id, schedule_id, status, guest_id, confirmation_token, updated_at, guests(name, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at), schedules!inner(schedule_types(key), events!inner(sms_fallback_enabled, event_date))',
       )
       .eq('schedules.events.sms_fallback_enabled', true)
       .eq('status', 'failed')
@@ -312,35 +382,48 @@ async function evaluateSchedule(
   const config = sendingConfig();
   const nothing = { scheduleId, sentCount: 0 };
 
-  const { count: queuedDeliveries, error: queuedError } = await supabase
-    .from('message_deliveries')
-    .select('id', { count: 'exact', head: true })
-    .eq('schedule_id', scheduleId)
-    .not('next_attempt_at', 'is', null);
-  if (queuedError) throw queuedError;
-
-  const { data: deliveryRows, error: deliveryError } = await supabase
-    .from('message_deliveries')
-    .select('id')
-    .eq('schedule_id', scheduleId);
+  const [{ data: deliveryRows, error: deliveryError }, { data: scheduleRow, error: scheduleError }] =
+    await Promise.all([
+      supabase
+        .from('message_deliveries')
+        .select('id, status, next_attempt_at, guests(rsvp_status, rsvp_changed_at)')
+        .eq('schedule_id', scheduleId),
+      supabase
+        .from('schedules')
+        .select('schedule_types(key), events(event_date)')
+        .eq('id', scheduleId)
+        .maybeSingle(),
+    ]);
   if (deliveryError) throw deliveryError;
-  const deliveryIds = (deliveryRows ?? []).map((row: { id: string }) => row.id);
-  if (deliveryIds.length === 0) {
+  if (scheduleError) throw scheduleError;
+  const deliveries = (deliveryRows ?? []) as unknown as SettleDeliveryRow[];
+  if (deliveries.length === 0) {
     return { ...nothing, outcome: 'nothing_eligible', reason: 'No deliveries' };
   }
 
   const { data: attemptRows, error: attemptError } = await supabase
     .from('message_delivery_attempts')
     .select('delivery_id, status, channel, error_code, created_at, updated_at')
-    .in('delivery_id', deliveryIds);
+    .in(
+      'delivery_id',
+      deliveries.map((row) => row.id),
+    );
   if (attemptError) throw attemptError;
   const attempts = (attemptRows ?? []) as AttemptRow[];
 
-  const pendingAttempts = attempts.filter((a) => a.status === 'pending').length;
-  const lastActivityAt = lastFailureActivityAt(attempts);
+  const facts = {
+    scheduleTypeKey: (scheduleRow?.schedule_types as { key?: string } | null | undefined)?.key,
+    eventDate: (scheduleRow?.events as { event_date?: string | null } | null | undefined)?.event_date,
+  };
+  const { queuedDeliveries, pendingAttempts, lastActivityAt } = settleInputs(
+    deliveries,
+    attempts,
+    facts,
+    now,
+  );
 
   const settle = settleDecision({
-    queuedDeliveries: queuedDeliveries ?? 0,
+    queuedDeliveries,
     pendingAttempts,
     lastActivityAt,
     settleMinutes: config.smsFallbackSettleMinutes,

@@ -56,7 +56,7 @@ export async function loadGuestJourneys(
       .order('created_at', { ascending: false }),
     supabase
       .from('guests')
-      .select('rsvp_status, events!inner(sms_fallback_enabled)')
+      .select('rsvp_status, rsvp_changed_at, events!inner(sms_fallback_enabled, event_date)')
       .eq('id', guest.id)
       .maybeSingle(),
   ]);
@@ -119,7 +119,10 @@ export async function loadGuestJourneys(
     name: guest.name,
     phone_number: guest.phone,
     rsvp_status: (eventResult.data?.rsvp_status as string | null | undefined) ?? null,
+    rsvp_changed_at: (eventResult.data?.rsvp_changed_at as string | null | undefined) ?? null,
   };
+  const eventDate = (eventResult.data?.events as { event_date?: string | null } | null | undefined)
+    ?.event_date;
   const now = new Date();
   const deliveries = rows.map((row): GuestJourneyDelivery => {
     const attempts = (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [];
@@ -131,7 +134,11 @@ export async function loadGuestJourneys(
     // Guest's answer has nothing coming at all (ADR 0056).
     const capHold = marketingCapHold(
       fallbackRow,
-      (row.schedules as { schedule_types?: { key?: string } | null } | null)?.schedule_types?.key,
+      {
+        scheduleTypeKey: (row.schedules as { schedule_types?: { key?: string } | null } | null)
+          ?.schedule_types?.key,
+        eventDate,
+      },
       now,
     );
     const smsOnItsWay =

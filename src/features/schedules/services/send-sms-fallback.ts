@@ -111,8 +111,13 @@ export type FallbackDeliveryRow = {
   status: 'failed' | 'sent';
   guest_id: string;
   confirmation_token: string | null;
-  /** `rsvp_status` is only read for the Marketing Cap Retry; absent counts as unanswered. */
-  guests: { name: string; phone_number: string | null; rsvp_status?: string | null } | null;
+  /** The answer and its time are only read for the Marketing Cap Retry; absent counts as unanswered. */
+  guests: {
+    name: string;
+    phone_number: string | null;
+    rsvp_status?: string | null;
+    rsvp_changed_at?: string | null;
+  } | null;
   message_delivery_attempts: AttemptRow[];
 };
 
@@ -122,15 +127,25 @@ export type FallbackDeliveryRow = {
  * answered while it waited and nothing more is sent. Asks the same rule the
  * queueing pass and the Owner's results read.
  */
+export type MarketingCapHold = 'awaiting_retry' | 'answered' | null;
+
+/** What a hold needs to know about the Delivery's Schedule. */
+export type MarketingCapScheduleFacts = {
+  scheduleTypeKey: string | null | undefined;
+  eventDate: string | null | undefined;
+};
+
 export function marketingCapHold(
   row: Pick<FallbackDeliveryRow, 'status' | 'guests' | 'message_delivery_attempts'>,
-  scheduleTypeKey: string | null | undefined,
+  schedule: MarketingCapScheduleFacts,
   now = new Date(),
-): 'awaiting_retry' | 'answered' | null {
+): MarketingCapHold {
   if (row.status !== 'failed') return null;
   const input = {
-    scheduleTypeKey,
+    scheduleTypeKey: schedule.scheduleTypeKey,
+    eventDate: schedule.eventDate,
     rsvpStatus: row.guests?.rsvp_status,
+    rsvpChangedAt: row.guests?.rsvp_changed_at,
     attempts: row.message_delivery_attempts,
     sendWindow: sendingConfig().sendWindow,
     now,
@@ -297,7 +312,7 @@ async function loadFallbackDeliveries(
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
-      'id, status, guest_id, confirmation_token, guests(name, phone_number, rsvp_status), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
+      'id, status, guest_id, confirmation_token, guests(name, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
     )
     .eq('schedule_id', scheduleId)
     .in('status', ['failed', 'sent']);
@@ -606,7 +621,12 @@ export async function sendSmsFallback(
   const rows =
     options.triggeredBy === 'fallback_auto'
       ? loadedRows.filter(
-          (row) => marketingCapHold(row, loaded.schedule.scheduleTypeKey, now) === null,
+          (row) =>
+            marketingCapHold(
+              row,
+              { scheduleTypeKey: loaded.schedule.scheduleTypeKey, eventDate: loaded.event.eventDate },
+              now,
+            ) === null,
         )
       : loadedRows;
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));

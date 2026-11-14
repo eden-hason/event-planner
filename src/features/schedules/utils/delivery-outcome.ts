@@ -150,7 +150,12 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
  */
 export function toFallbackRow(
   row: { id: string; status: string; guest_id: string },
-  guest: { name: string; phone_number: string | null; rsvp_status?: string | null },
+  guest: {
+    name: string;
+    phone_number: string | null;
+    rsvp_status?: string | null;
+    rsvp_changed_at?: string | null;
+  },
   attempts: readonly DeliveryAttemptRow[],
 ): FallbackDeliveryRow {
   return {
@@ -158,7 +163,12 @@ export function toFallbackRow(
     status: row.status,
     guest_id: row.guest_id,
     confirmation_token: null,
-    guests: { name: guest.name, phone_number: guest.phone_number, rsvp_status: guest.rsvp_status },
+    guests: {
+      name: guest.name,
+      phone_number: guest.phone_number,
+      rsvp_status: guest.rsvp_status,
+      rsvp_changed_at: guest.rsvp_changed_at,
+    },
     message_delivery_attempts: attempts.map((attempt) => ({
       channel: attempt.channel,
       status: attempt.status,
