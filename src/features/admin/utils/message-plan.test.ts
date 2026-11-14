@@ -61,7 +61,7 @@ test('the dialog names the Add button the Operator re-grants an Extra Schedule w
 });
 
 test('the dialog names what the move seeds by the Back Office type names', () => {
-  assert.match(MOVE_SEEDS, /עדיין מחכים לתשובה/);
+  assert.match(MOVE_SEEDS, /אישור הגעה חוזר/);
   assert.match(MOVE_SEEDS, /תזכורת אירוע/);
 });
 

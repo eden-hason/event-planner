@@ -6,8 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
 import { useFeatureHeader } from '@/components/feature-layout';
 import { buildNavUrl } from '@/components/layout/nav-urls';
+import {
+  followUpAttachment,
+  updateMessageMedia,
+  type MessageMediaState,
+} from '@/features/schedules';
 import {
   EventDetailsFormSchema,
   isCoupleEvent,
@@ -20,6 +26,7 @@ import {
   buildDefaultValues,
   buildUpdateFields,
   changedKeys,
+  MEDIA_CHANGE_KEYS,
   type ChangeKey,
 } from '../../utils/event-details-form';
 import {
@@ -30,6 +37,7 @@ import { HostsSection } from './hosts-section';
 import { DateTimeSection } from './date-time-section';
 import { LocationSection } from './location-section';
 import { InvitationSection } from './invitation-section';
+import { MediaSection } from './media-section';
 import { GuestExperienceSection } from './guest-experience-section';
 import { SaveBar } from './save-bar';
 
@@ -43,6 +51,9 @@ const FIELD_PATHS: Record<ChangeKey, FieldPath<EventDetailsFormValues>> = {
   ceremonyTime: 'ceremonyTime',
   location: 'location',
   invitation: 'invitations.imageUrl',
+  invitationVideo: 'invitationVideoUrl',
+  invitationMedia: 'messageMedia.invitation',
+  followUpMedia: 'messageMedia.followUps',
   brideName: 'hostDetails.bride.name',
   brideParents: 'hostDetails.bride.parents',
   groomName: 'hostDetails.groom.name',
@@ -64,6 +75,18 @@ interface EventDetailsWrapperProps {
    * to strand - see docs/backlog/0008.
    */
   plan: DateChangeImpact;
+  /**
+   * What the Asks attach, on the current Message Plan; null on a Classic
+   * Event, which keeps the invitation image section instead.
+   */
+  media: MessageMediaState | null;
+}
+
+/** Why a media save was refused, as the toast names it. */
+function mediaErrorKey(code: string | undefined): string {
+  if (code === 'attachment_unavailable' || code === 'attachment_not_offered') return 'mediaMissingFile';
+  if (code === 'not_editable') return 'mediaSent';
+  return 'mediaFailed';
 }
 
 /**
@@ -75,7 +98,7 @@ interface EventDetailsWrapperProps {
  * database column. The whole page shares a single form so a sitting that touches
  * three sections is still one save.
  */
-export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
+export function EventDetailsWrapper({ event, plan, media }: EventDetailsWrapperProps) {
   const t = useTranslations('eventDetails');
   const tToast = useTranslations('eventDetails.toast');
 
@@ -88,7 +111,7 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
 
   const form = useForm<EventDetailsFormValues>({
     resolver: zodResolver(EventDetailsFormSchema),
-    defaultValues: buildDefaultValues(event),
+    defaultValues: buildDefaultValues(event, media),
   });
 
   const [isSaving, setIsSaving] = React.useState(false);
@@ -103,35 +126,92 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
     subtitle: t('header.subtitle'),
   });
 
+  // Settles the saved fields only. Resetting the whole form would quietly drop
+  // a change the Owner made elsewhere and had not saved yet.
+  const settle = React.useCallback(
+    (keys: readonly ChangeKey[]) => {
+      keys.forEach((key) => {
+        const path = FIELD_PATHS[key];
+        form.resetField(path, { defaultValue: form.getValues(path) });
+      });
+    },
+    [form],
+  );
+
+  // The Event row first: a newly uploaded image or video has to be stored
+  // before an attachment that needs it can be saved.
+  const saveEvent = React.useCallback(
+    async (keys: readonly ChangeKey[]): Promise<boolean> => {
+      if (keys.length === 0) return true;
+      const fields = buildUpdateFields(form.getValues(), keys, { couple });
+      const formData = new FormData();
+      Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+      const result = await updateEventDetails(formData);
+      if (!result.success) {
+        toast.error(result.message || tToast('error'));
+        return false;
+      }
+      settle(keys);
+      return true;
+    },
+    [couple, form, settle, tToast],
+  );
+
+  // The Asks' attachments live on the Schedules (current plan only).
+  const saveMedia = React.useCallback(
+    async (keys: readonly ChangeKey[]): Promise<boolean> => {
+      if (keys.length === 0 || !media) return true;
+      const values = form.getValues();
+      const choice = values.messageMedia.invitation;
+      if (choice === 'image' && !values.invitations.imageUrl) {
+        toast.error(tToast('mediaMissingImage'));
+        return false;
+      }
+      if (choice === 'video' && !values.invitationVideoUrl) {
+        toast.error(tToast('mediaMissingVideo'));
+        return false;
+      }
+      if (
+        keys.includes('followUpMedia') &&
+        values.messageMedia.followUps &&
+        media.followUps.editableIds.length > 0 &&
+        !values.invitations.imageUrl
+      ) {
+        toast.error(tToast('mediaMissingFollowUpImage'));
+        return false;
+      }
+      const result = await updateMessageMedia({
+        invitation:
+          keys.includes('invitationMedia') && media.invitation?.editable
+            ? { scheduleId: media.invitation.scheduleId, attachment: choice }
+            : undefined,
+        followUps: keys.includes('followUpMedia')
+          ? {
+            scheduleIds: media.followUps.editableIds,
+            attachment: followUpAttachment(values.messageMedia.followUps),
+          }
+          : undefined,
+      });
+      if (!result.success) {
+        toast.error(tToast(mediaErrorKey(result.code)));
+        return false;
+      }
+      settle(keys);
+      return true;
+    },
+    [form, media, settle, tToast],
+  );
+
   const save = React.useCallback(
     async (keys: readonly ChangeKey[]): Promise<boolean> => {
       if (keys.length === 0) return true;
-
-      const values = form.getValues();
-      const fields = buildUpdateFields(values, keys, { couple });
-      const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value),
-      );
-
       setIsSaving(true);
       try {
-        const result = await updateEventDetails(formData);
-        if (!result.success) {
-          toast.error(result.message || tToast('error'));
-          return false;
-        }
-
-        // Only the saved fields are settled. Resetting the whole form would
-        // quietly drop a change the Owner made elsewhere and had not saved yet.
-        keys.forEach((key) => {
-          const path = FIELD_PATHS[key];
-          form.resetField(path, {
-            defaultValue: form.getValues(path),
-          });
-        });
-        toast.success(tToast('saved'));
-        return true;
+        const saved =
+          (await saveEvent(keys.filter((key) => !MEDIA_CHANGE_KEYS.has(key)))) &&
+          (await saveMedia(keys.filter((key) => MEDIA_CHANGE_KEYS.has(key))));
+        if (saved) toast.success(tToast('saved'));
+        return saved;
       } catch {
         toast.error(tToast('error'));
         return false;
@@ -139,7 +219,7 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
         setIsSaving(false);
       }
     },
-    [couple, form, tToast],
+    [saveEvent, saveMedia, tToast],
   );
 
   const revert = React.useCallback(
@@ -159,6 +239,7 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
       savedEventDate: event.eventDate,
       plan,
       schedulesHref: buildNavUrl('/app/schedules', event.id),
+      media,
       isSaving,
       save,
       revert,
@@ -171,6 +252,7 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
       female,
       hasCeremony,
       isSaving,
+      media,
       plan,
       revert,
       save,
@@ -199,7 +281,15 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
             the invitation image beside them. On a phone it is one stack, with the
             invitation between the venue and the questions.
           */}
-            <div className="grid items-start gap-3.5 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-[18px] lg:gap-y-[18px]">
+            <div
+              className={cn(
+                'grid items-start gap-3.5 lg:gap-x-[18px] lg:gap-y-[18px]',
+                // The media card holds two stages, so it gets a wider column.
+                media
+                  ? 'lg:grid-cols-[minmax(0,1fr)_380px]'
+                  : 'lg:grid-cols-[minmax(0,1fr)_300px]',
+              )}
+            >
               <div className="lg:col-start-1">
                 <DateTimeSection />
               </div>
@@ -207,7 +297,7 @@ export function EventDetailsWrapper({ event, plan }: EventDetailsWrapperProps) {
                 <LocationSection />
               </div>
               <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
-                <InvitationSection />
+                {media ? <MediaSection /> : <InvitationSection />}
               </div>
               <div className="lg:col-start-1">
                 <GuestExperienceSection />

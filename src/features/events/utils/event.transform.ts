@@ -25,6 +25,7 @@ type EventDetailsDbUpdate = {
   host_details?: HostDetails | null;
   event_settings?: EventSettings | null;
   invitations?: InvitationsDb | null;
+  invitation_video_url?: string | null;
   guests_experience?: GuestsExperienceDb | null;
 };
 
@@ -83,6 +84,10 @@ export function eventDetailsUpdateToDb(
     dbData.invitations = {
       image_url: data.invitations.imageUrl,
     };
+  }
+
+  if (data.invitationVideoUrl !== undefined) {
+    dbData.invitation_video_url = data.invitationVideoUrl || null;
   }
 
   // guestExperience maps to guests_experience with snake_case conversion

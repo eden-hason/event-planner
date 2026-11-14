@@ -1,7 +1,7 @@
 'use client';
 
-import { memo, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   IconAlertTriangle,
   IconBrandWhatsapp,
@@ -11,15 +11,6 @@ import {
 
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 import { stageOffersTable, type RenderRefusal } from '../message-plan';
 import type { PreviewGuest } from '../utils/message-plan-editor';
@@ -39,19 +30,16 @@ type Channel = 'whatsapp' | 'sms';
 /**
  * Exactly what a Guest gets on the current Message Plan, on WhatsApp and by
  * SMS (brief 8), composed the way the send composes it
- * (`composeMessagePlanForGuest`) from the Schedule as it stands unsaved. A
- * Guest picker shows any Guest's message: a typical seated one by default,
- * one with no table, the longest name. A message that cannot be rendered says
+ * (`composeMessagePlanForGuest`) from the Schedule as it stands unsaved, for
+ * one typical Guest (`previewGuest`). A message that cannot be rendered says
  * why instead of showing nothing.
  */
 export function MessagePlanPreview({
-  presets,
-  others,
+  guest,
   siteUrl,
   previewToken,
 }: {
-  presets: PreviewGuest[];
-  others: PreviewGuest[];
+  guest: PreviewGuest;
   siteUrl: string;
   previewToken: string | null;
 }) {
@@ -59,42 +47,30 @@ export function MessagePlanPreview({
   const tPreview = useTranslations('schedules.messagePreview');
   const { event, stage, previewSchedule, document: doc, wording } = useMessagePlanSettings();
   const [channel, setChannel] = useState<Channel>('whatsapp');
-  const [guestId, setGuestId] = useState(presets[0]?.id ?? '');
-
-  const guest = useMemo(
-    () =>
-      presets.find((candidate) => candidate.id === guestId) ??
-      others.find((candidate) => candidate.id === guestId) ??
-      presets[0],
-    [presets, others, guestId],
-  );
 
   const composed = useMemo(
     () =>
-      guest
-        ? composeMessagePlanForGuest({
-            schedule: previewSchedule,
-            event,
-            guest,
-            table: guest.table ? { tableNumber: guest.table.tableNumber, label: guest.table.label ?? null } : null,
-            confirmationToken: previewToken ?? 'preview',
-            siteUrl,
-          })
-        : null,
+      composeMessagePlanForGuest({
+        schedule: previewSchedule,
+        event,
+        guest,
+        table: guest.table ? { tableNumber: guest.table.tableNumber, label: guest.table.label ?? null } : null,
+        confirmationToken: previewToken ?? 'preview',
+        siteUrl,
+      }),
     [guest, previewSchedule, event, siteUrl, previewToken],
   );
 
   const offersTable = stageOffersTable(stage);
   const sentenceDropped =
-    offersTable && wording === 'personal' && doc.tableSentence !== null && guest?.table === null;
+    offersTable && wording === 'personal' && doc.tableSentence !== null && guest.table === null;
 
   return (
     <SettingsCard
       title={tPreview('cardTitle')}
       aside={<span className="text-muted-foreground/80 text-[11.5px]">{tPreview('hint')}</span>}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <GuestPicker presets={presets} others={others} value={guest?.id} onChange={setGuestId} />
+      <div className="flex">
         <div role="tablist" aria-label={t('channel')} className="bg-muted flex shrink-0 rounded-lg p-0.5">
           {(['whatsapp', 'sms'] as const).map((option) => (
             <button
@@ -115,14 +91,14 @@ export function MessagePlanPreview({
         </div>
       </div>
 
-      {offersTable && guest && (
+      {offersTable && (
         <p className="text-muted-foreground text-xs">
           {guest.table ? t('seatedAt', { table: guest.table.tableNumber }) : t('noTable')}
         </p>
       )}
 
       <PhoneFrame channel={channel}>
-        {!composed ? null : !composed.ok ? (
+        {!composed.ok ? (
           <RefusalState refusal={composed.refusal} eventId={event.id} />
         ) : channel === 'sms' ? (
           <SmsBubble body={composed.message.smsBody} />
@@ -163,59 +139,6 @@ export function MessagePlanPreview({
     </SettingsCard>
   );
 }
-
-/**
- * Who the preview is shown for. Memoised: its props do not change while the
- * Owner types, and a closed Select still renders every Guest's item.
- */
-const GuestPicker = memo(function GuestPicker({
-  presets,
-  others,
-  value,
-  onChange,
-}: {
-  presets: PreviewGuest[];
-  others: PreviewGuest[];
-  value: string | undefined;
-  onChange: (id: string) => void;
-}) {
-  const t = useTranslations('schedules.messagePlan.preview');
-  const locale = useLocale();
-  const labelOf = (candidate: PreviewGuest) =>
-    candidate.tags.length
-      ? `${candidate.name} · ${candidate.tags.map((tag) => t(`tags.${tag}`)).join(' · ')}`
-      : candidate.name;
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="text-muted-foreground text-xs">{t('guest')}</span>
-      <Select value={value} onValueChange={onChange} dir={locale === 'he' ? 'rtl' : 'ltr'}>
-        <SelectTrigger className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {presets.map((candidate) => (
-              <SelectItem key={candidate.id} value={candidate.id}>
-                {labelOf(candidate)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          {others.length > 0 && (
-            <SelectGroup>
-              <SelectLabel>{t('allGuests')}</SelectLabel>
-              {others.map((candidate) => (
-                <SelectItem key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          )}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-});
 
 /** Why there is no message to show, as the Owner can act on it. */
 function RefusalState({ refusal, eventId }: { refusal: RenderRefusal; eventId: string }) {

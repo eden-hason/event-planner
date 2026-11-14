@@ -71,7 +71,6 @@ test('the palette offers the table only on the Reminder, and the ceremony only w
   ) => messageFieldsFor(stage, event).map((f) => f.key);
   assert.deepEqual(keys('invitation'), [
     'hosts',
-    'occasionPhrase',
     'eventDate',
     'venueName',
     'receptionTime',

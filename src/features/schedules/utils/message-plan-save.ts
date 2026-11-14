@@ -19,7 +19,6 @@ import {
   validatePersonalText,
   type Attachment,
   type MessagePlanEvent,
-  type MessagePlanGuestTable,
   type PersonalTextError,
   type Wording,
 } from '../message-plan';
@@ -28,7 +27,7 @@ import {
   PERSONAL_TEXT_COLUMN_MAX,
 } from '../schemas/message-plan';
 import { isGiftingEnabled } from './event-config';
-import { attachmentOptions, sentTables } from './message-plan-editor';
+import { attachmentOptions } from './message-plan-editor';
 
 /** The `schedules` columns a save writes, only the ones it changes. */
 export type MessagePlanScheduleUpdate = {
@@ -52,21 +51,6 @@ export type MessagePlanSaveCheck =
   | { ok: false; error: MessagePlanSaveError };
 
 /**
- * Whether a save leaves the Schedule on a Personal Message with something in
- * it: the only case that is counted against the Guest list, so the only one
- * that needs it read.
- */
-export function savesPersonalText(
-  input: { wording?: Wording; personalText?: string | null },
-  stored: { wording: Wording | null; personalText: string | null },
-): boolean {
-  if (input.wording === undefined && input.personalText === undefined) return false;
-  const wording = input.wording ?? stored.wording;
-  const raw = input.personalText !== undefined ? input.personalText : stored.personalText;
-  return wording === 'personal' && !isBlankPersonalText(parsePersonalText(raw));
-}
-
-/**
  * Checks a save and turns it into the columns to write.
  *
  * The wording and the text travel together: `stored` is what the Schedule
@@ -81,7 +65,6 @@ export function checkMessagePlanSave(params: {
   input: unknown;
   stored: { wording: Wording | null; personalText: string | null };
   event: MessagePlanEvent;
-  guests: readonly { name: string; table: MessagePlanGuestTable | null }[];
 }): MessagePlanSaveCheck {
   const parsed = MessagePlanSaveInputSchema.safeParse(params.input);
   if (!parsed.success) return { ok: false, error: { code: 'invalid_input' } };
@@ -103,7 +86,6 @@ export function checkMessagePlanSave(params: {
       const checked = validatePersonalText(text, {
         stage,
         event: params.event,
-        guests: sentTables(stage, params.guests, params.event),
       });
       if (!checked.ok) {
         return { ok: false, error: { code: 'personal_text', errors: checked.errors } };

@@ -107,7 +107,7 @@ Events. The rules for how many Follow-ups an Event may have are unchanged.
   Back Office alike. The Classic Event Reminder's pin stays the date picker's alone, as it
   always was.
 - **An Extra Schedule is one more Follow-up,** added by an Operator from the Back Office
-  ("הוספת הודעת עדיין מחכים לתשובה", named as the Owner's screens name the
+  ("הוספת אישור הגעה חוזר", named as the Owner's screens name the
   Follow-up): undated, to pending Guests, with the image when the Event
   has one, exactly as the seed writes a Follow-up. Recording the payment stays separate.
 - **An Operator deletes only a Follow-up** on the current plan (one granted by mistake).

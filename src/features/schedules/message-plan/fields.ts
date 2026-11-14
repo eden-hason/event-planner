@@ -34,7 +34,6 @@ export type KululuValueKey =
 /** A Message Field an Owner can place in a Personal Message. */
 export type MessageFieldKey =
   | 'hosts'
-  | 'occasionPhrase'
   | 'eventDate'
   | 'venueName'
   | 'receptionTime'
@@ -180,7 +179,6 @@ const field = (
 
 export const MESSAGE_FIELDS: readonly MessageFieldDefinition[] = [
   field('hosts', 'שמות המארחים', 'נועה ודורון'),
-  field('occasionPhrase', 'שם האירוע', 'חתונה של נועה ודורון'),
   field('eventDate', 'תאריך', 'יום חמישי, 12 בנובמבר 2026'),
   field('venueName', 'מקום', 'אולמי הגן'),
   field('receptionTime', 'קבלת פנים', '19:30'),

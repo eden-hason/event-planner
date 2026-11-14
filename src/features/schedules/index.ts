@@ -16,7 +16,14 @@ export {
   type ManualSendResult,
   sendCatchUp,
   type CatchUpSendState,
+  updateMessageMedia,
+  type UpdateMessageMediaState,
 } from './actions';
+export {
+  messageMediaState,
+  followUpAttachment,
+  type MessageMediaState,
+} from './utils/message-media';
 
 // Utils
 export {

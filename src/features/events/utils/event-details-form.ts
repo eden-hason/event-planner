@@ -1,3 +1,4 @@
+import type { MessageMediaState } from '@/features/schedules';
 import type {
   EventApp,
   EventDetailsFormValues,
@@ -16,7 +17,14 @@ export const DEFAULT_MEAL_CHOICES: readonly string[] = [
   'strictly_kosher',
 ];
 
-export function buildDefaultValues(event: EventApp): EventDetailsFormValues {
+/**
+ * `media` is the Asks' attachments on the current Message Plan; a Classic
+ * Event has none and its `messageMedia` is never rendered or saved.
+ */
+export function buildDefaultValues(
+  event: EventApp,
+  media?: MessageMediaState | null,
+): EventDetailsFormValues {
   const hostDetails = event.hostDetails as EventHostDetails | undefined;
   const person = (role: 'bride' | 'groom' | 'child') => ({
     name: hostDetails?.[role]?.name ?? '',
@@ -30,6 +38,11 @@ export function buildDefaultValues(event: EventApp): EventDetailsFormValues {
     ceremonyTime: event.ceremonyTime ?? '',
     location: event.location ?? null,
     invitations: { imageUrl: event.invitations?.imageUrl ?? '' },
+    invitationVideoUrl: event.invitationVideoUrl ?? '',
+    messageMedia: {
+      invitation: media?.invitation?.attachment ?? 'none',
+      followUps: media?.followUps.image ?? false,
+    },
     hostDetails: {
       bride: person('bride'),
       groom: person('groom'),
@@ -59,6 +72,9 @@ export type ChangeKey =
   | 'ceremonyTime'
   | 'location'
   | 'invitation'
+  | 'invitationVideo'
+  | 'invitationMedia'
+  | 'followUpMedia'
   | 'brideName'
   | 'brideParents'
   | 'groomName'
@@ -83,7 +99,10 @@ const CHANGE_PATHS: ReadonlyArray<readonly [ChangeKey, readonly string[]]> = [
   ['receptionTime', ['receptionTime']],
   ['ceremonyTime', ['ceremonyTime']],
   ['location', ['location']],
+  ['invitationMedia', ['messageMedia', 'invitation']],
   ['invitation', ['invitations']],
+  ['invitationVideo', ['invitationVideoUrl']],
+  ['followUpMedia', ['messageMedia', 'followUps']],
   ['sendTableNumbers', ['guestExperience', 'sendTableNumbers']],
   ['specialMeal', ['guestExperience', 'dietaryOptions']],
   ['meals', ['guestExperience', 'dietaryTypes']],
@@ -143,6 +162,10 @@ const CHANGE_FIELDS: Record<ChangeKey, string> = {
   ceremonyTime: 'ceremonyTime',
   location: 'location',
   invitation: 'invitations',
+  invitationVideo: 'invitationVideoUrl',
+  // Saved on the Schedules by the schedules feature, never in this FormData.
+  invitationMedia: 'messageMedia',
+  followUpMedia: 'messageMedia',
   brideName: 'hostDetails',
   brideParents: 'hostDetails',
   groomName: 'hostDetails',
@@ -186,6 +209,10 @@ export function buildUpdateFields(
     entries.invitations = JSON.stringify(values.invitations);
   }
 
+  if (fields.has('invitationVideoUrl')) {
+    entries.invitationVideoUrl = values.invitationVideoUrl;
+  }
+
   if (fields.has('hostDetails')) {
     // Only the roles this event type has: writing an empty `child` onto a
     // wedding would put a person on the row who does not exist.
@@ -205,3 +232,9 @@ export function buildUpdateFields(
 
   return entries;
 }
+
+/** The changes saved on the Schedules rather than the Event row. */
+export const MEDIA_CHANGE_KEYS: ReadonlySet<ChangeKey> = new Set<ChangeKey>([
+  'invitationMedia',
+  'followUpMedia',
+]);

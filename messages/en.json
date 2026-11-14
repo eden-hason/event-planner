@@ -1909,7 +1909,6 @@
           "personalMessage": "Personal message",
           "dueTime": "Send time",
           "note": "Personal note",
-          "attachment": "Attachment",
           "giftButton": "Gift button"
         }
       },
@@ -2200,7 +2199,6 @@
         },
         "paragraphHelp": "Enter starts a new paragraph, up to {limit}",
         "paragraphLimit": "You have reached {limit} paragraphs, the most a message can have",
-        "countHelp": "Characters are counted with the event's details and the longest name on your guest list",
         "tableSentence": {
           "title": "Table sentence",
           "defaultText": "Your table: ",
@@ -2218,7 +2216,6 @@
       },
       "fields": {
         "hosts": "Hosts' names",
-        "occasionPhrase": "Event name",
         "eventDate": "Date",
         "venueName": "Venue",
         "receptionTime": "Reception",
@@ -2242,8 +2239,9 @@
           "video": "Invitation video",
           "none": "No attachment"
         },
-        "addImage": "Upload an invitation image in the event details",
-        "addVideo": "You can upload a video in the invitation video card"
+        "missing": "The file is not on the event, so the message is sent without one",
+        "change": "Change in event details",
+        "help": "The image, the video and what each message attaches are chosen in event details"
       },
       "gift": {
         "cardTitle": "Gift button",
@@ -2252,15 +2250,6 @@
         "notSetUp": "Set up the gifting page first to add a gift button",
         "setUp": "Set up the gifting page"
       },
-      "buttons": {
-        "cardTitle": "Buttons in the message",
-        "none": "This message has no buttons",
-        "help": {
-          "ask": "The buttons are fixed and added to every message, your own included",
-          "event_reminder": "The navigation button is always sent with the reminder. The gift button is sent when it is on",
-          "thank_you": "The gift button is sent when it is on"
-        }
-      },
       "timing": {
         "reminderToday": "On the event day the message says \"today\"",
         "reminderDated": "On an earlier day the message names the event's day and date",
@@ -2268,18 +2257,10 @@
         "thankYouSunday": "The day after the event is Saturday, so the message goes out on Sunday"
       },
       "preview": {
-        "guest": "Show for",
-        "allGuests": "All guests",
         "channel": "Channel",
         "channels": {
           "whatsapp": "WhatsApp",
           "sms": "SMS"
-        },
-        "tags": {
-          "typical": "example",
-          "noTable": "no table",
-          "longestName": "longest name",
-          "sample": "sample guest"
         },
         "seatedAt": "This guest sits at table {table}",
         "noTable": "This guest has no table",
@@ -2411,7 +2392,13 @@
     "notFound": "Event not found",
     "toast": {
       "saved": "Changes saved",
-      "error": "Something went wrong"
+      "error": "Something went wrong",
+      "mediaMissingImage": "You chose to attach an image to the invitation, upload it first",
+      "mediaMissingFollowUpImage": "You chose to attach an image to the follow-ups, upload it first",
+      "mediaMissingVideo": "You chose to attach a video to the invitation, upload it first",
+      "mediaMissingFile": "The file you chose to attach is not on the event",
+      "mediaSent": "The message was already sent, so it can no longer change",
+      "mediaFailed": "Saving the media for messages failed"
     },
     "header": {
       "title": "Event Details",
@@ -2507,6 +2494,59 @@
       "wrongType": "{name} is not an image file",
       "pickAnother": "Pick another image"
     },
+    "media": {
+      "title": "Media for messages",
+      "description": "What each WhatsApp message guests receive comes with",
+      "invitationTitle": "First invitation",
+      "messageOne": "Message",
+      "messageMany": "Messages",
+      "play": "Play the video",
+      "typeGroup": "Invitation media type",
+      "types": {
+        "none": "None",
+        "image": "Image",
+        "video": "Video"
+      },
+      "noneNote": "The invitation is sent as a text message only",
+      "invitationSent": "The invitation was already sent, so what it attaches can no longer change",
+      "uploadImage": "Upload an invitation image",
+      "uploadVideo": "Upload an invitation video",
+      "dropHint": "Drag here or click to choose · {formats}",
+      "imageFormats": "JPG, PNG · up to {max}",
+      "videoFormats": "MP4 · up to {max}",
+      "imageName": "Invitation image",
+      "imageMeta": "Image",
+      "videoName": "Invitation video",
+      "videoMeta": "Video",
+      "replace": "Replace",
+      "uploading": "Uploading the file",
+      "fileMeta": "{name} · {size}",
+      "failed": "The upload failed",
+      "tooLargeTitle": "The file is too large",
+      "tooLarge": "{name} weighs {size}, the maximum is {max}",
+      "wrongTypeTitle": "Unsupported file type",
+      "wrongTypeImage": "{name} is not an image file",
+      "wrongTypeVideo": "{name} is not an MP4 file",
+      "pickAnother": "Pick another file",
+      "followUpsFor": "{count, plural, one {for the message} =2 {for both messages} other {for all # messages}}",
+      "reuse": "Use the same image as the invitation",
+      "reuseReady": "{count, plural, one {The message is sent} other {All # messages are sent}} with the invitation image",
+      "reuseWaiting": "Sent with the invitation image once you upload it",
+      "followUpTypeGroup": "Follow-up media type",
+      "uploadFollowUpImage": "Upload an image for the follow-ups",
+      "followUpsVideoNote": "Follow-ups can't be sent with a video, only with an image",
+      "followUpsNoneNote": "These messages are sent as text only",
+      "followUpsSent": "These messages were already sent",
+      "chips": {
+        "ready": "Ready",
+        "missing": "Missing",
+        "textOnly": "Text only",
+        "waiting": "Waiting for the image",
+        "sent": "Sent",
+        "uploading": "Uploading",
+        "failed": "Upload failed"
+      }
+    },
     "guestExperience": {
       "title": "Additional Details",
       "specialMeal": "Special meal",
@@ -2533,6 +2573,9 @@
         "ceremonyTime": "Canopy time",
         "location": "Venue",
         "invitation": "Invitation image",
+        "invitationVideo": "Invitation video",
+        "invitationMedia": "What the invitation attaches",
+        "followUpMedia": "What the follow-ups attach",
         "brideName": "Bride's name",
         "brideParents": "Bride's parents",
         "groomName": "Groom's name",

@@ -9,19 +9,14 @@ import type { OutreachItemStatus } from '../types';
 import type { PreviewGuest } from '../utils/message-plan-editor';
 import { rsvpAskOf } from '../utils/schedule-results';
 import { isScheduleEditable } from '../utils/schedule-editable';
-import { InvitationVideoCard } from './invitation-video-card';
 import {
   MessagePlanAttachmentCard,
-  MessagePlanButtonsCard,
   MessagePlanGiftCard,
   MessagePlanTimingNote,
 } from './message-plan-options-cards';
 import { MessagePlanPreview } from './message-plan-preview';
 import { MessagePlanSaveBar } from './message-plan-save-bar';
-import {
-  MessagePlanSettingsProvider,
-  type LongestGuest,
-} from './message-plan-settings-context';
+import { MessagePlanSettingsProvider } from './message-plan-settings-context';
 import { MessagePlanWordingCard } from './message-plan-wording-card';
 import { PastDueTimeDialog } from './past-due-time-dialog';
 import { PersonalTextEditor } from './personal-text-editor';
@@ -40,9 +35,7 @@ import { TargetAudienceCard } from './target-audience-card';
  * five times.
  */
 export type MessagePlanGuests = {
-  /** The longest name and table the stage sends, for the 400-character count. */
-  longest: LongestGuest;
-  preview: { presets: PreviewGuest[]; others: PreviewGuest[] };
+  preview: PreviewGuest;
 };
 
 export interface MessagePlanDetailPaneProps {
@@ -122,7 +115,6 @@ async function MessagePlanTabContent({
       editable={editable}
       eventDate={eventDate}
       event={event}
-      longestGuest={guests.longest}
       dueTimeRules={{ sendWindow, maxLatenessHours: scheduleMaxLatenessHours }}
     >
       <div className="flex flex-col gap-4">
@@ -137,18 +129,6 @@ async function MessagePlanTabContent({
             ) : (
               <MessagePlanGiftCard lockBadge={lockBadge} />
             )}
-            {/* The video is the Event's, uploaded once for every Ask; it is
-                offered here, on the Invitation, which alone may send it. */}
-            {stage === 'invitation' && (
-              <InvitationVideoCard
-                scheduleId={schedule.id}
-                eventId={event.id}
-                videoUrl={event.invitationVideoUrl ?? null}
-                editable={editable}
-                lockBadge={lockBadge}
-              />
-            )}
-            <MessagePlanButtonsCard />
             <ScheduleDetailsCard
               eventDate={eventDate}
               scheduleTypeKey={schedule.scheduleTypeKey}
@@ -167,8 +147,7 @@ async function MessagePlanTabContent({
 
           <div className="flex flex-col gap-4">
             <MessagePlanPreview
-              presets={guests.preview.presets}
-              others={guests.preview.others}
+              guest={guests.preview}
               siteUrl={siteUrl}
               previewToken={previewToken}
             />

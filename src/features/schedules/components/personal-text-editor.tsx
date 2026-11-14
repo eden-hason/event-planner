@@ -133,7 +133,7 @@ function drawParagraphs(
  * The Owner's own message (ADR 0054, brief 7): the Wrapper's fixed lines
  * above and below the writing area, Message Fields placed from the palette as
  * tokens that read like their value, Enter for a new paragraph up to three,
- * and the count against the Event's longest Guest name. On the Reminder the
+ * and a count of what the Owner typed, fields not counted. On the Reminder the
  * table field opens the table sentence on its own line, sent only to seated
  * Guests. Saved by the page's one Save.
  */
@@ -231,9 +231,17 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
     }
     range.deleteContents();
     const token = tokenElement(field, lookOf(field));
-    const space = document.createTextNode(' ');
+    // Non-breaking, because a plain space at the end of a paragraph collapses
+    // and the caret would sit against the token. Saving cleans it to a space.
+    const space = document.createTextNode(' ');
     range.insertNode(space);
     range.insertNode(token);
+    // A space before it too, unless the token starts the paragraph or follows one.
+    const before = token.previousSibling;
+    const previousText = before?.nodeType === Node.TEXT_NODE ? (before.textContent ?? '') : null;
+    if (before && (previousText === null || (previousText !== '' && !/\s$/u.test(previousText)))) {
+      token.before(document.createTextNode(' '));
+    }
     const after = document.createRange();
     after.setStartAfter(space);
     after.collapse(true);
@@ -374,7 +382,6 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
               limit: PERSONAL_TEXT_MAX_PARAGRAPHS,
             })}
           </p>
-          <p>{t('countHelp')}</p>
         </div>
       )}
 

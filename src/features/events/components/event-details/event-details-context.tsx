@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import type { NavHref } from '@/components/layout/nav-urls';
+import type { MessageMediaState } from '@/features/schedules';
 import type { EventTypeKey } from '../../schemas';
 import type { ChangeKey } from '../../utils/event-details-form';
 
@@ -33,6 +34,8 @@ interface EventDetailsContextValue {
   savedEventDate: string | null;
   plan: DateChangeImpact;
   schedulesHref: NavHref;
+  /** The Asks' attachments on the current Message Plan; null on Classic. */
+  media: MessageMediaState | null;
   isSaving: boolean;
   /**
    * Saves just the named changes. Lets a focused editor (the names drawer)
