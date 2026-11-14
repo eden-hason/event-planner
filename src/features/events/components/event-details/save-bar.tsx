@@ -4,29 +4,6 @@ import { useTranslations } from 'next-intl';
 import { PageSaveBar } from '@/components/page-save-bar';
 import type { ChangeKey } from '../../utils/event-details-form';
 
-/** The message key each change is named by in the bar. */
-const FIELD_KEYS: Record<ChangeKey, string> = {
-  eventDate: 'eventDate',
-  receptionTime: 'receptionTime',
-  ceremonyTime: 'ceremonyTime',
-  location: 'location',
-  invitation: 'invitation',
-  invitationVideo: 'invitationVideo',
-  invitationMedia: 'invitationMedia',
-  followUpMedia: 'followUpMedia',
-  brideName: 'brideName',
-  brideParents: 'brideParents',
-  groomName: 'groomName',
-  groomParents: 'groomParents',
-  childName: 'childName',
-  childParents: 'childParents',
-  specialMeal: 'specialMeal',
-  meals: 'meals',
-  lockGuestCount: 'lockGuestCount',
-  sendTableNumbers: 'sendTableNumbers',
-  askTransportation: 'askTransportation',
-};
-
 /**
  * One save for the whole page, and it only shows while there is something to
  * save.
@@ -56,7 +33,7 @@ export function SaveBar({
   const fieldKey =
     only === 'childName' && female
       ? 'childNameFemale'
-      : only && FIELD_KEYS[only];
+      : only;
 
   return (
     <PageSaveBar

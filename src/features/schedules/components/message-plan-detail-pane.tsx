@@ -29,22 +29,14 @@ import { ScheduleLockedNotice } from './schedule-locked-notice';
 import { ScheduleResultsGhost } from './schedule-results';
 import { TargetAudienceCard } from './target-audience-card';
 
-/**
- * What the page works out once per kind of stage (sends tables or not) and
- * hands every pane of that kind: the same objects, so they are not computed
- * five times.
- */
-export type MessagePlanGuests = {
-  preview: PreviewGuest;
-};
-
 export interface MessagePlanDetailPaneProps {
   schedule: ScheduleApp;
   stage: Stage;
   event: MappedEvent;
   status: OutreachItemStatus;
   audienceCount: number | null;
-  guests: MessagePlanGuests;
+  /** The Guest the preview shows, worked out once per kind of stage by the page. */
+  previewGuest: PreviewGuest;
   siteUrl: string;
   previewToken: string | null;
   /** The Event's SMS Fallback switch, which the results tab describes. */
@@ -94,7 +86,7 @@ async function MessagePlanTabContent({
   event,
   status,
   audienceCount,
-  guests,
+  previewGuest,
   siteUrl,
   previewToken,
 }: MessagePlanDetailPaneProps) {
@@ -147,7 +139,7 @@ async function MessagePlanTabContent({
 
           <div className="flex flex-col gap-4">
             <MessagePlanPreview
-              guest={guests.preview}
+              guest={previewGuest}
               siteUrl={siteUrl}
               previewToken={previewToken}
             />

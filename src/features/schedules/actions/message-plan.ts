@@ -138,8 +138,6 @@ export async function updateMessagePlanSchedule(
   }
 }
 
-export type UpdateMessageMediaState = UpdateMessagePlanScheduleState;
-
 /**
  * Saves what the Asks attach, from the Event details page (current Message
  * Plan only): the Invitation's choice and the open Follow-ups' (the
@@ -153,7 +151,7 @@ export type UpdateMessageMediaState = UpdateMessagePlanScheduleState;
 export async function updateMessageMedia(input: {
   invitation?: { scheduleId: string; attachment: Attachment };
   followUps?: { scheduleIds: readonly string[]; attachment: Attachment };
-}): Promise<UpdateMessageMediaState> {
+}): Promise<UpdateMessagePlanScheduleState> {
   const writes: { scheduleId: string; attachment: Attachment }[] = [
     ...(input.invitation ? [input.invitation] : []),
     ...(input.followUps?.scheduleIds ?? []).map((scheduleId) => ({

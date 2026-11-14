@@ -231,16 +231,14 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
     }
     range.deleteContents();
     const token = tokenElement(field, lookOf(field));
-    // Non-breaking, because a plain space at the end of a paragraph collapses
-    // and the caret would sit against the token. Saving cleans it to a space.
-    const space = document.createTextNode(' ');
+    const space = document.createTextNode(' ');
     range.insertNode(space);
     range.insertNode(token);
     // A space before it too, unless the token starts the paragraph or follows one.
     const before = token.previousSibling;
     const previousText = before?.nodeType === Node.TEXT_NODE ? (before.textContent ?? '') : null;
     if (before && (previousText === null || (previousText !== '' && !/\s$/u.test(previousText)))) {
-      token.before(document.createTextNode(' '));
+      token.before(document.createTextNode(' '));
     }
     const after = document.createRange();
     after.setStartAfter(space);
@@ -354,7 +352,8 @@ export function PersonalTextEditor({ lockBadge }: { lockBadge?: React.ReactNode 
             onPaste={onPaste}
             onDrop={(event) => event.preventDefault()}
             className={cn(
-              'bg-card min-h-24 rounded-lg border px-3 py-2.5 text-sm leading-relaxed outline-none',
+              // pre-wrap keeps typed and inserted spaces, a trailing one included.
+              'bg-card min-h-24 rounded-lg border px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap outline-none',
               'focus-visible:ring-ring/50 focus-visible:ring-[3px] [&>div+div]:mt-2',
               !writable && 'bg-muted/60',
               textErrors.length > 0 && 'border-destructive',

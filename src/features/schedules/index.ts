@@ -6,6 +6,7 @@
 export { SchedulesHeader } from './components/schedules-header';
 export { GuestJourneySteps } from './components/guest-journey';
 export { RESULT_TONE, type ResultTone } from './components/results-presentation';
+export { ATTACHMENT_ICONS } from './components/attachment-icons';
 
 // Actions
 export {
@@ -17,7 +18,6 @@ export {
   sendCatchUp,
   type CatchUpSendState,
   updateMessageMedia,
-  type UpdateMessageMediaState,
 } from './actions';
 export {
   messageMediaState,

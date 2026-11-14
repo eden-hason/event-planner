@@ -325,14 +325,14 @@ export function fromEditorDocument(document: EditorDocument): PersonalText {
 // ─── What every pane of a kind is handed ─────────────────────────────────────
 
 /**
- * The Guests as a stage reads them, worked out once per kind of stage: with
- * their tables when the stage sends tables (the Reminder, with the Event's
- * switch on), without otherwise. The preview gets its one Guest.
+ * The Guest a stage's preview shows, worked out once per kind of stage: from
+ * the Guests with their tables when the stage sends tables (the Reminder, with
+ * the Event's switch on), without otherwise.
  */
-export function stageGuests(
+export function stagePreviewGuest(
   guests: readonly PreviewGuestSource[],
   options: { offersTable: boolean; sampleName: string; sampleTable: number },
-): { preview: PreviewGuest } {
+): PreviewGuest {
   const sent = options.offersTable ? guests : guests.map((guest) => ({ ...guest, table: null }));
-  return { preview: previewGuest(sent, options) };
+  return previewGuest(sent, options);
 }

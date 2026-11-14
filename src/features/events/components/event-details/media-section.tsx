@@ -9,7 +9,6 @@ import {
   IconPlayerPlayFilled,
   IconUpload,
   IconUserCheck,
-  IconMovie,
 } from '@tabler/icons-react';
 import { TriangleAlert } from 'lucide-react';
 import {
@@ -19,28 +18,32 @@ import {
 } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { uploadInvitationImage, uploadInvitationVideo } from '@/lib/storage';
+import {
+  IMAGE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
+  uploadInvitationImage,
+  uploadInvitationVideo,
+} from '@/lib/storage';
+import { ATTACHMENT_ICONS } from '@/features/schedules';
 import { cn } from '@/lib/utils';
 import type { EventDetailsFormValues } from '../../schemas';
 import { SECTION_IDS, useEventDetails } from './event-details-context';
 import { SectionCard, SectionStatus, type SectionStatusTone } from './section-card';
 import { formatMegabytes, useSingleUpload, type RejectedFile } from './use-single-upload';
 
-const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-// WhatsApp's own limits for a video header: MP4, up to 16 MB.
-const VIDEO_MAX_BYTES = 16 * 1024 * 1024;
 
 type InvitationMedia = EventDetailsFormValues['messageMedia']['invitation'];
 
+// "None" carries no icon in the toggle; the media icons are the Schedules
+// page's, so both screens show a choice the same way.
 const FOLLOW_UP_TYPES: readonly { value: 'none' | 'image'; icon: React.ReactNode }[] = [
   { value: 'none', icon: null },
-  { value: 'image', icon: <IconPhoto size={16} /> },
+  { value: 'image', icon: <ATTACHMENT_ICONS.image size={16} /> },
 ];
 
 const TYPES: readonly { value: InvitationMedia; icon: React.ReactNode }[] = [
-  { value: 'none', icon: null },
-  { value: 'image', icon: <IconPhoto size={16} /> },
-  { value: 'video', icon: <IconMovie size={16} /> },
+  ...FOLLOW_UP_TYPES,
+  { value: 'video', icon: <ATTACHMENT_ICONS.video size={16} /> },
 ];
 
 /**
@@ -137,31 +140,13 @@ export function MediaSection() {
           title={t('invitationTitle')}
           chip={<SectionStatus tone={invitationChip.tone} label={invitationChip.label} />}
         >
-          <div
-            role="group"
-            aria-label={t('typeGroup')}
-            className="bg-muted flex gap-1 rounded-xl p-1"
-          >
-            {TYPES.map((type) => (
-              <button
-                key={type.value}
-                type="button"
-                aria-pressed={choice === type.value}
-                disabled={!invitationEditable || isSaving}
-                onClick={() => pick(type.value)}
-                className={cn(
-                  'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[9px] border px-3.5 text-sm font-semibold transition-colors',
-                  'disabled:cursor-not-allowed disabled:opacity-60',
-                  choice === type.value
-                    ? 'bg-background text-primary border-primary/30 shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground border-transparent',
-                )}
-              >
-                {type.icon}
-                {t(`types.${type.value}`)}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label={t('typeGroup')}
+            options={TYPES}
+            value={choice}
+            onChange={pick}
+            disabled={!invitationEditable || isSaving}
+          />
 
           {!invitationEditable && (
             <p className="text-muted-foreground text-xs">{t('invitationSent')}</p>
@@ -208,9 +193,7 @@ export function MediaSection() {
                 <Checkbox
                   checked={reuse}
                   disabled={isSaving}
-                  onCheckedChange={(checked) =>
-                    form.setValue('messageMedia.followUps', checked === true, { shouldDirty: true })
-                  }
+                  onCheckedChange={(checked) => setFollowUpImage(checked === true)}
                 />
                 {t('reuse')}
               </label>
@@ -232,31 +215,13 @@ export function MediaSection() {
             </>
           ) : (
             <>
-              <div
-                role="group"
-                aria-label={t('followUpTypeGroup')}
-                className="bg-muted flex gap-1 rounded-xl p-1"
-              >
-                {FOLLOW_UP_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    aria-pressed={reuse === (type.value === 'image')}
-                    disabled={isSaving}
-                    onClick={() => setFollowUpImage(type.value === 'image')}
-                    className={cn(
-                      'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[9px] border px-3.5 text-sm font-semibold transition-colors',
-                      'disabled:cursor-not-allowed disabled:opacity-60',
-                      reuse === (type.value === 'image')
-                        ? 'bg-background text-primary border-primary/30 shadow-xs'
-                        : 'text-muted-foreground hover:text-foreground border-transparent',
-                    )}
-                  >
-                    {type.icon}
-                    {t(`types.${type.value}`)}
-                  </button>
-                ))}
-              </div>
+              <Segmented
+                label={t('followUpTypeGroup')}
+                options={FOLLOW_UP_TYPES}
+                value={reuse ? 'image' : 'none'}
+                onChange={(value) => setFollowUpImage(value === 'image')}
+                disabled={isSaving}
+              />
               {choice === 'video' ? (
                 <p className="text-muted-foreground text-[13px]">{t('followUpsVideoNote')}</p>
               ) : !reuse ? (
@@ -489,6 +454,46 @@ function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds)) return '';
   const total = Math.round(seconds);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** A row of mutually exclusive choices, the selected one raised. */
+function Segmented<V extends InvitationMedia>({
+  label,
+  options,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  options: readonly { value: V; icon: React.ReactNode }[];
+  value: V;
+  onChange: (value: V) => void;
+  disabled: boolean;
+}) {
+  const t = useTranslations('eventDetails.media');
+  return (
+    <div role="group" aria-label={label} className="bg-muted flex gap-1 rounded-xl p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          disabled={disabled}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[9px] border px-3.5 text-sm font-semibold transition-colors',
+            'disabled:cursor-not-allowed disabled:opacity-60',
+            value === option.value
+              ? 'bg-background text-primary border-primary/30 shadow-xs'
+              : 'text-muted-foreground hover:text-foreground border-transparent',
+          )}
+        >
+          {option.icon}
+          {t(`types.${option.value as InvitationMedia}`)}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function FileLabel({ name, meta }: { name: string; meta: string }) {

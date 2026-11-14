@@ -62,6 +62,11 @@ export async function uploadAvatarImage(
   return uploadToStorage(file, 'avatars', path);
 }
 
+/** The largest invitation image an Owner may upload. */
+export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+/** WhatsApp's own limit for a video header: MP4, up to 16 MB. */
+export const VIDEO_MAX_BYTES = 16 * 1024 * 1024;
+
 /**
  * Uploads an invitation image to Supabase Storage.
  * Generates a unique filename based on event ID and timestamp.

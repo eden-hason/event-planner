@@ -3,7 +3,7 @@ import { getEventById } from '@/features/events/queries';
 import { EventDetailsWrapper } from '@/features/events/components';
 import { getSchedulesByEventId } from '@/features/schedules/queries';
 import { summariseOutstandingPlan } from '@/features/schedules/utils/outstanding-plan';
-import { messageMediaState } from '@/features/schedules/utils/message-media';
+import { messageMediaState } from '@/features/schedules';
 
 export default async function EventDetailsServerPage({
   params,

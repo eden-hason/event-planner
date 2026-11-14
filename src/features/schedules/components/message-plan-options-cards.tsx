@@ -2,7 +2,6 @@
 
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { IconAlignRight, IconPhoto, IconMovie } from '@tabler/icons-react';
 
 import { Link } from '@/i18n/navigation';
 import { Switch } from '@/components/ui/toggle-switch';
@@ -13,14 +12,8 @@ import { isGiftingEnabled } from '../utils/event-config';
 import { timingNote } from '../utils/message-plan-editor';
 import { useDueTime } from './due-time-context';
 import { useMessagePlanSettings } from './message-plan-settings-context';
+import { ATTACHMENT_ICONS } from './attachment-icons';
 import { SettingsCard } from './settings-card';
-
-/** The same icons the Event details page's media card uses for each choice. */
-const ATTACHMENT_ICONS = {
-  none: IconAlignRight,
-  image: IconPhoto,
-  video: IconMovie,
-} as const;
 
 /**
  * What an Ask attaches: the invitation image, the video (the Invitation only)

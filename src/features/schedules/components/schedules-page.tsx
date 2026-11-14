@@ -42,8 +42,8 @@ import {
 } from '../message-plan';
 import { publicSiteUrl } from '../utils/parameter-resolvers';
 import { scheduleChannel } from '../utils/message-plan-kind';
-import { sentWording, stageGuests } from '../utils/message-plan-editor';
-import { MessagePlanDetailPane, type MessagePlanGuests } from './message-plan-detail-pane';
+import { sentWording, stagePreviewGuest, type PreviewGuest } from '../utils/message-plan-editor';
+import { MessagePlanDetailPane } from './message-plan-detail-pane';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoButton } from './delivery-info-button';
 import { ScheduleDetailPane } from './schedule-detail-pane';
@@ -126,7 +126,7 @@ export async function SchedulesPage({
   // The Guests as the current plan's stages read them, worked out once for a
   // stage that sends tables and once for one that does not, and shared by
   // every pane of that kind.
-  const planGuests = messagePlanData ? messagePlanGuests(guests, messagePlanData) : null;
+  const planPreviewGuest = messagePlanData ? messagePlanPreviewGuest(guests, messagePlanData) : null;
   const siteUrl = publicSiteUrl();
 
   // schedule.template is only the family anchor. Resolve what would actually be
@@ -340,14 +340,14 @@ export async function SchedulesPage({
           : null,
         // The current plan's list says whose words each message is (brief 5).
         listDetail: stage ? t(`messagePlan.list.${sentWording(schedule)}`) : null,
-        details: stage && messagePlanData && planGuests ? (
+        details: stage && messagePlanData && planPreviewGuest ? (
           <MessagePlanDetailPane
             schedule={schedule}
             stage={stage}
             event={messagePlanData.event}
             status={status}
             audienceCount={audienceCount}
-            guests={planGuests(stage)}
+            previewGuest={planPreviewGuest(stage)}
             siteUrl={siteUrl}
             previewToken={messagePlanData.previewToken}
             smsFallback={event?.smsFallbackEnabled ?? true}
@@ -463,22 +463,22 @@ export async function SchedulesPage({
  * number of Schedules: with tables for a stage that sends them (the Reminder,
  * with the Event's switch on) and without for every other.
  */
-function messagePlanGuests(
+function messagePlanPreviewGuest(
   guests: { id: string; name: string; tableId?: string | null }[],
   data: MessagePlanPageData,
-): (stage: Stage) => MessagePlanGuests {
+): (stage: Stage) => PreviewGuest {
   const sources = guests.map((guest) => ({
     id: guest.id,
     name: guest.name,
     table: guest.tableId ? (data.tables.get(guest.tableId) ?? null) : null,
   }));
   const tablesOn = shouldSendTableNumbers(data.event.guestExperience);
-  const built = new Map<boolean, MessagePlanGuests>();
+  const built = new Map<boolean, PreviewGuest>();
   return (stage) => {
     const offersTable = tablesOn && stageOffersTable(stage);
     let entry = built.get(offersTable);
     if (!entry) {
-      entry = stageGuests(sources, {
+      entry = stagePreviewGuest(sources, {
         offersTable,
         sampleName: messageField('guestName').sample,
         sampleTable: Number(messageField('tableNumber').sample),
