@@ -24,6 +24,16 @@ describe('messageMediaState', () => {
     assert.equal(state.invitation?.editable, false);
   });
 
+  it('keeps a payment-locked Invitation and Follow-ups editable', () => {
+    const state = messageMediaState([
+      { ...invitation, status: 'disabled' },
+      { ...fu1, status: 'disabled' },
+      { ...fu2, status: 'disabled' },
+    ]);
+    assert.equal(state.invitation?.editable, true);
+    assert.deepEqual(state.followUps.editableIds, ['fu1', 'fu2']);
+  });
+
   it('judges the image by the open Follow-ups only', () => {
     const state = messageMediaState([{ ...fu1, status: 'sent', attachment: 'none' }, fu2]);
     assert.deepEqual(state.followUps, { count: 2, editableIds: ['fu2'], image: true });
