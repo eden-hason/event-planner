@@ -42,7 +42,7 @@ import {
 } from '../message-plan';
 import { publicSiteUrl } from '../utils/parameter-resolvers';
 import { scheduleChannel } from '../utils/message-plan-kind';
-import { sentWording, stagePreviewGuest, type PreviewGuest } from '../utils/message-plan-editor';
+import { stagePreviewGuest, type PreviewGuest } from '../utils/message-plan-editor';
 import { MessagePlanDetailPane } from './message-plan-detail-pane';
 import { isFollowUpConfirmation } from '../utils/confirmation-round';
 import { DeliveryInfoButton } from './delivery-info-button';
@@ -338,8 +338,6 @@ export async function SchedulesPage({
               noAnswer: round.noAnswer,
             }
           : null,
-        // The current plan's list says whose words each message is (brief 5).
-        listDetail: stage ? t(`messagePlan.list.${sentWording(schedule)}`) : null,
         details: stage && messagePlanData && planPreviewGuest ? (
           <MessagePlanDetailPane
             schedule={schedule}
