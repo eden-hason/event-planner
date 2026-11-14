@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  toDeliveryOutcome,
+  ownerDeliveryOutcome,
   toDeliverySteps,
   toFallbackRow,
   type DeliveryAttemptRow,
@@ -8,6 +8,8 @@ import {
 } from '../utils/delivery-outcome';
 import { carriesReadReceipt } from '../utils/hand-delivery';
 import { awaitingSmsFallback, stuckWindow } from './send-sms-fallback';
+import { deliveryMarketingCapHold, scheduleFactsFrom } from '../utils/marketing-cap-retry';
+import { sendingConfig } from '@/lib/config/sending';
 import { scheduleFreeze } from './sweep-sms-fallback';
 
 /** One guest's Delivery for one Schedule: its Journey, and the queue facts a catch-up reads */
@@ -45,7 +47,7 @@ export async function loadGuestJourneys(
     supabase
       .from('message_deliveries')
       .select(
-        `id, schedule_id, status, not_sent_reason, sent_at, read_at, delivery_method, next_attempt_at, message_delivery_attempts(${ATTEMPTS})`,
+        `id, schedule_id, status, not_sent_reason, sent_at, read_at, delivery_method, next_attempt_at, schedules(schedule_types(key)), message_delivery_attempts(${ATTEMPTS})`,
       )
       .eq('guest_id', guest.id),
     supabase
@@ -56,7 +58,7 @@ export async function loadGuestJourneys(
       .order('created_at', { ascending: false }),
     supabase
       .from('guests')
-      .select('events!inner(sms_fallback_enabled)')
+      .select('rsvp_status, rsvp_changed_at, events!inner(sms_fallback_enabled, event_date)')
       .eq('id', guest.id)
       .maybeSingle(),
   ]);
@@ -115,23 +117,42 @@ export async function loadGuestJourneys(
     ),
   );
 
-  const owner = { name: guest.name, phone_number: guest.phone };
+  const owner = {
+    name: guest.name,
+    phone_number: guest.phone,
+    rsvp_status: (eventResult.data?.rsvp_status as string | null | undefined) ?? null,
+    rsvp_changed_at: (eventResult.data?.rsvp_changed_at as string | null | undefined) ?? null,
+  };
+  const eventDate = (eventResult.data?.events as { event_date?: string | null } | null | undefined)
+    ?.event_date;
+  const { sendWindow } = sendingConfig();
+  const now = new Date();
   const deliveries = rows.map((row): GuestJourneyDelivery => {
     const attempts = (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [];
     const scheduleId = row.schedule_id as string;
     const id = row.id as string;
 
+    const fallbackRow = toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts);
+    const capHold = deliveryMarketingCapHold(
+      fallbackRow,
+      { scheduleTypeKey: scheduleFactsFrom(row.schedules).scheduleTypeKey, eventDate },
+      sendWindow,
+      now,
+    );
     const smsOnItsWay =
       row.status === 'failed' &&
-      awaitingSmsFallback([toFallbackRow({ id, status: row.status, guest_id: guest.id }, owner, attempts)], {
+      capHold === null &&
+      awaitingSmsFallback([fallbackRow], {
         frozen: frozen.get(scheduleId) ?? false,
         optedOut,
         window: stuckWindow(),
       }).has(id);
 
-    const delivery = smsOnItsWay
-      ? 'sms_on_its_way'
-      : toDeliveryOutcome(row.status, row.delivery_method, row.not_sent_reason ?? null);
+    const delivery = ownerDeliveryOutcome(
+      { status: row.status, delivery_method: row.delivery_method, not_sent_reason: row.not_sent_reason ?? null },
+      capHold,
+      smsOnItsWay,
+    );
     const steps = toDeliverySteps(attempts);
     const answer = answerBySchedule.get(scheduleId);
     const read = row.delivery_method === 'whatsapp' && row.status === 'read';

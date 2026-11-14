@@ -27,6 +27,7 @@ import {
   type SmsFallbackTrigger,
 } from '../utils';
 import { sendingConfig } from '@/lib/config/sending';
+import { deliveryMarketingCapHold } from '../utils/marketing-cap-retry';
 import { canReceiveSms, toE164 } from '@/lib/phone';
 
 /**
@@ -48,6 +49,10 @@ import { canReceiveSms, toE164 } from '@/lib/phone';
  *      enough that an SMS is still worth having
  *   3. either way, it has no SMS attempt yet
  * RSVP is deliberately not considered.
+ *
+ * The automatic batch also leaves out a Delivery still awaiting a Marketing
+ * Cap Retry (ADR 0056) - see `deliveryMarketingCapHold`. The Operator's button
+ * does not: pressing it is the Operator choosing the SMS over the wait.
  *
  * An Operator may also retry a Delivery whose every SMS attempt failed (ADR
  * 0038) - the SMS poll can now find that out after the fact. The automatic
@@ -106,7 +111,13 @@ export type FallbackDeliveryRow = {
   status: 'failed' | 'sent';
   guest_id: string;
   confirmation_token: string | null;
-  guests: { name: string; phone_number: string | null } | null;
+  /** The answer and its time are only read for the Marketing Cap Retry; absent counts as unanswered. */
+  guests: {
+    name: string;
+    phone_number: string | null;
+    rsvp_status?: string | null;
+    rsvp_changed_at?: string | null;
+  } | null;
   message_delivery_attempts: AttemptRow[];
 };
 
@@ -267,7 +278,7 @@ async function loadFallbackDeliveries(
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(
-      'id, status, guest_id, confirmation_token, guests(name, phone_number), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
+      'id, status, guest_id, confirmation_token, guests(name, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, error_message, sent_at, created_at)',
     )
     .eq('schedule_id', scheduleId)
     .in('status', ['failed', 'sent']);
@@ -571,7 +582,14 @@ export async function sendSmsFallback(
   const resolution = await resolveSmsTemplates(supabase, loaded);
   if (!resolution.ok) return { success: false, message: resolution.reason, ...empty };
 
-  const rows = await loadFallbackDeliveries(supabase, scheduleId);
+  const loadedRows = await loadFallbackDeliveries(supabase, scheduleId);
+  const facts = { scheduleTypeKey: loaded.schedule.scheduleTypeKey, eventDate: loaded.event.eventDate };
+  const { sendWindow } = sendingConfig();
+  const now = new Date();
+  const rows =
+    options.triggeredBy === 'fallback_auto'
+      ? loadedRows.filter((row) => deliveryMarketingCapHold(row, facts, sendWindow, now) === null)
+      : loadedRows;
   const tokens = new Map(rows.map((r) => [r.id, r.confirmation_token]));
   const batch = classifySmsFallbackCandidates(rows, stuckWindow(), {
     retryFailedSms: options.triggeredBy === 'fallback',

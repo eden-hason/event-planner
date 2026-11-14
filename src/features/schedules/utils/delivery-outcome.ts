@@ -7,13 +7,16 @@
 import { isSmsFallbackTrigger, smsFallbackReason, type SmsFallbackReason } from './send-helpers';
 import { isHandTrigger } from './hand-delivery';
 import type { FallbackDeliveryRow } from '../services/send-sms-fallback';
+import type { MarketingCapHold } from './marketing-cap-retry';
 
 /**
  * How a schedule's Delivery reads to the Owner (CONTEXT.md: Delivery, Reached).
  *
  * - `whatsapp` / `sms`: Reached, over that channel - the provider confirmed
  *   delivery. For SMS that is the ActiveTrail report the SMS poll reads.
- * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet.
+ * - `on_its_way`: WhatsApp accepted it, the phone has not confirmed yet - or
+ *   WhatsApp withheld an Ask for its marketing limits and a Marketing Cap
+ *   Retry is coming (ADR 0056).
  * - `sms_on_its_way`: an SMS is on its way and not confirmed yet - either
  *   accepted by ActiveTrail with no report back, or, after WhatsApp failed, an
  *   automatic SMS Fallback being sent or due once the Schedule settles. Never
@@ -92,6 +95,25 @@ export type GuestInteractionRow = {
   mealCounts?: Record<string, number>;
 };
 
+/**
+ * The outcome the Owner reads, once the two things only a whole Schedule can
+ * know are settled: whether a Marketing Cap Retry holds the Delivery (ADR 0056)
+ * and whether an SMS Fallback is on its way. Shared by the Results tab and the
+ * guest drawer so they never tell the Owner two stories.
+ *
+ * A retry still to come reads as on its way - a message genuinely is. One
+ * ended by the Guest's answer has nothing coming, so it reads as its status.
+ */
+export function ownerDeliveryOutcome(
+  row: { status: string | null; delivery_method: string | null; not_sent_reason: string | null },
+  hold: MarketingCapHold,
+  smsComing: boolean,
+): GuestDeliveryOutcome {
+  if (hold?.kind === 'awaiting_retry') return 'on_its_way';
+  if (smsComing && hold === null) return 'sms_on_its_way';
+  return toDeliveryOutcome(row.status, row.delivery_method, row.not_sent_reason);
+}
+
 export function toDeliveryOutcome(
   status: string | null,
   channel: string | null,
@@ -148,7 +170,12 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
  */
 export function toFallbackRow(
   row: { id: string; status: string; guest_id: string },
-  guest: { name: string; phone_number: string | null },
+  guest: {
+    name: string;
+    phone_number: string | null;
+    rsvp_status?: string | null;
+    rsvp_changed_at?: string | null;
+  },
   attempts: readonly DeliveryAttemptRow[],
 ): FallbackDeliveryRow {
   return {
@@ -156,7 +183,12 @@ export function toFallbackRow(
     status: row.status,
     guest_id: row.guest_id,
     confirmation_token: null,
-    guests: { name: guest.name, phone_number: guest.phone_number },
+    guests: {
+      name: guest.name,
+      phone_number: guest.phone_number,
+      rsvp_status: guest.rsvp_status,
+      rsvp_changed_at: guest.rsvp_changed_at,
+    },
     message_delivery_attempts: attempts.map((attempt) => ({
       channel: attempt.channel,
       status: attempt.status,

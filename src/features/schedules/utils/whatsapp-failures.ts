@@ -38,6 +38,17 @@ const GUEST_LEVEL_CODES = new Map<number, string>([
   [131000, 'וואטסאפ לא הצליח למסור את ההודעה'],
 ]);
 
+/**
+ * The two Guest-level codes that are WhatsApp withholding a marketing message
+ * for now rather than the number being unreachable. On an Ask they earn a
+ * Marketing Cap Retry before any SMS Fallback (ADR 0056).
+ */
+export const MARKETING_CAP_CODES = [131049, 130472] as const;
+
+export function isMarketingCapCode(errorCode: number | null | undefined): boolean {
+  return errorCode != null && (MARKETING_CAP_CODES as readonly number[]).includes(errorCode);
+}
+
 export function classifyWhatsAppFailure(
   errorCode: number | null | undefined,
 ): WhatsAppFailureSide {

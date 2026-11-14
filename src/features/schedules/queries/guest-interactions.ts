@@ -2,7 +2,7 @@
 
 import { getEffectiveClient } from '@/lib/supabase/admin';
 import {
-  toDeliveryOutcome,
+  ownerDeliveryOutcome,
   toDeliverySteps,
   toFallbackRow,
   type DeliveryAttemptRow,
@@ -12,6 +12,8 @@ import {
 import { carriesReadReceipt } from '../utils/hand-delivery';
 import type { RsvpAsk } from '../utils/schedule-results';
 import { awaitingSmsFallback, stuckWindow } from '../services/send-sms-fallback';
+import { deliveryMarketingCapHold, scheduleFactsFrom } from '../utils/marketing-cap-retry';
+import { sendingConfig } from '@/lib/config/sending';
 import { scheduleFreeze } from '../services/sweep-sms-fallback';
 
 export type {
@@ -91,12 +93,12 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
+        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
       )
       .eq('schedule_id', scheduleId),
     supabase
       .from('schedules')
-      .select('events!inner(sms_fallback_enabled)')
+      .select('schedule_types(key), events!inner(sms_fallback_enabled, event_date)')
       .eq('id', scheduleId)
       .maybeSingle(),
   ]);
@@ -158,14 +160,28 @@ export async function getScheduleInteractionData(
   const seenCapableIds = new Set<string>();
 
   const deliveryRows = deliveriesResult.data ?? [];
-  const smsComing = awaitingSmsFallback(
-    deliveryRows.map((row) =>
-      toFallbackRow(
-        { id: row.id as string, status: row.status, guest_id: row.guest_id as string },
-        row.guests as unknown as { name: string; phone_number: string | null },
-        (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
-      ),
+  const fallbackRows = deliveryRows.map((row) =>
+    toFallbackRow(
+      { id: row.id as string, status: row.status, guest_id: row.guest_id as string },
+      row.guests as unknown as {
+        name: string;
+        phone_number: string | null;
+        rsvp_status: string | null;
+        rsvp_changed_at: string | null;
+      },
+      (row.message_delivery_attempts as DeliveryAttemptRow[] | null) ?? [],
     ),
+  );
+  const scheduleFacts = scheduleFactsFrom(eventResult.data);
+  const { sendWindow } = sendingConfig();
+  const now = new Date();
+  const capHold = new Map(
+    fallbackRows.map(
+      (row) => [row.id, deliveryMarketingCapHold(row, scheduleFacts, sendWindow, now)] as const,
+    ),
+  );
+  const smsComing = awaitingSmsFallback(
+    fallbackRows.filter((row) => capHold.get(row.id) === null),
     {
       frozen: scheduleFreeze(
         deliveryRows.flatMap(
@@ -184,13 +200,15 @@ export async function getScheduleInteractionData(
       phone_number: string | null;
     };
     const entry = rowFor(row.guest_id as string, guest);
-    entry.delivery = smsComing.has(row.id as string)
-      ? 'sms_on_its_way'
-      : toDeliveryOutcome(
-          row.status,
-          row.delivery_method,
-          (row.not_sent_reason as string | null) ?? null,
-        );
+    entry.delivery = ownerDeliveryOutcome(
+      {
+        status: row.status,
+        delivery_method: row.delivery_method,
+        not_sent_reason: (row.not_sent_reason as string | null) ?? null,
+      },
+      capHold.get(row.id as string) ?? null,
+      smsComing.has(row.id as string),
+    );
     entry.sentAt = (row.sent_at as string | null) ?? undefined;
     const attempts = row.message_delivery_attempts as unknown as
       | (DeliveryAttemptRow & AskedAttempt)[]

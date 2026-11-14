@@ -49,6 +49,11 @@ as Schedules grow, since each guest is a separate fetch from Meta.
 - `isTransient` and `classifyWhatsAppFailure` are deliberately independent (see the comment
   on `TRANSIENT_CODES`). Retrying `131053` must not make it SMS-eligible.
 
+- ADR 0056 (Marketing Cap Retry) builds the first webhook-reported retry: the webhook
+  queues a later WhatsApp attempt on the Delivery, and the sweeper holds back only that
+  Delivery's SMS while it waits. A `131053` retry can probably reuse that path with its own,
+  shorter delays and a burst guard.
+
 ## Open questions
 
 - Where is the retry decided? Options: in the webhook handler when it stamps `failed`, or
