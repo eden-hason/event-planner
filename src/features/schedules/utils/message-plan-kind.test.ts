@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isAsk, isCurrentPlanOnlyType, isMessagePlan, parseMessagePlan, scheduleChannel } from './message-plan-kind';
+import {
+  isAsk,
+  isCurrentPlanOnlyType,
+  isMessagePlan,
+  parseMessagePlan,
+  rendersFromMessagePlan,
+  scheduleChannel,
+} from './message-plan-kind';
 
 test('an Ask is a Classic Confirmation or a current Invitation or Follow-up', () => {
   for (const key of ['confirmation', 'invitation', 'follow_up']) assert.equal(isAsk(key), true, key);
@@ -35,4 +42,13 @@ test('isMessagePlan accepts only the two plans, with no Classic default', () => 
   for (const value of ['v2', 'toString', '', null, undefined, 1]) {
     assert.equal(isMessagePlan(value), false);
   }
+});
+
+test('the current plan renders from code unless the Schedule carries a Bespoke Template', () => {
+  assert.equal(rendersFromMessagePlan('current', null), true);
+  assert.equal(rendersFromMessagePlan('current', undefined), true);
+  assert.equal(rendersFromMessagePlan('current', { eventId: null }), true);
+  assert.equal(rendersFromMessagePlan('current', { eventId: 'event-1' }), false);
+  assert.equal(rendersFromMessagePlan('classic', null), false);
+  assert.equal(rendersFromMessagePlan('classic', { eventId: 'event-1' }), false);
 });

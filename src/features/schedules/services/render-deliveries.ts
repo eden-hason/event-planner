@@ -26,6 +26,7 @@ import {
   validatePhoneNumber,
   type ParameterResolutionContext,
 } from '../utils';
+import { rendersFromMessagePlan } from '../utils/message-plan-kind';
 import { renderSendPayload, type SendPayload } from '../utils/send-payload';
 import { publicSiteUrl } from '../utils/parameter-resolvers';
 import { renderMessagePlanForGuest } from '../utils/message-plan-send';
@@ -262,8 +263,9 @@ export async function renderScheduleDeliveries(
   }
 
   // The current Message Plan has no template: its messages are written in code
-  // (ADR 0055). Everything around the message is shared.
-  if (event.messagePlan === 'current') {
+  // (ADR 0055). Everything around the message is shared. A Bespoke Template set
+  // by an Operator is the exception and goes the catalog way below.
+  if (rendersFromMessagePlan(event.messagePlan, schedule.template)) {
     return renderMessagePlanDeliveries(supabase, scheduleId, schedule, event, options);
   }
 

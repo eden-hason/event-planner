@@ -55,3 +55,18 @@ export function scheduleChannel(
   if (messagePlan === 'current') return 'whatsapp';
   return templateChannel ?? null;
 }
+
+/**
+ * Whether a message Schedule renders from the current plan's code (ADR 0055)
+ * rather than from its own Template row. Classic never does. On the current
+ * plan every Schedule does, except one carrying a **Bespoke Template**: an
+ * Operator's one-off for one Event (a re-send of a fixed invitation video, with
+ * no RSVP buttons) is sent as written, through the Classic catalog path.
+ */
+export function rendersFromMessagePlan(
+  messagePlan: MessagePlan,
+  template: { eventId: string | null } | null | undefined,
+): boolean {
+  if (messagePlan !== 'current') return false;
+  return !template?.eventId;
+}
