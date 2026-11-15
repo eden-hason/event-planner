@@ -375,7 +375,7 @@ _Avoid_: variable, placeholder, chip (those are the editor's, not the domain's)
 
 ## Bespoke Template
 
-Not offered on the current **Message Plan**; Events on the Classic one keep theirs. A Template written for one Event only, and set on that Event's Schedule by Kululu rather
+Not offered to the Owner on the current **Message Plan**, where an Operator may still set one by hand on an `initial_invitation` Schedule (a one-off re-send); Events on the Classic one keep theirs. A Template written for one Event only, and set on that Event's Schedule by Kululu rather
 than chosen by the Owner. Its wording is fixed; the Owner neither picks it nor edits it,
 and no other Event ever sees it.
 
