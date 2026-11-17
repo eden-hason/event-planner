@@ -64,8 +64,10 @@ export type RsvpAuthor = { userId: string; displayName: string | null };
 /**
  * Sets the RSVP on every record whose status actually changes, attributed to
  * the Owner as a manual change - the same attribution a single edit gets.
- * Declining ends Table Assignments in the database trigger (ADR 0008); the
- * count and Special Meals a Guest gave are left as they are.
+ * Declining ends Table Assignments in the database trigger (ADR 0008), and
+ * leaving confirmed puts the count back to the invitation in another
+ * (guest_amount_follows_invitation); the Special Meals a Guest gave are left as
+ * they are.
  */
 export function setGuestsRsvp(
   supabase: SupabaseClient,

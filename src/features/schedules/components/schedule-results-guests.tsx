@@ -44,6 +44,7 @@ import {
   MessageActivityList,
   MessageActivityStrip,
   MessageStateLabel,
+  PreviousAnswer,
   RelativeMoment,
   RsvpBadge,
 } from './guest-activity';
@@ -206,7 +207,12 @@ export function ScheduleResultsGuests({
           {
             id: 'rsvp',
             header: t('columns.rsvp'),
-            cell: ({ row }) => <RsvpBadge row={row.original} />,
+            cell: ({ row }) => (
+              <div className="flex flex-col items-start gap-1">
+                <RsvpBadge row={row.original} />
+                <PreviousAnswer row={row.original} />
+              </div>
+            ),
           },
           {
             id: 'count',
@@ -367,6 +373,9 @@ export function ScheduleResultsGuests({
                   phone={row.phone}
                   className="text-muted-foreground text-[13px]"
                 />
+                {collectsRsvp && (
+                  <PreviousAnswer row={row} className="truncate" />
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <RelativeMoment
