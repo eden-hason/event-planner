@@ -2073,6 +2073,10 @@
           "declined": "סירבו",
           "pending": "ללא תגובה"
         },
+        "previousAnswer": {
+          "confirmed": "{count, plural, =0 {קודם אישרו} one {קודם אישרו לאורח אחד} other {קודם אישרו ל-# אורחים}}",
+          "declined": "קודם סירבו"
+        },
         "pagination": {
           "range": "{from}–{to} מתוך {total}",
           "previous": "הקודם",

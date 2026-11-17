@@ -257,6 +257,26 @@ export async function getScheduleInteractionData(
       entry.respondedAt = row.created_at;
       entry.guestCount = meta?.guestCount;
       entry.mealCounts = meta?.mealCounts;
+    } else if (
+      (row.interaction_type === 'rsvp_confirm' ||
+        row.interaction_type === 'rsvp_decline') &&
+      entry.response &&
+      !entry.previousAnswer
+    ) {
+      // Newest first, so the second answer is the one the latest replaced. A
+      // run of steps is already one row (answer-run), so this is a real change:
+      // the other response, or the same one given again later.
+      const previous = {
+        response: row.interaction_type as 'rsvp_confirm' | 'rsvp_decline',
+        guestCount: meta?.guestCount,
+        at: row.created_at as string,
+      };
+      if (
+        previous.response !== entry.response ||
+        previous.guestCount !== entry.guestCount
+      ) {
+        entry.previousAnswer = previous;
+      }
     }
   }
 

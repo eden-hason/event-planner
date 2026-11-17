@@ -129,6 +129,29 @@ export function RsvpBadge({ row }: { row: GuestInteractionRow }) {
   );
 }
 
+/**
+ * The answer the latest one replaced - "Previously confirmed for 4" under a
+ * decline - or nothing when the Guest answered once.
+ */
+export function PreviousAnswer({
+  row,
+  className,
+}: {
+  row: GuestInteractionRow;
+  className?: string;
+}) {
+  const t = useTranslations('schedules.results.guests.previousAnswer');
+  const previous = row.previousAnswer;
+  if (!previous) return null;
+  return (
+    <span className={cn('text-muted-foreground text-[12.5px]', className)}>
+      {previous.response === 'rsvp_confirm'
+        ? t('confirmed', { count: previous.guestCount ?? 0 })
+        : t('declined')}
+    </span>
+  );
+}
+
 /** The people an answer confirmed, or a dash */
 export function ConfirmedCount({ row }: { row: GuestInteractionRow }) {
   return row.response === 'rsvp_confirm' && row.guestCount ? (
@@ -478,6 +501,7 @@ export function GuestDetailsSheetBody({
             <span className="text-[17px] font-bold">
               {rsvp === 'confirmed' ? t('coming') : tRsvp(rsvp)}
             </span>
+            <PreviousAnswer row={row} className="text-foreground/70" />
           </div>
           <div className="bg-muted flex flex-col gap-1 rounded-xl p-3">
             <span className="text-foreground/70 text-[13px]">

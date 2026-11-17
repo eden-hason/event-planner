@@ -19,10 +19,24 @@ export type AmountDisplay = {
   changedByGuest: boolean;
 };
 
+/**
+ * How many people a record counts as: its answer once confirmed, its invitation
+ * otherwise. A declined record may still hold the count from an earlier
+ * "Coming" (a Guest who confirmed for 4 and then declined), so its `amount` is
+ * not read - the list and every headcount count it at its invitation.
+ */
+export function headsFor(
+  guest: Pick<GuestApp, 'rsvpStatus' | 'amount' | 'invitedAmount'>,
+): number {
+  return guest.rsvpStatus === 'confirmed'
+    ? guest.amount
+    : (guest.invitedAmount ?? guest.amount);
+}
+
 export function amountDisplay(guest: AmountGuest): AmountDisplay {
   const invited = guest.invitedAmount ?? guest.amount;
   if (guest.rsvpStatus !== 'confirmed') {
-    return { value: invited, invited, changedByGuest: false };
+    return { value: headsFor(guest), invited, changedByGuest: false };
   }
   // A call's outcome is the Guest's answer relayed by an Operator, so it counts;
   // a count the Owner typed in themselves does not.

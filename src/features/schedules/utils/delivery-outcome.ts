@@ -82,6 +82,16 @@ export type GuestInteractionRow = {
   response?: 'rsvp_confirm' | 'rsvp_decline';
   respondedAt?: string;
   /**
+   * The answer this one replaced in the same Schedule - a Guest who confirmed
+   * for 4 and then declined. Only the latest answer counts; this is shown so a
+   * change of mind is not hidden behind it.
+   */
+  previousAnswer?: {
+    response: 'rsvp_confirm' | 'rsvp_decline';
+    guestCount?: number;
+    at: string;
+  };
+  /**
    * Set on a Schedule that asks only the Guests who had not answered (an Advance
    * Reminder, ADR 0051) for a Guest it did not ask. Such a Guest has no answer to
    * be waiting for, so they are left out of every RSVP count.
