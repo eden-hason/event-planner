@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { IconUpload, IconDownload } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import { IconUpload, IconDownload, IconFileSpreadsheet } from '@tabler/icons-react';
 import { GoogleDriveIcon } from '@/components/icons';
 import { isExcelFile } from '@/features/guests/utils/parse-csv';
 import { preloadGoogleDrivePicker } from '@/features/guests/utils/google-drive-picker';
 import { MAX_IMPORT_FILE_BYTES } from '@/features/guests/utils/import-guests';
+import { useGuestTemplateDownload } from '@/features/guests/hooks/use-guest-template-download';
 
 const ACCEPT =
   '.csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
@@ -42,7 +43,7 @@ export function MobileUploadStep({
 }: MobileUploadStepProps) {
   const t = useTranslations('guests.import');
   const tm = useTranslations('guests.import.mobile.upload');
-  const locale = useLocale();
+  const template = useGuestTemplateDownload();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Scripts loaded ahead of the tap rather than on it: `requestAccessToken()`
@@ -68,11 +69,6 @@ export function MobileUploadStep({
     }
     onFileSelected(file);
   };
-
-  const templateHref =
-    locale === 'he'
-      ? '/templates/guest-import-template-he.csv'
-      : '/templates/guest-import-template-en.csv';
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
@@ -124,6 +120,31 @@ export function MobileUploadStep({
         </div>
       </button>
 
+      <button
+        type="button"
+        onClick={template.download}
+        disabled={template.isDownloading}
+        className="flex items-center gap-3 rounded-xl border p-3.5 text-start disabled:opacity-60"
+      >
+        <span className="bg-rsvp-confirmed-tint text-rsvp-confirmed-strong flex size-10 shrink-0 items-center justify-center rounded-lg">
+          <IconFileSpreadsheet size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold">
+            {t('template.title')}
+          </div>
+          <div className="text-muted-foreground text-xs leading-relaxed">
+            {t('template.description')}
+          </div>
+        </div>
+        <span className="text-primary flex shrink-0 items-center gap-1 text-xs font-semibold">
+          <IconDownload size={14} />
+          {template.isDownloading
+            ? t('template.downloading')
+            : t('template.download')}
+        </span>
+      </button>
+
       <div className="mt-auto flex flex-col gap-2 rounded-xl border p-3.5">
         <span className="text-[13px] font-semibold">
           {tm('whatYouCanImport')}
@@ -144,15 +165,7 @@ export function MobileUploadStep({
           ))}
         </div>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          {tm('columnsNote')}{' '}
-          <a
-            href={templateHref}
-            download
-            className="text-primary font-semibold underline underline-offset-2"
-          >
-            <IconDownload size={12} className="inline align-[-1px]" />{' '}
-            {tm('downloadTemplate')}
-          </a>
+          {tm('columnsNote')}
         </p>
       </div>
     </div>

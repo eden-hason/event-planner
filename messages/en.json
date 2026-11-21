@@ -874,7 +874,15 @@
       "upload": {
         "heading": "Upload your guests list",
         "instruction": "Drag and drop your .csv or .xlsx file here, or click to browse",
-        "replace": "Replace file"
+        "replace": "Replace file",
+        "orDivider": "or"
+      },
+      "template": {
+        "title": "Don't have a guest list file yet?",
+        "description": "Download our template, fill in your guests' details and upload it here",
+        "download": "Download the template",
+        "downloading": "Preparing the file…",
+        "downloadFailed": "Couldn't download the template"
       },
       "analyze": {
         "heading": "Analyzing your file…",
@@ -996,7 +1004,6 @@
           "firstRowHint": "First row = column headers",
           "whatYouCanImport": "What you can import",
           "columnsNote": "Column names don't have to be exact - detection is automatic.",
-          "downloadTemplate": "Download template",
           "orDivider": "or",
           "driveButtonTitle": "Choose from Google Drive",
           "driveButtonSubtitle": "One-time connection to your Google account",
