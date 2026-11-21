@@ -1245,7 +1245,8 @@
         "upload": "העלאת קובץ",
         "add": "הוספת אורח",
         "drive": "Google Drive",
-        "whatsapp": "וואטסאפ"
+        "whatsapp": "וואטסאפ",
+        "whatsappMobile": "העלאה דרך WhatsApp"
       },
       "columns": {
         "name": "שם",
