@@ -36,6 +36,7 @@ import {
 import { transportationSummary } from '@/features/guests/utils/transportation-summary';
 import { cn } from '@/lib/utils';
 import { useIplanExportOptions } from '@/features/guests/hooks/use-iplan-export-options';
+import { useGuestTemplateDownload } from '@/features/guests/hooks/use-guest-template-download';
 import { PackageLine } from '../package';
 import { RsvpMeterBar } from '../rsvp-meter-bar';
 
@@ -295,10 +296,7 @@ function ImportMenu({
   const t = useTranslations('guests.list.importMenu');
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
-  const templateHref =
-    locale === 'he'
-      ? '/templates/guest-import-template-he.csv'
-      : '/templates/guest-import-template-en.csv';
+  const template = useGuestTemplateDownload();
 
   return (
     <DropdownMenu dir={dir}>
@@ -346,12 +344,11 @@ function ImportMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator className="my-1.5" />
         <DropdownMenuItem
-          asChild
+          onClick={template.download}
+          disabled={template.isDownloading}
           className="text-primary focus:text-primary px-2.5 py-1.5 text-[12.5px] font-semibold"
         >
-          <a href={templateHref} download>
-            {t('sample')}
-          </a>
+          {t('sample')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

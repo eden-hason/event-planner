@@ -874,7 +874,15 @@
       "upload": {
         "heading": "העלה את רשימת האורחים",
         "instruction": "גרור ושחרר את קובץ ה-.csv או ה-.xlsx לכאן, או לחץ לבחירה",
-        "replace": "החלף קובץ"
+        "replace": "החלף קובץ",
+        "orDivider": "או"
+      },
+      "template": {
+        "title": "עדיין אין לכם קובץ מוזמנים?",
+        "description": "הורידו את קובץ הטמפלט שלנו, מלאו את פרטי המוזמנים והעלו אותו למערכת בקלות",
+        "download": "הורדת הטמפלט",
+        "downloading": "מכין את הקובץ…",
+        "downloadFailed": "הורדת הטמפלט נכשלה"
       },
       "analyze": {
         "heading": "מנתח את הקובץ…",
@@ -996,7 +1004,6 @@
           "firstRowHint": "שורה ראשונה = כותרות עמודות",
           "whatYouCanImport": "מה אפשר לייבא",
           "columnsNote": "שמות העמודות לא חייבים להיות מדויקים - הזיהוי אוטומטי.",
-          "downloadTemplate": "הורדת תבנית",
           "orDivider": "או",
           "driveButtonTitle": "בחירה מ-Google Drive",
           "driveButtonSubtitle": "התחברות חד-פעמית לחשבון Google שלך",

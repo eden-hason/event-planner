@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import {
   IconBrandGoogleDrive,
   IconBrandWhatsapp,
@@ -21,6 +21,7 @@ import {
   type RsvpStatus,
 } from '@/features/guests/utils';
 import { useCreateGroup } from '@/features/guests/hooks/use-create-group';
+import { useGuestTemplateDownload } from '@/features/guests/hooks/use-guest-template-download';
 import type { IplanExportOption } from '@/features/guests/hooks/use-iplan-export-options';
 import {
   GUEST_SORT_KEYS,
@@ -259,11 +260,7 @@ export function ImportSheet({
   onImportWhatsApp: () => void;
 }) {
   const t = useTranslations('guests.list.importMenu');
-  const locale = useLocale();
-  const templateHref =
-    locale === 'he'
-      ? '/templates/guest-import-template-he.csv'
-      : '/templates/guest-import-template-en.csv';
+  const template = useGuestTemplateDownload();
   const run = (action: () => void) => () => {
     onClose();
     action();
@@ -299,13 +296,14 @@ export function ImportSheet({
           onClick={run(onImportWhatsApp)}
         />
       </div>
-      <a
-        href={templateHref}
-        download
-        className="text-primary flex min-h-11 items-center border-t pt-1 text-sm font-semibold"
+      <button
+        type="button"
+        onClick={template.download}
+        disabled={template.isDownloading}
+        className="text-primary flex min-h-11 items-center border-t pt-1 text-start text-sm font-semibold disabled:opacity-60"
       >
         {t('sample')}
-      </a>
+      </button>
     </MobileSheet>
   );
 }

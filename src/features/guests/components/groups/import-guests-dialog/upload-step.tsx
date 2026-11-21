@@ -1,8 +1,17 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { IconUpload, IconX, IconFileTypeCsv, IconFileTypeXls, IconRefresh } from '@tabler/icons-react';
+import {
+  IconUpload,
+  IconX,
+  IconFileTypeCsv,
+  IconFileTypeXls,
+  IconRefresh,
+  IconDownload,
+  IconFileSpreadsheet,
+} from '@tabler/icons-react';
 import { isExcelFile } from '@/features/guests/utils/parse-csv';
+import { useGuestTemplateDownload } from '@/features/guests/hooks/use-guest-template-download';
 import {
   FileUpload,
   FileUploadDropzone,
@@ -39,6 +48,7 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
   const locale = useLocale();
   const dir = locale === 'he' ? 'rtl' : 'ltr';
   const hasFile = files.length > 0;
+  const template = useGuestTemplateDownload();
 
   const handleFilesChange = (newFiles: File[]) => {
     onFilesChange(newFiles.slice(-1));
@@ -70,6 +80,43 @@ export function UploadStep({ files, onFilesChange }: UploadStepProps) {
           </div>
         </div>
       </FileUploadDropzone>
+
+      {/* The second way in: no file yet, so start from Kululu's template. */}
+      {!hasFile && (
+        <>
+          <div className="flex items-center gap-2.5">
+            <span className="bg-border h-px flex-1" />
+            <span className="text-muted-foreground text-xs">
+              {t('import.upload.orDivider')}
+            </span>
+            <span className="bg-border h-px flex-1" />
+          </div>
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <IconFileSpreadsheet />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{t('import.template.title')}</ItemTitle>
+              <ItemDescription>{t('import.template.description')}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={template.download}
+                disabled={template.isDownloading}
+              >
+                <IconDownload size={14} />
+                {template.isDownloading
+                  ? t('import.template.downloading')
+                  : t('import.template.download')}
+              </Button>
+            </ItemActions>
+          </Item>
+        </>
+      )}
 
       <FileUploadList>
         {files.map((file) => (
