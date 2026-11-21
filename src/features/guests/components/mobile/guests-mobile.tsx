@@ -13,6 +13,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import {
   IconArrowsSort,
   IconBrandGoogleDrive,
+  IconBrandWhatsapp,
   IconBus,
   IconDownload,
   IconFilter2,
@@ -277,6 +278,10 @@ export function GuestsMobile({
             <Button variant="outline" onClick={onImportDrive}>
               <IconBrandGoogleDrive size={18} />
               {t('list.empty.drive')}
+            </Button>
+            <Button variant="outline" onClick={onImportWhatsApp}>
+              <IconBrandWhatsapp size={18} />
+              {t('list.empty.whatsappMobile')}
             </Button>
           </div>
         </div>

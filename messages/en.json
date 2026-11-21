@@ -1245,7 +1245,8 @@
         "upload": "Upload a file",
         "add": "Add guest",
         "drive": "Google Drive",
-        "whatsapp": "WhatsApp"
+        "whatsapp": "WhatsApp",
+        "whatsappMobile": "Import from WhatsApp"
       },
       "columns": {
         "name": "Name",
