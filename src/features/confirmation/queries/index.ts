@@ -44,6 +44,8 @@ type EventRow = {
     dietary_types?: string[];
     lock_guest_count?: boolean;
     ask_transportation?: boolean;
+    transportation_wording?: string | null;
+    transportation_group_url?: string | null;
   } | null;
   invitations: { image_url?: string } | null;
   event_types: { key: string } | null;
@@ -91,6 +93,8 @@ function toEventView(event: EventRow): ConfirmationPageData['event'] {
           dietaryTypes: event.guests_experience.dietary_types,
           lockGuestCount: event.guests_experience.lock_guest_count,
           askTransportation: event.guests_experience.ask_transportation,
+          transportationWording: event.guests_experience.transportation_wording ?? null,
+          transportationGroupUrl: event.guests_experience.transportation_group_url ?? null,
         }
       : undefined,
     eventType: eventType.success ? eventType.data : undefined,

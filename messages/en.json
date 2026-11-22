@@ -2552,6 +2552,16 @@
       "sendTableNumbersDescription": "In the day-of reminder each guest gets their table number",
       "askTransportation": "Transportation",
       "askTransportationDescription": "Guests who confirm are asked whether they want transportation to the event",
+      "transportationWording": "Question wording",
+      "transportationWordingHint": "The question is about transportation - you can change how it's worded",
+      "transportationWordingReset": "Back to Kululu's wording",
+      "transportationWordingTooLong": "Up to {max} characters",
+      "transportationGroup": "Transportation group",
+      "transportationGroupHint": "Optional. A WhatsApp group link that guests who answer yes get in the summary and on the RSVP page",
+      "transportationGroupError": {
+        "notUrl": "Paste the full link, starting with https://",
+        "notWhatsAppGroup": "This is not a WhatsApp group invite link"
+      },
       "meal": {
         "vegetarian": "Vegetarian",
         "vegan": "Vegan",
@@ -2580,7 +2590,9 @@
         "meals": "Which meals to offer",
         "lockGuestCount": "Lock the invited count",
         "sendTableNumbers": "Send table numbers",
-        "askTransportation": "Ask about transportation"
+        "askTransportation": "Ask about transportation",
+        "transportationWording": "Transportation question wording",
+        "transportationGroupUrl": "Transportation group"
       }
     }
   },

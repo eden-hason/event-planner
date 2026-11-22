@@ -1,4 +1,5 @@
 import type { MessageMediaState } from '@/features/schedules';
+import { transportationWording } from './transportation-question';
 import type {
   EventApp,
   EventDetailsFormValues,
@@ -55,6 +56,13 @@ export function buildDefaultValues(
       lockGuestCount: event.guestExperience?.lockGuestCount ?? false,
       sendTableNumbers: event.guestExperience?.sendTableNumbers ?? false,
       askTransportation: event.guestExperience?.askTransportation ?? false,
+      // Starts on Kululu's wording when the Owner wrote none, so a small change
+      // is an edit rather than a retype.
+      transportationWording: transportationWording(
+        event.guestExperience?.transportationWording,
+        'chat',
+      ),
+      transportationGroupUrl: event.guestExperience?.transportationGroupUrl ?? '',
     },
   };
 }
@@ -85,7 +93,9 @@ export type ChangeKey =
   | 'meals'
   | 'lockGuestCount'
   | 'sendTableNumbers'
-  | 'askTransportation';
+  | 'askTransportation'
+  | 'transportationWording'
+  | 'transportationGroupUrl';
 
 /** In the order the page renders the fields, so the bar counts top to bottom. */
 const CHANGE_PATHS: ReadonlyArray<readonly [ChangeKey, readonly string[]]> = [
@@ -108,6 +118,8 @@ const CHANGE_PATHS: ReadonlyArray<readonly [ChangeKey, readonly string[]]> = [
   ['meals', ['guestExperience', 'dietaryTypes']],
   ['lockGuestCount', ['guestExperience', 'lockGuestCount']],
   ['askTransportation', ['guestExperience', 'askTransportation']],
+  ['transportationWording', ['guestExperience', 'transportationWording']],
+  ['transportationGroupUrl', ['guestExperience', 'transportationGroupUrl']],
 ];
 
 /**
@@ -177,6 +189,8 @@ const CHANGE_FIELDS: Record<ChangeKey, string> = {
   lockGuestCount: 'guestExperience',
   sendTableNumbers: 'guestExperience',
   askTransportation: 'guestExperience',
+  transportationWording: 'guestExperience',
+  transportationGroupUrl: 'guestExperience',
 };
 
 /**

@@ -2,12 +2,20 @@
 
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
-import { MessageSquareText } from 'lucide-react';
+import { MessageSquareText, RotateCcw } from 'lucide-react';
 import { Switch } from '@/components/ui/toggle-switch';
 import { FormControl, FormField } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { MealChoice } from '@/lib/meal-choices';
 import type { EventDetailsFormValues } from '../../schemas';
+import {
+  KULULU_TRANSPORTATION_WORDING,
+  ownerTransportationWording,
+  TRANSPORTATION_WORDING_MAX_LENGTH,
+  validateTransportationGroupUrl,
+} from '../../utils/transportation-question';
 import { SECTION_IDS } from './event-details-context';
 import { SectionCard } from './section-card';
 
@@ -71,6 +79,103 @@ function ToggleRow({
 }
 
 /**
+ * The Transportation Question's Question Wording and Transportation Group,
+ * inside the setting they belong to and only while it is on. Both are kept when
+ * the question is switched off, so turning it back on finds them as they were.
+ *
+ * The wording starts on Kululu's, so a small change is an edit rather than a
+ * retype; what is stored is decided on save (ownerTransportationWording).
+ */
+function TransportationDetails() {
+  const t = useTranslations('eventDetails.guestExperience');
+  const form = useFormContext<EventDetailsFormValues>();
+  const labelClasses = 'text-muted-foreground text-xs font-bold lg:text-[12.5px]';
+  const hintClasses = 'text-muted-foreground text-xs leading-snug';
+
+  return (
+    <div className="border-primary/15 bg-primary/5 animate-in fade-in-0 slide-in-from-top-1 flex flex-col gap-3.5 rounded-xl border p-[11px] duration-200 lg:p-3">
+      <FormField
+        control={form.control}
+        name="guestExperience.transportationWording"
+        render={({ field, fieldState }) => {
+          const edited = ownerTransportationWording(field.value) !== null;
+          return (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="transportation-wording" className={labelClasses}>
+                  {t('transportationWording')}
+                </label>
+                {edited && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      field.onChange(KULULU_TRANSPORTATION_WORDING)
+                    }
+                    className="text-primary focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded text-xs font-semibold outline-none focus-visible:ring-[3px]"
+                  >
+                    <RotateCcw className="size-3" />
+                    {t('transportationWordingReset')}
+                  </button>
+                )}
+              </div>
+              <FormControl>
+                <Textarea
+                  id="transportation-wording"
+                  // The Guest reads it in Hebrew; an Owner's own wording keeps
+                  // whatever direction it was typed in.
+                  dir="auto"
+                  rows={2}
+                  maxLength={TRANSPORTATION_WORDING_MAX_LENGTH}
+                  className="bg-card min-h-0 resize-none"
+                  {...field}
+                />
+              </FormControl>
+              <span className={cn(hintClasses, fieldState.error && 'text-destructive')}>
+                {fieldState.error
+                  ? t('transportationWordingTooLong', { max: TRANSPORTATION_WORDING_MAX_LENGTH })
+                  : t('transportationWordingHint')}
+              </span>
+            </div>
+          );
+        }}
+      />
+
+      <FormField
+        control={form.control}
+        name="guestExperience.transportationGroupUrl"
+        render={({ field, fieldState }) => {
+          const error = fieldState.error ? validateTransportationGroupUrl(field.value) : null;
+          return (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="transportation-group" className={labelClasses}>
+                {t('transportationGroup')}
+              </label>
+              <FormControl>
+                <Input
+                  id="transportation-group"
+                  // Text, not url: the browser's own check would refuse the save
+                  // before ours could say why.
+                  type="text"
+                  inputMode="url"
+                  dir="ltr"
+                  autoComplete="off"
+                  placeholder="https://chat.whatsapp.com/..."
+                  className="bg-card"
+                  {...field}
+                />
+              </FormControl>
+              <span className={cn(hintClasses, error && 'text-destructive')}>
+                {error ? t(`transportationGroupError.${error}`) : t('transportationGroupHint')}
+              </span>
+            </div>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+/**
  * The switches that change what a Guest is asked or told.
  *
  * None of them touch what the product can do - seating works whether or not
@@ -83,6 +188,7 @@ export function GuestExperienceSection() {
   const form = useFormContext<EventDetailsFormValues>();
 
   const mealsEnabled = form.watch('guestExperience.dietaryOptions');
+  const transportationEnabled = form.watch('guestExperience.askTransportation');
 
   const rowClasses = 'border-t py-[11px] lg:py-[13px]';
 
@@ -177,12 +283,13 @@ export function GuestExperienceSection() {
         />
       </div>
 
-      <div className={rowClasses}>
+      <div className={cn('flex flex-col gap-2.5 lg:gap-3', rowClasses)}>
         <ToggleRow
           name="guestExperience.askTransportation"
           title={t('askTransportation')}
           description={t('askTransportationDescription')}
         />
+        {transportationEnabled && <TransportationDetails />}
       </div>
     </SectionCard>
   );

@@ -28,6 +28,11 @@ import {
 import { RSVP_CLOSED_MESSAGE } from '../utils/rsvp-cutoff';
 import type { ConfirmationPageData } from '../schemas';
 import type { MealChoice } from '@/lib/meal-choices';
+// Deep import: a pure leaf module, and the events barrel carries Server Actions.
+import {
+  transportationGroupFor,
+  transportationWording,
+} from '@/features/events/utils/transportation-question';
 
 /**
  * The stepper's ceiling. A party larger than this is a conversation with the
@@ -173,6 +178,14 @@ export function ConfirmationExperience({
 
   const detailsOpen = choice === 'confirmed';
   const mealVisible = mealOptions.length > 0;
+  // The answer as the success state shows it - what is on file, or what was
+  // just sent - so the group follows the "yes" the Guest is looking at.
+  const transportationGroup = transportationGroupFor({
+    askTransportation,
+    groupUrl: event.guestExperience?.transportationGroupUrl,
+    rsvpStatus: choice,
+    needsTransportation: wantsTransport,
+  });
 
   const handleSubmit = async () => {
     if (!choice || pending) return;
@@ -399,6 +412,20 @@ export function ConfirmationExperience({
                 </>
               ) : null}
             </div>
+
+            {transportationGroup ? (
+              // The Transportation Group, for a confirmed "yes" however it was
+              // given. On a phone the link hands over to WhatsApp.
+              <a
+                href={transportationGroup}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-primary text-primary-foreground rsvp-reveal mt-7 box-border flex min-h-[54px] w-full items-center justify-center gap-2.5 rounded-xl px-4 text-base font-semibold tracking-[-0.01em] shadow-[0_6px_18px_-8px_var(--primary)]"
+                style={{ animationDelay: '0.34s' }}
+              >
+                הצטרפות לקבוצת ההסעה
+              </a>
+            ) : null}
 
             {event.rsvpOpen ? (
               <button
@@ -650,7 +677,7 @@ export function ConfirmationExperience({
                 {askTransportation ? (
                   // An opt-in, so a checkbox rather than a yes/no pair: the
                   // form saves on submit, and unticked is sent as "no".
-                  <label className="border-border mx-1 mt-[22px] flex min-h-[54px] cursor-pointer items-center gap-3 rounded-xl border bg-white px-4">
+                  <label className="border-border mx-1 mt-[22px] flex min-h-[54px] cursor-pointer items-center gap-3 rounded-xl border bg-white px-4 py-3">
                     <input
                       type="checkbox"
                       checked={wantsTransport}
@@ -668,7 +695,13 @@ export function ConfirmationExperience({
                     >
                       {wantsTransport ? <Check className="size-4" strokeWidth={3} /> : null}
                     </span>
-                    <span className="text-[15px] font-medium">מעוניינים בהסעה לאירוע</span>
+                    {/* The Owner's wording as written, line breaks and all. */}
+                    <span className="text-[15px] font-medium whitespace-pre-line">
+                      {transportationWording(
+                        event.guestExperience?.transportationWording,
+                        'checkbox',
+                      )}
+                    </span>
                   </label>
                 ) : null}
               </div>

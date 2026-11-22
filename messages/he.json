@@ -2552,6 +2552,16 @@
       "sendTableNumbersDescription": "בתזכורת ליום האירוע כל אורח מקבל את מספר השולחן שלו",
       "askTransportation": "הסעה",
       "askTransportationDescription": "אורחים שמאשרים הגעה נשאלים אם הם מעוניינים בהסעה לאירוע",
+      "transportationWording": "נוסח השאלה",
+      "transportationWordingHint": "השאלה תמיד על הסעה - אפשר לשנות את הניסוח",
+      "transportationWordingReset": "חזרה לנוסח של קולולו",
+      "transportationWordingTooLong": "עד {max} תווים",
+      "transportationGroup": "קבוצת הסעה",
+      "transportationGroupHint": "לא חובה. קישור לקבוצת וואטסאפ שאורחים שעונים כן מקבלים בסיכום ובעמוד אישור ההגעה",
+      "transportationGroupError": {
+        "notUrl": "צריך להדביק את הקישור המלא, שמתחיל ב-https://",
+        "notWhatsAppGroup": "זה לא קישור הצטרפות לקבוצת וואטסאפ"
+      },
       "meal": {
         "vegetarian": "צמחוני",
         "vegan": "טבעוני",
@@ -2580,7 +2590,9 @@
         "meals": "אילו מנות להציע",
         "lockGuestCount": "נעילת מספר המוזמנים",
         "sendTableNumbers": "שליחת מספרי שולחן",
-        "askTransportation": "שאלה על הסעה"
+        "askTransportation": "שאלה על הסעה",
+        "transportationWording": "נוסח שאלת ההסעה",
+        "transportationGroupUrl": "קבוצת ההסעה"
       }
     }
   },

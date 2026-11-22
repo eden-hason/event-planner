@@ -32,6 +32,8 @@ export type RoundDetail = {
   targetStatus: string | null;
   /** The Event asks the Transportation Question, so the caller asks it too. */
   askTransportation: boolean;
+  /** The Owner's Question Wording for it; null asks Kululu's. */
+  transportationWording: string | null;
   guests: RoundGuestRow[];
 };
 
@@ -52,7 +54,10 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
 
   const event = round.events as unknown as {
     title: string | null;
-    guests_experience: { ask_transportation?: boolean } | null;
+    guests_experience: {
+      ask_transportation?: boolean;
+      transportation_wording?: string | null;
+    } | null;
   } | null;
 
   // Label parity with the Owner app: the index runs over every schedule of the
@@ -135,6 +140,7 @@ export async function getRoundDetail(roundId: string): Promise<RoundDetail | nul
     completedAt: round.completed_at,
     targetStatus,
     askTransportation: event?.guests_experience?.ask_transportation ?? false,
+    transportationWording: event?.guests_experience?.transportation_wording ?? null,
     guests,
   };
 }
