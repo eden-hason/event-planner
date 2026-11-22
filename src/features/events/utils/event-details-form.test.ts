@@ -6,6 +6,8 @@ import {
   changedKeys,
   DEFAULT_MEAL_CHOICES,
 } from './event-details-form';
+import { eventDetailsUpdateToDb } from './event.transform';
+import { KULULU_TRANSPORTATION_WORDING } from './transportation-question';
 import type { EventApp } from '../schemas';
 
 const EVENT_ID = '11111111-1111-4111-8111-111111111111';
@@ -194,6 +196,8 @@ test('any guest experience edit sends the whole object', () => {
     lockGuestCount: true,
     sendTableNumbers: false,
     askTransportation: false,
+    transportationWording: KULULU_TRANSPORTATION_WORDING,
+    transportationGroupUrl: '',
   });
 });
 
@@ -213,11 +217,66 @@ test('the transportation question is its own change and keeps the rest', () => {
     lockGuestCount: true,
     sendTableNumbers: false,
     askTransportation: true,
+    transportationWording: KULULU_TRANSPORTATION_WORDING,
+    transportationGroupUrl: '',
   });
 });
 
 test('an event that never set the transportation question starts with it off', () => {
   assert.equal(buildDefaultValues(makeEvent()).guestExperience.askTransportation, false);
+});
+
+test('the question wording starts on Kululu\'s, or on the Owner\'s when there is one', () => {
+  assert.equal(
+    buildDefaultValues(makeEvent()).guestExperience.transportationWording,
+    KULULU_TRANSPORTATION_WORDING,
+  );
+  const owned = 'הסעה מרכבת השלום ב-17:00?';
+  const values = buildDefaultValues(
+    makeEvent({ guestExperience: { transportationWording: owned } }),
+  );
+  assert.equal(values.guestExperience.transportationWording, owned);
+});
+
+test('the wording and the group are their own changes, saved with the rest', () => {
+  const group = 'https://chat.whatsapp.com/AbC123xyz';
+  const values = buildDefaultValues(
+    makeEvent({ guestExperience: { askTransportation: true } }),
+  );
+  values.guestExperience.transportationWording = 'הסעה?';
+  values.guestExperience.transportationGroupUrl = group;
+  const keys = changedKeys(
+    { guestExperience: { transportationWording: true, transportationGroupUrl: true } },
+    { couple: true, hasCeremony: true },
+  );
+  assert.deepEqual(keys, ['transportationWording', 'transportationGroupUrl']);
+  const sent = JSON.parse(buildUpdateFields(values, keys, { couple: true }).guestExperience);
+  assert.equal(sent.askTransportation, true);
+  assert.equal(sent.transportationWording, 'הסעה?');
+  assert.equal(sent.transportationGroupUrl, group);
+});
+
+test('the wording and the group are stored, Kululu\'s wording and blanks as none', () => {
+  const group = 'https://chat.whatsapp.com/AbC123xyz';
+  const stored = (transportationWording: string, transportationGroupUrl: string) =>
+    eventDetailsUpdateToDb({
+      id: '00000000-0000-4000-8000-000000000000',
+      guestExperience: { askTransportation: false, transportationWording, transportationGroupUrl },
+    }).guests_experience;
+
+  // Kept while the question is off.
+  assert.deepEqual(stored(' הסעה? ', ` ${group} `), {
+    dietary_options: undefined,
+    dietary_types: undefined,
+    lock_guest_count: undefined,
+    send_table_numbers: undefined,
+    ask_transportation: false,
+    transportation_wording: 'הסעה?',
+    transportation_group_url: group,
+  });
+  assert.equal(stored(KULULU_TRANSPORTATION_WORDING, '')?.transportation_wording, null);
+  assert.equal(stored('', '')?.transportation_wording, null);
+  assert.equal(stored('', '')?.transportation_group_url, null);
 });
 
 test('the video and the media choice start from the event and its schedules', () => {

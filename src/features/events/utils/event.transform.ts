@@ -5,6 +5,10 @@ import {
   type Location,
   type InvitationsDb,
 } from '../schemas';
+import {
+  ownerTransportationWording,
+  storedTransportationGroupUrl,
+} from './transportation-question';
 
 // DB shape for guests_experience (snake_case)
 type GuestsExperienceDb = {
@@ -13,6 +17,8 @@ type GuestsExperienceDb = {
   lock_guest_count?: boolean;
   send_table_numbers?: boolean;
   ask_transportation?: boolean;
+  transportation_wording?: string | null;
+  transportation_group_url?: string | null;
 };
 
 // Type for event details update to DB
@@ -98,6 +104,13 @@ export function eventDetailsUpdateToDb(
       lock_guest_count: data.guestExperience.lockGuestCount,
       send_table_numbers: data.guestExperience.sendTableNumbers,
       ask_transportation: data.guestExperience.askTransportation,
+      // Blank, or Kululu's own text, is stored as no wording of the Owner's.
+      transportation_wording: ownerTransportationWording(
+        data.guestExperience.transportationWording,
+      ),
+      transportation_group_url: storedTransportationGroupUrl(
+        data.guestExperience.transportationGroupUrl,
+      ),
     };
   }
 

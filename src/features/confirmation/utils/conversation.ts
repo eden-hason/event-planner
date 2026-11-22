@@ -1,4 +1,9 @@
 import type { MealChoice } from '@/lib/meal-choices';
+// Deep import: a pure leaf module, and the events barrel carries Server Actions.
+import {
+  transportationGroupFor,
+  transportationWording,
+} from '@/features/events/utils/transportation-question';
 import {
   encodeConversationId,
   parseConversationId,
@@ -45,6 +50,10 @@ export type ConversationEvent = {
   mealOptions: MealOption[];
   /** Whether the Owner switched on the transportation question. */
   askTransportation: boolean;
+  /** The Owner's Question Wording for it; null asks Kululu's. */
+  transportationWording: string | null;
+  /** The Transportation Group's invite link, for a "yes"; null when there is none. */
+  transportationGroupUrl: string | null;
   /** False past the RSVP Cutoff. */
   rsvpOpen: boolean;
 };
@@ -250,7 +259,7 @@ function afterMeals(ctx: Ctx): OutgoingMessage {
   if (!ctx.event.askTransportation) return summary(ctx);
   return {
     kind: 'buttons',
-    body: 'מעוניינים בהסעה לאירוע? 🚌',
+    body: transportationWording(ctx.event.transportationWording, 'chat'),
     buttons: [
       { id: id(ctx, { type: 'transport', answer: true }), title: 'כן' },
       { id: id(ctx, { type: 'transport', answer: false }), title: 'לא' },
@@ -283,6 +292,18 @@ function summary(ctx: Ctx): OutgoingMessage {
   }
   if (event.askTransportation && guest.needsTransportation !== null) {
     lines.push(`הסעה: ${guest.needsTransportation ? 'כן' : 'לא'}`);
+  }
+  // In the body, so the summary keeps its one button; WhatsApp makes the link
+  // tappable. Shown every time the summary is, so a Guest who reopens it finds
+  // the group again.
+  const group = transportationGroupFor({
+    askTransportation: event.askTransportation,
+    groupUrl: event.transportationGroupUrl,
+    rsvpStatus: guest.rsvpStatus,
+    needsTransportation: guest.needsTransportation,
+  });
+  if (group) {
+    lines.push('', 'להצטרפות לקבוצת ההסעה בוואטסאפ:', group);
   }
 
   return { kind: 'buttons', body: lines.join('\n'), buttons: [change] };

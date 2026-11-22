@@ -2,6 +2,10 @@ import { z } from 'zod';
 // Deep import: a pure leaf module, and the schedules barrel carries the send path.
 import { parseMessagePlan } from '@/features/schedules/utils/message-plan-kind';
 import { EVENT_BILLING_STATUSES } from '@/features/billing/schemas';
+import {
+  TRANSPORTATION_WORDING_MAX_LENGTH,
+  validateTransportationGroupUrl,
+} from '../utils/transportation-question';
 
 // --- Location Schema ---
 export const LocationCoordsSchema = z.object({
@@ -110,6 +114,22 @@ export const GuestExperienceSchema = z.object({
   // Whether a confirming Guest is asked if they want transportation to the
   // Event. The answer lands on guests.needs_transportation.
   askTransportation: z.boolean().optional(),
+  // The Owner's Question Wording for it; absent or null asks Kululu's. Kept
+  // while the question is off.
+  transportationWording: z
+    .string()
+    .max(TRANSPORTATION_WORDING_MAX_LENGTH)
+    .nullable()
+    .optional(),
+  // The Transportation Group's invite link, shown to a confirmed "yes"; absent
+  // or null is no group. Kept while the question is off.
+  transportationGroupUrl: z
+    .string()
+    .refine((value) => validateTransportationGroupUrl(value) === null, {
+      message: 'The transportation group must be a WhatsApp group invite link',
+    })
+    .nullable()
+    .optional(),
 });
 
 export type GuestExperience = z.infer<typeof GuestExperienceSchema>;
@@ -121,6 +141,8 @@ export const GuestExperienceDbSchema = z.object({
   lock_guest_count: z.boolean().optional(),
   send_table_numbers: z.boolean().optional(),
   ask_transportation: z.boolean().optional(),
+  transportation_wording: z.string().nullable().optional(),
+  transportation_group_url: z.string().nullable().optional(),
 });
 
 export type GuestExperienceDb = z.infer<typeof GuestExperienceDbSchema>;
@@ -299,6 +321,8 @@ export function dbToAppTransformer(dbData: {
       lockGuestCount: dbData.guests_experience.lock_guest_count,
       sendTableNumbers: dbData.guests_experience.send_table_numbers,
       askTransportation: dbData.guests_experience.ask_transportation,
+      transportationWording: dbData.guests_experience.transportation_wording ?? null,
+      transportationGroupUrl: dbData.guests_experience.transportation_group_url ?? null,
     }
     : undefined;
 
@@ -416,6 +440,14 @@ export const EventDetailsFormSchema = z.object({
     lockGuestCount: z.boolean(),
     sendTableNumbers: z.boolean(),
     askTransportation: z.boolean(),
+    // The field starts on Kululu's wording, so the Owner edits from it; what
+    // gets stored is decided by ownerTransportationWording.
+    transportationWording: z.string().max(TRANSPORTATION_WORDING_MAX_LENGTH, 'tooLong'),
+    transportationGroupUrl: z
+      .string()
+      .refine((value) => validateTransportationGroupUrl(value) === null, {
+        message: 'notWhatsAppGroup',
+      }),
   }),
 });
 

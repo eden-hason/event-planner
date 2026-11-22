@@ -71,3 +71,5 @@ in the diff, not here.
 | [0038](0038-an-existing-event-cannot-move-to-the-new-plan.md) | An existing Event cannot move onto the new message plan | schedules / outreach | in progress |
 | [0039](0039-no-catch-up-send-on-the-current-message-plan.md) | An Event on the current Message Plan offers no Catch-up Send | schedules / outreach | open |
 | [0040](0040-a-separate-follow-up-image.md) | The Follow-ups cannot have a different image from the Invitation | schedules / events | open |
+| [0041](0041-owner-written-guest-questions.md) | An Owner can ask Guests only the questions Kululu built | confirmation / events | open |
+| [0042](0042-send-the-transportation-group-to-earlier-yeses.md) | A Guest who said yes before the Transportation Group existed is never sent it | confirmation / outreach | open |

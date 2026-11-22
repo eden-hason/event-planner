@@ -21,6 +21,8 @@ import {
 import { CALL_OUTCOMES, type CallOutcome } from '@/features/calls/types';
 import type { RoundDetail, RoundGuestRow } from '@/features/admin/queries/call-round';
 import { formatPhone } from '@/lib/phone';
+// Deep import: a pure leaf module, and the events barrel carries Server Actions.
+import { transportationWording } from '@/features/events/utils/transportation-question';
 import { cn } from '@/lib/utils';
 import { ADMIN_TIME_ZONE } from '@/lib/date-time';
 import { rsvpPresentation } from '@/features/guests';
@@ -516,6 +518,20 @@ export function CallingSurface({ round }: { round: RoundDetail }) {
             />
           )}
         </div>
+      )}
+
+      {askTransportation && (
+        // The question as the Guest reads it, so the Operator asks it the same
+        // way - an Owner's wording often carries the pickup point and time.
+        <p className="bg-card flex items-start gap-2 rounded-md border px-3 py-2 text-[13px]">
+          <Bus className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+          <span>
+            <span className="text-muted-foreground">שאלת ההסעה: </span>
+            <span className="whitespace-pre-line">
+              {transportationWording(round.transportationWording, 'chat')}
+            </span>
+          </span>
+        </p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">

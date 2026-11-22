@@ -23,3 +23,14 @@ export {
   resolveResumeStep,
   hasAnswered,
 } from './utils/onboarding-progress';
+export {
+  KULULU_TRANSPORTATION_WORDING,
+  KULULU_TRANSPORTATION_CHECKBOX_WORDING,
+  TRANSPORTATION_WORDING_MAX_LENGTH,
+  ownerTransportationWording,
+  transportationWording,
+  validateTransportationGroupUrl,
+  storedTransportationGroupUrl,
+  transportationGroupFor,
+  type TransportationGroupUrlError,
+} from './utils/transportation-question';

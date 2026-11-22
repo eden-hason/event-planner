@@ -29,6 +29,8 @@ const event = (overrides: Partial<ConversationEvent> = {}): ConversationEvent =>
   // Off by default, so every test that does not mention it is the flow as it
   // was before the transportation question existed.
   askTransportation: false,
+  transportationWording: null,
+  transportationGroupUrl: null,
   rsvpOpen: true,
   ...overrides,
 });
@@ -518,5 +520,73 @@ describe('endsConversation', () => {
         step({ type: 'mealQuestion', answer: false }, confirmed, event({ askTransportation: true })).reply,
       ),
     );
+  });
+});
+
+describe('transportation wording and group', () => {
+  const GROUP = 'https://chat.whatsapp.com/AbC123xyz';
+  const confirmed = guest({ rsvpStatus: 'confirmed', amount: 2 });
+  const asked = (reply: OutgoingMessage) => reply.body;
+
+  it('asks Kululu\'s wording when the Owner wrote none', () => {
+    const { reply } = step({ type: 'mealQuestion', answer: false }, confirmed, event({ askTransportation: true }));
+    assert.equal(asked(reply), 'מעוניינים בהסעה לאירוע? 🚌');
+  });
+
+  it('asks the Owner\'s wording as written, with the same two answers', () => {
+    const wording = 'הסעה מרכבת השלום ב-17:00\nשומרים לכם מקום?';
+    const { reply } = step(
+      { type: 'mealQuestion', answer: false },
+      confirmed,
+      event({ askTransportation: true, transportationWording: wording }),
+    );
+    assert.equal(asked(reply), wording);
+    assert.deepEqual(offered(reply), [
+      { type: 'transport', answer: true },
+      { type: 'transport', answer: false },
+    ]);
+  });
+
+  it('puts the group in the summary of a "yes", and keeps the one button', () => {
+    const { reply } = step(
+      { type: 'transport', answer: true },
+      confirmed,
+      event({ askTransportation: true, transportationGroupUrl: GROUP }),
+    );
+    assert.match(reply.body, /הסעה: כן/);
+    assert.match(reply.body, /להצטרפות לקבוצת ההסעה בוואטסאפ:\nhttps:\/\/chat\.whatsapp\.com\/AbC123xyz$/);
+    assert.deepEqual(offered(reply), [{ type: 'change' }]);
+    assert.ok(reply.body.length <= 1024);
+  });
+
+  it('shows no group once the Owner switched the question off', () => {
+    const { reply } = step(
+      { type: 'mealMore', more: false },
+      guest({ rsvpStatus: 'confirmed', mealCounts: { vegan: 1 }, needsTransportation: true }),
+      event({ transportationGroupUrl: GROUP, askTransportation: false }),
+    );
+    // A "yes" given before the switch went off: no question, and no group.
+    assert.doesNotMatch(reply.body, /chat\.whatsapp\.com/);
+  });
+
+  it('never shows the group to a "no", or with no group set', () => {
+    const no = step(
+      { type: 'transport', answer: false },
+      confirmed,
+      event({ askTransportation: true, transportationGroupUrl: GROUP }),
+    );
+    assert.doesNotMatch(no.reply.body, /chat\.whatsapp\.com/);
+
+    const none = step({ type: 'transport', answer: true }, confirmed, event({ askTransportation: true }));
+    assert.doesNotMatch(none.reply.body, /קבוצת ההסעה/);
+  });
+
+  it('never shows the group to a declined record', () => {
+    const { reply } = step(
+      { type: 'no' },
+      guest({ rsvpStatus: 'confirmed', needsTransportation: true }),
+      event({ askTransportation: true, transportationGroupUrl: GROUP }),
+    );
+    assert.doesNotMatch(reply.body, /chat\.whatsapp\.com/);
   });
 });

@@ -265,6 +265,8 @@ type EventRow = {
     dietary_types?: string[];
     lock_guest_count?: boolean;
     ask_transportation?: boolean;
+    transportation_wording?: string | null;
+    transportation_group_url?: string | null;
   } | null;
   event_types: unknown;
 };
@@ -287,6 +289,8 @@ function toConversationEvent(event: EventRow): ConversationEvent {
         : null,
     ),
     askTransportation: event.guests_experience?.ask_transportation ?? false,
+    transportationWording: event.guests_experience?.transportation_wording ?? null,
+    transportationGroupUrl: event.guests_experience?.transportation_group_url ?? null,
     rsvpOpen: isRsvpOpen(event.event_date),
   };
 }
