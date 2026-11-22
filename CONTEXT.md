@@ -158,6 +158,15 @@ declines goes back to unanswered.
 The Owner may change its **Question Wording**, never its subject: it is always about
 transportation to the Event, and its answers are always yes or no.
 
+## Transportation Group
+
+The WhatsApp group an Owner runs for the Guests riding the transportation. A Guest Record
+whose answer to the Transportation Question is yes is invited to join it, whoever gave the
+answer - shown where the Guest next looks at their RSVP, never sent on its own. Kululu only
+points to the group; who is in it is the Owner's business in WhatsApp.
+
+_Avoid_: shuttle group, group link, WA link
+
 ## Question Wording
 
 What a Guest is asked, in the words the Guest reads - as opposed to the short name the
