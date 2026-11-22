@@ -155,6 +155,19 @@ confirmed. Unanswered is its own state, never a "no": a Guest who
 stops the conversation before it, or one confirmed some other way. A Guest Record that
 declines goes back to unanswered.
 
+The Owner may change its **Question Wording**, never its subject: it is always about
+transportation to the Event, and its answers are always yes or no.
+
+## Question Wording
+
+What a Guest is asked, in the words the Guest reads - as opposed to the short name the
+Owner and Operators see it by in the guest list ("הסעה"). Kululu has its own wording for
+each question; an Owner may write theirs instead, and an Owner's wording left blank is
+none, so Kululu's is asked.
+
+_Avoid_: label, question label, prompt, question text, Kululu Wording (that is a
+Schedule's text)
+
 ## Occasion Phrase
 
 How an Event is named inside a message sent for it - "חתונה של נועה ודורון", "בר המצווה
