@@ -51,6 +51,11 @@ export type GuestDeliveryStep = {
    * arrived (ADR 0052). Delivered on their word, so never read.
    */
   byHand?: true;
+  /**
+   * Reached by Reply: the Guest replied to this message, so it reached them
+   * whatever WhatsApp reported (ADR 0057). Its delivery time is the reply's.
+   */
+  byReply?: true;
   sentAt?: string;
   deliveredAt?: string;
   readAt?: string;
@@ -154,6 +159,8 @@ export type DeliveryAttemptRow = {
   sent_at: string | null;
   delivered_at: string | null;
   read_at: string | null;
+  /** When the Guest replied to this message - proof it reached them (ADR 0057) */
+  replied_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -163,15 +170,21 @@ export function toDeliverySteps(attempts: DeliveryAttemptRow[] | null): GuestDel
   return (attempts ?? [])
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .map((attempt) => ({
-      channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
-      fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
-      ...(isHandTrigger(attempt.triggered_by) ? { byHand: true as const } : {}),
-      sentAt: attempt.sent_at ?? undefined,
-      deliveredAt: attempt.delivered_at ?? undefined,
-      readAt: attempt.read_at ?? undefined,
-      failedAt: attempt.status === 'failed' ? attempt.updated_at : undefined,
-    }));
+    .map((attempt) => {
+      // A reply outranks what WhatsApp reported: the message arrived. Its
+      // failure stays an Operator fact, so the Owner is not shown one.
+      const replied = attempt.replied_at ?? undefined;
+      return {
+        channel: attempt.channel === 'sms' ? 'sms' : 'whatsapp',
+        fallback: isSmsFallbackTrigger(attempt.triggered_by) ? reason : null,
+        ...(isHandTrigger(attempt.triggered_by) ? { byHand: true as const } : {}),
+        ...(replied && !attempt.delivered_at ? { byReply: true as const } : {}),
+        sentAt: attempt.sent_at ?? undefined,
+        deliveredAt: attempt.delivered_at ?? replied,
+        readAt: attempt.read_at ?? undefined,
+        failedAt: attempt.status === 'failed' && !replied ? attempt.updated_at : undefined,
+      };
+    });
 }
 
 /**

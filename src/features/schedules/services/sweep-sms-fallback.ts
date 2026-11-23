@@ -102,14 +102,16 @@ export function freezeDecision(params: {
  * an SMS the sweeper is withholding.
  */
 export function scheduleFreeze(
-  attempts: Pick<AttemptRow, 'channel' | 'status' | 'error_code'>[],
+  attempts: (Pick<AttemptRow, 'channel' | 'status' | 'error_code'> & { replied_at?: string | null })[],
 ): { frozen: boolean; reason: string | null } {
   const config = sendingConfig();
   const whatsAppAttempts = attempts.filter((a) => a.channel === 'whatsapp');
   return freezeDecision({
     totalAttempts: whatsAppAttempts.length,
     guestLevelFailures: whatsAppAttempts.filter(
-      (a) => a.status === 'failed' && classifyWhatsAppFailure(a.error_code) === 'guest',
+      // A failure the Guest then replied to was no failure of their number (ADR 0057).
+      (a) =>
+        a.status === 'failed' && !a.replied_at && classifyWhatsAppFailure(a.error_code) === 'guest',
     ).length,
     freezePct: config.smsFallbackFreezePct,
     freezeMin: config.smsFallbackFreezeMin,
@@ -401,7 +403,7 @@ async function evaluateSchedule(
         supabase
           .from('message_delivery_attempts')
           .select(
-            'id, delivery_id, status, channel, error_code, created_at, updated_at, message_deliveries!inner(schedule_id)',
+            'id, delivery_id, status, channel, error_code, replied_at, created_at, updated_at, message_deliveries!inner(schedule_id)',
           )
           .eq('message_deliveries.schedule_id', scheduleId)
           .order('id')

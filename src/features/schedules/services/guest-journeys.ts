@@ -26,7 +26,7 @@ export type GuestJourneyDelivery = {
 export type GuestAnswer = { channel: string | null; at: string };
 
 const ATTEMPTS =
-  'channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at';
+  'channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, replied_at, created_at, updated_at';
 
 /**
  * Every Delivery one Guest Record has, each read the way the Schedule Results
@@ -110,7 +110,7 @@ export async function loadGuestJourneys(
       failedSchedules.map(async (scheduleId) => {
         const { data } = await supabase
           .from('message_delivery_attempts')
-          .select('channel, status, error_code, message_deliveries!inner(schedule_id)')
+          .select('channel, status, error_code, replied_at, message_deliveries!inner(schedule_id)')
           .eq('message_deliveries.schedule_id', scheduleId);
         return [scheduleId, scheduleFreeze(data ?? []).frozen] as const;
       }),

@@ -27,25 +27,19 @@ test('a message reads as its ticks: received, read', () => {
   assert.equal(messageState(row({ delivery: 'sms' })), 'received');
 });
 
-test('on its way is sent once accepted, and pending before any attempt', () => {
-  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [wa] })), 'sent');
-  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [] })), 'pending');
-});
-
-test('a WhatsApp withheld for the marketing limits reads as on its way, like a Fallback still to go', () => {
-  // The Marketing Cap Retry holds it: the only attempt failed, the retry is
-  // still ours to send. Nothing is out with WhatsApp, so it is not "sent".
-  const withheld = { ...wa, failedAt: '2026-09-21T10:00:05Z' };
-  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [withheld] })), 'pending');
-  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [withheld] })), 'pending');
-  // The retry went out and WhatsApp has it: sent.
-  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [withheld, wa] })), 'sent');
-});
-
-test('an SMS on the way is sent once accepted, pending while the Fallback is still to go', () => {
-  const failedWa = { ...wa, failedAt: '2026-09-21T10:01:00Z' };
-  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa, sms] })), 'sent');
-  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa] })), 'pending');
+test('anything on its way reads the same, on either channel, whatever is between', () => {
+  const failedWa = { ...wa, failedAt: '2026-09-21T10:00:05Z' };
+  const on = (delivery: Row['delivery'], steps: Row['steps']) => messageState(row({ delivery, steps }));
+  // Reserved, nothing attempted yet
+  assert.equal(on('on_its_way', []), 'pending');
+  // WhatsApp accepted it, the phone has not confirmed
+  assert.equal(on('on_its_way', [wa]), 'pending');
+  // WhatsApp withheld it for its marketing limits, a retry is coming
+  assert.equal(on('on_its_way', [failedWa]), 'pending');
+  // An SMS Fallback still to go out
+  assert.equal(on('sms_on_its_way', [failedWa]), 'pending');
+  // An SMS the provider accepted, its report not back
+  assert.equal(on('sms_on_its_way', [failedWa, sms]), 'pending');
 });
 
 test('a failure, and the records nothing was sent to, keep their reason', () => {

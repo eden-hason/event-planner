@@ -2100,6 +2100,7 @@
         "sentFallbackUnconfirmedMeta": "כי וואטסאפ עדיין לא אישר מסירה",
         "delivered": "נמסר",
         "deliveredMeta": "הטלפון אישר קבלה",
+        "deliveredByReplyMeta": "האורח ענה להודעה",
         "deliveredByHand": "נמסר על ידי צוות Kululu",
         "deliveredByHandMeta": "הצוות שלנו שלח את ההודעה ידנית אחרי שהיא לא הגיעה",
         "seen": "נקרא",

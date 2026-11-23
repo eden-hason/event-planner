@@ -2100,6 +2100,7 @@
         "sentFallbackUnconfirmedMeta": "Because WhatsApp hadn't confirmed delivery",
         "delivered": "Delivered",
         "deliveredMeta": "The phone confirmed it",
+        "deliveredByReplyMeta": "The guest replied to the message",
         "deliveredByHand": "Delivered by the Kululu team",
         "deliveredByHandMeta": "Our team sent it by hand after it didn't arrive",
         "seen": "Seen",
