@@ -15,12 +15,18 @@ export function isHandTrigger(triggeredBy: string | null | undefined): boolean {
 /**
  * A WhatsApp click-to-chat link that opens a chat with `phoneE164` on whatever
  * device the Operator is on, with `text` typed in and not yet sent - or an
- * empty chat when there is no text. wa.me wants the number as digits alone,
- * with no `+`.
+ * empty chat when there is no text. The number goes as digits alone, with no
+ * `+`.
+ *
+ * It points at api.whatsapp.com/send rather than wa.me: wa.me answers with a
+ * redirect that re-encodes the text and mangles every character outside the
+ * Basic Multilingual Plane, so the message's emojis (🎉 📅 📍) arrived in the
+ * chat as "�". The send endpoint takes the text as given.
  */
 export function whatsappChatUrl(phoneE164: string, text: string | null): string {
-  const chat = `https://wa.me/${phoneE164.replace(/\D/g, '')}`;
-  return text ? `${chat}?text=${encodeURIComponent(text)}` : chat;
+  const params = new URLSearchParams({ phone: phoneE164.replace(/\D/g, '') });
+  if (text) params.set('text', text);
+  return `https://api.whatsapp.com/send?${params.toString().replace(/\+/g, '%20')}`;
 }
 
 /** Whether an Operator recorded a Hand Delivery among these attempts */
