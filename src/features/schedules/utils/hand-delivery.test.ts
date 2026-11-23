@@ -4,19 +4,35 @@ import { describe, it } from 'node:test';
 import { carriesReadReceipt, handDeliveryRefusal, whatsappChatUrl } from './hand-delivery';
 
 describe('whatsappChatUrl', () => {
+  const text = 'נשמח לראותכם 🎉\n\n📅 יום רביעי\n📍 אמרלד, בית שמש\nלאישור הגעה: https://kululu.app/c/abc?x=1&y=2';
+
   it('opens a chat with the number as digits and the text encoded', () => {
     assert.equal(
       whatsappChatUrl('+972501234567', 'שלום\nלאישור הגעה: https://kululu.app/c/abc'),
-      `https://wa.me/972501234567?text=${encodeURIComponent('שלום\nלאישור הגעה: https://kululu.app/c/abc')}`,
+      `https://api.whatsapp.com/send?phone=972501234567&text=${encodeURIComponent('שלום\nלאישור הגעה: https://kululu.app/c/abc')}`,
     );
   });
 
+  it('does not go through the wa.me redirect, which mangles emojis', () => {
+    assert.doesNotMatch(whatsappChatUrl('+972501234567', text), /wa\.me/);
+  });
+
+  it('keeps emojis, line breaks and the link intact', () => {
+    const url = new URL(whatsappChatUrl('+972501234567', text));
+    assert.equal(url.searchParams.get('text'), text);
+    assert.match(url.search, /%F0%9F%8E%89/);
+  });
+
+  it('encodes spaces as %20, not +', () => {
+    assert.doesNotMatch(whatsappChatUrl('+972501234567', 'a b'), /\+/);
+  });
+
   it('opens an empty chat when there is no text', () => {
-    assert.equal(whatsappChatUrl('+972501234567', null), 'https://wa.me/972501234567');
+    assert.equal(whatsappChatUrl('+972501234567', null), 'https://api.whatsapp.com/send?phone=972501234567');
   });
 
   it('keeps a number from abroad', () => {
-    assert.match(whatsappChatUrl('+12125550100', 'hi'), /^https:\/\/wa\.me\/12125550100\?/);
+    assert.equal(new URL(whatsappChatUrl('+12125550100', 'hi')).searchParams.get('phone'), '12125550100');
   });
 });
 
