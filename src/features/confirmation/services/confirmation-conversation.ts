@@ -593,6 +593,30 @@ async function handleTypedText(
   await finish(supabase, claimId, { deliveryId: latest.id as string, result });
 }
 
+/**
+ * Reached by Reply (ADR 0057): a reply that quotes one of our WhatsApp
+ * messages - a quick-reply tap always does - proves that message reached the
+ * Guest, whatever WhatsApp reported about it. The first reply is recorded on
+ * the attempt beside WhatsApp's own status, and the roll-up reads it as
+ * Delivered. A reply quoting anything else - our answers in the conversation,
+ * an Owner Message - matches no attempt and records nothing. Best effort: the
+ * answer itself matters more than this fact, so a failure is only logged.
+ */
+async function recordReplyProof(
+  supabase: SupabaseClient,
+  message: InboundWhatsAppMessage,
+): Promise<void> {
+  const quotedId = message.context?.id;
+  if (!quotedId) return;
+  const { error } = await supabase
+    .from('message_delivery_attempts')
+    .update({ replied_at: new Date().toISOString() })
+    .eq('channel', 'whatsapp')
+    .eq('external_message_id', quotedId)
+    .is('replied_at', null);
+  if (error) console.error(`${TAG} Could not record the reply on its message:`, error);
+}
+
 // --- Entry point -------------------------------------------------------------
 
 export async function handleInboundWhatsAppMessage(
@@ -609,6 +633,8 @@ export async function handleInboundWhatsAppMessage(
 
   const claimed = await claim(supabase, message, tap?.title ?? text);
   if (!claimed) return;
+
+  await recordReplyProof(supabase, message);
 
   // An Owner tapping a button on Kululu's own message to them (ADR 0049), not
   // a Guest answering. Checked first, so an Owner who is also a Guest on their

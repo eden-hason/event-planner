@@ -581,6 +581,18 @@ falls back to Failed. An answer the Guest gave meanwhile stays theirs.
 _Avoid_: manual delivery, manual send (a "manual" attempt is an Operator's resend through
 Kululu's own WhatsApp)
 
+## Reached by Reply
+
+A WhatsApp message the Guest replied to - tapped its quick reply, or answered quoting it - so it
+reached them, whatever WhatsApp reported. WhatsApp's report stays on the Delivery Attempt as it
+came; the reply sits beside it, and the Delivery is Delivered from the reply's time. The Owner
+sees it as delivered because the guest replied, with no failure before it.
+
+A typed text that quotes nothing, and an answer on the RSVP page, prove nothing about the
+message and do not count.
+
+_Avoid_: delivered by RSVP, implicit delivery
+
 ## Guest-level Failure
 
 A failed Delivery Attempt caused by the Guest's own number - it is not on WhatsApp, it is

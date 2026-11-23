@@ -100,7 +100,9 @@ export function GuestJourneySteps({
       case 'delivered':
         return {
           label: t('journey.delivered'),
-          meta: t('journey.deliveredMeta'),
+          meta: step.byReply
+            ? t('journey.deliveredByReplyMeta')
+            : t('journey.deliveredMeta'),
         };
       case 'delivered_by_hand':
         return {

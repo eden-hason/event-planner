@@ -9,9 +9,14 @@ import type { GuestInteractionRow } from '../queries/guest-interactions';
  * Where a guest's message stands, in the words of a messaging app's ticks
  * rather than the Delivery's own states (CONTEXT.md, Delivery):
  *
- * - `pending`  nothing accepted yet - a Delivery reserved but not attempted, or
- *              an SMS Fallback still to go out
- * - `sent`     accepted and not confirmed (Sent): one tick
+ * - `pending`  on its way, on either channel: no receipt yet from the phone,
+ *              whatever is between - WhatsApp or the SMS provider holding it,
+ *              a Marketing Cap Retry or an SMS Fallback still to go out, or a
+ *              Delivery reserved but not attempted. The Owner waits the same
+ *              way for all of them, so the column says one thing - the same
+ *              guests the "on its way" filter finds
+ * - `sent`     a message that left, as a step in its activity - never the
+ *              column's state, since "sent" alone does not say it arrived
  * - `received` reached the phone on either channel (Delivered): two ticks
  * - `read`     a WhatsApp read receipt, or an answer, which implies one (Read)
  * - `failed`   every attempt failed and nothing further is pending
@@ -37,14 +42,8 @@ export function messageState(row: GuestInteractionRow): MessageState {
     case 'sms':
       return 'received';
     case 'on_its_way':
-      // No attempt recorded yet: reserved just before sending
-      return row.steps.length > 0 ? 'sent' : 'pending';
     case 'sms_on_its_way':
-      // An SMS accepted and awaiting its report is sent; a Fallback the
-      // sweeper has yet to send is still to go.
-      return row.steps.some((step) => step.channel === 'sms' && !step.failedAt)
-        ? 'sent'
-        : 'pending';
+      return 'pending';
     case 'not_delivered':
       return 'failed';
     default:
@@ -240,6 +239,8 @@ export type JourneyStep = {
   channel?: 'whatsapp' | 'sms';
   /** Why a `sent` is an SMS Fallback; absent or null when it is not one */
   fallback?: SmsFallbackReason | null;
+  /** A `delivered` known from the Guest's reply, not a receipt (ADR 0057) */
+  byReply?: true;
   guestCount?: number;
   mealCounts?: Record<string, number>;
 };
@@ -277,6 +278,7 @@ export function buildJourney(row: GuestInteractionRow): JourneyStep[] {
         kind: 'delivered',
         at: step.deliveredAt,
         channel: step.channel,
+        ...(step.byReply ? { byReply: true as const } : {}),
       });
     }
     if (step.channel === 'whatsapp' && step.readAt) {

@@ -93,7 +93,7 @@ export async function getScheduleInteractionData(
     supabase
       .from('message_deliveries')
       .select(
-        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
+        'id, guest_id, status, not_sent_reason, sent_at, read_at, delivery_method, guests!inner(name, amount, phone_number, rsvp_status, rsvp_changed_at), message_delivery_attempts(channel, status, error_code, triggered_by, sent_at, delivered_at, read_at, replied_at, created_at, updated_at, message_templates(requires_rsvp_ask))',
       )
       .eq('schedule_id', scheduleId),
     supabase

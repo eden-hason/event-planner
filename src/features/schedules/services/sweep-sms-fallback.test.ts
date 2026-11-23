@@ -92,6 +92,22 @@ test('the freeze counts WhatsApp attempts only', () => {
   assert.equal(scheduleFreeze(attempts).frozen, true);
 });
 
+test('a failure the Guest replied to is not counted toward the freeze', () => {
+  // WhatsApp said 131026, then the Guest tapped the message's button: their
+  // number was fine (ADR 0057). 12 of 20 failing would freeze; 9 of 20 do not.
+  const attempts = [
+    ...Array.from({ length: 9 }, () => ({ channel: 'whatsapp', status: 'failed', error_code: 131026 })),
+    ...Array.from({ length: 3 }, () => ({
+      channel: 'whatsapp',
+      status: 'failed',
+      error_code: 131026,
+      replied_at: '2026-11-23T08:03:16Z',
+    })),
+    ...Array.from({ length: 8 }, () => ({ channel: 'whatsapp', status: 'read', error_code: null })),
+  ];
+  assert.equal(scheduleFreeze(attempts).frozen, false);
+});
+
 test('no attempts cannot freeze', () => {
   assert.equal(
     freezeDecision({ totalAttempts: 0, guestLevelFailures: 0, ...THRESHOLDS }).frozen,
