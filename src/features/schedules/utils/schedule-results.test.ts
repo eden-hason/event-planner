@@ -32,6 +32,16 @@ test('on its way is sent once accepted, and pending before any attempt', () => {
   assert.equal(messageState(row({ delivery: 'on_its_way', steps: [] })), 'pending');
 });
 
+test('a WhatsApp withheld for the marketing limits reads as on its way, like a Fallback still to go', () => {
+  // The Marketing Cap Retry holds it: the only attempt failed, the retry is
+  // still ours to send. Nothing is out with WhatsApp, so it is not "sent".
+  const withheld = { ...wa, failedAt: '2026-09-21T10:00:05Z' };
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [withheld] })), 'pending');
+  assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [withheld] })), 'pending');
+  // The retry went out and WhatsApp has it: sent.
+  assert.equal(messageState(row({ delivery: 'on_its_way', steps: [withheld, wa] })), 'sent');
+});
+
 test('an SMS on the way is sent once accepted, pending while the Fallback is still to go', () => {
   const failedWa = { ...wa, failedAt: '2026-09-21T10:01:00Z' };
   assert.equal(messageState(row({ delivery: 'sms_on_its_way', steps: [failedWa, sms] })), 'sent');

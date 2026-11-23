@@ -37,14 +37,17 @@ export function messageState(row: GuestInteractionRow): MessageState {
     case 'sms':
       return 'received';
     case 'on_its_way':
-      // No attempt recorded yet: reserved just before sending
-      return row.steps.length > 0 ? 'sent' : 'pending';
-    case 'sms_on_its_way':
-      // An SMS accepted and awaiting its report is sent; a Fallback the
-      // sweeper has yet to send is still to go.
-      return row.steps.some((step) => step.channel === 'sms' && !step.failedAt)
+    case 'sms_on_its_way': {
+      // One rule for both channels: "sent" only while a message is out with
+      // the provider awaiting its receipt. When every attempt so far failed and
+      // the next send is still ours to make - a Fallback the sweeper has yet to
+      // send, a Marketing Cap Retry still to come, or nothing reserved yet -
+      // nothing has left, so it is still on its way.
+      const channel = row.delivery === 'sms_on_its_way' ? 'sms' : 'whatsapp';
+      return row.steps.some((step) => step.channel === channel && !step.failedAt)
         ? 'sent'
         : 'pending';
+    }
     case 'not_delivered':
       return 'failed';
     default:

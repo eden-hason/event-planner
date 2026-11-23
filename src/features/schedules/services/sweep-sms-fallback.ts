@@ -16,6 +16,7 @@ import {
 } from '../utils/marketing-cap-retry';
 import type { SendWindow } from '../utils/send-window';
 import { sendingConfig } from '@/lib/config/sending';
+import { pageAll } from '@/lib/supabase/row-cap';
 
 /**
  * The automatic half of the SMS Fallback (ADR 0016), for failed deliveries and
@@ -376,34 +377,43 @@ async function evaluateSchedule(
   const config = sendingConfig();
   const nothing = { scheduleId, sentCount: 0 };
 
-  const [{ data: deliveryRows, error: deliveryError }, { data: scheduleRow, error: scheduleError }] =
+  // Both reads are paged past `max_rows`, and the attempts are found through
+  // their Delivery's Schedule rather than a list of Delivery ids: an `in.(...)`
+  // of 681 ids is a 25KB URL, which the API gateway refuses with a bare 400.
+  // That failed every sweep of a 681-guest Schedule on 2026-11-23, so none of
+  // its failed guests got their SMS.
+  const [deliveryRows, { data: scheduleRow, error: scheduleError }, attemptRows] =
     await Promise.all([
-      supabase
-        .from('message_deliveries')
-        .select('id, status, next_attempt_at, guests(rsvp_status, rsvp_changed_at)')
-        .eq('schedule_id', scheduleId),
+      pageAll((from, to) =>
+        supabase
+          .from('message_deliveries')
+          .select('id, status, next_attempt_at, guests(rsvp_status, rsvp_changed_at)')
+          .eq('schedule_id', scheduleId)
+          .order('id')
+          .range(from, to),
+      ),
       supabase
         .from('schedules')
         .select('schedule_types(key), events(event_date)')
         .eq('id', scheduleId)
         .maybeSingle(),
+      pageAll((from, to) =>
+        supabase
+          .from('message_delivery_attempts')
+          .select(
+            'id, delivery_id, status, channel, error_code, created_at, updated_at, message_deliveries!inner(schedule_id)',
+          )
+          .eq('message_deliveries.schedule_id', scheduleId)
+          .order('id')
+          .range(from, to),
+      ),
     ]);
-  if (deliveryError) throw deliveryError;
   if (scheduleError) throw scheduleError;
-  const deliveries = (deliveryRows ?? []) as unknown as SettleDeliveryRow[];
+  const deliveries = deliveryRows as unknown as SettleDeliveryRow[];
   if (deliveries.length === 0) {
     return { ...nothing, outcome: 'nothing_eligible', reason: 'No deliveries' };
   }
-
-  const { data: attemptRows, error: attemptError } = await supabase
-    .from('message_delivery_attempts')
-    .select('delivery_id, status, channel, error_code, created_at, updated_at')
-    .in(
-      'delivery_id',
-      deliveries.map((row) => row.id),
-    );
-  if (attemptError) throw attemptError;
-  const attempts = (attemptRows ?? []) as AttemptRow[];
+  const attempts = attemptRows as unknown as AttemptRow[];
 
   const { queuedDeliveries, pendingAttempts, lastActivityAt } = settleInputs(
     deliveries,
@@ -474,7 +484,9 @@ export async function sweepSmsFallback(
       results.push({
         scheduleId,
         outcome: 'failed',
-        reason: error instanceof Error ? error.message : 'Fallback sweep failed',
+        // A Supabase error is a plain object, not an Error: read its message too,
+        // or the log says only that the sweep failed and never why.
+        reason: errorMessage(error),
         sentCount: 0,
       });
     }
@@ -488,4 +500,10 @@ export async function sweepSmsFallback(
   }
 
   return { considered: results.length, sent, results };
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  const message = (error as { message?: unknown } | null)?.message;
+  return typeof message === 'string' && message ? message : 'Fallback sweep failed';
 }
