@@ -214,12 +214,19 @@ export async function GroupEngagementCard({ eventId }: { eventId: string }) {
   );
 }
 
+/**
+ * Rows Recent Activity shows. In the wide bento it fills the whole end column,
+ * as tall as the donut and group cards stacked, so it lists more there.
+ */
+const ACTIVITY_ROWS = 4;
+const ACTIVITY_ROWS_WIDE = 7;
+
 export async function RecentActivityCard({ eventId }: { eventId: string }) {
   const [t, tActivity, format, activity] = await Promise.all([
     getTranslations('home.mobile.analytics'),
     getTranslations('home.recentActivity'),
     getFormatter(),
-    getRecentRsvpActivity(eventId, 4),
+    getRecentRsvpActivity(eventId, ACTIVITY_ROWS_WIDE),
   ]);
   const now = new Date();
 
@@ -237,7 +244,7 @@ export async function RecentActivityCard({ eventId }: { eventId: string }) {
         )}
       </div>
       {activity.length > 0 ? (
-        activity.map((row) => {
+        activity.map((row, index) => {
           const presentation = rsvpPresentation(row.rsvpStatus);
           const action =
             row.rsvpStatus === 'confirmed'
@@ -246,7 +253,13 @@ export async function RecentActivityCard({ eventId }: { eventId: string }) {
                 ? tActivity('declinedInvitation')
                 : tActivity('updatedRsvp');
           return (
-            <div key={row.id} className="border-border flex items-center gap-3 border-t px-4 py-[11px]">
+            <div
+              key={row.id}
+              className={cn(
+                'border-border items-center gap-3 border-t px-4 py-[11px]',
+                index < ACTIVITY_ROWS ? 'flex' : 'home-wide:flex hidden',
+              )}
+            >
               <span
                 className={cn(
                   'flex size-[34px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold',

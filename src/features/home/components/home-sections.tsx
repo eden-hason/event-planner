@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { cn } from '@/lib/utils';
 import { HomeHero } from './home-hero';
 import { FeaturedActionsSection } from './featured-actions-section';
 import { StatusStripSection } from './status-strip-section';
@@ -22,15 +23,23 @@ async function SectionError() {
 
 function Section({
   fallback,
+  className,
   children,
 }: {
   fallback: ReactNode;
+  /** Wraps the section in a box that its card (or skeleton) fills, for grid placement. */
+  className?: string;
   children: ReactNode;
 }) {
-  return (
+  const section = (
     <SectionErrorBoundary fallback={<SectionError />}>
       <Suspense fallback={fallback}>{children}</Suspense>
     </SectionErrorBoundary>
+  );
+  return className ? (
+    <div className={cn('flex flex-col *:flex-1', className)}>{section}</div>
+  ) : (
+    section
   );
 }
 
@@ -57,16 +66,29 @@ export function HomeSections({ eventId }: { eventId: string }) {
         <Section fallback={<ListSkeleton rows={1} />}>
           <StatusStripSection eventId={eventId} />
         </Section>
-        {/* Two columns from wide up, top-aligned, so expanding one card's rows
-            never stretches its neighbour. */}
-        <div className="home-wide:grid home-wide:grid-cols-2 home-wide:items-start home-wide:gap-3 flex flex-col gap-[22px]">
-          <Section fallback={<CardSkeleton height={176} />}>
+        {/* A bento from wide up: the RSVP donut over the group breakdown in the
+            start column, Recent Activity filling the whole end column. Every
+            card fills its cell so both columns share one top and bottom edge;
+            the donut keeps its natural height and the group card's `1fr` row
+            takes up any difference. Expanding the group rows grows the
+            activity card with it rather than leaving a hole. */}
+        <div className="home-wide:grid home-wide:grid-cols-2 home-wide:grid-rows-[auto_1fr] home-wide:gap-3 flex flex-col gap-[22px]">
+          <Section
+            className="home-wide:col-start-1 home-wide:row-start-1"
+            fallback={<CardSkeleton height={176} />}
+          >
             <RsvpDonutCard eventId={eventId} />
           </Section>
-          <Section fallback={<CardSkeleton />}>
+          <Section
+            className="home-wide:col-start-1 home-wide:row-start-2"
+            fallback={<CardSkeleton />}
+          >
             <GroupEngagementCard eventId={eventId} />
           </Section>
-          <Section fallback={<CardSkeleton height={220} />}>
+          <Section
+            className="home-wide:col-start-2 home-wide:row-span-2 home-wide:row-start-1"
+            fallback={<CardSkeleton height={220} />}
+          >
             <RecentActivityCard eventId={eventId} />
           </Section>
         </div>
