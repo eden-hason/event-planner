@@ -7,6 +7,8 @@ Date: 2026-11-23
 Accepted. Makes a second exception, after ADR 0052, to ADR 0011 (a Delivery Attempt keeps its
 own result): the attempt keeps it, but the Delivery no longer follows it alone.
 
+Amended by ADR 0058: an answer on the Delivery's own RSVP link counts as a reply too.
+
 ## Context
 
 On 2026-11-23 WhatsApp reported a Schedule's message to a Guest as failed with `131026`
@@ -36,7 +38,8 @@ message reached the Guest. This is **Reached by Reply**.
   so it does not count toward the Fallback Freeze.
 - **Only a quoting reply counts.** A typed text is attributed to the Guest's latest Delivery by
   their number, which proves nothing about that message. Answering on the RSVP page proves
-  nothing about WhatsApp either: the link may have come from anywhere.
+  nothing about WhatsApp either: the link may have come from anywhere. (Since ADR 0058, an answer on the
+  Delivery's own link does count - that link goes out only in its messages.)
 
 ## Alternatives rejected
 
