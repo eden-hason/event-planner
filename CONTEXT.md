@@ -583,10 +583,12 @@ Kululu's own WhatsApp)
 
 ## Reached by Reply
 
-A WhatsApp message the Guest replied to - tapped its quick reply, or answered quoting it - so it
-reached them, whatever WhatsApp reported. WhatsApp's report stays on the Delivery Attempt as it
-came; the reply sits beside it, and the Delivery is Delivered from the reply's time. The Owner
-sees it as delivered because the guest replied, with no failure before it.
+A message the Guest replied to - tapped its WhatsApp quick reply, answered quoting it (ADR 0057),
+or answered on the Delivery's own RSVP link (ADR 0058) - so it reached them, whatever its provider
+reported. A link answer is credited to the latest message of the Delivery sent before it. The
+provider's report stays on the Delivery Attempt as it came; the reply sits beside it, and the
+Delivery is Delivered from the reply's time. The Owner sees it as delivered because the guest
+replied, with no failure before it.
 
 A typed text that quotes nothing, and an answer on the RSVP page, prove nothing about the
 message and do not count.

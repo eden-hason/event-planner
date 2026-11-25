@@ -7,6 +7,7 @@ import {
 } from '../schemas';
 import { isGuestInvitationToken } from '../queries';
 import { recordGuestRsvp } from '../services/record-rsvp';
+import { recordLinkAnswerProof } from '../services/link-answer-proof';
 import { buildMealOptions } from '../utils/meal-options';
 import {
   normalizeMealCounts,
@@ -55,6 +56,8 @@ export async function submitConfirmation(
     };
   };
   let scheduleId: string | null = null;
+  /** Set only for a Delivery's own link - the one tied to the messages it went out in. */
+  let deliveryId: string | null = null;
 
   if (isGuestInvitationToken(token)) {
     // Direct invitation link - look up by guests.invitation_token
@@ -69,12 +72,13 @@ export async function submitConfirmation(
     // Schedule-based confirmation link - look up by message_deliveries.confirmation_token
     const { data, error } = await supabase
       .from('message_deliveries')
-      .select(`schedule_id, guests!inner (${guestColumns})`)
+      .select(`id, schedule_id, guests!inner (${guestColumns})`)
       .eq('confirmation_token', token)
       .single();
     if (error || !data) return { success: false, message: 'הקישור אינו תקין' };
     guest = data.guests as unknown as typeof guest;
     scheduleId = data.schedule_id;
+    deliveryId = data.id;
   }
 
   if (!isRsvpOpen(guest.events.event_date)) {
@@ -117,6 +121,10 @@ export async function submitConfirmation(
     channel: 'page',
   });
   if (!result.ok) return { success: false, message: result.message };
+
+  // The answer came through a link only this Delivery's messages carry, so one
+  // of them reached the Guest (ADR 0058).
+  if (deliveryId) await recordLinkAnswerProof(supabase, deliveryId);
 
   return {
     success: true,
